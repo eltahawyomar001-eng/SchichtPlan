@@ -76,6 +76,7 @@ model Workspace {
   employees Employee[]
   shifts    Shift[]
   locations Location[]
+  timeEntries TimeEntry[]
 }
 
 model Employee {
@@ -95,6 +96,7 @@ model Employee {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shifts      Shift[]
   absences    Absence[]
+  timeEntries TimeEntry[]
   @@unique([email, workspaceId])
 }
 
@@ -106,6 +108,7 @@ model Location {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shifts      Shift[]
+  timeEntries TimeEntry[]
 }
 
 model Shift {
@@ -153,4 +156,92 @@ enum AbsenceType {
   KRANK
   FEIERTAG
   SONSTIGES
+}
+
+// ── Zeiterfassung (Time Tracking) ──────────────────────────────
+
+enum TimeEntryStatus {
+  ENTWURF          // Draft — saved but not yet submitted
+  EINGEREICHT      // Submitted — awaiting manager review
+  KORREKTUR        // Correction required — sent back to employee
+  ZURUECKGEWIESEN  // Rejected by manager
+  GEPRUEFT         // Reviewed — first-level approval
+  BESTAETIGT       // Confirmed / final approval
+}
+
+model TimeEntry {
+  id           String          @id @default(cuid())
+  date         DateTime        @db.Date
+  startTime    String          // HH:mm
+  endTime      String          // HH:mm
+
+  // Break tracking
+  breakStart   String?         // HH:mm (optional if breakMinutes used)
+  breakEnd     String?         // HH:mm
+  breakMinutes Int             @default(0)
+
+  // Computed durations (stored for fast queries & export)
+  grossMinutes Int             @default(0) // total minutes (end - start)
+  netMinutes   Int             @default(0) // gross - break
+
+  remarks      String?         // Free-text comments
+
+  status       TimeEntryStatus @default(ENTWURF)
+  submittedAt  DateTime?
+  confirmedAt  DateTime?
+  confirmedBy  String?         // userId of the confirmer
+
+  // Optional: Auftraggeber (client) confirmation
+  clientConfirmed   Boolean  @default(false)
+  clientConfirmedAt DateTime?
+  clientConfirmedBy String?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  employeeId   String
+  employee     Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  locationId   String?
+  location     Location?       @relation(fields: [locationId], references: [id])
+  shiftId      String?         // optional link to a planned Shift
+  workspaceId  String
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  auditLog     TimeEntryAudit[]
+
+  @@index([workspaceId, date])
+  @@index([employeeId, date])
+  @@index([status])
+}
+
+model TimeEntryAudit {
+  id          String   @id @default(cuid())
+  action      String   // CREATED | SUBMITTED | APPROVED | CORRECTED | REJECTED | CONFIRMED | CLIENT_CONFIRMED
+  changes     String?  @db.Text // JSON diff of changed fields
+  comment     String?  // Manager/admin comment
+  performedBy String   // userId
+  performedAt DateTime @default(now())
+
+  timeEntryId String
+  timeEntry   TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  @@index([timeEntryId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // TIME_ENTRY_SUBMITTED | TIME_ENTRY_APPROVED | TIME_ENTRY_REJECTED | TIME_ENTRY_CORRECTED
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  link      String?  // Deep-link path e.g. /zeiterfassung?entry=xxx
+
+  createdAt DateTime @default(now())
+
+  userId      String   // recipient
+  workspaceId String
+
+  @@index([userId, read])
+  @@index([workspaceId])
 }

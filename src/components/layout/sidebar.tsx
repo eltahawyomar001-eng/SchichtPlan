@@ -10,6 +10,7 @@ import {
   SettingsIcon,
   LogOutIcon,
   SchichtPlanMark,
+  ClockIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -17,6 +18,7 @@ import { signOut } from "next-auth/react";
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
   { label: "Schichtplan", href: "/schichtplan", icon: CalendarIcon },
+  { label: "Zeiterfassung", href: "/zeiterfassung", icon: ClockIcon },
   { label: "Mitarbeiter", href: "/mitarbeiter", icon: UsersIcon },
   { label: "Standorte", href: "/standorte", icon: MapPinIcon },
   { label: "Einstellungen", href: "/einstellungen", icon: SettingsIcon },

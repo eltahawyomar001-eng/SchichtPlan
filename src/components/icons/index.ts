@@ -29,3 +29,7 @@ export { BuildingIcon } from "./BuildingIcon";
 export { LockIcon } from "./LockIcon";
 export { EyeIcon } from "./EyeIcon";
 export { EyeOffIcon } from "./EyeOffIcon";
+export { DownloadIcon } from "./DownloadIcon";
+export { EditIcon } from "./EditIcon";
+export { FilterIcon } from "./FilterIcon";
+export { ChevronDownIcon } from "./ChevronDownIcon";

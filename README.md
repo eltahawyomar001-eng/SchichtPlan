@@ -1,36 +1,176 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SchichtPlan — Intelligente Schichtplanung für Teams
 
-## Getting Started
+Moderne SaaS-Plattform zur Schichtplanung, Mitarbeiterverwaltung und Standortorganisation.
+Entwickelt für den deutschen Markt mit Next.js, Prisma und TypeScript.
 
-First, run the development server:
+---
+
+## Schnellstart
 
 ```bash
+# Repository klonen
+git clone https://github.com/eltahawyomar001-eng/SchichtPlan.git
+cd SchichtPlan
+
+# Abhängigkeiten installieren
+npm install
+
+# Umgebungsvariablen konfigurieren
+cp .env.example .env
+# → DATABASE_URL, NEXTAUTH_SECRET, STRIPE_SECRET_KEY anpassen
+
+# Datenbank migrieren
+npx prisma migrate dev
+
+# Entwicklungsserver starten
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Die App läuft unter **http://localhost:3000**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech-Stack
 
-## Learn More
+| Kategorie             | Technologie                                          |
+| --------------------- | ---------------------------------------------------- |
+| **Framework**         | Next.js 16 (App Router)                              |
+| **Sprache**           | TypeScript 5                                         |
+| **Styling**           | Tailwind CSS 4                                       |
+| **Datenbank**         | PostgreSQL via Prisma 7 (`@prisma/adapter-pg`)       |
+| **Authentifizierung** | NextAuth 4 (Credentials, JWT)                        |
+| **Zahlungen**         | Stripe                                               |
+| **Icons**             | Eigene SVG-Komponenten (TypeScript)                  |
+| **Illustrationen**    | Eigene SVG-Szenen mit `ResizeObserver`               |
+| **Commit-System**     | Conventional Commits, Husky, commitlint, lint-staged |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Projektstruktur
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+schichtplan/
+├── prisma/
+│   └── schema.prisma              # Datenbankschema (User, Workspace, Shift …)
+├── public/                        # Statische Assets
+├── src/
+│   ├── app/
+│   │   ├── globals.css            # Design-Tokens & Utility-Klassen
+│   │   ├── layout.tsx             # Root-Layout
+│   │   ├── page.tsx               # Landing-Page / Auth-Redirect
+│   │   ├── (auth)/
+│   │   │   ├── login/page.tsx     # Anmeldeseite
+│   │   │   └── register/page.tsx  # Registrierungsseite
+│   │   ├── (dashboard)/
+│   │   │   ├── layout.tsx         # Dashboard-Layout (Sidebar + Topbar)
+│   │   │   ├── dashboard/         # Übersichts-Dashboard
+│   │   │   ├── mitarbeiter/       # Mitarbeiterverwaltung
+│   │   │   ├── standorte/         # Standortverwaltung
+│   │   │   ├── schichtplan/       # Wochenkalender-Schichtplan
+│   │   │   └── einstellungen/     # Einstellungen & Profil
+│   │   └── api/
+│   │       ├── auth/              # NextAuth + Registrierung
+│   │       ├── employees/         # CRUD Mitarbeiter
+│   │       ├── locations/         # CRUD Standorte
+│   │       └── shifts/            # CRUD Schichten
+│   ├── components/
+│   │   ├── icons/                 # 28 SVG-Icon-Komponenten (TypeScript)
+│   │   │   ├── CalendarIcon.tsx
+│   │   │   ├── ClockIcon.tsx
+│   │   │   ├── SchichtPlanMark.tsx
+│   │   │   ├── …                  # + 25 weitere
+│   │   │   └── index.ts           # Barrel-Export
+│   │   ├── svgs/                  # 4 SVG-Illustrationen (responsive)
+│   │   │   ├── PlanningIllustration.tsx
+│   │   │   ├── DistributionIllustration.tsx
+│   │   │   ├── DayToDayIllustration.tsx
+│   │   │   ├── ReportingIllustration.tsx
+│   │   │   └── index.ts
+│   │   ├── landing/
+│   │   │   └── LandingPage.tsx    # Connecteam-inspirierte Landing-Page
+│   │   ├── layout/
+│   │   │   ├── sidebar.tsx        # Seitenleiste mit Navigation
+│   │   │   └── topbar.tsx         # Kopfleiste mit Benachrichtigungen
+│   │   ├── ui/                    # Basis-UI-Komponenten (Button, Card …)
+│   │   └── providers.tsx          # SessionProvider-Wrapper
+│   └── lib/
+│       ├── auth.ts                # NextAuth-Konfiguration
+│       ├── db.ts                  # Prisma-Client (Singleton, PrismaPg)
+│       └── utils.ts               # Hilfsfunktionen (cn, formatDate …)
+├── .husky/                        # Git-Hooks (commit-msg, pre-commit)
+├── commitlint.config.ts           # Conventional-Commits-Regeln
+├── eslint.config.mjs
+├── next.config.ts
+├── postcss.config.mjs
+├── prisma.config.ts
+├── tsconfig.json
+└── package.json
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Design-Prinzipien
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### SVG-Architektur
+
+Alle Icons und Illustrationen sind als reine TypeScript-SVG-Komponenten implementiert — **kein externer Icon-Pack** (kein lucide-react, kein Heroicons).
+
+- **Icons** (`src/components/icons/`): Typ-sicher über `SVGProps<SVGSVGElement>`, mit `<defs>`-Gradienten und eindeutigen IDs, `aria-hidden="true"` für Barrierefreiheit
+- **Illustrationen** (`src/components/svgs/`): Komplexe Szenen mit `useRef` + `ResizeObserver` für responsive Skalierung bei jeder Viewportgröße
+
+### UI / UX
+
+- Connecteam-inspiriertes Design, angepasst an den deutschen Markt
+- Markenfarben: Violett-Palette (`#7C3AED` → `#A78BFA`) mit neutralen Grautönen
+- Glass-Effekte, subtile Animationen (`fadeInUp`, `fadeIn`), Grid-Pattern-Hintergründe
+- Landing-Page mit Hero, Feature-Sektionen, Benefits-Grid, FAQ-Akkordeon
+
+### Datenbank
+
+- Prisma 7 mit PostgreSQL über Driver-Adapter (`@prisma/adapter-pg` + `pg.Pool`)
+- Modelle: `User` (Rollen: OWNER, ADMIN, MANAGER, EMPLOYEE), `Workspace`, `Employee`, `Location`, `Shift`, `Absence`
+- Deutsche Enum-Werte: `AbsenceType` → URLAUB, KRANK, FEIERTAG, SONSTIGES
+
+---
+
+## Commit-Konventionen
+
+Dieses Projekt nutzt [Conventional Commits](https://www.conventionalcommits.org/) — erzwungen durch Husky + commitlint.
+
+```
+feat(scope): Neue Funktion hinzufügen
+fix(scope): Fehler beheben
+docs: Dokumentation aktualisieren
+style: Formatierung anpassen (kein Code-Effekt)
+refactor(scope): Code umstrukturieren
+perf(scope): Performance verbessern
+test(scope): Tests hinzufügen oder anpassen
+chore: Build-Prozess oder Tooling ändern
+ci: CI/CD-Konfiguration anpassen
+```
+
+### Beispiele
+
+```bash
+git commit -m "feat(schichtplan): Wochenansicht mit Drag-and-Drop"
+git commit -m "fix(auth): Session-Ablauf korrekt behandeln"
+git commit -m "docs: README mit Projektstruktur ergänzt"
+git commit -m "chore: Husky und commitlint konfiguriert"
+```
+
+---
+
+## Skripte
+
+| Befehl          | Beschreibung                |
+| --------------- | --------------------------- |
+| `npm run dev`   | Entwicklungsserver starten  |
+| `npm run build` | Produktions-Build erstellen |
+| `npm start`     | Produktionsserver starten   |
+| `npm run lint`  | ESLint ausführen            |
+
+---
+
+## Lizenz
+
+Proprietär — © 2025 SchichtPlan. Alle Rechte vorbehalten.

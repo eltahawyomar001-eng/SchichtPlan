@@ -26,3 +26,6 @@ export { BriefcaseIcon } from "./BriefcaseIcon";
 export { TrashIcon } from "./TrashIcon";
 export { UserIcon } from "./UserIcon";
 export { BuildingIcon } from "./BuildingIcon";
+export { LockIcon } from "./LockIcon";
+export { EyeIcon } from "./EyeIcon";
+export { EyeOffIcon } from "./EyeOffIcon";

@@ -1,8 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { BellIcon } from "@/components/icons";
+import {
+  BellIcon,
+  CalendarIcon,
+  AlertTriangleIcon,
+  ClipboardIcon,
+  CircleCheckIcon,
+  CircleXIcon,
+  RefreshIcon,
+  ClockIcon,
+  PencilIcon,
+  AlertCircleIcon,
+} from "@/components/icons";
 import { useLocale, useTranslations } from "next-intl";
+import type { SVGProps, ComponentType } from "react";
 
 interface Notification {
   id: string;
@@ -113,24 +125,39 @@ export function NotificationDropdown() {
     return date.toLocaleDateString(locale === "de" ? "de-DE" : "en-US");
   }
 
-  const typeIcon: Record<string, string> = {
-    SHIFT_ASSIGNED: "📅",
-    SHIFTS_CANCELLED_ABSENCE: "⚠️",
-    ABSENCE_REQUESTED: "📋",
-    ABSENCE_AUTO_APPROVED: "✅",
-    ABSENCE_APPROVED: "✅",
-    ABSENCE_REJECTED: "❌",
-    SWAP_REQUESTED: "🔄",
-    SWAP_AUTO_APPROVED: "✅",
-    SWAP_GENEHMIGT: "✅",
-    SWAP_ABGELEHNT: "❌",
-    TIME_ENTRY_SUBMITTED: "⏰",
-    TIME_ENTRY_APPROVED: "✅",
-    TIME_ENTRY_REJECTED: "❌",
-    TIME_ENTRY_CORRECTED: "✏️",
-    TIME_ENTRY_CONFIRMED: "✅",
-    OVERTIME_ALERT: "🔴",
+  const typeIconMap: Record<
+    string,
+    { icon: ComponentType<SVGProps<SVGSVGElement>>; color: string }
+  > = {
+    SHIFT_ASSIGNED: { icon: CalendarIcon, color: "text-blue-500" },
+    SHIFTS_CANCELLED_ABSENCE: {
+      icon: AlertTriangleIcon,
+      color: "text-amber-500",
+    },
+    ABSENCE_REQUESTED: { icon: ClipboardIcon, color: "text-orange-500" },
+    ABSENCE_AUTO_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
+    ABSENCE_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
+    ABSENCE_REJECTED: { icon: CircleXIcon, color: "text-red-500" },
+    SWAP_REQUESTED: { icon: RefreshIcon, color: "text-blue-500" },
+    SWAP_AUTO_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
+    SWAP_GENEHMIGT: { icon: CircleCheckIcon, color: "text-emerald-500" },
+    SWAP_ABGELEHNT: { icon: CircleXIcon, color: "text-red-500" },
+    TIME_ENTRY_SUBMITTED: { icon: ClockIcon, color: "text-violet-500" },
+    TIME_ENTRY_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
+    TIME_ENTRY_REJECTED: { icon: CircleXIcon, color: "text-red-500" },
+    TIME_ENTRY_CORRECTED: { icon: PencilIcon, color: "text-amber-500" },
+    TIME_ENTRY_CONFIRMED: { icon: CircleCheckIcon, color: "text-emerald-600" },
+    OVERTIME_ALERT: { icon: AlertCircleIcon, color: "text-red-600" },
   };
+
+  function getNotificationIcon(type: string) {
+    const entry = typeIconMap[type] || {
+      icon: BellIcon,
+      color: "text-gray-400",
+    };
+    const Icon = entry.icon;
+    return <Icon className={`h-4 w-4 ${entry.color}`} />;
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -181,8 +208,8 @@ export function NotificationDropdown() {
                   }`}
                 >
                   <div className="flex gap-2.5">
-                    <span className="text-base flex-shrink-0 mt-0.5">
-                      {typeIcon[n.type] || "🔔"}
+                    <span className="flex-shrink-0 mt-0.5">
+                      {getNotificationIcon(n.type)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

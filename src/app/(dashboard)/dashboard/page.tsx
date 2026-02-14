@@ -13,6 +13,7 @@ import {
   ArrowRightIcon,
   CalendarOffIcon,
   SwapIcon,
+  RocketIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { getTranslations } from "next-intl/server";
@@ -168,8 +169,9 @@ export default async function DashboardPage() {
         {showOnboarding && (
           <Card className="border-violet-200 bg-gradient-to-br from-violet-50/60 to-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg sm:text-xl">
-                🚀 {to("welcomeTitle")}
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <RocketIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                {to("welcomeTitle")}
               </CardTitle>
               <p className="text-sm text-gray-500">{to("welcomeSubtitle")}</p>
             </CardHeader>

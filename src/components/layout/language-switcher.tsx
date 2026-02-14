@@ -1,13 +1,18 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, type ComponentType, type SVGProps } from "react";
 import { useLocale } from "next-intl";
 import { setLocale } from "@/i18n/locale";
+import { DEFlagIcon, GBFlagIcon } from "@/components/icons";
 import type { Locale } from "@/i18n/request";
 
-const LOCALES: { value: Locale; flag: string; label: string }[] = [
-  { value: "de", flag: "🇩🇪", label: "Deutsch" },
-  { value: "en", flag: "🇬🇧", label: "English" },
+const LOCALES: {
+  value: Locale;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  label: string;
+}[] = [
+  { value: "de", icon: DEFlagIcon, label: "Deutsch" },
+  { value: "en", icon: GBFlagIcon, label: "English" },
 ];
 
 export function LanguageSwitcher() {
@@ -29,13 +34,13 @@ export function LanguageSwitcher() {
           onClick={() => handleChange(l.value)}
           disabled={isPending || locale === l.value}
           title={l.label}
-          className={`rounded-md px-1.5 py-1 text-sm transition-colors ${
+          className={`rounded-lg p-1.5 transition-all ${
             locale === l.value
-              ? "bg-violet-100 text-violet-700 font-medium"
-              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          } ${isPending ? "opacity-50 cursor-wait" : ""}`}
+              ? "bg-violet-50 ring-1 ring-violet-200 shadow-sm"
+              : "opacity-50 hover:opacity-100 hover:bg-gray-100"
+          } ${isPending ? "opacity-30 cursor-wait" : ""}`}
         >
-          {l.flag}
+          <l.icon className="h-4 w-5" />
         </button>
       ))}
     </div>

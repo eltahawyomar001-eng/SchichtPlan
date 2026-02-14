@@ -40,3 +40,5 @@ export { SwapIcon } from "./SwapIcon";
 export { ScaleIcon } from "./ScaleIcon";
 export { FileExportIcon } from "./FileExportIcon";
 export { GlobeIcon } from "./GlobeIcon";
+export { DEFlagIcon } from "./DEFlagIcon";
+export { GBFlagIcon } from "./GBFlagIcon";

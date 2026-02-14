@@ -24,6 +24,7 @@ import {
   DayToDayIllustration,
   ReportingIllustration,
 } from "@/components/svgs";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 /**
  * Full Connecteam-style landing page for SchichtPlan.
@@ -176,6 +177,7 @@ function Navbar() {
 
         {/* CTA + mobile toggle */}
         <div className="flex items-center gap-3">
+          <LanguageSwitcher />
           <Link
             href="/login"
             className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
@@ -232,6 +234,9 @@ function Navbar() {
             >
               {t("navLogin")}
             </Link>
+            <div className="px-3 py-2">
+              <LanguageSwitcher />
+            </div>
           </div>
         </div>
       )}

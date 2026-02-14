@@ -538,10 +538,11 @@
     "swapClaraDavid": "Swap: Clara ↔ David",
     "reportingAria": "Reports — hour overview and payroll",
     "hourReport": "Hour report",
+    "reportWeek": "CW 24",
     "total": "Total",
     "overtime": "Overtime",
     "absent": "Absent",
-    "exportCsv": "📊 Export as CSV",
+    "exportCsv": "Export as CSV",
     "laborCosts": "Labor costs",
     "regular": "Regular",
     "hourTrend": "Hour trend"

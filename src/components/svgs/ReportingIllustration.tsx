@@ -57,7 +57,7 @@ export function ReportingIllustration() {
     <div
       ref={containerRef}
       className="relative w-full max-w-[520px] mx-auto overflow-hidden"
-      style={{ height: 320 * scale }}
+      style={{ height: 380 * scale }}
       role="img"
       aria-label={t("reportingAria")}
     >
@@ -131,7 +131,7 @@ export function ReportingIllustration() {
       `}</style>
 
       <div
-        className="absolute top-0 left-0 w-[520px] h-[320px] origin-top-left"
+        className="absolute top-0 left-0 w-[520px] h-[380px] origin-top-left"
         style={{ transform: `scale(${scale})` }}
       >
         {/* Main report card */}
@@ -161,7 +161,7 @@ export function ReportingIllustration() {
                 {t("hourReport")}
               </span>
             </div>
-            <span className="text-xs text-gray-500">KW 24</span>
+            <span className="text-xs text-gray-500">{t("reportWeek")}</span>
           </div>
 
           {/* Stats row */}
@@ -264,7 +264,8 @@ export function ReportingIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              <span className="text-xs font-semibold text-violet-500">
+              <span className="text-xs font-semibold text-violet-500 inline-flex items-center gap-1">
+                <BarChartIcon className="w-3.5 h-3.5" />
                 {t("exportCsv")}
               </span>
             </div>

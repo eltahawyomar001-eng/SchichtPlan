@@ -77,6 +77,10 @@ model Workspace {
   shifts    Shift[]
   locations Location[]
   timeEntries TimeEntry[]
+  absenceRequests AbsenceRequest[]
+  availabilities  Availability[]
+  shiftSwaps      ShiftSwapRequest[]
+  timeAccounts    TimeAccount[]
 }
 
 model Employee {
@@ -97,6 +101,11 @@ model Employee {
   shifts      Shift[]
   absences    Absence[]
   timeEntries TimeEntry[]
+  absenceRequests AbsenceRequest[]
+  availabilities  Availability[]
+  swapsRequested  ShiftSwapRequest[] @relation("SwapRequester")
+  swapsOffered    ShiftSwapRequest[] @relation("SwapTarget")
+  timeAccount     TimeAccount?
   @@unique([email, workspaceId])
 }
 
@@ -126,6 +135,8 @@ model Shift {
   location    Location? @relation(fields: [locationId], references: [id])
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  swapsFrom   ShiftSwapRequest[] @relation("SwapFromShift")
+  swapsTo     ShiftSwapRequest[] @relation("SwapToShift")
   @@index([workspaceId, date])
   @@index([employeeId, date])
 }
@@ -243,5 +254,150 @@ model Notification {
   workspaceId String
 
   @@index([userId, read])
+  @@index([workspaceId])
+}
+
+// ── Feature 1: Abwesenheitsmanagement (Absence Management) ─────
+
+enum AbsenceRequestStatus {
+  AUSSTEHEND     // Pending
+  GENEHMIGT      // Approved
+  ABGELEHNT      // Rejected
+  STORNIERT      // Cancelled by employee
+}
+
+enum AbsenceCategory {
+  URLAUB         // Vacation
+  KRANK          // Sick leave
+  ELTERNZEIT     // Parental leave
+  SONDERURLAUB   // Special leave (wedding, bereavement, etc.)
+  UNBEZAHLT      // Unpaid leave
+  FORTBILDUNG    // Training / education
+  SONSTIGES      // Other
+}
+
+model AbsenceRequest {
+  id          String              @id @default(cuid())
+  category    AbsenceCategory
+  startDate   DateTime            @db.Date
+  endDate     DateTime            @db.Date
+  halfDayStart Boolean            @default(false)  // Start date is half-day
+  halfDayEnd   Boolean            @default(false)  // End date is half-day
+  totalDays   Float               @default(0)      // Computed total working days
+  reason      String?             @db.Text
+  status      AbsenceRequestStatus @default(AUSSTEHEND)
+
+  // Approval workflow
+  reviewedBy  String?             // userId of reviewer
+  reviewedAt  DateTime?
+  reviewNote  String?             @db.Text
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  employeeId  String
+  employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([employeeId, startDate])
+}
+
+// ── Feature 2: Verfügbarkeiten (Availability) ──────────────────
+
+enum AvailabilityType {
+  VERFUEGBAR    // Available
+  BEVORZUGT     // Preferred
+  NICHT_VERFUEGBAR // Not available
+}
+
+model Availability {
+  id          String           @id @default(cuid())
+  weekday     Int              // 0 = Monday, 6 = Sunday (ISO)
+  startTime   String?          // HH:mm — null means whole day
+  endTime     String?          // HH:mm
+  type        AvailabilityType @default(VERFUEGBAR)
+  validFrom   DateTime         @db.Date  // Start of validity period
+  validUntil  DateTime?        @db.Date  // null = indefinite
+  notes       String?
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  employeeId  String
+  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, employeeId])
+  @@index([employeeId, weekday])
+}
+
+// ── Feature 3: Schichttausch (Shift Swap) ──────────────────────
+
+enum SwapStatus {
+  ANGEFRAGT      // Requested by employee
+  ANGENOMMEN     // Accepted by target employee
+  GENEHMIGT      // Approved by manager
+  ABGELEHNT      // Rejected (by target or manager)
+  STORNIERT      // Cancelled
+  ABGESCHLOSSEN  // Completed (shifts actually swapped)
+}
+
+model ShiftSwapRequest {
+  id            String     @id @default(cuid())
+  status        SwapStatus @default(ANGEFRAGT)
+  reason        String?    @db.Text
+
+  // The shift the requester wants to give away
+  shiftId       String
+  shift         Shift      @relation("SwapFromShift", fields: [shiftId], references: [id])
+
+  // The shift the requester wants in return (optional for "open" swaps)
+  targetShiftId String?
+  targetShift   Shift?     @relation("SwapToShift", fields: [targetShiftId], references: [id])
+
+  // Employees involved
+  requesterId   String
+  requester     Employee   @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  targetId      String?    // null = open swap (anyone can accept)
+  target        Employee?  @relation("SwapTarget", fields: [targetId], references: [id])
+
+  // Manager review
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  workspaceId   String
+  workspace     Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([requesterId])
+  @@index([targetId])
+}
+
+// ── Feature 4: Arbeitszeitkonten (Time Accounts / Hour Balances) ─
+
+model TimeAccount {
+  id              String   @id @default(cuid())
+  contractHours   Float    @default(40)    // Weekly contracted hours
+  carryoverMinutes Int     @default(0)     // Carried over from previous period
+  currentBalance  Int      @default(0)     // Running balance in minutes (+/-)
+  lastCalculated  DateTime @default(now()) // Timestamp of last balance recalculation
+  periodStart     DateTime @db.Date        // Current accounting period start
+  periodEnd       DateTime? @db.Date       // Current accounting period end (null = ongoing)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  employeeId      String   @unique         // One account per employee
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }

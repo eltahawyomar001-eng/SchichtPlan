@@ -12,6 +12,11 @@ import {
   SchichtPlanMark,
   ClockIcon,
   XIcon,
+  CalendarOffIcon,
+  HandRaisedIcon,
+  SwapIcon,
+  ScaleIcon,
+  FileExportIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -20,6 +25,11 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
   { label: "Schichtplan", href: "/schichtplan", icon: CalendarIcon },
   { label: "Zeiterfassung", href: "/zeiterfassung", icon: ClockIcon },
+  { label: "Abwesenheiten", href: "/abwesenheiten", icon: CalendarOffIcon },
+  { label: "Verfügbarkeiten", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
+  { label: "Schichttausch", href: "/schichttausch", icon: SwapIcon },
+  { label: "Zeitkonten", href: "/zeitkonten", icon: ScaleIcon },
+  { label: "Lohnexport", href: "/lohnexport", icon: FileExportIcon },
   { label: "Mitarbeiter", href: "/mitarbeiter", icon: UsersIcon },
   { label: "Standorte", href: "/standorte", icon: MapPinIcon },
   { label: "Einstellungen", href: "/einstellungen", icon: SettingsIcon },

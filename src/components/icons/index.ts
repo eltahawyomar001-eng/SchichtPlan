@@ -34,3 +34,8 @@ export { EditIcon } from "./EditIcon";
 export { FilterIcon } from "./FilterIcon";
 export { ChevronDownIcon } from "./ChevronDownIcon";
 export { MenuIcon } from "./MenuIcon";
+export { CalendarOffIcon } from "./CalendarOffIcon";
+export { HandRaisedIcon } from "./HandRaisedIcon";
+export { SwapIcon } from "./SwapIcon";
+export { ScaleIcon } from "./ScaleIcon";
+export { FileExportIcon } from "./FileExportIcon";

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { BarChartIcon } from "@/components/icons/BarChartIcon";
 
 /**
@@ -14,6 +15,7 @@ export function ReportingIllustration() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
+  const t = useTranslations("illustrations");
 
   useEffect(() => {
     const el = containerRef.current;
@@ -57,7 +59,7 @@ export function ReportingIllustration() {
       className="relative w-full max-w-[520px] mx-auto overflow-hidden"
       style={{ height: 320 * scale }}
       role="img"
-      aria-label="Berichte — Stundenübersicht und Lohnabrechnung"
+      aria-label={t("reportingAria")}
     >
       {/* Inline keyframes */}
       <style>{`
@@ -156,7 +158,7 @@ export function ReportingIllustration() {
             <div className="flex items-center gap-2">
               <BarChartIcon className="w-5 h-5" />
               <span className="font-semibold text-sm text-gray-800">
-                Stundenreport
+                {t("hourReport")}
               </span>
             </div>
             <span className="text-xs text-gray-500">KW 24</span>
@@ -165,9 +167,9 @@ export function ReportingIllustration() {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 px-4 py-3">
             {[
-              { label: "Gesamt", value: "155h", accent: "#7C3AED" },
-              { label: "Überstunden", value: "2h", accent: "#F59E0B" },
-              { label: "Abwesend", value: "0", accent: "#10B981" },
+              { label: t("total"), value: "155h", accent: "#7C3AED" },
+              { label: t("overtime"), value: "2h", accent: "#F59E0B" },
+              { label: t("absent"), value: "0", accent: "#10B981" },
             ].map((stat, i) => (
               <StatBox
                 key={stat.label}
@@ -263,7 +265,7 @@ export function ReportingIllustration() {
               }}
             >
               <span className="text-xs font-semibold text-violet-500">
-                📊 Als CSV exportieren
+                {t("exportCsv")}
               </span>
             </div>
           </div>
@@ -282,7 +284,7 @@ export function ReportingIllustration() {
         >
           <div className="px-4 py-3 bg-gradient-to-br from-violet-600 to-purple-500">
             <span className="block text-[10px] text-violet-200 font-medium">
-              Lohnkosten
+              {t("laborCosts")}
             </span>
             <span
               className="block text-xl text-white font-bold mt-0.5"
@@ -308,7 +310,7 @@ export function ReportingIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              <span className="text-gray-500">Regulär</span>
+              <span className="text-gray-500">{t("regular")}</span>
               <span className="text-gray-800 font-medium">€4.700</span>
             </div>
             <div
@@ -321,7 +323,7 @@ export function ReportingIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              <span className="text-gray-500">Überstunden</span>
+              <span className="text-gray-500">{t("overtime")}</span>
               <span className="text-amber-600 font-medium">€120</span>
             </div>
           </div>
@@ -339,7 +341,7 @@ export function ReportingIllustration() {
           }}
         >
           <span className="block text-[10px] text-gray-500 font-medium mb-2">
-            Stundentrend
+            {t("hourTrend")}
           </span>
           <svg
             width="126"

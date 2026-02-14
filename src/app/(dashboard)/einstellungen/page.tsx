@@ -25,6 +25,14 @@ export default function EinstellungenPage() {
   const { data: session } = useSession();
   const t = useTranslations("settings");
 
+  const roleMap: Record<string, string> = {
+    OWNER: t("roleOwner"),
+    ADMIN: t("roleAdmin"),
+    EMPLOYEE: t("roleEmployee"),
+  };
+  const rawRole = (session?.user as SessionUser)?.role || "OWNER";
+  const translatedRole = roleMap[rawRole] || rawRole;
+
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
@@ -51,9 +59,7 @@ export default function EinstellungenPage() {
                 <p className="text-sm text-gray-500">
                   {session?.user?.email || "–"}
                 </p>
-                <Badge className="mt-2">
-                  {(session?.user as SessionUser)?.role || "OWNER"}
-                </Badge>
+                <Badge className="mt-2">{translatedRole}</Badge>
               </div>
             </div>
           </CardContent>
@@ -80,9 +86,7 @@ export default function EinstellungenPage() {
               </div>
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-500">{t("role")}</span>
-                <Badge variant="outline">
-                  {(session?.user as SessionUser)?.role || "OWNER"}
-                </Badge>
+                <Badge variant="outline">{translatedRole}</Badge>
               </div>
             </div>
           </CardContent>

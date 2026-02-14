@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { UsersIcon } from "@/components/icons/UsersIcon";
 import { ClockIcon } from "@/components/icons/ClockIcon";
 import { CheckCircleIcon } from "@/components/icons/CheckCircleIcon";
@@ -16,6 +17,7 @@ export function DayToDayIllustration() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
+  const t = useTranslations("illustrations");
 
   useEffect(() => {
     const el = containerRef.current;
@@ -45,15 +47,20 @@ export function DayToDayIllustration() {
   }, []);
 
   const activeShifts = [
-    { name: "Anna M.", role: "Barista", since: "06:02", status: "active" },
-    { name: "Ben K.", role: "Kellner", since: "06:15", status: "active" },
-    { name: "Clara S.", role: "Küche", since: "—", status: "late" },
+    {
+      name: "Anna M.",
+      role: t("roleBarista"),
+      since: "06:02",
+      status: "active",
+    },
+    { name: "Ben K.", role: t("roleWaiter"), since: "06:15", status: "active" },
+    { name: "Clara S.", role: t("roleKitchen"), since: "—", status: "late" },
   ];
 
   const activities = [
-    { text: "Anna hat eingecheckt", time: "06:02", type: "checkin" },
-    { text: "Ben hat eingecheckt", time: "06:15", type: "checkin" },
-    { text: "Tausch: Clara ↔ David", time: "05:45", type: "swap" },
+    { text: t("annaCheckedIn"), time: "06:02", type: "checkin" },
+    { text: t("benCheckedIn"), time: "06:15", type: "checkin" },
+    { text: t("swapClaraDavid"), time: "05:45", type: "swap" },
   ];
 
   return (
@@ -62,7 +69,7 @@ export function DayToDayIllustration() {
       className="relative w-full max-w-[520px] mx-auto overflow-hidden"
       style={{ height: 320 * scale }}
       role="img"
-      aria-label="Tagesmanagement — Live-Dashboard mit aktiven Schichten"
+      aria-label={t("dayToDayAria")}
     >
       {/* Inline keyframes */}
       <style>{`
@@ -144,7 +151,7 @@ export function DayToDayIllustration() {
             <div className="flex items-center gap-2">
               <UsersIcon className="w-5 h-5" />
               <span className="font-semibold text-sm text-gray-800">
-                Heute aktiv
+                {t("activeToday")}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -213,7 +220,7 @@ export function DayToDayIllustration() {
                   </div>
                   {s.status === "late" && (
                     <span className="text-[10px] text-amber-600 font-medium">
-                      Verspätet
+                      {t("late")}
                     </span>
                   )}
                 </div>
@@ -233,7 +240,7 @@ export function DayToDayIllustration() {
             }}
           >
             <span className="text-xs text-violet-700 font-medium">
-              2/3 eingecheckt
+              {t("checkedIn")}
             </span>
             <div className="w-20 h-1.5 rounded-full bg-violet-200 overflow-hidden">
               <div

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { CalendarIcon } from "@/components/icons/CalendarIcon";
 import { ClockIcon } from "@/components/icons/ClockIcon";
 
@@ -15,6 +16,7 @@ export function PlanningIllustration() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
+  const t = useTranslations("illustrations");
 
   useEffect(() => {
     const el = containerRef.current;
@@ -43,17 +45,25 @@ export function PlanningIllustration() {
     };
   }, []);
 
-  const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const days = [
+    t("dayMo"),
+    t("dayTu"),
+    t("dayWe"),
+    t("dayTh"),
+    t("dayFr"),
+    t("daySa"),
+    t("daySu"),
+  ];
   const shifts = [
-    { day: 0, row: 0, color: "#7C3AED", label: "Früh", w: 1 },
-    { day: 1, row: 0, color: "#7C3AED", label: "Früh", w: 1 },
-    { day: 2, row: 0, color: "#7C3AED", label: "Früh", w: 1 },
-    { day: 0, row: 1, color: "#A78BFA", label: "Spät", w: 1 },
-    { day: 1, row: 1, color: "#A78BFA", label: "Spät", w: 1 },
-    { day: 3, row: 0, color: "#6D28D9", label: "Nacht", w: 1 },
-    { day: 4, row: 0, color: "#7C3AED", label: "Früh", w: 1 },
-    { day: 4, row: 1, color: "#A78BFA", label: "Spät", w: 1 },
-    { day: 5, row: 0, color: "#C4B5FD", label: "Bereit.", w: 1 },
+    { day: 0, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
+    { day: 1, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
+    { day: 2, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
+    { day: 0, row: 1, color: "#A78BFA", label: t("shiftLate"), w: 1 },
+    { day: 1, row: 1, color: "#A78BFA", label: t("shiftLate"), w: 1 },
+    { day: 3, row: 0, color: "#6D28D9", label: t("shiftNight"), w: 1 },
+    { day: 4, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
+    { day: 4, row: 1, color: "#A78BFA", label: t("shiftLate"), w: 1 },
+    { day: 5, row: 0, color: "#C4B5FD", label: t("shiftStandby"), w: 1 },
   ];
 
   /** Stagger index for each shift — order they appear in animation */
@@ -65,7 +75,7 @@ export function PlanningIllustration() {
       className="relative w-full max-w-[520px] mx-auto overflow-hidden"
       style={{ height: 320 * scale }}
       role="img"
-      aria-label="Schichtplanung — Wochenansicht mit Schichtblöcken"
+      aria-label={t("planningAria")}
     >
       {/* Inline keyframes */}
       <style>{`
@@ -127,12 +137,12 @@ export function PlanningIllustration() {
             <div className="flex items-center gap-2">
               <CalendarIcon className="w-5 h-5" />
               <span className="font-semibold text-sm text-gray-800">
-                KW 24 — Jun 2025
+                {t("calendarWeek")}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <ClockIcon className="w-4 h-4" />
-              <span className="text-xs text-gray-500">40 Stunden</span>
+              <span className="text-xs text-gray-500">{t("hoursTotal")}</span>
             </div>
           </div>
 
@@ -248,7 +258,7 @@ export function PlanningIllustration() {
               strokeLinecap="round"
             />
           </svg>
-          Verschieben
+          {t("drag")}
         </div>
       </div>
     </div>

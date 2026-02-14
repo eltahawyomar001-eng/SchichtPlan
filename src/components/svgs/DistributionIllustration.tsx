@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { SendIcon } from "@/components/icons/SendIcon";
 import { CheckCircleIcon } from "@/components/icons/CheckCircleIcon";
 
@@ -15,6 +16,7 @@ export function DistributionIllustration() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
+  const t = useTranslations("illustrations");
 
   useEffect(() => {
     const el = containerRef.current;
@@ -56,7 +58,7 @@ export function DistributionIllustration() {
       className="relative w-full max-w-[520px] mx-auto overflow-hidden"
       style={{ height: 320 * scale }}
       role="img"
-      aria-label="Schichtverteilung — Benachrichtigungen an Teammitglieder"
+      aria-label={t("distributionAria")}
     >
       {/* Inline keyframes */}
       <style>{`
@@ -136,7 +138,7 @@ export function DistributionIllustration() {
           >
             <SendIcon className="w-5 h-5" />
             <span className="font-semibold text-sm text-gray-800">
-              Plan verteilen
+              {t("distributePlan")}
             </span>
           </div>
 
@@ -152,7 +154,7 @@ export function DistributionIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              An alle senden
+              {t("sendToAll")}
             </div>
             <p
               className="text-xs text-gray-400 text-center mt-2"
@@ -164,7 +166,7 @@ export function DistributionIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              4 Mitarbeiter erhalten den Plan
+              {t("employeesReceive")}
             </p>
           </div>
 
@@ -216,7 +218,7 @@ export function DistributionIllustration() {
           name="Anna M."
           initials="AM"
           color="#7C3AED"
-          shift="Früh 06:00–14:00"
+          shift={t("shiftEarly0614")}
           top={20}
           left={300}
           index={0}
@@ -226,7 +228,7 @@ export function DistributionIllustration() {
           name="Ben K."
           initials="BK"
           color="#A78BFA"
-          shift="Spät 14:00–22:00"
+          shift={t("shiftLate1422")}
           top={100}
           left={320}
           index={1}
@@ -236,7 +238,7 @@ export function DistributionIllustration() {
           name="Clara S."
           initials="CS"
           color="#6D28D9"
-          shift="Früh 06:00–14:00"
+          shift={t("shiftEarly0614")}
           top={180}
           left={310}
           index={2}

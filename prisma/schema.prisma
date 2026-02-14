@@ -10,6 +10,7 @@ model User {
   id             String    @id @default(cuid())
   name           String?
   email          String    @unique
+  phone          String?
   emailVerified  DateTime?
   hashedPassword String?
   image          String?
@@ -20,6 +21,7 @@ model User {
   workspace      Workspace? @relation(fields: [workspaceId], references: [id])
   accounts       Account[]
   sessions       Session[]
+  notificationPreferences NotificationPreference[]
 }
 
 model Account {
@@ -404,6 +406,26 @@ model TimeAccount {
 }
 
 // ── Automation Settings ────────────────────────────────────────
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+model NotificationPreference {
+  id        String              @id @default(cuid())
+  channel   NotificationChannel
+  enabled   Boolean             @default(false)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channel])
+  @@index([userId])
+}
 
 model AutomationSetting {
   id        String   @id @default(cuid())

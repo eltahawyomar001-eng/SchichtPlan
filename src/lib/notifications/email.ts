@@ -1,0 +1,39 @@
+import { Resend } from "resend";
+import { buildEmailHtml } from "./templates";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM_ADDRESS =
+  process.env.RESEND_FROM_EMAIL || "SchichtPlan <noreply@schichtplan.de>";
+
+/**
+ * Send a notification email via Resend.
+ */
+export async function sendEmail(params: {
+  to: string;
+  type: string;
+  title: string;
+  message: string;
+  link?: string | null;
+  locale?: string;
+}) {
+  const { to, type, title, message, link, locale = "de" } = params;
+
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[notifications/email] RESEND_API_KEY not set — skipping");
+    return;
+  }
+
+  try {
+    const html = buildEmailHtml({ type, title, message, link, locale });
+
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: title,
+      html,
+    });
+  } catch (err) {
+    console.error("[notifications/email] Failed to send:", err);
+  }
+}

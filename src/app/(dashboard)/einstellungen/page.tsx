@@ -19,6 +19,7 @@ import {
   BuildingIcon,
   ShieldCheckIcon,
   ZapIcon,
+  BellIcon,
   ChevronRightIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
@@ -111,6 +112,26 @@ export default function EinstellungenPage() {
                 </p>
               </div>
               <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Notification Channels Card */}
+        <Link href="/einstellungen/benachrichtigungen" className="block group">
+          <Card className="transition-colors group-hover:border-blue-200 group-hover:bg-blue-50/30">
+            <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+              <div className="rounded-xl bg-blue-50 p-3 group-hover:bg-blue-100 transition-colors">
+                <BellIcon className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold text-gray-900">
+                  {t("notificationPrefs")}
+                </p>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {t("notificationPrefsDesc")}
+                </p>
+              </div>
+              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
             </CardContent>
           </Card>
         </Link>

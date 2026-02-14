@@ -19,6 +19,7 @@
 
 import { prisma } from "@/lib/db";
 import { calcGrossMinutes } from "@/lib/time-utils";
+import { dispatchExternalNotification } from "@/lib/notifications";
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTOMATION SETTINGS CHECK
@@ -299,6 +300,7 @@ export async function cascadeAbsenceApproval(params: {
 
 /**
  * Create a system notification for managers or a specific employee.
+ * Also dispatches to external channels (email, WhatsApp, SMS) based on user prefs.
  */
 export async function createSystemNotification(params: {
   type: string;
@@ -343,6 +345,19 @@ export async function createSystemNotification(params: {
         workspaceId,
       })),
     });
+
+    // Dispatch external notifications in parallel (fire-and-forget)
+    Promise.allSettled(
+      managers.map((m) =>
+        dispatchExternalNotification({
+          userId: m.id,
+          type,
+          title,
+          message,
+          link,
+        }),
+      ),
+    ).catch(() => {});
   } else if (employeeEmail) {
     const user = await prisma.user.findUnique({
       where: { email: employeeEmail },
@@ -359,6 +374,15 @@ export async function createSystemNotification(params: {
           workspaceId,
         },
       });
+
+      // Dispatch external notification (fire-and-forget)
+      dispatchExternalNotification({
+        userId: user.id,
+        type,
+        title,
+        message,
+        link,
+      }).catch(() => {});
     }
   }
 }

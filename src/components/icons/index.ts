@@ -50,3 +50,5 @@ export { CircleXIcon } from "./CircleXIcon";
 export { RefreshIcon } from "./RefreshIcon";
 export { PencilIcon } from "./PencilIcon";
 export { AlertCircleIcon } from "./AlertCircleIcon";
+export { MessageCircleIcon } from "./MessageCircleIcon";
+export { SmartphoneIcon } from "./SmartphoneIcon";

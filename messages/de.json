@@ -384,7 +384,9 @@
     "roleAdmin": "Admin",
     "roleEmployee": "Mitarbeiter",
     "automations": "Automatisierungen",
-    "automationsDesc": "Automatische Regeln für Schichtplanung, Zeiterfassung und Genehmigungen konfigurieren"
+    "automationsDesc": "Automatische Regeln für Schichtplanung, Zeiterfassung und Genehmigungen konfigurieren",
+    "notificationPrefs": "Benachrichtigungskanäle",
+    "notificationPrefsDesc": "Wählen Sie, wie Sie benachrichtigt werden — E-Mail, WhatsApp oder SMS"
   },
   "auth": {
     "login": "Anmelden",
@@ -601,6 +603,28 @@
       "timeEntryConfirmed": "Zeiteintrag bestätigt",
       "overtimeAlert": "Überstunden-Warnung"
     }
+  },
+  "notificationPrefs": {
+    "title": "Benachrichtigungskanäle",
+    "description": "Wählen Sie, wie Sie außerhalb der App benachrichtigt werden.",
+    "subtitle": "Aktivieren Sie E-Mail, WhatsApp oder SMS, um Benachrichtigungen auf Ihren bevorzugten Kanälen zu erhalten. Für WhatsApp und SMS ist eine Telefonnummer erforderlich.",
+    "channels": "Kanäle",
+    "email": "E-Mail",
+    "emailDesc": "Benachrichtigungen per E-Mail erhalten",
+    "whatsapp": "WhatsApp",
+    "whatsappDesc": "Benachrichtigungen per WhatsApp erhalten",
+    "sms": "SMS",
+    "smsDesc": "Benachrichtigungen per SMS erhalten",
+    "phone": "Telefonnummer",
+    "phonePlaceholder": "+49 170 1234567",
+    "phoneHint": "Erforderlich für WhatsApp und SMS. Verwenden Sie das internationale Format (z.B. +49...).",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "saving": "Speichern\u2026",
+    "saved": "Gespeichert",
+    "error": "Fehler beim Speichern",
+    "noChannels": "Keine externen Kanäle aktiviert. Sie erhalten nur In-App-Benachrichtigungen.",
+    "backToSettings": "Zurück zu Einstellungen"
   },
   "automations": {
     "title": "Automatisierungen",

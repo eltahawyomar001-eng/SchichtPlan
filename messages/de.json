@@ -349,6 +349,7 @@
     "role": "Rolle",
     "security": "Sicherheit",
     "securityDesc": "Konto-Sicherheitseinstellungen",
+    "signOut": "Abmelden",
     "language": "Sprache",
     "languageDesc": "Wählen Sie Ihre bevorzugte Sprache",
     "german": "Deutsch",

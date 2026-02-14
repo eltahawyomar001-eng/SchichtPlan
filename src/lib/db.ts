@@ -4,15 +4,25 @@ import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set");
+function getClient(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error("DATABASE_URL environment variable is not set");
+    }
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
+    globalForPrisma.prisma = new PrismaClient({ adapter });
   }
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter });
+  return globalForPrisma.prisma;
 }
 
-export const prisma =
-  globalForPrisma.prisma ?? (globalForPrisma.prisma = createPrismaClient());
+/**
+ * Lazy Prisma-Client – wird erst beim ersten Zugriff initialisiert,
+ * damit der Next.js-Build ohne DATABASE_URL durchlaufen kann.
+ */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    return Reflect.get(getClient(), prop);
+  },
+});

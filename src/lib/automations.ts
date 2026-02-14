@@ -21,6 +21,46 @@ import { prisma } from "@/lib/db";
 import { calcGrossMinutes } from "@/lib/time-utils";
 
 // ═══════════════════════════════════════════════════════════════════
+// AUTOMATION SETTINGS CHECK
+// ═══════════════════════════════════════════════════════════════════
+
+/** Default enabled state for all automation keys */
+const AUTOMATION_DEFAULTS: Record<string, boolean> = {
+  shiftConflictDetection: true,
+  restPeriodEnforcement: true,
+  cascadeAbsenceCancellation: true,
+  autoCreateTimeEntries: true,
+  legalBreakEnforcement: true,
+  timeAccountRecalculation: true,
+  recurringShifts: true,
+  autoApproveAbsence: true,
+  autoApproveSwap: true,
+  overtimeAlerts: true,
+  payrollAutoLock: true,
+  notifications: true,
+};
+
+/**
+ * Check whether a specific automation is enabled for a workspace.
+ * Falls back to the default value if no explicit setting exists.
+ */
+export async function isAutomationEnabled(
+  workspaceId: string,
+  key: string,
+): Promise<boolean> {
+  try {
+    const setting = await prisma.automationSetting.findUnique({
+      where: { workspaceId_key: { workspaceId, key } },
+    });
+    if (setting) return setting.enabled;
+    return AUTOMATION_DEFAULTS[key] ?? true;
+  } catch {
+    // If the table doesn't exist yet or query fails, default to enabled
+    return AUTOMATION_DEFAULTS[key] ?? true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // 1. SHIFT CONFLICT DETECTION & REST-PERIOD ENFORCEMENT
 // ═══════════════════════════════════════════════════════════════════
 
@@ -48,6 +88,12 @@ export async function checkShiftConflicts(params: {
 }): Promise<ShiftConflict[]> {
   const { employeeId, date, startTime, endTime, workspaceId, excludeShiftId } =
     params;
+
+  // Skip if conflict detection is disabled
+  if (!(await isAutomationEnabled(workspaceId, "shiftConflictDetection"))) {
+    return [];
+  }
+
   const conflicts: ShiftConflict[] = [];
   const shiftDate = new Date(date);
 
@@ -127,56 +173,62 @@ export async function checkShiftConflicts(params: {
   }
 
   // ── 1d. Rest period violation (ArbZG §5: 11h between shifts) ──
-  const prevDay = new Date(shiftDate);
-  prevDay.setDate(prevDay.getDate() - 1);
-  const nextDay = new Date(shiftDate);
-  nextDay.setDate(nextDay.getDate() + 1);
+  const restEnabled = await isAutomationEnabled(
+    workspaceId,
+    "restPeriodEnforcement",
+  );
+  if (restEnabled) {
+    const prevDay = new Date(shiftDate);
+    prevDay.setDate(prevDay.getDate() - 1);
+    const nextDay = new Date(shiftDate);
+    nextDay.setDate(nextDay.getDate() + 1);
 
-  // Check previous day's shifts
-  const prevShifts = await prisma.shift.findMany({
-    where: {
-      employeeId,
-      workspaceId,
-      date: prevDay,
-      status: { not: "CANCELLED" },
-    },
-    orderBy: { endTime: "desc" },
-    take: 1,
-  });
+    // Check previous day's shifts
+    const prevShifts = await prisma.shift.findMany({
+      where: {
+        employeeId,
+        workspaceId,
+        date: prevDay,
+        status: { not: "CANCELLED" },
+      },
+      orderBy: { endTime: "desc" },
+      take: 1,
+    });
 
-  if (prevShifts.length > 0) {
-    const prevEnd = prevShifts[0].endTime;
-    const restMinutes = calcRestBetween(prevEnd, startTime, true);
-    if (restMinutes < MIN_REST_HOURS * 60) {
-      conflicts.push({
-        type: "REST_PERIOD",
-        message: `Nur ${Math.floor(restMinutes / 60)}h ${restMinutes % 60}min Ruhezeit nach vorheriger Schicht (mind. ${MIN_REST_HOURS}h nötig, ArbZG §5)`,
-      });
+    if (prevShifts.length > 0) {
+      const prevEnd = prevShifts[0].endTime;
+      const restMinutes = calcRestBetween(prevEnd, startTime, true);
+      if (restMinutes < MIN_REST_HOURS * 60) {
+        conflicts.push({
+          type: "REST_PERIOD",
+          message: `Nur ${Math.floor(restMinutes / 60)}h ${restMinutes % 60}min Ruhezeit nach vorheriger Schicht (mind. ${MIN_REST_HOURS}h nötig, ArbZG §5)`,
+        });
+      }
     }
-  }
 
-  // Check next day's shifts
-  const nextShifts = await prisma.shift.findMany({
-    where: {
-      employeeId,
-      workspaceId,
-      date: nextDay,
-      status: { not: "CANCELLED" },
-    },
-    orderBy: { startTime: "asc" },
-    take: 1,
-  });
+    // Check next day's shifts
+    const nextShifts = await prisma.shift.findMany({
+      where: {
+        employeeId,
+        workspaceId,
+        date: nextDay,
+        status: { not: "CANCELLED" },
+      },
+      orderBy: { startTime: "asc" },
+      take: 1,
+    });
 
-  if (nextShifts.length > 0) {
-    const nextStart = nextShifts[0].startTime;
-    const restMinutes = calcRestBetween(endTime, nextStart, true);
-    if (restMinutes < MIN_REST_HOURS * 60) {
-      conflicts.push({
-        type: "REST_PERIOD",
-        message: `Nur ${Math.floor(restMinutes / 60)}h ${restMinutes % 60}min Ruhezeit bis zur nächsten Schicht (mind. ${MIN_REST_HOURS}h nötig, ArbZG §5)`,
-      });
+    if (nextShifts.length > 0) {
+      const nextStart = nextShifts[0].startTime;
+      const restMinutes = calcRestBetween(endTime, nextStart, true);
+      if (restMinutes < MIN_REST_HOURS * 60) {
+        conflicts.push({
+          type: "REST_PERIOD",
+          message: `Nur ${Math.floor(restMinutes / 60)}h ${restMinutes % 60}min Ruhezeit bis zur nächsten Schicht (mind. ${MIN_REST_HOURS}h nötig, ArbZG §5)`,
+        });
+      }
     }
-  }
+  } // end restPeriodEnforcement check
 
   return conflicts;
 }
@@ -198,6 +250,11 @@ export async function cascadeAbsenceApproval(params: {
   reviewerId: string;
 }) {
   const { employeeId, startDate, endDate, workspaceId, reviewerId } = params;
+
+  // Skip if cascade cancellation is disabled
+  if (!(await isAutomationEnabled(workspaceId, "cascadeAbsenceCancellation"))) {
+    return { cancelledShifts: 0 };
+  }
 
   // Find all shifts for this employee in the absence period
   const conflictingShifts = await prisma.shift.findMany({
@@ -262,6 +319,11 @@ export async function createSystemNotification(params: {
     employeeEmail,
   } = params;
 
+  // Skip if notifications are disabled
+  if (!(await isAutomationEnabled(workspaceId, "notifications"))) {
+    return;
+  }
+
   if (recipientType === "managers") {
     const managers = await prisma.user.findMany({
       where: {
@@ -313,6 +375,11 @@ export async function createSystemNotification(params: {
  * Or via Vercel Cron at 02:00 daily.
  */
 export async function generateTimeEntriesFromShifts(workspaceId: string) {
+  // Skip if auto-create time entries is disabled
+  if (!(await isAutomationEnabled(workspaceId, "autoCreateTimeEntries"))) {
+    return { created: 0 };
+  }
+
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   yesterday.setHours(23, 59, 59, 999);
@@ -422,6 +489,16 @@ export async function recalculateTimeAccount(employeeId: string) {
   });
 
   if (!account) return null;
+
+  // Skip if time account recalculation is disabled
+  if (
+    !(await isAutomationEnabled(
+      account.workspaceId,
+      "timeAccountRecalculation",
+    ))
+  ) {
+    return null;
+  }
 
   // Sum all confirmed net minutes since period start
   const result = await prisma.timeEntry.aggregate({
@@ -543,6 +620,11 @@ export async function tryAutoApproveAbsence(
 
   if (!absence || absence.status !== "AUSSTEHEND") return false;
 
+  // Skip if auto-approve absence is disabled
+  if (!(await isAutomationEnabled(absence.workspaceId, "autoApproveAbsence"))) {
+    return false;
+  }
+
   // Auto-approve sick leave immediately
   if (absence.category === "KRANK") {
     await prisma.absenceRequest.update({
@@ -602,6 +684,11 @@ export async function tryAutoApproveSwap(swapId: string): Promise<boolean> {
   });
 
   if (!swap || swap.status !== "ANGENOMMEN" || !swap.targetId) return false;
+
+  // Skip if auto-approve swap is disabled
+  if (!(await isAutomationEnabled(swap.workspaceId, "autoApproveSwap"))) {
+    return false;
+  }
 
   // Check: can targetId work the requester's shift?
   const targetConflicts = await checkShiftConflicts({
@@ -680,6 +767,11 @@ export async function tryAutoApproveSwap(swapId: string): Promise<boolean> {
  * Creates notifications for managers when employees exceed contracted hours.
  */
 export async function checkOvertimeAlerts(workspaceId: string) {
+  // Skip if overtime alerts are disabled
+  if (!(await isAutomationEnabled(workspaceId, "overtimeAlerts"))) {
+    return { alerts: [] };
+  }
+
   const accounts = await prisma.timeAccount.findMany({
     where: { workspaceId },
     include: { employee: true },
@@ -748,6 +840,11 @@ export async function lockMonthTimeEntries(
   year: number,
   month: number, // 1-12
 ) {
+  // Skip if payroll auto-lock is disabled
+  if (!(await isAutomationEnabled(workspaceId, "payrollAutoLock"))) {
+    return { locked: 0, month: `${year}-${String(month).padStart(2, "0")}` };
+  }
+
   const monthStart = new Date(year, month - 1, 1);
   const monthEnd = new Date(year, month, 0); // last day of month
 

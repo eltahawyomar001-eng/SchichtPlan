@@ -81,6 +81,7 @@ model Workspace {
   availabilities  Availability[]
   shiftSwaps      ShiftSwapRequest[]
   timeAccounts    TimeAccount[]
+  automationSettings AutomationSetting[]
 }
 
 model Employee {
@@ -399,5 +400,21 @@ model TimeAccount {
   workspaceId     String
   workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
+  @@index([workspaceId])
+}
+
+// ── Automation Settings ────────────────────────────────────────
+
+model AutomationSetting {
+  id        String   @id @default(cuid())
+  key       String   // e.g. "shiftConflictDetection", "autoApproveAbsence"
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, key])
   @@index([workspaceId])
 }

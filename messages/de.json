@@ -382,7 +382,9 @@
     "english": "English",
     "roleOwner": "Inhaber",
     "roleAdmin": "Admin",
-    "roleEmployee": "Mitarbeiter"
+    "roleEmployee": "Mitarbeiter",
+    "automations": "Automatisierungen",
+    "automationsDesc": "Automatische Regeln für Schichtplanung, Zeiterfassung und Genehmigungen konfigurieren"
   },
   "auth": {
     "login": "Anmelden",
@@ -599,5 +601,78 @@
       "timeEntryConfirmed": "Zeiteintrag bestätigt",
       "overtimeAlert": "Überstunden-Warnung"
     }
+  },
+  "automations": {
+    "title": "Automatisierungen",
+    "description": "Konfigurieren Sie automatische Regeln für Ihren Arbeitsbereich",
+    "subtitle": "Steuern Sie, welche Automatisierungen aktiv sind. Alle Regeln basieren auf deutschem Arbeitsrecht (ArbZG) und Ihren Geschäftsregeln.",
+    "enabled": "Aktiv",
+    "disabled": "Inaktiv",
+    "enableAll": "Alle aktivieren",
+    "disableAll": "Alle deaktivieren",
+    "saving": "Wird gespeichert…",
+    "saved": "Gespeichert",
+    "error": "Fehler beim Speichern",
+    "categories": {
+      "shiftManagement": "Schichtplanung",
+      "shiftManagementDesc": "Automatische Prüfungen und Regeln bei der Schichtplanung",
+      "timeTracking": "Zeiterfassung",
+      "timeTrackingDesc": "Automatische Zeiteinträge, Pausen und Kontoberechnung",
+      "approvals": "Genehmigungen",
+      "approvalsDesc": "Automatische Genehmigung von Abwesenheiten und Schichttausch",
+      "alertsCompliance": "Warnungen & Compliance",
+      "alertsComplianceDesc": "Überstundenwarnungen und Lohnabrechnungssperren"
+    },
+    "rules": {
+      "shiftConflictDetection": {
+        "name": "Schichtkonflikterkennung",
+        "desc": "Erkennt automatisch überlappende Schichten, Konflikte mit Abwesenheiten und Verfügbarkeitseinschränkungen bei der Schichtplanung."
+      },
+      "restPeriodEnforcement": {
+        "name": "Ruhezeiteinhaltung (ArbZG §5)",
+        "desc": "Stellt sicher, dass zwischen zwei Schichten mindestens 11 Stunden Ruhezeit eingehalten werden, wie im Arbeitszeitgesetz vorgeschrieben."
+      },
+      "cascadeAbsenceCancellation": {
+        "name": "Automatische Schichtstornierung bei Abwesenheit",
+        "desc": "Storniert automatisch alle betroffenen Schichten, wenn eine Abwesenheit genehmigt wird, und benachrichtigt Manager über den Vertretungsbedarf."
+      },
+      "autoCreateTimeEntries": {
+        "name": "Automatische Zeiteinträge",
+        "desc": "Erstellt automatisch Zeiteinträge aus vergangenen Schichten, die noch nicht erfasst wurden. Läuft täglich um 02:00 Uhr."
+      },
+      "legalBreakEnforcement": {
+        "name": "Gesetzliche Pausenregelung (ArbZG)",
+        "desc": "Erzwingt automatisch die gesetzlichen Mindestpausen: 30 Minuten bei über 6 Stunden, 45 Minuten bei über 9 Stunden Arbeitszeit."
+      },
+      "timeAccountRecalculation": {
+        "name": "Arbeitszeitkonto-Berechnung",
+        "desc": "Berechnet automatisch den Saldo des Arbeitszeitkontos nach jeder bestätigten Zeiterfassung."
+      },
+      "recurringShifts": {
+        "name": "Wiederkehrende Schichten",
+        "desc": "Ermöglicht das Erstellen von wiederkehrenden Schichten über mehrere Wochen mit automatischer Konfliktprüfung."
+      },
+      "autoApproveAbsence": {
+        "name": "Automatische Abwesenheitsgenehmigung",
+        "desc": "Genehmigt Krankmeldungen sofort automatisch. Andere Abwesenheiten werden automatisch genehmigt, wenn keine Schichtkonflikte bestehen."
+      },
+      "autoApproveSwap": {
+        "name": "Automatische Schichttausch-Genehmigung",
+        "desc": "Genehmigt Schichttausch-Anträge automatisch, wenn beide Mitarbeiter keine Konflikte durch den Tausch haben."
+      },
+      "overtimeAlerts": {
+        "name": "Überstunden-Warnungen",
+        "desc": "Benachrichtigt Manager automatisch, wenn Mitarbeiter ihre vertraglich vereinbarte Wochenarbeitszeit überschreiten."
+      },
+      "payrollAutoLock": {
+        "name": "Automatische Lohnabrechnungssperre",
+        "desc": "Sperrt automatisch alle geprüften Zeiteinträge 5 Tage nach Monatsende, um nachträgliche Änderungen zu verhindern."
+      },
+      "notifications": {
+        "name": "System-Benachrichtigungen",
+        "desc": "Sendet automatische Benachrichtigungen an Mitarbeiter und Manager bei Schichtzuweisungen, Genehmigungen und Statusänderungen."
+      }
+    },
+    "backToSettings": "Zurück zu Einstellungen"
   }
 }

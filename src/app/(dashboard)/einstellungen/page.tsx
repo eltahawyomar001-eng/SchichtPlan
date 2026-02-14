@@ -18,8 +18,11 @@ import {
   UserIcon,
   BuildingIcon,
   ShieldCheckIcon,
+  ZapIcon,
+  ChevronRightIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
+import Link from "next/link";
 
 export default function EinstellungenPage() {
   const { data: session } = useSession();
@@ -91,6 +94,26 @@ export default function EinstellungenPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Automations Card */}
+        <Link href="/einstellungen/automationen" className="block group">
+          <Card className="transition-colors group-hover:border-violet-200 group-hover:bg-violet-50/30">
+            <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+              <div className="rounded-xl bg-violet-50 p-3 group-hover:bg-violet-100 transition-colors">
+                <ZapIcon className="h-6 w-6 text-violet-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold text-gray-900">
+                  {t("automations")}
+                </p>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {t("automationsDesc")}
+                </p>
+              </div>
+              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* Security Card */}
         <Card>

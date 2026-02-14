@@ -382,7 +382,9 @@
     "english": "English",
     "roleOwner": "Owner",
     "roleAdmin": "Admin",
-    "roleEmployee": "Employee"
+    "roleEmployee": "Employee",
+    "automations": "Automations",
+    "automationsDesc": "Configure automatic rules for shift planning, time tracking, and approvals"
   },
   "auth": {
     "login": "Sign in",
@@ -599,5 +601,78 @@
       "timeEntryConfirmed": "Time entry confirmed",
       "overtimeAlert": "Overtime alert"
     }
+  },
+  "automations": {
+    "title": "Automations",
+    "description": "Configure automatic rules for your workspace",
+    "subtitle": "Control which automations are active. All rules are based on German labor law (ArbZG) and your business rules.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "enableAll": "Enable all",
+    "disableAll": "Disable all",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "Error saving",
+    "categories": {
+      "shiftManagement": "Shift Management",
+      "shiftManagementDesc": "Automatic checks and rules for shift planning",
+      "timeTracking": "Time Tracking",
+      "timeTrackingDesc": "Automatic time entries, breaks, and account calculation",
+      "approvals": "Approvals",
+      "approvalsDesc": "Automatic approval of absences and shift swaps",
+      "alertsCompliance": "Alerts & Compliance",
+      "alertsComplianceDesc": "Overtime alerts and payroll locks"
+    },
+    "rules": {
+      "shiftConflictDetection": {
+        "name": "Shift conflict detection",
+        "desc": "Automatically detects overlapping shifts, absence conflicts, and availability restrictions when planning shifts."
+      },
+      "restPeriodEnforcement": {
+        "name": "Rest period enforcement (ArbZG §5)",
+        "desc": "Ensures at least 11 hours of rest between shifts, as required by German labor law."
+      },
+      "cascadeAbsenceCancellation": {
+        "name": "Auto-cancel shifts on absence",
+        "desc": "Automatically cancels all affected shifts when an absence is approved and notifies managers about coverage needs."
+      },
+      "autoCreateTimeEntries": {
+        "name": "Auto-create time entries",
+        "desc": "Automatically creates time entries from past shifts that have not been tracked yet. Runs daily at 02:00."
+      },
+      "legalBreakEnforcement": {
+        "name": "Legal break enforcement (ArbZG)",
+        "desc": "Automatically enforces minimum legal breaks: 30 minutes for 6+ hours, 45 minutes for 9+ hours of work."
+      },
+      "timeAccountRecalculation": {
+        "name": "Time account recalculation",
+        "desc": "Automatically recalculates time account balances after each confirmed time entry."
+      },
+      "recurringShifts": {
+        "name": "Recurring shifts",
+        "desc": "Allows creating recurring shifts over multiple weeks with automatic conflict checking."
+      },
+      "autoApproveAbsence": {
+        "name": "Auto-approve absences",
+        "desc": "Automatically approves sick leave immediately. Other absences are auto-approved if no shift conflicts exist."
+      },
+      "autoApproveSwap": {
+        "name": "Auto-approve shift swaps",
+        "desc": "Automatically approves shift swap requests when neither employee has conflicts from the swap."
+      },
+      "overtimeAlerts": {
+        "name": "Overtime alerts",
+        "desc": "Automatically notifies managers when employees exceed their contracted weekly hours."
+      },
+      "payrollAutoLock": {
+        "name": "Payroll auto-lock",
+        "desc": "Automatically locks all reviewed time entries 5 days after month end to prevent retroactive changes."
+      },
+      "notifications": {
+        "name": "System notifications",
+        "desc": "Sends automatic notifications to employees and managers on shift assignments, approvals, and status changes."
+      }
+    },
+    "backToSettings": "Back to Settings"
   }
 }

@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  hashedPassword String?
+  image          String?
+  role           Role      @default(OWNER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  workspaceId    String?
+  workspace      Workspace? @relation(fields: [workspaceId], references: [id])
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  industry  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  stripeCustomerId       String?  @unique
+  stripeSubscriptionId   String?  @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  members   User[]
+  employees Employee[]
+  shifts    Shift[]
+  locations Location[]
+}
+
+model Employee {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  position    String?
+  hourlyRate  Float?
+  weeklyHours Float?
+  color       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shifts      Shift[]
+  absences    Absence[]
+  @@unique([email, workspaceId])
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shifts      Shift[]
+}
+
+model Shift {
+  id        String      @id @default(cuid())
+  date      DateTime    @db.Date
+  startTime String
+  endTime   String
+  notes     String?
+  status    ShiftStatus @default(SCHEDULED)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId, date])
+  @@index([employeeId, date])
+}
+
+enum ShiftStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Absence {
+  id        String      @id @default(cuid())
+  type      AbsenceType
+  startDate DateTime    @db.Date
+  endDate   DateTime    @db.Date
+  notes     String?
+  approved  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+enum AbsenceType {
+  URLAUB
+  KRANK
+  FEIERTAG
+  SONSTIGES
+}

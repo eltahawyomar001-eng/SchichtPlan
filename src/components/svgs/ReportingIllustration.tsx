@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { BarChartIcon } from "@/components/icons/BarChartIcon";
+import { DownloadIcon } from "@/components/icons/DownloadIcon";
 
 /**
  * Reporting Illustration — Connecteam Step 4.
@@ -183,7 +184,7 @@ export function ReportingIllustration() {
           </div>
 
           {/* Horizontal bar chart */}
-          <div className="px-4 py-2 space-y-3">
+          <div className="px-4 py-2 space-y-2.5">
             {employees.map((e, i) => {
               const barWidth = (e.hours / maxHours) * 100;
               const overtimeWidth = (e.overtime / maxHours) * 100;
@@ -253,7 +254,7 @@ export function ReportingIllustration() {
           </div>
 
           {/* Export button */}
-          <div className="mx-4 mt-3">
+          <div className="mx-4 mt-3 mb-3">
             <div
               className="rounded-xl border-2 border-dashed border-violet-200 py-2.5 text-center"
               style={{
@@ -265,7 +266,7 @@ export function ReportingIllustration() {
               }}
             >
               <span className="text-xs font-semibold text-violet-500 inline-flex items-center gap-1">
-                <BarChartIcon className="w-3.5 h-3.5" />
+                <DownloadIcon className="w-3.5 h-3.5" />
                 {t("exportCsv")}
               </span>
             </div>

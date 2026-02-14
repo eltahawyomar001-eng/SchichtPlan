@@ -57,7 +57,7 @@ export function ReportingIllustration() {
     <div
       ref={containerRef}
       className="relative w-full max-w-[520px] mx-auto overflow-hidden"
-      style={{ height: 340 * scale }}
+      style={{ height: 320 * scale }}
       role="img"
       aria-label={t("reportingAria")}
     >
@@ -131,12 +131,12 @@ export function ReportingIllustration() {
       `}</style>
 
       <div
-        className="absolute top-0 left-0 w-[520px] h-[340px] origin-top-left"
+        className="absolute top-0 left-0 w-[520px] h-[320px] origin-top-left"
         style={{ transform: `scale(${scale})` }}
       >
         {/* Main report card */}
         <div
-          className="absolute left-0 top-0 w-[340px] h-[340px] rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(124,58,237,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
+          className="absolute left-0 top-0 w-[340px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(124,58,237,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible
@@ -332,7 +332,7 @@ export function ReportingIllustration() {
 
         {/* Mini sparkline */}
         <div
-          className="absolute right-[10px] top-[180px] w-[150px] rounded-xl bg-white border border-gray-100 shadow-[0px_4px_16px_0px_rgba(124,58,237,0.08)] p-3"
+          className="absolute right-[10px] bottom-[40px] w-[150px] rounded-xl bg-white border border-gray-100 shadow-[0px_4px_16px_0px_rgba(124,58,237,0.08)] p-3"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible

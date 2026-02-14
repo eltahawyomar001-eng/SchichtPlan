@@ -580,6 +580,24 @@
     "justNow": "Just now",
     "minutesAgo": "{count} min ago",
     "hoursAgo": "{count} hrs ago",
-    "daysAgo": "{count} days ago"
+    "daysAgo": "{count} days ago",
+    "types": {
+      "shiftAssigned": "New shift assigned",
+      "shiftsCancelledAbsence": "Shifts cancelled due to absence",
+      "absenceRequested": "New absence request",
+      "absenceAutoApproved": "Absence auto-approved",
+      "absenceApproved": "Absence approved",
+      "absenceRejected": "Absence rejected",
+      "swapRequested": "New shift swap request",
+      "swapAutoApproved": "Shift swap auto-approved",
+      "swapApproved": "Shift swap approved",
+      "swapRejected": "Shift swap rejected",
+      "timeEntrySubmitted": "New time entry submitted",
+      "timeEntryApproved": "Time entry approved",
+      "timeEntryRejected": "Time entry rejected",
+      "timeEntryCorrected": "Correction requested",
+      "timeEntryConfirmed": "Time entry confirmed",
+      "overtimeAlert": "Overtime alert"
+    }
   }
 }

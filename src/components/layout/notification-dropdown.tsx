@@ -35,6 +35,30 @@ export function NotificationDropdown() {
   const locale = useLocale();
   const t = useTranslations("notifications");
 
+  // ── Client-side title/message translation by notification type ──
+  const titleMap: Record<string, string> = {
+    SHIFT_ASSIGNED: t("types.shiftAssigned"),
+    SHIFTS_CANCELLED_ABSENCE: t("types.shiftsCancelledAbsence"),
+    ABSENCE_REQUESTED: t("types.absenceRequested"),
+    ABSENCE_AUTO_APPROVED: t("types.absenceAutoApproved"),
+    ABSENCE_APPROVED: t("types.absenceApproved"),
+    ABSENCE_REJECTED: t("types.absenceRejected"),
+    SWAP_REQUESTED: t("types.swapRequested"),
+    SWAP_AUTO_APPROVED: t("types.swapAutoApproved"),
+    SWAP_GENEHMIGT: t("types.swapApproved"),
+    SWAP_ABGELEHNT: t("types.swapRejected"),
+    TIME_ENTRY_SUBMITTED: t("types.timeEntrySubmitted"),
+    TIME_ENTRY_APPROVED: t("types.timeEntryApproved"),
+    TIME_ENTRY_REJECTED: t("types.timeEntryRejected"),
+    TIME_ENTRY_CORRECTED: t("types.timeEntryCorrected"),
+    TIME_ENTRY_CONFIRMED: t("types.timeEntryConfirmed"),
+    OVERTIME_ALERT: t("types.overtimeAlert"),
+  };
+
+  function getTranslatedTitle(n: Notification) {
+    return titleMap[n.type] || n.title;
+  }
+
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications");
@@ -218,7 +242,7 @@ export function NotificationDropdown() {
                             !n.read ? "text-gray-900" : "text-gray-600"
                           }`}
                         >
-                          {n.title}
+                          {getTranslatedTitle(n)}
                         </span>
                         {!n.read && (
                           <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />

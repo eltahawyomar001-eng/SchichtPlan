@@ -580,6 +580,24 @@
     "justNow": "Gerade eben",
     "minutesAgo": "vor {count} Min.",
     "hoursAgo": "vor {count} Std.",
-    "daysAgo": "vor {count} Tagen"
+    "daysAgo": "vor {count} Tagen",
+    "types": {
+      "shiftAssigned": "Neue Schicht zugewiesen",
+      "shiftsCancelledAbsence": "Schichten wegen Abwesenheit storniert",
+      "absenceRequested": "Neuer Abwesenheitsantrag",
+      "absenceAutoApproved": "Abwesenheit automatisch genehmigt",
+      "absenceApproved": "Abwesenheit genehmigt",
+      "absenceRejected": "Abwesenheit abgelehnt",
+      "swapRequested": "Neuer Schichttausch-Antrag",
+      "swapAutoApproved": "Schichttausch automatisch genehmigt",
+      "swapApproved": "Schichttausch genehmigt",
+      "swapRejected": "Schichttausch abgelehnt",
+      "timeEntrySubmitted": "Neuer Zeiteintrag eingereicht",
+      "timeEntryApproved": "Zeiteintrag genehmigt",
+      "timeEntryRejected": "Zeiteintrag abgelehnt",
+      "timeEntryCorrected": "Korrektur angefordert",
+      "timeEntryConfirmed": "Zeiteintrag bestätigt",
+      "overtimeAlert": "Überstunden-Warnung"
+    }
   }
 }

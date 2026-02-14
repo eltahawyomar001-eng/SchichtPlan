@@ -267,34 +267,34 @@ export default async function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                 <Link
                   href="/mitarbeiter"
-                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
+                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-violet-300 hover:bg-violet-50/50 transition-all group min-w-0"
                 >
-                  <div className="rounded-lg bg-violet-50 p-2 group-hover:bg-violet-100 transition-colors">
+                  <div className="flex-shrink-0 rounded-lg bg-violet-50 p-2 group-hover:bg-violet-100 transition-colors">
                     <PlusIcon className="h-4 w-4 text-violet-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-violet-700">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-violet-700 truncate">
                     {t("addEmployee")}
                   </span>
                 </Link>
                 <Link
                   href="/standorte"
-                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group"
+                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group min-w-0"
                 >
-                  <div className="rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100 transition-colors">
+                  <div className="flex-shrink-0 rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100 transition-colors">
                     <PlusIcon className="h-4 w-4 text-emerald-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 truncate">
                     {t("addLocation")}
                   </span>
                 </Link>
                 <Link
                   href="/schichtplan"
-                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-all group min-w-0"
                 >
-                  <div className="rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100 transition-colors">
+                  <div className="flex-shrink-0 rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100 transition-colors">
                     <CalendarIcon className="h-4 w-4 text-blue-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 truncate">
                     {t("createShift")}
                   </span>
                 </Link>

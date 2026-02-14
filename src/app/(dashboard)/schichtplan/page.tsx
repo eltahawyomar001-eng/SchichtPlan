@@ -284,7 +284,7 @@ export default function SchichtplanPage() {
             </div>
 
             {/* Desktop: 7-column grid */}
-            <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-2">
+            <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 py-2">
               <div className="grid grid-cols-7 gap-4 min-w-[700px]">
                 {weekDays.map((day) => {
                   const dayShifts = getShiftsForDay(day);

@@ -321,24 +321,25 @@ export default function ZeiterfassungPage() {
         title="Zeiterfassung"
         description="Arbeitszeiten erfassen, prüfen und exportieren"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isManager && (
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <DownloadIcon className="h-4 w-4" />
-                Export
+                <span className="hidden sm:inline">Export</span>
               </Button>
             )}
             <Button size="sm" onClick={() => setShowForm(true)}>
               <PlusIcon className="h-4 w-4" />
-              Neuer Eintrag
+              <span className="hidden sm:inline">Neuer Eintrag</span>
+              <span className="sm:hidden">Neu</span>
             </Button>
           </div>
         }
       />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* ── Summary Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -894,7 +895,7 @@ export default function ZeiterfassungPage() {
           </div>
         )}
 
-        {/* ── Entries Table ── */}
+        {/* ── Entries Table (desktop) / Cards (mobile) ── */}
         <Card>
           <CardContent className="p-0">
             {loading ? (
@@ -910,118 +911,179 @@ export default function ZeiterfassungPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-gray-50/50">
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Datum
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Mitarbeiter
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Zeit
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Pause
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Netto
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Standort
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-right font-medium text-gray-500">
-                        KW
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEntries.map((entry) => {
-                      const d = new Date(entry.date);
-                      const kw = getCalendarWeek(d);
-
-                      return (
-                        <tr
-                          key={entry.id}
-                          className="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors"
-                          onClick={() => setSelectedEntry(entry)}
-                        >
-                          <td className="px-4 py-3 font-medium text-gray-900">
-                            {format(d, "dd.MM.yyyy", { locale: de })}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-2 w-2 rounded-full"
-                                style={{
-                                  backgroundColor:
-                                    entry.employee.color ?? "#6b7280",
-                                }}
-                              />
+              <>
+                {/* ── Mobile card list ── */}
+                <div className="divide-y sm:hidden">
+                  {filteredEntries.map((entry) => {
+                    const d = new Date(entry.date);
+                    return (
+                      <div
+                        key={entry.id}
+                        className="p-4 space-y-2 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => setSelectedEntry(entry)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-2 w-2 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor:
+                                  entry.employee.color ?? "#6b7280",
+                              }}
+                            />
+                            <span className="font-medium text-gray-900 text-sm">
                               {entry.employee.firstName}{" "}
                               {entry.employee.lastName}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">
-                            {entry.startTime} – {entry.endTime}
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">
-                            {formatMinutesToHHmm(entry.breakMinutes)}
-                          </td>
-                          <td className="px-4 py-3 font-medium">
-                            {formatMinutesToHHmm(entry.netMinutes)}
-                            <span className="text-xs text-gray-400 ml-1">
-                              ({formatIndustrial(entry.netMinutes)})
                             </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">
-                            {entry.location ? (
-                              <span className="flex items-center gap-1">
-                                <MapPinIcon className="h-3 w-3" />
-                                {entry.location.name}
+                          </div>
+                          <Badge className={STATUS_COLORS[entry.status] ?? ""}>
+                            {STATUS_LABELS[entry.status] ?? entry.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{format(d, "dd.MM.yyyy", { locale: de })}</span>
+                          <span>
+                            {entry.startTime} – {entry.endTime}
+                          </span>
+                          <span className="font-medium text-gray-700">
+                            {formatMinutesToHHmm(entry.netMinutes)}
+                          </span>
+                        </div>
+                        {entry.location && (
+                          <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <MapPinIcon className="h-3 w-3" />
+                            {entry.location.name}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {/* Mobile total */}
+                  <div className="p-4 bg-gray-50/50 flex items-center justify-between text-sm">
+                    <span className="font-medium text-gray-700">Gesamt:</span>
+                    <span className="font-bold text-gray-900">
+                      {formatMinutesToHHmm(totalNetMinutes)}
+                      <span className="text-xs text-gray-400 ml-1 font-normal">
+                        ({formatIndustrial(totalNetMinutes)} h)
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* ── Desktop table ── */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50/50">
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Datum
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Mitarbeiter
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Zeit
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Pause
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Netto
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Standort
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-500">
+                          KW
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredEntries.map((entry) => {
+                        const d = new Date(entry.date);
+                        const kw = getCalendarWeek(d);
+
+                        return (
+                          <tr
+                            key={entry.id}
+                            className="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                            onClick={() => setSelectedEntry(entry)}
+                          >
+                            <td className="px-4 py-3 font-medium text-gray-900">
+                              {format(d, "dd.MM.yyyy", { locale: de })}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="h-2 w-2 rounded-full"
+                                  style={{
+                                    backgroundColor:
+                                      entry.employee.color ?? "#6b7280",
+                                  }}
+                                />
+                                {entry.employee.firstName}{" "}
+                                {entry.employee.lastName}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {entry.startTime} – {entry.endTime}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {formatMinutesToHHmm(entry.breakMinutes)}
+                            </td>
+                            <td className="px-4 py-3 font-medium">
+                              {formatMinutesToHHmm(entry.netMinutes)}
+                              <span className="text-xs text-gray-400 ml-1">
+                                ({formatIndustrial(entry.netMinutes)})
                               </span>
-                            ) : (
-                              "–"
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge
-                              className={STATUS_COLORS[entry.status] ?? ""}
-                            >
-                              {STATUS_LABELS[entry.status] ?? entry.status}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-right text-gray-500">
-                            {kw}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-gray-50/50 border-t">
-                      <td
-                        colSpan={4}
-                        className="px-4 py-3 text-right font-medium text-gray-700"
-                      >
-                        Gesamt:
-                      </td>
-                      <td className="px-4 py-3 font-bold text-gray-900">
-                        {formatMinutesToHHmm(totalNetMinutes)}
-                        <span className="text-xs text-gray-400 ml-1 font-normal">
-                          ({formatIndustrial(totalNetMinutes)} h)
-                        </span>
-                      </td>
-                      <td colSpan={3} />
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {entry.location ? (
+                                <span className="flex items-center gap-1">
+                                  <MapPinIcon className="h-3 w-3" />
+                                  {entry.location.name}
+                                </span>
+                              ) : (
+                                "–"
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge
+                                className={STATUS_COLORS[entry.status] ?? ""}
+                              >
+                                {STATUS_LABELS[entry.status] ?? entry.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right text-gray-500">
+                              {kw}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-50/50 border-t">
+                        <td
+                          colSpan={4}
+                          className="px-4 py-3 text-right font-medium text-gray-700"
+                        >
+                          Gesamt:
+                        </td>
+                        <td className="px-4 py-3 font-bold text-gray-900">
+                          {formatMinutesToHHmm(totalNetMinutes)}
+                          <span className="text-xs text-gray-400 ml-1 font-normal">
+                            ({formatIndustrial(totalNetMinutes)} h)
+                          </span>
+                        </td>
+                        <td colSpan={3} />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

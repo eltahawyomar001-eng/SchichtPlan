@@ -72,14 +72,15 @@ export default function StandortePage() {
         title="Standorte"
         description="Verwalten Sie Ihre Standorte"
         actions={
-          <Button onClick={() => setShowForm(true)}>
+          <Button size="sm" onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4" />
-            Neuer Standort
+            <span className="hidden sm:inline">Neuer Standort</span>
+            <span className="sm:hidden">Neu</span>
           </Button>
         }
       />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Add Location Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

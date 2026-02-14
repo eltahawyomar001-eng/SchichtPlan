@@ -111,16 +111,17 @@ export default function MitarbeiterPage() {
         title="Mitarbeiter"
         description="Verwalten Sie Ihre Mitarbeiter"
         actions={
-          <Button onClick={() => setShowForm(true)}>
+          <Button size="sm" onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4" />
-            Neuer Mitarbeiter
+            <span className="hidden sm:inline">Neuer Mitarbeiter</span>
+            <span className="sm:hidden">Neu</span>
           </Button>
         }
       />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Search */}
-        <div className="relative max-w-md">
+        <div className="relative max-w-full sm:max-w-md">
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Mitarbeiter suchen..."
@@ -298,8 +299,8 @@ export default function MitarbeiterPage() {
                 key={employee.id}
                 className="hover:shadow-md transition-shadow"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
                       <Avatar
                         name={`${employee.firstName} ${employee.lastName}`}
@@ -323,14 +324,14 @@ export default function MitarbeiterPage() {
 
                   <div className="mt-4 space-y-2">
                     {employee.email && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <MailIcon className="h-4 w-4" />
-                        {employee.email}
+                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+                        <MailIcon className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{employee.email}</span>
                       </div>
                     )}
                     {employee.phone && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <PhoneIcon className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+                        <PhoneIcon className="h-4 w-4 flex-shrink-0" />
                         {employee.phone}
                       </div>
                     )}

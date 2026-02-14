@@ -30,7 +30,7 @@ export default function EinstellungenPage() {
         description="Verwalten Sie Ihr Konto und Ihre Einstellungen"
       />
 
-      <div className="p-6 space-y-6 max-w-3xl">
+      <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
         {/* Profile Card */}
         <Card>
           <CardHeader>
@@ -73,9 +73,9 @@ export default function EinstellungenPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-500">Workspace ID</span>
-                <span className="text-sm font-mono text-gray-900">
+                <span className="text-sm font-mono text-gray-900 break-all">
                   {(session?.user as SessionUser)?.workspaceId || "–"}
                 </span>
               </div>

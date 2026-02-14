@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   SchichtPlanMark,
@@ -13,6 +14,8 @@ import {
   ArrowRightIcon,
   ChevronRightIcon,
   StarIcon,
+  MenuIcon,
+  XIcon,
 } from "@/components/icons";
 import {
   PlanningIllustration,
@@ -128,9 +131,11 @@ export function LandingPage() {
    ═══════════════════════════════════════════ */
 
 function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <nav className="fixed top-0 inset-x-0 z-50 glass border-b border-white/20">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <SchichtPlanMark className="w-8 h-8" />
@@ -139,7 +144,7 @@ function Navbar() {
           </span>
         </Link>
 
-        {/* Nav links */}
+        {/* Nav links — desktop */}
         <div className="hidden md:flex items-center gap-8">
           <a
             href="#features"
@@ -161,22 +166,67 @@ function Navbar() {
           </a>
         </div>
 
-        {/* CTA */}
+        {/* CTA + mobile toggle */}
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
             Anmelden
           </Link>
           <Link
             href="/register"
-            className="bg-brand-gradient text-white text-sm font-semibold px-5 py-2 rounded-full hover:shadow-lg hover:shadow-violet-200 transition-all"
+            className="bg-brand-gradient text-white text-sm font-semibold px-4 sm:px-5 py-2 rounded-full hover:shadow-lg hover:shadow-violet-200 transition-all"
           >
             Kostenlos starten
           </Link>
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden rounded-lg p-2 text-gray-500 hover:bg-gray-100 transition-colors"
+          >
+            {mobileOpen ? (
+              <XIcon className="h-5 w-5" />
+            ) : (
+              <MenuIcon className="h-5 w-5" />
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md">
+          <div className="px-4 py-3 space-y-1">
+            <a
+              href="#features"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              Funktionen
+            </a>
+            <a
+              href="#benefits"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              Vorteile
+            </a>
+            <a
+              href="#faq"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              FAQ
+            </a>
+            <Link
+              href="/login"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors sm:hidden"
+            >
+              Anmelden
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -188,7 +238,7 @@ function HeroSection() {
       <div className="absolute top-20 -left-32 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-6 text-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center">
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-6">
           <ZapIcon className="w-4 h-4" />
@@ -196,7 +246,7 @@ function HeroSection() {
         </div>
 
         {/* Headline */}
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 max-w-4xl mx-auto leading-[1.1]">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 max-w-4xl mx-auto leading-[1.1]">
           Schichtpläne erstellen,{" "}
           <span className="text-gradient">die funktionieren</span>
         </h1>
@@ -226,7 +276,7 @@ function HeroSection() {
         </div>
 
         {/* Social proof */}
-        <div className="mt-12 flex items-center justify-center gap-6 text-sm text-gray-400">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-gray-400">
           <div className="flex items-center gap-1">
             <CheckCircleIcon className="w-4 h-4" />
             Kostenlos testen
@@ -301,11 +351,11 @@ function FeatureSection({
       id={step === 1 ? "features" : undefined}
       className={`py-20 ${step % 2 === 0 ? "bg-section-alt" : ""}`}
     >
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div
           className={`flex flex-col ${
             reversed ? "lg:flex-row-reverse" : "lg:flex-row"
-          } items-center gap-16`}
+          } items-center gap-10 lg:gap-16`}
         >
           {/* Text */}
           <div className="flex-1 max-w-lg">
@@ -315,7 +365,7 @@ function FeatureSection({
               Schritt {step} — {label}
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
               {title}
             </h2>
             <p className="mt-4 text-gray-500 leading-relaxed">{description}</p>
@@ -375,9 +425,9 @@ function BenefitsSection() {
 
   return (
     <section id="benefits" className="py-20 bg-hero-gradient bg-grid">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
             Warum Teams <span className="text-gradient">SchichtPlan</span>{" "}
             wählen
           </h2>
@@ -434,9 +484,9 @@ function FAQSection() {
 
   return (
     <section id="faq" className="py-20">
-      <div className="max-w-3xl mx-auto px-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
             Häufige Fragen
           </h2>
           <p className="mt-4 text-gray-500">
@@ -468,8 +518,8 @@ function FAQSection() {
 function CTAFooter() {
   return (
     <section className="py-20">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 p-12 md:p-16 text-center relative overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
           {/* Decorative circles */}
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/5 rounded-full" />

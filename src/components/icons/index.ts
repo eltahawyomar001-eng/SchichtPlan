@@ -33,3 +33,4 @@ export { DownloadIcon } from "./DownloadIcon";
 export { EditIcon } from "./EditIcon";
 export { FilterIcon } from "./FilterIcon";
 export { ChevronDownIcon } from "./ChevronDownIcon";
+export { MenuIcon } from "./MenuIcon";

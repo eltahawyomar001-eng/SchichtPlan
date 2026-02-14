@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { Sidebar } from "@/components/layout/sidebar";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export default async function DashboardLayout({
   children,
@@ -14,10 +14,5 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="pl-64">{children}</main>
-    </div>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }

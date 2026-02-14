@@ -79,23 +79,25 @@ export default async function DashboardPage() {
         title="Dashboard"
         description="Übersicht über Ihre Schichtplanung"
       />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {stats.map((stat) => (
             <Card key={stat.title}>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">
                       {stat.title}
                     </p>
-                    <p className="mt-1 text-3xl font-bold text-gray-900">
+                    <p className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900">
                       {stat.value}
                     </p>
                   </div>
-                  <div className={`rounded-lg p-3 ${stat.bg}`}>
-                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                  <div className={`rounded-lg p-2 sm:p-3 ${stat.bg}`}>
+                    <stat.icon
+                      className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -118,11 +120,11 @@ export default async function DashboardPage() {
                 {(todayShifts as ShiftWithRelations[]).map((shift) => (
                   <div
                     key={shift.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 p-4"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 sm:p-4"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
                       <div
-                        className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0"
                         style={{
                           backgroundColor: shift.employee.color || "#3B82F6",
                         }}
@@ -141,8 +143,8 @@ export default async function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">
+                    <div className="text-right sm:text-right">
+                      <p className="font-medium text-sm sm:text-base text-gray-900">
                         {shift.startTime} - {shift.endTime}
                       </p>
                       <p className="text-sm text-gray-500">{shift.status}</p>

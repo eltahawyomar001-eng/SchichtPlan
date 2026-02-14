@@ -192,8 +192,9 @@ export default function SchichtplanPage() {
             <p className="text-gray-500">{tc("loading")}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-2">
-            <div className="grid grid-cols-7 gap-2 sm:gap-4 min-w-[700px]">
+          <>
+            {/* Mobile: Vertical day list */}
+            <div className="space-y-3 sm:hidden">
               {weekDays.map((day) => {
                 const dayShifts = getShiftsForDay(day);
                 const today = isToday(day);
@@ -203,73 +204,165 @@ export default function SchichtplanPage() {
                     key={day.toISOString()}
                     className={today ? "ring-2 ring-blue-500" : ""}
                   >
-                    <CardHeader className="pb-2 px-3 pt-3">
+                    <CardHeader className="pb-2 px-4 pt-3">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase">
-                            {format(day, "EEE", { locale: dateFnsLocale })}
-                          </p>
-                          <p
-                            className={`text-lg font-bold ${
-                              today ? "text-blue-600" : "text-gray-900"
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`flex flex-col items-center justify-center rounded-lg px-2.5 py-1 ${
+                              today
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-100 text-gray-900"
                             }`}
                           >
-                            {format(day, "d")}
-                          </p>
+                            <span className="text-[10px] font-medium uppercase leading-tight">
+                              {format(day, "EEE", { locale: dateFnsLocale })}
+                            </span>
+                            <span className="text-lg font-bold leading-tight">
+                              {format(day, "d")}
+                            </span>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {dayShifts.length > 0
+                              ? `${dayShifts.length} ${dayShifts.length === 1 ? (locale === "de" ? "Schicht" : "shift") : locale === "de" ? "Schichten" : "shifts"}`
+                              : t("noShifts")}
+                          </span>
                         </div>
                         <button
                           onClick={() => handleAddShift(day)}
-                          className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                         >
-                          <PlusIcon className="h-4 w-4" />
+                          <PlusIcon className="h-5 w-5" />
                         </button>
                       </div>
                     </CardHeader>
-                    <CardContent className="px-3 pb-3 space-y-2">
-                      {dayShifts.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-2">
-                          {t("noShifts")}
-                        </p>
-                      ) : (
-                        dayShifts.map((shift) => (
+                    {dayShifts.length > 0 && (
+                      <CardContent className="px-4 pb-3 space-y-2">
+                        {dayShifts.map((shift) => (
                           <div
                             key={shift.id}
-                            className="group relative rounded-md p-2 text-xs"
+                            className="group relative flex items-center gap-3 rounded-lg p-3"
                             style={{
                               backgroundColor:
-                                (shift.employee.color || "#3B82F6") + "20",
+                                (shift.employee.color || "#3B82F6") + "15",
                               borderLeft: `3px solid ${
                                 shift.employee.color || "#3B82F6"
                               }`,
                             }}
                           >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-gray-900">
+                                {shift.employee.firstName}{" "}
+                                {shift.employee.lastName}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
+                                <span>
+                                  {shift.startTime} – {shift.endTime}
+                                </span>
+                                {shift.location && (
+                                  <>
+                                    <span className="text-gray-300">·</span>
+                                    <span className="truncate">
+                                      {shift.location.name}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                             <button
                               onClick={() => handleDeleteShift(shift.id)}
-                              className="absolute right-1 top-1 hidden rounded p-0.5 hover:bg-white/50 group-hover:block"
+                              className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              <XIcon className="h-3 w-3" />
+                              <XIcon className="h-4 w-4" />
                             </button>
-                            <p className="font-medium text-gray-900">
-                              {shift.employee.firstName.charAt(0)}.{" "}
-                              {shift.employee.lastName}
-                            </p>
-                            <p className="text-gray-600">
-                              {shift.startTime} - {shift.endTime}
-                            </p>
-                            {shift.location && (
-                              <p className="text-gray-500 truncate">
-                                {shift.location.name}
-                              </p>
-                            )}
                           </div>
-                        ))
-                      )}
-                    </CardContent>
+                        ))}
+                      </CardContent>
+                    )}
                   </Card>
                 );
               })}
             </div>
-          </div>
+
+            {/* Desktop: 7-column grid */}
+            <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-2">
+              <div className="grid grid-cols-7 gap-4 min-w-[700px]">
+                {weekDays.map((day) => {
+                  const dayShifts = getShiftsForDay(day);
+                  const today = isToday(day);
+
+                  return (
+                    <Card
+                      key={day.toISOString()}
+                      className={today ? "ring-2 ring-blue-500" : ""}
+                    >
+                      <CardHeader className="pb-2 px-3 pt-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase">
+                              {format(day, "EEE", { locale: dateFnsLocale })}
+                            </p>
+                            <p
+                              className={`text-lg font-bold ${
+                                today ? "text-blue-600" : "text-gray-900"
+                              }`}
+                            >
+                              {format(day, "d")}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleAddShift(day)}
+                            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-3 pb-3 space-y-2">
+                        {dayShifts.length === 0 ? (
+                          <p className="text-xs text-gray-400 text-center py-2">
+                            {t("noShifts")}
+                          </p>
+                        ) : (
+                          dayShifts.map((shift) => (
+                            <div
+                              key={shift.id}
+                              className="group relative rounded-md p-2 text-xs"
+                              style={{
+                                backgroundColor:
+                                  (shift.employee.color || "#3B82F6") + "20",
+                                borderLeft: `3px solid ${
+                                  shift.employee.color || "#3B82F6"
+                                }`,
+                              }}
+                            >
+                              <button
+                                onClick={() => handleDeleteShift(shift.id)}
+                                className="absolute right-1 top-1 hidden rounded p-0.5 hover:bg-white/50 group-hover:block"
+                              >
+                                <XIcon className="h-3 w-3" />
+                              </button>
+                              <p className="font-medium text-gray-900">
+                                {shift.employee.firstName.charAt(0)}.{" "}
+                                {shift.employee.lastName}
+                              </p>
+                              <p className="text-gray-600">
+                                {shift.startTime} - {shift.endTime}
+                              </p>
+                              {shift.location && (
+                                <p className="text-gray-500 truncate">
+                                  {shift.location.name}
+                                </p>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         )}
 
         {/* Add Shift Modal */}

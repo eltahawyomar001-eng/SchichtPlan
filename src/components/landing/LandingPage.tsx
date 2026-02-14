@@ -176,8 +176,10 @@ function Navbar() {
         </div>
 
         {/* CTA + mobile toggle */}
-        <div className="flex items-center gap-3">
-          <LanguageSwitcher />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
           <Link
             href="/login"
             className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"

@@ -233,7 +233,7 @@ function Navbar() {
 
 function HeroSection() {
   return (
-    <section className="relative pt-32 pb-20 bg-hero-gradient bg-grid overflow-hidden">
+    <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 bg-hero-gradient bg-grid overflow-hidden">
       {/* Decorative gradient blobs */}
       <div className="absolute top-20 -left-32 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl" />
@@ -252,7 +252,7 @@ function HeroSection() {
         </h1>
 
         {/* Subheadline */}
-        <p className="mt-6 text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
           Von der Planung bis zur Lohnabrechnung — SchichtPlan vereinfacht dein
           gesamtes Schichtmanagement in einer Plattform.
         </p>
@@ -307,11 +307,11 @@ function TrustedByBar() {
 
   return (
     <section className="py-10 border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
           Vertraut von Teams in ganz Deutschland
         </p>
-        <div className="flex items-center justify-center gap-12 flex-wrap opacity-40">
+        <div className="flex items-center justify-center gap-6 sm:gap-12 flex-wrap opacity-40">
           {companies.map((name) => (
             <span
               key={name}
@@ -349,7 +349,7 @@ function FeatureSection({
   return (
     <section
       id={step === 1 ? "features" : undefined}
-      className={`py-20 ${step % 2 === 0 ? "bg-section-alt" : ""}`}
+      className={`py-12 sm:py-20 ${step % 2 === 0 ? "bg-section-alt" : ""}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div
@@ -424,7 +424,7 @@ function BenefitsSection() {
   ];
 
   return (
-    <section id="benefits" className="py-20 bg-hero-gradient bg-grid">
+    <section id="benefits" className="py-12 sm:py-20 bg-hero-gradient bg-grid">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
@@ -441,7 +441,7 @@ function BenefitsSection() {
           {benefits.map((b) => (
             <div
               key={b.title}
-              className="rounded-2xl bg-white border border-gray-100 shadow-[0px_4px_24px_0px_rgba(124,58,237,0.06)] p-6 hover:shadow-[0px_8px_32px_0px_rgba(124,58,237,0.12)] transition-shadow"
+              className="rounded-2xl bg-white border border-gray-100 shadow-[0px_4px_24px_0px_rgba(124,58,237,0.06)] p-4 sm:p-6 hover:shadow-[0px_8px_32px_0px_rgba(124,58,237,0.12)] transition-shadow"
             >
               <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center mb-4">
                 <b.icon className="w-5 h-5" />
@@ -483,7 +483,7 @@ function FAQSection() {
   ];
 
   return (
-    <section id="faq" className="py-20">
+    <section id="faq" className="py-12 sm:py-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
@@ -500,11 +500,11 @@ function FAQSection() {
               key={faq.q}
               className="group rounded-2xl border border-gray-200 bg-white overflow-hidden"
             >
-              <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+              <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-sm sm:text-base">
                 {faq.q}
                 <ChevronRightIcon className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-90 shrink-0" />
               </summary>
-              <div className="px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+              <div className="px-4 sm:px-6 pb-5 text-sm text-gray-500 leading-relaxed">
                 {faq.a}
               </div>
             </details>
@@ -517,7 +517,7 @@ function FAQSection() {
 
 function CTAFooter() {
   return (
-    <section className="py-20">
+    <section className="py-12 sm:py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
           {/* Decorative circles */}
@@ -535,7 +535,7 @@ function CTAFooter() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="bg-white text-violet-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all flex items-center gap-2"
+                className="bg-white text-violet-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 Jetzt kostenlos starten
                 <ArrowRightIcon className="w-5 h-5" />
@@ -551,7 +551,7 @@ function CTAFooter() {
 function Footer() {
   return (
     <footer className="border-t border-gray-100 py-10">
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <SchichtPlanMark className="w-6 h-6" />
           <span className="font-bold text-sm text-gray-900">SchichtPlan</span>

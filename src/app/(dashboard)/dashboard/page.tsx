@@ -143,11 +143,13 @@ export default async function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    <div className="text-right sm:text-right">
+                    <div className="text-left sm:text-right">
                       <p className="font-medium text-sm sm:text-base text-gray-900">
                         {shift.startTime} - {shift.endTime}
                       </p>
-                      <p className="text-sm text-gray-500">{shift.status}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">
+                        {shift.status}
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -83,8 +83,8 @@ export default function StandortePage() {
       <div className="p-4 sm:p-6 space-y-6">
         {/* Add Location Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <Card className="w-full max-w-md mx-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Neuer Standort</CardTitle>
                 <button
@@ -167,8 +167,8 @@ export default function StandortePage() {
                 key={location.id}
                 className="hover:shadow-md transition-shadow"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
                       <div className="rounded-lg bg-purple-50 p-2.5">
                         <MapPinIcon className="h-5 w-5 text-purple-600" />

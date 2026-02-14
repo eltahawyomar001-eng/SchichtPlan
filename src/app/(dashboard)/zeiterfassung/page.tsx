@@ -341,18 +341,20 @@ export default function ZeiterfassungPage() {
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-blue-50 p-2.5">
-                  <ClockIcon className="h-5 w-5 text-blue-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="rounded-lg bg-blue-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Gesamtstunden</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                    Gesamtstunden
+                  </p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {formatMinutesToHHmm(totalNetMinutes)}
                   </p>
-                  <p className="text-xs text-gray-400">
-                    {formatIndustrial(totalNetMinutes)} Industriestunden
+                  <p className="text-[10px] sm:text-xs text-gray-400 truncate">
+                    {formatIndustrial(totalNetMinutes)} Ind.-Std.
                   </p>
                 </div>
               </div>
@@ -360,14 +362,14 @@ export default function ZeiterfassungPage() {
           </Card>
 
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-purple-50 p-2.5">
-                  <CalendarIcon className="h-5 w-5 text-purple-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="rounded-lg bg-purple-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Einträge</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500">Einträge</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {filteredEntries.length}
                   </p>
                 </div>
@@ -376,14 +378,14 @@ export default function ZeiterfassungPage() {
           </Card>
 
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-yellow-50 p-2.5">
-                  <ClockIcon className="h-5 w-5 text-yellow-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="rounded-lg bg-yellow-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Offen</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500">Offen</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {pendingCount}
                   </p>
                 </div>
@@ -392,14 +394,14 @@ export default function ZeiterfassungPage() {
           </Card>
 
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-green-50 p-2.5">
-                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="rounded-lg bg-green-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Bestätigt</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-500">Bestätigt</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {confirmedCount}
                   </p>
                 </div>
@@ -478,8 +480,8 @@ export default function ZeiterfassungPage() {
 
         {/* ── Entry Form Modal ── */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <Card className="w-full max-w-lg mx-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
+            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>
@@ -575,7 +577,7 @@ export default function ZeiterfassungPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                       <Label htmlFor="breakStart">Pause von</Label>
                       <Input
@@ -677,8 +679,8 @@ export default function ZeiterfassungPage() {
 
         {/* ── Entry Detail Modal ── */}
         {selectedEntry && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <Card className="w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
+            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Zeiteintrag Details</CardTitle>

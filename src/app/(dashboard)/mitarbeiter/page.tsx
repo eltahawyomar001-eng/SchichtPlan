@@ -133,8 +133,8 @@ export default function MitarbeiterPage() {
 
         {/* Add Employee Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg mx-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Neuer Mitarbeiter</CardTitle>
                 <button

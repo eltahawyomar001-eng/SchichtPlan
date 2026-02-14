@@ -38,10 +38,10 @@ export function Topbar({ title, description, actions }: TopbarProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {actions}
-        <button className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-          <BellIcon className="h-5 w-5" />
+        <button className="relative rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+          <BellIcon className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
         {session?.user?.name && <Avatar name={session.user.name} size="sm" />}
       </div>

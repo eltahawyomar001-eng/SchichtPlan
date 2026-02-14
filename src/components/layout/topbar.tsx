@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { Avatar } from "@/components/ui/avatar";
 import { BellIcon, MenuIcon } from "@/components/icons";
 import { useSidebar } from "@/components/layout/dashboard-shell";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 interface TopbarProps {
   title: string;
@@ -40,6 +41,7 @@ export function Topbar({ title, description, actions }: TopbarProps) {
 
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {actions}
+        <LanguageSwitcher />
         <button className="relative rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
           <BellIcon className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
   CalendarOffIcon,
 } from "@/components/icons";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { de, enUS } from "date-fns/locale";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -43,52 +44,40 @@ interface AbsenceRequest {
 
 // ─── Constants ──────────────────────────────────────────────────
 
-const CATEGORIES = [
-  { value: "URLAUB", label: "Urlaub", color: "bg-blue-100 text-blue-700" },
-  { value: "KRANK", label: "Krank", color: "bg-red-100 text-red-700" },
-  {
-    value: "ELTERNZEIT",
-    label: "Elternzeit",
-    color: "bg-pink-100 text-pink-700",
-  },
-  {
-    value: "SONDERURLAUB",
-    label: "Sonderurlaub",
-    color: "bg-purple-100 text-purple-700",
-  },
-  {
-    value: "UNBEZAHLT",
-    label: "Unbezahlt",
-    color: "bg-gray-100 text-gray-700",
-  },
-  {
-    value: "FORTBILDUNG",
-    label: "Fortbildung",
-    color: "bg-teal-100 text-teal-700",
-  },
-  {
-    value: "SONSTIGES",
-    label: "Sonstiges",
-    color: "bg-amber-100 text-amber-700",
-  },
+const CATEGORY_KEYS = [
+  { value: "URLAUB", color: "bg-blue-100 text-blue-700" },
+  { value: "KRANK", color: "bg-red-100 text-red-700" },
+  { value: "ELTERNZEIT", color: "bg-pink-100 text-pink-700" },
+  { value: "SONDERURLAUB", color: "bg-purple-100 text-purple-700" },
+  { value: "UNBEZAHLT", color: "bg-gray-100 text-gray-700" },
+  { value: "FORTBILDUNG", color: "bg-teal-100 text-teal-700" },
+  { value: "SONSTIGES", color: "bg-amber-100 text-amber-700" },
 ];
 
-const STATUS_MAP: Record<
+const STATUS_VARIANTS: Record<
   string,
-  {
-    label: string;
-    variant: "default" | "success" | "destructive" | "warning" | "outline";
-  }
+  "default" | "success" | "destructive" | "warning" | "outline"
 > = {
-  AUSSTEHEND: { label: "Ausstehend", variant: "warning" },
-  GENEHMIGT: { label: "Genehmigt", variant: "success" },
-  ABGELEHNT: { label: "Abgelehnt", variant: "destructive" },
-  STORNIERT: { label: "Storniert", variant: "outline" },
+  AUSSTEHEND: "warning",
+  GENEHMIGT: "success",
+  ABGELEHNT: "destructive",
+  STORNIERT: "outline",
+};
+
+const STATUS_KEYS: Record<string, string> = {
+  AUSSTEHEND: "pending",
+  GENEHMIGT: "approved",
+  ABGELEHNT: "rejected",
+  STORNIERT: "cancelled",
 };
 
 // ─── Component ──────────────────────────────────────────────────
 
 export default function AbwesenheitenPage() {
+  const t = useTranslations("absences");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  const dateFnsLocale = locale === "de" ? de : enUS;
   const [absences, setAbsences] = useState<AbsenceRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -178,12 +167,12 @@ export default function AbwesenheitenPage() {
   // ── Helpers ─────────────────────────────────────────────────
 
   function getCategoryInfo(cat: string) {
-    return CATEGORIES.find((c) => c.value === cat) || CATEGORIES[6];
+    return CATEGORY_KEYS.find((c) => c.value === cat) || CATEGORY_KEYS[6];
   }
 
   function formatDateRange(start: string, end: string) {
-    const s = format(new Date(start), "dd. MMM", { locale: de });
-    const e = format(new Date(end), "dd. MMM yyyy", { locale: de });
+    const s = format(new Date(start), "dd. MMM", { locale: dateFnsLocale });
+    const e = format(new Date(end), "dd. MMM yyyy", { locale: dateFnsLocale });
     return `${s} – ${e}`;
   }
 
@@ -200,13 +189,13 @@ export default function AbwesenheitenPage() {
   return (
     <div>
       <Topbar
-        title="Abwesenheiten"
-        description="Urlaub, Krankmeldungen & Abwesenheitsanträge verwalten"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Neuer Antrag</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{t("newRequest")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
           </Button>
         }
       />
@@ -225,7 +214,7 @@ export default function AbwesenheitenPage() {
                     {pending}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Ausstehend
+                    {t("pending")}
                   </p>
                 </div>
               </div>
@@ -242,7 +231,7 @@ export default function AbwesenheitenPage() {
                     {approved}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Genehmigt
+                    {t("approved")}
                   </p>
                 </div>
               </div>
@@ -259,7 +248,7 @@ export default function AbwesenheitenPage() {
                     {totalDays}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Tage gesamt
+                    {t("totalDays")}
                   </p>
                 </div>
               </div>
@@ -279,7 +268,7 @@ export default function AbwesenheitenPage() {
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {s === "all" ? "Alle" : STATUS_MAP[s]?.label || s}
+              {s === "all" ? tc("all") : t(STATUS_KEYS[s]) || s}
             </button>
           ))}
         </div>
@@ -287,23 +276,20 @@ export default function AbwesenheitenPage() {
         {/* Absence list */}
         <Card>
           <CardHeader>
-            <CardTitle>Abwesenheitsanträge</CardTitle>
+            <CardTitle>{t("requests")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-gray-500">Laden…</p>
+              <p className="text-sm text-gray-500">{tc("loading")}</p>
             ) : absences.length === 0 ? (
               <div className="text-center py-10">
                 <CalendarOffIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500">
-                  Keine Abwesenheitsanträge vorhanden.
-                </p>
+                <p className="text-sm text-gray-500">{t("noRequests")}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {absences.map((absence) => {
                   const cat = getCategoryInfo(absence.category);
-                  const statusInfo = STATUS_MAP[absence.status];
                   return (
                     <div
                       key={absence.id}
@@ -332,16 +318,20 @@ export default function AbwesenheitenPage() {
                             )}
                             <span className="text-gray-400"> · </span>
                             {absence.totalDays}{" "}
-                            {absence.totalDays === 1 ? "Tag" : "Tage"}
+                            {absence.totalDays === 1 ? tc("day") : tc("days")}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <span
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cat.color}`}
                             >
-                              {cat.label}
+                              {t(`categories.${absence.category}`)}
                             </span>
-                            <Badge variant={statusInfo?.variant || "outline"}>
-                              {statusInfo?.label || absence.status}
+                            <Badge
+                              variant={
+                                STATUS_VARIANTS[absence.status] || "outline"
+                              }
+                            >
+                              {t(STATUS_KEYS[absence.status]) || absence.status}
                             </Badge>
                           </div>
                           {absence.reason && (
@@ -363,7 +353,9 @@ export default function AbwesenheitenPage() {
                             className="bg-green-600 hover:bg-green-700 text-white"
                           >
                             <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Genehmigen</span>
+                            <span className="hidden sm:inline">
+                              {t("approve")}
+                            </span>
                           </Button>
                           <Button
                             size="sm"
@@ -373,7 +365,9 @@ export default function AbwesenheitenPage() {
                             }
                           >
                             <XIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Ablehnen</span>
+                            <span className="hidden sm:inline">
+                              {t("reject")}
+                            </span>
                           </Button>
                         </div>
                       )}
@@ -392,7 +386,7 @@ export default function AbwesenheitenPage() {
           <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Neuer Abwesenheitsantrag</CardTitle>
+                <CardTitle>{t("newRequest")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1.5 hover:bg-gray-100"
@@ -404,7 +398,7 @@ export default function AbwesenheitenPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label>Mitarbeiter</Label>
+                  <Label>{t("form.employee")}</Label>
                   <Select
                     value={formData.employeeId}
                     onChange={(e) =>
@@ -412,7 +406,7 @@ export default function AbwesenheitenPage() {
                     }
                     required
                   >
-                    <option value="">Bitte wählen…</option>
+                    <option value="">{tc("selectPlaceholder")}</option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.firstName} {emp.lastName}
@@ -422,16 +416,16 @@ export default function AbwesenheitenPage() {
                 </div>
 
                 <div>
-                  <Label>Kategorie</Label>
+                  <Label>{t("form.category")}</Label>
                   <Select
                     value={formData.category}
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
                   >
-                    {CATEGORIES.map((cat) => (
+                    {CATEGORY_KEYS.map((cat) => (
                       <option key={cat.value} value={cat.value}>
-                        {cat.label}
+                        {t(`categories.${cat.value}`)}
                       </option>
                     ))}
                   </Select>
@@ -439,7 +433,7 @@ export default function AbwesenheitenPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Startdatum</Label>
+                    <Label>{t("form.startDate")}</Label>
                     <Input
                       type="date"
                       value={formData.startDate}
@@ -460,11 +454,11 @@ export default function AbwesenheitenPage() {
                         }
                         className="rounded"
                       />
-                      Halber Tag
+                      {t("halfDay")}
                     </label>
                   </div>
                   <div>
-                    <Label>Enddatum</Label>
+                    <Label>{t("form.endDate")}</Label>
                     <Input
                       type="date"
                       value={formData.endDate}
@@ -485,20 +479,20 @@ export default function AbwesenheitenPage() {
                         }
                         className="rounded"
                       />
-                      Halber Tag
+                      {t("halfDay")}
                     </label>
                   </div>
                 </div>
 
                 <div>
-                  <Label>Bemerkung (optional)</Label>
+                  <Label>{t("form.reason")}</Label>
                   <textarea
                     value={formData.reason}
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
                     className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 min-h-[80px] resize-none"
-                    placeholder="Grund oder Hinweise…"
+                    placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>
 
@@ -508,9 +502,9 @@ export default function AbwesenheitenPage() {
                     variant="outline"
                     onClick={() => setShowForm(false)}
                   >
-                    Abbrechen
+                    {tc("cancel")}
                   </Button>
-                  <Button type="submit">Antrag einreichen</Button>
+                  <Button type="submit">{t("form.submit")}</Button>
                 </div>
               </form>
             </CardContent>

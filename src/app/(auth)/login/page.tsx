@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
   SchichtPlanMark,
@@ -19,6 +20,7 @@ import {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("auth");
   const justRegistered = searchParams.get("registered") === "true";
 
   const [email, setEmail] = useState("");
@@ -39,7 +41,7 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setError("Ungültige E-Mail oder Passwort.");
+      setError(t("invalidCredentials"));
       setLoading(false);
     } else {
       router.push("/dashboard");
@@ -84,13 +86,12 @@ function LoginForm() {
           </div>
 
           <h2 className="text-3xl font-bold text-white">
-            Willkommen zurück bei
+            {t("welcomeBack")}
             <br />
             <span className="text-white/90">SchichtPlan.</span>
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-white/70">
-            Ihr Team wartet auf Sie. Melden Sie sich an und behalten Sie Ihre
-            Schichtplanung im Griff.
+            {t("teamWaiting")}
           </p>
 
           {/* Feature highlights */}
@@ -98,18 +99,18 @@ function LoginForm() {
             {[
               {
                 icon: ZapIcon,
-                title: "Blitzschnelle Planung",
-                desc: "Erstellen Sie Dienstpläne in Minuten statt Stunden.",
+                title: t("featureFast"),
+                desc: t("featureFastDesc"),
               },
               {
                 icon: ShieldCheckIcon,
-                title: "DSGVO-konform",
-                desc: "Ihre Daten sind sicher und geschützt in der EU.",
+                title: t("featureGdpr"),
+                desc: t("featureGdprDesc"),
               },
               {
                 icon: StarIcon,
-                title: "Von Teams geliebt",
-                desc: "Über 500+ Unternehmen vertrauen auf SchichtPlan.",
+                title: t("featureLoved"),
+                desc: t("featureLovedDesc"),
               },
             ].map((item) => (
               <div
@@ -142,17 +143,15 @@ function LoginForm() {
           </Link>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Anmelden
+            {t("login")}
           </h1>
-          <p className="mt-2 text-base text-gray-500">
-            Melden Sie sich bei Ihrem Konto an, um fortzufahren.
-          </p>
+          <p className="mt-2 text-base text-gray-500">{t("signInSubtitle")}</p>
 
           {/* Success banner (after registration) */}
           {justRegistered && (
             <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
               <CheckCircleIcon className="h-5 w-5 shrink-0" />
-              Konto erfolgreich erstellt! Sie können sich jetzt anmelden.
+              {t("accountCreated")}
             </div>
           )}
 
@@ -182,7 +181,7 @@ function LoginForm() {
                 htmlFor="email"
                 className="mb-1.5 block text-sm font-medium text-gray-700"
               >
-                E-Mail-Adresse
+                {t("email")}
               </label>
               <div className="relative">
                 <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -190,7 +189,7 @@ function LoginForm() {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="max@beispiel.de"
+                  placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -206,10 +205,10 @@ function LoginForm() {
                   htmlFor="password"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Passwort
+                  {t("password")}
                 </label>
                 <span className="text-xs text-[var(--brand-600)] hover:text-[var(--brand-700)] cursor-pointer transition-colors">
-                  Passwort vergessen?
+                  {t("forgotPassword")}
                 </span>
               </div>
               <div className="relative">
@@ -267,10 +266,10 @@ function LoginForm() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  Anmelden…
+                  {t("signingIn")}
                 </>
               ) : (
-                "ANMELDEN"
+                t("signInButton")
               )}
             </button>
           </form>
@@ -281,18 +280,18 @@ function LoginForm() {
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-3 text-gray-400">oder</span>
+              <span className="bg-white px-3 text-gray-400">{t("or")}</span>
             </div>
           </div>
 
           {/* Footer link */}
           <p className="mt-8 text-center text-sm text-gray-500">
-            Noch kein Konto?{" "}
+            {t("noAccount")}{" "}
             <Link
               href="/register"
               className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] transition-colors"
             >
-              Kostenlos registrieren
+              {t("registerHere")}
             </Link>
           </p>
         </div>

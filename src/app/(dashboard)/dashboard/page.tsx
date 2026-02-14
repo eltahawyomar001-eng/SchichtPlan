@@ -10,6 +10,7 @@ import {
   ClockIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
+import { getTranslations } from "next-intl/server";
 
 interface ShiftWithRelations {
   id: string;
@@ -23,6 +24,7 @@ interface ShiftWithRelations {
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const workspaceId = (session?.user as SessionUser)?.workspaceId;
+  const t = await getTranslations("dashboard");
 
   const [employeeCount, shiftCount, locationCount, todayShifts] =
     await Promise.all([
@@ -44,28 +46,28 @@ export default async function DashboardPage() {
 
   const stats = [
     {
-      title: "Mitarbeiter",
+      title: t("employees"),
       value: employeeCount,
       icon: UsersIcon,
       color: "text-violet-600",
       bg: "bg-violet-50",
     },
     {
-      title: "Schichten gesamt",
+      title: t("totalShifts"),
       value: shiftCount,
       icon: CalendarIcon,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
     },
     {
-      title: "Standorte",
+      title: t("locations"),
       value: locationCount,
       icon: MapPinIcon,
       color: "text-purple-600",
       bg: "bg-purple-50",
     },
     {
-      title: "Schichten heute",
+      title: t("shiftsToday"),
       value: todayShifts.length,
       icon: ClockIcon,
       color: "text-amber-600",
@@ -75,10 +77,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <Topbar
-        title="Dashboard"
-        description="Übersicht über Ihre Schichtplanung"
-      />
+      <Topbar title={t("title")} description={t("description")} />
       <div className="p-4 sm:p-6 space-y-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -108,13 +107,11 @@ export default async function DashboardPage() {
         {/* Today's Shifts */}
         <Card>
           <CardHeader>
-            <CardTitle>Heutige Schichten</CardTitle>
+            <CardTitle>{t("todayShifts")}</CardTitle>
           </CardHeader>
           <CardContent>
             {todayShifts.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                Keine Schichten für heute geplant.
-              </p>
+              <p className="text-sm text-gray-500">{t("noShiftsToday")}</p>
             ) : (
               <div className="space-y-3">
                 {(todayShifts as ShiftWithRelations[]).map((shift) => (

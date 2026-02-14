@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,8 @@ interface Employee {
 }
 
 export default function MitarbeiterPage() {
+  const t = useTranslations("employeesPage");
+  const tc = useTranslations("common");
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -90,7 +93,7 @@ export default function MitarbeiterPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Mitarbeiter wirklich löschen?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     try {
       await fetch(`/api/employees/${id}`, { method: "DELETE" });
       fetchEmployees();
@@ -108,13 +111,13 @@ export default function MitarbeiterPage() {
   return (
     <div>
       <Topbar
-        title="Mitarbeiter"
-        description="Verwalten Sie Ihre Mitarbeiter"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button size="sm" onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Neuer Mitarbeiter</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{t("newEmployee")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
           </Button>
         }
       />
@@ -124,7 +127,7 @@ export default function MitarbeiterPage() {
         <div className="relative max-w-full sm:max-w-md">
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="Mitarbeiter suchen..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -136,7 +139,7 @@ export default function MitarbeiterPage() {
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Neuer Mitarbeiter</CardTitle>
+                <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1 hover:bg-gray-100"
@@ -148,7 +151,7 @@ export default function MitarbeiterPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">Vorname *</Label>
+                      <Label htmlFor="firstName">{t("form.firstName")} *</Label>
                       <Input
                         id="firstName"
                         value={formData.firstName}
@@ -162,7 +165,7 @@ export default function MitarbeiterPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Nachname *</Label>
+                      <Label htmlFor="lastName">{t("form.lastName")} *</Label>
                       <Input
                         id="lastName"
                         value={formData.lastName}
@@ -178,7 +181,7 @@ export default function MitarbeiterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">E-Mail</Label>
+                    <Label htmlFor="email">{t("form.email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -190,7 +193,7 @@ export default function MitarbeiterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Telefon</Label>
+                    <Label htmlFor="phone">{t("form.phone")}</Label>
                     <Input
                       id="phone"
                       value={formData.phone}
@@ -201,7 +204,7 @@ export default function MitarbeiterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
+                    <Label htmlFor="position">{t("form.position")}</Label>
                     <Input
                       id="position"
                       value={formData.position}
@@ -216,7 +219,7 @@ export default function MitarbeiterPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="hourlyRate">Stundenlohn (€)</Label>
+                      <Label htmlFor="hourlyRate">{t("form.hourlyRate")}</Label>
                       <Input
                         id="hourlyRate"
                         type="number"
@@ -231,7 +234,9 @@ export default function MitarbeiterPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="weeklyHours">Wochenstunden</Label>
+                      <Label htmlFor="weeklyHours">
+                        {t("form.weeklyHours")}
+                      </Label>
                       <Input
                         id="weeklyHours"
                         type="number"
@@ -253,9 +258,9 @@ export default function MitarbeiterPage() {
                       variant="outline"
                       onClick={() => setShowForm(false)}
                     >
-                      Abbrechen
+                      {tc("cancel")}
                     </Button>
-                    <Button type="submit">Speichern</Button>
+                    <Button type="submit">{tc("save")}</Button>
                   </div>
                 </form>
               </CardContent>
@@ -266,7 +271,7 @@ export default function MitarbeiterPage() {
         {/* Employee List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500">Laden...</p>
+            <p className="text-gray-500">{tc("loading")}</p>
           </div>
         ) : filteredEmployees.length === 0 ? (
           <Card>
@@ -275,19 +280,15 @@ export default function MitarbeiterPage() {
                 <UsersIcon className="h-8 w-8 text-gray-400" />
               </div>
               <p className="text-lg font-medium text-gray-900">
-                {search
-                  ? "Keine Mitarbeiter gefunden"
-                  : "Noch keine Mitarbeiter"}
+                {search ? t("noSearchResults") : t("noEmployees")}
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                {search
-                  ? "Versuchen Sie eine andere Suche."
-                  : "Fügen Sie Ihren ersten Mitarbeiter hinzu."}
+                {search ? t("noSearchResultsHint") : t("noEmployeesHint")}
               </p>
               {!search && (
                 <Button className="mt-4" onClick={() => setShowForm(true)}>
                   <PlusIcon className="h-4 w-4" />
-                  Mitarbeiter hinzufügen
+                  {t("addEmployee")}
                 </Button>
               )}
             </CardContent>
@@ -318,7 +319,7 @@ export default function MitarbeiterPage() {
                       </div>
                     </div>
                     <Badge variant={employee.isActive ? "success" : "outline"}>
-                      {employee.isActive ? "Aktiv" : "Inaktiv"}
+                      {employee.isActive ? tc("active") : tc("inactive")}
                     </Badge>
                   </div>
 
@@ -340,7 +341,7 @@ export default function MitarbeiterPage() {
                         <BriefcaseIcon className="h-4 w-4" />
                         {employee.hourlyRate.toFixed(2)} €/h
                         {employee.weeklyHours &&
-                          ` · ${employee.weeklyHours}h/Woche`}
+                          ` · ${employee.weeklyHours}${tc("hrsPerWeek")}`}
                       </div>
                     )}
                   </div>
@@ -352,7 +353,7 @@ export default function MitarbeiterPage() {
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={() => handleDelete(employee.id)}
                     >
-                      Löschen
+                      {tc("delete")}
                     </Button>
                   </div>
                 </CardContent>

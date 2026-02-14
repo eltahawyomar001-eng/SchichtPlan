@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,11 +42,11 @@ interface TimeAccount {
 
 // ─── Helpers ────────────────────────────────────────────────────
 
-function minutesToDisplay(minutes: number): string {
+function minutesToDisplay(minutes: number, suffix: string): string {
   const h = Math.floor(Math.abs(minutes) / 60);
   const m = Math.abs(minutes) % 60;
   const sign = minutes < 0 ? "-" : "+";
-  return `${sign}${h}:${String(m).padStart(2, "0")} Std`;
+  return `${sign}${h}:${String(m).padStart(2, "0")} ${suffix}`;
 }
 
 function minutesToDecimal(minutes: number): string {
@@ -55,6 +56,9 @@ function minutesToDecimal(minutes: number): string {
 // ─── Component ──────────────────────────────────────────────────
 
 export default function ZeitkontenPage() {
+  const t = useTranslations("timeAccounts");
+  const tc = useTranslations("common");
+  const hrsLabel = tc("hrsShort");
   const [accounts, setAccounts] = useState<TimeAccount[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -132,13 +136,13 @@ export default function ZeitkontenPage() {
   return (
     <div>
       <Topbar
-        title="Zeitkonten"
-        description="Arbeitszeitkonten & Überstunden-Salden verwalten"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Konto anlegen</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{t("createAccount")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
           </Button>
         }
       />
@@ -154,10 +158,10 @@ export default function ZeitkontenPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
-                    {minutesToDisplay(totalBalance)}
+                    {minutesToDisplay(totalBalance, hrsLabel)}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Gesamt-Saldo
+                    {t("totalBalance")}
                   </p>
                 </div>
               </div>
@@ -174,7 +178,7 @@ export default function ZeitkontenPage() {
                     {overtimeEmployees}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Überstunden
+                    {t("overtime")}
                   </p>
                 </div>
               </div>
@@ -191,7 +195,7 @@ export default function ZeitkontenPage() {
                     {undertimeEmployees}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Minusstunden
+                    {t("undertime")}
                   </p>
                 </div>
               </div>
@@ -201,17 +205,14 @@ export default function ZeitkontenPage() {
 
         {/* Account list */}
         {loading ? (
-          <p className="text-sm text-gray-500">Laden…</p>
+          <p className="text-sm text-gray-500">{tc("loading")}</p>
         ) : accounts.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center">
               <ScaleIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">
-                Noch keine Zeitkonten angelegt.
-              </p>
+              <p className="text-sm text-gray-500">{t("noAccounts")}</p>
               <p className="text-xs text-gray-400 mt-1">
-                Legen Sie für jeden Mitarbeiter ein Konto an, um Überstunden zu
-                tracken.
+                {t("noAccountsHint")}
               </p>
             </CardContent>
           </Card>
@@ -240,7 +241,8 @@ export default function ZeitkontenPage() {
                             {account.employee.lastName}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Vertrag: {account.contractHours} Std/Woche
+                            {t("contract")}: {account.contractHours}{" "}
+                            {tc("hrsPerWeek")}
                           </p>
                         </div>
                       </div>
@@ -248,7 +250,7 @@ export default function ZeitkontenPage() {
                         variant={isPositive ? "success" : "destructive"}
                         className="text-sm font-bold shrink-0"
                       >
-                        {minutesToDisplay(account.balanceMinutes)}
+                        {minutesToDisplay(account.balanceMinutes, hrsLabel)}
                       </Badge>
                     </div>
 
@@ -256,11 +258,14 @@ export default function ZeitkontenPage() {
                     <div className="mt-4 space-y-2">
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>
-                          Gearbeitet: {minutesToDecimal(account.workedMinutes)}{" "}
-                          Std
+                          {t("worked")}:{" "}
+                          {minutesToDecimal(account.workedMinutes)}{" "}
+                          {tc("hrsShort")}
                         </span>
                         <span>
-                          Soll: {minutesToDecimal(account.expectedMinutes)} Std
+                          {t("expected")}:{" "}
+                          {minutesToDecimal(account.expectedMinutes)}{" "}
+                          {tc("hrsShort")}
                         </span>
                       </div>
                       <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -275,7 +280,8 @@ export default function ZeitkontenPage() {
                       </div>
                       {account.carryoverMinutes !== 0 && (
                         <p className="text-xs text-gray-400">
-                          Übertrag: {minutesToDisplay(account.carryoverMinutes)}
+                          {t("carryover")}:{" "}
+                          {minutesToDisplay(account.carryoverMinutes, hrsLabel)}
                         </p>
                       )}
                     </div>
@@ -293,7 +299,7 @@ export default function ZeitkontenPage() {
           <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Zeitkonto anlegen</CardTitle>
+                <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1.5 hover:bg-gray-100"
@@ -305,7 +311,7 @@ export default function ZeitkontenPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label>Mitarbeiter</Label>
+                  <Label>{t("form.employee")}</Label>
                   <Select
                     value={formData.employeeId}
                     onChange={(e) =>
@@ -313,7 +319,7 @@ export default function ZeitkontenPage() {
                     }
                     required
                   >
-                    <option value="">Bitte wählen…</option>
+                    <option value="">{tc("selectPlaceholder")}</option>
                     {employees
                       .filter((emp) => !employeesWithAccount.has(emp.id))
                       .map((emp) => (
@@ -326,14 +332,14 @@ export default function ZeitkontenPage() {
                     employees.filter((emp) => !employeesWithAccount.has(emp.id))
                       .length === 0 && (
                       <p className="text-xs text-amber-600 mt-1">
-                        Alle Mitarbeiter haben bereits ein Zeitkonto.
+                        {t("allHaveAccounts")}
                       </p>
                     )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label>Wochenstunden (Vertrag)</Label>
+                    <Label>{t("form.weeklyHours")}</Label>
                     <Input
                       type="number"
                       step="0.5"
@@ -350,7 +356,7 @@ export default function ZeitkontenPage() {
                     />
                   </div>
                   <div>
-                    <Label>Übertrag (Stunden)</Label>
+                    <Label>{t("form.carryoverHours")}</Label>
                     <Input
                       type="number"
                       step="0.5"
@@ -363,13 +369,13 @@ export default function ZeitkontenPage() {
                       }
                     />
                     <p className="text-xs text-gray-400 mt-1">
-                      Positiv = Überstunden, Negativ = Minusstunden
+                      {t("form.carryoverHint")}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <Label>Periodenstart</Label>
+                  <Label>{t("form.periodStart")}</Label>
                   <Input
                     type="date"
                     value={formData.periodStart}
@@ -386,11 +392,11 @@ export default function ZeitkontenPage() {
                     variant="outline"
                     onClick={() => setShowForm(false)}
                   >
-                    Abbrechen
+                    {tc("cancel")}
                   </Button>
                   <Button type="submit">
                     <CheckCircleIcon className="h-4 w-4 mr-2" />
-                    Konto anlegen
+                    {t("form.submit")}
                   </Button>
                 </div>
               </form>

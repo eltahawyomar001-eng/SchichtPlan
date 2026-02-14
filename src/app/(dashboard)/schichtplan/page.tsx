@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import {
   subWeeks,
   isToday,
 } from "date-fns";
-import { de } from "date-fns/locale";
+import { de, enUS } from "date-fns/locale";
 
 interface Employee {
   id: string;
@@ -47,6 +48,10 @@ interface Shift {
 }
 
 export default function SchichtplanPage() {
+  const t = useTranslations("shiftPlan");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  const dateFnsLocale = locale === "de" ? de : enUS;
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -131,7 +136,7 @@ export default function SchichtplanPage() {
   };
 
   const handleDeleteShift = async (id: string) => {
-    if (!confirm("Schicht wirklich löschen?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     try {
       await fetch(`/api/shifts/${id}`, { method: "DELETE" });
       fetchData();
@@ -147,10 +152,7 @@ export default function SchichtplanPage() {
 
   return (
     <div>
-      <Topbar
-        title="Schichtplan"
-        description="Wochenansicht Ihrer Schichtplanung"
-      />
+      <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6">
         {/* Week Navigation */}
@@ -164,8 +166,8 @@ export default function SchichtplanPage() {
               <ChevronLeftIcon className="h-4 w-4" />
             </Button>
             <h2 className="text-sm sm:text-lg font-semibold text-gray-900 text-center">
-              {format(weekStart, "d. MMM", { locale: de })} –{" "}
-              {format(weekEnd, "d. MMM yyyy", { locale: de })}
+              {format(weekStart, "d. MMM", { locale: dateFnsLocale })} –{" "}
+              {format(weekEnd, "d. MMM yyyy", { locale: dateFnsLocale })}
             </h2>
             <Button
               variant="outline"
@@ -180,14 +182,14 @@ export default function SchichtplanPage() {
             size="sm"
             onClick={() => setCurrentWeek(new Date())}
           >
-            Heute
+            {tc("today")}
           </Button>
         </div>
 
         {/* Week Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500">Laden...</p>
+            <p className="text-gray-500">{tc("loading")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-2">
@@ -205,7 +207,7 @@ export default function SchichtplanPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs font-medium text-gray-500 uppercase">
-                            {format(day, "EEE", { locale: de })}
+                            {format(day, "EEE", { locale: dateFnsLocale })}
                           </p>
                           <p
                             className={`text-lg font-bold ${
@@ -226,7 +228,7 @@ export default function SchichtplanPage() {
                     <CardContent className="px-3 pb-3 space-y-2">
                       {dayShifts.length === 0 ? (
                         <p className="text-xs text-gray-400 text-center py-2">
-                          Keine Schichten
+                          {t("noShifts")}
                         </p>
                       ) : (
                         dayShifts.map((shift) => (
@@ -275,7 +277,7 @@ export default function SchichtplanPage() {
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Neue Schicht</CardTitle>
+                <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1 hover:bg-gray-100"
@@ -286,7 +288,7 @@ export default function SchichtplanPage() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="date">Datum *</Label>
+                    <Label htmlFor="date">{t("form.date")} *</Label>
                     <Input
                       id="date"
                       type="date"
@@ -300,7 +302,7 @@ export default function SchichtplanPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="startTime">Beginn *</Label>
+                      <Label htmlFor="startTime">{t("form.start")} *</Label>
                       <Input
                         id="startTime"
                         type="time"
@@ -315,7 +317,7 @@ export default function SchichtplanPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="endTime">Ende *</Label>
+                      <Label htmlFor="endTime">{t("form.end")} *</Label>
                       <Input
                         id="endTime"
                         type="time"
@@ -332,7 +334,7 @@ export default function SchichtplanPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="employeeId">Mitarbeiter *</Label>
+                    <Label htmlFor="employeeId">{t("form.employee")} *</Label>
                     <select
                       id="employeeId"
                       value={formData.employeeId}
@@ -345,7 +347,7 @@ export default function SchichtplanPage() {
                       className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       required
                     >
-                      <option value="">Mitarbeiter wählen...</option>
+                      <option value="">{t("form.selectEmployee")}</option>
                       {employees.map((emp) => (
                         <option key={emp.id} value={emp.id}>
                           {emp.firstName} {emp.lastName}
@@ -355,7 +357,7 @@ export default function SchichtplanPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="locationId">Standort</Label>
+                    <Label htmlFor="locationId">{t("form.location")}</Label>
                     <select
                       id="locationId"
                       value={formData.locationId}
@@ -367,7 +369,7 @@ export default function SchichtplanPage() {
                       }
                       className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
-                      <option value="">Kein Standort</option>
+                      <option value="">{t("form.noLocation")}</option>
                       {locations.map((loc) => (
                         <option key={loc.id} value={loc.id}>
                           {loc.name}
@@ -377,14 +379,14 @@ export default function SchichtplanPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Notizen</Label>
+                    <Label htmlFor="notes">{t("form.notes")}</Label>
                     <Input
                       id="notes"
                       value={formData.notes}
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, notes: e.target.value }))
                       }
-                      placeholder="Optionale Notizen..."
+                      placeholder={t("form.notesPlaceholder")}
                     />
                   </div>
 
@@ -394,9 +396,9 @@ export default function SchichtplanPage() {
                       variant="outline"
                       onClick={() => setShowForm(false)}
                     >
-                      Abbrechen
+                      {tc("cancel")}
                     </Button>
-                    <Button type="submit">Schicht erstellen</Button>
+                    <Button type="submit">{t("form.submit")}</Button>
                   </div>
                 </form>
               </CardContent>

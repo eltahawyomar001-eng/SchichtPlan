@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
   SchichtPlanMark,
@@ -19,6 +20,7 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations("auth");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,12 +42,12 @@ export default function RegisterPage() {
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwörter stimmen nicht überein.");
+      setError(t("passwordsNoMatch"));
       return;
     }
 
     if (formData.password.length < 8) {
-      setError("Das Passwort muss mindestens 8 Zeichen lang sein.");
+      setError(t("passwordTooShort"));
       return;
     }
 
@@ -66,14 +68,14 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Registrierung fehlgeschlagen.");
+        setError(data.error || t("registrationFailed"));
         setLoading(false);
         return;
       }
 
       router.push("/login?registered=true");
     } catch {
-      setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+      setError(t("genericError"));
       setLoading(false);
     }
   };
@@ -99,15 +101,12 @@ export default function RegisterPage() {
           </Link>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Ein kleiner Schritt für Sie,
+            {t("registerTitle")}
             <br />
-            <span className="text-gradient">
-              ein großer für Ihr Unternehmen.
-            </span>
+            <span className="text-gradient">{t("registerTitleHighlight")}</span>
           </h1>
           <p className="mt-3 text-base text-gray-500">
-            Erstellen Sie Ihr kostenloses Konto und starten Sie in wenigen
-            Minuten.
+            {t("registerSubtitle")}
           </p>
 
           {/* Error banner */}
@@ -136,7 +135,7 @@ export default function RegisterPage() {
                 htmlFor="name"
                 className="mb-1.5 block text-sm font-medium text-gray-700"
               >
-                Vollständiger Name
+                {t("fullName")}
               </label>
               <div className="relative">
                 <UserIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -144,7 +143,7 @@ export default function RegisterPage() {
                   id="name"
                   name="name"
                   autoComplete="name"
-                  placeholder="Max Mustermann"
+                  placeholder={t("fullNamePlaceholder")}
                   value={formData.name}
                   onChange={handleChange}
                   required
@@ -159,7 +158,7 @@ export default function RegisterPage() {
                 htmlFor="email"
                 className="mb-1.5 block text-sm font-medium text-gray-700"
               >
-                Geschäftliche E-Mail
+                {t("businessEmail")}
               </label>
               <div className="relative">
                 <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -168,7 +167,7 @@ export default function RegisterPage() {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="max@beispiel.de"
+                  placeholder={t("emailPlaceholder")}
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -183,7 +182,7 @@ export default function RegisterPage() {
                 htmlFor="workspaceName"
                 className="mb-1.5 block text-sm font-medium text-gray-700"
               >
-                Firmenname
+                {t("companyName")}
               </label>
               <div className="relative">
                 <BuildingIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -191,7 +190,7 @@ export default function RegisterPage() {
                   id="workspaceName"
                   name="workspaceName"
                   autoComplete="organization"
-                  placeholder="Meine Firma GmbH"
+                  placeholder={t("companyPlaceholder")}
                   value={formData.workspaceName}
                   onChange={handleChange}
                   required
@@ -206,7 +205,7 @@ export default function RegisterPage() {
                 htmlFor="password"
                 className="mb-1.5 block text-sm font-medium text-gray-700"
               >
-                Passwort
+                {t("password")}
               </label>
               <div className="relative">
                 <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -215,7 +214,7 @@ export default function RegisterPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
-                  placeholder="Mindestens 8 Zeichen"
+                  placeholder={t("passwordPlaceholder")}
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -256,10 +255,10 @@ export default function RegisterPage() {
                   </div>
                   <span className="text-xs text-gray-400">
                     {passwordStrength === 1
-                      ? "Schwach"
+                      ? t("passwordStrengthWeak")
                       : passwordStrength === 2
-                        ? "Mittel"
-                        : "Stark"}
+                        ? t("passwordStrengthMedium")
+                        : t("passwordStrengthStrong")}
                   </span>
                 </div>
               )}
@@ -271,7 +270,7 @@ export default function RegisterPage() {
                 htmlFor="confirmPassword"
                 className="mb-1.5 block text-sm font-medium text-gray-700"
               >
-                Passwort bestätigen
+                {t("confirmPassword")}
               </label>
               <div className="relative">
                 <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -280,7 +279,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   type={showConfirm ? "text" : "password"}
                   autoComplete="new-password"
-                  placeholder="Passwort wiederholen"
+                  placeholder={t("confirmPlaceholder")}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
@@ -329,35 +328,30 @@ export default function RegisterPage() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  Wird erstellt…
+                  {t("creating")}
                 </>
               ) : (
-                "LOS GEHT'S"
+                t("letsGo")
               )}
             </button>
           </form>
 
           {/* Footer link */}
           <p className="mt-8 text-center text-sm text-gray-500">
-            Bereits ein Konto?{" "}
+            {t("hasAccount")}{" "}
             <Link
               href="/login"
               className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] transition-colors"
             >
-              Jetzt anmelden
+              {t("loginHere")}
             </Link>
           </p>
 
           <p className="mt-4 text-center text-xs text-gray-400">
-            Mit der Registrierung akzeptieren Sie unsere{" "}
-            <span className="underline cursor-pointer">
-              Nutzungsbedingungen
-            </span>{" "}
-            und{" "}
-            <span className="underline cursor-pointer">
-              Datenschutzrichtlinie
-            </span>
-            .
+            {t("termsText")}{" "}
+            <span className="underline cursor-pointer">{t("terms")}</span>{" "}
+            {t("and")}{" "}
+            <span className="underline cursor-pointer">{t("privacy")}</span>.
           </p>
         </div>
       </div>
@@ -429,23 +423,25 @@ export default function RegisterPage() {
                 className="text-[var(--brand-600)]"
               />
               <text x="68" y="48" fontSize="14" fontWeight="700" fill="#1F2937">
-                Schichtplan · KW 24
+                {t("scheduleKW")}
               </text>
               {/* Day columns headers */}
-              {["Mo", "Di", "Mi", "Do", "Fr"].map((d, i) => (
-                <g key={d}>
-                  <text
-                    x={52 + i * 52}
-                    y="80"
-                    fontSize="11"
-                    fontWeight="600"
-                    fill="#9CA3AF"
-                    textAnchor="middle"
-                  >
-                    {d}
-                  </text>
-                </g>
-              ))}
+              {[t("dayMo"), t("dayTu"), t("dayWe"), t("dayTh"), t("dayFr")].map(
+                (d, i) => (
+                  <g key={d}>
+                    <text
+                      x={52 + i * 52}
+                      y="80"
+                      fontSize="11"
+                      fontWeight="600"
+                      fill="#9CA3AF"
+                      textAnchor="middle"
+                    >
+                      {d}
+                    </text>
+                  </g>
+                ),
+              )}
               {/* Shift blocks row 1 */}
               <rect
                 x="30"
@@ -521,7 +517,7 @@ export default function RegisterPage() {
                 fill="#F59E0B"
                 textAnchor="middle"
               >
-                Frei
+                {t("dayOff")}
               </text>
               <rect
                 x="238"
@@ -580,7 +576,7 @@ export default function RegisterPage() {
                 fill="#F59E0B"
                 textAnchor="middle"
               >
-                Frei
+                {t("dayOff")}
               </text>
               <rect
                 x="134"
@@ -662,7 +658,7 @@ export default function RegisterPage() {
                 fontWeight="500"
                 fill="#374151"
               >
-                3 Mitarbeiter geplant
+                3 {t("employeesPlanned")}
               </text>
 
               {/* Status badge */}
@@ -683,7 +679,7 @@ export default function RegisterPage() {
                 fontWeight="600"
                 fill="#10B981"
               >
-                Vollständig
+                {t("complete")}
               </text>
 
               {/* Bottom stats */}
@@ -702,25 +698,24 @@ export default function RegisterPage() {
                 fontWeight="500"
                 fill="#6B7280"
               >
-                120 Std. · 5 Schichten
+                120 {t("hrsShifts")}
               </text>
             </svg>
           </div>
 
           <h2 className="text-2xl font-bold text-white">
-            Schichtplanung wird einfach.
+            {t("schedulingMadeEasy")}
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-white/80">
-            Erstellen Sie Dienstpläne, verwalten Sie Teams und behalten Sie den
-            Überblick — alles in einer Plattform.
+            {t("schedulingDesc")}
           </p>
 
           {/* Feature chips */}
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             {[
-              "Drag & Drop Planung",
-              "Echtzeit-Updates",
-              "Team-Kommunikation",
+              t("featureDragDrop"),
+              t("featureRealtime"),
+              t("featureTeamComm"),
             ].map((f) => (
               <span
                 key={f}

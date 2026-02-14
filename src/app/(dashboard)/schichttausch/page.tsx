@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
   ArrowRightIcon,
 } from "@/components/icons";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { de, enUS } from "date-fns/locale";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -48,24 +49,34 @@ interface SwapRequest {
 
 // ─── Constants ──────────────────────────────────────────────────
 
-const STATUS_MAP: Record<
+const STATUS_VARIANTS: Record<
   string,
-  {
-    label: string;
-    variant: "default" | "success" | "destructive" | "warning" | "outline";
-  }
+  "default" | "success" | "destructive" | "warning" | "outline"
 > = {
-  ANGEFRAGT: { label: "Angefragt", variant: "warning" },
-  ANGENOMMEN: { label: "Angenommen", variant: "default" },
-  GENEHMIGT: { label: "Genehmigt", variant: "success" },
-  ABGELEHNT: { label: "Abgelehnt", variant: "destructive" },
-  STORNIERT: { label: "Storniert", variant: "outline" },
-  ABGESCHLOSSEN: { label: "Abgeschlossen", variant: "success" },
+  ANGEFRAGT: "warning",
+  ANGENOMMEN: "default",
+  GENEHMIGT: "success",
+  ABGELEHNT: "destructive",
+  STORNIERT: "outline",
+  ABGESCHLOSSEN: "success",
+};
+
+const STATUS_KEYS: Record<string, string> = {
+  ANGEFRAGT: "statuses.ANGEFRAGT",
+  ANGENOMMEN: "statuses.ANGENOMMEN",
+  GENEHMIGT: "statuses.GENEHMIGT",
+  ABGELEHNT: "statuses.ABGELEHNT",
+  STORNIERT: "statuses.STORNIERT",
+  ABGESCHLOSSEN: "statuses.ABGESCHLOSSEN",
 };
 
 // ─── Component ──────────────────────────────────────────────────
 
 export default function SchichttauschPage() {
+  const t = useTranslations("shiftSwap");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  const dateFnsLocale = locale === "de" ? de : enUS;
   const [swaps, setSwaps] = useState<SwapRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [shifts, setShifts] = useState<ShiftInfo[]>([]);
@@ -166,7 +177,7 @@ export default function SchichttauschPage() {
   // ── Helpers ─────────────────────────────────────────────────
 
   function formatShift(shift: ShiftInfo) {
-    const d = format(new Date(shift.date), "dd.MM.", { locale: de });
+    const d = format(new Date(shift.date), "dd.MM.", { locale: dateFnsLocale });
     return `${d} ${shift.startTime}–${shift.endTime}`;
   }
 
@@ -193,13 +204,13 @@ export default function SchichttauschPage() {
   return (
     <div>
       <Topbar
-        title="Schichttausch"
-        description="Schichten zwischen Mitarbeitern tauschen"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Neue Tauschanfrage</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{t("newRequest")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
           </Button>
         }
       />
@@ -218,7 +229,7 @@ export default function SchichttauschPage() {
                     {openSwaps}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Offene Anfragen
+                    {t("openRequests")}
                   </p>
                 </div>
               </div>
@@ -235,7 +246,7 @@ export default function SchichttauschPage() {
                     {completedSwaps}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Abgeschlossen
+                    {t("completed")}
                   </p>
                 </div>
               </div>
@@ -256,7 +267,7 @@ export default function SchichttauschPage() {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {s === "all" ? "Alle" : STATUS_MAP[s]?.label || s}
+                {s === "all" ? tc("all") : t(STATUS_KEYS[s]) || s}
               </button>
             ),
           )}
@@ -265,22 +276,19 @@ export default function SchichttauschPage() {
         {/* Swap list */}
         <Card>
           <CardHeader>
-            <CardTitle>Tauschanfragen</CardTitle>
+            <CardTitle>{t("requests")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-gray-500">Laden…</p>
+              <p className="text-sm text-gray-500">{tc("loading")}</p>
             ) : swaps.length === 0 ? (
               <div className="text-center py-10">
                 <SwapIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500">
-                  Keine Tauschanfragen vorhanden.
-                </p>
+                <p className="text-sm text-gray-500">{t("noRequests")}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {swaps.map((swap) => {
-                  const statusInfo = STATUS_MAP[swap.status];
                   return (
                     <div
                       key={swap.id}
@@ -340,14 +348,16 @@ export default function SchichttauschPage() {
                             </div>
                           ) : (
                             <span className="text-sm text-gray-400 italic">
-                              Offen
+                              {t("open")}
                             </span>
                           )}
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge variant={statusInfo?.variant || "outline"}>
-                            {statusInfo?.label || swap.status}
+                          <Badge
+                            variant={STATUS_VARIANTS[swap.status] || "outline"}
+                          >
+                            {t(STATUS_KEYS[swap.status]) || swap.status}
                           </Badge>
                         </div>
                       </div>
@@ -367,7 +377,9 @@ export default function SchichttauschPage() {
                             className="bg-green-600 hover:bg-green-700 text-white"
                           >
                             <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Genehmigen</span>
+                            <span className="hidden sm:inline">
+                              {t("approve")}
+                            </span>
                           </Button>
                           <Button
                             size="sm"
@@ -375,7 +387,9 @@ export default function SchichttauschPage() {
                             onClick={() => handleAction(swap.id, "ABGELEHNT")}
                           >
                             <XIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Ablehnen</span>
+                            <span className="hidden sm:inline">
+                              {t("reject")}
+                            </span>
                           </Button>
                         </div>
                       )}
@@ -394,7 +408,7 @@ export default function SchichttauschPage() {
           <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Neue Tauschanfrage</CardTitle>
+                <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1.5 hover:bg-gray-100"
@@ -406,7 +420,7 @@ export default function SchichttauschPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label>Anfragender Mitarbeiter</Label>
+                  <Label>{t("form.requester")}</Label>
                   <Select
                     value={formData.requesterId}
                     onChange={(e) =>
@@ -418,7 +432,7 @@ export default function SchichttauschPage() {
                     }
                     required
                   >
-                    <option value="">Bitte wählen…</option>
+                    <option value="">{tc("selectPlaceholder")}</option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.firstName} {emp.lastName}
@@ -428,7 +442,7 @@ export default function SchichttauschPage() {
                 </div>
 
                 <div>
-                  <Label>Schicht zum Tauschen</Label>
+                  <Label>{t("form.shift")}</Label>
                   <Select
                     value={formData.shiftId}
                     onChange={(e) =>
@@ -436,7 +450,7 @@ export default function SchichttauschPage() {
                     }
                     required
                   >
-                    <option value="">Bitte wählen…</option>
+                    <option value="">{tc("selectPlaceholder")}</option>
                     {shifts
                       .filter(
                         (s) =>
@@ -453,14 +467,14 @@ export default function SchichttauschPage() {
                 </div>
 
                 <div>
-                  <Label>Tauschpartner (optional)</Label>
+                  <Label>{t("form.target")}</Label>
                   <Select
                     value={formData.targetId}
                     onChange={(e) =>
                       setFormData({ ...formData, targetId: e.target.value })
                     }
                   >
-                    <option value="">Offen lassen (jeder kann annehmen)</option>
+                    <option value="">{t("form.targetOpen")}</option>
                     {employees
                       .filter((emp) => emp.id !== formData.requesterId)
                       .map((emp) => (
@@ -472,14 +486,14 @@ export default function SchichttauschPage() {
                 </div>
 
                 <div>
-                  <Label>Grund (optional)</Label>
+                  <Label>{t("form.reason")}</Label>
                   <textarea
                     value={formData.reason}
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
                     className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 min-h-[80px] resize-none"
-                    placeholder="Warum möchten Sie tauschen?"
+                    placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>
 
@@ -489,11 +503,11 @@ export default function SchichttauschPage() {
                     variant="outline"
                     onClick={() => setShowForm(false)}
                   >
-                    Abbrechen
+                    {tc("cancel")}
                   </Button>
                   <Button type="submit">
                     <SwapIcon className="h-4 w-4 mr-2" />
-                    Anfrage senden
+                    {t("form.submit")}
                   </Button>
                 </div>
               </form>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   DashboardIcon,
   CalendarIcon,
@@ -22,17 +23,17 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
-  { label: "Schichtplan", href: "/schichtplan", icon: CalendarIcon },
-  { label: "Zeiterfassung", href: "/zeiterfassung", icon: ClockIcon },
-  { label: "Abwesenheiten", href: "/abwesenheiten", icon: CalendarOffIcon },
-  { label: "Verfügbarkeiten", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
-  { label: "Schichttausch", href: "/schichttausch", icon: SwapIcon },
-  { label: "Zeitkonten", href: "/zeitkonten", icon: ScaleIcon },
-  { label: "Lohnexport", href: "/lohnexport", icon: FileExportIcon },
-  { label: "Mitarbeiter", href: "/mitarbeiter", icon: UsersIcon },
-  { label: "Standorte", href: "/standorte", icon: MapPinIcon },
-  { label: "Einstellungen", href: "/einstellungen", icon: SettingsIcon },
+  { key: "dashboard", href: "/dashboard", icon: DashboardIcon },
+  { key: "shiftPlan", href: "/schichtplan", icon: CalendarIcon },
+  { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
+  { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
+  { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
+  { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
+  { key: "timeAccounts", href: "/zeitkonten", icon: ScaleIcon },
+  { key: "payrollExport", href: "/lohnexport", icon: FileExportIcon },
+  { key: "employees", href: "/mitarbeiter", icon: UsersIcon },
+  { key: "locations", href: "/standorte", icon: MapPinIcon },
+  { key: "settings", href: "/einstellungen", icon: SettingsIcon },
 ];
 
 interface SidebarProps {
@@ -42,6 +43,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <>
@@ -102,7 +104,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     isActive ? "text-violet-700" : "text-gray-400",
                   )}
                 />
-                {item.label}
+                {t(item.key)}
               </Link>
             );
           })}
@@ -115,7 +117,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
           >
             <LogOutIcon className="h-5 w-5 text-gray-400" />
-            Abmelden
+            {t("logout")}
           </button>
         </div>
       </aside>

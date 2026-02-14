@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,34 +32,12 @@ interface Availability {
 
 // ─── Constants ──────────────────────────────────────────────────
 
-const WEEKDAYS = [
-  "Montag",
-  "Dienstag",
-  "Mittwoch",
-  "Donnerstag",
-  "Freitag",
-  "Samstag",
-  "Sonntag",
-];
+const WEEKDAY_KEYS = [0, 1, 2, 3, 4, 5, 6];
 
-const WEEKDAYS_SHORT = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-
-const TYPES = [
-  {
-    value: "VERFUEGBAR",
-    label: "Verfügbar",
-    color: "bg-green-100 text-green-700",
-  },
-  {
-    value: "BEVORZUGT",
-    label: "Bevorzugt",
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    value: "NICHT_VERFUEGBAR",
-    label: "Nicht verfügbar",
-    color: "bg-red-100 text-red-700",
-  },
+const TYPE_KEYS = [
+  { value: "VERFUEGBAR", color: "bg-green-100 text-green-700" },
+  { value: "BEVORZUGT", color: "bg-blue-100 text-blue-700" },
+  { value: "NICHT_VERFUEGBAR", color: "bg-red-100 text-red-700" },
 ];
 
 // ─── Weekly entry type for the form ─────────────────────────────
@@ -74,6 +53,8 @@ interface WeekdayEntry {
 // ─── Component ──────────────────────────────────────────────────
 
 export default function VerfuegbarkeitenPage() {
+  const t = useTranslations("availability");
+  const tc = useTranslations("common");
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState("");
@@ -81,7 +62,7 @@ export default function VerfuegbarkeitenPage() {
   const [loading, setLoading] = useState(true);
 
   const defaultEntries = (): WeekdayEntry[] =>
-    WEEKDAYS.map((_, i) => ({
+    WEEKDAY_KEYS.map((i) => ({
       weekday: i,
       type: i < 5 ? "VERFUEGBAR" : "NICHT_VERFUEGBAR",
       startTime: "08:00",
@@ -169,7 +150,7 @@ export default function VerfuegbarkeitenPage() {
   }
 
   function getTypeInfo(type: string) {
-    return TYPES.find((t) => t.value === type) || TYPES[0];
+    return TYPE_KEYS.find((tk) => tk.value === type) || TYPE_KEYS[0];
   }
 
   // ── Render ──────────────────────────────────────────────────
@@ -177,13 +158,13 @@ export default function VerfuegbarkeitenPage() {
   return (
     <div>
       <Topbar
-        title="Verfügbarkeiten"
-        description="Mitarbeiter-Verfügbarkeiten pro Wochentag verwalten"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button onClick={() => setShowForm(true)}>
             <HandRaisedIcon className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Verfügbarkeit eintragen</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{t("addAvailability")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
           </Button>
         }
       />
@@ -195,7 +176,7 @@ export default function VerfuegbarkeitenPage() {
             value={selectedEmployee}
             onChange={(e) => setSelectedEmployee(e.target.value)}
           >
-            <option value="">Alle Mitarbeiter</option>
+            <option value="">{tc("allEmployees")}</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.firstName} {emp.lastName}
@@ -206,14 +187,12 @@ export default function VerfuegbarkeitenPage() {
 
         {/* Availability cards per employee */}
         {loading ? (
-          <p className="text-sm text-gray-500">Laden…</p>
+          <p className="text-sm text-gray-500">{tc("loading")}</p>
         ) : Object.keys(grouped).length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center">
               <HandRaisedIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">
-                Noch keine Verfügbarkeiten eingetragen.
-              </p>
+              <p className="text-sm text-gray-500">{t("noEntries")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -236,18 +215,18 @@ export default function VerfuegbarkeitenPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {WEEKDAYS.map((day, i) => {
+                    {WEEKDAY_KEYS.map((i) => {
                       const entry = entries.find((e) => e.weekday === i);
                       const typeInfo = entry
                         ? getTypeInfo(entry.type)
-                        : { label: "—", color: "bg-gray-50 text-gray-400" };
+                        : { value: "", color: "bg-gray-50 text-gray-400" };
                       return (
                         <div
                           key={i}
                           className="flex items-center justify-between gap-2 py-1.5 border-b border-gray-50 last:border-0"
                         >
                           <span className="text-sm font-medium text-gray-700 w-24 shrink-0">
-                            {day}
+                            {t(`weekdays.${i}`)}
                           </span>
                           <div className="flex items-center gap-2 min-w-0">
                             {entry?.startTime && entry?.endTime && (
@@ -258,7 +237,7 @@ export default function VerfuegbarkeitenPage() {
                             <Badge
                               className={`${typeInfo.color} text-xs shrink-0`}
                             >
-                              {typeInfo.label}
+                              {entry ? t(`types.${entry.type}`) : "—"}
                             </Badge>
                           </div>
                         </div>
@@ -278,7 +257,7 @@ export default function VerfuegbarkeitenPage() {
           <Card className="w-full max-w-2xl mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Verfügbarkeit eintragen</CardTitle>
+                <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1.5 hover:bg-gray-100"
@@ -290,13 +269,13 @@ export default function VerfuegbarkeitenPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label>Mitarbeiter</Label>
+                  <Label>{t("form.employee")}</Label>
                   <Select
                     value={formEmployee}
                     onChange={(e) => setFormEmployee(e.target.value)}
                     required
                   >
-                    <option value="">Bitte wählen…</option>
+                    <option value="">{tc("selectPlaceholder")}</option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.firstName} {emp.lastName}
@@ -313,17 +292,21 @@ export default function VerfuegbarkeitenPage() {
                       className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-gray-50"
                     >
                       <span className="text-sm font-medium text-gray-700 w-20 shrink-0">
-                        <span className="hidden sm:inline">{WEEKDAYS[i]}</span>
-                        <span className="sm:hidden">{WEEKDAYS_SHORT[i]}</span>
+                        <span className="hidden sm:inline">
+                          {t(`weekdays.${i}`)}
+                        </span>
+                        <span className="sm:hidden">
+                          {t(`weekdaysShort.${i}`)}
+                        </span>
                       </span>
                       <Select
                         value={entry.type}
                         onChange={(e) => updateEntry(i, "type", e.target.value)}
                         className="text-xs sm:text-sm flex-1"
                       >
-                        {TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
+                        {TYPE_KEYS.map((tk) => (
+                          <option key={tk.value} value={tk.value}>
+                            {t(`types.${tk.value}`)}
                           </option>
                         ))}
                       </Select>
@@ -358,11 +341,11 @@ export default function VerfuegbarkeitenPage() {
                     variant="outline"
                     onClick={() => setShowForm(false)}
                   >
-                    Abbrechen
+                    {tc("cancel")}
                   </Button>
                   <Button type="submit">
                     <CheckCircleIcon className="h-4 w-4 mr-2" />
-                    Speichern
+                    {tc("save")}
                   </Button>
                 </div>
               </form>

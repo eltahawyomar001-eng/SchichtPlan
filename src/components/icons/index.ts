@@ -39,3 +39,4 @@ export { HandRaisedIcon } from "./HandRaisedIcon";
 export { SwapIcon } from "./SwapIcon";
 export { ScaleIcon } from "./ScaleIcon";
 export { FileExportIcon } from "./FileExportIcon";
+export { GlobeIcon } from "./GlobeIcon";

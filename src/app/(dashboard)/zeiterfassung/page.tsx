@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,22 @@ import {
   formatMinutesToHHmm,
   formatIndustrial,
   getCalendarWeek,
-  STATUS_LABELS,
   STATUS_COLORS,
 } from "@/lib/time-utils";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
+
+// ─── Constants ──────────────────────────────────────────────────
+
+const STATUS_KEYS = [
+  "ENTWURF",
+  "EINGEREICHT",
+  "KORREKTUR",
+  "ZURUECKGEWIESEN",
+  "GEPRUEFT",
+  "BESTAETIGT",
+] as const;
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -79,6 +90,10 @@ interface TimeEntry {
 
 export default function ZeiterfassungPage() {
   const { data: session } = useSession();
+  const t = useTranslations("timeTracking");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  const dateFnsLocale = locale === "de" ? de : enUS;
   const user = session?.user as SessionUser | undefined;
   const isManager =
     user && ["OWNER", "ADMIN", "MANAGER"].includes(user.role ?? "");
@@ -223,7 +238,7 @@ export default function ZeiterfassungPage() {
             data.errors.map((err: { message: string }) => err.message),
           );
         } else {
-          setFormErrors([data.error || "Fehler beim Speichern"]);
+          setFormErrors([data.error || t("saveError")]);
         }
         return;
       }
@@ -232,7 +247,7 @@ export default function ZeiterfassungPage() {
       fetchEntries();
     } catch (error) {
       console.error("Error:", error);
-      setFormErrors(["Netzwerkfehler"]);
+      setFormErrors([t("networkError")]);
     } finally {
       setSubmitting(false);
     }
@@ -258,7 +273,7 @@ export default function ZeiterfassungPage() {
         setActionComment("");
       } else {
         const data = await res.json();
-        alert(data.error || "Fehler");
+        alert(data.error || t("error"));
       }
     } catch (error) {
       console.error("Error:", error);
@@ -266,7 +281,7 @@ export default function ZeiterfassungPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Eintrag wirklich löschen?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     try {
       const res = await fetch(`/api/time-entries/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -318,20 +333,20 @@ export default function ZeiterfassungPage() {
   return (
     <div>
       <Topbar
-        title="Zeiterfassung"
-        description="Arbeitszeiten erfassen, prüfen und exportieren"
+        title={t("title")}
+        description={t("description")}
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2">
             {isManager && (
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <DownloadIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Export</span>
+                <span className="hidden sm:inline">{t("export")}</span>
               </Button>
             )}
             <Button size="sm" onClick={() => setShowForm(true)}>
               <PlusIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Neuer Eintrag</span>
-              <span className="sm:hidden">Neu</span>
+              <span className="hidden sm:inline">{t("newEntry")}</span>
+              <span className="sm:hidden">{tc("new")}</span>
             </Button>
           </div>
         }
@@ -348,13 +363,13 @@ export default function ZeiterfassungPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Gesamtstunden
+                    {t("totalHours")}
                   </p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {formatMinutesToHHmm(totalNetMinutes)}
                   </p>
                   <p className="text-[10px] sm:text-xs text-gray-400 truncate">
-                    {formatIndustrial(totalNetMinutes)} Ind.-Std.
+                    {formatIndustrial(totalNetMinutes)} {t("industrialHrs")}
                   </p>
                 </div>
               </div>
@@ -368,7 +383,9 @@ export default function ZeiterfassungPage() {
                   <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500">Einträge</p>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    {t("entries")}
+                  </p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {filteredEntries.length}
                   </p>
@@ -384,7 +401,9 @@ export default function ZeiterfassungPage() {
                   <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500">Offen</p>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    {t("open")}
+                  </p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {pendingCount}
                   </p>
@@ -400,7 +419,9 @@ export default function ZeiterfassungPage() {
                   <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500">Bestätigt</p>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    {t("confirmed")}
+                  </p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {confirmedCount}
                   </p>
@@ -415,7 +436,7 @@ export default function ZeiterfassungPage() {
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Suchen (Name, Standort, Bemerkung)..."
+              placeholder={t("searchPlaceholder")}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -427,7 +448,7 @@ export default function ZeiterfassungPage() {
             onClick={() => setShowFilters(!showFilters)}
           >
             <FilterIcon className="h-4 w-4" />
-            Filter
+            {t("filter")}
             <ChevronDownIcon
               className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
             />
@@ -439,16 +460,18 @@ export default function ZeiterfassungPage() {
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-gray-500 mb-1">Status</Label>
+                  <Label className="text-xs text-gray-500 mb-1">
+                    {tc("status")}
+                  </Label>
                   <select
                     className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
-                    <option value="">Alle</option>
-                    {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                    <option value="">{tc("all")}</option>
+                    {STATUS_KEYS.map((key) => (
                       <option key={key} value={key}>
-                        {label}
+                        {t(`statuses.${key}`)}
                       </option>
                     ))}
                   </select>
@@ -457,14 +480,14 @@ export default function ZeiterfassungPage() {
                 {isManager && (
                   <div>
                     <Label className="text-xs text-gray-500 mb-1">
-                      Mitarbeiter
+                      {tc("employee")}
                     </Label>
                     <select
                       className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       value={filterEmployee}
                       onChange={(e) => setFilterEmployee(e.target.value)}
                     >
-                      <option value="">Alle</option>
+                      <option value="">{tc("all")}</option>
                       {employees.map((emp) => (
                         <option key={emp.id} value={emp.id}>
                           {emp.firstName} {emp.lastName}
@@ -485,7 +508,7 @@ export default function ZeiterfassungPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>
-                    {editingId ? "Eintrag bearbeiten" : "Neuer Zeiteintrag"}
+                    {editingId ? t("editEntry") : t("newTimeEntry")}
                   </CardTitle>
                   <button
                     onClick={resetForm}
@@ -509,7 +532,7 @@ export default function ZeiterfassungPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="date">Datum *</Label>
+                      <Label htmlFor="date">{t("form.date")} *</Label>
                       <Input
                         id="date"
                         type="date"
@@ -521,7 +544,7 @@ export default function ZeiterfassungPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="employeeId">Mitarbeiter *</Label>
+                      <Label htmlFor="employeeId">{t("form.employee")} *</Label>
                       <select
                         id="employeeId"
                         className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -534,7 +557,7 @@ export default function ZeiterfassungPage() {
                         }
                         required
                       >
-                        <option value="">Wählen...</option>
+                        <option value="">{t("form.selectEmployee")}</option>
                         {employees.map((emp) => (
                           <option key={emp.id} value={emp.id}>
                             {emp.firstName} {emp.lastName}
@@ -546,7 +569,7 @@ export default function ZeiterfassungPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="startTime">Startzeit *</Label>
+                      <Label htmlFor="startTime">{t("form.startTime")} *</Label>
                       <Input
                         id="startTime"
                         type="time"
@@ -561,7 +584,7 @@ export default function ZeiterfassungPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="endTime">Endzeit *</Label>
+                      <Label htmlFor="endTime">{t("form.endTime")} *</Label>
                       <Input
                         id="endTime"
                         type="time"
@@ -579,7 +602,7 @@ export default function ZeiterfassungPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="breakStart">Pause von</Label>
+                      <Label htmlFor="breakStart">{t("form.breakFrom")}</Label>
                       <Input
                         id="breakStart"
                         type="time"
@@ -593,7 +616,7 @@ export default function ZeiterfassungPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="breakEnd">Pause bis</Label>
+                      <Label htmlFor="breakEnd">{t("form.breakTo")}</Label>
                       <Input
                         id="breakEnd"
                         type="time"
@@ -607,7 +630,9 @@ export default function ZeiterfassungPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="breakMinutes">Pause (Min.)</Label>
+                      <Label htmlFor="breakMinutes">
+                        {t("form.breakMinutes")}
+                      </Label>
                       <Input
                         id="breakMinutes"
                         type="number"
@@ -624,7 +649,7 @@ export default function ZeiterfassungPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="locationId">Standort</Label>
+                    <Label htmlFor="locationId">{t("form.location")}</Label>
                     <select
                       id="locationId"
                       className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -636,7 +661,7 @@ export default function ZeiterfassungPage() {
                         }))
                       }
                     >
-                      <option value="">Kein Standort</option>
+                      <option value="">{t("form.noLocation")}</option>
                       {locations.map((loc) => (
                         <option key={loc.id} value={loc.id}>
                           {loc.name}
@@ -646,7 +671,7 @@ export default function ZeiterfassungPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="remarks">Bemerkung</Label>
+                    <Label htmlFor="remarks">{t("form.remarks")}</Label>
                     <textarea
                       id="remarks"
                       rows={2}
@@ -655,20 +680,20 @@ export default function ZeiterfassungPage() {
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, remarks: e.target.value }))
                       }
-                      placeholder="Optional: Tätigkeit, Projekt, etc."
+                      placeholder={t("form.remarksPlaceholder")}
                     />
                   </div>
 
                   <div className="flex justify-end gap-3 pt-2">
                     <Button type="button" variant="outline" onClick={resetForm}>
-                      Abbrechen
+                      {tc("cancel")}
                     </Button>
                     <Button type="submit" disabled={submitting}>
                       {submitting
-                        ? "Speichern..."
+                        ? t("form.saving")
                         : editingId
-                          ? "Aktualisieren"
-                          : "Speichern"}
+                          ? t("form.update")
+                          : tc("save")}
                     </Button>
                   </div>
                 </form>
@@ -683,7 +708,7 @@ export default function ZeiterfassungPage() {
             <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Zeiteintrag Details</CardTitle>
+                  <CardTitle>{t("entryDetails")}</CardTitle>
                   <button
                     onClick={() => {
                       setSelectedEntry(null);
@@ -699,28 +724,30 @@ export default function ZeiterfassungPage() {
                 {/* Entry info */}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-500">Mitarbeiter</span>
+                    <span className="text-gray-500">
+                      {t("detail.employee")}
+                    </span>
                     <p className="font-medium">
                       {selectedEntry.employee.firstName}{" "}
                       {selectedEntry.employee.lastName}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Datum</span>
+                    <span className="text-gray-500">{t("detail.date")}</span>
                     <p className="font-medium">
                       {format(new Date(selectedEntry.date), "dd.MM.yyyy", {
-                        locale: de,
+                        locale: dateFnsLocale,
                       })}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Zeit</span>
+                    <span className="text-gray-500">{t("detail.time")}</span>
                     <p className="font-medium">
                       {selectedEntry.startTime} – {selectedEntry.endTime}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Netto</span>
+                    <span className="text-gray-500">{t("detail.net")}</span>
                     <p className="font-medium">
                       {formatMinutesToHHmm(selectedEntry.netMinutes)} (
                       {formatIndustrial(selectedEntry.netMinutes)} h)
@@ -728,26 +755,29 @@ export default function ZeiterfassungPage() {
                   </div>
                   {selectedEntry.location && (
                     <div>
-                      <span className="text-gray-500">Standort</span>
+                      <span className="text-gray-500">
+                        {t("detail.location")}
+                      </span>
                       <p className="font-medium">
                         {selectedEntry.location.name}
                       </p>
                     </div>
                   )}
                   <div>
-                    <span className="text-gray-500">Status</span>
+                    <span className="text-gray-500">{t("detail.status")}</span>
                     <p>
                       <Badge
                         className={STATUS_COLORS[selectedEntry.status] ?? ""}
                       >
-                        {STATUS_LABELS[selectedEntry.status] ??
-                          selectedEntry.status}
+                        {t(`statuses.${selectedEntry.status}`)}
                       </Badge>
                     </p>
                   </div>
                   {selectedEntry.remarks && (
                     <div className="col-span-2">
-                      <span className="text-gray-500">Bemerkung</span>
+                      <span className="text-gray-500">
+                        {t("detail.remarks")}
+                      </span>
                       <p className="font-medium">{selectedEntry.remarks}</p>
                     </div>
                   )}
@@ -764,7 +794,7 @@ export default function ZeiterfassungPage() {
                           handleStatusAction(selectedEntry.id, "submit")
                         }
                       >
-                        Einreichen
+                        {t("submit")}
                       </Button>
                       <Button
                         size="sm"
@@ -775,14 +805,14 @@ export default function ZeiterfassungPage() {
                         }}
                       >
                         <EditIcon className="h-4 w-4" />
-                        Bearbeiten
+                        {tc("edit")}
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDelete(selectedEntry.id)}
                       >
-                        Löschen
+                        {tc("delete")}
                       </Button>
                     </div>
                   )}
@@ -792,14 +822,14 @@ export default function ZeiterfassungPage() {
                     <div className="space-y-3">
                       <div>
                         <Label className="text-xs text-gray-500">
-                          Kommentar (optional)
+                          {t("commentOptional")}
                         </Label>
                         <textarea
                           rows={2}
                           className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           value={actionComment}
                           onChange={(e) => setActionComment(e.target.value)}
-                          placeholder="Begründung..."
+                          placeholder={t("commentPlaceholder")}
                         />
                       </div>
                       <div className="flex gap-2">
@@ -814,7 +844,7 @@ export default function ZeiterfassungPage() {
                           }
                         >
                           <CheckCircleIcon className="h-4 w-4" />
-                          Genehmigen
+                          {t("approve")}
                         </Button>
                         <Button
                           size="sm"
@@ -827,7 +857,7 @@ export default function ZeiterfassungPage() {
                             )
                           }
                         >
-                          Korrektur anfordern
+                          {t("requestCorrection")}
                         </Button>
                         <Button
                           size="sm"
@@ -840,7 +870,7 @@ export default function ZeiterfassungPage() {
                             )
                           }
                         >
-                          Ablehnen
+                          {t("reject")}
                         </Button>
                       </div>
                     </div>
@@ -854,7 +884,7 @@ export default function ZeiterfassungPage() {
                       }
                     >
                       <CheckCircleIcon className="h-4 w-4" />
-                      Endgültig bestätigen
+                      {t("finalConfirm")}
                     </Button>
                   )}
                 </div>
@@ -863,7 +893,7 @@ export default function ZeiterfassungPage() {
                 {selectedEntry.auditLog.length > 0 && (
                   <div className="border-t pt-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      Änderungsprotokoll
+                      {t("auditLog")}
                     </h4>
                     <div className="space-y-2">
                       {selectedEntry.auditLog.map((log) => (
@@ -883,7 +913,7 @@ export default function ZeiterfassungPage() {
                               {format(
                                 new Date(log.performedAt),
                                 "dd.MM.yyyy HH:mm",
-                                { locale: de },
+                                { locale: dateFnsLocale },
                               )}
                             </p>
                           </div>
@@ -902,15 +932,13 @@ export default function ZeiterfassungPage() {
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <p className="text-gray-500">Laden...</p>
+                <p className="text-gray-500">{tc("loading")}</p>
               </div>
             ) : filteredEntries.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                 <ClockIcon className="h-12 w-12 mb-3" />
-                <p className="text-lg font-medium">Keine Einträge</p>
-                <p className="text-sm">
-                  Erstellen Sie einen neuen Zeiteintrag.
-                </p>
+                <p className="text-lg font-medium">{t("noEntries")}</p>
+                <p className="text-sm">{t("noEntriesHint")}</p>
               </div>
             ) : (
               <>
@@ -939,11 +967,13 @@ export default function ZeiterfassungPage() {
                             </span>
                           </div>
                           <Badge className={STATUS_COLORS[entry.status] ?? ""}>
-                            {STATUS_LABELS[entry.status] ?? entry.status}
+                            {t(`statuses.${entry.status}`)}
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{format(d, "dd.MM.yyyy", { locale: de })}</span>
+                          <span>
+                            {format(d, "dd.MM.yyyy", { locale: dateFnsLocale })}
+                          </span>
                           <span>
                             {entry.startTime} – {entry.endTime}
                           </span>
@@ -962,7 +992,9 @@ export default function ZeiterfassungPage() {
                   })}
                   {/* Mobile total */}
                   <div className="p-4 bg-gray-50/50 flex items-center justify-between text-sm">
-                    <span className="font-medium text-gray-700">Gesamt:</span>
+                    <span className="font-medium text-gray-700">
+                      {t("total")}
+                    </span>
                     <span className="font-bold text-gray-900">
                       {formatMinutesToHHmm(totalNetMinutes)}
                       <span className="text-xs text-gray-400 ml-1 font-normal">
@@ -978,28 +1010,28 @@ export default function ZeiterfassungPage() {
                     <thead>
                       <tr className="border-b bg-gray-50/50">
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Datum
+                          {t("table.date")}
                         </th>
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Mitarbeiter
+                          {t("table.employee")}
                         </th>
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Zeit
+                          {t("table.time")}
                         </th>
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Pause
+                          {t("table.break")}
                         </th>
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Netto
+                          {t("table.net")}
                         </th>
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Standort
+                          {t("table.location")}
                         </th>
                         <th className="px-4 py-3 text-left font-medium text-gray-500">
-                          Status
+                          {t("table.status")}
                         </th>
                         <th className="px-4 py-3 text-right font-medium text-gray-500">
-                          KW
+                          {t("table.cw")}
                         </th>
                       </tr>
                     </thead>
@@ -1015,7 +1047,9 @@ export default function ZeiterfassungPage() {
                             onClick={() => setSelectedEntry(entry)}
                           >
                             <td className="px-4 py-3 font-medium text-gray-900">
-                              {format(d, "dd.MM.yyyy", { locale: de })}
+                              {format(d, "dd.MM.yyyy", {
+                                locale: dateFnsLocale,
+                              })}
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
@@ -1056,7 +1090,7 @@ export default function ZeiterfassungPage() {
                               <Badge
                                 className={STATUS_COLORS[entry.status] ?? ""}
                               >
-                                {STATUS_LABELS[entry.status] ?? entry.status}
+                                {t(`statuses.${entry.status}`)}
                               </Badge>
                             </td>
                             <td className="px-4 py-3 text-right text-gray-500">
@@ -1072,7 +1106,7 @@ export default function ZeiterfassungPage() {
                           colSpan={4}
                           className="px-4 py-3 text-right font-medium text-gray-700"
                         >
-                          Gesamt:
+                          {t("total")}
                         </td>
                         <td className="px-4 py-3 font-bold text-gray-900">
                           {formatMinutesToHHmm(totalNetMinutes)}

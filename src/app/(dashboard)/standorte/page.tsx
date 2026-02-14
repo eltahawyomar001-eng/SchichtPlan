@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ interface Location {
 }
 
 export default function StandortePage() {
+  const t = useTranslations("locationsPage");
+  const tc = useTranslations("common");
   const [locations, setLocations] = useState<Location[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,7 @@ export default function StandortePage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Standort wirklich löschen?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     try {
       await fetch(`/api/locations/${id}`, { method: "DELETE" });
       fetchLocations();
@@ -69,13 +72,13 @@ export default function StandortePage() {
   return (
     <div>
       <Topbar
-        title="Standorte"
-        description="Verwalten Sie Ihre Standorte"
+        title={t("title")}
+        description={t("description")}
         actions={
           <Button size="sm" onClick={() => setShowForm(true)}>
             <PlusIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Neuer Standort</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{t("newLocation")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
           </Button>
         }
       />
@@ -86,7 +89,7 @@ export default function StandortePage() {
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Neuer Standort</CardTitle>
+                <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1 hover:bg-gray-100"
@@ -97,27 +100,27 @@ export default function StandortePage() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name *</Label>
+                    <Label htmlFor="name">{t("form.name")} *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, name: e.target.value }))
                       }
-                      placeholder="z.B. Hauptstandort"
+                      placeholder={t("form.namePlaceholder")}
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address">Adresse</Label>
+                    <Label htmlFor="address">{t("form.address")}</Label>
                     <Input
                       id="address"
                       value={formData.address}
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, address: e.target.value }))
                       }
-                      placeholder="z.B. Musterstraße 1, 10115 Berlin"
+                      placeholder={t("form.addressPlaceholder")}
                     />
                   </div>
 
@@ -127,9 +130,9 @@ export default function StandortePage() {
                       variant="outline"
                       onClick={() => setShowForm(false)}
                     >
-                      Abbrechen
+                      {tc("cancel")}
                     </Button>
-                    <Button type="submit">Speichern</Button>
+                    <Button type="submit">{tc("save")}</Button>
                   </div>
                 </form>
               </CardContent>
@@ -140,7 +143,7 @@ export default function StandortePage() {
         {/* Locations List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500">Laden...</p>
+            <p className="text-gray-500">{tc("loading")}</p>
           </div>
         ) : locations.length === 0 ? (
           <Card>
@@ -149,14 +152,14 @@ export default function StandortePage() {
                 <MapPinIcon className="h-8 w-8 text-gray-400" />
               </div>
               <p className="text-lg font-medium text-gray-900">
-                Noch keine Standorte
+                {t("noLocations")}
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                Fügen Sie Ihren ersten Standort hinzu.
+                {t("noLocationsHint")}
               </p>
               <Button className="mt-4" onClick={() => setShowForm(true)}>
                 <PlusIcon className="h-4 w-4" />
-                Standort hinzufügen
+                {t("addLocation")}
               </Button>
             </CardContent>
           </Card>

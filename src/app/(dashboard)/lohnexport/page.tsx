@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
   UsersIcon,
 } from "@/components/icons";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { de } from "date-fns/locale";
+import { de, enUS } from "date-fns/locale";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -37,6 +38,10 @@ interface ExportSummary {
 // ─── Component ──────────────────────────────────────────────────
 
 export default function LohnexportPage() {
+  const t = useTranslations("payrollExport");
+  const tc = useTranslations("common");
+  const locale = useLocale();
+  const dateFnsLocale = locale === "de" ? de : enUS;
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [preview, setPreview] = useState<ExportSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -125,10 +130,7 @@ export default function LohnexportPage() {
 
   return (
     <div>
-      <Topbar
-        title="Lohnexport"
-        description="DATEV-kompatible Lohndaten exportieren"
-      />
+      <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6">
         {/* Configuration */}
@@ -136,20 +138,20 @@ export default function LohnexportPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileExportIcon className="h-5 w-5 text-violet-600" />
-              Export konfigurieren
+              {t("configure")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Quick presets */}
             <div>
               <Label className="text-xs text-gray-500 mb-2 block">
-                Schnellauswahl
+                {t("quickSelect")}
               </Label>
               <div className="flex items-center gap-2 flex-wrap">
                 {[
-                  { label: "Letzter Monat", months: 1 },
-                  { label: "Vorletzter Monat", months: 2 },
-                  { label: "Aktueller Monat", months: 0 },
+                  { label: t("lastMonth"), months: 1 },
+                  { label: t("monthBefore"), months: 2 },
+                  { label: t("currentMonth"), months: 0 },
                 ].map((preset) => (
                   <button
                     key={preset.months}
@@ -164,7 +166,7 @@ export default function LohnexportPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <Label>Von</Label>
+                <Label>{tc("from")}</Label>
                 <Input
                   type="date"
                   value={startDate}
@@ -175,7 +177,7 @@ export default function LohnexportPage() {
                 />
               </div>
               <div>
-                <Label>Bis</Label>
+                <Label>{tc("to")}</Label>
                 <Input
                   type="date"
                   value={endDate}
@@ -186,7 +188,7 @@ export default function LohnexportPage() {
                 />
               </div>
               <div>
-                <Label>Mitarbeiter</Label>
+                <Label>{tc("employee")}</Label>
                 <Select
                   value={selectedEmployee}
                   onChange={(e) => {
@@ -194,7 +196,7 @@ export default function LohnexportPage() {
                     setPreviewLoaded(false);
                   }}
                 >
-                  <option value="">Alle Mitarbeiter</option>
+                  <option value="">{tc("allEmployees")}</option>
                   {employees.map((emp) => (
                     <option key={emp.id} value={emp.id}>
                       {emp.firstName} {emp.lastName}
@@ -203,13 +205,13 @@ export default function LohnexportPage() {
                 </Select>
               </div>
               <div>
-                <Label>Format</Label>
+                <Label>{t("format")}</Label>
                 <Select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value)}
                 >
-                  <option value="datev">DATEV (Semikolon)</option>
-                  <option value="csv">CSV (Komma)</option>
+                  <option value="datev">{t("datev")}</option>
+                  <option value="csv">{t("csv")}</option>
                 </Select>
               </div>
             </div>
@@ -220,12 +222,12 @@ export default function LohnexportPage() {
                 onClick={handlePreview}
                 disabled={loading}
               >
-                {loading ? "Laden…" : "Vorschau"}
+                {loading ? tc("loading") : tc("preview")}
               </Button>
               <Button onClick={handleDownload}>
                 <DownloadIcon className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">CSV herunterladen</span>
-                <span className="sm:hidden">Download</span>
+                <span className="hidden sm:inline">{t("downloadCsv")}</span>
+                <span className="sm:hidden">{tc("download")}</span>
               </Button>
             </div>
           </CardContent>
@@ -246,7 +248,7 @@ export default function LohnexportPage() {
                         {totalEmployees}
                       </p>
                       <p className="text-xs sm:text-sm text-gray-500 truncate">
-                        Mitarbeiter
+                        {tc("employees")}
                       </p>
                     </div>
                   </div>
@@ -263,7 +265,7 @@ export default function LohnexportPage() {
                         {totalHours.toFixed(2)}
                       </p>
                       <p className="text-xs sm:text-sm text-gray-500 truncate">
-                        Netto-Stunden
+                        {t("netHours")}
                       </p>
                     </div>
                   </div>
@@ -275,10 +277,15 @@ export default function LohnexportPage() {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  Zusammenfassung{" "}
+                  {t("summary")}{" "}
                   <span className="text-sm font-normal text-gray-500">
-                    {format(new Date(startDate), "dd.MM.yyyy")} –{" "}
-                    {format(new Date(endDate), "dd.MM.yyyy")}
+                    {format(new Date(startDate), "dd.MM.yyyy", {
+                      locale: dateFnsLocale,
+                    })}{" "}
+                    –{" "}
+                    {format(new Date(endDate), "dd.MM.yyyy", {
+                      locale: dateFnsLocale,
+                    })}
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -286,12 +293,9 @@ export default function LohnexportPage() {
                 {preview.length === 0 ? (
                   <div className="text-center py-10">
                     <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-sm text-gray-500">
-                      Keine bestätigten Zeiteinträge im gewählten Zeitraum.
-                    </p>
+                    <p className="text-sm text-gray-500">{t("noEntries")}</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Nur Einträge mit Status &quot;Bestätigt&quot; werden
-                      exportiert.
+                      {t("onlyConfirmed")}
                     </p>
                   </div>
                 ) : (
@@ -300,19 +304,19 @@ export default function LohnexportPage() {
                       <thead>
                         <tr className="border-b border-gray-200">
                           <th className="text-left py-2 px-3 font-medium text-gray-500">
-                            Mitarbeiter
+                            {tc("employee")}
                           </th>
                           <th className="text-right py-2 px-3 font-medium text-gray-500">
-                            Tage
+                            {tc("days")}
                           </th>
                           <th className="text-right py-2 px-3 font-medium text-gray-500 hidden sm:table-cell">
-                            Brutto
+                            {t("gross")}
                           </th>
                           <th className="text-right py-2 px-3 font-medium text-gray-500 hidden sm:table-cell">
-                            Pause
+                            {t("break")}
                           </th>
                           <th className="text-right py-2 px-3 font-medium text-gray-500">
-                            Netto
+                            {t("net")}
                           </th>
                         </tr>
                       </thead>
@@ -338,13 +342,13 @@ export default function LohnexportPage() {
                               {row.days}
                             </td>
                             <td className="text-right py-2.5 px-3 text-gray-700 hidden sm:table-cell">
-                              {row.totalGrossHours.toFixed(2)} Std
+                              {row.totalGrossHours.toFixed(2)} {tc("hrsShort")}
                             </td>
                             <td className="text-right py-2.5 px-3 text-gray-700 hidden sm:table-cell">
-                              {row.totalBreakHours.toFixed(2)} Std
+                              {row.totalBreakHours.toFixed(2)} {tc("hrsShort")}
                             </td>
                             <td className="text-right py-2.5 px-3 font-medium text-gray-900">
-                              {row.totalNetHours.toFixed(2)} Std
+                              {row.totalNetHours.toFixed(2)} {tc("hrsShort")}
                             </td>
                           </tr>
                         ))}
@@ -352,7 +356,7 @@ export default function LohnexportPage() {
                       <tfoot>
                         <tr className="border-t-2 border-gray-200">
                           <td className="py-2.5 px-3 font-bold text-gray-900">
-                            Gesamt
+                            {tc("total")}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900">
                             {preview.reduce((s, r) => s + r.days, 0)}
@@ -361,16 +365,16 @@ export default function LohnexportPage() {
                             {preview
                               .reduce((s, r) => s + r.totalGrossHours, 0)
                               .toFixed(2)}{" "}
-                            Std
+                            {tc("hrsShort")}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900 hidden sm:table-cell">
                             {preview
                               .reduce((s, r) => s + r.totalBreakHours, 0)
                               .toFixed(2)}{" "}
-                            Std
+                            {tc("hrsShort")}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900">
-                            {totalHours.toFixed(2)} Std
+                            {totalHours.toFixed(2)} {tc("hrsShort")}
                           </td>
                         </tr>
                       </tfoot>
@@ -387,14 +391,9 @@ export default function LohnexportPage() {
           <Card>
             <CardContent className="py-10 text-center">
               <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">
-                Wählen Sie einen Zeitraum und klicken Sie auf
-                &quot;Vorschau&quot;, um die Daten zu prüfen.
-              </p>
+              <p className="text-sm text-gray-500">{t("helpText")}</p>
               <p className="text-xs text-gray-400 mt-2 max-w-md mx-auto">
-                Der Export enthält nur bestätigte Zeiteinträge und ist
-                kompatibel mit DATEV, Lexware und anderen
-                Lohnabrechnungsprogrammen.
+                {t("helpHint")}
               </p>
             </CardContent>
           </Card>

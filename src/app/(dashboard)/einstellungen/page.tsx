@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import {
   Card,
@@ -22,13 +23,11 @@ import type { SessionUser } from "@/lib/types";
 
 export default function EinstellungenPage() {
   const { data: session } = useSession();
+  const t = useTranslations("settings");
 
   return (
     <div>
-      <Topbar
-        title="Einstellungen"
-        description="Verwalten Sie Ihr Konto und Ihre Einstellungen"
-      />
+      <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
         {/* Profile Card */}
@@ -36,9 +35,9 @@ export default function EinstellungenPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserIcon className="h-5 w-5" />
-              Profil
+              {t("profile")}
             </CardTitle>
-            <CardDescription>Ihre persönlichen Informationen</CardDescription>
+            <CardDescription>{t("profileDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -65,22 +64,22 @@ export default function EinstellungenPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BuildingIcon className="h-5 w-5" />
-              Workspace
+              {t("workspace")}
             </CardTitle>
-            <CardDescription>
-              Informationen zu Ihrem Arbeitsbereich
-            </CardDescription>
+            <CardDescription>{t("workspaceDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-500">Workspace ID</span>
+                <span className="text-sm text-gray-500">
+                  {t("workspaceId")}
+                </span>
                 <span className="text-sm font-mono text-gray-900 break-all">
                   {(session?.user as SessionUser)?.workspaceId || "–"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-500">Rolle</span>
+                <span className="text-sm text-gray-500">{t("role")}</span>
                 <Badge variant="outline">
                   {(session?.user as SessionUser)?.role || "OWNER"}
                 </Badge>
@@ -94,9 +93,9 @@ export default function EinstellungenPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShieldCheckIcon className="h-5 w-5" />
-              Sicherheit
+              {t("security")}
             </CardTitle>
-            <CardDescription>Konto-Sicherheitseinstellungen</CardDescription>
+            <CardDescription>{t("securityDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -105,7 +104,7 @@ export default function EinstellungenPage() {
                 onClick={() => signOut({ callbackUrl: "/login" })}
               >
                 <LogOutIcon className="h-4 w-4" />
-                Abmelden
+                {t("signOut")}
               </Button>
             </div>
           </CardContent>

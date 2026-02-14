@@ -572,5 +572,14 @@
     "laborCosts": "Lohnkosten",
     "regular": "Regulär",
     "hourTrend": "Stundentrend"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "empty": "Keine Benachrichtigungen",
+    "justNow": "Gerade eben",
+    "minutesAgo": "vor {count} Min.",
+    "hoursAgo": "vor {count} Std.",
+    "daysAgo": "vor {count} Tagen"
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { createSystemNotification } from "@/lib/automations";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
 export async function GET(req: Request) {
@@ -98,6 +99,22 @@ export async function POST(req: Request) {
         target: true,
         shift: { include: { location: true } },
       },
+    });
+
+    // ── Automation: Notify managers about new swap request ──
+    const requesterName = `${swap.requester.firstName} ${swap.requester.lastName}`;
+    const shiftDate =
+      swap.shift.date instanceof Date
+        ? swap.shift.date.toLocaleDateString("de-DE")
+        : new Date(swap.shift.date).toLocaleDateString("de-DE");
+
+    await createSystemNotification({
+      type: "SWAP_REQUESTED",
+      title: "Neuer Schichttausch-Antrag",
+      message: `${requesterName} möchte die Schicht am ${shiftDate} (${swap.shift.startTime}–${swap.shift.endTime}) tauschen.`,
+      link: "/schichttausch",
+      workspaceId,
+      recipientType: "managers",
     });
 
     return NextResponse.json(swap, { status: 201 });

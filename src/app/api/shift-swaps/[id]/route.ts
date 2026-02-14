@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import {
+  tryAutoApproveSwap,
+  createSystemNotification,
+} from "@/lib/automations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -62,6 +66,41 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     });
 
+    // ── Automation: Auto-approve swap if no conflicts ──
+    if (body.status === "ANGENOMMEN") {
+      const autoApproved = await tryAutoApproveSwap(id);
+
+      if (autoApproved) {
+        // Notify both parties
+        const shiftDate =
+          existing.shift.date instanceof Date
+            ? existing.shift.date.toLocaleDateString("de-DE")
+            : new Date(existing.shift.date).toLocaleDateString("de-DE");
+
+        await createSystemNotification({
+          type: "SWAP_AUTO_APPROVED",
+          title: "Schichttausch automatisch genehmigt",
+          message: `Der Schichttausch am ${shiftDate} wurde automatisch genehmigt (keine Konflikte).`,
+          link: "/schichttausch",
+          workspaceId: user.workspaceId!,
+          recipientType: "managers",
+        });
+
+        // Re-fetch final state
+        const finalSwap = await prisma.shiftSwapRequest.findUnique({
+          where: { id },
+          include: {
+            requester: true,
+            target: true,
+            shift: { include: { location: true } },
+            targetShift: { include: { location: true } },
+          },
+        });
+
+        return NextResponse.json({ ...finalSwap, autoApproved: true });
+      }
+    }
+
     // If approved, actually swap the employee assignments
     if (
       body.status === "GENEHMIGT" &&
@@ -98,6 +137,38 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           data: { status: "ABGESCHLOSSEN" },
         }),
       ]);
+    }
+
+    // ── Automation: Notify on manual approval/rejection ──
+    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+      const statusText =
+        body.status === "GENEHMIGT" ? "genehmigt" : "abgelehnt";
+
+      // Notify requester
+      if (updated.requester?.email) {
+        await createSystemNotification({
+          type: `SWAP_${body.status}`,
+          title: `Schichttausch ${statusText}`,
+          message: `Ihr Schichttausch-Antrag wurde ${statusText}.${body.reviewNote ? ` Grund: ${body.reviewNote}` : ""}`,
+          link: "/schichttausch",
+          workspaceId: user.workspaceId!,
+          recipientType: "employee",
+          employeeEmail: updated.requester.email,
+        });
+      }
+
+      // Notify target
+      if (updated.target?.email) {
+        await createSystemNotification({
+          type: `SWAP_${body.status}`,
+          title: `Schichttausch ${statusText}`,
+          message: `Ein Schichttausch, an dem Sie beteiligt sind, wurde ${statusText}.`,
+          link: "/schichttausch",
+          workspaceId: user.workspaceId!,
+          recipientType: "employee",
+          employeeEmail: updated.target.email,
+        });
+      }
     }
 
     return NextResponse.json(updated);

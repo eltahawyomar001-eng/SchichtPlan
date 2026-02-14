@@ -9,6 +9,7 @@ import {
   calcBreakMinutes,
   calcNetMinutes,
 } from "@/lib/time-utils";
+import { ensureLegalBreak } from "@/lib/automations";
 
 // ─── GET  /api/time-entries ─────────────────────────────────────
 export async function GET(req: Request) {
@@ -107,11 +108,13 @@ export async function POST(req: Request) {
 
     // Calculate durations
     const grossMinutes = calcGrossMinutes(body.startTime, body.endTime);
-    const breakMins = calcBreakMinutes(
+    const rawBreakMins = calcBreakMinutes(
       body.breakStart,
       body.breakEnd,
       body.breakMinutes,
     );
+    // ── Automation: Ensure ArbZG minimum break ──
+    const breakMins = ensureLegalBreak(grossMinutes, rawBreakMins);
     const netMinutes = calcNetMinutes(grossMinutes, breakMins);
 
     const entry = await prisma.timeEntry.create({

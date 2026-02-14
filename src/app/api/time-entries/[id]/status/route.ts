@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { recalculateTimeAccount, isMonthLocked } from "@/lib/automations";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -45,6 +46,17 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     if (!entry) {
       return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
+    }
+
+    // ── Automation: Payroll lock — prevent edits on locked months ──
+    if (isMonthLocked(entry.date)) {
+      return NextResponse.json(
+        {
+          error:
+            "Dieser Monat ist für Änderungen gesperrt (Gehaltsabrechnung abgeschlossen).",
+        },
+        { status: 403 },
+      );
     }
 
     const body = await req.json();
@@ -147,6 +159,11 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     // Create notification
     await createNotification(entry, action, user, workspaceId ?? "");
+
+    // ── Automation: Recalculate time account on confirmation ──
+    if (action === "confirm") {
+      await recalculateTimeAccount(entry.employeeId);
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

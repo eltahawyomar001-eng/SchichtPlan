@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import {
+  checkShiftConflicts,
+  createRecurringShifts,
+  createSystemNotification,
+} from "@/lib/automations";
 
 export async function GET(req: Request) {
   try {
@@ -60,7 +65,15 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { date, startTime, endTime, employeeId, locationId, notes } = body;
+    const {
+      date,
+      startTime,
+      endTime,
+      employeeId,
+      locationId,
+      notes,
+      repeatWeeks,
+    } = body;
 
     if (!date || !startTime || !endTime || !employeeId) {
       return NextResponse.json(
@@ -69,6 +82,26 @@ export async function POST(req: Request) {
       );
     }
 
+    // ── Automation: Conflict detection ──
+    const conflicts = await checkShiftConflicts({
+      employeeId,
+      date,
+      startTime,
+      endTime,
+      workspaceId,
+    });
+
+    if (conflicts.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Konflikte erkannt",
+          conflicts,
+        },
+        { status: 409 },
+      );
+    }
+
+    // ── Create the shift ──
     const shift = await prisma.shift.create({
       data: {
         date: new Date(date),
@@ -85,7 +118,34 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(shift, { status: 201 });
+    // ── Automation: Recurring shifts ──
+    let recurringResult = null;
+    if (repeatWeeks && repeatWeeks > 0) {
+      recurringResult = await createRecurringShifts({
+        baseShift: { date, startTime, endTime, employeeId, locationId, notes },
+        repeatWeeks: Math.min(repeatWeeks, 52),
+        workspaceId,
+      });
+    }
+
+    // ── Automation: Notify employee about new shift ──
+    const employeeName = `${shift.employee.firstName} ${shift.employee.lastName}`;
+    if (shift.employee.email) {
+      await createSystemNotification({
+        type: "SHIFT_ASSIGNED",
+        title: "Neue Schicht zugewiesen",
+        message: `Ihnen wurde eine Schicht am ${new Date(date).toLocaleDateString("de-DE")} (${startTime}–${endTime}) zugewiesen.`,
+        link: "/schichtplan",
+        workspaceId,
+        recipientType: "employee",
+        employeeEmail: shift.employee.email,
+      });
+    }
+
+    return NextResponse.json(
+      { ...shift, recurring: recurringResult },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Error creating shift:", error);
     return NextResponse.json(

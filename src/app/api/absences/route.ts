@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import {
+  tryAutoApproveAbsence,
+  createSystemNotification,
+} from "@/lib/automations";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
 export async function GET(req: Request) {
@@ -132,7 +136,44 @@ export async function POST(req: Request) {
       include: { employee: true },
     });
 
-    return NextResponse.json(absence, { status: 201 });
+    // ── Automation: Try auto-approve (sick leave or no conflicts) ──
+    const autoApproved = await tryAutoApproveAbsence(absence.id);
+
+    // ── Automation: Notify managers about new request ──
+    if (!autoApproved) {
+      const empName = `${absence.employee.firstName} ${absence.employee.lastName}`;
+      await createSystemNotification({
+        type: "ABSENCE_REQUESTED",
+        title: "Neuer Abwesenheitsantrag",
+        message: `${empName} hat einen Abwesenheitsantrag (${body.category}) vom ${start.toLocaleDateString("de-DE")} bis ${end.toLocaleDateString("de-DE")} eingereicht.`,
+        link: "/abwesenheiten",
+        workspaceId,
+        recipientType: "managers",
+      });
+    } else {
+      // Notify employee that it was auto-approved
+      if (absence.employee.email) {
+        await createSystemNotification({
+          type: "ABSENCE_AUTO_APPROVED",
+          title: "Abwesenheit automatisch genehmigt",
+          message: `Ihr Abwesenheitsantrag (${body.category}) wurde automatisch genehmigt.`,
+          link: "/abwesenheiten",
+          workspaceId,
+          recipientType: "employee",
+          employeeEmail: absence.employee.email,
+        });
+      }
+    }
+
+    // Re-fetch to get updated status if auto-approved
+    const result = autoApproved
+      ? await prisma.absenceRequest.findUnique({
+          where: { id: absence.id },
+          include: { employee: true },
+        })
+      : absence;
+
+    return NextResponse.json({ ...result, autoApproved }, { status: 201 });
   } catch (error) {
     console.error("Error creating absence:", error);
     return NextResponse.json(

@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import {
+  cascadeAbsenceApproval,
+  createSystemNotification,
+} from "@/lib/automations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -45,6 +49,44 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       data,
       include: { employee: true },
     });
+
+    // ── Automation: Cascade on approval ──
+    if (body.status === "GENEHMIGT") {
+      const cascadeResult = await cascadeAbsenceApproval({
+        absenceId: id,
+        employeeId: existing.employeeId,
+        startDate: existing.startDate,
+        endDate: existing.endDate,
+        workspaceId: user.workspaceId!,
+        reviewerId: user.id,
+      });
+
+      // Notify employee
+      if (updated.employee.email) {
+        await createSystemNotification({
+          type: "ABSENCE_APPROVED",
+          title: "Abwesenheit genehmigt",
+          message: `Ihr Abwesenheitsantrag wurde genehmigt.${cascadeResult.cancelledShifts > 0 ? ` ${cascadeResult.cancelledShifts} betroffene Schicht(en) wurden abgesagt.` : ""}`,
+          link: "/abwesenheiten",
+          workspaceId: user.workspaceId!,
+          recipientType: "employee",
+          employeeEmail: updated.employee.email,
+        });
+      }
+    }
+
+    // ── Automation: Notify on rejection ──
+    if (body.status === "ABGELEHNT" && updated.employee.email) {
+      await createSystemNotification({
+        type: "ABSENCE_REJECTED",
+        title: "Abwesenheit abgelehnt",
+        message: `Ihr Abwesenheitsantrag wurde abgelehnt.${body.reviewNote ? ` Grund: ${body.reviewNote}` : ""}`,
+        link: "/abwesenheiten",
+        workspaceId: user.workspaceId!,
+        recipientType: "employee",
+        employeeEmail: updated.employee.email,
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

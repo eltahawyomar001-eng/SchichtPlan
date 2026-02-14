@@ -4,10 +4,13 @@ import { authOptions } from "@/lib/auth";
 import { LandingPage } from "@/components/landing/LandingPage";
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-
-  if (session) {
-    redirect("/dashboard");
+  try {
+    const session = await getServerSession(authOptions);
+    if (session) {
+      redirect("/dashboard");
+    }
+  } catch {
+    // Auth not configured yet — show landing page
   }
 
   return <LandingPage />;

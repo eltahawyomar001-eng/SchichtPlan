@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   SchichtPlanMark,
   CalendarIcon,
@@ -39,6 +40,8 @@ import {
  * All icons/graphics are inline SVG TypeScript components — animation-ready.
  */
 export function LandingPage() {
+  const t = useTranslations("landing");
+
   return (
     <div className="min-h-screen bg-white">
       {/* ─── Navbar ─── */}
@@ -53,62 +56,66 @@ export function LandingPage() {
       {/* ─── 4-Step Feature Flow ─── */}
       <FeatureSection
         step={1}
-        label="PLANUNG"
-        title="Erstelle Schichtpläne in Minuten"
-        description="Plane Schichten per Drag & Drop, nutze Vorlagen und lass dir freie Zeitfenster automatisch vorschlagen. Konflikte werden sofort erkannt."
+        label={t("step1Label")}
+        title={t("step1Title")}
+        description={t("step1Desc")}
         features={[
-          "Drag & Drop Schichtplanung",
-          "Automatische Konflikterkennung",
-          "Wiederverwendbare Vorlagen",
-          "Verfügbarkeiten der Mitarbeiter",
+          t("step1Feature1"),
+          t("step1Feature2"),
+          t("step1Feature3"),
+          t("step1Feature4"),
         ]}
         illustration={<PlanningIllustration />}
         reversed={false}
+        t={t}
       />
 
       <FeatureSection
         step={2}
-        label="VERTEILUNG"
-        title="Mit einem Klick an alle verteilen"
-        description="Veröffentliche den fertigen Schichtplan und benachrichtige dein gesamtes Team automatisch. Bestätigungen in Echtzeit."
+        label={t("step2Label")}
+        title={t("step2Title")}
+        description={t("step2Desc")}
         features={[
-          "Sofortige Push-Benachrichtigung",
-          "Bestätigungsstatus pro Mitarbeiter",
-          "Automatische Erinnerungen",
-          "Änderungshistorie",
+          t("step2Feature1"),
+          t("step2Feature2"),
+          t("step2Feature3"),
+          t("step2Feature4"),
         ]}
         illustration={<DistributionIllustration />}
         reversed={true}
+        t={t}
       />
 
       <FeatureSection
         step={3}
-        label="TAGESGESCHÄFT"
-        title="Behalte den Überblick im Alltag"
-        description="Verwalte Schichttausch, Abwesenheiten und Einchecken an einem Ort. Alles in Echtzeit."
+        label={t("step3Label")}
+        title={t("step3Title")}
+        description={t("step3Desc")}
         features={[
-          "Live-Übersicht aktiver Schichten",
-          "Schichttausch mit einem Klick",
-          "Zeiterfassung & Einchecken",
-          "Abwesenheitsmanagement",
+          t("step3Feature1"),
+          t("step3Feature2"),
+          t("step3Feature3"),
+          t("step3Feature4"),
         ]}
         illustration={<DayToDayIllustration />}
         reversed={false}
+        t={t}
       />
 
       <FeatureSection
         step={4}
-        label="AUSWERTUNG"
-        title="Bereit für Lohnabrechnung"
-        description="Exportiere Stundenreports, erkenne Überstunden und halte Arbeitsgesetze ein — alles automatisch."
+        label={t("step4Label")}
+        title={t("step4Title")}
+        description={t("step4Desc")}
         features={[
-          "Automatische Stundenreports",
-          "Überstunden-Erkennung",
-          "CSV & PDF Export",
-          "Lohnkosten-Übersicht",
+          t("step4Feature1"),
+          t("step4Feature2"),
+          t("step4Feature3"),
+          t("step4Feature4"),
         ]}
         illustration={<ReportingIllustration />}
         reversed={true}
+        t={t}
       />
 
       {/* ─── Benefits Grid ─── */}
@@ -132,6 +139,7 @@ export function LandingPage() {
 
 function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = useTranslations("landing");
 
   return (
     <nav className="fixed top-0 inset-x-0 z-50 glass border-b border-white/20">
@@ -150,19 +158,19 @@ function Navbar() {
             href="#features"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Funktionen
+            {t("navFeatures")}
           </a>
           <a
             href="#benefits"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Vorteile
+            {t("navBenefits")}
           </a>
           <a
             href="#faq"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
-            FAQ
+            {t("navFaq")}
           </a>
         </div>
 
@@ -172,13 +180,13 @@ function Navbar() {
             href="/login"
             className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Anmelden
+            {t("navLogin")}
           </Link>
           <Link
             href="/register"
             className="bg-brand-gradient text-white text-sm font-semibold px-4 sm:px-5 py-2 rounded-full hover:shadow-lg hover:shadow-violet-200 transition-all"
           >
-            Kostenlos starten
+            {t("navCta")}
           </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -202,27 +210,27 @@ function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
             >
-              Funktionen
+              {t("navFeatures")}
             </a>
             <a
               href="#benefits"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
             >
-              Vorteile
+              {t("navBenefits")}
             </a>
             <a
               href="#faq"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
             >
-              FAQ
+              {t("navFaq")}
             </a>
             <Link
               href="/login"
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors sm:hidden"
             >
-              Anmelden
+              {t("navLogin")}
             </Link>
           </div>
         </div>
@@ -232,6 +240,8 @@ function Navbar() {
 }
 
 function HeroSection() {
+  const t = useTranslations("landing");
+
   return (
     <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 bg-hero-gradient bg-grid overflow-hidden">
       {/* Decorative gradient blobs */}
@@ -242,19 +252,18 @@ function HeroSection() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-6">
           <ZapIcon className="w-4 h-4" />
-          Schichtplanung neu gedacht
+          {t("heroBadge")}
         </div>
 
         {/* Headline */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 max-w-4xl mx-auto leading-[1.1]">
-          Schichtpläne erstellen,{" "}
-          <span className="text-gradient">die funktionieren</span>
+          {t("heroTitle")}{" "}
+          <span className="text-gradient">{t("heroTitleHighlight")}</span>
         </h1>
 
         {/* Subheadline */}
         <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-          Von der Planung bis zur Lohnabrechnung — SchichtPlan vereinfacht dein
-          gesamtes Schichtmanagement in einer Plattform.
+          {t("heroSubtitle")}
         </p>
 
         {/* CTA Buttons */}
@@ -263,14 +272,14 @@ function HeroSection() {
             href="/register"
             className="bg-brand-gradient text-white font-semibold px-8 py-3.5 rounded-full text-base hover:shadow-xl hover:shadow-violet-200 transition-all flex items-center gap-2"
           >
-            Jetzt kostenlos starten
+            {t("heroCtaPrimary")}
             <ArrowRightIcon className="w-5 h-5" />
           </Link>
           <a
             href="#features"
             className="flex items-center gap-2 text-gray-600 font-medium hover:text-gray-900 transition-colors"
           >
-            Mehr erfahren
+            {t("heroCtaSecondary")}
             <ChevronRightIcon className="w-4 h-4" />
           </a>
         </div>
@@ -279,15 +288,15 @@ function HeroSection() {
         <div className="mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-gray-400">
           <div className="flex items-center gap-1">
             <CheckCircleIcon className="w-4 h-4" />
-            Kostenlos testen
+            {t("heroProof1")}
           </div>
           <div className="flex items-center gap-1">
             <CheckCircleIcon className="w-4 h-4" />
-            Keine Kreditkarte nötig
+            {t("heroProof2")}
           </div>
           <div className="flex items-center gap-1">
             <CheckCircleIcon className="w-4 h-4" />
-            DSGVO-konform
+            {t("heroProof3")}
           </div>
         </div>
       </div>
@@ -296,6 +305,7 @@ function HeroSection() {
 }
 
 function TrustedByBar() {
+  const t = useTranslations("landing");
   // Placeholder logos rendered as SVG text for now
   const companies = [
     "Backwerk",
@@ -309,7 +319,7 @@ function TrustedByBar() {
     <section className="py-10 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
-          Vertraut von Teams in ganz Deutschland
+          {t("trustedBy")}
         </p>
         <div className="flex items-center justify-center gap-6 sm:gap-12 flex-wrap opacity-40">
           {companies.map((name) => (
@@ -334,6 +344,7 @@ function FeatureSection({
   features,
   illustration,
   reversed,
+  t,
 }: {
   step: number;
   label: string;
@@ -342,6 +353,7 @@ function FeatureSection({
   features: string[];
   illustration: React.ReactNode;
   reversed: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
   const stepIcons = [CalendarIcon, SendIcon, UsersIcon, BarChartIcon];
   const StepIcon = stepIcons[step - 1];
@@ -362,7 +374,7 @@ function FeatureSection({
             {/* Step badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold uppercase tracking-wider mb-4">
               <StepIcon className="w-3.5 h-3.5" />
-              Schritt {step} — {label}
+              {t("step")} {step} — {label}
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
@@ -390,36 +402,38 @@ function FeatureSection({
 }
 
 function BenefitsSection() {
+  const t = useTranslations("landing");
+
   const benefits = [
     {
       icon: ZapIcon,
-      title: "80% schneller planen",
-      desc: "Vorlagen und Drag & Drop machen Schluss mit Zettelwirtschaft.",
+      title: t("benefit1Title"),
+      desc: t("benefit1Desc"),
     },
     {
       icon: UsersIcon,
-      title: "Team zufrieden stellen",
-      desc: "Mitarbeiter sehen ihre Schichten sofort und können tauschen.",
+      title: t("benefit2Title"),
+      desc: t("benefit2Desc"),
     },
     {
       icon: ShieldCheckIcon,
-      title: "Rechtssicher arbeiten",
-      desc: "Automatische Prüfung von Ruhezeiten und Arbeitszeitgesetzen.",
+      title: t("benefit3Title"),
+      desc: t("benefit3Desc"),
     },
     {
       icon: BarChartIcon,
-      title: "Kosten im Blick",
-      desc: "Lohnkosten-Prognosen und Überstunden-Tracking in Echtzeit.",
+      title: t("benefit4Title"),
+      desc: t("benefit4Desc"),
     },
     {
       icon: CalendarIcon,
-      title: "Abwesenheiten managen",
-      desc: "Urlaub, Krankheit und Feiertage in einem System verwalten.",
+      title: t("benefit5Title"),
+      desc: t("benefit5Desc"),
     },
     {
       icon: StarIcon,
-      title: "5-Sterne Bewertungen",
-      desc: "Schichtplanung, die Teams lieben — einfach und intuitiv.",
+      title: t("benefit6Title"),
+      desc: t("benefit6Desc"),
     },
   ];
 
@@ -428,13 +442,11 @@ function BenefitsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
-            Warum Teams <span className="text-gradient">SchichtPlan</span>{" "}
-            wählen
+            {t("benefitsTitle")}{" "}
+            <span className="text-gradient">{t("benefitsTitleBrand")}</span>{" "}
+            {t("benefitsTitleEnd")}
           </h2>
-          <p className="mt-4 text-gray-500">
-            Alles, was du für professionelle Schichtplanung brauchst — in einer
-            Plattform.
-          </p>
+          <p className="mt-4 text-gray-500">{t("benefitsSubtitle")}</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -459,27 +471,14 @@ function BenefitsSection() {
 }
 
 function FAQSection() {
+  const t = useTranslations("landing");
+
   const faqs = [
-    {
-      q: "Ist SchichtPlan wirklich kostenlos?",
-      a: "Ja! Du kannst SchichtPlan kostenlos mit bis zu 5 Mitarbeitern nutzen. Für größere Teams gibt es flexible Tarife.",
-    },
-    {
-      q: "Wie schnell kann ich starten?",
-      a: "In unter 5 Minuten. Registriere dich, lade deine Mitarbeiter ein und erstelle deinen ersten Schichtplan.",
-    },
-    {
-      q: "Ist meine Daten sicher?",
-      a: "Absolut. Alle Daten werden DSGVO-konform in Deutschland gehostet und verschlüsselt übertragen.",
-    },
-    {
-      q: "Können Mitarbeiter ihre Schichten tauschen?",
-      a: "Ja, Mitarbeiter können Tausch-Anfragen direkt stellen. Du als Manager behältst die volle Kontrolle und genehmigst Änderungen.",
-    },
-    {
-      q: "Gibt es eine App für Mitarbeiter?",
-      a: "SchichtPlan funktioniert vollständig im Browser auf jedem Gerät. Eine native App ist in Planung.",
-    },
+    { q: t("faq1Q"), a: t("faq1A") },
+    { q: t("faq2Q"), a: t("faq2A") },
+    { q: t("faq3Q"), a: t("faq3A") },
+    { q: t("faq4Q"), a: t("faq4A") },
+    { q: t("faq5Q"), a: t("faq5A") },
   ];
 
   return (
@@ -487,11 +486,9 @@ function FAQSection() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
-            Häufige Fragen
+            {t("faqTitle")}
           </h2>
-          <p className="mt-4 text-gray-500">
-            Du hast Fragen? Wir haben Antworten.
-          </p>
+          <p className="mt-4 text-gray-500">{t("faqSubtitle")}</p>
         </div>
 
         <div className="space-y-4">
@@ -516,6 +513,8 @@ function FAQSection() {
 }
 
 function CTAFooter() {
+  const t = useTranslations("landing");
+
   return (
     <section className="py-12 sm:py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -526,18 +525,17 @@ function CTAFooter() {
 
           <div className="relative">
             <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
-              Bereit, deine Schichtplanung zu revolutionieren?
+              {t("ctaTitle")}
             </h2>
             <p className="mt-4 text-violet-200 text-lg max-w-xl mx-auto">
-              Starte kostenlos und erlebe, wie einfach Personalplanung sein
-              kann.
+              {t("ctaSubtitle")}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
                 className="bg-white text-violet-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
               >
-                Jetzt kostenlos starten
+                {t("ctaButton")}
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
             </div>
@@ -549,6 +547,8 @@ function CTAFooter() {
 }
 
 function Footer() {
+  const t = useTranslations("landing");
+
   return (
     <footer className="border-t border-gray-100 py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -557,17 +557,17 @@ function Footer() {
           <span className="font-bold text-sm text-gray-900">SchichtPlan</span>
         </div>
         <p className="text-sm text-gray-400">
-          © {new Date().getFullYear()} SchichtPlan. Alle Rechte vorbehalten.
+          © {new Date().getFullYear()} SchichtPlan. {t("footerRights")}
         </p>
         <div className="flex items-center gap-6 text-sm text-gray-400">
           <a href="#" className="hover:text-gray-600 transition-colors">
-            Datenschutz
+            {t("footerPrivacy")}
           </a>
           <a href="#" className="hover:text-gray-600 transition-colors">
-            Impressum
+            {t("footerImprint")}
           </a>
           <a href="#" className="hover:text-gray-600 transition-colors">
-            AGB
+            {t("footerTerms")}
           </a>
         </div>
       </div>

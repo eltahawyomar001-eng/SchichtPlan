@@ -2,6 +2,7 @@ import { type SVGProps } from "react";
 
 /**
  * File export icon — used for Lohnexport (payroll/DATEV export).
+ * Gradient stroke from Brand/600 (#7C3AED) to Brand/400 (#A78BFA).
  */
 export function FileExportIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -14,25 +15,49 @@ export function FileExportIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
-        stroke="currentColor"
+        stroke="url(#fileexport-gradient)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M14 2v6h6"
-        stroke="currentColor"
+        stroke="url(#fileexport-gradient)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M12 18v-6M9 15l3 3 3-3"
-        stroke="currentColor"
+        stroke="url(#fileexport-arrow-gradient)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <defs>
+        <linearGradient
+          id="fileexport-gradient"
+          x1="4"
+          y1="2"
+          x2="20"
+          y2="22"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#7C3AED" />
+          <stop offset="1" stopColor="#A78BFA" />
+        </linearGradient>
+        <linearGradient
+          id="fileexport-arrow-gradient"
+          x1="9"
+          y1="12"
+          x2="15"
+          y2="18"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#7C3AED" />
+          <stop offset="1" stopColor="#A78BFA" />
+        </linearGradient>
+      </defs>
     </svg>
   );
 }

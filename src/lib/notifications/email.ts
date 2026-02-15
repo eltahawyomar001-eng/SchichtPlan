@@ -13,7 +13,7 @@ function getResend() {
 }
 
 const FROM_ADDRESS =
-  process.env.RESEND_FROM_EMAIL || "SchichtPlan <noreply@schichtplan.de>";
+  process.env.RESEND_FROM_EMAIL || "SchichtPlan <onboarding@resend.dev>";
 
 /**
  * Send a notification email via Resend.

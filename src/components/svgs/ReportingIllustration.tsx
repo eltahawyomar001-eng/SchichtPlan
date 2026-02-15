@@ -57,8 +57,8 @@ export function ReportingIllustration() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-[520px] mx-auto overflow-hidden"
-      style={{ height: 320 * scale }}
+      className="relative w-full max-w-[520px] mx-auto overflow-clip"
+      style={{ aspectRatio: "520 / 340", maxHeight: 340 }}
       role="img"
       aria-label={t("reportingAria")}
     >
@@ -132,7 +132,7 @@ export function ReportingIllustration() {
       `}</style>
 
       <div
-        className="absolute top-0 left-0 w-[520px] h-[320px] origin-top-left"
+        className="absolute top-0 left-0 w-[520px] h-[340px] origin-top-left"
         style={{ transform: `scale(${scale})` }}
       >
         {/* Main report card */}

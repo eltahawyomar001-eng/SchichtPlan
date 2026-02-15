@@ -160,7 +160,7 @@ export default function ZeitkontenPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {minutesToDisplay(totalBalance, hrsLabel)}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("totalBalance")}
                   </p>
                 </div>
@@ -177,7 +177,7 @@ export default function ZeitkontenPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {overtimeEmployees}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("overtime")}
                   </p>
                 </div>
@@ -194,7 +194,7 @@ export default function ZeitkontenPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {undertimeEmployees}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("undertime")}
                   </p>
                 </div>
@@ -236,7 +236,7 @@ export default function ZeitkontenPage() {
                           {account.employee.lastName.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
+                          <p className="font-medium text-gray-900 break-words">
                             {account.employee.firstName}{" "}
                             {account.employee.lastName}
                           </p>

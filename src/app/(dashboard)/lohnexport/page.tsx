@@ -247,7 +247,7 @@ export default function LohnexportPage() {
                       <p className="text-lg sm:text-2xl font-bold text-gray-900">
                         {totalEmployees}
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">
+                      <p className="text-xs sm:text-sm text-gray-500 break-words">
                         {tc("employees")}
                       </p>
                     </div>
@@ -264,7 +264,7 @@ export default function LohnexportPage() {
                       <p className="text-lg sm:text-2xl font-bold text-gray-900">
                         {totalHours.toFixed(2)}
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">
+                      <p className="text-xs sm:text-sm text-gray-500 break-words">
                         {t("netHours")}
                       </p>
                     </div>

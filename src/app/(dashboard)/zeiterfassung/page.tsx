@@ -362,13 +362,13 @@ export default function ZeiterfassungPage() {
                   <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("totalHours")}
                   </p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {formatMinutesToHHmm(totalNetMinutes)}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-gray-400 truncate">
+                  <p className="text-[10px] sm:text-xs text-gray-400 break-words">
                     {formatIndustrial(totalNetMinutes)} {t("industrialHrs")}
                   </p>
                 </div>

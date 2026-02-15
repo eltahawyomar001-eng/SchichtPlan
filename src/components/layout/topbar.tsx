@@ -29,11 +29,11 @@ export function Topbar({ title, description, actions }: TopbarProps) {
         </button>
 
         <div className="min-w-0">
-          <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+          <h1 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
             {title}
           </h1>
           {description && (
-            <p className="text-xs sm:text-sm text-gray-500 truncate hidden sm:block">
+            <p className="text-xs sm:text-sm text-gray-500 break-words hidden sm:block">
               {description}
             </p>
           )}

@@ -213,7 +213,7 @@ export default function AbwesenheitenPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {pending}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("pending")}
                   </p>
                 </div>
@@ -230,7 +230,7 @@ export default function AbwesenheitenPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {approved}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("approved")}
                   </p>
                 </div>
@@ -247,7 +247,7 @@ export default function AbwesenheitenPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {totalDays}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("totalDays")}
                   </p>
                 </div>
@@ -307,7 +307,7 @@ export default function AbwesenheitenPage() {
                           {absence.employee.lastName.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
+                          <p className="font-medium text-gray-900 break-words">
                             {absence.employee.firstName}{" "}
                             {absence.employee.lastName}
                           </p>

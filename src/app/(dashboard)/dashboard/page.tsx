@@ -247,9 +247,9 @@ export default async function DashboardPage() {
           {stats.map((stat) => (
             <Card key={stat.title}>
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-500">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500 break-words">
                       {stat.title}
                     </p>
                     <p className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900">
@@ -283,7 +283,7 @@ export default async function DashboardPage() {
                   <div className="flex-shrink-0 rounded-lg bg-violet-50 p-2 group-hover:bg-violet-100 transition-colors">
                     <PlusIcon className="h-4 w-4 text-violet-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-violet-700 truncate">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-violet-700 break-words text-left">
                     {t("addEmployee")}
                   </span>
                 </Link>
@@ -294,7 +294,7 @@ export default async function DashboardPage() {
                   <div className="flex-shrink-0 rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100 transition-colors">
                     <PlusIcon className="h-4 w-4 text-emerald-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 truncate">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 break-words text-left">
                     {t("addLocation")}
                   </span>
                 </Link>
@@ -305,7 +305,7 @@ export default async function DashboardPage() {
                   <div className="flex-shrink-0 rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100 transition-colors">
                     <CalendarIcon className="h-4 w-4 text-blue-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 truncate">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 break-words text-left">
                     {t("createShift")}
                   </span>
                 </Link>

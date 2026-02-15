@@ -228,7 +228,7 @@ export default function SchichttauschPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {openSwaps}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("openRequests")}
                   </p>
                 </div>
@@ -245,7 +245,7 @@ export default function SchichttauschPage() {
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {completedSwaps}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-sm text-gray-500 break-words">
                     {t("completed")}
                   </p>
                 </div>
@@ -310,7 +310,7 @@ export default function SchichttauschPage() {
                               {swap.requester.lastName.charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <p className="text-sm font-medium text-gray-900 break-words">
                                 {swap.requester.firstName}{" "}
                                 {swap.requester.lastName}
                               </p>
@@ -336,7 +336,7 @@ export default function SchichttauschPage() {
                                 {swap.target.lastName.charAt(0)}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                                <p className="text-sm font-medium text-gray-900 break-words">
                                   {swap.target.firstName} {swap.target.lastName}
                                 </p>
                                 {swap.targetShift && (

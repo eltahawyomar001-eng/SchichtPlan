@@ -146,6 +146,19 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Prevent horizontal overflow on mobile */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* German / long-word text wrapping */
+.break-words {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
 /* Focus ring */
 *:focus-visible {
   outline: 2px solid var(--brand-500);

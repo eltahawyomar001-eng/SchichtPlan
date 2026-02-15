@@ -58,6 +58,7 @@ export default function SchichtplanPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     startTime: "08:00",
@@ -106,11 +107,13 @@ export default function SchichtplanPage() {
 
   const handleAddShift = (date: Date) => {
     setFormData((p) => ({ ...p, date: format(date, "yyyy-MM-dd") }));
+    setFormError(null);
     setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     try {
       const res = await fetch("/api/shifts", {
         method: "POST",
@@ -120,6 +123,7 @@ export default function SchichtplanPage() {
 
       if (res.ok) {
         setShowForm(false);
+        setFormError(null);
         setFormData({
           date: "",
           startTime: "08:00",
@@ -129,9 +133,21 @@ export default function SchichtplanPage() {
           notes: "",
         });
         fetchData();
+      } else {
+        const data = await res.json();
+        if (res.status === 409 && data.conflicts) {
+          // ArbZG / conflict violations
+          const messages = data.conflicts.map(
+            (c: { message: string }) => c.message,
+          );
+          setFormError(messages.join("\n"));
+        } else {
+          setFormError(data.error || "Fehler beim Erstellen der Schicht");
+        }
       }
     } catch (error) {
       console.error("Error:", error);
+      setFormError(t("networkError"));
     }
   };
 
@@ -482,6 +498,17 @@ export default function SchichtplanPage() {
                       placeholder={t("form.notesPlaceholder")}
                     />
                   </div>
+
+                  {formError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                      <p className="font-semibold mb-1">{t("conflictError")}</p>
+                      {formError.split("\n").map((line, i) => (
+                        <p key={i} className="ml-2">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-3 pt-4">
                     <Button

@@ -95,6 +95,8 @@
     "noShifts": "Keine Schichten",
     "shiftsCount": "{count, plural, =1 {1 Schicht} other {# Schichten}}",
     "deleteConfirm": "Schicht wirklich löschen?",
+    "conflictError": "Schicht kann nicht erstellt werden:",
+    "networkError": "Netzwerkfehler — bitte erneut versuchen",
     "form": {
       "title": "Neue Schicht",
       "date": "Datum",
@@ -617,7 +619,11 @@
     "saving": "Speichern\u2026",
     "saved": "Gespeichert",
     "error": "Fehler beim Speichern",
-    "backToSettings": "Zurück zu Einstellungen"
+    "backToSettings": "Zurück zu Einstellungen",
+    "sendTestEmail": "Test-E-Mail senden",
+    "testEmailSending": "Wird gesendet\u2026",
+    "testEmailSent": "Test-E-Mail gesendet",
+    "testEmailFailed": "Test-E-Mail fehlgeschlagen"
   },
   "automations": {
     "title": "Automatisierungen",

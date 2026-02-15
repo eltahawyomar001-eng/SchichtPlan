@@ -53,7 +53,7 @@ export async function dispatchExternalNotification(params: {
   console.log(`[dispatcher] Sending email to ${user.email}`);
 
   try {
-    await sendEmail({
+    const result = await sendEmail({
       to: user.email,
       type,
       title,
@@ -61,7 +61,13 @@ export async function dispatchExternalNotification(params: {
       link,
       locale: "de",
     });
-    console.log(`[dispatcher] Email sent to ${user.email}`);
+    if (result.success) {
+      console.log(`[dispatcher] Email sent to ${user.email}`);
+    } else {
+      console.error(
+        `[dispatcher] Email failed for ${user.email}: ${result.error}`,
+      );
+    }
   } catch (err) {
     console.error(`[dispatcher] Email failed for ${user.email}:`, err);
   }

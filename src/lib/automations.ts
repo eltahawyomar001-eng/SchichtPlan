@@ -66,7 +66,13 @@ export async function isAutomationEnabled(
 // ═══════════════════════════════════════════════════════════════════
 
 export interface ShiftConflict {
-  type: "OVERLAP" | "ABSENCE" | "UNAVAILABLE" | "REST_PERIOD";
+  type:
+    | "OVERLAP"
+    | "ABSENCE"
+    | "UNAVAILABLE"
+    | "REST_PERIOD"
+    | "MAX_DAILY_HOURS"
+    | "MAX_WEEKLY_HOURS";
   message: string;
   /** ID of the conflicting record (shift, absence, availability) */
   conflictId?: string;
@@ -74,6 +80,12 @@ export interface ShiftConflict {
 
 /** Minimum rest between shifts in hours (ArbZG §5: 11 hours) */
 const MIN_REST_HOURS = 11;
+
+/** Maximum daily working hours (ArbZG §3: normally 8h, extendable to 10h) */
+const MAX_DAILY_HOURS = 10;
+
+/** Maximum weekly working hours (ArbZG §3: 6 × 8h = 48h averaged) */
+const MAX_WEEKLY_HOURS = 48;
 
 /**
  * Check all conflicts for a proposed shift assignment.
@@ -184,6 +196,38 @@ export async function checkShiftConflicts(params: {
     const nextDay = new Date(shiftDate);
     nextDay.setDate(nextDay.getDate() + 1);
 
+    // ── Same-day rest period check ──
+    // If there are other non-overlapping shifts on the same day,
+    // check that the gap between them is >= 11 hours
+    const newStart = toMinutes(startTime);
+    let newEnd = toMinutes(endTime);
+    if (newEnd <= newStart) newEnd += 1440; // overnight
+
+    for (const existing of existingShifts) {
+      const exStart = toMinutes(existing.startTime);
+      let exEnd = toMinutes(existing.endTime);
+      if (exEnd <= exStart) exEnd += 1440;
+
+      // Only check rest period for non-overlapping shifts (overlaps caught in 1a)
+      if (!(newStart < exEnd && exStart < newEnd)) {
+        // Gap between: if new shift is after existing
+        let gapMinutes: number;
+        if (newStart >= exEnd) {
+          gapMinutes = newStart - exEnd;
+        } else {
+          gapMinutes = exStart - newEnd;
+        }
+
+        if (gapMinutes < MIN_REST_HOURS * 60) {
+          conflicts.push({
+            type: "REST_PERIOD",
+            message: `Nur ${Math.floor(gapMinutes / 60)}h ${gapMinutes % 60}min Ruhezeit zwischen Schichten am selben Tag (mind. ${MIN_REST_HOURS}h nötig, ArbZG §5)`,
+            conflictId: existing.id,
+          });
+        }
+      }
+    }
+
     // Check previous day's shifts
     const prevShifts = await prisma.shift.findMany({
       where: {
@@ -230,6 +274,60 @@ export async function checkShiftConflicts(params: {
       }
     }
   } // end restPeriodEnforcement check
+
+  // ── 1e. Maximum daily working hours (ArbZG §3: max 10h/day) ──
+  {
+    const proposedMinutes = calcGrossMinutes(startTime, endTime);
+    let totalDayMinutes = proposedMinutes;
+
+    for (const existing of existingShifts) {
+      totalDayMinutes += calcGrossMinutes(existing.startTime, existing.endTime);
+    }
+
+    const totalDayHours = totalDayMinutes / 60;
+    if (totalDayHours > MAX_DAILY_HOURS) {
+      conflicts.push({
+        type: "MAX_DAILY_HOURS",
+        message: `${totalDayHours.toFixed(1)}h Gesamtarbeitszeit am Tag überschreitet das Maximum von ${MAX_DAILY_HOURS}h (ArbZG §3)`,
+      });
+    }
+  }
+
+  // ── 1f. Maximum weekly working hours (ArbZG §3: max 48h/week) ──
+  {
+    const proposedMinutes = calcGrossMinutes(startTime, endTime);
+
+    // Get the Monday and Sunday of the shift's week
+    const dayOfWeek = shiftDate.getDay(); // 0=Sun
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekMonday = new Date(shiftDate);
+    weekMonday.setDate(shiftDate.getDate() + mondayOffset);
+    const weekSunday = new Date(weekMonday);
+    weekSunday.setDate(weekMonday.getDate() + 6);
+
+    const weekShifts = await prisma.shift.findMany({
+      where: {
+        employeeId,
+        workspaceId,
+        date: { gte: weekMonday, lte: weekSunday },
+        status: { not: "CANCELLED" },
+        ...(excludeShiftId ? { id: { not: excludeShiftId } } : {}),
+      },
+    });
+
+    let totalWeekMinutes = proposedMinutes;
+    for (const ws of weekShifts) {
+      totalWeekMinutes += calcGrossMinutes(ws.startTime, ws.endTime);
+    }
+
+    const totalWeekHours = totalWeekMinutes / 60;
+    if (totalWeekHours > MAX_WEEKLY_HOURS) {
+      conflicts.push({
+        type: "MAX_WEEKLY_HOURS",
+        message: `${totalWeekHours.toFixed(1)}h Wochenarbeitszeit überschreitet das Maximum von ${MAX_WEEKLY_HOURS}h (ArbZG §3)`,
+      });
+    }
+  }
 
   return conflicts;
 }
@@ -410,7 +508,7 @@ export async function createSystemNotification(params: {
       );
       // No User account for this employee — still send a direct email
       try {
-        await sendEmail({
+        const result = await sendEmail({
           to: employeeEmail,
           type,
           title,
@@ -418,6 +516,13 @@ export async function createSystemNotification(params: {
           link,
           locale: "de",
         });
+        if (result.success) {
+          console.log(`[notification] Direct email sent to ${employeeEmail}`);
+        } else {
+          console.error(
+            `[notification] Direct email failed for ${employeeEmail}: ${result.error}`,
+          );
+        }
       } catch (err) {
         console.error("[notification] Direct email error:", err);
       }

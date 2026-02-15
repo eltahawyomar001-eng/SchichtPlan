@@ -11,6 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { BellIcon, MailIcon, ChevronLeftIcon } from "@/components/icons";
 import Link from "next/link";
 
@@ -22,6 +23,9 @@ export default function BenachrichtigungenPage() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [loading, setLoading] = useState(true);
+  const [testStatus, setTestStatus] = useState<
+    "idle" | "sending" | "sent" | "failed"
+  >("idle");
 
   const fetchPrefs = useCallback(async () => {
     try {
@@ -133,36 +137,84 @@ export default function BenachrichtigungenPage() {
             </CardTitle>
             <CardDescription>{t("emailDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center gap-4 pt-0">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={emailEnabled ? "default" : "outline"}
-                  className={`text-[10px] px-1.5 py-0 ${
-                    emailEnabled
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {emailEnabled ? t("enabled") : t("disabled")}
-                </Badge>
+          <CardContent className="space-y-4 pt-0">
+            <div className="flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={emailEnabled ? "default" : "outline"}
+                    className={`text-[10px] px-1.5 py-0 ${
+                      emailEnabled
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {emailEnabled ? t("enabled") : t("disabled")}
+                  </Badge>
+                </div>
               </div>
+
+              {/* Toggle switch */}
+              <button
+                onClick={toggleEmail}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 flex-shrink-0 cursor-pointer ${
+                  emailEnabled ? "bg-blue-600" : "bg-gray-200"
+                }`}
+                aria-label="Toggle email notifications"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                    emailEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
 
-            {/* Toggle switch */}
-            <button
-              onClick={toggleEmail}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 flex-shrink-0 cursor-pointer ${
-                emailEnabled ? "bg-blue-600" : "bg-gray-200"
-              }`}
-              aria-label="Toggle email notifications"
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                  emailEnabled ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
+            {/* Test email button */}
+            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={testStatus === "sending"}
+                onClick={async () => {
+                  setTestStatus("sending");
+                  try {
+                    const res = await fetch("/api/test-email", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({}),
+                    });
+                    if (res.ok) {
+                      setTestStatus("sent");
+                    } else {
+                      setTestStatus("failed");
+                    }
+                  } catch {
+                    setTestStatus("failed");
+                  }
+                  setTimeout(() => setTestStatus("idle"), 4000);
+                }}
+              >
+                <MailIcon className="h-4 w-4 mr-1.5" />
+                {testStatus === "sending"
+                  ? t("testEmailSending")
+                  : testStatus === "sent"
+                    ? t("testEmailSent")
+                    : testStatus === "failed"
+                      ? t("testEmailFailed")
+                      : t("sendTestEmail")}
+              </Button>
+              {testStatus === "sent" && (
+                <span className="text-xs text-emerald-600">
+                  {t("testEmailSent")}
+                </span>
+              )}
+              {testStatus === "failed" && (
+                <span className="text-xs text-red-600">
+                  {t("testEmailFailed")}
+                </span>
+              )}
+            </div>
           </CardContent>
         </Card>
 

@@ -95,6 +95,8 @@
     "noShifts": "No shifts",
     "shiftsCount": "{count, plural, =1 {1 shift} other {# shifts}}",
     "deleteConfirm": "Really delete this shift?",
+    "conflictError": "Shift cannot be created:",
+    "networkError": "Network error — please try again",
     "form": {
       "title": "New Shift",
       "date": "Date",
@@ -617,7 +619,11 @@
     "saving": "Saving\u2026",
     "saved": "Saved",
     "error": "Error saving",
-    "backToSettings": "Back to Settings"
+    "backToSettings": "Back to Settings",
+    "sendTestEmail": "Send test email",
+    "testEmailSending": "Sending\u2026",
+    "testEmailSent": "Test email sent",
+    "testEmailFailed": "Test email failed"
   },
   "automations": {
     "title": "Automations",

@@ -25,25 +25,45 @@ export async function sendEmail(params: {
   message: string;
   link?: string | null;
   locale?: string;
-}) {
+}): Promise<{ success: boolean; error?: string }> {
   const { to, type, title, message, link, locale = "de" } = params;
 
   const client = getResend();
   if (!client) {
     console.warn("[notifications/email] RESEND_API_KEY not set — skipping");
-    return;
+    return { success: false, error: "RESEND_API_KEY not configured" };
   }
 
   try {
+    console.log(
+      `[notifications/email] Sending to=${to}, from=${FROM_ADDRESS}, subject="${title}"`,
+    );
     const html = buildEmailHtml({ type, title, message, link, locale });
 
-    await client.emails.send({
+    const result = await client.emails.send({
       from: FROM_ADDRESS,
       to,
       subject: title,
       html,
     });
+
+    if (result.error) {
+      console.error(
+        `[notifications/email] Resend API error: ${JSON.stringify(result.error)}`,
+      );
+      return {
+        success: false,
+        error: `Resend error: ${result.error.message || JSON.stringify(result.error)}`,
+      };
+    }
+
+    console.log(
+      `[notifications/email] Sent successfully: id=${result.data?.id}`,
+    );
+    return { success: true };
   } catch (err) {
-    console.error("[notifications/email] Failed to send:", err);
+    const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error(`[notifications/email] Failed to send: ${errorMsg}`);
+    return { success: false, error: errorMsg };
   }
 }

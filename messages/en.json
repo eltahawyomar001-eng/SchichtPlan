@@ -71,7 +71,15 @@
     "pendingSwaps": "{count, plural, =1 {1 pending swap request} other {# pending swap requests}}",
     "pendingTimeEntries": "{count, plural, =1 {1 unconfirmed time entry} other {# unconfirmed time entries}}",
     "noPending": "No pending items — all caught up!",
-    "reviewNow": "Review now"
+    "reviewNow": "Review now",
+    "shiftStatuses": {
+      "SCHEDULED": "Scheduled",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "NO_SHOW": "No Show"
+    }
   },
   "onboarding": {
     "welcomeTitle": "Welcome to SchichtPlan!",
@@ -97,8 +105,13 @@
     "deleteConfirm": "Really delete this shift?",
     "conflictError": "Shift cannot be created:",
     "networkError": "Network error — please try again",
+    "saveError": "Error saving shift",
+    "allLocations": "All locations",
+    "deleteConfirmTitle": "Delete Shift",
+    "deleteConfirmMessage": "Are you sure you want to delete this shift? This action cannot be undone.",
     "form": {
       "title": "New Shift",
+      "editTitle": "Edit Shift",
       "date": "Date",
       "start": "Start",
       "end": "End",
@@ -108,7 +121,10 @@
       "noLocation": "No location",
       "notes": "Notes",
       "notesPlaceholder": "Optional notes...",
-      "submit": "Create shift"
+      "submit": "Create shift",
+      "update": "Update shift",
+      "repeatWeeks": "Repeat (weeks)",
+      "repeatWeeksHint": "0 = no repeat. Specifies how many weeks the shift is repeated for."
     }
   },
   "timeTracking": {
@@ -137,6 +153,10 @@
     "commentOptional": "Comment (optional)",
     "commentPlaceholder": "Reason...",
     "deleteConfirm": "Really delete this entry?",
+    "deleteConfirmTitle": "Delete Entry",
+    "deleteConfirmMessage": "Are you sure you want to delete this time entry? This action cannot be undone.",
+    "delete": "Delete",
+    "cancel": "Cancel",
     "approve": "Approve",
     "reject": "Reject",
     "error": "Error",
@@ -334,6 +354,10 @@
     "newEmployee": "New employee",
     "searchPlaceholder": "Search employees...",
     "deleteConfirm": "Really delete this employee?",
+    "deleteConfirmTitle": "Delete Employee",
+    "deleteConfirmMessage": "Are you sure you want to delete this employee? All associated shifts will also be deleted.",
+    "saveError": "Error saving employee",
+    "networkError": "Network error — please try again",
     "noEmployees": "No employees yet",
     "noEmployeesHint": "Add your first employee.",
     "noSearchResults": "No employees found",
@@ -341,6 +365,7 @@
     "addEmployee": "Add employee",
     "form": {
       "title": "New Employee",
+      "editTitle": "Edit Employee",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
@@ -355,11 +380,17 @@
     "description": "Manage your locations",
     "newLocation": "New location",
     "deleteConfirm": "Really delete this location?",
+    "deleteConfirmTitle": "Delete Location",
+    "deleteConfirmMessage": "Are you sure you want to delete this location? This action cannot be undone.",
+    "searchPlaceholder": "Search locations...",
+    "saveError": "Error saving location",
+    "networkError": "Network error — please try again",
     "noLocations": "No locations yet",
     "noLocationsHint": "Add your first location.",
     "addLocation": "Add location",
     "form": {
       "title": "New Location",
+      "editTitle": "Edit Location",
       "name": "Name",
       "namePlaceholder": "e.g. Main office",
       "address": "Address",
@@ -388,7 +419,20 @@
     "automations": "Automations",
     "automationsDesc": "Configure automatic rules for shift planning, time tracking, and approvals",
     "notificationPrefs": "Email Notifications",
-    "notificationPrefsDesc": "Configure email notifications for shift assignments and updates"
+    "notificationPrefsDesc": "Configure email notifications for shift assignments and updates",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordChanged": "Password changed successfully.",
+    "wrongPassword": "Current password is incorrect.",
+    "noPassword": "No password set — please contact your admin.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordsNoMatch": "Passwords do not match.",
+    "profileUpdated": "Profile updated successfully.",
+    "saveError": "Error saving changes",
+    "networkError": "Network error — please try again",
+    "cancelChange": "Cancel"
   },
   "auth": {
     "login": "Sign in",
@@ -404,6 +448,7 @@
     "signInButton": "SIGN IN",
     "signInSubtitle": "Sign in to your account to continue.",
     "forgotPassword": "Forgot password?",
+    "forgotPasswordInfo": "Please contact your workspace administrator to reset your password.",
     "or": "or",
     "accountCreated": "Account created successfully! You can now sign in.",
     "welcomeBack": "Welcome back to",

@@ -7,11 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   PlusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   XIcon,
+  EditIcon,
+  TrashIcon,
+  FilterIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -57,8 +61,11 @@ export default function SchichtplanPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
+  const [filterLocationId, setFilterLocationId] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     startTime: "08:00",
@@ -66,6 +73,7 @@ export default function SchichtplanPage() {
     employeeId: "",
     locationId: "",
     notes: "",
+    repeatWeeks: 0,
   });
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -105,8 +113,32 @@ export default function SchichtplanPage() {
     fetchData();
   }, [fetchData]);
 
-  const handleAddShift = (date: Date) => {
-    setFormData((p) => ({ ...p, date: format(date, "yyyy-MM-dd") }));
+  const openCreateForm = (date: Date) => {
+    setEditingShift(null);
+    setFormData({
+      date: format(date, "yyyy-MM-dd"),
+      startTime: "08:00",
+      endTime: "16:00",
+      employeeId: "",
+      locationId: "",
+      notes: "",
+      repeatWeeks: 0,
+    });
+    setFormError(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (shift: Shift) => {
+    setEditingShift(shift);
+    setFormData({
+      date: shift.date.split("T")[0],
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      employeeId: shift.employee.id,
+      locationId: shift.location?.id || "",
+      notes: shift.notes || "",
+      repeatWeeks: 0,
+    });
     setFormError(null);
     setShowForm(true);
   };
@@ -115,14 +147,23 @@ export default function SchichtplanPage() {
     e.preventDefault();
     setFormError(null);
     try {
-      const res = await fetch("/api/shifts", {
-        method: "POST",
+      const url = editingShift
+        ? `/api/shifts/${editingShift.id}`
+        : "/api/shifts";
+      const method = editingShift ? "PATCH" : "POST";
+      const payload = editingShift
+        ? { ...formData, repeatWeeks: undefined }
+        : formData;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         setShowForm(false);
+        setEditingShift(null);
         setFormError(null);
         setFormData({
           date: "",
@@ -131,18 +172,18 @@ export default function SchichtplanPage() {
           employeeId: "",
           locationId: "",
           notes: "",
+          repeatWeeks: 0,
         });
         fetchData();
       } else {
         const data = await res.json();
         if (res.status === 409 && data.conflicts) {
-          // ArbZG / conflict violations
           const messages = data.conflicts.map(
             (c: { message: string }) => c.message,
           );
           setFormError(messages.join("\n"));
         } else {
-          setFormError(data.error || "Fehler beim Erstellen der Schicht");
+          setFormError(data.error || t("saveError"));
         }
       }
     } catch (error) {
@@ -151,10 +192,11 @@ export default function SchichtplanPage() {
     }
   };
 
-  const handleDeleteShift = async (id: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
+  const handleDeleteShift = async () => {
+    if (!deleteTarget) return;
     try {
-      await fetch(`/api/shifts/${id}`, { method: "DELETE" });
+      await fetch(`/api/shifts/${deleteTarget}`, { method: "DELETE" });
+      setDeleteTarget(null);
       fetchData();
     } catch (error) {
       console.error("Error:", error);
@@ -163,7 +205,9 @@ export default function SchichtplanPage() {
 
   const getShiftsForDay = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
-    return shifts.filter((s) => s.date.startsWith(dateStr));
+    return shifts
+      .filter((s) => s.date.startsWith(dateStr))
+      .filter((s) => !filterLocationId || s.location?.id === filterLocationId);
   };
 
   return (
@@ -171,7 +215,7 @@ export default function SchichtplanPage() {
       <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Week Navigation */}
+        {/* Week Navigation + Location Filter */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-4">
             <Button
@@ -193,13 +237,33 @@ export default function SchichtplanPage() {
               <ChevronRightIcon className="h-4 w-4" />
             </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentWeek(new Date())}
-          >
-            {tc("today")}
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Location Filter */}
+            {locations.length > 0 && (
+              <div className="relative flex-1 sm:flex-initial">
+                <FilterIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <select
+                  value={filterLocationId}
+                  onChange={(e) => setFilterLocationId(e.target.value)}
+                  className="h-9 w-full sm:w-auto appearance-none rounded-lg border border-gray-300 bg-white pl-9 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <option value="">{t("allLocations")}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentWeek(new Date())}
+            >
+              {tc("today")}
+            </Button>
+          </div>
         </div>
 
         {/* Week Grid */}
@@ -244,7 +308,7 @@ export default function SchichtplanPage() {
                           </span>
                         </div>
                         <button
-                          onClick={() => handleAddShift(day)}
+                          onClick={() => openCreateForm(day)}
                           className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                         >
                           <PlusIcon className="h-5 w-5" />
@@ -284,12 +348,20 @@ export default function SchichtplanPage() {
                                 )}
                               </div>
                             </div>
-                            <button
-                              onClick={() => handleDeleteShift(shift.id)}
-                              className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <XIcon className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => openEditForm(shift)}
+                                className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-blue-500"
+                              >
+                                <EditIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteTarget(shift.id)}
+                                className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-red-500"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </CardContent>
@@ -326,7 +398,7 @@ export default function SchichtplanPage() {
                             </p>
                           </div>
                           <button
-                            onClick={() => handleAddShift(day)}
+                            onClick={() => openCreateForm(day)}
                             className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                           >
                             <PlusIcon className="h-4 w-4" />
@@ -342,7 +414,7 @@ export default function SchichtplanPage() {
                           dayShifts.map((shift) => (
                             <div
                               key={shift.id}
-                              className="group relative rounded-md p-2 text-xs"
+                              className="group relative rounded-md p-2 text-xs cursor-pointer"
                               style={{
                                 backgroundColor:
                                   (shift.employee.color || "#3B82F6") + "20",
@@ -350,10 +422,14 @@ export default function SchichtplanPage() {
                                   shift.employee.color || "#3B82F6"
                                 }`,
                               }}
+                              onClick={() => openEditForm(shift)}
                             >
                               <button
-                                onClick={() => handleDeleteShift(shift.id)}
-                                className="absolute right-1 top-1 hidden rounded p-0.5 hover:bg-white/50 group-hover:block"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget(shift.id);
+                                }}
+                                className="absolute right-1 top-1 hidden rounded p-0.5 hover:bg-white/50 group-hover:block text-gray-400 hover:text-red-500"
                               >
                                 <XIcon className="h-3 w-3" />
                               </button>
@@ -381,12 +457,14 @@ export default function SchichtplanPage() {
           </>
         )}
 
-        {/* Add Shift Modal */}
+        {/* Add/Edit Shift Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{t("form.title")}</CardTitle>
+                <CardTitle>
+                  {editingShift ? t("form.editTitle") : t("form.title")}
+                </CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1 hover:bg-gray-100"
@@ -499,6 +577,31 @@ export default function SchichtplanPage() {
                     />
                   </div>
 
+                  {/* Repeat weeks (only for new shifts) */}
+                  {!editingShift && (
+                    <div className="space-y-2">
+                      <Label htmlFor="repeatWeeks">
+                        {t("form.repeatWeeks")}
+                      </Label>
+                      <Input
+                        id="repeatWeeks"
+                        type="number"
+                        min="0"
+                        max="52"
+                        value={formData.repeatWeeks}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            repeatWeeks: parseInt(e.target.value) || 0,
+                          }))
+                        }
+                      />
+                      <p className="text-xs text-gray-500">
+                        {t("form.repeatWeeksHint")}
+                      </p>
+                    </div>
+                  )}
+
                   {formError && (
                     <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                       <p className="font-semibold mb-1">{t("conflictError")}</p>
@@ -518,7 +621,9 @@ export default function SchichtplanPage() {
                     >
                       {tc("cancel")}
                     </Button>
-                    <Button type="submit">{t("form.submit")}</Button>
+                    <Button type="submit">
+                      {editingShift ? t("form.update") : t("form.submit")}
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -526,6 +631,18 @@ export default function SchichtplanPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={handleDeleteShift}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

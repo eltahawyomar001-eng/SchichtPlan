@@ -70,10 +70,6 @@ model Workspace {
   industry  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  stripeCustomerId       String?  @unique
-  stripeSubscriptionId   String?  @unique
-  stripePriceId          String?
-  stripeCurrentPeriodEnd DateTime?
   members   User[]
   employees Employee[]
   shifts    Shift[]
@@ -102,7 +98,6 @@ model Employee {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shifts      Shift[]
-  absences    Absence[]
   timeEntries TimeEntry[]
   absenceRequests AbsenceRequest[]
   availabilities  Availability[]
@@ -153,25 +148,6 @@ enum ShiftStatus {
   NO_SHOW
 }
 
-model Absence {
-  id        String      @id @default(cuid())
-  type      AbsenceType
-  startDate DateTime    @db.Date
-  endDate   DateTime    @db.Date
-  notes     String?
-  approved  Boolean     @default(false)
-  createdAt DateTime    @default(now())
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-}
-
-enum AbsenceType {
-  URLAUB
-  KRANK
-  FEIERTAG
-  SONSTIGES
-}
-
 // ── Zeiterfassung (Time Tracking) ──────────────────────────────
 
 enum TimeEntryStatus {
@@ -204,11 +180,6 @@ model TimeEntry {
   submittedAt  DateTime?
   confirmedAt  DateTime?
   confirmedBy  String?         // userId of the confirmer
-
-  // Optional: Auftraggeber (client) confirmation
-  clientConfirmed   Boolean  @default(false)
-  clientConfirmedAt DateTime?
-  clientConfirmedBy String?
 
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt

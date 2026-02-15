@@ -103,7 +103,7 @@ export default function AbwesenheitenPage() {
       const res = await fetch(`/api/absences?${params}`);
       if (res.ok) setAbsences(await res.json());
     } catch (err) {
-      console.error("Fehler beim Laden:", err);
+      console.error("Error loading:", err);
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ export default function AbwesenheitenPage() {
       const res = await fetch("/api/employees");
       if (res.ok) setEmployees(await res.json());
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }, []);
 
@@ -147,7 +147,7 @@ export default function AbwesenheitenPage() {
         fetchAbsences();
       }
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }
 
@@ -160,7 +160,7 @@ export default function AbwesenheitenPage() {
       });
       fetchAbsences();
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }
 

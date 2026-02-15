@@ -7,7 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusIcon, MapPinIcon, XIcon, TrashIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  PlusIcon,
+  MapPinIcon,
+  XIcon,
+  TrashIcon,
+  EditIcon,
+  SearchIcon,
+} from "@/components/icons";
 
 interface Location {
   id: string;
@@ -21,7 +29,11 @@ export default function StandortePage() {
   const tc = useTranslations("common");
   const [locations, setLocations] = useState<Location[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", address: "" });
 
   useEffect(() => {
@@ -40,34 +52,66 @@ export default function StandortePage() {
     }
   };
 
+  const openCreateForm = () => {
+    setEditingLocation(null);
+    setFormData({ name: "", address: "" });
+    setFormError(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (loc: Location) => {
+    setEditingLocation(loc);
+    setFormData({ name: loc.name, address: loc.address || "" });
+    setFormError(null);
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     try {
-      const res = await fetch("/api/locations", {
-        method: "POST",
+      const url = editingLocation
+        ? `/api/locations/${editingLocation.id}`
+        : "/api/locations";
+      const method = editingLocation ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       if (res.ok) {
         setShowForm(false);
+        setEditingLocation(null);
         setFormData({ name: "", address: "" });
         fetchLocations();
+      } else {
+        const data = await res.json();
+        setFormError(data.error || t("saveError"));
       }
     } catch (error) {
       console.error("Error:", error);
+      setFormError(t("networkError"));
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await fetch(`/api/locations/${id}`, { method: "DELETE" });
+      await fetch(`/api/locations/${deleteTarget}`, { method: "DELETE" });
+      setDeleteTarget(null);
       fetchLocations();
     } catch (error) {
       console.error("Error:", error);
     }
   };
+
+  const filteredLocations = locations.filter((loc) =>
+    `${loc.name} ${loc.address || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
 
   return (
     <div>
@@ -75,7 +119,7 @@ export default function StandortePage() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button size="sm" onClick={() => setShowForm(true)}>
+          <Button size="sm" onClick={openCreateForm}>
             <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("newLocation")}</span>
             <span className="sm:hidden">{tc("new")}</span>
@@ -84,12 +128,27 @@ export default function StandortePage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Add Location Modal */}
+        {/* Search */}
+        {locations.length > 0 && (
+          <div className="relative max-w-full sm:max-w-md">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        )}
+
+        {/* Add/Edit Location Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{t("form.title")}</CardTitle>
+                <CardTitle>
+                  {editingLocation ? t("form.editTitle") : t("form.title")}
+                </CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1 hover:bg-gray-100"
@@ -124,6 +183,12 @@ export default function StandortePage() {
                     />
                   </div>
 
+                  {formError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                      {formError}
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-3 pt-4">
                     <Button
                       type="button"
@@ -132,7 +197,9 @@ export default function StandortePage() {
                     >
                       {tc("cancel")}
                     </Button>
-                    <Button type="submit">{tc("save")}</Button>
+                    <Button type="submit">
+                      {editingLocation ? tc("save") : t("addLocation")}
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -145,27 +212,29 @@ export default function StandortePage() {
           <div className="flex items-center justify-center py-12">
             <p className="text-gray-500">{tc("loading")}</p>
           </div>
-        ) : locations.length === 0 ? (
+        ) : filteredLocations.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="rounded-full bg-gray-100 p-4 mb-4">
                 <MapPinIcon className="h-8 w-8 text-gray-400" />
               </div>
               <p className="text-lg font-medium text-gray-900">
-                {t("noLocations")}
+                {search ? tc("noResults") : t("noLocations")}
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                {t("noLocationsHint")}
+                {!search && t("noLocationsHint")}
               </p>
-              <Button className="mt-4" onClick={() => setShowForm(true)}>
-                <PlusIcon className="h-4 w-4" />
-                {t("addLocation")}
-              </Button>
+              {!search && (
+                <Button className="mt-4" onClick={openCreateForm}>
+                  <PlusIcon className="h-4 w-4" />
+                  {t("addLocation")}
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {locations.map((location) => (
+            {filteredLocations.map((location) => (
               <Card
                 key={location.id}
                 className="hover:shadow-md transition-shadow"
@@ -187,14 +256,24 @@ export default function StandortePage() {
                         )}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-red-600"
-                      onClick={() => handleDelete(location.id)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => openEditForm(location)}
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-red-600"
+                        onClick={() => setDeleteTarget(location.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -202,6 +281,18 @@ export default function StandortePage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

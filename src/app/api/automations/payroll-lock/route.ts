@@ -86,7 +86,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error locking payroll:", error);
     return NextResponse.json(
-      { error: "Fehler beim Sperren der Gehaltsabrechnung" },
+      { error: "Error locking payroll" },
       { status: 500 },
     );
   }

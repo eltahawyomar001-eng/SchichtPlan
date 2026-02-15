@@ -65,7 +65,7 @@ export default function LohnexportPage() {
       const res = await fetch("/api/employees");
       if (res.ok) setEmployees(await res.json());
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }, []);
 
@@ -92,7 +92,7 @@ export default function LohnexportPage() {
         setPreviewLoaded(true);
       }
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }

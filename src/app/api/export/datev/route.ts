@@ -78,7 +78,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("Error exporting:", error);
-    return NextResponse.json({ error: "Fehler beim Export" }, { status: 500 });
+    return NextResponse.json({ error: "Error exporting" }, { status: 500 });
   }
 }
 

@@ -34,10 +34,7 @@ export async function PATCH(
     return NextResponse.json(shift);
   } catch (error) {
     console.error("Error updating shift:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
 
@@ -61,6 +58,6 @@ export async function DELETE(
     return NextResponse.json({ message: "Schicht gelöscht" });
   } catch (error) {
     console.error("Error deleting shift:", error);
-    return NextResponse.json({ error: "Fehler beim Löschen" }, { status: 500 });
+    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error checking overtime:", error);
     return NextResponse.json(
-      { error: "Fehler bei der Überstundenprüfung" },
+      { error: "Error checking overtime" },
       { status: 500 },
     );
   }

@@ -174,9 +174,6 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating shift swap:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }

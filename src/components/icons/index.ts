@@ -52,3 +52,4 @@ export { PencilIcon } from "./PencilIcon";
 export { AlertCircleIcon } from "./AlertCircleIcon";
 export { MessageCircleIcon } from "./MessageCircleIcon";
 export { SmartphoneIcon } from "./SmartphoneIcon";
+export { CheckIcon } from "./CheckIcon";

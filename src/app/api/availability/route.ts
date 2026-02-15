@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     return NextResponse.json(availabilities);
   } catch (error) {
     console.error("Error fetching availability:", error);
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
 
@@ -96,9 +96,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ created: created.count }, { status: 201 });
   } catch (error) {
     console.error("Error saving availability:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Speichern" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Error saving" }, { status: 500 });
   }
 }

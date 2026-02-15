@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error generating time entries:", error);
     return NextResponse.json(
-      { error: "Fehler bei der automatischen Zeiterfassung" },
+      { error: "Error with automatic time tracking" },
       { status: 500 },
     );
   }

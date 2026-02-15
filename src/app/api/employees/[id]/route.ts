@@ -32,7 +32,7 @@ export async function GET(
     return NextResponse.json(employee);
   } catch (error) {
     console.error("Error fetching employee:", error);
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
 
@@ -68,10 +68,7 @@ export async function PATCH(
     return NextResponse.json(employee);
   } catch (error) {
     console.error("Error updating employee:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
 
@@ -95,6 +92,6 @@ export async function DELETE(
     return NextResponse.json({ message: "Mitarbeiter gelöscht" });
   } catch (error) {
     console.error("Error deleting employee:", error);
-    return NextResponse.json({ error: "Fehler beim Löschen" }, { status: 500 });
+    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

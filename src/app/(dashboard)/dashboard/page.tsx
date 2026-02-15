@@ -36,6 +36,18 @@ export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
 
+  const statusLabel = (s: string) => {
+    const map: Record<string, string> = {
+      SCHEDULED: t("shiftStatuses.SCHEDULED"),
+      CONFIRMED: t("shiftStatuses.CONFIRMED"),
+      IN_PROGRESS: t("shiftStatuses.IN_PROGRESS"),
+      COMPLETED: t("shiftStatuses.COMPLETED"),
+      CANCELLED: t("shiftStatuses.CANCELLED"),
+      NO_SHOW: t("shiftStatuses.NO_SHOW"),
+    };
+    return map[s] || s;
+  };
+
   // Compute "today" in Europe/Berlin timezone for correct date matching.
   // @db.Date columns in Postgres are returned by Prisma as midnight UTC,
   // so we build the comparison date from the Berlin-local date string.
@@ -399,7 +411,7 @@ export default async function DashboardPage() {
                         {shift.startTime} - {shift.endTime}
                       </p>
                       <p className="text-xs sm:text-sm text-gray-500">
-                        {shift.status}
+                        {statusLabel(shift.status)}
                       </p>
                     </div>
                   </div>

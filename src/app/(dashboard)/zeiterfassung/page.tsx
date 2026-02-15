@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   PlusIcon,
   XIcon,
@@ -132,6 +133,7 @@ export default function ZeiterfassungPage() {
 
   // Action states
   const [actionComment, setActionComment] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // ─── Data Fetching ──────────────────────────────────────────
 
@@ -281,15 +283,23 @@ export default function ZeiterfassungPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      const res = await fetch(`/api/time-entries/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/time-entries/${deleteTarget}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         fetchEntries();
         setSelectedEntry(null);
       }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -1124,6 +1134,18 @@ export default function ZeiterfassungPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={t("delete")}
+        cancelLabel={t("cancel")}
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

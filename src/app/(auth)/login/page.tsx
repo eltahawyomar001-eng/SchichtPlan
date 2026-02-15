@@ -28,6 +28,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotInfo, setShowForgotInfo] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,7 +208,10 @@ function LoginForm() {
                 >
                   {t("password")}
                 </label>
-                <span className="text-xs text-[var(--brand-600)] hover:text-[var(--brand-700)] cursor-pointer transition-colors">
+                <span
+                  onClick={() => setShowForgotInfo(true)}
+                  className="text-xs text-[var(--brand-600)] hover:text-[var(--brand-700)] cursor-pointer transition-colors"
+                >
                   {t("forgotPassword")}
                 </span>
               </div>
@@ -237,6 +241,13 @@ function LoginForm() {
                 </button>
               </div>
             </div>
+
+            {/* Forgot password info */}
+            {showForgotInfo && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                {t("forgotPasswordInfo")}
+              </div>
+            )}
 
             {/* CTA Button */}
             <button

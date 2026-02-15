@@ -68,7 +68,7 @@ export async function GET(req: Request) {
     return NextResponse.json(enriched);
   } catch (error) {
     console.error("Error fetching time accounts:", error);
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
 
@@ -119,9 +119,6 @@ export async function POST(req: Request) {
     return NextResponse.json(account, { status: 201 });
   } catch (error) {
     console.error("Error saving time account:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Speichern" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Error saving" }, { status: 500 });
   }
 }

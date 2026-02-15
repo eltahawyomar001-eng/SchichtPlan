@@ -101,7 +101,7 @@ export default function SchichttauschPage() {
       const res = await fetch(`/api/shift-swaps?${params}`);
       if (res.ok) setSwaps(await res.json());
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function SchichttauschPage() {
       if (empRes.ok) setEmployees(await empRes.json());
       if (shiftRes.ok) setShifts(await shiftRes.json());
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }, []);
 
@@ -153,7 +153,7 @@ export default function SchichttauschPage() {
         fetchSwaps();
       }
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }
 
@@ -170,7 +170,7 @@ export default function SchichttauschPage() {
       });
       fetchSwaps();
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }
 

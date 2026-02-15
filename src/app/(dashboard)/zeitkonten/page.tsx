@@ -82,7 +82,7 @@ export default function ZeitkontenPage() {
       if (accRes.ok) setAccounts(await accRes.json());
       if (empRes.ok) setEmployees(await empRes.json());
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export default function ZeitkontenPage() {
         fetchData();
       }
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }
 

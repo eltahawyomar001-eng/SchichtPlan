@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     return NextResponse.json(absences);
   } catch (error) {
     console.error("Error fetching absences:", error);
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
 
@@ -177,7 +177,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating absence:", error);
     return NextResponse.json(
-      { error: "Fehler beim Erstellen" },
+      { error: "Error creating resource" },
       { status: 500 },
     );
   }

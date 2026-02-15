@@ -169,7 +169,7 @@ export async function POST(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error("Error updating time entry status:", error);
     return NextResponse.json(
-      { error: "Fehler beim Statuswechsel" },
+      { error: "Error changing status" },
       { status: 500 },
     );
   }

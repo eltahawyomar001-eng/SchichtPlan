@@ -87,7 +87,7 @@ export default function VerfuegbarkeitenPage() {
       if (avRes.ok) setAvailabilities(await avRes.json());
       if (empRes.ok) setEmployees(await empRes.json());
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -133,7 +133,7 @@ export default function VerfuegbarkeitenPage() {
         fetchData();
       }
     } catch (err) {
-      console.error("Fehler:", err);
+      console.error("Error:", err);
     }
   }
 

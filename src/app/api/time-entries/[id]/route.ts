@@ -40,7 +40,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     return NextResponse.json(entry);
   } catch (error) {
     console.error("Error fetching time entry:", error);
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
 
@@ -145,10 +145,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating time entry:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
 
@@ -183,6 +180,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting time entry:", error);
-    return NextResponse.json({ error: "Fehler beim Löschen" }, { status: 500 });
+    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

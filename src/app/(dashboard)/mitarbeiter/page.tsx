@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   PlusIcon,
   SearchIcon,
@@ -17,6 +18,7 @@ import {
   PhoneIcon,
   BriefcaseIcon,
   UsersIcon,
+  EditIcon,
 } from "@/components/icons";
 
 interface Employee {
@@ -38,7 +40,10 @@ export default function MitarbeiterPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -65,17 +70,54 @@ export default function MitarbeiterPage() {
     }
   };
 
+  const openCreateForm = () => {
+    setEditingEmployee(null);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      position: "",
+      hourlyRate: "",
+      weeklyHours: "",
+    });
+    setFormError(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setFormData({
+      firstName: emp.firstName,
+      lastName: emp.lastName,
+      email: emp.email || "",
+      phone: emp.phone || "",
+      position: emp.position || "",
+      hourlyRate: emp.hourlyRate?.toString() || "",
+      weeklyHours: emp.weeklyHours?.toString() || "",
+    });
+    setFormError(null);
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     try {
-      const res = await fetch("/api/employees", {
-        method: "POST",
+      const url = editingEmployee
+        ? `/api/employees/${editingEmployee.id}`
+        : "/api/employees";
+      const method = editingEmployee ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       if (res.ok) {
         setShowForm(false);
+        setEditingEmployee(null);
         setFormData({
           firstName: "",
           lastName: "",
@@ -86,16 +128,34 @@ export default function MitarbeiterPage() {
           weeklyHours: "",
         });
         fetchEmployees();
+      } else {
+        const data = await res.json();
+        setFormError(data.error || t("saveError"));
       }
+    } catch (error) {
+      console.error("Error:", error);
+      setFormError(t("networkError"));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`/api/employees/${deleteTarget}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      fetchEmployees();
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
+  const handleToggleActive = async (emp: Employee) => {
     try {
-      await fetch(`/api/employees/${id}`, { method: "DELETE" });
+      await fetch(`/api/employees/${emp.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...emp, isActive: !emp.isActive }),
+      });
       fetchEmployees();
     } catch (error) {
       console.error("Error:", error);
@@ -114,7 +174,7 @@ export default function MitarbeiterPage() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button size="sm" onClick={() => setShowForm(true)}>
+          <Button size="sm" onClick={openCreateForm}>
             <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("newEmployee")}</span>
             <span className="sm:hidden">{tc("new")}</span>
@@ -134,12 +194,14 @@ export default function MitarbeiterPage() {
           />
         </div>
 
-        {/* Add Employee Modal */}
+        {/* Add/Edit Employee Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{t("form.title")}</CardTitle>
+                <CardTitle>
+                  {editingEmployee ? t("form.editTitle") : t("form.title")}
+                </CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1 hover:bg-gray-100"
@@ -252,6 +314,12 @@ export default function MitarbeiterPage() {
                     </div>
                   </div>
 
+                  {formError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                      {formError}
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-3 pt-4">
                     <Button
                       type="button"
@@ -260,7 +328,9 @@ export default function MitarbeiterPage() {
                     >
                       {tc("cancel")}
                     </Button>
-                    <Button type="submit">{tc("save")}</Button>
+                    <Button type="submit">
+                      {editingEmployee ? tc("save") : t("addEmployee")}
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -286,7 +356,7 @@ export default function MitarbeiterPage() {
                 {search ? t("noSearchResultsHint") : t("noEmployeesHint")}
               </p>
               {!search && (
-                <Button className="mt-4" onClick={() => setShowForm(true)}>
+                <Button className="mt-4" onClick={openCreateForm}>
                   <PlusIcon className="h-4 w-4" />
                   {t("addEmployee")}
                 </Button>
@@ -298,7 +368,7 @@ export default function MitarbeiterPage() {
             {filteredEmployees.map((employee) => (
               <Card
                 key={employee.id}
-                className="hover:shadow-md transition-shadow"
+                className={`hover:shadow-md transition-shadow ${!employee.isActive ? "opacity-60" : ""}`}
               >
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
@@ -318,9 +388,19 @@ export default function MitarbeiterPage() {
                         )}
                       </div>
                     </div>
-                    <Badge variant={employee.isActive ? "success" : "outline"}>
-                      {employee.isActive ? tc("active") : tc("inactive")}
-                    </Badge>
+                    <button
+                      onClick={() => handleToggleActive(employee)}
+                      title={
+                        employee.isActive ? tc("deactivate") : tc("activate")
+                      }
+                    >
+                      <Badge
+                        variant={employee.isActive ? "success" : "outline"}
+                        className="cursor-pointer hover:opacity-80"
+                      >
+                        {employee.isActive ? tc("active") : tc("inactive")}
+                      </Badge>
+                    </button>
                   </div>
 
                   <div className="mt-4 space-y-2">
@@ -346,12 +426,20 @@ export default function MitarbeiterPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditForm(employee)}
+                    >
+                      <EditIcon className="h-4 w-4" />
+                      {tc("edit")}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => handleDelete(employee.id)}
+                      onClick={() => setDeleteTarget(employee.id)}
                     >
                       {tc("delete")}
                     </Button>
@@ -362,6 +450,18 @@ export default function MitarbeiterPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

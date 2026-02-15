@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     return NextResponse.json(entries);
   } catch (error) {
     console.error("Error fetching time entries:", error);
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
 
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating time entry:", error);
     return NextResponse.json(
-      { error: "Fehler beim Erstellen" },
+      { error: "Error creating resource" },
       { status: 500 },
     );
   }

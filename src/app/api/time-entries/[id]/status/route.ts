@@ -3,7 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { recalculateTimeAccount, isMonthLocked } from "@/lib/automations";
+import {
+  recalculateTimeAccount,
+  isMonthLocked,
+  createSystemNotification,
+} from "@/lib/automations";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -195,85 +199,54 @@ async function createNotification(
       type: string;
       title: string;
       message: string;
-      recipientQuery: "managers" | "employee";
+      recipientType: "managers" | "employee";
     }
   > = {
     submit: {
       type: "TIME_ENTRY_SUBMITTED",
       title: "Neuer Zeiteintrag eingereicht",
       message: `${employeeName} hat einen Zeiteintrag zur Prüfung eingereicht.`,
-      recipientQuery: "managers",
+      recipientType: "managers",
     },
     approve: {
       type: "TIME_ENTRY_APPROVED",
       title: "Zeiteintrag genehmigt",
       message: `Ihr Zeiteintrag wurde von ${performer.name ?? "einem Manager"} genehmigt.`,
-      recipientQuery: "employee",
+      recipientType: "employee",
     },
     reject: {
       type: "TIME_ENTRY_REJECTED",
       title: "Zeiteintrag abgelehnt",
       message: `Ihr Zeiteintrag wurde von ${performer.name ?? "einem Manager"} abgelehnt.`,
-      recipientQuery: "employee",
+      recipientType: "employee",
     },
     correct: {
       type: "TIME_ENTRY_CORRECTED",
       title: "Korrektur angefordert",
       message: `${performer.name ?? "Ein Manager"} hat eine Korrektur für Ihren Zeiteintrag angefordert.`,
-      recipientQuery: "employee",
+      recipientType: "employee",
     },
     confirm: {
       type: "TIME_ENTRY_CONFIRMED",
       title: "Zeiteintrag bestätigt",
       message: `Ihr Zeiteintrag wurde endgültig bestätigt.`,
-      recipientQuery: "employee",
+      recipientType: "employee",
     },
   };
 
   const info = notificationMap[action];
   if (!info) return;
 
-  if (info.recipientQuery === "managers") {
-    // Notify all managers/admins/owners in the workspace
-    const managers = await prisma.user.findMany({
-      where: {
-        workspaceId,
-        role: { in: ["OWNER", "ADMIN", "MANAGER"] },
-      },
-      select: { id: true },
-    });
-
-    for (const mgr of managers) {
-      await prisma.notification.create({
-        data: {
-          type: info.type,
-          title: info.title,
-          message: info.message,
-          userId: mgr.id,
-          workspaceId,
-          link: `/zeiterfassung?entry=${entry.id}`,
-        },
-      });
-    }
-  } else {
-    // Notify the employee (find their User account by email)
-    if (entry.employee.email) {
-      const employeeUser = await prisma.user.findUnique({
-        where: { email: entry.employee.email },
-        select: { id: true },
-      });
-      if (employeeUser) {
-        await prisma.notification.create({
-          data: {
-            type: info.type,
-            title: info.title,
-            message: info.message,
-            userId: employeeUser.id,
-            workspaceId,
-            link: `/zeiterfassung?entry=${entry.id}`,
-          },
-        });
-      }
-    }
-  }
+  await createSystemNotification({
+    type: info.type,
+    title: info.title,
+    message: info.message,
+    link: `/zeiterfassung?entry=${entry.id}`,
+    workspaceId,
+    recipientType: info.recipientType,
+    employeeEmail:
+      info.recipientType === "employee"
+        ? (entry.employee.email ?? undefined)
+        : undefined,
+  });
 }

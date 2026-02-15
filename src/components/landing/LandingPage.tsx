@@ -567,15 +567,21 @@ function Footer() {
           © {new Date().getFullYear()} SchichtPlan. {t("footerRights")}
         </p>
         <div className="flex items-center gap-6 text-sm text-gray-400">
-          <a href="#" className="hover:text-gray-600 transition-colors">
+          <Link
+            href="/datenschutz"
+            className="hover:text-gray-600 transition-colors"
+          >
             {t("footerPrivacy")}
-          </a>
-          <a href="#" className="hover:text-gray-600 transition-colors">
+          </Link>
+          <Link
+            href="/impressum"
+            className="hover:text-gray-600 transition-colors"
+          >
             {t("footerImprint")}
-          </a>
-          <a href="#" className="hover:text-gray-600 transition-colors">
+          </Link>
+          <Link href="/agb" className="hover:text-gray-600 transition-colors">
             {t("footerTerms")}
-          </a>
+          </Link>
         </div>
       </div>
     </footer>

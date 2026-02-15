@@ -13,7 +13,14 @@ function getClient() {
 }
 
 /**
- * Send a notification via WhatsApp using Twilio.
+ * Send a WhatsApp notification using Twilio WhatsApp Sandbox.
+ *
+ * Setup (one-time per user):
+ * 1. User sends "join <sandbox-keyword>" to +1 415 523 8886 on WhatsApp
+ * 2. They receive a confirmation message
+ * 3. Now they can receive WhatsApp notifications from SchichtPlan
+ *
+ * Twilio Sandbox sends messages from whatsapp:+14155238886.
  */
 export async function sendWhatsApp(params: {
   to: string; // E.164 format, e.g. "+491701234567"

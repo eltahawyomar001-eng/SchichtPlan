@@ -386,7 +386,7 @@
     "automations": "Automatisierungen",
     "automationsDesc": "Automatische Regeln für Schichtplanung, Zeiterfassung und Genehmigungen konfigurieren",
     "notificationPrefs": "Benachrichtigungskanäle",
-    "notificationPrefsDesc": "Wählen Sie, wie Sie benachrichtigt werden — E-Mail, WhatsApp oder SMS"
+    "notificationPrefsDesc": "Wählen Sie, wie Sie benachrichtigt werden — E-Mail oder WhatsApp"
   },
   "auth": {
     "login": "Anmelden",
@@ -607,17 +607,20 @@
   "notificationPrefs": {
     "title": "Benachrichtigungskanäle",
     "description": "Wählen Sie, wie Sie außerhalb der App benachrichtigt werden.",
-    "subtitle": "Aktivieren Sie E-Mail, WhatsApp oder SMS, um Benachrichtigungen auf Ihren bevorzugten Kanälen zu erhalten. Für WhatsApp und SMS ist eine Telefonnummer erforderlich.",
+    "subtitle": "Aktivieren Sie E-Mail oder WhatsApp, um Benachrichtigungen auf Ihren bevorzugten Kanälen zu erhalten. Für WhatsApp ist eine Telefonnummer erforderlich.",
     "channels": "Kanäle",
     "email": "E-Mail",
     "emailDesc": "Benachrichtigungen per E-Mail erhalten",
     "whatsapp": "WhatsApp",
     "whatsappDesc": "Benachrichtigungen per WhatsApp erhalten",
-    "sms": "SMS",
-    "smsDesc": "Benachrichtigungen per SMS erhalten",
     "phone": "Telefonnummer",
     "phonePlaceholder": "+49 170 1234567",
-    "phoneHint": "Erforderlich für WhatsApp und SMS. Verwenden Sie das internationale Format (z.B. +49...).",
+    "phoneHint": "Erforderlich für WhatsApp. Verwenden Sie das internationale Format (z.B. +49...).",
+    "whatsappSetup": "WhatsApp einrichten",
+    "whatsappSetupDesc": "Verbinden Sie Ihr WhatsApp, um Schichtbenachrichtigungen zu erhalten.",
+    "whatsappStep1": "1. Öffnen Sie WhatsApp auf Ihrem Handy",
+    "whatsappStep2": "2. Senden Sie die Nachricht \"join <Ihr-Sandbox-Schlüsselwort>\" an die folgende Nummer:",
+    "whatsappStep3": "3. Sie erhalten eine Bestätigung — fertig!",
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "saving": "Speichern\u2026",

@@ -29,7 +29,7 @@ interface ChannelConfig {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
   bgColor: string;
-  needsPhone: boolean;
+  requiresPhone: boolean;
 }
 
 const CHANNELS: ChannelConfig[] = [
@@ -40,7 +40,7 @@ const CHANNELS: ChannelConfig[] = [
     icon: MailIcon,
     color: "text-blue-600",
     bgColor: "bg-blue-50",
-    needsPhone: false,
+    requiresPhone: false,
   },
   {
     key: "WHATSAPP",
@@ -49,16 +49,7 @@ const CHANNELS: ChannelConfig[] = [
     icon: MessageCircleIcon,
     color: "text-green-600",
     bgColor: "bg-green-50",
-    needsPhone: true,
-  },
-  {
-    key: "SMS",
-    labelKey: "sms",
-    descKey: "smsDesc",
-    icon: SmartphoneIcon,
-    color: "text-violet-600",
-    bgColor: "bg-violet-50",
-    needsPhone: true,
+    requiresPhone: true,
   },
 ];
 
@@ -68,7 +59,6 @@ export default function BenachrichtigungenPage() {
   const [preferences, setPreferences] = useState<Record<string, boolean>>({
     EMAIL: false,
     WHATSAPP: false,
-    SMS: false,
   });
   const [phone, setPhone] = useState("");
   const [phoneSaved, setPhoneSaved] = useState("");
@@ -193,7 +183,7 @@ export default function BenachrichtigungenPage() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900">
               {enabledCount > 0
-                ? `${enabledCount}/3 ${t("channels").toLowerCase()}`
+                ? `${enabledCount}/2 ${t("channels").toLowerCase()}`
                 : t("noChannels")}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">{t("subtitle")}</p>
@@ -241,6 +231,31 @@ export default function BenachrichtigungenPage() {
           </CardContent>
         </Card>
 
+        {/* WhatsApp Sandbox Setup */}
+        <Card className="border-green-100">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MessageCircleIcon className="h-5 w-5 text-green-600" />
+              {t("whatsappSetup")}
+            </CardTitle>
+            <CardDescription>{t("whatsappSetupDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg bg-green-50 border border-green-100 p-4 space-y-2.5">
+              <p className="text-xs font-medium text-green-800">
+                {t("whatsappStep1")}
+              </p>
+              <p className="text-xs text-green-700">{t("whatsappStep2")}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-mono font-semibold text-green-800 ring-1 ring-inset ring-green-200">
+                  +1 415 523 8886
+                </span>
+              </div>
+              <p className="text-xs text-green-700">{t("whatsappStep3")}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Channel toggles */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-700">
@@ -250,7 +265,7 @@ export default function BenachrichtigungenPage() {
           {CHANNELS.map((ch) => {
             const Icon = ch.icon;
             const enabled = preferences[ch.key] ?? false;
-            const needsPhoneButMissing = ch.needsPhone && !phoneSaved;
+            const needsPhoneButMissing = ch.requiresPhone && !phoneSaved;
 
             return (
               <Card key={ch.key} className="relative overflow-hidden">

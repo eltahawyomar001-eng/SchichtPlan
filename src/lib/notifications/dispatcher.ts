@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import { sendEmail } from "./email";
-import { sendSMS } from "./sms";
 import { sendWhatsApp } from "./whatsapp";
 
 /**
@@ -8,7 +7,7 @@ import { sendWhatsApp } from "./whatsapp";
  *
  * Call this AFTER the in-app notification row has been created.
  * It checks the user's NotificationPreference rows and sends
- * via email, WhatsApp, and/or SMS accordingly.
+ * via email and/or WhatsApp accordingly.
  */
 export async function dispatchExternalNotification(params: {
   userId: string;
@@ -53,12 +52,14 @@ export async function dispatchExternalNotification(params: {
 
   // ── WhatsApp ───────────────────────────────────────────────
   if (prefs.get("WHATSAPP") && user.phone) {
-    promises.push(sendWhatsApp({ to: user.phone, title, message, link }));
-  }
-
-  // ── SMS ────────────────────────────────────────────────────
-  if (prefs.get("SMS") && user.phone) {
-    promises.push(sendSMS({ to: user.phone, title, message, link }));
+    promises.push(
+      sendWhatsApp({
+        to: user.phone,
+        title,
+        message,
+        link,
+      }),
+    );
   }
 
   // Fire all channels in parallel — don't let one failure block others

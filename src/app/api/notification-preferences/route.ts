@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { NotificationChannel } from "@prisma/client";
 
-const CHANNELS: NotificationChannel[] = ["EMAIL", "WHATSAPP", "SMS"];
+const CHANNELS: NotificationChannel[] = ["EMAIL", "WHATSAPP"];
 
 // ─── GET  /api/notification-preferences ─────────────────────────
 // Returns the user's channel preferences + phone number.
@@ -45,7 +45,7 @@ export async function GET() {
 
 // ─── PUT  /api/notification-preferences ─────────────────────────
 // Update a single channel toggle or the phone number.
-// Body: { channel: "EMAIL"|"WHATSAPP"|"SMS", enabled: boolean }
+// Body: { channel: "EMAIL"|"WHATSAPP", enabled: boolean }
 //   or  { phone: "+491701234567" }
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);

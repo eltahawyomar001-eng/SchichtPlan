@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
@@ -18,12 +18,18 @@ import {
   ClockIcon,
 } from "@/components/icons";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("auth");
+
+  const invitationToken = searchParams.get("invitation") || "";
+  const invitedEmail = searchParams.get("email") || "";
+  const isInvitation = !!invitationToken;
+
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    email: invitedEmail,
     password: "",
     confirmPassword: "",
     workspaceName: "",
@@ -61,7 +67,8 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          workspaceName: formData.workspaceName,
+          workspaceName: isInvitation ? undefined : formData.workspaceName,
+          invitationToken: isInvitation ? invitationToken : undefined,
         }),
       });
 
@@ -171,33 +178,36 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                  readOnly={isInvitation && !!invitedEmail}
+                  className={`h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none ${isInvitation && invitedEmail ? "bg-gray-50 cursor-not-allowed" : ""}`}
                 />
               </div>
             </div>
 
-            {/* Workspace / Company */}
-            <div>
-              <label
-                htmlFor="workspaceName"
-                className="mb-1.5 block text-sm font-medium text-gray-700"
-              >
-                {t("companyName")}
-              </label>
-              <div className="relative">
-                <BuildingIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <input
-                  id="workspaceName"
-                  name="workspaceName"
-                  autoComplete="organization"
-                  placeholder={t("companyPlaceholder")}
-                  value={formData.workspaceName}
-                  onChange={handleChange}
-                  required
-                  className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
-                />
+            {/* Workspace / Company — hidden when joining via invitation */}
+            {!isInvitation && (
+              <div>
+                <label
+                  htmlFor="workspaceName"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
+                  {t("companyName")}
+                </label>
+                <div className="relative">
+                  <BuildingIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="workspaceName"
+                    name="workspaceName"
+                    autoComplete="organization"
+                    placeholder={t("companyPlaceholder")}
+                    value={formData.workspaceName}
+                    onChange={handleChange}
+                    required
+                    className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Password */}
             <div>
@@ -729,5 +739,19 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -22,6 +22,7 @@ model User {
   accounts       Account[]
   sessions       Session[]
   notificationPreferences NotificationPreference[]
+  invitationsSent Invitation[]
 }
 
 model Account {
@@ -63,6 +64,32 @@ enum Role {
   EMPLOYEE
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  token       String           @unique
+  email       String
+  role        Role             @default(EMPLOYEE)
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedById String
+  invitedBy   User             @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([email, workspaceId])
+}
+
 model Workspace {
   id        String   @id @default(cuid())
   name      String
@@ -80,6 +107,7 @@ model Workspace {
   shiftSwaps      ShiftSwapRequest[]
   timeAccounts    TimeAccount[]
   automationSettings AutomationSetting[]
+  invitations Invitation[]
 }
 
 model Employee {

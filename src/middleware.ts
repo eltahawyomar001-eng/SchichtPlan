@@ -20,7 +20,7 @@ export const config = {
     "/verfuegbarkeiten/:path*",
     "/zeitkonten/:path*",
     "/lohnexport/:path*",
-    // Protect API routes (except auth)
+    // Protect API routes (except auth and public invitation token lookup)
     "/api/employees/:path*",
     "/api/locations/:path*",
     "/api/shifts/:path*",
@@ -35,5 +35,7 @@ export const config = {
     "/api/export/:path*",
     "/api/automations/:path*",
     "/api/test-email/:path*",
+    "/api/invitations/:path*",
+    "/api/team/:path*",
   ],
 };

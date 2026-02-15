@@ -28,6 +28,7 @@ import {
   CheckIcon,
   XIcon,
   LockIcon,
+  UsersIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
@@ -59,6 +60,7 @@ export default function EinstellungenPage() {
   const roleMap: Record<string, string> = {
     OWNER: t("roleOwner"),
     ADMIN: t("roleAdmin"),
+    MANAGER: t("roleManager"),
     EMPLOYEE: t("roleEmployee"),
   };
   const rawRole = (session?.user as SessionUser)?.role || "OWNER";
@@ -287,6 +289,28 @@ export default function EinstellungenPage() {
             </CardContent>
           </Card>
         </Link>
+
+        {/* Team Management Card */}
+        {["OWNER", "ADMIN"].includes(rawRole) && (
+          <Link href="/einstellungen/team" className="block group">
+            <Card className="transition-colors group-hover:border-emerald-200 group-hover:bg-emerald-50/30">
+              <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+                <div className="rounded-xl bg-emerald-50 p-3 group-hover:bg-emerald-100 transition-colors">
+                  <UsersIcon className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-gray-900">
+                    {t("teamManagement")}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {t("teamManagementDesc")}
+                  </p>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        )}
 
         {/* Security Card */}
         <Card>

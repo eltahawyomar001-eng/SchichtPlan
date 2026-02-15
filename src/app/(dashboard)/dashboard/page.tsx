@@ -19,6 +19,8 @@ import type { SessionUser } from "@/lib/types";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 interface ShiftWithRelations {
   id: string;
   startTime: string;
@@ -33,6 +35,15 @@ export default async function DashboardPage() {
   const workspaceId = (session?.user as SessionUser)?.workspaceId;
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
+
+  // Compute "today" in Europe/Berlin timezone for correct date matching.
+  // @db.Date columns in Postgres are returned by Prisma as midnight UTC,
+  // so we build the comparison date from the Berlin-local date string.
+  const berlinDate = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Europe/Berlin",
+  }); // "2026-02-15"
+  const todayStart = new Date(`${berlinDate}T00:00:00.000Z`);
+  const todayEnd = new Date(`${berlinDate}T23:59:59.999Z`);
 
   const [
     employeeCount,
@@ -50,8 +61,8 @@ export default async function DashboardPage() {
       where: {
         workspaceId,
         date: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lt: new Date(new Date().setHours(23, 59, 59, 999)),
+          gte: todayStart,
+          lt: todayEnd,
         },
       },
       include: { employee: true, location: true },

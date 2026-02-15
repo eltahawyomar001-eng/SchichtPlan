@@ -19,7 +19,7 @@
 
 import { prisma } from "@/lib/db";
 import { calcGrossMinutes } from "@/lib/time-utils";
-import { dispatchExternalNotification } from "@/lib/notifications";
+import { dispatchExternalNotification, sendEmail } from "@/lib/notifications";
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTOMATION SETTINGS CHECK
@@ -382,6 +382,16 @@ export async function createSystemNotification(params: {
         title,
         message,
         link,
+      }).catch(() => {});
+    } else {
+      // No User account for this employee — still send a direct email
+      sendEmail({
+        to: employeeEmail,
+        type,
+        title,
+        message,
+        link,
+        locale: "de",
       }).catch(() => {});
     }
   }

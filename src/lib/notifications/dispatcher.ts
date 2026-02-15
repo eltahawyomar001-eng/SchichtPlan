@@ -8,6 +8,8 @@ import { sendWhatsApp } from "./whatsapp";
  * Call this AFTER the in-app notification row has been created.
  * It checks the user's NotificationPreference rows and sends
  * via email and/or WhatsApp accordingly.
+ *
+ * When no preferences exist yet, email is sent by default.
  */
 export async function dispatchExternalNotification(params: {
   userId: string;
@@ -37,21 +39,24 @@ export async function dispatchExternalNotification(params: {
     user.notificationPreferences.map((p) => [p.channel, p.enabled]),
   );
 
-  // Locale detection: check if the user's browser locale cookie exists
-  // For server-side, we default to "de" (German market)
+  // If the user hasn't configured any preferences yet, default to email ON
+  const hasAnyPrefs = user.notificationPreferences.length > 0;
+  const emailEnabled = hasAnyPrefs ? (prefs.get("EMAIL") ?? false) : true;
+  const whatsappEnabled = prefs.get("WHATSAPP") ?? false;
+
   const locale = "de";
 
   const promises: Promise<void>[] = [];
 
   // ── Email ──────────────────────────────────────────────────
-  if (prefs.get("EMAIL") && user.email) {
+  if (emailEnabled && user.email) {
     promises.push(
       sendEmail({ to: user.email, type, title, message, link, locale }),
     );
   }
 
   // ── WhatsApp ───────────────────────────────────────────────
-  if (prefs.get("WHATSAPP") && user.phone) {
+  if (whatsappEnabled && user.phone) {
     promises.push(
       sendWhatsApp({
         to: user.phone,

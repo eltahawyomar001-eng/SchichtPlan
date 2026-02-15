@@ -13,12 +13,12 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const workspaceId = (session.user as SessionUser).workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -56,12 +56,12 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const workspaceId = (session.user as SessionUser).workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const body = await req.json();
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     if (!date || !startTime || !endTime || !employeeId) {
       return NextResponse.json(
-        { error: "Datum, Start-/Endzeit und Mitarbeiter sind erforderlich." },
+        { error: "Date, start/end time and employee are required" },
         { status: 400 },
       );
     }
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
     if (conflicts.length > 0) {
       return NextResponse.json(
         {
-          error: "Konflikte erkannt",
+          error: "Conflicts detected",
           conflicts,
         },
         { status: 409 },

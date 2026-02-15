@@ -226,6 +226,14 @@ export default function EinstellungenPage() {
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-500">
+                  {t("workspaceName")}
+                </span>
+                <span className="text-sm font-medium text-gray-900">
+                  {(session?.user as SessionUser)?.workspaceName || "–"}
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-500">
                   {t("workspaceId")}
                 </span>
                 <span className="text-sm font-mono text-gray-900 break-all">

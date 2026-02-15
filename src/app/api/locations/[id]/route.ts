@@ -11,7 +11,7 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -40,7 +40,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -50,7 +50,7 @@ export async function DELETE(
       where: { id, workspaceId },
     });
 
-    return NextResponse.json({ message: "Standort gelöscht" });
+    return NextResponse.json({ message: "Location deleted" });
   } catch (error) {
     console.error("Error deleting location:", error);
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });

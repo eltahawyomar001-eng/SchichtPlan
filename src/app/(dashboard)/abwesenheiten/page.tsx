@@ -93,6 +93,7 @@ export default function AbwesenheitenPage() {
     halfDayEnd: false,
     reason: "",
   });
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   // ── Fetch data ──────────────────────────────────────────────
 
@@ -156,7 +157,12 @@ export default function AbwesenheitenPage() {
       await fetch(`/api/absences/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, reviewNote: reviewNotes[id] || null }),
+      });
+      setReviewNotes((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
       });
       fetchAbsences();
     } catch (err) {
@@ -339,36 +345,55 @@ export default function AbwesenheitenPage() {
                               {absence.reason}
                             </p>
                           )}
+                          {absence.reviewNote &&
+                            absence.status !== "AUSSTEHEND" && (
+                              <p className="text-xs text-gray-500 mt-1 italic">
+                                {t("reviewNoteLabel")}: {absence.reviewNote}
+                              </p>
+                            )}
                         </div>
                       </div>
 
                       {/* Actions */}
                       {absence.status === "AUSSTEHEND" && (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(absence.id, "GENEHMIGT")
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          <Input
+                            placeholder={t("reviewNotePlaceholder")}
+                            value={reviewNotes[absence.id] || ""}
+                            onChange={(e) =>
+                              setReviewNotes((prev) => ({
+                                ...prev,
+                                [absence.id]: e.target.value,
+                              }))
                             }
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">
-                              {t("approve")}
-                            </span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleStatusChange(absence.id, "ABGELEHNT")
-                            }
-                          >
-                            <XIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">
-                              {t("reject")}
-                            </span>
-                          </Button>
+                            className="text-xs h-8"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                handleStatusChange(absence.id, "GENEHMIGT")
+                              }
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">
+                                {t("approve")}
+                              </span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleStatusChange(absence.id, "ABGELEHNT")
+                              }
+                            >
+                              <XIcon className="h-4 w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">
+                                {t("reject")}
+                              </span>
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { checkShiftConflicts } from "@/lib/automations";
 
 export async function PATCH(
   req: Request,
@@ -11,12 +12,39 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const workspaceId = (session.user as SessionUser).workspaceId;
     const body = await req.json();
+
+    // If date/time/employee changed, run conflict detection
+    if (body.date || body.startTime || body.endTime || body.employeeId) {
+      // Fetch the current shift to fill in unchanged fields
+      const currentShift = await prisma.shift.findFirst({
+        where: { id, workspaceId },
+      });
+      if (!currentShift) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+
+      const conflicts = await checkShiftConflicts({
+        employeeId: body.employeeId || currentShift.employeeId,
+        date: body.date || currentShift.date.toISOString().split("T")[0],
+        startTime: body.startTime || currentShift.startTime,
+        endTime: body.endTime || currentShift.endTime,
+        workspaceId,
+        excludeShiftId: id,
+      });
+
+      if (conflicts.length > 0) {
+        return NextResponse.json(
+          { error: "Conflicts detected", conflicts },
+          { status: 409 },
+        );
+      }
+    }
 
     const shift = await prisma.shift.updateMany({
       where: { id, workspaceId },
@@ -45,7 +73,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -55,7 +83,7 @@ export async function DELETE(
       where: { id, workspaceId },
     });
 
-    return NextResponse.json({ message: "Schicht gelöscht" });
+    return NextResponse.json({ message: "Shift deleted" });
   } catch (error) {
     console.error("Error deleting shift:", error);
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });

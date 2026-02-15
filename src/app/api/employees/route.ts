@@ -8,12 +8,12 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const workspaceId = (session.user as SessionUser).workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const employees = await prisma.employee.findMany({
@@ -32,12 +32,12 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const workspaceId = (session.user as SessionUser).workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const body = await req.json();
@@ -54,7 +54,21 @@ export async function POST(req: Request) {
 
     if (!firstName || !lastName) {
       return NextResponse.json(
-        { error: "Vor- und Nachname sind erforderlich." },
+        { error: "First and last name are required" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      (hourlyRate !== undefined &&
+        hourlyRate !== "" &&
+        parseFloat(hourlyRate) < 0) ||
+      (weeklyHours !== undefined &&
+        weeklyHours !== "" &&
+        parseFloat(weeklyHours) < 0)
+    ) {
+      return NextResponse.json(
+        { error: "Hourly rate and weekly hours must not be negative" },
         { status: 400 },
       );
     }

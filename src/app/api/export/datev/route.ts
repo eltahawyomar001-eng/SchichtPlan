@@ -11,19 +11,19 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     // Only managers/admins/owners can export
     if (user.role === "EMPLOYEE") {
       return NextResponse.json(
-        { error: "Keine Berechtigung für den Export" },
+        { error: "No permission for export" },
         { status: 403 },
       );
     }
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     if (!startDate || !endDate) {
       return NextResponse.json(
-        { error: "Start- und Enddatum sind erforderlich" },
+        { error: "Start and end date are required" },
         { status: 400 },
       );
     }

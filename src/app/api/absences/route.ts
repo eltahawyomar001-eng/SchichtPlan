@@ -13,13 +13,13 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -55,13 +55,13 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const body = await req.json();
@@ -75,8 +75,7 @@ export async function POST(req: Request) {
     ) {
       return NextResponse.json(
         {
-          error:
-            "Mitarbeiter, Kategorie, Start- und Enddatum sind erforderlich",
+          error: "Employee, category, start and end date are required",
         },
         { status: 400 },
       );
@@ -86,7 +85,7 @@ export async function POST(req: Request) {
     const end = new Date(body.endDate);
     if (end < start) {
       return NextResponse.json(
-        { error: "Enddatum muss nach Startdatum liegen" },
+        { error: "End date must be after start date" },
         { status: 400 },
       );
     }
@@ -115,7 +114,7 @@ export async function POST(req: Request) {
     if (overlapping) {
       return NextResponse.json(
         {
-          error: "Es gibt bereits einen Abwesenheitsantrag für diesen Zeitraum",
+          error: "An absence request already exists for this period",
         },
         { status: 409 },
       );

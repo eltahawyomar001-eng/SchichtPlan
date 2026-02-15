@@ -52,6 +52,7 @@ export default function MitarbeiterPage() {
     position: "",
     hourlyRate: "",
     weeklyHours: "",
+    color: "#3B82F6",
   });
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export default function MitarbeiterPage() {
       position: "",
       hourlyRate: "",
       weeklyHours: "",
+      color: "#3B82F6",
     });
     setFormError(null);
     setShowForm(true);
@@ -95,6 +97,7 @@ export default function MitarbeiterPage() {
       position: emp.position || "",
       hourlyRate: emp.hourlyRate?.toString() || "",
       weeklyHours: emp.weeklyHours?.toString() || "",
+      color: emp.color || "#3B82F6",
     });
     setFormError(null);
     setShowForm(true);
@@ -126,6 +129,7 @@ export default function MitarbeiterPage() {
           position: "",
           hourlyRate: "",
           weeklyHours: "",
+          color: "#3B82F6",
         });
         fetchEmployees();
       } else {
@@ -286,6 +290,7 @@ export default function MitarbeiterPage() {
                         id="hourlyRate"
                         type="number"
                         step="0.01"
+                        min="0"
                         value={formData.hourlyRate}
                         onChange={(e) =>
                           setFormData((p) => ({
@@ -303,6 +308,7 @@ export default function MitarbeiterPage() {
                         id="weeklyHours"
                         type="number"
                         step="0.5"
+                        min="0"
                         value={formData.weeklyHours}
                         onChange={(e) =>
                           setFormData((p) => ({
@@ -311,6 +317,24 @@ export default function MitarbeiterPage() {
                           }))
                         }
                       />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="color">{t("form.color")}</Label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="color"
+                        type="color"
+                        value={formData.color}
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, color: e.target.value }))
+                        }
+                        className="h-9 w-12 rounded border border-gray-300 cursor-pointer p-0.5"
+                      />
+                      <span className="text-sm text-gray-500 font-mono">
+                        {formData.color}
+                      </span>
                     </div>
                   </div>
 

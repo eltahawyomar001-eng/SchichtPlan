@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/automations/generate-time-entries",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/automations/overtime-check",
+      "schedule": "0 3 * * 1"
+    },
+    {
+      "path": "/api/automations/payroll-lock",
+      "schedule": "0 4 1 * *"
+    }
+  ]
+}

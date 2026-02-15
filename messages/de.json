@@ -219,6 +219,8 @@
     "approve": "Genehmigen",
     "reject": "Ablehnen",
     "halfDay": "Halber Tag",
+    "reviewNoteLabel": "Anmerkung",
+    "reviewNotePlaceholder": "Anmerkung (optional)",
     "categories": {
       "URLAUB": "Urlaub",
       "KRANK": "Krank",
@@ -372,7 +374,8 @@
       "phone": "Telefon",
       "position": "Position",
       "hourlyRate": "Stundenlohn (€)",
-      "weeklyHours": "Wochenstunden"
+      "weeklyHours": "Wochenstunden",
+      "color": "Farbe"
     }
   },
   "locationsPage": {
@@ -404,6 +407,7 @@
     "profileDesc": "Ihre persönlichen Informationen",
     "workspace": "Workspace",
     "workspaceDesc": "Informationen zu Ihrem Arbeitsbereich",
+    "workspaceName": "Workspace",
     "workspaceId": "Workspace ID",
     "role": "Rolle",
     "security": "Sicherheit",

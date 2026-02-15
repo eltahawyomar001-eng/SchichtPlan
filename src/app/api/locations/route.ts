@@ -8,12 +8,12 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const workspaceId = (session.user as SessionUser).workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const locations = await prisma.location.findMany({
@@ -32,21 +32,18 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const workspaceId = (session.user as SessionUser).workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     const { name, address } = await req.json();
 
     if (!name) {
-      return NextResponse.json(
-        { error: "Name ist erforderlich." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     const location = await prisma.location.create({

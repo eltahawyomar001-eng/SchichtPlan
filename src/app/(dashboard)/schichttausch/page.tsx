@@ -32,6 +32,7 @@ interface ShiftInfo {
   date: string;
   startTime: string;
   endTime: string;
+  employeeId: string;
   location: { name: string } | null;
 }
 
@@ -109,9 +110,15 @@ export default function SchichttauschPage() {
 
   const fetchMeta = useCallback(async () => {
     try {
+      // Fetch future shifts only (today + 8 weeks) for swap selection
+      const today = new Date();
+      const futureEnd = new Date();
+      futureEnd.setDate(futureEnd.getDate() + 56);
+      const start = today.toISOString().split("T")[0];
+      const end = futureEnd.toISOString().split("T")[0];
       const [empRes, shiftRes] = await Promise.all([
         fetch("/api/employees"),
-        fetch("/api/shifts"),
+        fetch(`/api/shifts?start=${start}&end=${end}`),
       ]);
       if (empRes.ok) setEmployees(await empRes.json());
       if (shiftRes.ok) setShifts(await shiftRes.json());
@@ -192,12 +199,9 @@ export default function SchichttauschPage() {
 
   // ── Shifts for selected requester ───────────────────────────
 
-  const requesterShifts = shifts.filter(
-    (s) =>
-      formData.requesterId &&
-      (s as ShiftInfo & { employee?: Employee })?.id &&
-      true,
-  );
+  const requesterShifts = formData.requesterId
+    ? shifts.filter((s) => s.employeeId === formData.requesterId)
+    : [];
 
   // ── Render ──────────────────────────────────────────────────
 
@@ -368,6 +372,12 @@ export default function SchichttauschPage() {
                         </p>
                       )}
 
+                      {swap.reviewNote && (
+                        <p className="mt-1 text-xs text-violet-500 line-clamp-1">
+                          {tc("note")}: {swap.reviewNote}
+                        </p>
+                      )}
+
                       {/* Manager actions */}
                       {swap.status === "ANGENOMMEN" && (
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
@@ -451,18 +461,12 @@ export default function SchichttauschPage() {
                     required
                   >
                     <option value="">{tc("selectPlaceholder")}</option>
-                    {shifts
-                      .filter(
-                        (s) =>
-                          !formData.requesterId ||
-                          (s as ShiftInfo & { employeeId?: string }).id,
-                      )
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {formatShift(s)}
-                          {s.location ? ` · ${s.location.name}` : ""}
-                        </option>
-                      ))}
+                    {requesterShifts.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {formatShift(s)}
+                        {s.location ? ` · ${s.location.name}` : ""}
+                      </option>
+                    ))}
                   </Select>
                 </div>
 

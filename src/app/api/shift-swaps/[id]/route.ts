@@ -17,7 +17,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     });
 
     if (!existing || existing.workspaceId !== user.workspaceId) {
-      return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     const data: Record<string, unknown> = {};

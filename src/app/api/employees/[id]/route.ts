@@ -11,7 +11,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -24,7 +24,7 @@ export async function GET(
 
     if (!employee) {
       return NextResponse.json(
-        { error: "Mitarbeiter nicht gefunden" },
+        { error: "Employee not found" },
         { status: 404 },
       );
     }
@@ -43,7 +43,7 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -79,7 +79,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -89,7 +89,7 @@ export async function DELETE(
       where: { id, workspaceId },
     });
 
-    return NextResponse.json({ message: "Mitarbeiter gelöscht" });
+    return NextResponse.json({ message: "Employee deleted" });
   } catch (error) {
     console.error("Error deleting employee:", error);
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });

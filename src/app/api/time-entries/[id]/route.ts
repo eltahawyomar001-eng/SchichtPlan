@@ -18,7 +18,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -34,7 +34,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     });
 
     if (!entry) {
-      return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     return NextResponse.json(entry);
@@ -49,7 +49,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -61,7 +61,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     // Only ENTWURF or KORREKTUR can be edited
@@ -154,7 +154,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -165,13 +165,13 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     // Only drafts can be deleted
     if (existing.status !== "ENTWURF") {
       return NextResponse.json(
-        { error: "Nur Entwürfe können gelöscht werden" },
+        { error: "Only drafts can be deleted" },
         { status: 400 },
       );
     }

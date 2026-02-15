@@ -34,20 +34,17 @@ export async function POST(req: Request) {
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     if (!["OWNER", "ADMIN", "MANAGER"].includes(user.role ?? "")) {
-      return NextResponse.json(
-        { error: "Keine Berechtigung" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const result = await checkOvertimeAlerts(workspaceId);

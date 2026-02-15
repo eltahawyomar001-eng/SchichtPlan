@@ -32,7 +32,7 @@ export async function POST(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -45,7 +45,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     });
 
     if (!entry) {
-      return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     // ── Automation: Payroll lock — prevent edits on locked months ──
@@ -123,7 +123,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       !["OWNER", "ADMIN", "MANAGER"].includes(user.role ?? "")
     ) {
       return NextResponse.json(
-        { error: "Nur Manager können diese Aktion durchführen" },
+        { error: "Only managers can perform this action" },
         { status: 403 },
       );
     }

@@ -49,18 +49,18 @@ export async function POST(req: Request) {
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
-      return NextResponse.json({ error: "Kein Workspace" }, { status: 400 });
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
     if (!["OWNER", "ADMIN"].includes(user.role ?? "")) {
       return NextResponse.json(
-        { error: "Nur Admins können Monate sperren" },
+        { error: "Only admins can lock months" },
         { status: 403 },
       );
     }

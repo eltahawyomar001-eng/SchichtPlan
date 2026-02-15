@@ -219,6 +219,8 @@
     "approve": "Approve",
     "reject": "Reject",
     "halfDay": "Half day",
+    "reviewNoteLabel": "Note",
+    "reviewNotePlaceholder": "Review note (optional)",
     "categories": {
       "URLAUB": "Vacation",
       "KRANK": "Sick leave",
@@ -372,7 +374,8 @@
       "phone": "Phone",
       "position": "Position",
       "hourlyRate": "Hourly rate (€)",
-      "weeklyHours": "Weekly hours"
+      "weeklyHours": "Weekly hours",
+      "color": "Color"
     }
   },
   "locationsPage": {
@@ -404,6 +407,7 @@
     "profileDesc": "Your personal information",
     "workspace": "Workspace",
     "workspaceDesc": "Your workspace information",
+    "workspaceName": "Workspace",
     "workspaceId": "Workspace ID",
     "role": "Role",
     "security": "Security",

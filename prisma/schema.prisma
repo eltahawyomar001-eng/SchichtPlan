@@ -409,7 +409,6 @@ model TimeAccount {
 
 enum NotificationChannel {
   EMAIL
-  WHATSAPP
 }
 
 model NotificationPreference {

@@ -385,8 +385,8 @@
     "roleEmployee": "Employee",
     "automations": "Automations",
     "automationsDesc": "Configure automatic rules for shift planning, time tracking, and approvals",
-    "notificationPrefs": "Notification Channels",
-    "notificationPrefsDesc": "Choose how you want to be notified — email or WhatsApp"
+    "notificationPrefs": "Email Notifications",
+    "notificationPrefsDesc": "Configure email notifications for shift assignments and updates"
   },
   "auth": {
     "login": "Sign in",
@@ -605,28 +605,18 @@
     }
   },
   "notificationPrefs": {
-    "title": "Notification Channels",
-    "description": "Choose how you want to be notified outside of the app.",
-    "subtitle": "Enable email or WhatsApp to receive notifications on your preferred channels. A phone number is required for WhatsApp.",
-    "channels": "Channels",
-    "email": "Email",
-    "emailDesc": "Receive notifications via email",
-    "whatsapp": "WhatsApp",
-    "whatsappDesc": "Receive notifications via WhatsApp",
-    "phone": "Phone number",
-    "phonePlaceholder": "+49 170 1234567",
-    "phoneHint": "Required for WhatsApp. Use international format (e.g. +49...).",
-    "whatsappSetup": "WhatsApp Setup",
-    "whatsappSetupDesc": "Connect your WhatsApp to receive shift notifications.",
-    "whatsappStep1": "1. Open WhatsApp on your phone",
-    "whatsappStep2": "2. Send the message \"join <your-sandbox-keyword>\" to the number below:",
-    "whatsappStep3": "3. You will receive a confirmation — you're all set!",
+    "title": "Email Notifications",
+    "description": "Enable or disable email notifications.",
+    "subtitle": "When enabled, you will receive an email for shift assignments and other important updates.",
+    "emailNotifications": "Email Notifications",
+    "email": "Email Notifications",
+    "emailDesc": "Receive emails for shift assignments, absence requests, and other updates.",
+    "emailInfo": "When email notifications are enabled, you will be emailed about new shift assignments, approved absences, and other important events. In-app notifications are not affected.",
     "enabled": "Enabled",
     "disabled": "Disabled",
     "saving": "Saving\u2026",
     "saved": "Saved",
     "error": "Error saving",
-    "noChannels": "No external channels enabled. You will only receive in-app notifications.",
     "backToSettings": "Back to Settings"
   },
   "automations": {

@@ -371,33 +371,16 @@ export async function createSystemNotification(params: {
       console.error("[notification] Manager dispatch error:", err);
     }
   } else if (employeeEmail) {
-    // Look up User by employee email — also grab the Employee's phone
-    // so we can attempt WhatsApp even if the User has no phone set
-    const [user, employee] = await Promise.all([
-      prisma.user.findUnique({
-        where: { email: employeeEmail },
-        select: { id: true, phone: true },
-      }),
-      prisma.employee.findFirst({
-        where: { email: employeeEmail, workspaceId },
-        select: { phone: true },
-      }),
-    ]);
+    const user = await prisma.user.findUnique({
+      where: { email: employeeEmail },
+      select: { id: true },
+    });
 
     console.log(
-      `[notification] Lookup email=${employeeEmail}: User=${user ? user.id : "NOT found"}, Employee phone=${employee?.phone ?? "none"}`,
+      `[notification] Lookup email=${employeeEmail}: User=${user ? user.id : "NOT found"}`,
     );
 
     if (user) {
-      // If the user has no phone but the employee does, copy it over
-      if (!user.phone && employee?.phone) {
-        console.log(`[notification] Syncing employee phone to User ${user.id}`);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { phone: employee.phone },
-        });
-      }
-
       await prisma.notification.create({
         data: {
           type,
@@ -409,7 +392,7 @@ export async function createSystemNotification(params: {
         },
       });
 
-      // Dispatch external notification — AWAIT so errors surface
+      // Dispatch email notification
       try {
         await dispatchExternalNotification({
           userId: user.id,

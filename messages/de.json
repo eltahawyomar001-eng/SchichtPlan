@@ -385,8 +385,8 @@
     "roleEmployee": "Mitarbeiter",
     "automations": "Automatisierungen",
     "automationsDesc": "Automatische Regeln für Schichtplanung, Zeiterfassung und Genehmigungen konfigurieren",
-    "notificationPrefs": "Benachrichtigungskanäle",
-    "notificationPrefsDesc": "Wählen Sie, wie Sie benachrichtigt werden — E-Mail oder WhatsApp"
+    "notificationPrefs": "E-Mail-Benachrichtigungen",
+    "notificationPrefsDesc": "E-Mail-Benachrichtigungen für Schichtzuweisungen und Updates konfigurieren"
   },
   "auth": {
     "login": "Anmelden",
@@ -605,28 +605,18 @@
     }
   },
   "notificationPrefs": {
-    "title": "Benachrichtigungskanäle",
-    "description": "Wählen Sie, wie Sie außerhalb der App benachrichtigt werden.",
-    "subtitle": "Aktivieren Sie E-Mail oder WhatsApp, um Benachrichtigungen auf Ihren bevorzugten Kanälen zu erhalten. Für WhatsApp ist eine Telefonnummer erforderlich.",
-    "channels": "Kanäle",
-    "email": "E-Mail",
-    "emailDesc": "Benachrichtigungen per E-Mail erhalten",
-    "whatsapp": "WhatsApp",
-    "whatsappDesc": "Benachrichtigungen per WhatsApp erhalten",
-    "phone": "Telefonnummer",
-    "phonePlaceholder": "+49 170 1234567",
-    "phoneHint": "Erforderlich für WhatsApp. Verwenden Sie das internationale Format (z.B. +49...).",
-    "whatsappSetup": "WhatsApp einrichten",
-    "whatsappSetupDesc": "Verbinden Sie Ihr WhatsApp, um Schichtbenachrichtigungen zu erhalten.",
-    "whatsappStep1": "1. Öffnen Sie WhatsApp auf Ihrem Handy",
-    "whatsappStep2": "2. Senden Sie die Nachricht \"join <Ihr-Sandbox-Schlüsselwort>\" an die folgende Nummer:",
-    "whatsappStep3": "3. Sie erhalten eine Bestätigung — fertig!",
+    "title": "E-Mail-Benachrichtigungen",
+    "description": "Aktivieren oder deaktivieren Sie E-Mail-Benachrichtigungen.",
+    "subtitle": "Wenn aktiviert, erhalten Sie eine E-Mail bei Schichtzuweisungen und anderen wichtigen Updates.",
+    "emailNotifications": "E-Mail-Benachrichtigungen",
+    "email": "E-Mail-Benachrichtigungen",
+    "emailDesc": "Erhalten Sie E-Mails bei Schichtzuweisungen, Abwesenheitsanträgen und anderen Updates.",
+    "emailInfo": "Wenn E-Mail-Benachrichtigungen aktiviert sind, werden Sie per E-Mail über neue Schichtzuweisungen, genehmigte Abwesenheiten und andere wichtige Ereignisse informiert. In-App-Benachrichtigungen bleiben davon unberührt.",
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "saving": "Speichern\u2026",
     "saved": "Gespeichert",
     "error": "Fehler beim Speichern",
-    "noChannels": "Keine externen Kanäle aktiviert. Sie erhalten nur In-App-Benachrichtigungen.",
     "backToSettings": "Zurück zu Einstellungen"
   },
   "automations": {

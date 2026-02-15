@@ -130,6 +130,9 @@ export async function POST(req: Request) {
 
     // ── Automation: Notify employee about new shift ──
     const employeeName = `${shift.employee.firstName} ${shift.employee.lastName}`;
+    console.log(
+      `[shifts/POST] Shift created for ${employeeName}, email=${shift.employee.email ?? "NONE"}, phone=${shift.employee.phone ?? "NONE"}`,
+    );
     if (shift.employee.email) {
       await createSystemNotification({
         type: "SHIFT_ASSIGNED",
@@ -140,6 +143,10 @@ export async function POST(req: Request) {
         recipientType: "employee",
         employeeEmail: shift.employee.email,
       });
+    } else {
+      console.warn(
+        `[shifts/POST] Employee ${employeeName} has no email — notification skipped entirely`,
+      );
     }
 
     return NextResponse.json(

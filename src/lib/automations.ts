@@ -323,8 +323,13 @@ export async function createSystemNotification(params: {
 
   // Skip if notifications are disabled
   if (!(await isAutomationEnabled(workspaceId, "notifications"))) {
+    console.log("[notification] Skipped — notifications automation disabled");
     return;
   }
+
+  console.log(
+    `[notification] Creating: type=${type}, recipientType=${recipientType}, employeeEmail=${employeeEmail ?? "none"}`,
+  );
 
   if (recipientType === "managers") {
     const managers = await prisma.user.findMany({
@@ -334,6 +339,8 @@ export async function createSystemNotification(params: {
       },
       select: { id: true },
     });
+
+    console.log(`[notification] Found ${managers.length} managers`);
 
     await prisma.notification.createMany({
       data: managers.map((m) => ({
@@ -346,24 +353,51 @@ export async function createSystemNotification(params: {
       })),
     });
 
-    // Dispatch external notifications in parallel (fire-and-forget)
-    Promise.allSettled(
-      managers.map((m) =>
-        dispatchExternalNotification({
-          userId: m.id,
-          type,
-          title,
-          message,
-          link,
-        }),
-      ),
-    ).catch(() => {});
+    // Dispatch external notifications in parallel
+    // AWAIT so errors surface in Vercel logs
+    try {
+      await Promise.allSettled(
+        managers.map((m) =>
+          dispatchExternalNotification({
+            userId: m.id,
+            type,
+            title,
+            message,
+            link,
+          }),
+        ),
+      );
+    } catch (err) {
+      console.error("[notification] Manager dispatch error:", err);
+    }
   } else if (employeeEmail) {
-    const user = await prisma.user.findUnique({
-      where: { email: employeeEmail },
-      select: { id: true },
-    });
+    // Look up User by employee email — also grab the Employee's phone
+    // so we can attempt WhatsApp even if the User has no phone set
+    const [user, employee] = await Promise.all([
+      prisma.user.findUnique({
+        where: { email: employeeEmail },
+        select: { id: true, phone: true },
+      }),
+      prisma.employee.findFirst({
+        where: { email: employeeEmail, workspaceId },
+        select: { phone: true },
+      }),
+    ]);
+
+    console.log(
+      `[notification] Lookup email=${employeeEmail}: User=${user ? user.id : "NOT found"}, Employee phone=${employee?.phone ?? "none"}`,
+    );
+
     if (user) {
+      // If the user has no phone but the employee does, copy it over
+      if (!user.phone && employee?.phone) {
+        console.log(`[notification] Syncing employee phone to User ${user.id}`);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { phone: employee.phone },
+        });
+      }
+
       await prisma.notification.create({
         data: {
           type,
@@ -375,25 +409,40 @@ export async function createSystemNotification(params: {
         },
       });
 
-      // Dispatch external notification (fire-and-forget)
-      dispatchExternalNotification({
-        userId: user.id,
-        type,
-        title,
-        message,
-        link,
-      }).catch(() => {});
+      // Dispatch external notification — AWAIT so errors surface
+      try {
+        await dispatchExternalNotification({
+          userId: user.id,
+          type,
+          title,
+          message,
+          link,
+        });
+      } catch (err) {
+        console.error("[notification] Dispatch error:", err);
+      }
     } else {
+      console.log(
+        `[notification] No User for ${employeeEmail} — sending direct email`,
+      );
       // No User account for this employee — still send a direct email
-      sendEmail({
-        to: employeeEmail,
-        type,
-        title,
-        message,
-        link,
-        locale: "de",
-      }).catch(() => {});
+      try {
+        await sendEmail({
+          to: employeeEmail,
+          type,
+          title,
+          message,
+          link,
+          locale: "de",
+        });
+      } catch (err) {
+        console.error("[notification] Direct email error:", err);
+      }
     }
+  } else {
+    console.warn(
+      "[notification] recipientType=employee but no employeeEmail provided",
+    );
   }
 }
 

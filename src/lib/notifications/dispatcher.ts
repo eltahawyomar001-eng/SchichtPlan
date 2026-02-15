@@ -20,6 +20,8 @@ export async function dispatchExternalNotification(params: {
 }) {
   const { userId, type, title, message, link } = params;
 
+  console.log(`[dispatcher] Dispatching for userId=${userId}, type=${type}`);
+
   // Fetch user + preferences in one query
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -32,7 +34,10 @@ export async function dispatchExternalNotification(params: {
     },
   });
 
-  if (!user) return;
+  if (!user) {
+    console.warn(`[dispatcher] No user found for id=${userId}`);
+    return;
+  }
 
   // Build a quick lookup
   const prefs = new Map(
@@ -44,19 +49,29 @@ export async function dispatchExternalNotification(params: {
   const emailEnabled = hasAnyPrefs ? (prefs.get("EMAIL") ?? false) : true;
   const whatsappEnabled = prefs.get("WHATSAPP") ?? false;
 
+  console.log(
+    `[dispatcher] user=${user.email}, phone=${user.phone ? "set" : "NOT set"}, hasPrefs=${hasAnyPrefs}, emailON=${emailEnabled}, whatsappON=${whatsappEnabled}`,
+  );
+
   const locale = "de";
 
   const promises: Promise<void>[] = [];
 
   // ── Email ──────────────────────────────────────────────────
   if (emailEnabled && user.email) {
+    console.log(`[dispatcher] Sending email to ${user.email}`);
     promises.push(
       sendEmail({ to: user.email, type, title, message, link, locale }),
+    );
+  } else {
+    console.log(
+      `[dispatcher] Email SKIPPED (enabled=${emailEnabled}, email=${user.email ?? "null"})`,
     );
   }
 
   // ── WhatsApp ───────────────────────────────────────────────
   if (whatsappEnabled && user.phone) {
+    console.log(`[dispatcher] Sending WhatsApp to ${user.phone}`);
     promises.push(
       sendWhatsApp({
         to: user.phone,
@@ -65,8 +80,22 @@ export async function dispatchExternalNotification(params: {
         link,
       }),
     );
+  } else {
+    console.log(
+      `[dispatcher] WhatsApp SKIPPED (enabled=${whatsappEnabled}, phone=${user.phone ? "set" : "null"})`,
+    );
+  }
+
+  if (promises.length === 0) {
+    console.warn(`[dispatcher] No channels to send for userId=${userId}`);
+    return;
   }
 
   // Fire all channels in parallel — don't let one failure block others
-  await Promise.allSettled(promises);
+  const results = await Promise.allSettled(promises);
+  for (const r of results) {
+    if (r.status === "rejected") {
+      console.error(`[dispatcher] Channel failed:`, r.reason);
+    }
+  }
 }

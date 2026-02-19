@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { requirePermission } from "@/lib/authorization";
 
 export async function GET(
   req: Request,
@@ -47,7 +48,13 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
+
+    // Only OWNER, ADMIN, MANAGER can update employees
+    const forbidden = requirePermission(user, "employees", "update");
+    if (forbidden) return forbidden;
+
     const body = await req.json();
 
     const employee = await prisma.employee.updateMany({
@@ -83,7 +90,12 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
+
+    // Only OWNER, ADMIN, MANAGER can delete employees
+    const forbidden = requirePermission(user, "employees", "delete");
+    if (forbidden) return forbidden;
 
     await prisma.employee.deleteMany({
       where: { id, workspaceId },

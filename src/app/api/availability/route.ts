@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { isEmployee } from "@/lib/authorization";
 
 // ─── GET  /api/availability ─────────────────────────────────────
 export async function GET(req: Request) {
@@ -59,6 +60,22 @@ export async function POST(req: Request) {
         { error: "employeeId and entries array are required" },
         { status: 400 },
       );
+    }
+
+    // EMPLOYEE can only manage their own availability
+    if (isEmployee(user)) {
+      const linkedEmployee = await prisma.employee.findFirst({
+        where: { workspaceId, email: user.email ?? undefined },
+      });
+      if (!linkedEmployee || body.employeeId !== linkedEmployee.id) {
+        return NextResponse.json(
+          {
+            error: "Forbidden",
+            message: "Sie können nur Ihre eigene Verfügbarkeit verwalten.",
+          },
+          { status: 403 },
+        );
+      }
     }
 
     // Delete existing entries for this employee's validity period, then re-create

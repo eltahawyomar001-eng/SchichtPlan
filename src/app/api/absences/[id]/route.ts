@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   cascadeAbsenceApproval,
   createSystemNotification,
@@ -36,6 +37,22 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const data: Record<string, unknown> = {};
 
     if (body.status) {
+      // Approve/reject requires management role
+      if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+        const forbidden = requirePermission(user, "absences", "approve");
+        if (forbidden) return forbidden;
+      }
+
+      // Cancel (STORNIERT) — employee can cancel own, management can cancel any
+      if (body.status === "STORNIERT" && isEmployee(user)) {
+        const linkedEmployee = await prisma.employee.findFirst({
+          where: { workspaceId: user.workspaceId, email: user.email },
+        });
+        if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+
       data.status = body.status;
       if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
         data.reviewedBy = user.id;
@@ -112,6 +129,16 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
 
     if (!existing || existing.workspaceId !== user.workspaceId) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // EMPLOYEE can only delete their own absence requests
+    if (isEmployee(user)) {
+      const linkedEmployee = await prisma.employee.findFirst({
+        where: { workspaceId: user.workspaceId, email: user.email },
+      });
+      if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     await prisma.absenceRequest.delete({ where: { id } });

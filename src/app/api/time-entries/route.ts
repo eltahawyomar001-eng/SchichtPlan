@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { isEmployee } from "@/lib/authorization";
 import {
   validateTimeEntry,
   calcGrossMinutes,
@@ -79,6 +80,22 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    // EMPLOYEE can only create time entries for themselves
+    if (isEmployee(user)) {
+      const linkedEmployee = await prisma.employee.findFirst({
+        where: { workspaceId, email: user.email ?? undefined },
+      });
+      if (!linkedEmployee || body.employeeId !== linkedEmployee.id) {
+        return NextResponse.json(
+          {
+            error: "Forbidden",
+            message: "Sie können nur eigene Zeiteinträge erstellen.",
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     // Validate
     const errors = validateTimeEntry(body);

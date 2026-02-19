@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
 import {
   DashboardIcon,
   CalendarIcon,
@@ -21,19 +22,53 @@ import {
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import type { Role } from "@/lib/authorization";
 
-const navItems = [
+interface NavItem {
+  key: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** Which roles can see this nav item. If omitted, all roles can see it. */
+  roles?: Role[];
+}
+
+const navItems: NavItem[] = [
   { key: "dashboard", href: "/dashboard", icon: DashboardIcon },
   { key: "shiftPlan", href: "/schichtplan", icon: CalendarIcon },
   { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
   { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
   { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
   { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
-  { key: "timeAccounts", href: "/zeitkonten", icon: ScaleIcon },
-  { key: "payrollExport", href: "/lohnexport", icon: FileExportIcon },
-  { key: "employees", href: "/mitarbeiter", icon: UsersIcon },
-  { key: "locations", href: "/standorte", icon: MapPinIcon },
-  { key: "settings", href: "/einstellungen", icon: SettingsIcon },
+  {
+    key: "timeAccounts",
+    href: "/zeitkonten",
+    icon: ScaleIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "payrollExport",
+    href: "/lohnexport",
+    icon: FileExportIcon,
+    roles: ["OWNER", "ADMIN"],
+  },
+  {
+    key: "employees",
+    href: "/mitarbeiter",
+    icon: UsersIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "locations",
+    href: "/standorte",
+    icon: MapPinIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "settings",
+    href: "/einstellungen",
+    icon: SettingsIcon,
+    roles: ["OWNER", "ADMIN"],
+  },
 ];
 
 interface SidebarProps {
@@ -44,6 +79,17 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string } | undefined)?.role as
+    | Role
+    | undefined;
+
+  // Filter nav items based on user role
+  const visibleNavItems = navItems.filter((item) => {
+    if (!item.roles) return true; // visible to all roles
+    if (!userRole) return false; // hide restricted items if role unknown
+    return item.roles.includes(userRole);
+  });
 
   return (
     <>
@@ -83,7 +129,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
             return (

@@ -105,6 +105,7 @@ model Workspace {
   absenceRequests AbsenceRequest[]
   availabilities  Availability[]
   shiftSwaps      ShiftSwapRequest[]
+  shiftChangeRequests ShiftChangeRequest[]
   timeAccounts    TimeAccount[]
   automationSettings AutomationSetting[]
   invitations Invitation[]
@@ -131,6 +132,7 @@ model Employee {
   availabilities  Availability[]
   swapsRequested  ShiftSwapRequest[] @relation("SwapRequester")
   swapsOffered    ShiftSwapRequest[] @relation("SwapTarget")
+  changeRequests  ShiftChangeRequest[]
   timeAccount     TimeAccount?
   @@unique([email, workspaceId])
 }
@@ -163,6 +165,7 @@ model Shift {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   swapsFrom   ShiftSwapRequest[] @relation("SwapFromShift")
   swapsTo     ShiftSwapRequest[] @relation("SwapToShift")
+  changeRequests ShiftChangeRequest[]
   @@index([workspaceId, date])
   @@index([employeeId, date])
 }
@@ -334,6 +337,50 @@ model Availability {
 
   @@index([workspaceId, employeeId])
   @@index([employeeId, weekday])
+}
+
+// ── Feature 2b: Schichtänderungsanfrage (Shift Change Request) ──
+
+enum ChangeRequestStatus {
+  AUSSTEHEND     // Pending — awaiting manager review
+  GENEHMIGT      // Approved — changes applied to the shift
+  ABGELEHNT      // Rejected by manager
+  STORNIERT      // Cancelled by employee
+}
+
+model ShiftChangeRequest {
+  id            String              @id @default(cuid())
+  status        ChangeRequestStatus @default(AUSSTEHEND)
+  reason        String?             @db.Text
+
+  // The shift the employee wants to change
+  shiftId       String
+  shift         Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  // Requested changes (null = keep current value)
+  newDate       DateTime?           @db.Date
+  newStartTime  String?             // HH:mm
+  newEndTime    String?             // HH:mm
+  newNotes      String?             @db.Text
+
+  // The employee requesting the change
+  requesterId   String
+  requester     Employee            @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  // Manager review
+  reviewedBy    String?             // userId of reviewer
+  reviewedAt    DateTime?
+  reviewNote    String?             @db.Text
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  workspaceId   String
+  workspace     Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([requesterId])
+  @@index([shiftId])
 }
 
 // ── Feature 3: Schichttausch (Shift Swap) ──────────────────────

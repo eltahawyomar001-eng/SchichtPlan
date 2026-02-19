@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   checkShiftConflicts,
   createRecurringShifts,
@@ -59,10 +60,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
+
+    // Only OWNER, ADMIN, MANAGER can create shifts
+    const forbidden = requirePermission(user, "shifts", "create");
+    if (forbidden) return forbidden;
 
     const body = await req.json();
     const {

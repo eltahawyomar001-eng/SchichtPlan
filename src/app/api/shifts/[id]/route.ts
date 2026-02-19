@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { requirePermission } from "@/lib/authorization";
 import { checkShiftConflicts } from "@/lib/automations";
 
 export async function PATCH(
@@ -16,7 +17,13 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
+
+    // Only OWNER, ADMIN, MANAGER can update shifts
+    const forbidden = requirePermission(user, "shifts", "update");
+    if (forbidden) return forbidden;
+
     const body = await req.json();
 
     // If date/time/employee changed, run conflict detection
@@ -77,7 +84,12 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
+
+    // Only OWNER, ADMIN, MANAGER can delete shifts
+    const forbidden = requirePermission(user, "shifts", "delete");
+    if (forbidden) return forbidden;
 
     await prisma.shift.deleteMany({
       where: { id, workspaceId },

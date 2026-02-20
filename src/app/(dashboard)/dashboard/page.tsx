@@ -14,8 +14,10 @@ import {
   CalendarOffIcon,
   SwapIcon,
   RocketIcon,
+  HandRaisedIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
+import { isManagement } from "@/lib/authorization";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
@@ -23,6 +25,7 @@ export const dynamic = "force-dynamic";
 
 interface ShiftWithRelations {
   id: string;
+  date: Date;
   startTime: string;
   endTime: string;
   status: string;
@@ -32,9 +35,12 @@ interface ShiftWithRelations {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const workspaceId = (session?.user as SessionUser)?.workspaceId;
+  const user = session?.user as SessionUser;
+  const workspaceId = user?.workspaceId;
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
+
+  const isManager = user ? isManagement(user) : false;
 
   const statusLabel = (s: string) => {
     const map: Record<string, string> = {
@@ -49,13 +55,261 @@ export default async function DashboardPage() {
   };
 
   // Compute "today" in Europe/Berlin timezone for correct date matching.
-  // @db.Date columns in Postgres are returned by Prisma as midnight UTC,
-  // so we build the comparison date from the Berlin-local date string.
   const berlinDate = new Date().toLocaleDateString("en-CA", {
     timeZone: "Europe/Berlin",
-  }); // "2026-02-15"
+  });
   const todayStart = new Date(`${berlinDate}T00:00:00.000Z`);
   const todayEnd = new Date(`${berlinDate}T23:59:59.999Z`);
+
+  // ── Employee-only data fetching ──
+  // Employees see only their own shifts and their own pending requests.
+  if (!isManager) {
+    const employeeId = user?.employeeId;
+
+    const [myTodayShifts, myUpcomingShifts, myPendingAbsences, myPendingSwaps] =
+      await Promise.all([
+        employeeId
+          ? prisma.shift.findMany({
+              where: {
+                workspaceId,
+                employeeId,
+                date: { gte: todayStart, lt: todayEnd },
+              },
+              include: { employee: true, location: true },
+              orderBy: { startTime: "asc" },
+            })
+          : Promise.resolve([]),
+        employeeId
+          ? prisma.shift.findMany({
+              where: {
+                workspaceId,
+                employeeId,
+                date: { gt: todayEnd },
+              },
+              include: { employee: true, location: true },
+              orderBy: [{ date: "asc" }, { startTime: "asc" }],
+              take: 5,
+            })
+          : Promise.resolve([]),
+        employeeId
+          ? prisma.absenceRequest.count({
+              where: { workspaceId, employeeId, status: "AUSSTEHEND" },
+            })
+          : Promise.resolve(0),
+        employeeId
+          ? prisma.shiftSwapRequest.count({
+              where: {
+                workspaceId,
+                requesterId: employeeId,
+                status: "ANGEFRAGT",
+              },
+            })
+          : Promise.resolve(0),
+      ]);
+
+    return (
+      <div>
+        <Topbar title={t("title")} description={t("employeeDashboardDesc")} />
+        <div className="p-4 sm:p-6 space-y-6">
+          {/* Employee Quick Links */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            <Link
+              href="/schichtplan"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-violet-300 hover:shadow-sm transition-all group"
+            >
+              <div className="rounded-lg bg-violet-50 p-2 group-hover:bg-violet-100">
+                <CalendarIcon className="h-5 w-5 text-violet-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 group-hover:text-violet-700">
+                {t("myShifts")}
+              </span>
+            </Link>
+            <Link
+              href="/abwesenheiten"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-orange-300 hover:shadow-sm transition-all group"
+            >
+              <div className="rounded-lg bg-orange-50 p-2 group-hover:bg-orange-100">
+                <CalendarOffIcon className="h-5 w-5 text-orange-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 group-hover:text-orange-700">
+                {t("requestAbsence")}
+              </span>
+            </Link>
+            <Link
+              href="/verfuegbarkeiten"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-emerald-300 hover:shadow-sm transition-all group"
+            >
+              <div className="rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100">
+                <HandRaisedIcon className="h-5 w-5 text-emerald-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">
+                {t("myAvailability")}
+              </span>
+            </Link>
+            <Link
+              href="/schichttausch"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300 hover:shadow-sm transition-all group"
+            >
+              <div className="rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100">
+                <SwapIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
+                {t("shiftSwap")}
+              </span>
+            </Link>
+          </div>
+
+          {/* My Pending Requests */}
+          {(myPendingAbsences > 0 || myPendingSwaps > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {t("myPendingRequests")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {myPendingAbsences > 0 && (
+                    <Link
+                      href="/abwesenheiten"
+                      className="flex items-center justify-between rounded-xl border border-gray-200 p-3 hover:border-gray-300 hover:bg-gray-50 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-orange-50 p-2">
+                          <CalendarOffIcon className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-700">
+                          {t("pendingAbsences", {
+                            count: myPendingAbsences,
+                          })}
+                        </p>
+                      </div>
+                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-violet-600" />
+                    </Link>
+                  )}
+                  {myPendingSwaps > 0 && (
+                    <Link
+                      href="/schichttausch"
+                      className="flex items-center justify-between rounded-xl border border-gray-200 p-3 hover:border-gray-300 hover:bg-gray-50 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-blue-50 p-2">
+                          <SwapIcon className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-700">
+                          {t("pendingSwaps", { count: myPendingSwaps })}
+                        </p>
+                      </div>
+                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-violet-600" />
+                    </Link>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* My Shifts Today */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("myShiftsToday")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(myTodayShifts as ShiftWithRelations[]).length === 0 ? (
+                <p className="text-sm text-gray-500">{t("noShiftsToday")}</p>
+              ) : (
+                <div className="space-y-3">
+                  {(myTodayShifts as ShiftWithRelations[]).map((shift) => (
+                    <div
+                      key={shift.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 sm:p-4"
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div
+                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0"
+                          style={{
+                            backgroundColor: shift.employee.color || "#3B82F6",
+                          }}
+                        >
+                          {shift.employee.firstName.charAt(0)}
+                          {shift.employee.lastName.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {shift.startTime} - {shift.endTime}
+                          </p>
+                          {shift.location && (
+                            <p className="text-sm text-gray-500">
+                              {shift.location.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {statusLabel(shift.status)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Shifts */}
+          {(myUpcomingShifts as ShiftWithRelations[]).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("upcomingShifts")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {(myUpcomingShifts as ShiftWithRelations[]).map((shift) => (
+                    <div
+                      key={shift.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 sm:p-4"
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div
+                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0"
+                          style={{
+                            backgroundColor: shift.employee.color || "#3B82F6",
+                          }}
+                        >
+                          {shift.employee.firstName.charAt(0)}
+                          {shift.employee.lastName.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {shift.startTime} - {shift.endTime}
+                          </p>
+                          {shift.location && (
+                            <p className="text-sm text-gray-500">
+                              {shift.location.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs text-gray-400">
+                          {new Date(shift.date).toLocaleDateString("de-DE")}
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {statusLabel(shift.status)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Management dashboard (OWNER / ADMIN / MANAGER) ──
 
   const [
     employeeCount,

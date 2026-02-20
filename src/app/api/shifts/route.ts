@@ -23,7 +23,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -32,7 +33,11 @@ export async function GET(req: Request) {
     const startDate = searchParams.get("start");
     const endDate = searchParams.get("end");
 
-    const where: { workspaceId: string; date?: { gte: Date; lte: Date } } = {
+    const where: {
+      workspaceId: string;
+      date?: { gte: Date; lte: Date };
+      employeeId?: string;
+    } = {
       workspaceId,
     };
 
@@ -41,6 +46,11 @@ export async function GET(req: Request) {
         gte: new Date(startDate),
         lte: new Date(endDate),
       };
+    }
+
+    // EMPLOYEE can only see their own shifts
+    if (isEmployee(user) && user.employeeId) {
+      where.employeeId = user.employeeId;
     }
 
     const shifts = await prisma.shift.findMany({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,8 @@ import {
   isToday,
 } from "date-fns";
 import { de, enUS } from "date-fns/locale";
+import type { SessionUser } from "@/lib/types";
+import { isManagement } from "@/lib/authorization";
 
 interface Employee {
   id: string;
@@ -56,6 +59,9 @@ export default function SchichtplanPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const dateFnsLocale = locale === "de" ? de : enUS;
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+  const canManage = user ? isManagement(user) : false;
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -307,12 +313,14 @@ export default function SchichtplanPage() {
                               : t("noShifts")}
                           </span>
                         </div>
-                        <button
-                          onClick={() => openCreateForm(day)}
-                          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        >
-                          <PlusIcon className="h-5 w-5" />
-                        </button>
+                        {canManage && (
+                          <button
+                            onClick={() => openCreateForm(day)}
+                            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          >
+                            <PlusIcon className="h-5 w-5" />
+                          </button>
+                        )}
                       </div>
                     </CardHeader>
                     {dayShifts.length > 0 && (
@@ -348,20 +356,22 @@ export default function SchichtplanPage() {
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => openEditForm(shift)}
-                                className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-blue-500"
-                              >
-                                <EditIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteTarget(shift.id)}
-                                className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-red-500"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </div>
+                            {canManage && (
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => openEditForm(shift)}
+                                  className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-blue-500"
+                                >
+                                  <EditIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => setDeleteTarget(shift.id)}
+                                  className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-red-500"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </CardContent>
@@ -397,12 +407,14 @@ export default function SchichtplanPage() {
                               {format(day, "d")}
                             </p>
                           </div>
-                          <button
-                            onClick={() => openCreateForm(day)}
-                            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                          >
-                            <PlusIcon className="h-4 w-4" />
-                          </button>
+                          {canManage && (
+                            <button
+                              onClick={() => openCreateForm(day)}
+                              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            >
+                              <PlusIcon className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </CardHeader>
                       <CardContent className="px-3 pb-3 space-y-2">
@@ -414,7 +426,7 @@ export default function SchichtplanPage() {
                           dayShifts.map((shift) => (
                             <div
                               key={shift.id}
-                              className="group relative rounded-md p-2 text-xs cursor-pointer"
+                              className={`group relative rounded-md p-2 text-xs ${canManage ? "cursor-pointer" : ""}`}
                               style={{
                                 backgroundColor:
                                   (shift.employee.color || "#3B82F6") + "20",
@@ -422,17 +434,23 @@ export default function SchichtplanPage() {
                                   shift.employee.color || "#3B82F6"
                                 }`,
                               }}
-                              onClick={() => openEditForm(shift)}
+                              onClick={
+                                canManage
+                                  ? () => openEditForm(shift)
+                                  : undefined
+                              }
                             >
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteTarget(shift.id);
-                                }}
-                                className="absolute right-1 top-1 hidden rounded p-0.5 hover:bg-white/50 group-hover:block text-gray-400 hover:text-red-500"
-                              >
-                                <XIcon className="h-3 w-3" />
-                              </button>
+                              {canManage && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget(shift.id);
+                                  }}
+                                  className="absolute right-1 top-1 hidden rounded p-0.5 hover:bg-white/50 group-hover:block text-gray-400 hover:text-red-500"
+                                >
+                                  <XIcon className="h-3 w-3" />
+                                </button>
+                              )}
                               <p className="font-medium text-gray-900">
                                 {shift.employee.firstName.charAt(0)}.{" "}
                                 {shift.employee.lastName}
@@ -457,8 +475,8 @@ export default function SchichtplanPage() {
           </>
         )}
 
-        {/* Add/Edit Shift Modal */}
-        {showForm && (
+        {/* Add/Edit Shift Modal (management only) */}
+        {canManage && showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
             <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -632,17 +650,19 @@ export default function SchichtplanPage() {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title={t("deleteConfirmTitle")}
-        message={t("deleteConfirmMessage")}
-        confirmLabel={tc("delete")}
-        cancelLabel={tc("cancel")}
-        variant="danger"
-        onConfirm={handleDeleteShift}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      {/* Delete Confirmation Dialog (management only) */}
+      {canManage && (
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title={t("deleteConfirmTitle")}
+          message={t("deleteConfirmMessage")}
+          confirmLabel={tc("delete")}
+          cancelLabel={tc("cancel")}
+          variant="danger"
+          onConfirm={handleDeleteShift}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }

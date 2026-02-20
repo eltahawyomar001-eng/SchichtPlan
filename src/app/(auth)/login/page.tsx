@@ -209,7 +209,9 @@ function LoginForm() {
                   {t("password")}
                 </label>
                 <span
-                  onClick={() => setShowForgotInfo(true)}
+                  onClick={() => {
+                    window.location.href = "/passwort-vergessen";
+                  }}
                   className="text-xs text-[var(--brand-600)] hover:text-[var(--brand-700)] cursor-pointer transition-colors"
                 >
                   {t("forgotPassword")}
@@ -241,13 +243,6 @@ function LoginForm() {
                 </button>
               </div>
             </div>
-
-            {/* Forgot password info */}
-            {showForgotInfo && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                {t("forgotPasswordInfo")}
-              </div>
-            )}
 
             {/* CTA Button */}
             <button

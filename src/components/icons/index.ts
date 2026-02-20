@@ -54,3 +54,8 @@ export { MessageCircleIcon } from "./MessageCircleIcon";
 export { SmartphoneIcon } from "./SmartphoneIcon";
 export { CheckIcon } from "./CheckIcon";
 export { UserPlusIcon } from "./UserPlusIcon";
+export { FlagIcon } from "./FlagIcon";
+export { LayersIcon } from "./LayersIcon";
+export { AwardIcon } from "./AwardIcon";
+export { PalmtreeIcon } from "./PalmtreeIcon";
+export { TemplateIcon } from "./TemplateIcon";

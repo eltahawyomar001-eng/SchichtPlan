@@ -75,7 +75,13 @@ export type Resource =
   | "payroll-export"
   | "time-accounts"
   | "notifications"
-  | "settings";
+  | "settings"
+  | "departments"
+  | "skills"
+  | "shift-templates"
+  | "vacation-balances"
+  | "public-holidays"
+  | "reports";
 
 export type Action = "read" | "create" | "update" | "delete" | "approve";
 
@@ -191,6 +197,48 @@ const permissionMatrix: Record<Resource, Record<Action, Role[]>> = {
     create: ["OWNER", "ADMIN"],
     update: ["OWNER", "ADMIN"],
     delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  departments: {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  skills: {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  "shift-templates": {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN", "MANAGER"],
+    approve: [],
+  },
+  "vacation-balances": {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  "public-holidays": {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN"],
+    update: ["OWNER", "ADMIN"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  reports: {
+    read: ["OWNER", "ADMIN", "MANAGER"],
+    create: [],
+    update: [],
+    delete: [],
     approve: [],
   },
 };

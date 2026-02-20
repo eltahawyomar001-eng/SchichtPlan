@@ -108,7 +108,24 @@ export async function POST(req: Request) {
           data: { status: "ACCEPTED" },
         });
 
-        return { user };
+        // Auto-link Employee↔User if an employee with
+        // the same email exists in this workspace
+        const existingEmployee = await tx.employee.findFirst({
+          where: {
+            email: { equals: email, mode: "insensitive" },
+            workspaceId: invitation.workspaceId,
+            userId: null, // not yet linked
+          },
+        });
+
+        if (existingEmployee) {
+          await tx.employee.update({
+            where: { id: existingEmployee.id },
+            data: { userId: user.id },
+          });
+        }
+
+        return { user, employeeLinked: !!existingEmployee };
       });
 
       return NextResponse.json(

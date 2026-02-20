@@ -15,7 +15,7 @@ model User {
   hashedPassword String?
   image          String?
   role           Role      @default(OWNER)
-  consentGivenAt DateTime? // DSGVO: timestamp when user accepted Datenschutz + AGB
+  consentGivenAt DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   workspaceId    String?
@@ -24,6 +24,7 @@ model User {
   sessions       Session[]
   notificationPreferences NotificationPreference[]
   invitationsSent Invitation[]
+  employee       Employee?
 }
 
 model Account {
@@ -58,6 +59,15 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  expires   DateTime
+  createdAt DateTime @default(now())
+  @@index([email])
+}
+
 enum Role {
   OWNER
   ADMIN
@@ -81,27 +91,27 @@ model Invitation {
   expiresAt   DateTime
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
-
   workspaceId String
   workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   invitedById String
   invitedBy   User             @relation(fields: [invitedById], references: [id], onDelete: Cascade)
-
   @@index([workspaceId])
   @@index([email, workspaceId])
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  industry  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  members   User[]
-  employees Employee[]
-  shifts    Shift[]
-  locations Location[]
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  industry   String?
+  bundesland String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  members    User[]
+  employees  Employee[]
+  shifts     Shift[]
+  locations  Location[]
+  departments Department[]
   timeEntries TimeEntry[]
   absenceRequests AbsenceRequest[]
   availabilities  Availability[]
@@ -110,31 +120,40 @@ model Workspace {
   timeAccounts    TimeAccount[]
   automationSettings AutomationSetting[]
   invitations Invitation[]
+  vacationBalances VacationBalance[]
+  skills      Skill[]
+  shiftTemplates ShiftTemplate[]
 }
 
 model Employee {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  email       String?
-  phone       String?
-  position    String?
-  hourlyRate  Float?
-  weeklyHours Float?
-  color       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  shifts      Shift[]
-  timeEntries TimeEntry[]
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  position     String?
+  hourlyRate   Float?
+  weeklyHours  Float?
+  color        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId       String?  @unique
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  shifts       Shift[]
+  timeEntries  TimeEntry[]
   absenceRequests AbsenceRequest[]
   availabilities  Availability[]
   swapsRequested  ShiftSwapRequest[] @relation("SwapRequester")
   swapsOffered    ShiftSwapRequest[] @relation("SwapTarget")
   changeRequests  ShiftChangeRequest[]
   timeAccount     TimeAccount?
+  vacationBalances VacationBalance[]
+  employeeSkills  EmployeeSkill[]
   @@unique([email, workspaceId])
 }
 
@@ -147,6 +166,60 @@ model Location {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shifts      Shift[]
   timeEntries TimeEntry[]
+  departments Department[]
+  shiftTemplates ShiftTemplate[]
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employees   Employee[]
+  @@index([workspaceId])
+}
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String
+  category  String?
+  createdAt DateTime @default(now())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeSkills EmployeeSkill[]
+  @@unique([name, workspaceId])
+  @@index([workspaceId])
+}
+
+model EmployeeSkill {
+  id         String    @id @default(cuid())
+  expiresAt  DateTime? @db.Date
+  createdAt  DateTime  @default(now())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  skillId    String
+  skill      Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  @@unique([employeeId, skillId])
+}
+
+model ShiftTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  startTime String
+  endTime   String
+  color     String?
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
 }
 
 model Shift {
@@ -156,10 +229,14 @@ model Shift {
   endTime   String
   notes     String?
   status    ShiftStatus @default(SCHEDULED)
+  isNightShift   Boolean @default(false)
+  isHolidayShift Boolean @default(false)
+  isSundayShift  Boolean @default(false)
+  surchargePercent Float @default(0)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId  String?
   location    Location? @relation(fields: [locationId], references: [id])
   workspaceId String
@@ -178,55 +255,73 @@ enum ShiftStatus {
   COMPLETED
   CANCELLED
   NO_SHOW
+  OPEN
 }
 
-// ── Zeiterfassung (Time Tracking) ──────────────────────────────
+model PublicHoliday {
+  id         String   @id @default(cuid())
+  name       String
+  date       DateTime @db.Date
+  bundesland String
+  isNational Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  @@unique([date, bundesland])
+  @@index([date])
+  @@index([bundesland])
+}
+
+model VacationBalance {
+  id               String   @id @default(cuid())
+  year             Int
+  totalEntitlement Float    @default(20)
+  carryOver        Float    @default(0)
+  used             Float    @default(0)
+  planned          Float    @default(0)
+  remaining        Float    @default(20)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  employeeId       String
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workspaceId      String
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@unique([employeeId, year])
+  @@index([workspaceId])
+}
 
 enum TimeEntryStatus {
-  ENTWURF          // Draft — saved but not yet submitted
-  EINGEREICHT      // Submitted — awaiting manager review
-  KORREKTUR        // Correction required — sent back to employee
-  ZURUECKGEWIESEN  // Rejected by manager
-  GEPRUEFT         // Reviewed — first-level approval
-  BESTAETIGT       // Confirmed / final approval
+  ENTWURF
+  EINGEREICHT
+  KORREKTUR
+  ZURUECKGEWIESEN
+  GEPRUEFT
+  BESTAETIGT
 }
 
 model TimeEntry {
   id           String          @id @default(cuid())
   date         DateTime        @db.Date
-  startTime    String          // HH:mm
-  endTime      String          // HH:mm
-
-  // Break tracking
-  breakStart   String?         // HH:mm (optional if breakMinutes used)
-  breakEnd     String?         // HH:mm
+  startTime    String
+  endTime      String
+  breakStart   String?
+  breakEnd     String?
   breakMinutes Int             @default(0)
-
-  // Computed durations (stored for fast queries & export)
-  grossMinutes Int             @default(0) // total minutes (end - start)
-  netMinutes   Int             @default(0) // gross - break
-
-  remarks      String?         // Free-text comments
-
+  grossMinutes Int             @default(0)
+  netMinutes   Int             @default(0)
+  remarks      String?
   status       TimeEntryStatus @default(ENTWURF)
   submittedAt  DateTime?
   confirmedAt  DateTime?
-  confirmedBy  String?         // userId of the confirmer
-
+  confirmedBy  String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
-
-  // Relations
   employeeId   String
   employee     Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId   String?
   location     Location?       @relation(fields: [locationId], references: [id])
-  shiftId      String?         // optional link to a planned Shift
+  shiftId      String?
   workspaceId  String
   workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   auditLog     TimeEntryAudit[]
-
   @@index([workspaceId, date])
   @@index([employeeId, date])
   @@index([status])
@@ -234,52 +329,45 @@ model TimeEntry {
 
 model TimeEntryAudit {
   id          String   @id @default(cuid())
-  action      String   // CREATED | SUBMITTED | APPROVED | CORRECTED | REJECTED | CONFIRMED | CLIENT_CONFIRMED
-  changes     String?  @db.Text // JSON diff of changed fields
-  comment     String?  // Manager/admin comment
-  performedBy String   // userId
+  action      String
+  changes     String?  @db.Text
+  comment     String?
+  performedBy String
   performedAt DateTime @default(now())
-
   timeEntryId String
   timeEntry   TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
-
   @@index([timeEntryId])
 }
 
 model Notification {
   id        String   @id @default(cuid())
-  type      String   // TIME_ENTRY_SUBMITTED | TIME_ENTRY_APPROVED | TIME_ENTRY_REJECTED | TIME_ENTRY_CORRECTED
+  type      String
   title     String
   message   String   @db.Text
   read      Boolean  @default(false)
-  link      String?  // Deep-link path e.g. /zeiterfassung?entry=xxx
-
+  link      String?
   createdAt DateTime @default(now())
-
-  userId      String   // recipient
+  userId      String
   workspaceId String
-
   @@index([userId, read])
   @@index([workspaceId])
 }
 
-// ── Feature 1: Abwesenheitsmanagement (Absence Management) ─────
-
 enum AbsenceRequestStatus {
-  AUSSTEHEND     // Pending
-  GENEHMIGT      // Approved
-  ABGELEHNT      // Rejected
-  STORNIERT      // Cancelled by employee
+  AUSSTEHEND
+  GENEHMIGT
+  ABGELEHNT
+  STORNIERT
 }
 
 enum AbsenceCategory {
-  URLAUB         // Vacation
-  KRANK          // Sick leave
-  ELTERNZEIT     // Parental leave
-  SONDERURLAUB   // Special leave (wedding, bereavement, etc.)
-  UNBEZAHLT      // Unpaid leave
-  FORTBILDUNG    // Training / education
-  SONSTIGES      // Other
+  URLAUB
+  KRANK
+  ELTERNZEIT
+  SONDERURLAUB
+  UNBEZAHLT
+  FORTBILDUNG
+  SONSTIGES
 }
 
 model AbsenceRequest {
@@ -287,175 +375,133 @@ model AbsenceRequest {
   category    AbsenceCategory
   startDate   DateTime            @db.Date
   endDate     DateTime            @db.Date
-  halfDayStart Boolean            @default(false)  // Start date is half-day
-  halfDayEnd   Boolean            @default(false)  // End date is half-day
-  totalDays   Float               @default(0)      // Computed total working days
+  halfDayStart Boolean            @default(false)
+  halfDayEnd   Boolean            @default(false)
+  totalDays   Float               @default(0)
   reason      String?             @db.Text
   status      AbsenceRequestStatus @default(AUSSTEHEND)
-
-  // Approval workflow
-  reviewedBy  String?             // userId of reviewer
+  reviewedBy  String?
   reviewedAt  DateTime?
   reviewNote  String?             @db.Text
-
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
-
   employeeId  String
   employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   @@index([workspaceId, status])
   @@index([employeeId, startDate])
 }
 
-// ── Feature 2: Verfügbarkeiten (Availability) ──────────────────
-
 enum AvailabilityType {
-  VERFUEGBAR    // Available
-  BEVORZUGT     // Preferred
-  NICHT_VERFUEGBAR // Not available
+  VERFUEGBAR
+  BEVORZUGT
+  NICHT_VERFUEGBAR
 }
 
 model Availability {
   id          String           @id @default(cuid())
-  weekday     Int              // 0 = Monday, 6 = Sunday (ISO)
-  startTime   String?          // HH:mm — null means whole day
-  endTime     String?          // HH:mm
+  weekday     Int
+  startTime   String?
+  endTime     String?
   type        AvailabilityType @default(VERFUEGBAR)
-  validFrom   DateTime         @db.Date  // Start of validity period
-  validUntil  DateTime?        @db.Date  // null = indefinite
+  validFrom   DateTime         @db.Date
+  validUntil  DateTime?        @db.Date
   notes       String?
-
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
-
   employeeId  String
   employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   @@index([workspaceId, employeeId])
   @@index([employeeId, weekday])
 }
 
-// ── Feature 2b: Schichtänderungsanfrage (Shift Change Request) ──
-
 enum ChangeRequestStatus {
-  AUSSTEHEND     // Pending — awaiting manager review
-  GENEHMIGT      // Approved — changes applied to the shift
-  ABGELEHNT      // Rejected by manager
-  STORNIERT      // Cancelled by employee
+  AUSSTEHEND
+  GENEHMIGT
+  ABGELEHNT
+  STORNIERT
 }
 
 model ShiftChangeRequest {
   id            String              @id @default(cuid())
   status        ChangeRequestStatus @default(AUSSTEHEND)
   reason        String?             @db.Text
-
-  // The shift the employee wants to change
   shiftId       String
   shift         Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-
-  // Requested changes (null = keep current value)
   newDate       DateTime?           @db.Date
-  newStartTime  String?             // HH:mm
-  newEndTime    String?             // HH:mm
+  newStartTime  String?
+  newEndTime    String?
   newNotes      String?             @db.Text
-
-  // The employee requesting the change
   requesterId   String
   requester     Employee            @relation(fields: [requesterId], references: [id], onDelete: Cascade)
-
-  // Manager review
-  reviewedBy    String?             // userId of reviewer
+  reviewedBy    String?
   reviewedAt    DateTime?
   reviewNote    String?             @db.Text
-
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-
   workspaceId   String
   workspace     Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   @@index([workspaceId, status])
   @@index([requesterId])
   @@index([shiftId])
 }
 
-// ── Feature 3: Schichttausch (Shift Swap) ──────────────────────
-
 enum SwapStatus {
-  ANGEFRAGT      // Requested by employee
-  ANGENOMMEN     // Accepted by target employee
-  GENEHMIGT      // Approved by manager
-  ABGELEHNT      // Rejected (by target or manager)
-  STORNIERT      // Cancelled
-  ABGESCHLOSSEN  // Completed (shifts actually swapped)
+  ANGEFRAGT
+  ANGENOMMEN
+  GENEHMIGT
+  ABGELEHNT
+  STORNIERT
+  ABGESCHLOSSEN
 }
 
 model ShiftSwapRequest {
   id            String     @id @default(cuid())
   status        SwapStatus @default(ANGEFRAGT)
   reason        String?    @db.Text
-
-  // The shift the requester wants to give away
   shiftId       String
   shift         Shift      @relation("SwapFromShift", fields: [shiftId], references: [id])
-
-  // The shift the requester wants in return (optional for "open" swaps)
   targetShiftId String?
   targetShift   Shift?     @relation("SwapToShift", fields: [targetShiftId], references: [id])
-
-  // Employees involved
   requesterId   String
   requester     Employee   @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  targetId      String?    // null = open swap (anyone can accept)
+  targetId      String?
   target        Employee?  @relation("SwapTarget", fields: [targetId], references: [id])
-
-  // Manager review
   reviewedBy    String?
   reviewedAt    DateTime?
   reviewNote    String?
-
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
-
   workspaceId   String
   workspace     Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   @@index([workspaceId, status])
   @@index([requesterId])
   @@index([targetId])
 }
 
-// ── Feature 4: Arbeitszeitkonten (Time Accounts / Hour Balances) ─
-
 model TimeAccount {
   id              String   @id @default(cuid())
-  contractHours   Float    @default(40)    // Weekly contracted hours
-  carryoverMinutes Int     @default(0)     // Carried over from previous period
-  currentBalance  Int      @default(0)     // Running balance in minutes (+/-)
-  lastCalculated  DateTime @default(now()) // Timestamp of last balance recalculation
-  periodStart     DateTime @db.Date        // Current accounting period start
-  periodEnd       DateTime? @db.Date       // Current accounting period end (null = ongoing)
-
+  contractHours   Float    @default(40)
+  carryoverMinutes Int     @default(0)
+  currentBalance  Int      @default(0)
+  lastCalculated  DateTime @default(now())
+  periodStart     DateTime @db.Date
+  periodEnd       DateTime? @db.Date
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
-  employeeId      String   @unique         // One account per employee
+  employeeId      String   @unique
   employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId     String
   workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   @@index([workspaceId])
 }
 
-// ── Automation Settings ────────────────────────────────────────
-
 enum NotificationChannel {
   EMAIL
+  PUSH
 }
 
 model NotificationPreference {
@@ -464,24 +510,20 @@ model NotificationPreference {
   enabled   Boolean             @default(false)
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
-
   userId String
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([userId, channel])
   @@index([userId])
 }
 
 model AutomationSetting {
   id        String   @id @default(cuid())
-  key       String   // e.g. "shiftConflictDetection", "autoApproveAbsence"
+  key       String
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
   @@unique([workspaceId, key])
   @@index([workspaceId])
 }

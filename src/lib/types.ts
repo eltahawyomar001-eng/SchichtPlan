@@ -6,4 +6,5 @@ export interface SessionUser {
   role: string;
   workspaceId: string;
   workspaceName?: string | null;
+  employeeId?: string | null;
 }

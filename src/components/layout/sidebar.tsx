@@ -19,6 +19,12 @@ import {
   SwapIcon,
   ScaleIcon,
   FileExportIcon,
+  BarChartIcon,
+  FlagIcon,
+  LayersIcon,
+  AwardIcon,
+  PalmtreeIcon,
+  TemplateIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -40,9 +46,21 @@ const navItems: NavItem[] = [
   { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
   { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
   {
+    key: "vacationBalance",
+    href: "/urlaubskonto",
+    icon: PalmtreeIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
     key: "timeAccounts",
     href: "/zeitkonten",
     icon: ScaleIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "reports",
+    href: "/berichte",
+    icon: BarChartIcon,
     roles: ["OWNER", "ADMIN", "MANAGER"],
   },
   {
@@ -56,6 +74,29 @@ const navItems: NavItem[] = [
     href: "/mitarbeiter",
     icon: UsersIcon,
     roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "departments",
+    href: "/abteilungen",
+    icon: LayersIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "skills",
+    href: "/qualifikationen",
+    icon: AwardIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "shiftTemplates",
+    href: "/schichtvorlagen",
+    icon: TemplateIcon,
+    roles: ["OWNER", "ADMIN", "MANAGER"],
+  },
+  {
+    key: "holidays",
+    href: "/feiertage",
+    icon: FlagIcon,
   },
   {
     key: "locations",

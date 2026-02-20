@@ -9,6 +9,12 @@ import {
   createRecurringShifts,
   createSystemNotification,
 } from "@/lib/automations";
+import {
+  isPublicHoliday,
+  isSunday,
+  isNightShift,
+  calculateSurcharge,
+} from "@/lib/holidays";
 
 export async function GET(req: Request) {
   try {
@@ -81,41 +87,71 @@ export async function POST(req: Request) {
       repeatWeeks,
     } = body;
 
-    if (!date || !startTime || !endTime || !employeeId) {
+    if (!date || !startTime || !endTime) {
       return NextResponse.json(
-        { error: "Date, start/end time and employee are required" },
+        {
+          error: "Date, start time and end time are required",
+        },
         { status: 400 },
       );
     }
 
-    // ── Automation: Conflict detection ──
-    const conflicts = await checkShiftConflicts({
-      employeeId,
-      date,
-      startTime,
-      endTime,
-      workspaceId,
-    });
+    // ── Automation: Conflict detection (only if assigned) ──
+    if (employeeId) {
+      const conflicts = await checkShiftConflicts({
+        employeeId,
+        date,
+        startTime,
+        endTime,
+        workspaceId,
+      });
 
-    if (conflicts.length > 0) {
-      return NextResponse.json(
-        {
-          error: "Conflicts detected",
-          conflicts,
-        },
-        { status: 409 },
-      );
+      if (conflicts.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Conflicts detected",
+            conflicts,
+          },
+          { status: 409 },
+        );
+      }
     }
 
+    // ── Auto-detect surcharges ──
+    const shiftDate = new Date(date);
+
+    // Get workspace Bundesland for holiday check
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ws = await (prisma as any).workspace?.findUnique?.({
+      where: { id: workspaceId },
+      select: { bundesland: true },
+    });
+    const bundesland = ws?.bundesland || "HE";
+
+    const holidayCheck = isPublicHoliday(shiftDate, bundesland);
+    const sundayCheck = isSunday(shiftDate);
+    const nightCheck = isNightShift(startTime, endTime);
+    const surcharge = calculateSurcharge({
+      isNight: nightCheck,
+      isSunday: sundayCheck,
+      isHoliday: holidayCheck.isHoliday,
+    });
+
     // ── Create the shift ──
-    const shift = await prisma.shift.create({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shift = await (prisma.shift.create as any)({
       data: {
         date: new Date(date),
         startTime,
         endTime,
         notes: notes || null,
-        employeeId,
+        status: employeeId ? "SCHEDULED" : "OPEN",
+        employeeId: employeeId || null,
         locationId: locationId || null,
+        isNightShift: nightCheck,
+        isHolidayShift: holidayCheck.isHoliday,
+        isSundayShift: sundayCheck,
+        surchargePercent: surcharge,
         workspaceId,
       },
       include: {
@@ -135,24 +171,30 @@ export async function POST(req: Request) {
     }
 
     // ── Automation: Notify employee about new shift ──
-    const employeeName = `${shift.employee.firstName} ${shift.employee.lastName}`;
-    console.log(
-      `[shifts/POST] Shift created for ${employeeName}, email=${shift.employee.email ?? "NONE"}, phone=${shift.employee.phone ?? "NONE"}`,
-    );
-    if (shift.employee.email) {
-      await createSystemNotification({
-        type: "SHIFT_ASSIGNED",
-        title: "Neue Schicht zugewiesen",
-        message: `Ihnen wurde eine Schicht am ${new Date(date).toLocaleDateString("de-DE")} (${startTime}–${endTime}) zugewiesen.`,
-        link: "/schichtplan",
-        workspaceId,
-        recipientType: "employee",
-        employeeEmail: shift.employee.email,
-      });
-    } else {
-      console.warn(
-        `[shifts/POST] Employee ${employeeName} has no email — notification skipped entirely`,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shiftAny = shift as any;
+    if (shiftAny.employee) {
+      const employeeName = `${shiftAny.employee.firstName} ${shiftAny.employee.lastName}`;
+      console.log(
+        `[shifts/POST] Shift created for ${employeeName}, email=${shiftAny.employee.email ?? "NONE"}, phone=${shiftAny.employee.phone ?? "NONE"}`,
       );
+      if (shiftAny.employee.email) {
+        await createSystemNotification({
+          type: "SHIFT_ASSIGNED",
+          title: "Neue Schicht zugewiesen",
+          message: `Ihnen wurde eine Schicht am ${new Date(date).toLocaleDateString("de-DE")} (${startTime}–${endTime}) zugewiesen.`,
+          link: "/schichtplan",
+          workspaceId,
+          recipientType: "employee",
+          employeeEmail: shiftAny.employee.email,
+        });
+      } else {
+        console.warn(
+          `[shifts/POST] Employee ${employeeName} has no email — notification skipped entirely`,
+        );
+      }
+    } else {
+      console.log(`[shifts/POST] Open shift created (no employee assigned)`);
     }
 
     return NextResponse.json(

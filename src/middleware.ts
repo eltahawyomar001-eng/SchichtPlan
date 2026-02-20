@@ -162,11 +162,17 @@ export default withAuth(
     },
     callbacks: {
       // Allow unauthenticated access to auth endpoints (login, register)
-      // so rate limiting still applies to them
+      // and password reset pages
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
         // Auth routes don't require authentication
         if (pathname.startsWith("/api/auth")) return true;
+        // Password reset pages are public
+        if (
+          pathname === "/passwort-vergessen" ||
+          pathname === "/passwort-zuruecksetzen"
+        )
+          return true;
         // Everything else requires auth
         return !!token;
       },
@@ -178,6 +184,9 @@ export const config = {
   matcher: [
     // Auth routes (rate limiting only, no auth required)
     "/api/auth/:path*",
+    // Password reset pages (public, but security headers apply)
+    "/passwort-vergessen",
+    "/passwort-zuruecksetzen",
     // Protect all dashboard routes
     "/dashboard/:path*",
     "/schichtplan/:path*",
@@ -190,6 +199,12 @@ export const config = {
     "/verfuegbarkeiten/:path*",
     "/zeitkonten/:path*",
     "/lohnexport/:path*",
+    "/berichte/:path*",
+    "/feiertage/:path*",
+    "/abteilungen/:path*",
+    "/qualifikationen/:path*",
+    "/schichtvorlagen/:path*",
+    "/urlaubskonto/:path*",
     // Protect API routes (except auth and public invitation token lookup)
     "/api/employees/:path*",
     "/api/locations/:path*",
@@ -207,5 +222,11 @@ export const config = {
     "/api/test-email/:path*",
     "/api/invitations/:path*",
     "/api/team/:path*",
+    "/api/departments/:path*",
+    "/api/skills/:path*",
+    "/api/shift-templates/:path*",
+    "/api/vacation-balances/:path*",
+    "/api/holidays/:path*",
+    "/api/reports/:path*",
   ],
 };

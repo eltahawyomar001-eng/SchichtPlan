@@ -34,81 +34,103 @@ interface NavItem {
   key: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  /** Which roles can see this nav item. If omitted, all roles can see it. */
   roles?: Role[];
 }
 
-const navItems: NavItem[] = [
-  { key: "dashboard", href: "/dashboard", icon: DashboardIcon },
-  { key: "shiftPlan", href: "/schichtplan", icon: CalendarIcon },
-  { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
-  { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
-  { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
-  { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
+interface NavGroup {
+  labelKey?: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
-    key: "vacationBalance",
-    href: "/urlaubskonto",
-    icon: PalmtreeIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
+    // Main — visible to all
+    items: [
+      { key: "dashboard", href: "/dashboard", icon: DashboardIcon },
+      { key: "shiftPlan", href: "/schichtplan", icon: CalendarIcon },
+      { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
+      { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
+      { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
+      { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
+    ],
   },
   {
-    key: "timeAccounts",
-    href: "/zeitkonten",
-    icon: ScaleIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
+    // Management
+    labelKey: "management",
+    items: [
+      {
+        key: "employees",
+        href: "/mitarbeiter",
+        icon: UsersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "departments",
+        href: "/abteilungen",
+        icon: LayersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "skills",
+        href: "/qualifikationen",
+        icon: AwardIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "locations",
+        href: "/standorte",
+        icon: MapPinIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "shiftTemplates",
+        href: "/schichtvorlagen",
+        icon: TemplateIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+    ],
   },
   {
-    key: "reports",
-    href: "/berichte",
-    icon: BarChartIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
+    // Tracking & Reports
+    labelKey: "trackingReports",
+    items: [
+      {
+        key: "vacationBalance",
+        href: "/urlaubskonto",
+        icon: PalmtreeIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "timeAccounts",
+        href: "/zeitkonten",
+        icon: ScaleIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "reports",
+        href: "/berichte",
+        icon: BarChartIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "payrollExport",
+        href: "/lohnexport",
+        icon: FileExportIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+      { key: "holidays", href: "/feiertage", icon: FlagIcon },
+    ],
   },
   {
-    key: "payrollExport",
-    href: "/lohnexport",
-    icon: FileExportIcon,
-    roles: ["OWNER", "ADMIN"],
-  },
-  {
-    key: "employees",
-    href: "/mitarbeiter",
-    icon: UsersIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
-  },
-  {
-    key: "departments",
-    href: "/abteilungen",
-    icon: LayersIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
-  },
-  {
-    key: "skills",
-    href: "/qualifikationen",
-    icon: AwardIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
-  },
-  {
-    key: "shiftTemplates",
-    href: "/schichtvorlagen",
-    icon: TemplateIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
-  },
-  {
-    key: "holidays",
-    href: "/feiertage",
-    icon: FlagIcon,
-  },
-  {
-    key: "locations",
-    href: "/standorte",
-    icon: MapPinIcon,
-    roles: ["OWNER", "ADMIN", "MANAGER"],
-  },
-  {
-    key: "settings",
-    href: "/einstellungen",
-    icon: SettingsIcon,
-    roles: ["OWNER", "ADMIN"],
+    // Settings
+    items: [
+      {
+        key: "settings",
+        href: "/einstellungen",
+        icon: SettingsIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+    ],
   },
 ];
 
@@ -125,13 +147,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     | Role
     | undefined;
 
-  // Filter nav items based on user role
-  const visibleNavItems = navItems.filter((item) => {
-    if (!item.roles) return true; // visible to all roles
-    if (!userRole) return false; // hide restricted items if role unknown
-    return item.roles.includes(userRole);
-  });
-
   return (
     <>
       {/* Mobile backdrop */}
@@ -145,21 +160,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out",
-          // Desktop: always visible
           "lg:translate-x-0",
-          // Mobile: slide in/out
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
+        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <SchichtPlanMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">
               Schicht<span className="text-gradient">Plan</span>
             </span>
           </div>
-          {/* Mobile close button */}
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 lg:hidden"
@@ -168,40 +180,62 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {visibleNavItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+        {/* Scrollable Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
+          {navGroups.map((group, groupIdx) => {
+            const visibleItems = group.items.filter((item) => {
+              if (!item.roles) return true;
+              if (!userRole) return false;
+              return item.roles.includes(userRole);
+            });
+
+            if (visibleItems.length === 0) return null;
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors min-w-0",
-                  isActive
-                    ? "bg-violet-50 text-violet-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+              <div key={groupIdx} className={groupIdx > 0 ? "mt-4" : ""}>
+                {group.labelKey && (
+                  <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    {t(group.labelKey)}
+                  </p>
                 )}
-              >
-                <item.icon
-                  className={cn(
-                    "h-5 w-5",
-                    isActive ? "text-violet-700" : "text-gray-400",
-                  )}
-                />
-                {t(item.key)}
-              </Link>
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(item.href + "/");
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors min-w-0",
+                          isActive
+                            ? "bg-violet-50 text-violet-700"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            isActive ? "text-violet-700" : "text-gray-400",
+                          )}
+                        />
+                        <span className="truncate">{t(item.key)}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-3">
+        <div className="border-t border-gray-200 p-3 flex-shrink-0">
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
           >
             <LogOutIcon className="h-5 w-5 text-gray-400" />
             {t("logout")}

@@ -57,7 +57,9 @@
     "departments": "Abteilungen",
     "skills": "Qualifikationen",
     "shiftTemplates": "Schichtvorlagen",
-    "holidays": "Feiertage"
+    "holidays": "Feiertage",
+    "management": "Verwaltung",
+    "trackingReports": "Auswertung"
   },
   "dashboard": {
     "title": "Dashboard",

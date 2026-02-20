@@ -57,7 +57,9 @@
     "departments": "Departments",
     "skills": "Skills",
     "shiftTemplates": "Shift Templates",
-    "holidays": "Holidays"
+    "holidays": "Holidays",
+    "management": "Management",
+    "trackingReports": "Tracking & Reports"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
@@ -24,6 +25,14 @@ export async function GET(req: Request) {
 
     const where: Record<string, unknown> = { workspaceId };
     if (status) where.status = status;
+
+    // EMPLOYEE can only see swaps they are involved in
+    if (isEmployee(user) && user.employeeId) {
+      where.OR = [
+        { requesterId: user.employeeId },
+        { targetId: user.employeeId },
+      ];
+    }
 
     const swaps = await prisma.shiftSwapRequest.findMany({
       where,

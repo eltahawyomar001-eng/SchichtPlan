@@ -353,7 +353,15 @@ export default function ZeiterfassungPage() {
                 <span className="hidden sm:inline">{t("export")}</span>
               </Button>
             )}
-            <Button size="sm" onClick={() => setShowForm(true)}>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (!isManager && user?.employeeId) {
+                  setFormData((p) => ({ ...p, employeeId: user.employeeId! }));
+                }
+                setShowForm(true);
+              }}
+            >
               <PlusIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t("newEntry")}</span>
               <span className="sm:hidden">{tc("new")}</span>
@@ -553,28 +561,34 @@ export default function ZeiterfassungPage() {
                         required
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="employeeId">{t("form.employee")} *</Label>
-                      <select
-                        id="employeeId"
-                        className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                        value={formData.employeeId}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            employeeId: e.target.value,
-                          }))
-                        }
-                        required
-                      >
-                        <option value="">{t("form.selectEmployee")}</option>
-                        {employees.map((emp) => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.firstName} {emp.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {isManager ? (
+                      <div>
+                        <Label htmlFor="employeeId">
+                          {t("form.employee")} *
+                        </Label>
+                        <select
+                          id="employeeId"
+                          className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          value={formData.employeeId}
+                          onChange={(e) =>
+                            setFormData((p) => ({
+                              ...p,
+                              employeeId: e.target.value,
+                            }))
+                          }
+                          required
+                        >
+                          <option value="">{t("form.selectEmployee")}</option>
+                          {employees.map((emp) => (
+                            <option key={emp.id} value={emp.id}>
+                              {emp.firstName} {emp.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <input type="hidden" value={formData.employeeId} />
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,8 @@ import {
 } from "@/components/icons";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
+import type { SessionUser } from "@/lib/types";
+import { isManagement } from "@/lib/authorization";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -78,6 +81,9 @@ export default function SchichttauschPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const dateFnsLocale = locale === "de" ? de : enUS;
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+  const canManage = user ? isManagement(user) : false;
   const [swaps, setSwaps] = useState<SwapRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [shifts, setShifts] = useState<ShiftInfo[]>([]);
@@ -379,7 +385,7 @@ export default function SchichttauschPage() {
                       )}
 
                       {/* Manager actions */}
-                      {swap.status === "ANGENOMMEN" && (
+                      {canManage && swap.status === "ANGENOMMEN" && (
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
                           <Button
                             size="sm"

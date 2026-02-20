@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { isEmployee } from "@/lib/authorization";
 import {
   tryAutoApproveAbsence,
   createSystemNotification,
@@ -37,6 +38,11 @@ export async function GET(req: Request) {
       };
     }
 
+    // EMPLOYEE can only see their own absences
+    if (isEmployee(user) && user.employeeId) {
+      where.employeeId = user.employeeId;
+    }
+
     const absences = await prisma.absenceRequest.findMany({
       where,
       include: { employee: true },
@@ -65,6 +71,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    // EMPLOYEE can only create absences for themselves
+    if (isEmployee(user) && user.employeeId) {
+      if (body.employeeId !== user.employeeId) {
+        return NextResponse.json(
+          {
+            error: "Forbidden",
+            message: "Sie können nur eigene Abwesenheitsanträge erstellen.",
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     // Validate required fields
     if (

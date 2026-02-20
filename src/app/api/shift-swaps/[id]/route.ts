@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { requirePermission } from "@/lib/authorization";
 import {
   tryAutoApproveSwap,
   createSystemNotification,
@@ -44,6 +45,13 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     // Approve / Reject (by manager)
     if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+      const forbidden = requirePermission(
+        user,
+        "shift-swap-requests",
+        "approve",
+      );
+      if (forbidden) return forbidden;
+
       data.status = body.status;
       data.reviewedBy = user.id;
       data.reviewedAt = new Date();

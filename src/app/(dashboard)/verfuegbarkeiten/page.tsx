@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { HandRaisedIcon, CheckCircleIcon, XIcon } from "@/components/icons";
+import type { SessionUser } from "@/lib/types";
+import { isManagement } from "@/lib/authorization";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -55,6 +58,9 @@ interface WeekdayEntry {
 export default function VerfuegbarkeitenPage() {
   const t = useTranslations("availability");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+  const canManage = user ? isManagement(user) : false;
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState("");
@@ -161,7 +167,14 @@ export default function VerfuegbarkeitenPage() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button onClick={() => setShowForm(true)}>
+          <Button
+            onClick={() => {
+              if (!canManage && user?.employeeId) {
+                setFormEmployee(user.employeeId);
+              }
+              setShowForm(true);
+            }}
+          >
             <HandRaisedIcon className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">{t("addAvailability")}</span>
             <span className="sm:hidden">{tc("new")}</span>
@@ -170,20 +183,22 @@ export default function VerfuegbarkeitenPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Employee filter */}
-        <div className="max-w-xs">
-          <Select
-            value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(e.target.value)}
-          >
-            <option value="">{tc("allEmployees")}</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.firstName} {emp.lastName}
-              </option>
-            ))}
-          </Select>
-        </div>
+        {/* Employee filter (management only) */}
+        {canManage && (
+          <div className="max-w-xs">
+            <Select
+              value={selectedEmployee}
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+            >
+              <option value="">{tc("allEmployees")}</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
 
         {/* Availability cards per employee */}
         {loading ? (
@@ -268,21 +283,25 @@ export default function VerfuegbarkeitenPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>{t("form.employee")}</Label>
-                  <Select
-                    value={formEmployee}
-                    onChange={(e) => setFormEmployee(e.target.value)}
-                    required
-                  >
-                    <option value="">{tc("selectPlaceholder")}</option>
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.firstName} {emp.lastName}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+                {canManage ? (
+                  <div>
+                    <Label>{t("form.employee")}</Label>
+                    <Select
+                      value={formEmployee}
+                      onChange={(e) => setFormEmployee(e.target.value)}
+                      required
+                    >
+                      <option value="">{tc("selectPlaceholder")}</option>
+                      {employees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.firstName} {emp.lastName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                ) : (
+                  <input type="hidden" value={formEmployee} />
+                )}
 
                 {/* Weekday grid */}
                 <div className="space-y-3">

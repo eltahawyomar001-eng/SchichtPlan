@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,8 @@ import {
 } from "@/components/icons";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
+import type { SessionUser } from "@/lib/types";
+import { isManagement } from "@/lib/authorization";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -78,6 +81,9 @@ export default function AbwesenheitenPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const dateFnsLocale = locale === "de" ? de : enUS;
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+  const canManage = user ? isManagement(user) : false;
   const [absences, setAbsences] = useState<AbsenceRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -93,6 +99,15 @@ export default function AbwesenheitenPage() {
     halfDayEnd: false,
     reason: "",
   });
+
+  // Auto-fill employeeId for EMPLOYEE role
+  const openForm = useCallback(() => {
+    if (!canManage && user?.employeeId) {
+      setFormData((prev) => ({ ...prev, employeeId: user.employeeId! }));
+    }
+    setShowForm(true);
+  }, [canManage, user]);
+
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   // ── Fetch data ──────────────────────────────────────────────
@@ -198,7 +213,7 @@ export default function AbwesenheitenPage() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={openForm}>
             <PlusIcon className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">{t("newRequest")}</span>
             <span className="sm:hidden">{tc("new")}</span>
@@ -354,8 +369,8 @@ export default function AbwesenheitenPage() {
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      {absence.status === "AUSSTEHEND" && (
+                      {/* Actions (management only) */}
+                      {canManage && absence.status === "AUSSTEHEND" && (
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           <Input
                             placeholder={t("reviewNotePlaceholder")}
@@ -422,23 +437,27 @@ export default function AbwesenheitenPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>{t("form.employee")}</Label>
-                  <Select
-                    value={formData.employeeId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, employeeId: e.target.value })
-                    }
-                    required
-                  >
-                    <option value="">{tc("selectPlaceholder")}</option>
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.firstName} {emp.lastName}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+                {canManage ? (
+                  <div>
+                    <Label>{t("form.employee")}</Label>
+                    <Select
+                      value={formData.employeeId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, employeeId: e.target.value })
+                      }
+                      required
+                    >
+                      <option value="">{tc("selectPlaceholder")}</option>
+                      {employees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.firstName} {emp.lastName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                ) : (
+                  <input type="hidden" value={user?.employeeId || ""} />
+                )}
 
                 <div>
                   <Label>{t("form.category")}</Label>

@@ -378,7 +378,9 @@ export async function cascadeAbsenceApproval(params: {
 
   // Notify managers about cancelled shifts needing coverage
   const employee = conflictingShifts[0].employee;
-  const employeeName = `${employee.firstName} ${employee.lastName}`;
+  const employeeName = employee
+    ? `${employee.firstName} ${employee.lastName}`
+    : "Nicht zugewiesen";
 
   await createSystemNotification({
     type: "SHIFTS_CANCELLED_ABSENCE",

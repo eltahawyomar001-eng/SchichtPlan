@@ -144,7 +144,7 @@ function Navbar() {
 
   return (
     <nav className="fixed top-0 inset-x-0 z-50 glass border-b border-white/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <SchichtPlanMark className="w-8 h-8" />
@@ -207,7 +207,7 @@ function Navbar() {
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md">
+        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md px-[env(safe-area-inset-left)]">
           <div className="px-4 py-3 space-y-1">
             <a
               href="#features"
@@ -250,7 +250,7 @@ function HeroSection() {
   const t = useTranslations("landing");
 
   return (
-    <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 bg-hero-gradient bg-grid overflow-hidden">
+    <section className="relative pt-28 sm:pt-36 pb-14 sm:pb-20 bg-hero-gradient bg-grid overflow-hidden">
       {/* Decorative gradient blobs */}
       <div className="absolute top-20 -left-32 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl" />
@@ -557,16 +557,16 @@ function Footer() {
   const t = useTranslations("landing");
 
   return (
-    <footer className="border-t border-gray-100 py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer className="border-t border-gray-100 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
         <div className="flex items-center gap-2">
           <SchichtPlanMark className="w-6 h-6" />
           <span className="font-bold text-sm text-gray-900">SchichtPlan</span>
         </div>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-400 text-center">
           © {new Date().getFullYear()} SchichtPlan. {t("footerRights")}
         </p>
-        <div className="flex items-center gap-6 text-sm text-gray-400">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
           <Link
             href="/datenschutz"
             className="hover:text-gray-600 transition-colors"

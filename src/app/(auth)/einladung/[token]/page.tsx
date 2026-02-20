@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -34,6 +34,14 @@ export default function EinladungPage() {
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [accepted, setAccepted] = useState(false);
+
+  // Pre-check: does the signed-in email match the invitation?
+  const isEmailMatch =
+    session?.user?.email &&
+    invitation?.email &&
+    session.user.email.toLowerCase() === invitation.email.toLowerCase();
+
+  const isSignedIn = !!session?.user;
 
   // Fetch invitation details
   useEffect(() => {
@@ -72,9 +80,7 @@ export default function EinladungPage() {
 
       if (res.ok) {
         setAccepted(true);
-        // Redirect to dashboard after a short delay
         setTimeout(() => {
-          // Force a session refresh by signing in again
           router.push("/dashboard");
         }, 2000);
       } else {
@@ -85,6 +91,27 @@ export default function EinladungPage() {
     } finally {
       setAccepting(false);
     }
+  };
+
+  // Sign out and redirect back to this invitation page to sign in
+  // with the correct account
+  const handleSwitchAccount = () => {
+    signOut({ callbackUrl: `/einladung/${token}` });
+  };
+
+  // Sign out and redirect to login with callback to this page
+  const handleSignInWithCorrectEmail = () => {
+    signOut({
+      callbackUrl: `/login?callbackUrl=${encodeURIComponent(`/einladung/${token}`)}`,
+    });
+  };
+
+  // Sign out and redirect to register with pre-filled invitation data
+  const handleRegisterWithCorrectEmail = () => {
+    const registerUrl =
+      `/register?invitation=${token}` +
+      `&email=${encodeURIComponent(invitation?.email || "")}`;
+    signOut({ callbackUrl: registerUrl });
   };
 
   const roleLabels: Record<string, string> = {
@@ -116,7 +143,7 @@ export default function EinladungPage() {
     );
   }
 
-  // Error state
+  // Error state (only for fatal errors where we have no invitation data)
   if (error && !invitation) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
@@ -214,7 +241,9 @@ export default function EinladungPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">{t("invitedAs")}</span>
-            <span className="text-sm text-gray-900">{invitation?.email}</span>
+            <span className="text-sm font-medium text-gray-900">
+              {invitation?.email}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">{t("expires")}</span>
@@ -227,20 +256,20 @@ export default function EinladungPage() {
           </div>
         </div>
 
-        {/* Error */}
+        {/* Error from accept attempt */}
         {error && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
             {errorMessages[error] || t("errorGeneric")}
           </div>
         )}
 
-        {/* Action */}
+        {/* Action section — 3 states: email match, email mismatch, not signed in */}
         <div className="mt-6">
-          {session?.user ? (
-            // Logged in — show accept button
+          {isSignedIn && isEmailMatch ? (
+            /* ✅ Signed in with the CORRECT email — show accept */
             <div className="space-y-3">
               <p className="text-sm text-gray-600 text-center">
-                {t("loggedInAs", { email: session.user.email || "" })}
+                {t("loggedInAs", { email: session?.user?.email || "" })}
               </p>
               <button
                 onClick={handleAccept}
@@ -250,8 +279,50 @@ export default function EinladungPage() {
                 {accepting ? t("accepting") : t("acceptInvitation")}
               </button>
             </div>
+          ) : isSignedIn && !isEmailMatch ? (
+            /* ⚠️ Signed in with the WRONG email — show mismatch warning */
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex gap-3">
+                  <AlertCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-amber-800">
+                      {t("mismatchTitle")}
+                    </p>
+                    <p className="text-sm text-amber-700">
+                      {t("mismatchDetail", {
+                        currentEmail: session?.user?.email || "",
+                        invitedEmail: invitation?.email || "",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleSignInWithCorrectEmail}
+                className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+              >
+                {t("switchAndSignIn", {
+                  email: invitation?.email || "",
+                })}
+              </button>
+              <button
+                onClick={handleRegisterWithCorrectEmail}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {t("switchAndRegister", {
+                  email: invitation?.email || "",
+                })}
+              </button>
+              <button
+                onClick={handleSwitchAccount}
+                className="w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {t("switchAccount")}
+              </button>
+            </div>
           ) : (
-            // Not logged in — offer sign in or register
+            /* 🔒 Not signed in — offer sign in or register */
             <div className="space-y-3">
               <p className="text-sm text-gray-600 text-center">
                 {t("signInToAccept")}

@@ -862,6 +862,11 @@
     "errorAlreadyInWorkspace": "You are already a member of a workspace. You must leave your current workspace before joining a new one.",
     "errorNetwork": "Network error. Please try again.",
     "errorAcceptFailed": "Failed to accept invitation. Please try again.",
+    "mismatchTitle": "Wrong account",
+    "mismatchDetail": "You are signed in as {currentEmail}. This invitation is for {invitedEmail}. Please sign in with the invited account.",
+    "switchAndSignIn": "Sign out and sign in as {email}",
+    "switchAndRegister": "Sign out and create account for {email}",
+    "switchAccount": "Sign in with a different account",
     "goToLogin": "Go to Sign In",
     "backToHome": "Back to Homepage"
   },

@@ -862,6 +862,11 @@
     "errorAlreadyInWorkspace": "Sie sind bereits Mitglied eines Workspaces. Sie müssen Ihren aktuellen Workspace verlassen, bevor Sie einem neuen beitreten können.",
     "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
     "errorAcceptFailed": "Einladung konnte nicht angenommen werden. Bitte versuchen Sie es erneut.",
+    "mismatchTitle": "Falsches Konto",
+    "mismatchDetail": "Sie sind als {currentEmail} angemeldet. Diese Einladung ist jedoch für {invitedEmail} bestimmt. Bitte melden Sie sich mit dem eingeladenen Konto an.",
+    "switchAndSignIn": "Abmelden und als {email} anmelden",
+    "switchAndRegister": "Abmelden und Konto für {email} erstellen",
+    "switchAccount": "Mit anderem Konto anmelden",
     "goToLogin": "Zur Anmeldung",
     "backToHome": "Zurück zur Startseite"
   },

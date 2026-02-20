@@ -22,6 +22,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const t = useTranslations("auth");
   const justRegistered = searchParams.get("registered") === "true";
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,7 +46,7 @@ function LoginForm() {
       setError(t("invalidCredentials"));
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push(callbackUrl);
     }
   };
 

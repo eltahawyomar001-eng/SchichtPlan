@@ -101,8 +101,9 @@ export default function EinladungPage() {
 
   // Sign out and redirect to login with callback to this page
   const handleSignInWithCorrectEmail = () => {
+    const invitationPath = `/einladung/${token}`;
     signOut({
-      callbackUrl: `/login?callbackUrl=${encodeURIComponent(`/einladung/${token}`)}`,
+      callbackUrl: `/login?callbackUrl=${encodeURIComponent(invitationPath)}`,
     });
   };
 
@@ -258,8 +259,15 @@ export default function EinladungPage() {
 
         {/* Error from accept attempt */}
         {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-            {errorMessages[error] || t("errorGeneric")}
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+            <p className="text-sm font-medium text-red-800">
+              {errorMessages[error] || t("errorGeneric")}
+            </p>
+            {error === "ALREADY_IN_WORKSPACE" && (
+              <p className="mt-1 text-xs text-red-600">
+                {t("alreadyInWorkspaceHint")}
+              </p>
+            )}
           </div>
         )}
 

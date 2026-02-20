@@ -860,6 +860,7 @@
     "errorRevoked": "Diese Einladung wurde widerrufen.",
     "errorEmailMismatch": "Ihre E-Mail-Adresse stimmt nicht mit der Einladung überein. Bitte melden Sie sich mit dem richtigen Konto an.",
     "errorAlreadyInWorkspace": "Sie sind bereits Mitglied eines Workspaces. Sie müssen Ihren aktuellen Workspace verlassen, bevor Sie einem neuen beitreten können.",
+    "alreadyInWorkspaceHint": "Bitte kontaktieren Sie den Admin Ihres aktuellen Workspaces, um Ihr Konto zu entfernen, oder wenden Sie sich an die Person, die Sie eingeladen hat.",
     "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
     "errorAcceptFailed": "Einladung konnte nicht angenommen werden. Bitte versuchen Sie es erneut.",
     "mismatchTitle": "Falsches Konto",

@@ -860,6 +860,7 @@
     "errorRevoked": "This invitation has been revoked.",
     "errorEmailMismatch": "Your email does not match the invitation. Please sign in with the correct account.",
     "errorAlreadyInWorkspace": "You are already a member of a workspace. You must leave your current workspace before joining a new one.",
+    "alreadyInWorkspaceHint": "Please contact the admin of your current workspace to remove your account, or reach out to the person who invited you.",
     "errorNetwork": "Network error. Please try again.",
     "errorAcceptFailed": "Failed to accept invitation. Please try again.",
     "mismatchTitle": "Wrong account",

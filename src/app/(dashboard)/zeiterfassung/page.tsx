@@ -811,7 +811,7 @@ export default function ZeiterfassungPage() {
                 <div className="border-t pt-4 space-y-3">
                   {/* Employee actions */}
                   {["ENTWURF", "KORREKTUR"].includes(selectedEntry.status) && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
                         onClick={() =>
@@ -856,7 +856,7 @@ export default function ZeiterfassungPage() {
                           placeholder={t("commentPlaceholder")}
                         />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           onClick={() =>

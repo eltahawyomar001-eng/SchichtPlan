@@ -209,7 +209,7 @@ export default function EinstellungenPage() {
             <CardDescription>{t("profileDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
               {session?.user?.name && (
                 <Avatar name={session.user.name} size="lg" />
               )}

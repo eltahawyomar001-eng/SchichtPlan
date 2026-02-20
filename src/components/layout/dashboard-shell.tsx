@@ -32,7 +32,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           Zum Inhalt springen
         </a>
         <Sidebar open={sidebarOpen} onClose={closeSidebar} />
-        <main id="main-content" className="lg:pl-64 min-h-screen">
+        <main
+          id="main-content"
+          className="lg:pl-64 min-h-screen pb-[env(safe-area-inset-bottom)]"
+        >
           {children}
         </main>
       </div>

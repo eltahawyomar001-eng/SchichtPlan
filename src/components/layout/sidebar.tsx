@@ -165,7 +165,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6 flex-shrink-0">
+        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6 flex-shrink-0 pt-[env(safe-area-inset-top)]">
           <div className="flex items-center gap-2.5">
             <SchichtPlanMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">
@@ -232,7 +232,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-3 flex-shrink-0">
+        <div className="border-t border-gray-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex-shrink-0">
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"

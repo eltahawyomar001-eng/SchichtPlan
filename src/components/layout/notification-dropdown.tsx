@@ -199,68 +199,80 @@ export function NotificationDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-gray-200 bg-white shadow-xl z-50 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="font-semibold text-gray-900 text-sm">
-              {t("title")}
-            </h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                disabled={loading}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
-              >
-                {t("markAllRead")}
-              </button>
-            )}
-          </div>
-
-          {/* Notification list */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
-            {notifications.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400">
-                {t("empty")}
-              </div>
-            ) : (
-              notifications.map((n) => (
+        <>
+          {/* Mobile backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
+            onClick={() => setOpen(false)}
+          />
+          {/* Mobile: bottom-sheet, Desktop: dropdown */}
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-gray-200 bg-white shadow-xl sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:rounded-xl sm:border sm:rounded-t-xl overflow-hidden">
+            {/* Mobile drag handle */}
+            <div className="flex justify-center pt-2 pb-0 sm:hidden">
+              <div className="h-1 w-10 rounded-full bg-gray-300" />
+            </div>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <h3 className="font-semibold text-gray-900 text-sm">
+                {t("title")}
+              </h3>
+              {unreadCount > 0 && (
                 <button
-                  key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                    !n.read ? "bg-blue-50/50" : ""
-                  }`}
+                  onClick={markAllRead}
+                  disabled={loading}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
                 >
-                  <div className="flex gap-2.5">
-                    <span className="flex-shrink-0 mt-0.5">
-                      {getNotificationIcon(n.type)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-sm font-medium truncate ${
-                            !n.read ? "text-gray-900" : "text-gray-600"
-                          }`}
-                        >
-                          {getTranslatedTitle(n)}
-                        </span>
-                        {!n.read && (
-                          <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                        {n.message}
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-1">
-                        {formatTime(n.createdAt)}
-                      </p>
-                    </div>
-                  </div>
+                  {t("markAllRead")}
                 </button>
-              ))
-            )}
+              )}
+            </div>
+
+            {/* Notification list */}
+            <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto divide-y divide-gray-50 pb-[env(safe-area-inset-bottom)]">
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center text-sm text-gray-400">
+                  {t("empty")}
+                </div>
+              ) : (
+                notifications.map((n) => (
+                  <button
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                      !n.read ? "bg-blue-50/50" : ""
+                    }`}
+                  >
+                    <div className="flex gap-2.5">
+                      <span className="flex-shrink-0 mt-0.5">
+                        {getNotificationIcon(n.type)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-sm font-medium truncate ${
+                              !n.read ? "text-gray-900" : "text-gray-600"
+                            }`}
+                          >
+                            {getTranslatedTitle(n)}
+                          </span>
+                          {!n.read && (
+                            <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                          {n.message}
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          {formatTime(n.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

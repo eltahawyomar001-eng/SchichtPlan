@@ -18,8 +18,8 @@ export function Topbar({ title, description, actions }: TopbarProps) {
   const { openSidebar } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6 h-14 sm:h-16 gap-3">
-      <div className="flex items-center gap-3 min-w-0">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 h-14 sm:h-16 gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {/* Mobile hamburger */}
         <button
           onClick={openSidebar}
@@ -29,18 +29,18 @@ export function Topbar({ title, description, actions }: TopbarProps) {
         </button>
 
         <div className="min-w-0">
-          <h1 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
+          <h1 className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
             {title}
           </h1>
           {description && (
-            <p className="text-xs sm:text-sm text-gray-500 break-words hidden sm:block">
+            <p className="text-xs sm:text-sm text-gray-500 truncate hidden sm:block">
               {description}
             </p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {actions}
         <LanguageSwitcher />
         <NotificationDropdown />

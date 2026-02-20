@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -330,27 +330,28 @@ export default function EinladungPage() {
               </button>
             </div>
           ) : (
-            /* 🔒 Not signed in — offer sign in or register */
+            /* 🔒 Not signed in — primary: register, secondary: sign in */
             <div className="space-y-3">
               <p className="text-sm text-gray-600 text-center">
-                {t("signInToAccept")}
+                {t("createAccountToAccept", {
+                  email: invitation?.email || "",
+                })}
               </p>
-              <button
-                onClick={() =>
-                  signIn(undefined, {
-                    callbackUrl: `/einladung/${token}`,
-                  })
-                }
-                className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
-              >
-                {t("signIn")}
-              </button>
               <Link
                 href={`/register?invitation=${token}&email=${encodeURIComponent(invitation?.email || "")}`}
-                className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="block w-full rounded-lg bg-violet-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-violet-700 transition-colors"
               >
-                {t("createAccount")}
+                {t("createAccountAndAccept")}
               </Link>
+              <p className="text-center text-xs text-gray-400">
+                {t("alreadyHaveAccount")}{" "}
+                <Link
+                  href={`/login?callbackUrl=${encodeURIComponent(`/einladung/${token}`)}`}
+                  className="font-medium text-violet-600 hover:text-violet-700"
+                >
+                  {t("signInInstead")}
+                </Link>
+              </p>
             </div>
           )}
         </div>

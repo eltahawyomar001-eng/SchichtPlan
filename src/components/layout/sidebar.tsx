@@ -165,7 +165,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6 flex-shrink-0 pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 flex-shrink-0 py-3.5 pt-[max(0.875rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-2.5">
             <SchichtPlanMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">

@@ -18,7 +18,7 @@ export function Topbar({ title, description, actions }: TopbarProps) {
   const { openSidebar } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 h-14 sm:h-16 gap-2 sm:gap-3 pt-[env(safe-area-inset-top)]">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-sm px-3 sm:px-6 py-2.5 sm:py-3.5 gap-2 sm:gap-3 pt-[max(0.625rem,env(safe-area-inset-top))]">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {/* Mobile hamburger */}
         <button

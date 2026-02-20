@@ -150,8 +150,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         shiftUpdate.notes = changeRequest.newNotes;
       }
 
-      // Run conflict detection if date/time changed
-      if (shiftUpdate.date || shiftUpdate.startTime || shiftUpdate.endTime) {
+      // Run conflict detection if date/time changed (skip for open shifts)
+      if (
+        changeRequest.shift.employeeId &&
+        (shiftUpdate.date || shiftUpdate.startTime || shiftUpdate.endTime)
+      ) {
         const conflicts = await checkShiftConflicts({
           employeeId: changeRequest.shift.employeeId,
           date:

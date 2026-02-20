@@ -570,6 +570,9 @@ export async function generateTimeEntriesFromShifts(workspaceId: string) {
   let created = 0;
 
   for (const shift of shifts) {
+    // Skip open shifts with no employee assigned
+    if (!shift.employeeId) continue;
+
     // Check if a time entry already exists for this shift
     const existing = await prisma.timeEntry.findFirst({
       where: { shiftId: shift.id },

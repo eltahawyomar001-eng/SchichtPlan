@@ -969,5 +969,19 @@
     "planned": "Geplant",
     "remaining": "Verbleibend",
     "carryOver": "Übertrag"
+  },
+  "pwa": {
+    "title": "App installieren",
+    "description": "SchichtPlan als App auf dem Startbildschirm installieren für schnelleren Zugriff.",
+    "install": "Installieren",
+    "later": "Später",
+    "understood": "Verstanden",
+    "iosTitle": "Zum Startbildschirm hinzufügen",
+    "iosStep1": "Teilen-Button antippen",
+    "iosStep1Desc": "Tippe auf das Teilen-Symbol (Quadrat mit Pfeil) in der Safari-Menüleiste unten.",
+    "iosStep2": "\"Zum Home-Bildschirm\" wählen",
+    "iosStep2Desc": "Scrolle im Menü nach unten und tippe auf \"Zum Home-Bildschirm\".",
+    "iosStep3": "\"Hinzufügen\" antippen",
+    "iosStep3Desc": "Bestätige den Namen und tippe oben rechts auf \"Hinzufügen\"."
   }
 }

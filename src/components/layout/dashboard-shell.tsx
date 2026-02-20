@@ -2,6 +2,7 @@
 
 import { useState, createContext, useContext, useCallback } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
+import { InstallPwaPrompt } from "@/components/layout/install-pwa-prompt";
 
 interface SidebarContextValue {
   openSidebar: () => void;
@@ -38,6 +39,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         >
           {children}
         </main>
+        <InstallPwaPrompt />
       </div>
     </SidebarContext.Provider>
   );

@@ -969,5 +969,19 @@
     "planned": "Planned",
     "remaining": "Remaining",
     "carryOver": "Carry-over"
+  },
+  "pwa": {
+    "title": "Install App",
+    "description": "Add SchichtPlan to your home screen for quick access.",
+    "install": "Install",
+    "later": "Later",
+    "understood": "Got it",
+    "iosTitle": "Add to Home Screen",
+    "iosStep1": "Tap the Share button",
+    "iosStep1Desc": "Tap the share icon (square with arrow) in the Safari toolbar at the bottom.",
+    "iosStep2": "Select \"Add to Home Screen\"",
+    "iosStep2Desc": "Scroll down in the menu and tap \"Add to Home Screen\".",
+    "iosStep3": "Tap \"Add\"",
+    "iosStep3Desc": "Confirm the name and tap \"Add\" in the top right corner."
   }
 }

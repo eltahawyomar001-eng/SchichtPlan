@@ -602,7 +602,9 @@
     "footerRights": "All rights reserved.",
     "footerPrivacy": "Privacy",
     "footerImprint": "Imprint",
-    "footerTerms": "Terms"
+    "footerTerms": "Terms",
+    "footerWithdrawal": "Withdrawal",
+    "footerAccessibility": "Accessibility"
   },
   "illustrations": {
     "planningAria": "Shift planning — weekly view with shift blocks",

@@ -21,18 +21,14 @@ export default function ImpressumPage() {
         <div className="prose prose-gray max-w-none space-y-6 text-sm text-gray-700 leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Angaben gemäß § 5 TMG
+              Angaben gemäß § 5 DDG
             </h2>
             <p>
               SchichtPlan
               <br />
-              [Ihr vollständiger Name / Firmenname]
+              Omar Rageh
               <br />
-              [Straße und Hausnummer]
-              <br />
-              [PLZ und Ort]
-              <br />
-              Deutschland
+              Fulda, Deutschland
             </p>
           </section>
 
@@ -40,39 +36,73 @@ export default function ImpressumPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Kontakt
             </h2>
-            <p>
-              E-Mail: kontakt@schichtplan.plan
-              <br />
-              Telefon: [Ihre Telefonnummer]
-            </p>
+            <p>E-Mail: kontakt@schichtplan.plan</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
+              Umsatzsteuer
             </h2>
             <p>
-              [Ihr vollständiger Name]
-              <br />
-              [Adresse wie oben]
+              Kleinunternehmer gemäß § 19 UStG — es wird keine Umsatzsteuer
+              ausgewiesen.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Haftungsausschluss
+              Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
             </h2>
             <p>
-              Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine
-              Haftung für die Inhalte externer Links. Für den Inhalt der
-              verlinkten Seiten sind ausschließlich deren Betreiber
-              verantwortlich.
+              Omar Rageh
+              <br />
+              Fulda, Deutschland
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Streitschlichtung
+              Haftung für Inhalte
+            </h2>
+            <p>
+              Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene
+              Inhalte auf diesen Seiten nach den allgemeinen Gesetzen
+              verantwortlich. Nach §§ 8 bis 10 DDG sind wir als Diensteanbieter
+              jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
+              Informationen zu überwachen oder nach Umständen zu forschen, die
+              auf eine rechtswidrige Tätigkeit hinweisen.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Haftung für Links
+            </h2>
+            <p>
+              Unser Angebot enthält Links zu externen Websites Dritter, auf
+              deren Inhalte wir keinen Einfluss haben. Für die Inhalte der
+              verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber
+              verantwortlich. Rechtswidrige Inhalte waren zum Zeitpunkt der
+              Verlinkung nicht erkennbar.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Urheberrecht
+            </h2>
+            <p>
+              Die durch den Seitenbetreiber erstellten Inhalte und Werke auf
+              diesen Seiten unterliegen dem deutschen Urheberrecht. Die
+              Vervielfältigung, Bearbeitung, Verbreitung und jede Art der
+              Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der
+              schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Online-Streitbeilegung (OS)
             </h2>
             <p>
               Die Europäische Kommission stellt eine Plattform zur
@@ -85,7 +115,10 @@ export default function ImpressumPage() {
               >
                 https://ec.europa.eu/consumers/odr
               </a>
-              . Wir sind nicht bereit oder verpflichtet, an
+              .
+            </p>
+            <p className="mt-2">
+              Wir sind nicht bereit oder verpflichtet, an
               Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
               teilzunehmen.
             </p>

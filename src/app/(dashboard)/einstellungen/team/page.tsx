@@ -448,7 +448,9 @@ export default function TeamPage() {
                           ) : (
                             <span>
                               {t("expiresOn")}{" "}
-                              {new Date(inv.expiresAt).toLocaleDateString()}
+                              {new Date(inv.expiresAt).toLocaleDateString(
+                                "de-DE",
+                              )}
                             </span>
                           )}
                         </p>
@@ -508,7 +510,7 @@ export default function TeamPage() {
                       </p>
                       <p className="text-xs text-gray-400">
                         {roleLabels[inv.role]} &middot;{" "}
-                        {new Date(inv.createdAt).toLocaleDateString()}
+                        {new Date(inv.createdAt).toLocaleDateString("de-DE")}
                       </p>
                     </div>
                     <span

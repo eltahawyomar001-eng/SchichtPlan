@@ -582,6 +582,18 @@ function Footer() {
           <Link href="/agb" className="hover:text-gray-600 transition-colors">
             {t("footerTerms")}
           </Link>
+          <Link
+            href="/widerruf"
+            className="hover:text-gray-600 transition-colors"
+          >
+            {t("footerWithdrawal")}
+          </Link>
+          <Link
+            href="/barrierefreiheit"
+            className="hover:text-gray-600 transition-colors"
+          >
+            {t("footerAccessibility")}
+          </Link>
         </div>
       </div>
     </footer>

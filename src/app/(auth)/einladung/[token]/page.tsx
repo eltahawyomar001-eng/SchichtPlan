@@ -221,7 +221,7 @@ export default function EinladungPage() {
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <ClockIcon className="h-3.5 w-3.5" />
               {invitation?.expiresAt
-                ? new Date(invitation.expiresAt).toLocaleDateString()
+                ? new Date(invitation.expiresAt).toLocaleDateString("de-DE")
                 : "-"}
             </span>
           </div>

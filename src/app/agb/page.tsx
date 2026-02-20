@@ -109,18 +109,61 @@ export default function AGBPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 8 Änderungen der AGB
+              § 8 Widerrufsrecht
             </h2>
             <p>
-              Wir behalten uns vor, diese AGB jederzeit zu ändern. Änderungen
-              werden Ihnen per E-Mail mitgeteilt. Widersprechen Sie nicht
-              innerhalb von 30 Tagen, gelten die neuen AGB als akzeptiert.
+              Verbrauchern steht ein gesetzliches Widerrufsrecht gemäß
+              §§&nbsp;312b–312h, 355–357 BGB zu. Die vollständige
+              Widerrufsbelehrung einschließlich des Muster-Widerrufsformulars
+              finden Sie auf unserer{" "}
+              <Link
+                href="/widerruf"
+                className="text-violet-600 hover:text-violet-700 underline"
+              >
+                Widerrufsbelehrung
+              </Link>
+              .
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 9 Schlussbestimmungen
+              § 9 Änderungen der AGB
+            </h2>
+            <p>
+              Wir behalten uns vor, diese AGB zu ändern. Über wesentliche
+              Änderungen werden Sie per E-Mail informiert. Wesentliche
+              Änderungen bedürfen Ihrer ausdrücklichen Zustimmung; diese kann
+              elektronisch (z.&nbsp;B. per Bestätigungs-Button) erfolgen.
+              Stimmen Sie den geänderten AGB nicht zu, haben Sie das Recht, den
+              Vertrag zum Zeitpunkt des Inkrafttretens der Änderung zu kündigen.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              § 10 Online-Streitbeilegung
+            </h2>
+            <p>
+              Die Europäische Kommission stellt eine Plattform zur
+              Online-Streitbeilegung (OS) bereit:{" "}
+              <a
+                href="https://ec.europa.eu/consumers/odr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-600 hover:text-violet-700 underline"
+              >
+                https://ec.europa.eu/consumers/odr
+              </a>
+              . Wir sind nicht bereit oder verpflichtet, an
+              Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
+              teilzunehmen.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              § 11 Schlussbestimmungen
             </h2>
             <p>
               Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand

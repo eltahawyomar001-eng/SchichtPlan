@@ -602,7 +602,9 @@
     "footerRights": "Alle Rechte vorbehalten.",
     "footerPrivacy": "Datenschutz",
     "footerImprint": "Impressum",
-    "footerTerms": "AGB"
+    "footerTerms": "AGB",
+    "footerWithdrawal": "Widerruf",
+    "footerAccessibility": "Barrierefreiheit"
   },
   "illustrations": {
     "planningAria": "Schichtplanung — Wochenansicht mit Schichtblöcken",

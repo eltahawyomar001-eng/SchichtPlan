@@ -99,7 +99,7 @@ function RegisterForm() {
           : 3;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       {/* ── Left: Form ── */}
       <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-[460px]">

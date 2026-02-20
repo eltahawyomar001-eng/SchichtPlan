@@ -5,7 +5,7 @@ export default function BarrierefreiheitPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-[max(1rem,env(safe-area-inset-top))] flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
             <SchichtPlanMark className="h-7 w-7" />
             <span className="text-lg font-bold text-gray-900">
@@ -195,7 +195,7 @@ export default function BarrierefreiheitPage() {
           </section>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-gray-200">
+        <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
             className="text-sm text-violet-600 hover:text-violet-700 font-medium"

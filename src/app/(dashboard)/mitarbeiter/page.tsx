@@ -201,7 +201,7 @@ export default function MitarbeiterPage() {
         {/* Add/Edit Employee Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto">
+            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>
                   {editingEmployee ? t("form.editTitle") : t("form.title")}

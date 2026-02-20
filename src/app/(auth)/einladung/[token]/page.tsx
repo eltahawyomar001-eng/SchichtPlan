@@ -135,7 +135,7 @@ export default function EinladungPage() {
   // Loading state
   if (loading || sessionStatus === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
           <p className="mt-3 text-sm text-gray-500">{t("loading")}</p>
@@ -147,7 +147,7 @@ export default function EinladungPage() {
   // Error state (only for fatal errors where we have no invitation data)
   if (error && !invitation) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
             <SchichtPlanMark className="h-8 w-8" />
@@ -184,7 +184,7 @@ export default function EinladungPage() {
   // Accepted state
   if (accepted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
             <SchichtPlanMark className="h-8 w-8" />
@@ -209,7 +209,7 @@ export default function EinladungPage() {
 
   // Main invitation view
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
         {/* Header */}
         <div className="text-center">

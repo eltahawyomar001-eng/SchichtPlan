@@ -5,12 +5,26 @@ import { slugify } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, workspaceName, invitationToken } =
-      await req.json();
+    const {
+      name,
+      email,
+      password,
+      workspaceName,
+      invitationToken,
+      consentGiven,
+    } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Alle Felder sind erforderlich." },
+        { status: 400 },
+      );
+    }
+
+    // DSGVO: Consent to Datenschutzerklärung + AGB is mandatory
+    if (!consentGiven) {
+      return NextResponse.json(
+        { error: "Bitte stimmen Sie der Datenschutzerklärung und den AGB zu." },
         { status: 400 },
       );
     }
@@ -85,6 +99,7 @@ export async function POST(req: Request) {
             hashedPassword,
             role: invitation.role,
             workspaceId: invitation.workspaceId,
+            consentGivenAt: new Date(),
           },
         });
 
@@ -122,6 +137,7 @@ export async function POST(req: Request) {
           hashedPassword,
           role: "OWNER",
           workspaceId: workspace.id,
+          consentGivenAt: new Date(),
         },
       });
 

@@ -29,9 +29,12 @@ import {
   XIcon,
   LockIcon,
   UsersIcon,
+  DownloadIcon,
+  TrashIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();
@@ -56,6 +59,15 @@ export default function EinstellungenPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // DSGVO: Account deletion + data export
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const roleMap: Record<string, string> = {
     OWNER: t("roleOwner"),
@@ -132,6 +144,53 @@ export default function EinstellungenPage() {
       setPwMsg({ type: "error", text: t("networkError") });
     } finally {
       setPwSaving(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/profile/export");
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `schichtplan-datenexport-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        setDeleteMsg({ type: "error", text: t("networkError") });
+      }
+    } catch {
+      setDeleteMsg({ type: "error", text: t("networkError") });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteMsg(null);
+    try {
+      const res = await fetch("/api/profile", { method: "DELETE" });
+      if (res.ok) {
+        signOut({ callbackUrl: "/login" });
+      } else {
+        const data = await res.json();
+        if (data.error === "OWNER_TRANSFER_REQUIRED") {
+          setDeleteMsg({ type: "error", text: t("ownerTransferRequired") });
+        } else {
+          setDeleteMsg({ type: "error", text: t("deleteError") });
+        }
+      }
+    } catch {
+      setDeleteMsg({ type: "error", text: t("networkError") });
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -422,6 +481,73 @@ export default function EinstellungenPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* DSGVO: Data Privacy & Account Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheckIcon className="h-5 w-5" />
+              {t("dataPrivacy")}
+            </CardTitle>
+            <CardDescription>{t("dataPrivacyDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Export Data */}
+              <div>
+                <p className="text-sm text-gray-600 mb-2">
+                  {t("exportDataInfo")}
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={handleExportData}
+                  disabled={exporting}
+                >
+                  <DownloadIcon className="h-4 w-4" />
+                  {exporting ? t("exportingData") : t("exportData")}
+                </Button>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  {t("deleteAccountInfo")}
+                </p>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  {t("deleteAccount")}
+                </Button>
+              </div>
+
+              {deleteMsg && (
+                <div
+                  className={`rounded-lg p-3 text-sm ${
+                    deleteMsg.type === "success"
+                      ? "bg-green-50 text-green-800 border border-green-200"
+                      : "bg-red-50 text-red-800 border border-red-200"
+                  }`}
+                >
+                  {deleteMsg.text}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <ConfirmDialog
+          open={showDeleteDialog}
+          title={t("deleteAccountTitle")}
+          message={t("deleteAccountMessage")}
+          confirmLabel={
+            deleting ? t("deletingAccount") : t("deleteAccountConfirm")
+          }
+          cancelLabel={t("cancelChange")}
+          variant="danger"
+          onConfirm={handleDeleteAccount}
+          onCancel={() => setShowDeleteDialog(false)}
+        />
       </div>
     </div>
   );

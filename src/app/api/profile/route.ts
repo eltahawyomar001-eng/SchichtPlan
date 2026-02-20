@@ -5,6 +5,71 @@ import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import type { SessionUser } from "@/lib/types";
 
+// ── DELETE /api/profile — Account deletion (Art. 17 DSGVO) ──
+export async function DELETE() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = (session.user as SessionUser).id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { workspace: { include: { members: true } } },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await prisma.$transaction(async (tx: any) => {
+      // If OWNER and sole member → delete entire workspace (cascades everything)
+      if (user.role === "OWNER" && user.workspaceId) {
+        const otherMembers = user.workspace?.members.filter(
+          (m) => m.id !== userId,
+        );
+
+        if (!otherMembers || otherMembers.length === 0) {
+          // Sole owner — delete entire workspace (all employees, shifts, etc. cascade)
+          await tx.workspace.delete({ where: { id: user.workspaceId } });
+        } else {
+          // Other members exist — cannot delete without transferring ownership
+          throw new Error("OWNER_TRANSFER_REQUIRED");
+        }
+      }
+
+      // Delete user-specific data that won't cascade from workspace
+      await tx.notification.deleteMany({ where: { userId } });
+      await tx.notificationPreference.deleteMany({ where: { userId } });
+      await tx.session.deleteMany({ where: { userId } });
+      await tx.account.deleteMany({ where: { userId } });
+
+      // Finally delete the user
+      await tx.user.delete({ where: { id: userId } });
+    });
+
+    return NextResponse.json({ message: "Account deleted" });
+  } catch (error) {
+    if (error instanceof Error && error.message === "OWNER_TRANSFER_REQUIRED") {
+      return NextResponse.json(
+        {
+          error: "OWNER_TRANSFER_REQUIRED",
+          message:
+            "Bitte übertragen Sie die Inhaberrolle an ein anderes Teammitglied, bevor Sie Ihr Konto löschen.",
+        },
+        { status: 409 },
+      );
+    }
+    console.error("Error deleting account:", error);
+    return NextResponse.json(
+      { error: "Error deleting account" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);

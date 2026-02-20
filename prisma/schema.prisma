@@ -15,6 +15,7 @@ model User {
   hashedPassword String?
   image          String?
   role           Role      @default(OWNER)
+  consentGivenAt DateTime? // DSGVO: timestamp when user accepted Datenschutz + AGB
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   workspaceId    String?

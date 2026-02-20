@@ -38,6 +38,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -69,6 +70,7 @@ function RegisterForm() {
           password: formData.password,
           workspaceName: isInvitation ? undefined : formData.workspaceName,
           invitationToken: isInvitation ? invitationToken : undefined,
+          consentGiven,
         }),
       });
 
@@ -310,10 +312,43 @@ function RegisterForm() {
               </div>
             </div>
 
+            {/* DSGVO Consent Checkbox */}
+            <div className="flex items-start gap-3">
+              <input
+                id="consent"
+                type="checkbox"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--brand-600)] focus:ring-[var(--brand-500)] cursor-pointer"
+              />
+              <label
+                htmlFor="consent"
+                className="text-sm text-gray-600 cursor-pointer"
+              >
+                {t("consentText")}{" "}
+                <Link
+                  href="/datenschutz"
+                  target="_blank"
+                  className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] underline"
+                >
+                  {t("privacy")}
+                </Link>{" "}
+                {t("and")}{" "}
+                <Link
+                  href="/agb"
+                  target="_blank"
+                  className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] underline"
+                >
+                  {t("terms")}
+                </Link>{" "}
+                {t("consentTextEnd")}
+              </label>
+            </div>
+
             {/* CTA Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !consentGiven}
               className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
             >
               {loading ? (
@@ -358,10 +393,7 @@ function RegisterForm() {
           </p>
 
           <p className="mt-4 text-center text-xs text-gray-400">
-            {t("termsText")}{" "}
-            <span className="underline cursor-pointer">{t("terms")}</span>{" "}
-            {t("and")}{" "}
-            <span className="underline cursor-pointer">{t("privacy")}</span>.
+            {t("securedByDsgvo")}
           </p>
         </div>
       </div>

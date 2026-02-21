@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { sendVerificationEmail } from "@/lib/verification";
 
 export async function POST(req: Request) {
   try {
@@ -140,10 +141,16 @@ export async function POST(req: Request) {
         return { user };
       });
 
+      // Send verification email (non-blocking)
+      sendVerificationEmail(email).catch((err) =>
+        console.error("Failed to send verification email:", err),
+      );
+
       return NextResponse.json(
         {
           message: "Konto erfolgreich erstellt.",
           userId: result.user.id,
+          requiresVerification: true,
         },
         { status: 201 },
       );
@@ -173,10 +180,16 @@ export async function POST(req: Request) {
       return { user, workspace };
     });
 
+    // Send verification email (non-blocking)
+    sendVerificationEmail(email).catch((err) =>
+      console.error("Failed to send verification email:", err),
+    );
+
     return NextResponse.json(
       {
         message: "Konto erfolgreich erstellt.",
         userId: result.user.id,
+        requiresVerification: true,
       },
       { status: 201 },
     );

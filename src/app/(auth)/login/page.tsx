@@ -22,6 +22,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const t = useTranslations("auth");
   const justRegistered = searchParams.get("registered") === "true";
+  const justVerified = searchParams.get("verified") === "true";
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
   const [email, setEmail] = useState("");
@@ -29,10 +30,32 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  const handleResendVerification = async () => {
+    if (resending || !email) return;
+    setResending(true);
+    try {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setResent(true);
+    } catch {
+      // silent
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setEmailNotVerified(false);
+    setResent(false);
     setLoading(true);
 
     const result = await signIn("credentials", {
@@ -42,7 +65,11 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setError(t("invalidCredentials"));
+      if (result.error.includes("EMAIL_NOT_VERIFIED")) {
+        setEmailNotVerified(true);
+      } else {
+        setError(t("invalidCredentials"));
+      }
       setLoading(false);
     } else {
       router.push(callbackUrl);
@@ -148,11 +175,43 @@ function LoginForm() {
           </h1>
           <p className="mt-2 text-base text-gray-500">{t("signInSubtitle")}</p>
 
+          {/* Success banner (after email verification) */}
+          {justVerified && (
+            <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+              <CheckCircleIcon className="h-5 w-5 shrink-0" />
+              {t("emailVerified")}
+            </div>
+          )}
+
           {/* Success banner (after registration) */}
           {justRegistered && (
             <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
               <CheckCircleIcon className="h-5 w-5 shrink-0" />
               {t("accountCreated")}
+            </div>
+          )}
+
+          {/* Email not verified banner */}
+          {emailNotVerified && (
+            <div className="mt-6 rounded-xl bg-amber-50 border border-amber-200 px-4 py-4">
+              <div className="flex items-start gap-2">
+                <MailIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">
+                    {t("emailNotVerifiedTitle")}
+                  </p>
+                  <p className="mt-1 text-xs text-amber-600">
+                    {t("emailNotVerifiedDesc")}
+                  </p>
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resending || resent}
+                    className="mt-2 text-xs font-semibold text-violet-600 hover:text-violet-700 disabled:opacity-50"
+                  >
+                    {resent ? t("verificationResent") : t("resendVerification")}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

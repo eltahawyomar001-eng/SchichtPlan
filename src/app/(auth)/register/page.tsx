@@ -83,7 +83,8 @@ function RegisterForm() {
         return;
       }
 
-      router.push("/login?registered=true");
+      // Redirect to verification page (check your email)
+      router.push("/verifizierung");
     } catch {
       setError(t("genericError"));
       setLoading(false);

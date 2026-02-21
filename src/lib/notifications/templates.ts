@@ -20,10 +20,17 @@ export function buildEmailHtml(params: {
       ? "Sie erhalten diese E-Mail, weil Sie Benachrichtigungen in SchichtPlan aktiviert haben."
       : "You are receiving this email because you have notifications enabled in SchichtPlan.";
 
-  const ctaBlock = link
+  // If link is already an absolute URL, use it directly; otherwise prepend base URL
+  const ctaHref = link
+    ? link.startsWith("http")
+      ? link
+      : `${process.env.NEXTAUTH_URL || "https://app.schichtplan.de"}${link}`
+    : null;
+
+  const ctaBlock = ctaHref
     ? `<tr>
          <td style="padding:24px 32px 0;">
-           <a href="${process.env.NEXTAUTH_URL || "https://app.schichtplan.de"}${link}"
+           <a href="${ctaHref}"
               style="display:inline-block;padding:12px 24px;background:#6d28d9;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">
               ${ctaLabel}
            </a>

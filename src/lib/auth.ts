@@ -66,6 +66,11 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) return null;
 
+        // Block unverified email accounts
+        if (!user.emailVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
         // 2FA check: if enabled, verify the TOTP code
         if ((user as any).twoFactorEnabled && (user as any).twoFactorSecret) {
           const totpCode = (credentials as any).totpCode;

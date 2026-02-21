@@ -193,6 +193,7 @@ export const config = {
     "/standorte/:path*",
     "/einstellungen/:path*",
     "/zeiterfassung/:path*",
+    "/stempeluhr/:path*",
     "/abwesenheiten/:path*",
     "/schichttausch/:path*",
     "/verfuegbarkeiten/:path*",

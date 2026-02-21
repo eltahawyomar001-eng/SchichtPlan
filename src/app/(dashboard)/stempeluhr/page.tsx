@@ -143,7 +143,12 @@ export default function StempeluhrSeite() {
       const res = await fetch("/api/time-entries/clock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, lat, lng }),
+        body: JSON.stringify({
+          action,
+          lat,
+          lng,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       });
 
       if (!res.ok) {

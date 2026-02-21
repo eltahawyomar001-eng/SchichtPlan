@@ -29,9 +29,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const { action, lat, lng } = await req.json();
+    const { action, lat, lng, timezone } = await req.json();
     const now = new Date();
-    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const tz = timezone || "Europe/Berlin";
+    const timeStr = now.toLocaleTimeString("de-DE", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    // Date in the employee's timezone (may differ from UTC date near midnight)
+    const localDateStr = now.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+    const [ly, lm, ld] = localDateStr.split("-").map(Number);
+    const dateOnly = new Date(Date.UTC(ly, lm - 1, ld));
 
     // ── Clock In ──
     if (action === "in") {
@@ -44,12 +55,6 @@ export async function POST(req: Request) {
           { status: 409 },
         );
       }
-
-      const dateOnly = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-      );
 
       const entry = await prisma.timeEntry.create({
         data: {
@@ -198,10 +203,13 @@ export async function GET() {
       orderBy: { clockInAt: "desc" },
     });
 
-    // Today's completed entries for the log
-    const todayStart = new Date();
+    // Today's completed entries for the log (use Europe/Berlin)
+    const berlinNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
+    );
+    const todayStart = new Date(berlinNow);
     todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
+    const todayEnd = new Date(berlinNow);
     todayEnd.setHours(23, 59, 59, 999);
 
     const todayEntries = await prisma.timeEntry.findMany({

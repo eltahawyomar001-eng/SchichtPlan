@@ -129,6 +129,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
+      // Initial sign-in via credentials — seed the token
       if (user) {
         const authUser = user as SessionUser;
         token.role = authUser.role;
@@ -137,7 +138,7 @@ export const authOptions: NextAuthOptions = {
         token.employeeId = authUser.employeeId;
       }
 
-      // For OAuth sign-ins, load role/workspace from DB
+      // For OAuth sign-ins, bootstrap workspace if missing
       if (account && account.provider !== "credentials" && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
@@ -147,7 +148,6 @@ export const authOptions: NextAuthOptions = {
           },
         });
         if (dbUser) {
-          // If still no workspace (edge case), create one now
           if (!dbUser.workspaceId) {
             const displayName =
               dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
@@ -176,6 +176,16 @@ export const authOptions: NextAuthOptions = {
             token.employeeId = dbUser.employee?.id || null;
           }
         }
+      }
+
+      // Always refresh employeeId from DB so it picks up
+      // profiles linked after the initial sign-in
+      if (token.sub) {
+        const emp = await prisma.employee.findUnique({
+          where: { userId: token.sub },
+          select: { id: true },
+        });
+        token.employeeId = emp?.id || null;
       }
 
       return token;

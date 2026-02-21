@@ -155,7 +155,7 @@ export default function WebhooksSeite() {
                 onClick={() => setShowForm(false)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Abbrechen
+                {t("cancel")}
               </button>
               <button
                 type="submit"
@@ -183,9 +183,9 @@ export default function WebhooksSeite() {
                 key={hook.id}
                 className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-mono text-sm text-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-sm text-gray-900 truncate">
                       {hook.url}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1">
@@ -204,7 +204,7 @@ export default function WebhooksSeite() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() =>
                         setRevealedSecret(
@@ -223,7 +223,7 @@ export default function WebhooksSeite() {
                           : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {hook.isActive ? "Aktiv" : "Inaktiv"}
+                      {hook.isActive ? t("active") : t("inactive")}
                     </button>
                     <button
                       onClick={() => deleteHook(hook.id)}

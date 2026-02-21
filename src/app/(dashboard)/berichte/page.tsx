@@ -277,17 +277,17 @@ export default function BerichteSeite() {
                   {data.employeeStats.map((emp, idx) => (
                     <li
                       key={emp.employeeId}
-                      className="flex items-center justify-between px-6 py-3"
+                      className="flex items-center justify-between px-4 sm:px-6 py-3 gap-3"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 flex-shrink-0">
                           {idx + 1}
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-gray-900 truncate">
                           {emp.name}
                         </span>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <span className="text-sm font-semibold text-gray-900">
                           {emp.hours}h
                         </span>

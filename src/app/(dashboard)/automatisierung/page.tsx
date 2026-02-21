@@ -177,7 +177,7 @@ export default function AutomatisierungSeite() {
                 onClick={() => setShowForm(false)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Abbrechen
+                {t("cancel")}
               </button>
               <button
                 type="submit"
@@ -203,18 +203,22 @@ export default function AutomatisierungSeite() {
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
               >
-                <div>
-                  <h3 className="font-medium text-gray-900">{rule.name}</h3>
-                  <p className="text-sm text-gray-500">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-medium text-gray-900 truncate">
+                    {rule.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 truncate">
                     {t("trigger")}: {rule.trigger}
                   </p>
                   {rule.description && (
-                    <p className="text-sm text-gray-400">{rule.description}</p>
+                    <p className="text-sm text-gray-400 truncate">
+                      {rule.description}
+                    </p>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     onClick={() => toggleActive(rule)}
                     className={`rounded-full px-3 py-1 text-xs font-medium ${

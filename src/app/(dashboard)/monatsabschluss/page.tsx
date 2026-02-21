@@ -59,20 +59,20 @@ export default function MonatsabschlussSeite() {
   }
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const monthNames = [
-    "Januar",
-    "Februar",
-    "März",
-    "April",
-    "Mai",
-    "Juni",
-    "Juli",
-    "August",
-    "September",
-    "Oktober",
-    "November",
-    "Dezember",
-  ];
+  const monthKeys = [
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+  ] as const;
 
   const statusBadge: Record<string, string> = {
     OPEN: "bg-gray-100 text-gray-700",
@@ -119,7 +119,7 @@ export default function MonatsabschlussSeite() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-900">
-                      {monthNames[m - 1]}
+                      {t(monthKeys[m - 1])}
                     </h3>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge[status]}`}

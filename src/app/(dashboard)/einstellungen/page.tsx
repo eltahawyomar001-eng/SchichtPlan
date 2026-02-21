@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
@@ -84,6 +84,35 @@ export default function EinstellungenPage() {
   // Push notification state
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [pushSupported, setPushSupported] = useState(true);
+  const [pushDenied, setPushDenied] = useState(false);
+
+  // Check existing push subscription on mount
+  useEffect(() => {
+    async function checkPush() {
+      if (
+        typeof window === "undefined" ||
+        !("serviceWorker" in navigator) ||
+        !("PushManager" in window) ||
+        !("Notification" in window)
+      ) {
+        setPushSupported(false);
+        return;
+      }
+      if (Notification.permission === "denied") {
+        setPushDenied(true);
+        return;
+      }
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        setPushEnabled(!!sub);
+      } catch {
+        setPushSupported(false);
+      }
+    }
+    checkPush();
+  }, []);
 
   const roleMap: Record<string, string> = {
     OWNER: t("roleOwner"),
@@ -266,7 +295,19 @@ export default function EinstellungenPage() {
   };
 
   // Push notification handlers
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const raw = atob(base64);
+    const arr = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
   const handleTogglePush = async () => {
+    if (!pushSupported) return;
     setPushLoading(true);
     try {
       if (pushEnabled) {
@@ -285,13 +326,17 @@ export default function EinstellungenPage() {
       } else {
         // Subscribe
         const permission = await Notification.requestPermission();
+        if (permission === "denied") {
+          setPushDenied(true);
+          return;
+        }
         if (permission !== "granted") return;
         const reg = await navigator.serviceWorker.ready;
         const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
         if (!vapidKey) return;
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: vapidKey,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
         });
         await fetch("/api/push-subscriptions", {
           method: "POST",
@@ -300,8 +345,8 @@ export default function EinstellungenPage() {
         });
         setPushEnabled(true);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("[push] toggle error:", err);
     } finally {
       setPushLoading(false);
     }
@@ -674,13 +719,23 @@ export default function EinstellungenPage() {
                     <p className="text-xs text-gray-500 mt-0.5">
                       {t("pushNotificationsDesc")}
                     </p>
+                    {!pushSupported && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        {t("pushNotSupported")}
+                      </p>
+                    )}
+                    {pushDenied && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {t("pushDenied")}
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={handleTogglePush}
-                    disabled={pushLoading}
+                    disabled={pushLoading || !pushSupported || pushDenied}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                       pushEnabled ? "bg-violet-600" : "bg-gray-200"
-                    } ${pushLoading ? "opacity-50" : ""}`}
+                    } ${pushLoading || !pushSupported || pushDenied ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

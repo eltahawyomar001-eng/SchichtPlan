@@ -487,7 +487,9 @@
     "twoFADisabled": "Zwei-Faktor-Authentifizierung wurde deaktiviert.",
     "twoFAInvalid": "Ungültiger Code. Bitte versuchen Sie es erneut.",
     "pushNotifications": "Push-Benachrichtigungen",
-    "pushNotificationsDesc": "Erhalten Sie Push-Benachrichtigungen direkt auf Ihrem Gerät."
+    "pushNotificationsDesc": "Erhalten Sie Push-Benachrichtigungen direkt auf Ihrem Gerät.",
+    "pushNotSupported": "Push-Benachrichtigungen werden von diesem Browser oder Gerät nicht unterstützt. Auf iOS muss die App als PWA installiert sein (iOS 16.4+).",
+    "pushDenied": "Push-Benachrichtigungen wurden blockiert. Bitte erlauben Sie diese in Ihren Browsereinstellungen."
   },
   "auth": {
     "login": "Anmelden",
@@ -673,7 +675,7 @@
     "faq1A": "Ja! SchichtPlan ist aktuell komplett kostenlos nutzbar. Wir arbeiten an zusätzlichen Premium-Funktionen für größere Teams.",
     "faq2Q": "Wie schnell kann ich starten?",
     "faq2A": "In unter 5 Minuten. Registriere dich, lege deine Mitarbeiter an und erstelle deinen ersten Schichtplan.",
-    "faq3Q": "Ist meine Daten sicher?",
+    "faq3Q": "Sind meine Daten sicher?",
     "faq3A": "Absolut. Alle Daten werden DSGVO-konform in Deutschland gehostet und verschlüsselt übertragen.",
     "faq4Q": "Können Mitarbeiter ihre Schichten tauschen?",
     "faq4A": "Ja, Mitarbeiter können Tausch-Anfragen direkt stellen. Du als Manager behältst die volle Kontrolle und genehmigst Änderungen.",
@@ -1063,7 +1065,8 @@
     "billRate": "Abrechnungssatz (€/h)",
     "budgetMinutes": "Budget (Minuten)",
     "startDate": "Startdatum",
-    "endDate": "Enddatum"
+    "endDate": "Enddatum",
+    "cancel": "Abbrechen"
   },
   "monthClose": {
     "title": "Monatsabschluss",
@@ -1076,7 +1079,19 @@
     "export": "Exportieren",
     "open": "Offen",
     "locked": "Gesperrt",
-    "exported": "Exportiert"
+    "exported": "Exportiert",
+    "january": "Januar",
+    "february": "Februar",
+    "march": "März",
+    "april": "April",
+    "may": "Mai",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "Dezember"
   },
   "automationRules": {
     "title": "Automatisierung",
@@ -1088,7 +1103,8 @@
     "actions": "Aktionen",
     "active": "Aktiv",
     "inactive": "Inaktiv",
-    "noRules": "Keine Automatisierungsregeln vorhanden."
+    "noRules": "Keine Automatisierungsregeln vorhanden.",
+    "cancel": "Abbrechen"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -1099,7 +1115,8 @@
     "secret": "Secret",
     "active": "Aktiv",
     "inactive": "Inaktiv",
-    "noWebhooks": "Keine Webhooks konfiguriert."
+    "noWebhooks": "Keine Webhooks konfiguriert.",
+    "cancel": "Abbrechen"
   },
   "teamCalendar": {
     "title": "Teamkalender",

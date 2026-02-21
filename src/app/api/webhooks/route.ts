@@ -20,7 +20,7 @@ export async function GET() {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const forbidden = requirePermission(user, "settings", "read");
+    const forbidden = requirePermission(user, "webhooks", "read");
     if (forbidden) return forbidden;
 
     const hooks = await (prisma as any).webhookEndpoint.findMany({
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const forbidden = requirePermission(user, "settings", "create");
+    const forbidden = requirePermission(user, "webhooks", "create");
     if (forbidden) return forbidden;
 
     const { url, events } = await req.json();

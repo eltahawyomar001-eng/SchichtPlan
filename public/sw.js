@@ -39,6 +39,21 @@ sw.addEventListener("notificationclick", (event) => {
   );
 });
 
+// Handle subscription renewal (when browser invalidates the old one)
+sw.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    sw.registration.pushManager
+      .subscribe(event.oldSubscription?.options ?? { userVisibleOnly: true })
+      .then((newSub) =>
+        fetch("/api/push-subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newSub.toJSON()),
+        }),
+      ),
+  );
+});
+
 // Cache strategies for offline support
 const CACHE_NAME = "schichtplan-v1";
 const OFFLINE_URL = "/offline";

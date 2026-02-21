@@ -19,7 +19,7 @@ export async function GET() {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const forbidden = requirePermission(user, "reports", "read");
+    const forbidden = requirePermission(user, "clients", "read");
     if (forbidden) return forbidden;
 
     const clients = await (prisma as any).client.findMany({
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const forbidden = requirePermission(user, "reports", "create");
+    const forbidden = requirePermission(user, "clients", "create");
     if (forbidden) return forbidden;
 
     const { name, email, phone, address, notes } = await req.json();

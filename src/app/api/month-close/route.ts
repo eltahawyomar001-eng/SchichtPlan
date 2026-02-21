@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const forbidden = requirePermission(user, "payroll-export", "read");
+    const forbidden = requirePermission(user, "month-close", "read");
     if (forbidden) return forbidden;
 
     const { searchParams } = new URL(req.url);
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const forbidden = requirePermission(user, "payroll-export", "create");
+    const forbidden = requirePermission(user, "month-close", "create");
     if (forbidden) return forbidden;
 
     const { year, month, action } = await req.json();

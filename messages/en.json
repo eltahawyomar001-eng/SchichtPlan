@@ -487,7 +487,9 @@
     "twoFADisabled": "Two-factor authentication has been disabled.",
     "twoFAInvalid": "Invalid code. Please try again.",
     "pushNotifications": "Push Notifications",
-    "pushNotificationsDesc": "Receive push notifications directly on your device."
+    "pushNotificationsDesc": "Receive push notifications directly on your device.",
+    "pushNotSupported": "Push notifications are not supported on this browser or device. On iOS, the app must be installed as a PWA (iOS 16.4+).",
+    "pushDenied": "Push notifications have been blocked. Please allow them in your browser settings."
   },
   "auth": {
     "login": "Sign in",
@@ -1063,7 +1065,8 @@
     "billRate": "Bill Rate (€/h)",
     "budgetMinutes": "Budget (minutes)",
     "startDate": "Start Date",
-    "endDate": "End Date"
+    "endDate": "End Date",
+    "cancel": "Cancel"
   },
   "monthClose": {
     "title": "Month Close",
@@ -1076,7 +1079,19 @@
     "export": "Export",
     "open": "Open",
     "locked": "Locked",
-    "exported": "Exported"
+    "exported": "Exported",
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
   },
   "automationRules": {
     "title": "Automation",
@@ -1088,7 +1103,8 @@
     "actions": "Actions",
     "active": "Active",
     "inactive": "Inactive",
-    "noRules": "No automation rules configured."
+    "noRules": "No automation rules configured.",
+    "cancel": "Cancel"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -1099,7 +1115,8 @@
     "secret": "Secret",
     "active": "Active",
     "inactive": "Inactive",
-    "noWebhooks": "No webhooks configured."
+    "noWebhooks": "No webhooks configured.",
+    "cancel": "Cancel"
   },
   "teamCalendar": {
     "title": "Team Calendar",

@@ -225,11 +225,11 @@ export default function DatenSeite() {
             {t("icalTitle")}
           </h2>
           <p className="text-sm text-gray-600">{t("icalDesc")}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input
               readOnly
               value={icalUrl}
-              className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700"
+              className="flex-1 min-w-0 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700 truncate"
             />
             <button
               onClick={copyIcal}

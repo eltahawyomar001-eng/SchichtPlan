@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/db";
 import { sendEmail } from "./email";
+import { sendPushNotification } from "./push";
 
 /**
- * Dispatch an email notification for a user.
+ * Dispatch an email + push notification for a user.
  *
  * Logic:
- * - If user has an EMAIL preference set to true -> send
+ * - If user has an EMAIL preference set to true -> send email
  * - If user has NO preferences at all -> send (default on)
- * - If user explicitly disabled EMAIL -> skip
+ * - If user explicitly disabled EMAIL -> skip email
+ * - Push is always attempted if subscriptions exist
  */
 export async function dispatchExternalNotification(params: {
   userId: string;
@@ -25,8 +27,7 @@ export async function dispatchExternalNotification(params: {
     select: {
       email: true,
       notificationPreferences: {
-        where: { channel: "EMAIL" },
-        select: { enabled: true },
+        select: { channel: true, enabled: true },
       },
     },
   });
@@ -36,39 +37,52 @@ export async function dispatchExternalNotification(params: {
     return;
   }
 
-  // Default to ON when no preference row exists
-  const emailPref = user.notificationPreferences[0];
+  // --- Email ---
+  const emailPref = user.notificationPreferences.find(
+    (p) => p.channel === "EMAIL",
+  );
   const emailEnabled = emailPref ? emailPref.enabled : true;
 
-  if (!emailEnabled) {
-    console.log(`[dispatcher] Email disabled for ${user.email}`);
-    return;
-  }
-
-  if (!user.email) {
-    console.warn(`[dispatcher] User ${userId} has no email`);
-    return;
-  }
-
-  console.log(`[dispatcher] Sending email to ${user.email}`);
-
-  try {
-    const result = await sendEmail({
-      to: user.email,
-      type,
-      title,
-      message,
-      link,
-      locale: "de",
-    });
-    if (result.success) {
-      console.log(`[dispatcher] Email sent to ${user.email}`);
-    } else {
-      console.error(
-        `[dispatcher] Email failed for ${user.email}: ${result.error}`,
-      );
+  if (emailEnabled && user.email) {
+    console.log(`[dispatcher] Sending email to ${user.email}`);
+    try {
+      const result = await sendEmail({
+        to: user.email,
+        type,
+        title,
+        message,
+        link,
+        locale: "de",
+      });
+      if (result.success) {
+        console.log(`[dispatcher] Email sent to ${user.email}`);
+      } else {
+        console.error(
+          `[dispatcher] Email failed for ${user.email}: ${result.error}`,
+        );
+      }
+    } catch (err) {
+      console.error(`[dispatcher] Email failed for ${user.email}:`, err);
     }
-  } catch (err) {
-    console.error(`[dispatcher] Email failed for ${user.email}:`, err);
+  }
+
+  // --- Push ---
+  const pushPref = user.notificationPreferences.find(
+    (p) => p.channel === "PUSH",
+  );
+  const pushEnabled = pushPref ? pushPref.enabled : true;
+
+  if (pushEnabled) {
+    try {
+      await sendPushNotification({
+        userId,
+        title,
+        body: message,
+        url: link || undefined,
+        tag: type,
+      });
+    } catch (err) {
+      console.error(`[dispatcher] Push failed for userId=${userId}:`, err);
+    }
   }
 }

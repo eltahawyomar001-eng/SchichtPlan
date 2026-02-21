@@ -25,6 +25,13 @@ import {
   AwardIcon,
   PalmtreeIcon,
   TemplateIcon,
+  FolderIcon,
+  TargetIcon,
+  ArchiveIcon,
+  LinkIcon,
+  ZapIcon,
+  DatabaseIcon,
+  CalendarUsersIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -52,6 +59,17 @@ const navGroups: NavGroup[] = [
       { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
       { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
       { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
+      {
+        key: "punchClock",
+        href: "/stempeluhr",
+        icon: TargetIcon,
+      },
+      {
+        key: "teamCalendar",
+        href: "/teamkalender",
+        icon: CalendarUsersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
     ],
   },
   {
@@ -88,6 +106,12 @@ const navGroups: NavGroup[] = [
         icon: TemplateIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
+      {
+        key: "projects",
+        href: "/projekte",
+        icon: FolderIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
     ],
   },
   {
@@ -118,7 +142,37 @@ const navGroups: NavGroup[] = [
         icon: FileExportIcon,
         roles: ["OWNER", "ADMIN"],
       },
+      {
+        key: "monthClose",
+        href: "/monatsabschluss",
+        icon: ArchiveIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+      {
+        key: "dataIO",
+        href: "/daten",
+        icon: DatabaseIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
       { key: "holidays", href: "/feiertage", icon: FlagIcon },
+    ],
+  },
+  {
+    // Settings & Developer
+    labelKey: "developer",
+    items: [
+      {
+        key: "automationRules",
+        href: "/automatisierung",
+        icon: ZapIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+      {
+        key: "webhooks",
+        href: "/webhooks",
+        icon: LinkIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
     ],
   },
   {

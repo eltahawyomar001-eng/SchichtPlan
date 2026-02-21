@@ -81,7 +81,11 @@ export type Resource =
   | "shift-templates"
   | "vacation-balances"
   | "public-holidays"
-  | "reports";
+  | "reports"
+  | "clients"
+  | "projects"
+  | "webhooks"
+  | "month-close";
 
 export type Action = "read" | "create" | "update" | "delete" | "approve";
 
@@ -236,8 +240,36 @@ const permissionMatrix: Record<Resource, Record<Action, Role[]>> = {
   },
   reports: {
     read: ["OWNER", "ADMIN", "MANAGER"],
-    create: [],
-    update: [],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  clients: {
+    read: ["OWNER", "ADMIN", "MANAGER"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  projects: {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  webhooks: {
+    read: ["OWNER", "ADMIN"],
+    create: ["OWNER", "ADMIN"],
+    update: ["OWNER", "ADMIN"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  "month-close": {
+    read: ["OWNER", "ADMIN"],
+    create: ["OWNER", "ADMIN"],
+    update: ["OWNER", "ADMIN"],
     delete: [],
     approve: [],
   },

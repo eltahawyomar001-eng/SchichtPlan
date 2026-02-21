@@ -16,6 +16,8 @@ model User {
   image          String?
   role           Role      @default(OWNER)
   consentGivenAt DateTime?
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   workspaceId    String?
@@ -25,6 +27,7 @@ model User {
   notificationPreferences NotificationPreference[]
   invitationsSent Invitation[]
   employee       Employee?
+  pushSubscriptions PushSubscription[]
 }
 
 model Account {
@@ -123,6 +126,12 @@ model Workspace {
   vacationBalances VacationBalance[]
   skills      Skill[]
   shiftTemplates ShiftTemplate[]
+  clients     Client[]
+  projects    Project[]
+  monthCloses MonthClose[]
+  exportJobs  ExportJob[]
+  webhookEndpoints WebhookEndpoint[]
+  automationRules AutomationRule[]
 }
 
 model Employee {
@@ -154,6 +163,7 @@ model Employee {
   timeAccount     TimeAccount?
   vacationBalances VacationBalance[]
   employeeSkills  EmployeeSkill[]
+  projectMembers  ProjectMember[]
   @@unique([email, workspaceId])
 }
 
@@ -312,6 +322,13 @@ model TimeEntry {
   submittedAt  DateTime?
   confirmedAt  DateTime?
   confirmedBy  String?
+  clockInLat   Float?
+  clockInLng   Float?
+  clockOutLat  Float?
+  clockOutLng  Float?
+  clockInAt    DateTime?
+  clockOutAt   DateTime?
+  isLiveClock  Boolean         @default(false)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   employeeId   String
@@ -319,12 +336,15 @@ model TimeEntry {
   locationId   String?
   location     Location?       @relation(fields: [locationId], references: [id])
   shiftId      String?
+  projectId    String?
+  project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
   workspaceId  String
   workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   auditLog     TimeEntryAudit[]
   @@index([workspaceId, date])
   @@index([employeeId, date])
   @@index([status])
+  @@index([projectId])
 }
 
 model TimeEntryAudit {
@@ -525,5 +545,162 @@ model AutomationSetting {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@unique([workspaceId, key])
+  @@index([workspaceId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PUSH NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @db.Text
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, endpoint])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROJECT MODULE
+// ═══════════════════════════════════════════════════════════════
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?  @db.Text
+  notes     String?  @db.Text
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projects    Project[]
+  @@index([workspaceId])
+}
+
+enum ProjectStatus {
+  AKTIV
+  PAUSIERT
+  ABGESCHLOSSEN
+  ARCHIVIERT
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?       @db.Text
+  status       ProjectStatus @default(AKTIV)
+  costRate     Float?
+  billRate     Float?
+  budgetMinutes Int?
+  startDate    DateTime?     @db.Date
+  endDate      DateTime?     @db.Date
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  clientId     String?
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  workspaceId  String
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members      ProjectMember[]
+  timeEntries  TimeEntry[]
+  @@index([workspaceId])
+  @@index([clientId])
+}
+
+model ProjectMember {
+  id         String   @id @default(cuid())
+  role       String   @default("MEMBER")
+  createdAt  DateTime @default(now())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  @@unique([employeeId, projectId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MONTH CLOSE WORKFLOW
+// ═══════════════════════════════════════════════════════════════
+
+enum MonthCloseStatus {
+  OPEN
+  LOCKED
+  EXPORTED
+}
+
+model MonthClose {
+  id          String          @id @default(cuid())
+  year        Int
+  month       Int
+  status      MonthCloseStatus @default(OPEN)
+  lockedBy    String?
+  lockedAt    DateTime?
+  exportedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  exportJobs  ExportJob[]
+  @@unique([workspaceId, year, month])
+  @@index([workspaceId])
+}
+
+model ExportJob {
+  id           String   @id @default(cuid())
+  format       String
+  fileName     String
+  fileUrl      String?  @db.Text
+  status       String   @default("PENDING")
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now())
+  completedAt  DateTime?
+  monthCloseId String?
+  monthClose   MonthClose? @relation(fields: [monthCloseId], references: [id], onDelete: SetNull)
+  projectId    String?
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WEBHOOKS
+// ═══════════════════════════════════════════════════════════════
+
+model WebhookEndpoint {
+  id        String   @id @default(cuid())
+  url       String   @db.Text
+  secret    String
+  events    String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CUSTOM AUTOMATION RULES
+// ═══════════════════════════════════════════════════════════════
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String
+  conditions  String   @db.Text
+  actions     String   @db.Text
+  isActive    Boolean  @default(true)
+  lastTriggered DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([workspaceId])
 }

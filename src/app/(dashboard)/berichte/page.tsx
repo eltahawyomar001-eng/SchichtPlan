@@ -3,6 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 interface ReportData {
   period: { start: string; end: string };
@@ -28,6 +41,17 @@ interface ReportData {
     shifts: number;
   }[];
 }
+
+const COLORS = [
+  "#7C3AED",
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#EC4899",
+  "#06B6D4",
+  "#8B5CF6",
+];
 
 export default function BerichteSeite() {
   const t = useTranslations("reports");
@@ -61,6 +85,39 @@ export default function BerichteSeite() {
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
+
+  // Prepare chart data
+  const shiftTypeData = data
+    ? [
+        { name: t("nightShifts"), value: data.summary.nightShifts },
+        { name: t("sundayShifts"), value: data.summary.sundayShifts },
+        { name: t("holidayShifts"), value: data.summary.holidayShifts },
+        {
+          name: t("totalShifts"),
+          value:
+            data.summary.totalShifts -
+            data.summary.nightShifts -
+            data.summary.sundayShifts -
+            data.summary.holidayShifts,
+        },
+      ].filter((d) => d.value > 0)
+    : [];
+
+  const absenceData = data
+    ? [
+        { name: t("pending"), value: data.absences.pending, fill: "#F59E0B" },
+        {
+          name: t("approved"),
+          value: data.absences.approved,
+          fill: "#10B981",
+        },
+        {
+          name: t("rejected"),
+          value: data.absences.rejected,
+          fill: "#EF4444",
+        },
+      ].filter((d) => d.value > 0)
+    : [];
 
   return (
     <div>
@@ -111,53 +168,104 @@ export default function BerichteSeite() {
               />
             </div>
 
-            {/* Surcharge shifts */}
-            <div className="grid grid-cols-3 gap-4">
-              <StatCard
-                label={t("nightShifts")}
-                value={String(data.summary.nightShifts)}
-                accent="blue"
-              />
-              <StatCard
-                label={t("sundayShifts")}
-                value={String(data.summary.sundayShifts)}
-                accent="violet"
-              />
-              <StatCard
-                label={t("holidayShifts")}
-                value={String(data.summary.holidayShifts)}
-                accent="red"
-              />
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Employee Hours Bar Chart */}
+              {data.employeeStats.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                    {t("employeeHours")}
+                  </h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={data.employeeStats.slice(0, 10)}
+                      margin={{ top: 5, right: 20, left: 0, bottom: 60 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 11 }}
+                        angle={-35}
+                        textAnchor="end"
+                        height={70}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip
+                        formatter={(val) => [`${val}h`, t("totalHours")]}
+                      />
+                      <Bar
+                        dataKey="hours"
+                        fill="#7C3AED"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Shift Types Pie Chart */}
+              {shiftTypeData.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                    {t("totalShifts")}
+                  </h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={shiftTypeData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        dataKey="value"
+                        paddingAngle={3}
+                        label={({ name, percent }) =>
+                          `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                        }
+                      >
+                        {shiftTypeData.map((_, idx) => (
+                          <Cell
+                            key={`cell-${idx}`}
+                            fill={COLORS[idx % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
 
-            {/* Absence stats */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                {t("absences")}
-              </h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-amber-600">
-                    {data.absences.pending}
-                  </p>
-                  <p className="text-xs text-gray-500">{t("pending")}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
-                    {data.absences.approved}
-                  </p>
-                  <p className="text-xs text-gray-500">{t("approved")}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-red-600">
-                    {data.absences.rejected}
-                  </p>
-                  <p className="text-xs text-gray-500">{t("rejected")}</p>
-                </div>
+            {/* Absence Pie Chart */}
+            {absenceData.length > 0 && (
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm max-w-md">
+                <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                  {t("absences")}
+                </h2>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={absenceData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {absenceData.map((entry, idx) => (
+                        <Cell key={`abs-${idx}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            </div>
+            )}
 
-            {/* Employee hours ranking */}
+            {/* Employee hours ranking table */}
             {data.employeeStats.length > 0 && (
               <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 px-6 py-4">

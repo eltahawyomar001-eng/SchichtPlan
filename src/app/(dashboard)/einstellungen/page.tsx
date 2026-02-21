@@ -69,6 +69,22 @@ export default function EinstellungenPage() {
   } | null>(null);
   const [exporting, setExporting] = useState(false);
 
+  // 2FA state
+  const [twoFASetup, setTwoFASetup] = useState(false);
+  const [twoFAQr, setTwoFAQr] = useState("");
+  const [twoFASecret, setTwoFASecret] = useState("");
+  const [twoFAToken, setTwoFAToken] = useState("");
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [twoFAMsg, setTwoFAMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [twoFASaving, setTwoFASaving] = useState(false);
+
+  // Push notification state
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
   const roleMap: Record<string, string> = {
     OWNER: t("roleOwner"),
     ADMIN: t("roleAdmin"),
@@ -191,6 +207,103 @@ export default function EinstellungenPage() {
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
+    }
+  };
+
+  // 2FA handlers
+  const handleSetup2FA = async () => {
+    setTwoFAMsg(null);
+    try {
+      const res = await fetch("/api/auth/two-factor");
+      if (res.ok) {
+        const data = await res.json();
+        setTwoFAQr(data.qrCode);
+        setTwoFASecret(data.secret);
+        setTwoFASetup(true);
+      }
+    } catch {
+      setTwoFAMsg({ type: "error", text: t("networkError") });
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    setTwoFASaving(true);
+    setTwoFAMsg(null);
+    try {
+      const res = await fetch("/api/auth/two-factor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: twoFAToken }),
+      });
+      if (res.ok) {
+        setTwoFAEnabled(true);
+        setTwoFASetup(false);
+        setTwoFAToken("");
+        setTwoFAMsg({ type: "success", text: t("twoFAEnabled") });
+      } else {
+        setTwoFAMsg({ type: "error", text: t("twoFAInvalid") });
+      }
+    } catch {
+      setTwoFAMsg({ type: "error", text: t("networkError") });
+    } finally {
+      setTwoFASaving(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    setTwoFASaving(true);
+    try {
+      const res = await fetch("/api/auth/two-factor", { method: "DELETE" });
+      if (res.ok) {
+        setTwoFAEnabled(false);
+        setTwoFAMsg({ type: "success", text: t("twoFADisabled") });
+      }
+    } catch {
+      setTwoFAMsg({ type: "error", text: t("networkError") });
+    } finally {
+      setTwoFASaving(false);
+    }
+  };
+
+  // Push notification handlers
+  const handleTogglePush = async () => {
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        // Unsubscribe
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch("/api/push-subscriptions", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          await sub.unsubscribe();
+        }
+        setPushEnabled(false);
+      } else {
+        // Subscribe
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return;
+        const reg = await navigator.serviceWorker.ready;
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!vapidKey) return;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidKey,
+        });
+        await fetch("/api/push-subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sub.toJSON()),
+        });
+        setPushEnabled(true);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setPushLoading(false);
     }
   };
 
@@ -468,6 +581,115 @@ export default function EinstellungenPage() {
                   {pwMsg.text}
                 </div>
               )}
+
+              {/* Two-Factor Authentication */}
+              <div className="border-t border-gray-100 pt-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                  {t("twoFactorAuth")}
+                </h3>
+                {twoFAEnabled ? (
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-800"
+                    >
+                      {t("twoFAActive")}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDisable2FA}
+                      disabled={twoFASaving}
+                    >
+                      {t("twoFADisableBtn")}
+                    </Button>
+                  </div>
+                ) : twoFASetup ? (
+                  <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+                    <p className="text-sm text-gray-600">{t("twoFAScanQR")}</p>
+                    {twoFAQr && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={twoFAQr}
+                        alt="2FA QR Code"
+                        className="mx-auto w-48 h-48"
+                      />
+                    )}
+                    <p className="text-xs text-gray-400 break-all font-mono">
+                      {twoFASecret}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="000000"
+                        value={twoFAToken}
+                        onChange={(e) => setTwoFAToken(e.target.value)}
+                        maxLength={6}
+                        className="max-w-[120px] font-mono text-center"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleVerify2FA}
+                        disabled={twoFASaving || twoFAToken.length !== 6}
+                      >
+                        {t("twoFAVerify")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setTwoFASetup(false);
+                          setTwoFAToken("");
+                        }}
+                      >
+                        {t("cancelChange")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="outline" onClick={handleSetup2FA}>
+                    <ShieldCheckIcon className="h-4 w-4" />
+                    {t("twoFASetup")}
+                  </Button>
+                )}
+                {twoFAMsg && (
+                  <div
+                    className={`mt-2 rounded-lg p-3 text-sm ${
+                      twoFAMsg.type === "success"
+                        ? "bg-green-50 text-green-800 border border-green-200"
+                        : "bg-red-50 text-red-800 border border-red-200"
+                    }`}
+                  >
+                    {twoFAMsg.text}
+                  </div>
+                )}
+              </div>
+
+              {/* Push Notifications */}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      {t("pushNotifications")}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {t("pushNotificationsDesc")}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleTogglePush}
+                    disabled={pushLoading}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      pushEnabled ? "bg-violet-600" : "bg-gray-200"
+                    } ${pushLoading ? "opacity-50" : ""}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        pushEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
 
               <div className="border-t border-gray-100 pt-4">
                 <Button

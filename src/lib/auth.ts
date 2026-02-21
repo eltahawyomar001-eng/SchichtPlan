@@ -101,6 +101,34 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // For OAuth sign-ins: if the user has no workspace, auto-create one
+      if (account && account.provider !== "credentials" && user.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { workspaceId: true, name: true, email: true },
+        });
+        if (dbUser && !dbUser.workspaceId) {
+          const displayName =
+            dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
+          const slug =
+            displayName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "") +
+            "-" +
+            user.id.slice(-6);
+          const workspace = await prisma.workspace.create({
+            data: { name: `${displayName}'s Workspace`, slug },
+          });
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { workspaceId: workspace.id, role: "OWNER" },
+          });
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       if (user) {
         const authUser = user as SessionUser;

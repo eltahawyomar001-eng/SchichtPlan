@@ -123,9 +123,21 @@ export async function POST(req: Request) {
             where: { id: existingEmployee.id },
             data: { userId: user.id },
           });
+        } else {
+          // No existing employee — create one and link it
+          const nameParts = name.trim().split(/\s+/);
+          await tx.employee.create({
+            data: {
+              firstName: nameParts[0] || name,
+              lastName: nameParts.slice(1).join(" ") || "",
+              email,
+              userId: user.id,
+              workspaceId: invitation.workspaceId,
+            },
+          });
         }
 
-        return { user, employeeLinked: !!existingEmployee };
+        return { user };
       });
 
       return NextResponse.json(

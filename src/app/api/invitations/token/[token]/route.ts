@@ -105,7 +105,7 @@ export async function POST(
     );
   }
 
-  // Accept: update user workspace + role, mark invitation as accepted
+  // Accept: update user workspace + role, link/create employee, mark invitation as accepted
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await prisma.$transaction(async (tx: any) => {
     await tx.user.update({
@@ -120,6 +120,36 @@ export async function POST(
       where: { id: invitation.id },
       data: { status: "ACCEPTED" },
     });
+
+    // Auto-link or create an Employee record
+    const existingEmployee = await tx.employee.findFirst({
+      where: {
+        email: { equals: session.user!.email!, mode: "insensitive" },
+        workspaceId: invitation.workspaceId,
+        userId: null,
+      },
+    });
+
+    if (existingEmployee) {
+      await tx.employee.update({
+        where: { id: existingEmployee.id },
+        data: { userId: user.id },
+      });
+    } else {
+      // No existing employee — create one and link it
+      const displayName =
+        (session.user as SessionUser).name || session.user!.email!;
+      const nameParts = displayName.trim().split(/\s+/);
+      await tx.employee.create({
+        data: {
+          firstName: nameParts[0] || displayName,
+          lastName: nameParts.slice(1).join(" ") || "",
+          email: session.user!.email!,
+          userId: user.id,
+          workspaceId: invitation.workspaceId,
+        },
+      });
+    }
   });
 
   return NextResponse.json({

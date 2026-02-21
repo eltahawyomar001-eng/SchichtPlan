@@ -44,7 +44,10 @@ export default function StempeluhrSeite() {
   // ── Fetch current status ──
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/time-entries/clock");
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch(
+        `/api/time-entries/clock?timezone=${encodeURIComponent(tz)}`,
+      );
       if (!res.ok) {
         const data = await res.json();
         setError(data.error || t("errorGeneric"));

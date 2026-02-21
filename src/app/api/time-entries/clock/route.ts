@@ -179,8 +179,11 @@ function toMinutes(t: string): number {
  * GET /api/time-entries/clock
  * Returns current clock-in status + today's completed entries for the employee.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const tz = searchParams.get("timezone") || "Europe/Berlin";
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -203,13 +206,13 @@ export async function GET() {
       orderBy: { clockInAt: "desc" },
     });
 
-    // Today's completed entries for the log (use Europe/Berlin)
-    const berlinNow = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
+    // Today's completed entries for the log (use client timezone)
+    const localNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: tz }),
     );
-    const todayStart = new Date(berlinNow);
+    const todayStart = new Date(localNow);
     todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(berlinNow);
+    const todayEnd = new Date(localNow);
     todayEnd.setHours(23, 59, 59, 999);
 
     const todayEntries = await prisma.timeEntry.findMany({

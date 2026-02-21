@@ -178,14 +178,25 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Always refresh employeeId from DB so it picks up
-      // profiles linked after the initial sign-in
+      // Always refresh employeeId, workspaceId, and role from DB
+      // so changes (e.g. workspace reassignment, role changes) are
+      // picked up without requiring the user to re-login.
       if (token.sub) {
-        const emp = await prisma.employee.findUnique({
-          where: { userId: token.sub },
-          select: { id: true },
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            role: true,
+            workspaceId: true,
+            workspace: { select: { name: true } },
+            employee: { select: { id: true } },
+          },
         });
-        token.employeeId = emp?.id || null;
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.workspaceId = dbUser.workspaceId;
+          token.workspaceName = dbUser.workspace?.name || null;
+          token.employeeId = dbUser.employee?.id || null;
+        }
       }
 
       return token;

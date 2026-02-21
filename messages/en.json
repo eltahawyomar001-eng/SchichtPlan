@@ -106,6 +106,9 @@
     }
   },
   "onboarding": {
+    "welcome": "Welcome to SchichtPlan!",
+    "setupDesc": "Your workspace is being set up. Please reload the page or go to settings.",
+    "setupButton": "Go to Settings",
     "welcomeTitle": "Welcome to SchichtPlan!",
     "welcomeSubtitle": "Set up your workspace in 3 simple steps.",
     "step1Title": "Add a location",

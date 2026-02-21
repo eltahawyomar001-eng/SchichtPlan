@@ -40,6 +40,31 @@ export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
 
+  // Guard: if no workspace yet (e.g. fresh OAuth sign-up), show setup prompt
+  if (!workspaceId) {
+    return (
+      <div>
+        <Topbar title={t("title")} description="" />
+        <div className="flex items-center justify-center py-20">
+          <Card className="mx-4 max-w-md">
+            <CardContent className="p-8 text-center">
+              <RocketIcon className="mx-auto mb-4 h-12 w-12 text-violet-500" />
+              <CardTitle className="mb-2">{to("welcome")}</CardTitle>
+              <p className="text-sm text-gray-500 mb-6">{to("setupDesc")}</p>
+              <Link
+                href="/einstellungen"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110"
+              >
+                {to("setupButton")}
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const isManager = user ? isManagement(user) : false;
 
   const statusLabel = (s: string) => {

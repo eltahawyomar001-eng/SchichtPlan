@@ -106,6 +106,9 @@
     }
   },
   "onboarding": {
+    "welcome": "Willkommen bei SchichtPlan!",
+    "setupDesc": "Ihr Arbeitsbereich wird eingerichtet. Bitte laden Sie die Seite neu oder gehen Sie zu den Einstellungen.",
+    "setupButton": "Zu den Einstellungen",
     "welcomeTitle": "Willkommen bei SchichtPlan!",
     "welcomeSubtitle": "Richten Sie Ihren Arbeitsbereich in 3 einfachen Schritten ein.",
     "step1Title": "Standort hinzufügen",

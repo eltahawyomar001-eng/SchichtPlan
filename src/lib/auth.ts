@@ -100,35 +100,34 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  callbacks: {
-    async signIn({ user, account }) {
-      // For OAuth sign-ins: if the user has no workspace, auto-create one
-      if (account && account.provider !== "credentials" && user.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { workspaceId: true, name: true, email: true },
+  events: {
+    // After PrismaAdapter creates a new OAuth user, auto-create a workspace
+    async createUser({ user }) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { workspaceId: true, name: true, email: true },
+      });
+      if (dbUser && !dbUser.workspaceId) {
+        const displayName =
+          dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
+        const slug =
+          displayName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "") +
+          "-" +
+          user.id.slice(-6);
+        const workspace = await prisma.workspace.create({
+          data: { name: `${displayName}'s Workspace`, slug },
         });
-        if (dbUser && !dbUser.workspaceId) {
-          const displayName =
-            dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
-          const slug =
-            displayName
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-|-$/g, "") +
-            "-" +
-            user.id.slice(-6);
-          const workspace = await prisma.workspace.create({
-            data: { name: `${displayName}'s Workspace`, slug },
-          });
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { workspaceId: workspace.id, role: "OWNER" },
-          });
-        }
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { workspaceId: workspace.id, role: "OWNER" },
+        });
       }
-      return true;
     },
+  },
+  callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
         const authUser = user as SessionUser;
@@ -148,10 +147,34 @@ export const authOptions: NextAuthOptions = {
           },
         });
         if (dbUser) {
-          token.role = dbUser.role;
-          token.workspaceId = dbUser.workspaceId;
-          token.workspaceName = dbUser.workspace?.name || null;
-          token.employeeId = dbUser.employee?.id || null;
+          // If still no workspace (edge case), create one now
+          if (!dbUser.workspaceId) {
+            const displayName =
+              dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
+            const slug =
+              displayName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "") +
+              "-" +
+              token.sub.slice(-6);
+            const workspace = await prisma.workspace.create({
+              data: { name: `${displayName}'s Workspace`, slug },
+            });
+            await prisma.user.update({
+              where: { id: token.sub },
+              data: { workspaceId: workspace.id, role: "OWNER" },
+            });
+            token.role = "OWNER";
+            token.workspaceId = workspace.id;
+            token.workspaceName = workspace.name;
+            token.employeeId = null;
+          } else {
+            token.role = dbUser.role;
+            token.workspaceId = dbUser.workspaceId;
+            token.workspaceName = dbUser.workspace?.name || null;
+            token.employeeId = dbUser.employee?.id || null;
+          }
         }
       }
 

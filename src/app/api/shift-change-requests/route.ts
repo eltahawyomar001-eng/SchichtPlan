@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { isEmployee, isManagement } from "@/lib/authorization";
+import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────

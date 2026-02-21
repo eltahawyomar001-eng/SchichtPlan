@@ -58,7 +58,7 @@ export default function TeamPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
-  const [loadingInvites, setLoadingInvites] = useState(true);
+  const [, setLoadingInvites] = useState(true);
 
   // Invite form
   const [inviteEmail, setInviteEmail] = useState("");

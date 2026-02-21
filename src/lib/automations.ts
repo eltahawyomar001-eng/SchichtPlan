@@ -348,7 +348,7 @@ export async function cascadeAbsenceApproval(params: {
   workspaceId: string;
   reviewerId: string;
 }) {
-  const { employeeId, startDate, endDate, workspaceId, reviewerId } = params;
+  const { employeeId, startDate, endDate, workspaceId } = params;
 
   // Skip if cascade cancellation is disabled
   if (!(await isAutomationEnabled(workspaceId, "cascadeAbsenceCancellation"))) {

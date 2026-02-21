@@ -1,6 +1,5 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 /* ──────────────────────────────────────────────────────────────
  * Security headers (DSGVO Art. 32 — appropriate technical measures)

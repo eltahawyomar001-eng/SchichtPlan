@@ -3,11 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import {
-  requirePermission,
-  isEmployee,
-  isManagement,
-} from "@/lib/authorization";
+import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   checkShiftConflicts,
   createSystemNotification,

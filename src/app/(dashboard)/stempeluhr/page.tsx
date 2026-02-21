@@ -5,7 +5,12 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent } from "@/components/ui/card";
-import { ClockIcon, AlertTriangleIcon, MapPinIcon } from "@/components/icons";
+import {
+  ClockIcon,
+  AlertTriangleIcon,
+  MapPinIcon,
+  UsersIcon,
+} from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 
 interface ClockEntry {
@@ -19,6 +24,35 @@ interface ClockEntry {
   breakMinutes: number;
   grossMinutes: number;
   netMinutes: number;
+}
+
+interface TeamEmployee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  color: string | null;
+  position: string | null;
+}
+
+interface TeamMember {
+  employee: TeamEmployee;
+  status: "offline" | "working" | "break";
+  active: {
+    id: string;
+    clockInAt: string;
+    startTime: string;
+    breakStart: string | null;
+    breakEnd: string | null;
+  } | null;
+  completedCount: number;
+  totalNetMinutes: number;
+}
+
+interface TeamSummary {
+  total: number;
+  working: number;
+  onBreak: number;
+  offline: number;
 }
 
 type ClockState = "idle" | "working" | "break";
@@ -40,6 +74,33 @@ export default function StempeluhrSeite() {
     "unknown",
   );
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
+
+  // ── Team state (management only) ──
+  const isManager = ["OWNER", "ADMIN", "MANAGER"].includes(user?.role ?? "");
+  const [teamData, setTeamData] = useState<TeamMember[]>([]);
+  const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+  const [teamLoading, setTeamLoading] = useState(false);
+
+  // ── Fetch team status ──
+  const fetchTeam = useCallback(async () => {
+    if (!isManager) return;
+    setTeamLoading(true);
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch(
+        `/api/time-entries/clock/team?timezone=${encodeURIComponent(tz)}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setTeamData(data.team || []);
+        setTeamSummary(data.summary || null);
+      }
+    } catch {
+      // silent – team panel is supplementary
+    } finally {
+      setTeamLoading(false);
+    }
+  }, [isManager]);
 
   // ── Fetch current status ──
   const fetchStatus = useCallback(async () => {
@@ -78,6 +139,16 @@ export default function StempeluhrSeite() {
   useEffect(() => {
     fetchStatus();
   }, [fetchStatus]);
+
+  // ── Fetch team data (management) ──
+  useEffect(() => {
+    fetchTeam();
+    // Auto-refresh every 30s
+    if (isManager) {
+      const iv = setInterval(fetchTeam, 30000);
+      return () => clearInterval(iv);
+    }
+  }, [fetchTeam, isManager]);
 
   // ── Check GPS permission ──
   useEffect(() => {
@@ -169,6 +240,7 @@ export default function StempeluhrSeite() {
       }
 
       await fetchStatus();
+      await fetchTeam();
     } catch {
       setError(t("errorNetwork"));
     } finally {
@@ -412,6 +484,135 @@ export default function StempeluhrSeite() {
             </Card>
           )}
         </div>
+
+        {/* ── Team Overview (management only) ── */}
+        {isManager && (
+          <div className="mx-auto mt-6 max-w-4xl">
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <UsersIcon className="h-5 w-5 text-violet-600" />
+                    <h3 className="text-base font-semibold text-gray-900">
+                      {t("teamOverview")}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={fetchTeam}
+                    disabled={teamLoading}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {teamLoading ? <Spinner /> : t("refreshTeam")}
+                  </button>
+                </div>
+
+                {/* Summary badges */}
+                {teamSummary && (
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                      <span className="h-2 w-2 rounded-full bg-green-500" />
+                      {t("employeesWorking", {
+                        count: teamSummary.working,
+                      })}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      {t("employeesOnBreak", {
+                        count: teamSummary.onBreak,
+                      })}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+                      <span className="h-2 w-2 rounded-full bg-gray-400" />
+                      {t("employeesOffline", {
+                        count: teamSummary.offline,
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Team list */}
+                {teamLoading && teamData.length === 0 ? (
+                  <div className="flex justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-violet-600 border-t-transparent" />
+                  </div>
+                ) : teamData.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-gray-400">
+                    {t("noTeamEntries")}
+                  </p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {teamData.map((m) => {
+                      const initials =
+                        (m.employee.firstName?.[0] ?? "") +
+                        (m.employee.lastName?.[0] ?? "");
+                      const fullName = `${m.employee.firstName} ${m.employee.lastName}`;
+                      const totalH = Math.floor(m.totalNetMinutes / 60);
+                      const totalM = m.totalNetMinutes % 60;
+
+                      return (
+                        <div
+                          key={m.employee.id}
+                          className={`flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors ${
+                            m.status === "working"
+                              ? "border-green-200 bg-green-50/50"
+                              : m.status === "break"
+                                ? "border-amber-200 bg-amber-50/50"
+                                : "border-gray-100 bg-gray-50/30"
+                          }`}
+                        >
+                          {/* Avatar */}
+                          <div
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                            style={{
+                              backgroundColor: m.employee.color || "#8b5cf6",
+                            }}
+                          >
+                            {initials}
+                          </div>
+
+                          {/* Info */}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-gray-900">
+                              {fullName}
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  m.status === "working"
+                                    ? "bg-green-500 animate-pulse"
+                                    : m.status === "break"
+                                      ? "bg-amber-500 animate-pulse"
+                                      : "bg-gray-400"
+                                }`}
+                              />
+                              <span className="text-xs text-gray-500">
+                                {m.status === "working"
+                                  ? t("statusWorking")
+                                  : m.status === "break"
+                                    ? t("statusBreak")
+                                    : t("statusOffline")}
+                                {m.active?.startTime &&
+                                  ` · ${t("since")} ${m.active.startTime}`}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Today's total */}
+                          {m.totalNetMinutes > 0 && (
+                            <span className="shrink-0 text-xs font-medium text-gray-500">
+                              {totalH}h {String(totalM).padStart(2, "0")}m
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

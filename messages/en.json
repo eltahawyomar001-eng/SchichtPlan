@@ -1065,7 +1065,19 @@
     "errorNoBreak": "No active break found.",
     "errorNoProfile": "No employee profile linked.",
     "errorGeneric": "An error occurred. Please try again.",
-    "errorNetwork": "Network error. Please check your connection."
+    "errorNetwork": "Network error. Please check your connection.",
+    "teamOverview": "Team Overview",
+    "teamOverviewDesc": "Live status of all employees",
+    "statusWorking": "Working",
+    "statusBreak": "Break",
+    "statusOffline": "Offline",
+    "employeesWorking": "{count} working",
+    "employeesOnBreak": "{count} on break",
+    "employeesOffline": "{count} offline",
+    "since": "since",
+    "noTeamEntries": "No activity yet today.",
+    "todayTeamTotal": "Today total",
+    "refreshTeam": "Refresh"
   },
   "projects": {
     "title": "Projects",

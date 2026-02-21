@@ -1065,7 +1065,19 @@
     "errorNoBreak": "Keine aktive Pause vorhanden.",
     "errorNoProfile": "Kein Mitarbeiterprofil verknüpft.",
     "errorGeneric": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-    "errorNetwork": "Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung."
+    "errorNetwork": "Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung.",
+    "teamOverview": "Team-Übersicht",
+    "teamOverviewDesc": "Live-Status aller Mitarbeiter",
+    "statusWorking": "Arbeitet",
+    "statusBreak": "Pause",
+    "statusOffline": "Offline",
+    "employeesWorking": "{count} arbeiten",
+    "employeesOnBreak": "{count} in Pause",
+    "employeesOffline": "{count} offline",
+    "since": "seit",
+    "noTeamEntries": "Heute noch keine Aktivität.",
+    "todayTeamTotal": "Heute gesamt",
+    "refreshTeam": "Aktualisieren"
   },
   "projects": {
     "title": "Projekte",

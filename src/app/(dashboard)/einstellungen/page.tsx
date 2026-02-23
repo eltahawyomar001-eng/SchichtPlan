@@ -80,6 +80,9 @@ export default function EinstellungenPage() {
     text: string;
   } | null>(null);
   const [twoFASaving, setTwoFASaving] = useState(false);
+  const [twoFARecoveryCodes, setTwoFARecoveryCodes] = useState<string[] | null>(
+    null,
+  );
 
   // Push notification state
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -112,6 +115,22 @@ export default function EinstellungenPage() {
       }
     }
     checkPush();
+  }, []);
+
+  // Fetch 2FA enabled status from server on mount
+  useEffect(() => {
+    async function check2FA() {
+      try {
+        const res = await fetch("/api/auth/two-factor?status=1");
+        if (res.ok) {
+          const data = await res.json();
+          setTwoFAEnabled(data.enabled);
+        }
+      } catch {
+        // silent
+      }
+    }
+    check2FA();
   }, []);
 
   const roleMap: Record<string, string> = {
@@ -265,9 +284,11 @@ export default function EinstellungenPage() {
         body: JSON.stringify({ token: twoFAToken }),
       });
       if (res.ok) {
+        const data = await res.json();
         setTwoFAEnabled(true);
         setTwoFASetup(false);
         setTwoFAToken("");
+        setTwoFARecoveryCodes(data.recoveryCodes || null);
         setTwoFAMsg({ type: "success", text: t("twoFAEnabled") });
       } else {
         setTwoFAMsg({ type: "error", text: t("twoFAInvalid") });
@@ -632,6 +653,52 @@ export default function EinstellungenPage() {
                 <h3 className="text-sm font-semibold text-gray-900 mb-2">
                   {t("twoFactorAuth")}
                 </h3>
+
+                {/* Recovery codes display (shown once after enabling) */}
+                {twoFARecoveryCodes && (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-amber-800 mb-2">
+                      {t("twoFARecoveryTitle")}
+                    </p>
+                    <p className="text-xs text-amber-700 mb-3">
+                      {t("twoFARecoveryDesc")}
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {twoFARecoveryCodes.map((code, i) => (
+                        <code
+                          key={i}
+                          className="rounded bg-white px-2 py-1 text-xs font-mono text-gray-800 text-center border border-amber-200"
+                        >
+                          {code}
+                        </code>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => {
+                        const text = twoFARecoveryCodes.join("\n");
+                        navigator.clipboard.writeText(text);
+                        setTwoFAMsg({
+                          type: "success",
+                          text: t("twoFARecoveryCopied"),
+                        });
+                      }}
+                    >
+                      {t("twoFARecoveryCopy")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 ml-2"
+                      onClick={() => setTwoFARecoveryCodes(null)}
+                    >
+                      {t("twoFARecoveryDismiss")}
+                    </Button>
+                  </div>
+                )}
+
                 {twoFAEnabled ? (
                   <div className="flex items-center gap-3">
                     <Badge

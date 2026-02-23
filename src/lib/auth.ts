@@ -9,6 +9,18 @@ import * as OTPAuth from "otpauth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 
+/** Compare a plain-text recovery code against an array of bcrypt hashes. */
+async function findMatchingRecoveryCode(
+  plainCode: string,
+  hashedCodes: string[],
+): Promise<number | null> {
+  const normalized = plainCode.replace(/[\s-]/g, "").toUpperCase();
+  for (let i = 0; i < hashedCodes.length; i++) {
+    if (await bcrypt.compare(normalized, hashedCodes[i])) return i;
+  }
+  return null;
+}
+
 /* ── JWT role-refresh cache ── */
 // Avoid hitting DB on every single request — cache user data for 60s.
 const JWT_REFRESH_TTL_MS = 60_000;
@@ -57,6 +69,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "E-Mail", type: "email" },
         password: { label: "Passwort", type: "password" },
+        totpCode: { label: "2FA Code", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -83,25 +96,50 @@ export const authOptions: NextAuthOptions = {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
-        // 2FA check: if enabled, verify the TOTP code
-        if ((user as any).twoFactorEnabled && (user as any).twoFactorSecret) {
-          const totpCode = (credentials as any).totpCode;
+        // 2FA check: if enabled, verify the TOTP code or recovery code
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+          const totpCode = credentials.totpCode;
           if (!totpCode) {
             throw new Error("2FA_REQUIRED");
           }
+
+          // Try TOTP validation first
+          const secret = OTPAuth.Secret.fromHex(user.twoFactorSecret);
           const totp = new OTPAuth.TOTP({
             issuer: "Shiftfy",
             label: user.email,
             algorithm: "SHA1",
             digits: 6,
             period: 30,
-            secret: OTPAuth.Secret.fromHex(
-              Buffer.from((user as any).twoFactorSecret).toString("hex"),
-            ),
+            secret,
           });
           const delta = totp.validate({ token: totpCode, window: 1 });
+
           if (delta === null) {
-            throw new Error("2FA_INVALID");
+            // TOTP failed — try recovery code
+            const recoveryCodes = (user as any).twoFactorRecoveryCodes;  
+            if (recoveryCodes) {
+              const codes: string[] = JSON.parse(recoveryCodes);
+              const hashedMatch = await findMatchingRecoveryCode(
+                totpCode,
+                codes,
+              );
+              if (hashedMatch !== null) {
+                // Remove used recovery code
+                codes.splice(hashedMatch, 1);
+                 
+                await (prisma.user as any).update({
+                  where: { id: user.id },
+                  data: {
+                    twoFactorRecoveryCodes: JSON.stringify(codes),
+                  },
+                });
+              } else {
+                throw new Error("2FA_INVALID");
+              }
+            } else {
+              throw new Error("2FA_INVALID");
+            }
           }
         }
 

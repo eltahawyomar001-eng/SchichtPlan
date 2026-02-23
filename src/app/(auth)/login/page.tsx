@@ -162,13 +162,32 @@ function LoginForm() {
       <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-[440px]">
           {/* Logo + headline */}
-          <Link
-            href="/"
-            className="mb-8 inline-flex items-center gap-3 lg:hidden"
-          >
+          <Link href="/" className="mb-8 inline-flex items-center gap-3">
             <ShiftfyMark className="h-10 w-10" />
             <span className="text-xl font-bold text-gray-900">Shiftfy</span>
           </Link>
+
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              {t("backToHome")}
+            </Link>
+          </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             {t("login")}

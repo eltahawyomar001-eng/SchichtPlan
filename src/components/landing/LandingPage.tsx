@@ -147,7 +147,7 @@ function Navbar() {
 
   return (
     <nav className="fixed top-0 inset-x-0 z-50 glass border-b border-white/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <ShiftfyMark className="w-8 h-8" />
@@ -216,7 +216,7 @@ function Navbar() {
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md px-[env(safe-area-inset-left)]">
+        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           <div className="px-4 py-3 space-y-1">
             <a
               href="#features"
@@ -266,13 +266,13 @@ function HeroSection() {
   const t = useTranslations("landing");
 
   return (
-    <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-violet-50/60 via-white to-white">
+    <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-violet-50/60 via-white to-white">
       {/* Subtle decorative elements */}
       <div className="absolute top-20 -left-40 w-[500px] h-[500px] bg-violet-100/40 rounded-full blur-3xl" />
       <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-purple-100/30 rounded-full blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+      <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
           {/* ─── Left: Text content ─── */}
           <div className="flex-1 max-w-xl text-center lg:text-left">
             {/* Headline */}
@@ -441,7 +441,7 @@ function HeroMockup() {
       </div>
 
       {/* Floating notification card */}
-      <div className="absolute -bottom-4 -left-4 sm:-left-6 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-3 flex items-center gap-3 max-w-[220px]">
+      <div className="absolute -bottom-4 left-0 sm:-left-6 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-3 flex items-center gap-3 max-w-[220px]">
         <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
           <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
         </div>
@@ -456,7 +456,7 @@ function HeroMockup() {
       </div>
 
       {/* Floating stat badge */}
-      <div className="absolute -top-3 -right-3 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-2.5 text-center">
+      <div className="absolute -top-3 right-0 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-2.5 text-center">
         <div className="text-lg font-bold text-violet-700">98%</div>
         <div className="text-[10px] font-medium text-gray-400">
           {t("heroMockupCoverage")}
@@ -479,7 +479,7 @@ function TrustedByBar() {
 
   return (
     <section className="py-10 border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
           {t("trustedBy")}
         </p>
@@ -525,7 +525,7 @@ function FeatureSection({
       id={step === 1 ? "features" : undefined}
       className={`py-12 sm:py-20 ${step % 2 === 0 ? "bg-section-alt" : ""}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div
           className={`flex flex-col ${
             reversed ? "lg:flex-row-reverse" : "lg:flex-row"
@@ -641,7 +641,7 @@ function PricingSection() {
 
   return (
     <section id="pricing" className="py-12 sm:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
             {t("pricingTitle")}
@@ -736,7 +736,7 @@ function BenefitsSection() {
 
   return (
     <section id="benefits" className="py-12 sm:py-20 bg-hero-gradient bg-grid">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
             {t("benefitsTitle")}{" "}
@@ -780,7 +780,7 @@ function FAQSection() {
 
   return (
     <section id="faq" className="py-12 sm:py-20">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
             {t("faqTitle")}
@@ -814,7 +814,7 @@ function CTAFooter() {
 
   return (
     <section className="py-12 sm:py-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-violet-700 p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
           {/* Decorative circles */}
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
@@ -848,7 +848,7 @@ function Footer() {
 
   return (
     <footer className="border-t border-gray-100 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
         <div className="flex items-center gap-2">
           <ShiftfyMark className="w-6 h-6" />
           <span className="font-bold text-sm text-gray-900">Shiftfy</span>

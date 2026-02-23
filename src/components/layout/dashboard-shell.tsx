@@ -35,7 +35,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <Sidebar open={sidebarOpen} onClose={closeSidebar} />
         <main
           id="main-content"
-          className="lg:pl-64 min-h-screen pb-[env(safe-area-inset-bottom)]"
+          className="lg:pl-64 min-h-screen pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
         >
           {children}
         </main>

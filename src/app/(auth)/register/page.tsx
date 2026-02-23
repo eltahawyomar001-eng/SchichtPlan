@@ -111,6 +111,28 @@ function RegisterForm() {
             <span className="text-xl font-bold text-gray-900">Shiftfy</span>
           </Link>
 
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              {t("backToHome")}
+            </Link>
+          </div>
+
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             {t("registerTitle")}
             <br />

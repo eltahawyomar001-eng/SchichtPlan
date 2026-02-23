@@ -60,8 +60,8 @@ export async function POST(req: Request) {
       subscription_data: {
         trial_period_days: plan.trialDays || undefined,
       },
-      success_url: `${process.env.NEXTAUTH_URL}/einstellungen?billing=success`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/einstellungen?billing=cancel`,
+      success_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
+      cancel_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=cancel`,
       client_reference_id: user.workspaceId,
       allow_promotion_codes: true,
       tax_id_collection: { enabled: true },

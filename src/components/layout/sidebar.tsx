@@ -32,6 +32,7 @@ import {
   ZapIcon,
   DatabaseIcon,
   CalendarUsersIcon,
+  CreditCardIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -182,6 +183,12 @@ const navGroups: NavGroup[] = [
         key: "settings",
         href: "/einstellungen",
         icon: SettingsIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+      {
+        key: "billing",
+        href: "/einstellungen/abonnement",
+        icon: CreditCardIcon,
         roles: ["OWNER", "ADMIN"],
       },
     ],

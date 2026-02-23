@@ -15,6 +15,7 @@ export { StarIcon } from "./StarIcon";
 export { PlayIcon } from "./PlayIcon";
 export { ArrowRightIcon } from "./ArrowRightIcon";
 export { ShiftfyMark } from "./ShiftfyMark";
+export { ShiftfyLogo } from "./ShiftfyLogo";
 export { LogOutIcon } from "./LogOutIcon";
 export { DashboardIcon } from "./DashboardIcon";
 export { PlusIcon } from "./PlusIcon";

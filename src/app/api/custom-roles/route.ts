@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireAdmin } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
-import { rateLimit } from "@/lib/rate-limit";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -86,9 +85,6 @@ export async function GET(req: Request) {
 
 /* ── POST /api/custom-roles ── */
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "mutation");
-  if (limited) return limited;
-
   const session = await getServerSession(authOptions);
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/verification";
-import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/resend-verification
@@ -10,9 +9,6 @@ import { rateLimit } from "@/lib/rate-limit";
  * Body: { email: string }
  */
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "auth");
-  if (limited) return limited;
-
   try {
     const { email } = await req.json();
 

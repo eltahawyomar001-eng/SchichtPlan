@@ -3,13 +3,9 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/verification";
-import { rateLimit } from "@/lib/rate-limit";
 import { registerSchema, validateBody } from "@/lib/validations";
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "auth");
-  if (limited) return limited;
-
   try {
     const body = await req.json();
     const parsed = validateBody(registerSchema, body);

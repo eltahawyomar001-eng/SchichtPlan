@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 /* ──────────────────────────────────────────────────────────────
  * Security headers (DSGVO Art. 32 — appropriate technical measures)
  * ────────────────────────────────────────────────────────────── */
+const isDev = process.env.NODE_ENV === "development";
+
 const securityHeaders: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
@@ -14,11 +16,12 @@ const securityHeaders: Record<string, string> = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    // Next.js HMR requires unsafe-eval in dev; production only allows unsafe-inline
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co https://*.resend.com",
+    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -168,6 +171,8 @@ export default withAuth(
         if (pathname.startsWith("/api/auth")) return true;
         // Stripe webhook is called server-to-server (no session)
         if (pathname === "/api/billing/webhook") return true;
+        // Health check is public (uptime monitors, load balancers)
+        if (pathname === "/api/health") return true;
         // Password reset pages are public
         if (
           pathname === "/passwort-vergessen" ||
@@ -247,5 +252,6 @@ export const config = {
     "/api/projects/:path*",
     "/api/shift-change-requests/:path*",
     "/api/automation-rules/:path*",
+    "/api/health",
   ],
 };

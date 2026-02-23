@@ -8,6 +8,7 @@ import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import crypto from "crypto";
 import { createWebhookSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 /** GET /api/webhooks — list all webhook endpoints */
 export async function GET() {
@@ -36,7 +37,7 @@ export async function GET() {
 
     return NextResponse.json(hooks);
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(hook, { status: 201 });
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

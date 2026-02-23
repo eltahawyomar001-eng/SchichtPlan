@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { checkShiftConflicts } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/shifts/[id]/claim
@@ -90,7 +91,7 @@ export async function POST(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Error claiming shift:", error);
+    log.error("Error claiming shift:", { error: error });
     return NextResponse.json(
       { error: "Error claiming shift" },
       { status: 500 },

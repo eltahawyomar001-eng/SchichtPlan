@@ -5,6 +5,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe } from "@/lib/stripe";
 import { getSubscription } from "@/lib/subscription";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/billing/portal
@@ -39,7 +40,7 @@ export async function POST() {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
-    console.error("[Stripe] Portal error:", error);
+    log.error("[Stripe] Portal error:", { error: error });
     return NextResponse.json(
       { error: "Portal session failed" },
       { status: 500 },

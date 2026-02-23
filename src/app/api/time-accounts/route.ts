@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/time-accounts ────────────────────────────────────
 export async function GET(req: Request) {
@@ -67,7 +68,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(enriched);
   } catch (error) {
-    console.error("Error fetching time accounts:", error);
+    log.error("Error fetching time accounts:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(account, { status: 201 });
   } catch (error) {
-    console.error("Error saving time account:", error);
+    log.error("Error saving time account:", { error: error });
     return NextResponse.json({ error: "Error saving" }, { status: 500 });
   }
 }

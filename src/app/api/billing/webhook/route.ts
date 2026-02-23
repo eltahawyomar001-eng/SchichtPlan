@@ -9,6 +9,7 @@ import {
 } from "@/lib/subscription";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { log } from "@/lib/logger";
 
 /* ── Idempotency guard ──────────────────────────────────────────
  * Prevent processing the same Stripe event twice (e.g. on retries).
@@ -68,13 +69,13 @@ export async function POST(req: Request) {
     try {
       event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
     } catch (err) {
-      console.error("[Stripe] Signature verification failed:", err);
+      log.error("[Stripe] Signature verification failed:", { error: err });
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
     // ── Idempotency: skip already-processed events ──
     if (isEventProcessed(event.id)) {
-      console.log(`[Stripe] Skipping duplicate event: ${event.id}`);
+      log.info(`[Stripe] Skipping duplicate event: ${event.id}`);
       return NextResponse.json({ received: true, duplicate: true });
     }
     markEventProcessed(event.id);
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
             : session.customer?.id;
 
         if (!workspaceId || !subscriptionId || !customerId) {
-          console.warn("[Stripe] Missing data in checkout session");
+          log.warn("[Stripe] Missing data in checkout session");
           break;
         }
 
@@ -120,7 +121,7 @@ export async function POST(req: Request) {
           status: sub.status,
         });
 
-        console.log(
+        log.info(
           `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
         );
         break;
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
           cancelAtPeriodEnd: sub.cancel_at_period_end,
         });
 
-        console.log(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
+        log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
         break;
       }
 
@@ -152,14 +153,14 @@ export async function POST(req: Request) {
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         await cancelSubscription(sub.id);
-        console.log(`[Stripe] Cancelled: ${sub.id}`);
+        log.info(`[Stripe] Cancelled: ${sub.id}`);
         break;
       }
 
       /* ─── Payment failed → notify workspace owner ─── */
       case "invoice.payment_failed": {
         const invoice = event.data.object;
-        console.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
+        log.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
 
         // Find the workspace owner and notify them
         const customerId =
@@ -198,28 +199,27 @@ export async function POST(req: Request) {
                     `um eine Unterbrechung Ihres Abonnements zu vermeiden.`,
                   link: "/einstellungen/abonnement",
                 });
-                console.log(
+                log.info(
                   `[Stripe] Payment failure notification sent to ${owner.email}`,
                 );
               }
             }
           } catch (notifyErr) {
-            console.error(
-              "[Stripe] Failed to send payment failure notification:",
-              notifyErr,
-            );
+            log.error("[Stripe] Failed to send payment failure notification:", {
+              error: notifyErr,
+            });
           }
         }
         break;
       }
 
       default:
-        console.log(`[Stripe] Unhandled event: ${event.type}`);
+        log.info(`[Stripe] Unhandled event: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("[Stripe] Webhook error:", error);
+    log.error("[Stripe] Webhook error:", { error: error });
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 },

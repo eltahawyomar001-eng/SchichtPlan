@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import ical, { ICalCalendarMethod } from "ical-generator";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/ical
@@ -75,7 +76,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("iCal error:", error);
+    log.error("iCal error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

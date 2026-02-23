@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { toIndustrialHours } from "@/lib/time-utils";
 import { requirePlanFeature } from "@/lib/subscription";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
 // Returns a DATEV-compatible CSV for payroll
@@ -82,7 +83,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Error exporting:", error);
+    log.error("Error exporting:", { error: error });
     return NextResponse.json({ error: "Error exporting" }, { status: 500 });
   }
 }

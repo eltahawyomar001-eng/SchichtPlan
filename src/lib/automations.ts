@@ -20,6 +20,7 @@
 import { prisma } from "@/lib/db";
 import { calcGrossMinutes } from "@/lib/time-utils";
 import { dispatchExternalNotification, sendEmail } from "@/lib/notifications";
+import { log } from "@/lib/logger";
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTOMATION SETTINGS CHECK
@@ -423,11 +424,11 @@ export async function createSystemNotification(params: {
 
   // Skip if notifications are disabled
   if (!(await isAutomationEnabled(workspaceId, "notifications"))) {
-    console.log("[notification] Skipped — notifications automation disabled");
+    log.info("[notification] Skipped — notifications automation disabled");
     return;
   }
 
-  console.log(
+  log.info(
     `[notification] Creating: type=${type}, recipientType=${recipientType}, employeeEmail=${employeeEmail ?? "none"}`,
   );
 
@@ -440,7 +441,7 @@ export async function createSystemNotification(params: {
       select: { id: true },
     });
 
-    console.log(`[notification] Found ${managers.length} managers`);
+    log.info(`[notification] Found ${managers.length} managers`);
 
     await prisma.notification.createMany({
       data: managers.map((m) => ({
@@ -468,7 +469,7 @@ export async function createSystemNotification(params: {
         ),
       );
     } catch (err) {
-      console.error("[notification] Manager dispatch error:", err);
+      log.error("[notification] Manager dispatch error:", { error: err });
     }
   } else if (employeeEmail) {
     const user = await prisma.user.findUnique({
@@ -476,7 +477,7 @@ export async function createSystemNotification(params: {
       select: { id: true },
     });
 
-    console.log(
+    log.info(
       `[notification] Lookup email=${employeeEmail}: User=${user ? user.id : "NOT found"}`,
     );
 
@@ -502,10 +503,10 @@ export async function createSystemNotification(params: {
           link,
         });
       } catch (err) {
-        console.error("[notification] Dispatch error:", err);
+        log.error("[notification] Dispatch error:", { error: err });
       }
     } else {
-      console.log(
+      log.info(
         `[notification] No User for ${employeeEmail} — sending direct email`,
       );
       // No User account for this employee — still send a direct email
@@ -519,18 +520,18 @@ export async function createSystemNotification(params: {
           locale: "de",
         });
         if (result.success) {
-          console.log(`[notification] Direct email sent to ${employeeEmail}`);
+          log.info(`[notification] Direct email sent to ${employeeEmail}`);
         } else {
-          console.error(
+          log.error(
             `[notification] Direct email failed for ${employeeEmail}: ${result.error}`,
           );
         }
       } catch (err) {
-        console.error("[notification] Direct email error:", err);
+        log.error("[notification] Direct email error:", { error: err });
       }
     }
   } else {
-    console.warn(
+    log.warn(
       "[notification] recipientType=employee but no employeeEmail provided",
     );
   }

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function PUT(
   req: Request,
@@ -34,7 +35,7 @@ export async function PUT(
 
     return NextResponse.json(department);
   } catch (error) {
-    console.error("Error updating department:", error);
+    log.error("Error updating department:", { error: error });
     return NextResponse.json(
       { error: "Error updating department" },
       { status: 500 },
@@ -65,7 +66,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting department:", error);
+    log.error("Error deleting department:", { error: error });
     return NextResponse.json(
       { error: "Error deleting department" },
       { status: 500 },

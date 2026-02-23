@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────
 // Management sees all requests for the workspace.
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(requests);
   } catch (error) {
-    console.error("Error fetching shift change requests:", error);
+    log.error("Error fetching shift change requests:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -181,12 +182,12 @@ export async function POST(req: Request) {
       });
     } catch {
       // Don't fail the request if notifications fail
-      console.error("Failed to send notification for shift change request");
+      log.error("Failed to send notification for shift change request");
     }
 
     return NextResponse.json(changeRequest, { status: 201 });
   } catch (error) {
-    console.error("Error creating shift change request:", error);
+    log.error("Error creating shift change request:", { error: error });
     return NextResponse.json(
       { error: "Error creating request" },
       { status: 500 },

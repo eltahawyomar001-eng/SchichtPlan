@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/vacation-balances?year=2025&employeeId=xxx
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(balances);
   } catch (error) {
-    console.error("Error fetching vacation balances:", error);
+    log.error("Error fetching vacation balances:", { error: error });
     return NextResponse.json(
       { error: "Error loading vacation balances" },
       { status: 500 },
@@ -141,7 +142,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(updated, { status: 201 });
   } catch (error) {
-    console.error("Error creating vacation balance:", error);
+    log.error("Error creating vacation balance:", { error: error });
     return NextResponse.json(
       { error: "Error saving vacation balance" },
       { status: 500 },

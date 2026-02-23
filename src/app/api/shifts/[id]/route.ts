@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { checkShiftConflicts } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 export async function PATCH(
   req: Request,
@@ -68,7 +69,7 @@ export async function PATCH(
 
     return NextResponse.json(shift);
   } catch (error) {
-    console.error("Error updating shift:", error);
+    log.error("Error updating shift:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
@@ -97,7 +98,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Shift deleted" });
   } catch (error) {
-    console.error("Error deleting shift:", error);
+    log.error("Error deleting shift:", { error: error });
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function DELETE(
   _req: Request,
@@ -28,7 +29,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting skill:", error);
+    log.error("Error deleting skill:", { error: error });
     return NextResponse.json(
       { error: "Error deleting skill" },
       { status: 500 },

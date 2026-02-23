@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/verification";
 import { registerSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -136,7 +137,7 @@ export async function POST(req: Request) {
 
       // Send verification email (non-blocking)
       sendVerificationEmail(email).catch((err) =>
-        console.error("Failed to send verification email:", err),
+        log.error("Failed to send verification email", { error: err }),
       );
 
       return NextResponse.json(
@@ -175,7 +176,7 @@ export async function POST(req: Request) {
 
     // Send verification email (non-blocking)
     sendVerificationEmail(email).catch((err) =>
-      console.error("Failed to send verification email:", err),
+      log.error("Failed to send verification email", { error: err }),
     );
 
     return NextResponse.json(
@@ -187,7 +188,7 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    log.error("Registration error:", { error: error });
     return NextResponse.json(
       { error: "Registrierung fehlgeschlagen." },
       { status: 500 },

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { getGermanHolidays, BUNDESLAENDER } from "@/lib/holidays";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/holidays?year=2025&bundesland=HE
@@ -59,7 +60,7 @@ export async function GET(req: Request) {
       })),
     });
   } catch (error) {
-    console.error("Error fetching holidays:", error);
+    log.error("Error fetching holidays:", { error: error });
     return NextResponse.json(
       { error: "Error loading holidays" },
       { status: 500 },

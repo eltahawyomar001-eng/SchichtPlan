@@ -8,6 +8,7 @@ import {
   calcBreakMinutes,
   calcNetMinutes,
 } from "@/lib/time-utils";
+import { log } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -39,7 +40,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
     return NextResponse.json(entry);
   } catch (error) {
-    console.error("Error fetching time entry:", error);
+    log.error("Error fetching time entry:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -144,7 +145,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Error updating time entry:", error);
+    log.error("Error updating time entry:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
@@ -179,7 +180,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     await prisma.timeEntry.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting time entry:", error);
+    log.error("Error deleting time entry:", { error: error });
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 /* ═══════════════════════════════════════════════════════════════
    Runtime environment validation
    ═══════════════════════════════════════════════════════════════
@@ -44,7 +45,7 @@ export function validateEnv(): void {
   // Warn about optional-but-recommended vars
   for (const key of RECOMMENDED) {
     if (!process.env[key]) {
-      console.warn(`[env] ⚠ ${key} is not set — related features disabled`);
+      log.warn(`[env] ⚠ ${key} is not set — related features disabled`);
     }
   }
 }

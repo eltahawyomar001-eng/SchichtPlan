@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { buildEmailHtml } from "./templates";
+import { log } from "@/lib/logger";
 
 let resend: Resend | null = null;
 
@@ -30,12 +31,12 @@ export async function sendEmail(params: {
 
   const client = getResend();
   if (!client) {
-    console.warn("[notifications/email] RESEND_API_KEY not set — skipping");
+    log.warn("[notifications/email] RESEND_API_KEY not set — skipping");
     return { success: false, error: "RESEND_API_KEY not configured" };
   }
 
   try {
-    console.log(
+    log.info(
       `[notifications/email] Sending to=${to}, from=${FROM_ADDRESS}, subject="${title}"`,
     );
     const html = buildEmailHtml({ type, title, message, link, locale });
@@ -48,7 +49,7 @@ export async function sendEmail(params: {
     });
 
     if (result.error) {
-      console.error(
+      log.error(
         `[notifications/email] Resend API error: ${JSON.stringify(result.error)}`,
       );
       return {
@@ -57,13 +58,11 @@ export async function sendEmail(params: {
       };
     }
 
-    console.log(
-      `[notifications/email] Sent successfully: id=${result.data?.id}`,
-    );
+    log.info(`[notifications/email] Sent successfully: id=${result.data?.id}`);
     return { success: true };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-    console.error(`[notifications/email] Failed to send: ${errorMsg}`);
+    log.error(`[notifications/email] Failed to send: ${errorMsg}`);
     return { success: false, error: errorMsg };
   }
 }

@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requireEmployeeSlot } from "@/lib/subscription";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -26,7 +27,7 @@ export async function GET() {
 
     return NextResponse.json(employees);
   } catch (error) {
-    console.error("Error fetching employees:", error);
+    log.error("Error fetching employees:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(employee, { status: 201 });
   } catch (error) {
-    console.error("Error creating employee:", error);
+    log.error("Error creating employee:", { error: error });
     return NextResponse.json(
       { error: "Error creating resource" },
       { status: 500 },

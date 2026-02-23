@@ -9,6 +9,7 @@ import {
   getCalendarWeek,
   STATUS_LABELS,
 } from "@/lib/time-utils";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/time-entries/export?format=csv&start=...&end=...&employeeId=...
@@ -142,7 +143,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Error exporting time entries:", error);
+    log.error("Error exporting time entries:", { error: error });
     return NextResponse.json({ error: "Error exporting" }, { status: 500 });
   }
 }

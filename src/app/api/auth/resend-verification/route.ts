@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/verification";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/auth/resend-verification
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
       message: "Bestätigungs-E-Mail wurde erneut gesendet.",
     });
   } catch (error) {
-    console.error("Resend verification error:", error);
+    log.error("Resend verification error:", { error: error });
     return NextResponse.json(
       { error: "E-Mail konnte nicht gesendet werden." },
       { status: 500 },

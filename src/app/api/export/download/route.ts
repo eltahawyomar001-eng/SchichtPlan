@@ -9,6 +9,7 @@ import { requirePlanFeature } from "@/lib/subscription";
 import ExcelJS from "exceljs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/export?type=shifts|time-entries|employees&format=xlsx|csv|pdf&start=...&end=...
@@ -207,7 +208,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Export error:", error);
+    log.error("Export error:", { error: error });
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -31,7 +32,7 @@ export async function GET() {
 
     return NextResponse.json(templates);
   } catch (error) {
-    console.error("Error fetching templates:", error);
+    log.error("Error fetching templates:", { error: error });
     return NextResponse.json(
       { error: "Error loading templates" },
       { status: 500 },
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(template, { status: 201 });
   } catch (error) {
-    console.error("Error creating template:", error);
+    log.error("Error creating template:", { error: error });
     return NextResponse.json(
       { error: "Error creating template" },
       { status: 500 },

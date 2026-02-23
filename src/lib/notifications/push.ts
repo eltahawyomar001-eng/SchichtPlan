@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import webpush from "web-push";
 import { prisma } from "@/lib/db";
+import { log } from "@/lib/logger";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
@@ -21,7 +22,7 @@ export async function sendPushNotification(params: {
   tag?: string;
 }) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    console.log("[push] VAPID keys not configured, skipping push");
+    log.info("[push] VAPID keys not configured, skipping push");
     return;
   }
 
@@ -64,10 +65,10 @@ export async function sendPushNotification(params: {
     );
 
     const sent = results.filter((r) => r.status === "fulfilled").length;
-    console.log(
+    log.info(
       `[push] Sent ${sent}/${subscriptions.length} for user ${params.userId}`,
     );
   } catch (error) {
-    console.error("[push] Error sending push notification:", error);
+    log.error("[push] Error sending push notification:", { error: error });
   }
 }

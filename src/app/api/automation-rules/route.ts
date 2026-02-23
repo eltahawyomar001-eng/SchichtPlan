@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 /** GET /api/automation-rules — list workspace automation rules */
 export async function GET() {
@@ -36,7 +37,7 @@ export async function GET() {
 
     return NextResponse.json(parsed);
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

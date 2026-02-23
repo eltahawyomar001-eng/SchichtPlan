@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function PATCH(
   req: Request,
@@ -35,7 +36,7 @@ export async function PATCH(
 
     return NextResponse.json(location);
   } catch (error) {
-    console.error("Error updating location:", error);
+    log.error("Error updating location:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
@@ -64,7 +65,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Location deleted" });
   } catch (error) {
-    console.error("Error deleting location:", error);
+    log.error("Error deleting location:", { error: error });
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

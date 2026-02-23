@@ -8,6 +8,7 @@ import {
   tryAutoApproveSwap,
   createSystemNotification,
 } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -181,7 +182,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Error updating shift swap:", error);
+    log.error("Error updating shift swap:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }

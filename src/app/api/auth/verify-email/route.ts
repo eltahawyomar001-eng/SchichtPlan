@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyEmailToken } from "@/lib/verification";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/auth/verify-email
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "E-Mail erfolgreich bestätigt." });
   } catch (error) {
-    console.error("Email verification error:", error);
+    log.error("Email verification error:", { error: error });
     return NextResponse.json(
       { error: "Verifizierung fehlgeschlagen." },
       { status: 500 },

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { sendEmail } from "@/lib/notifications";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/test-email
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log(`[test-email] Sending test email to ${to}`);
+    log.info(`[test-email] Sending test email to ${to}`);
 
     const result = await sendEmail({
       to,
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
       locale: "de",
     });
 
-    console.log(`[test-email] Result: ${JSON.stringify(result)}`);
+    log.info(`[test-email] Result: ${JSON.stringify(result)}`);
 
     if (result.success) {
       return NextResponse.json({ success: true, to });
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
       );
     }
   } catch (error) {
-    console.error("[test-email] Error:", error);
+    log.error("[test-email] Error:", { error: error });
     return NextResponse.json(
       { error: "Error sending test email" },
       { status: 500 },

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 /** GET /api/month-close — list month-close records for workspace */
 export async function GET(req: Request) {
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(records);
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -135,7 +136,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

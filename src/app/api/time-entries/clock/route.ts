@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureLegalBreak } from "@/lib/automations";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/time-entries/clock
@@ -165,7 +166,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: "INVALID_ACTION" }, { status: 400 });
   } catch (error) {
-    console.error("Clock error:", error);
+    log.error("Clock error:", { error: error });
     return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
   }
 }
@@ -233,7 +234,7 @@ export async function GET(req: Request) {
       noProfile: false,
     });
   } catch (error) {
-    console.error("Clock status error:", error);
+    log.error("Clock status error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

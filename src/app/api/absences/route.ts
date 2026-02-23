@@ -9,6 +9,7 @@ import {
   createSystemNotification,
 } from "@/lib/automations";
 import { requirePlanFeature } from "@/lib/subscription";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
 export async function GET(req: Request) {
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(absences);
   } catch (error) {
-    console.error("Error fetching absences:", error);
+    log.error("Error fetching absences:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -198,7 +199,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ...result, autoApproved }, { status: 201 });
   } catch (error) {
-    console.error("Error creating absence:", error);
+    log.error("Error creating absence:", { error: error });
     return NextResponse.json(
       { error: "Error creating resource" },
       { status: 500 },

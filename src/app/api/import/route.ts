@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import ExcelJS from "exceljs";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/import
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ created, skipped, total: rows.length });
   } catch (error) {
-    console.error("Import error:", error);
+    log.error("Import error:", { error: error });
     return NextResponse.json({ error: "Import failed" }, { status: 500 });
   }
 }

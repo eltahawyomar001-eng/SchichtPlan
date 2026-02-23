@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { checkOvertimeAlerts } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/automations/overtime-check
@@ -16,9 +17,18 @@ import { checkOvertimeAlerts } from "@/lib/automations";
  */
 export async function POST(req: Request) {
   try {
-    const cronSecret = req.headers.get("authorization")?.replace("Bearer ", "");
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = authHeader?.replace("Bearer ", "");
 
-    if (cronSecret === process.env.CRON_SECRET && process.env.CRON_SECRET) {
+    // If a Bearer token was provided, it MUST match CRON_SECRET
+    if (authHeader?.startsWith("Bearer ")) {
+      if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+        return NextResponse.json(
+          { error: "Invalid cron secret" },
+          { status: 403 },
+        );
+      }
+
       const workspaces = await prisma.workspace.findMany({
         select: { id: true },
       });
@@ -54,7 +64,7 @@ export async function POST(req: Request) {
       alerts: result.alerts,
     });
   } catch (error) {
-    console.error("Error checking overtime:", error);
+    log.error("Error checking overtime:", { error: error });
     return NextResponse.json(
       { error: "Error checking overtime" },
       { status: 500 },

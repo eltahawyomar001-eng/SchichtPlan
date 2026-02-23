@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(sub, { status: 201 });
   } catch (error) {
-    console.error("Error saving push subscription:", error);
+    log.error("Error saving push subscription:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -61,7 +62,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error removing push subscription:", error);
+    log.error("Error removing push subscription:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

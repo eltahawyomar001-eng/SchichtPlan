@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function GET(
   req: Request,
@@ -32,7 +33,7 @@ export async function GET(
 
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("Error fetching employee:", error);
+    log.error("Error fetching employee:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -74,7 +75,7 @@ export async function PATCH(
 
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("Error updating employee:", error);
+    log.error("Error updating employee:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
@@ -103,7 +104,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Employee deleted" });
   } catch (error) {
-    console.error("Error deleting employee:", error);
+    log.error("Error deleting employee:", { error: error });
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

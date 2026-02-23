@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { generateTimeEntriesFromShifts } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/automations/generate-time-entries
@@ -16,10 +17,19 @@ import { generateTimeEntriesFromShifts } from "@/lib/automations";
 export async function POST(req: Request) {
   try {
     // Support both session auth and cron secret
-    const cronSecret = req.headers.get("authorization")?.replace("Bearer ", "");
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = authHeader?.replace("Bearer ", "");
     let workspaceId: string | null = null;
 
-    if (cronSecret === process.env.CRON_SECRET && process.env.CRON_SECRET) {
+    // If a Bearer token was provided, it MUST match CRON_SECRET
+    if (authHeader?.startsWith("Bearer ")) {
+      if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+        return NextResponse.json(
+          { error: "Invalid cron secret" },
+          { status: 403 },
+        );
+      }
+
       // Cron job: process all workspaces
       const workspaces = await prisma.workspace.findMany({
         select: { id: true },
@@ -61,7 +71,7 @@ export async function POST(req: Request) {
       created: result.created,
     });
   } catch (error) {
-    console.error("Error generating time entries:", error);
+    log.error("Error generating time entries:", { error: error });
     return NextResponse.json(
       { error: "Error with automatic time tracking" },
       { status: 500 },

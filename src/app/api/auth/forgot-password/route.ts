@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { log } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
         "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen gesendet.",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    log.error("Forgot password error:", { error: error });
     return NextResponse.json(
       { error: "Ein Fehler ist aufgetreten." },
       { status: 500 },

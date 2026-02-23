@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/notifications ────────────────────────────────────
 export async function GET() {
@@ -26,7 +27,7 @@ export async function GET() {
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
-    console.error("Error fetching notifications:", error);
+    log.error("Error fetching notifications:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -56,7 +57,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error updating notifications:", error);
+    log.error("Error updating notifications:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }

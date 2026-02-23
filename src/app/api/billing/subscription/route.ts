@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { getSubscription, ensureSubscription } from "@/lib/subscription";
 import { PLANS, type PlanId } from "@/lib/stripe";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/billing/subscription
@@ -38,7 +39,7 @@ export async function GET() {
       limits: planConfig?.limits ?? PLANS.starter.limits,
     });
   } catch (error) {
-    console.error("[Billing] Subscription fetch error:", error);
+    log.error("[Billing] Subscription fetch error:", { error: error });
     return NextResponse.json(
       { error: "Failed to fetch subscription" },
       { status: 500 },

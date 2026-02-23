@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requireLocationSlot } from "@/lib/subscription";
 import { createLocationSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -26,7 +27,7 @@ export async function GET() {
 
     return NextResponse.json(locations);
   } catch (error) {
-    console.error("Error fetching locations:", error);
+    log.error("Error fetching locations:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(location, { status: 201 });
   } catch (error) {
-    console.error("Error creating location:", error);
+    log.error("Error creating location:", { error: error });
     return NextResponse.json(
       { error: "Error creating resource" },
       { status: 500 },

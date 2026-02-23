@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/reports?start=2025-01-01&end=2025-01-31
@@ -148,7 +149,7 @@ export async function GET(req: Request) {
       employeeStats,
     });
   } catch (error) {
-    console.error("Error generating report:", error);
+    log.error("Error generating report:", { error: error });
     return NextResponse.json(
       { error: "Error generating report" },
       { status: 500 },

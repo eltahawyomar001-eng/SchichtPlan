@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/time-entries/clock/team
@@ -164,7 +165,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Team clock status error:", error);
+    log.error("Team clock status error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

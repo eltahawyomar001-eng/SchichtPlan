@@ -6,6 +6,7 @@ import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
 import type { SessionUser } from "@/lib/types";
 import crypto from "crypto";
+import { log } from "@/lib/logger";
 
 /**
  * GET  → generate a new TOTP secret + QR code (setup)
@@ -46,7 +47,7 @@ export async function GET() {
       otpauthUrl,
     });
   } catch (error) {
-    console.error("2FA setup error:", error);
+    log.error("2FA setup error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("2FA verify error:", error);
+    log.error("2FA verify error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -116,7 +117,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("2FA disable error:", error);
+    log.error("2FA disable error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

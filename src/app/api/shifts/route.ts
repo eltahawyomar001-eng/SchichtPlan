@@ -16,6 +16,7 @@ import {
   calculateSurcharge,
 } from "@/lib/holidays";
 import { createShiftSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -65,7 +66,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(shifts);
   } catch (error) {
-    console.error("Error fetching shifts:", error);
+    log.error("Error fetching shifts:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -186,7 +187,7 @@ export async function POST(req: Request) {
     const shiftAny = shift as any;
     if (shiftAny.employee) {
       const employeeName = `${shiftAny.employee.firstName} ${shiftAny.employee.lastName}`;
-      console.log(
+      log.info(
         `[shifts/POST] Shift created for ${employeeName}, email=${shiftAny.employee.email ?? "NONE"}, phone=${shiftAny.employee.phone ?? "NONE"}`,
       );
       if (shiftAny.employee.email) {
@@ -200,12 +201,12 @@ export async function POST(req: Request) {
           employeeEmail: shiftAny.employee.email,
         });
       } else {
-        console.warn(
+        log.warn(
           `[shifts/POST] Employee ${employeeName} has no email — notification skipped entirely`,
         );
       }
     } else {
-      console.log(`[shifts/POST] Open shift created (no employee assigned)`);
+      log.info(`[shifts/POST] Open shift created (no employee assigned)`);
     }
 
     return NextResponse.json(
@@ -213,7 +214,7 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Error creating shift:", error);
+    log.error("Error creating shift:", { error: error });
     return NextResponse.json(
       { error: "Error creating resource" },
       { status: 500 },

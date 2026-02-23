@@ -114,7 +114,7 @@ def build_styles():
 
 def color_swatch(hex_color, name, role):
     d = Drawing(160, 30)
-    d.add(Rect(0, 4, 22, 22, fillColor=HexColor(hex_color), strokeColor=HexColor("#D1D5DB"), strokeWidth=0.5, rx=3))
+    d.add(Rect(0, 4, 22, 22, fillColor=HexColor(hex_color), strokeColor=HexColor("#D1D5DB"), strokeWidth=0.5, rx=3))  # type: ignore[arg-type]
     d.add(String(28, 14, f"{name}  {hex_color}", fontName="Helvetica-Bold", fontSize=8, fillColor=TEXT_PRIMARY))
     d.add(String(28, 4, role, fontName="Helvetica", fontSize=7, fillColor=TEXT_MUTED))
     return d
@@ -496,7 +496,7 @@ def build_report():
     swatch_row = []
     for hex_c, name, role in swatches:
         d = Drawing(62, 40)
-        d.add(Rect(4, 10, 54, 26, fillColor=HexColor(hex_c), strokeColor=HexColor("#D1D5DB"), strokeWidth=0.5, rx=4))
+        d.add(Rect(4, 10, 54, 26, fillColor=HexColor(hex_c), strokeColor=HexColor("#D1D5DB"), strokeWidth=0.5, rx=4))  # type: ignore[arg-type]
         d.add(String(8, 2, f"{name}", fontName="Helvetica", fontSize=6, fillColor=TEXT_PRIMARY))
         swatch_row.append(d)
 

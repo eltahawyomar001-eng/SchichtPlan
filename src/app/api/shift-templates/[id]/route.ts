@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function PUT(
   req: Request,
@@ -36,7 +37,7 @@ export async function PUT(
 
     return NextResponse.json(template);
   } catch (error) {
-    console.error("Error updating template:", error);
+    log.error("Error updating template:", { error: error });
     return NextResponse.json(
       { error: "Error updating template" },
       { status: 500 },
@@ -67,7 +68,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting template:", error);
+    log.error("Error deleting template:", { error: error });
     return NextResponse.json(
       { error: "Error deleting template" },
       { status: 500 },

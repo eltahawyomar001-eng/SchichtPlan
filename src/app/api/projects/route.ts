@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 /** GET /api/projects — list all projects for the workspace */
 export async function GET(req: Request) {
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(projects);
   } catch (error) {
-    console.error("Error fetching projects:", error);
+    log.error("Error fetching projects:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
-    console.error("Error creating project:", error);
+    log.error("Error creating project:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

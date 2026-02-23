@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -29,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json(departments);
   } catch (error) {
-    console.error("Error fetching departments:", error);
+    log.error("Error fetching departments:", { error: error });
     return NextResponse.json(
       { error: "Error loading departments" },
       { status: 500 },
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(department, { status: 201 });
   } catch (error) {
-    console.error("Error creating department:", error);
+    log.error("Error creating department:", { error: error });
     return NextResponse.json(
       { error: "Error creating department" },
       { status: 500 },

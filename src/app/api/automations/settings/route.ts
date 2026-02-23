@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 /**
  * All known automation keys and their default enabled state.
@@ -55,7 +56,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: merged });
   } catch (error) {
-    console.error("Error fetching automation settings:", error);
+    log.error("Error fetching automation settings:", { error: error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -125,7 +126,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ settings: merged });
   } catch (error) {
-    console.error("Error updating automation settings:", error);
+    log.error("Error updating automation settings:", { error: error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

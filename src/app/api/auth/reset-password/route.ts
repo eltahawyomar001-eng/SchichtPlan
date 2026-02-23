@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { resetPasswordSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
       message: "Passwort erfolgreich zurückgesetzt.",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
+    log.error("Reset password error:", { error: error });
     return NextResponse.json(
       { error: "Ein Fehler ist aufgetreten." },
       { status: 500 },

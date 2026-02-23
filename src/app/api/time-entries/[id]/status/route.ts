@@ -8,6 +8,7 @@ import {
   isMonthLocked,
   createSystemNotification,
 } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -171,7 +172,7 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Error updating time entry status:", error);
+    log.error("Error updating time entry status:", { error: error });
     return NextResponse.json(
       { error: "Error changing status" },
       { status: 500 },

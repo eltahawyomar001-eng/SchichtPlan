@@ -8,6 +8,7 @@ import {
   checkShiftConflicts,
   createSystemNotification,
 } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -121,7 +122,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
             employeeEmail: updated.requester.email,
           });
         } catch {
-          console.error("Failed to send rejection notification");
+          log.error("Failed to send rejection notification");
         }
       }
 
@@ -207,7 +208,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
             employeeEmail: changeRequest.requester.email,
           });
         } catch {
-          console.error("Failed to send approval notification");
+          log.error("Failed to send approval notification");
         }
       }
 
@@ -219,7 +220,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (error) {
-    console.error("Error processing shift change request:", error);
+    log.error("Error processing shift change request:", { error: error });
     return NextResponse.json(
       { error: "Error processing request" },
       { status: 500 },

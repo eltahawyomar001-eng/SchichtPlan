@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 // ── GET /api/profile/export — Data export (Art. 20 DSGVO Datenübertragbarkeit) ──
 export async function GET() {
@@ -177,7 +178,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Error exporting data:", error);
+    log.error("Error exporting data:", { error: error });
     return NextResponse.json(
       { error: "Error exporting data" },
       { status: 500 },

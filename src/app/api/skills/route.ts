@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -28,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json(skills);
   } catch (error) {
-    console.error("Error fetching skills:", error);
+    log.error("Error fetching skills:", { error: error });
     return NextResponse.json(
       { error: "Error loading skills" },
       { status: 500 },
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
         { status: 409 },
       );
     }
-    console.error("Error creating skill:", error);
+    log.error("Error creating skill:", { error: error });
     return NextResponse.json(
       { error: "Error creating skill" },
       { status: 500 },

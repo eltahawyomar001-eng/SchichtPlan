@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { sendEmail } from "./email";
 import { sendPushNotification } from "./push";
+import { log } from "@/lib/logger";
 
 /**
  * Dispatch an email + push notification for a user.
@@ -20,7 +21,7 @@ export async function dispatchExternalNotification(params: {
 }) {
   const { userId, type, title, message, link } = params;
 
-  console.log(`[dispatcher] userId=${userId}, type=${type}`);
+  log.info(`[dispatcher] userId=${userId}, type=${type}`);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -33,7 +34,7 @@ export async function dispatchExternalNotification(params: {
   });
 
   if (!user) {
-    console.warn(`[dispatcher] User ${userId} not found`);
+    log.warn(`[dispatcher] User ${userId} not found`);
     return;
   }
 
@@ -44,7 +45,7 @@ export async function dispatchExternalNotification(params: {
   const emailEnabled = emailPref ? emailPref.enabled : true;
 
   if (emailEnabled && user.email) {
-    console.log(`[dispatcher] Sending email to ${user.email}`);
+    log.info(`[dispatcher] Sending email to ${user.email}`);
     try {
       const result = await sendEmail({
         to: user.email,
@@ -55,14 +56,14 @@ export async function dispatchExternalNotification(params: {
         locale: "de",
       });
       if (result.success) {
-        console.log(`[dispatcher] Email sent to ${user.email}`);
+        log.info(`[dispatcher] Email sent to ${user.email}`);
       } else {
-        console.error(
+        log.error(
           `[dispatcher] Email failed for ${user.email}: ${result.error}`,
         );
       }
     } catch (err) {
-      console.error(`[dispatcher] Email failed for ${user.email}:`, err);
+      log.error(`[dispatcher] Email failed for ${user.email}`, { error: err });
     }
   }
 
@@ -82,7 +83,9 @@ export async function dispatchExternalNotification(params: {
         tag: type,
       });
     } catch (err) {
-      console.error(`[dispatcher] Push failed for userId=${userId}:`, err);
+      log.error(`[dispatcher] Push failed for userId=${userId}`, {
+        error: err,
+      });
     }
   }
 }

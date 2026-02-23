@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { lockMonthTimeEntries } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/automations/payroll-lock
@@ -17,7 +18,8 @@ import { lockMonthTimeEntries } from "@/lib/automations";
  */
 export async function POST(req: Request) {
   try {
-    const cronSecret = req.headers.get("authorization")?.replace("Bearer ", "");
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = authHeader?.replace("Bearer ", "");
 
     // Determine which month to lock
     const now = new Date();
@@ -25,7 +27,15 @@ export async function POST(req: Request) {
       now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
     const defaultMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // previous month
 
-    if (cronSecret === process.env.CRON_SECRET && process.env.CRON_SECRET) {
+    // If a Bearer token was provided, it MUST match CRON_SECRET
+    if (authHeader?.startsWith("Bearer ")) {
+      if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+        return NextResponse.json(
+          { error: "Invalid cron secret" },
+          { status: 403 },
+        );
+      }
+
       const workspaces = await prisma.workspace.findMany({
         select: { id: true },
       });
@@ -84,7 +94,7 @@ export async function POST(req: Request) {
       month: result.month,
     });
   } catch (error) {
-    console.error("Error locking payroll:", error);
+    log.error("Error locking payroll:", { error: error });
     return NextResponse.json(
       { error: "Error locking payroll" },
       { status: 500 },

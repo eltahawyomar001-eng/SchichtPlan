@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/authorization";
 import { getStripe, getPlanByPriceId } from "@/lib/stripe";
 import { ensureSubscription } from "@/lib/subscription";
 import { checkoutSchema, validateBody } from "@/lib/validations";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/billing/checkout
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
-    console.error("[Stripe] Checkout error:", error);
+    log.error("[Stripe] Checkout error:", { error: error });
     return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
   }
 }

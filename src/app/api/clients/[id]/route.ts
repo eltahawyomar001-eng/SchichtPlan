@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { log } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -36,7 +37,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
     return NextResponse.json(client);
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     return NextResponse.json(client);
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -108,7 +109,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     await (prisma as any).client.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

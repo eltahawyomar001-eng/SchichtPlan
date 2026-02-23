@@ -31,6 +31,13 @@ const securityHeaders: Record<string, string> = {
 /* ──────────────────────────────────────────────────────────────
  * In-memory rate limiter (per IP)
  *
+ * ⚠️  SERVERLESS WARNING: This rate limiter uses an in-memory Map
+ * which is NOT shared across serverless instances. On platforms
+ * like Vercel, each cold-start gets its own Map, so a determined
+ * attacker could bypass limits by hitting different instances.
+ * For production-grade protection, replace with Redis / Upstash
+ * or a dedicated rate-limiting service (e.g. Vercel WAF).
+ *
  * Limits:
  *   – Auth endpoints (login/register): 10 req / 60 s
  *   – API endpoints:                    60 req / 60 s

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import type { SessionUser } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 // ── DELETE /api/profile — Account deletion (Art. 17 DSGVO) ──
 export async function DELETE() {
@@ -62,7 +63,7 @@ export async function DELETE() {
         { status: 409 },
       );
     }
-    console.error("Error deleting account:", error);
+    log.error("Error deleting account:", { error: error });
     return NextResponse.json(
       { error: "Error deleting account" },
       { status: 500 },
@@ -122,7 +123,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   } catch (error) {
-    console.error("Error updating profile:", error);
+    log.error("Error updating profile:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }

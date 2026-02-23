@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
 export async function GET(req: Request) {
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(swaps);
   } catch (error) {
-    console.error("Error fetching shift swaps:", error);
+    log.error("Error fetching shift swaps:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(swap, { status: 201 });
   } catch (error) {
-    console.error("Error creating shift swap:", error);
+    log.error("Error creating shift swap:", { error: error });
     return NextResponse.json(
       { error: "Error creating resource" },
       { status: 500 },

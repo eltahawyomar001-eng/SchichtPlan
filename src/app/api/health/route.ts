@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { log } from "@/lib/logger";
 
 /**
  * GET /api/health
@@ -24,7 +25,7 @@ export async function GET() {
       { status: 200 },
     );
   } catch (error) {
-    console.error("[health] Database check failed:", error);
+    log.error("[health] Database check failed:", { error: error });
     return NextResponse.json(
       {
         status: "degraded",

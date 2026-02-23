@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
   MapPinIcon,
@@ -27,6 +28,7 @@ interface Location {
 export default function StandortePage() {
   const t = useTranslations("locationsPage");
   const tc = useTranslations("common");
+  const { handlePlanLimit } = usePlanLimit();
   const [locations, setLocations] = useState<Location[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
@@ -87,6 +89,9 @@ export default function StandortePage() {
         setFormData({ name: "", address: "" });
         fetchLocations();
       } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
+
         const data = await res.json();
         setFormError(data.error || t("saveError"));
       }

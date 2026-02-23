@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { PlusIcon } from "@/components/icons";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 
 interface WebhookEndpoint {
   id: string;
@@ -16,6 +17,7 @@ interface WebhookEndpoint {
 
 export default function WebhooksSeite() {
   const t = useTranslations("webhooks");
+  const { handlePlanLimit } = usePlanLimit();
   const [hooks, setHooks] = useState<WebhookEndpoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -66,6 +68,9 @@ export default function WebhooksSeite() {
         setFormUrl("");
         setFormEvents([]);
         fetchHooks();
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
       }
     } catch {
       // ignore

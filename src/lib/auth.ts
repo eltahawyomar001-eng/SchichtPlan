@@ -9,6 +9,20 @@ import * as OTPAuth from "otpauth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 
+/* ── JWT role-refresh cache ── */
+// Avoid hitting DB on every single request — cache user data for 60s.
+const JWT_REFRESH_TTL_MS = 60_000;
+const jwtCache = new Map<
+  string,
+  {
+    role: string;
+    workspaceId: string | null;
+    workspaceName: string | null;
+    employeeId: string | null;
+    ts: number;
+  }
+>();
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
@@ -183,24 +197,40 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Always refresh employeeId, workspaceId, and role from DB
-      // so changes (e.g. workspace reassignment, role changes) are
-      // picked up without requiring the user to re-login.
+      // Refresh employeeId, workspaceId, and role from DB
+      // with a 60-second TTL cache to avoid a DB query on every
+      // single request while still picking up role/workspace changes.
       if (token.sub) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: {
-            role: true,
-            workspaceId: true,
-            workspace: { select: { name: true } },
-            employee: { select: { id: true } },
-          },
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.workspaceId = dbUser.workspaceId;
-          token.workspaceName = dbUser.workspace?.name || null;
-          token.employeeId = dbUser.employee?.id || null;
+        const cached = jwtCache.get(token.sub);
+        const now = Date.now();
+        if (cached && now - cached.ts < JWT_REFRESH_TTL_MS) {
+          token.role = cached.role;
+          token.workspaceId = cached.workspaceId;
+          token.workspaceName = cached.workspaceName;
+          token.employeeId = cached.employeeId;
+        } else {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: {
+              role: true,
+              workspaceId: true,
+              workspace: { select: { name: true } },
+              employee: { select: { id: true } },
+            },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.workspaceId = dbUser.workspaceId;
+            token.workspaceName = dbUser.workspace?.name || null;
+            token.employeeId = dbUser.employee?.id || null;
+            jwtCache.set(token.sub, {
+              role: dbUser.role,
+              workspaceId: dbUser.workspaceId,
+              workspaceName: dbUser.workspace?.name || null,
+              employeeId: dbUser.employee?.id || null,
+              ts: now,
+            });
+          }
         }
       }
 

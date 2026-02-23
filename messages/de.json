@@ -68,7 +68,8 @@
     "webhooks": "Webhooks",
     "developer": "Entwickler",
     "teamCalendar": "Teamkalender",
-    "dataIO": "Import / Export"
+    "dataIO": "Import / Export",
+    "roles": "Rollen"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -673,6 +674,13 @@
     "faqInvoiceAnswer": "Alle Rechnungen sind über das Stripe-Kundenportal verfügbar. Klicken Sie auf 'Abonnement verwalten'.",
     "faqTax": "Ist Umsatzsteuer enthalten?",
     "faqTaxAnswer": "Die Preise verstehen sich zzgl. MwSt. Bei der Checkout-Abwicklung wird die gesetzliche MwSt. ausgewiesen. Sie können Ihre USt-IdNr. hinterlegen."
+  },
+  "roles": {
+    "title": "Rollen & Berechtigungen",
+    "description": "Verwalten Sie Rollen und deren Berechtigungen",
+    "builtIn": "Standard",
+    "builtInInfo": "Shiftfy enthält 4 Standardrollen mit vordefinierten Berechtigungen.",
+    "comingSoon": "Benutzerdefinierte Rollen mit individuellen Berechtigungen sind in Kürze verfügbar (Business-Plan)."
   },
   "pricing": {
     "title": "Preise & Pakete",
@@ -1306,5 +1314,24 @@
     "icalTitle": "iCal-Abo",
     "icalDesc": "Fügen Sie diese URL in Ihren Kalender (Google, Apple, Outlook) ein, um Schichten automatisch zu synchronisieren.",
     "copy": "Kopieren"
+  },
+  "planLimit": {
+    "title": "Plan-Limit erreicht",
+    "limitReached": "Sie haben das Maximum von {limit} {feature} in Ihrem aktuellen Plan erreicht.",
+    "featureGated": "Die Funktion \u201E{feature}\u201C ist in Ihrem aktuellen Plan nicht enthalten.",
+    "upgradeHint": "Upgraden Sie Ihren Plan, um diese Funktion freizuschalten und Ihr Team ohne Einschränkungen zu verwalten.",
+    "dismiss": "Später",
+    "upgradeCta": "Jetzt upgraden",
+    "features": {
+      "maxEmployees": "Mitarbeiter",
+      "maxLocations": "Standorte",
+      "shiftTemplates": "Schichtvorlagen",
+      "absenceManagement": "Abwesenheitsverwaltung",
+      "csvPdfExport": "CSV/PDF-Export",
+      "datevExport": "DATEV-Export",
+      "apiWebhooks": "API & Webhooks",
+      "customRoles": "Benutzerdefinierte Rollen",
+      "analytics": "Erweiterte Analysen"
+    }
   }
 }

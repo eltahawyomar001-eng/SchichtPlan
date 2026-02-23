@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { PlusIcon, TrashIcon, EditIcon } from "@/components/icons";
 import { Topbar } from "@/components/layout/topbar";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 
 interface ShiftTemplate {
   id: string;
@@ -21,6 +22,7 @@ interface Location {
 
 export default function SchichtvorlagenSeite() {
   const t = useTranslations("shiftTemplates");
+  const { handlePlanLimit } = usePlanLimit();
   const [templates, setTemplates] = useState<ShiftTemplate[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +81,9 @@ export default function SchichtvorlagenSeite() {
           locationId: "",
         });
         fetchData();
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
       }
     } catch (err) {
       console.error("Error saving:", err);

@@ -4,9 +4,11 @@ import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { DownloadIcon } from "@/components/icons";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 
 export default function DatenSeite() {
   const t = useTranslations("dataIO");
+  const { handlePlanLimit } = usePlanLimit();
   const [importType, setImportType] = useState("employees");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<{
@@ -89,6 +91,9 @@ export default function DatenSeite() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
       }
     } catch {
       // ignore

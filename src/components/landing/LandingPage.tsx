@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import {
   ShiftfyMark,
@@ -18,13 +19,37 @@ import {
   MenuIcon,
   XIcon,
 } from "@/components/icons";
-import {
-  PlanningIllustration,
-  DistributionIllustration,
-  DayToDayIllustration,
-  ReportingIllustration,
-} from "@/components/svgs";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+
+/* ── Lazy-load heavy SVG illustrations below the fold (LCP optimisation) ── */
+const PlanningIllustration = dynamic(
+  () =>
+    import("@/components/svgs/PlanningIllustration").then(
+      (m) => m.PlanningIllustration,
+    ),
+  { ssr: false },
+);
+const DistributionIllustration = dynamic(
+  () =>
+    import("@/components/svgs/DistributionIllustration").then(
+      (m) => m.DistributionIllustration,
+    ),
+  { ssr: false },
+);
+const DayToDayIllustration = dynamic(
+  () =>
+    import("@/components/svgs/DayToDayIllustration").then(
+      (m) => m.DayToDayIllustration,
+    ),
+  { ssr: false },
+);
+const ReportingIllustration = dynamic(
+  () =>
+    import("@/components/svgs/ReportingIllustration").then(
+      (m) => m.ReportingIllustration,
+    ),
+  { ssr: false },
+);
 
 /**
  * Full Connecteam-style landing page for Shiftfy.

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   FileExportIcon,
   DownloadIcon,
@@ -42,6 +43,7 @@ export default function LohnexportPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const dateFnsLocale = locale === "de" ? de : enUS;
+  const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [preview, setPreview] = useState<ExportSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,6 +92,9 @@ export default function LohnexportPage() {
         const data = await res.json();
         setPreview(data);
         setPreviewLoaded(true);
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
       }
     } catch (err) {
       console.error("Error:", err);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   BarChart,
   Bar,
@@ -55,6 +56,7 @@ const COLORS = [
 
 export default function BerichteSeite() {
   const t = useTranslations("reports");
+  const { handlePlanLimit } = usePlanLimit();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +76,9 @@ export default function BerichteSeite() {
       const res = await fetch(`/api/reports?start=${startDate}&end=${endDate}`);
       if (res.ok) {
         setData(await res.json());
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
       }
     } catch (err) {
       console.error("Error fetching report:", err);

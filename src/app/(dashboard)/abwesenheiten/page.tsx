@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
   XIcon,
@@ -84,6 +85,7 @@ export default function AbwesenheitenPage() {
   const { data: session } = useSession();
   const user = session?.user as SessionUser | undefined;
   const canManage = user ? isManagement(user) : false;
+  const { handlePlanLimit } = usePlanLimit();
   const [absences, setAbsences] = useState<AbsenceRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -161,6 +163,9 @@ export default function AbwesenheitenPage() {
           reason: "",
         });
         fetchAbsences();
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
       }
     } catch (err) {
       console.error("Error:", err);

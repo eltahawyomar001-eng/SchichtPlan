@@ -33,6 +33,7 @@ import {
   DatabaseIcon,
   CalendarUsersIcon,
   CreditCardIcon,
+  ShieldCheckIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -189,6 +190,12 @@ const navGroups: NavGroup[] = [
         key: "billing",
         href: "/einstellungen/abonnement",
         icon: CreditCardIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+      {
+        key: "roles",
+        href: "/einstellungen/rollen",
+        icon: ShieldCheckIcon,
         roles: ["OWNER", "ADMIN"],
       },
     ],

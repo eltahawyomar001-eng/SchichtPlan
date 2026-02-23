@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
   SearchIcon,
@@ -37,6 +38,7 @@ interface Employee {
 export default function MitarbeiterPage() {
   const t = useTranslations("employeesPage");
   const tc = useTranslations("common");
+  const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -133,6 +135,10 @@ export default function MitarbeiterPage() {
         });
         fetchEmployees();
       } else {
+        // Intercept plan-limit errors with upgrade modal
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
+
         const data = await res.json();
         setFormError(data.error || t("saveError"));
       }

@@ -68,7 +68,8 @@
     "webhooks": "Webhooks",
     "developer": "Developer",
     "teamCalendar": "Team Calendar",
-    "dataIO": "Import / Export"
+    "dataIO": "Import / Export",
+    "roles": "Roles"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -672,6 +673,13 @@
     "statusIncomplete": "Incomplete",
     "noSubscription": "No active subscription",
     "loadingSubscription": "Loading subscription data..."
+  },
+  "roles": {
+    "title": "Roles & Permissions",
+    "description": "Manage roles and their permissions",
+    "builtIn": "Built-in",
+    "builtInInfo": "Shiftfy includes 4 built-in roles with predefined permissions.",
+    "comingSoon": "Custom roles with individual permissions are coming soon (Business plan)."
   },
   "pricing": {
     "title": "Pricing & Plans",
@@ -1305,5 +1313,24 @@
     "icalTitle": "iCal Subscription",
     "icalDesc": "Add this URL to your calendar app (Google, Apple, Outlook) to automatically sync shifts.",
     "copy": "Copy"
+  },
+  "planLimit": {
+    "title": "Plan Limit Reached",
+    "limitReached": "You've reached the maximum of {limit} {feature} on your current plan.",
+    "featureGated": "The \"{feature}\" feature is not included in your current plan.",
+    "upgradeHint": "Upgrade your plan to unlock this feature and manage your team without restrictions.",
+    "dismiss": "Maybe Later",
+    "upgradeCta": "Upgrade Now",
+    "features": {
+      "maxEmployees": "employees",
+      "maxLocations": "locations",
+      "shiftTemplates": "shift templates",
+      "absenceManagement": "absence management",
+      "csvPdfExport": "CSV/PDF export",
+      "datevExport": "DATEV export",
+      "apiWebhooks": "API & webhooks",
+      "customRoles": "custom roles",
+      "analytics": "advanced analytics"
+    }
   }
 }

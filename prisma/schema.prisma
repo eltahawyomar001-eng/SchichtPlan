@@ -132,6 +132,50 @@ model Workspace {
   exportJobs  ExportJob[]
   webhookEndpoints WebhookEndpoint[]
   automationRules AutomationRule[]
+  subscription    Subscription?
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STRIPE BILLING & SUBSCRIPTIONS
+// ═══════════════════════════════════════════════════════════════
+
+enum SubscriptionPlan {
+  STARTER
+  TEAM
+  BUSINESS
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAUSED
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  plan                 SubscriptionPlan   @default(STARTER)
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  seatCount            Int                @default(1)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  workspaceId          String             @unique
+  workspace            Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
 }
 
 model Employee {

@@ -122,6 +122,9 @@ export function LandingPage() {
       {/* ─── Benefits Grid ─── */}
       <BenefitsSection />
 
+      {/* ─── Pricing ─── */}
+      <PricingSection />
+
       {/* ─── FAQ ─── */}
       <FAQSection />
 
@@ -160,6 +163,12 @@ function Navbar() {
             className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
             {t("navFeatures")}
+          </a>
+          <a
+            href="#pricing"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            {t("navPricing")}
           </a>
           <a
             href="#benefits"
@@ -215,6 +224,13 @@ function Navbar() {
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
             >
               {t("navFeatures")}
+            </a>
+            <a
+              href="#pricing"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              {t("navPricing")}
             </a>
             <a
               href="#benefits"
@@ -295,36 +311,18 @@ function HeroSection() {
                 {t("heroCtaPrimary")}
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
-              <span className="text-sm text-gray-400">
-                {t("heroCtaSubNote")}
-              </span>
+              <a
+                href="#pricing"
+                className="text-sm font-medium text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1"
+              >
+                {t("heroCtaSecondary")}
+                <ChevronRightIcon className="w-4 h-4" />
+              </a>
             </div>
 
-            {/* Pricing teaser */}
-            <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm">
-              <div className="flex flex-col items-center lg:items-start">
-                <span className="text-2xl font-extrabold text-gray-900">
-                  {t("heroPriceFree")}
-                </span>
-                <span className="text-gray-400">{t("heroPriceFreeLabel")}</span>
-              </div>
-              <div className="w-px h-10 bg-gray-200 hidden sm:block" />
-              <div className="flex flex-col items-center lg:items-start">
-                <span className="text-2xl font-extrabold text-gray-900">
-                  {t("heroPriceTeam")}
-                </span>
-                <span className="text-gray-400">{t("heroPriceTeamLabel")}</span>
-              </div>
-              <div className="w-px h-10 bg-gray-200 hidden sm:block" />
-              <div className="flex flex-col items-center lg:items-start">
-                <span className="text-2xl font-extrabold text-gray-900">
-                  {t("heroPriceBusiness")}
-                </span>
-                <span className="text-gray-400">
-                  {t("heroPriceBusinessLabel")}
-                </span>
-              </div>
-            </div>
+            <p className="mt-3 text-sm text-gray-400 text-center lg:text-left">
+              {t("heroCtaSubNote")}
+            </p>
           </div>
 
           {/* ─── Right: App mockup ─── */}
@@ -459,9 +457,9 @@ function HeroMockup() {
 
       {/* Floating stat badge */}
       <div className="absolute -top-3 -right-3 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-2.5 text-center">
-        <div className="text-lg font-bold text-violet-700">€0</div>
+        <div className="text-lg font-bold text-violet-700">98%</div>
         <div className="text-[10px] font-medium text-gray-400">
-          {t("heroMockupFreeBadge")}
+          {t("heroMockupCoverage")}
         </div>
       </div>
     </div>
@@ -559,6 +557,141 @@ function FeatureSection({
 
           {/* Illustration */}
           <div className="flex-1 w-full max-w-[520px]">{illustration}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PricingSection() {
+  const t = useTranslations("landing");
+  const tp = useTranslations("pricing");
+
+  const plans = [
+    {
+      name: tp("free"),
+      price: tp("freePrice"),
+      priceNote: tp("freePriceNote"),
+      description: tp("freeDesc"),
+      features: [
+        tp("featureFree1"),
+        tp("featureFree2"),
+        tp("featureFree3"),
+        tp("featureFree4"),
+        tp("featureFree5"),
+        tp("featureFree6"),
+      ],
+      cta: tp("getStarted"),
+      href: "/register",
+      highlighted: false,
+    },
+    {
+      name: tp("pro"),
+      price: tp("proPrice"),
+      priceNote: tp("proPriceNote"),
+      description: tp("proDesc"),
+      features: [
+        tp("featurePro1"),
+        tp("featurePro2"),
+        tp("featurePro3"),
+        tp("featurePro4"),
+        tp("featurePro5"),
+        tp("featurePro6"),
+      ],
+      cta: tp("startTrial"),
+      href: "/register",
+      highlighted: true,
+    },
+    {
+      name: tp("enterprise"),
+      price: tp("enterprisePrice"),
+      priceNote: tp("enterprisePriceNote"),
+      description: tp("enterpriseDesc"),
+      features: [
+        tp("featureEnt1"),
+        tp("featureEnt2"),
+        tp("featureEnt3"),
+        tp("featureEnt4"),
+        tp("featureEnt5"),
+        tp("featureEnt6"),
+        tp("featureEnt7"),
+      ],
+      cta: tp("startTrial"),
+      href: "/register",
+      highlighted: false,
+    },
+    {
+      name: tp("custom"),
+      price: tp("customPrice"),
+      priceNote: tp("customPriceNote"),
+      description: tp("customDesc"),
+      features: [
+        tp("featureCustom1"),
+        tp("featureCustom2"),
+        tp("featureCustom3"),
+        tp("featureCustom4"),
+        tp("featureCustom5"),
+        tp("featureCustom6"),
+      ],
+      cta: tp("contactUs"),
+      href: "mailto:info@shiftfy.de",
+      highlighted: false,
+    },
+  ];
+
+  return (
+    <section id="pricing" className="py-12 sm:py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
+            {t("pricingTitle")}
+          </h2>
+          <p className="mt-4 text-gray-500">{t("pricingSubtitle")}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {plans.map((plan) => (
+            <div
+              key={plan.name}
+              className={`rounded-2xl border p-6 flex flex-col transition-shadow ${
+                plan.highlighted
+                  ? "border-violet-500 ring-2 ring-violet-500 bg-white shadow-lg shadow-violet-100/50"
+                  : "border-gray-200 bg-white shadow-sm hover:shadow-md"
+              }`}
+            >
+              {plan.highlighted && (
+                <span className="inline-block self-start rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 mb-4">
+                  {tp("popular")}
+                </span>
+              )}
+              <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-extrabold text-gray-900">
+                  {plan.price}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{plan.priceNote}</p>
+              <p className="mt-3 text-sm text-gray-600">{plan.description}</p>
+              <ul className="mt-6 space-y-3 flex-1">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <CheckCircleIcon className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href={plan.href}
+                className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${
+                  plan.highlighted
+                    ? "bg-brand-gradient text-white hover:shadow-lg hover:shadow-violet-200"
+                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {plan.cta}
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </section>

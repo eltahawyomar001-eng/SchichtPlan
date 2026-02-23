@@ -1,7 +1,83 @@
 # Shiftfy — Intelligente Schichtplanung für Teams
 
-Moderne SaaS-Plattform zur Schichtplanung, Mitarbeiterverwaltung und Standortorganisation.
-Entwickelt für den deutschen Markt mit Next.js, Prisma und TypeScript.
+> Moderne SaaS-Plattform zur Schichtplanung, Zeiterfassung und Personalverwaltung.  
+> Entwickelt für den deutschen Markt mit Next.js, Prisma, Stripe und TypeScript.
+
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://typescriptlang.org)
+[![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)](https://prisma.io)
+[![Stripe](https://img.shields.io/badge/Stripe-Billing-635BFF?logo=stripe)](https://stripe.com)
+[![License](https://img.shields.io/badge/License-Proprietary-red)]()
+
+---
+
+## Features
+
+### Schichtplanung
+
+- 📅 Drag & Drop Wochenkalender mit Schichtblöcken
+- 🔁 Wiederverwendbare Schichtvorlagen
+- ⚠️ Automatische Konflikterkennung (Überlappungen, Ruhezeiten)
+- 📋 Schichttausch-Anträge mit Manager-Genehmigung
+
+### Zeiterfassung
+
+- ⏱️ Digitale Stempeluhr (Ein-/Ausstempeln mit GPS)
+- ☕ Pausenverwaltung mit gesetzlicher Pausenregelung (ArbZG)
+- 📊 Team-Übersicht: Live-Status aller Mitarbeiter
+- 🔒 Monatsabschluss-Workflow (Sperren → Exportieren)
+
+### Personalverwaltung
+
+- 👥 Mitarbeiter, Standorte, Abteilungen, Qualifikationen
+- 🏖️ Abwesenheitsverwaltung (Urlaub, Krank, Elternzeit, Sonderurlaub)
+- ⏰ Arbeitszeitkonten mit automatischer Saldo-Berechnung
+- 📧 Team-Einladungen per E-Mail mit Rollen (Owner/Admin/Manager/Employee)
+
+### Berichte & Export
+
+- 📈 Stundenreports mit Überstunden-Erkennung
+- 📄 Export: CSV, PDF, XLSX, DATEV-kompatibel
+- 📅 iCal-Feed für Kalenderintegration (Google, Apple, Outlook)
+
+### Abrechnung & Preise
+
+- 💳 Stripe Billing Integration (Checkout, Portal, Webhooks)
+- 🆓 4-Stufen-Preismodell: Starter (€0) → Team → Business → Enterprise
+- 🔄 Per-Seat-Abrechnung mit 14-Tage-Testphase
+- 🧾 SEPA-Lastschrift & Kreditkarte, Steuer-ID-Erfassung
+
+### Weitere Features
+
+- 🌍 Mehrsprachig (Deutsch / Englisch) via next-intl
+- 🔐 Authentifizierung: Credentials, Google OAuth, Microsoft Azure AD
+- ✉️ E-Mail-Verifizierung bei Registrierung (Resend)
+- 🔑 Zwei-Faktor-Authentifizierung (TOTP)
+- 📱 Progressive Web App (PWA) — installierbar auf allen Geräten
+- 🔔 Push-Benachrichtigungen (Web Push + E-Mail)
+- 🤖 12+ Automatisierungsregeln (ArbZG-Compliance, Auto-Genehmigungen)
+- 🏗️ Projekt- & Kundenmodul mit Zeiterfassung pro Projekt
+- 🪝 Webhooks & benutzerdefinierte Automatisierungen
+
+---
+
+## Tech-Stack
+
+| Kategorie             | Technologie                                          |
+| --------------------- | ---------------------------------------------------- |
+| **Framework**         | Next.js 16 (App Router, Server Components)           |
+| **Sprache**           | TypeScript 5                                         |
+| **Styling**           | Tailwind CSS 4                                       |
+| **Datenbank**         | PostgreSQL via Prisma 7 (`@prisma/adapter-pg`)       |
+| **Authentifizierung** | NextAuth 4 (Credentials, Google, Azure AD, JWT)      |
+| **Zahlungen**         | Stripe (Checkout, Billing Portal, Webhooks)          |
+| **E-Mail**            | Resend (Transaktionale E-Mails, Verifizierung)       |
+| **i18n**              | next-intl (DE/EN)                                    |
+| **Charts**            | Recharts                                             |
+| **Icons**             | Eigene SVG-Komponenten (28+ Icons, TypeScript)       |
+| **Illustrationen**    | Eigene SVG-Szenen mit `ResizeObserver`               |
+| **Hosting**           | Vercel                                               |
+| **Commit-System**     | Conventional Commits, Husky, commitlint, lint-staged |
 
 ---
 
@@ -17,7 +93,10 @@ npm install
 
 # Umgebungsvariablen konfigurieren
 cp .env.example .env
-# → DATABASE_URL, NEXTAUTH_SECRET, STRIPE_SECRET_KEY anpassen
+# → Siehe "Umgebungsvariablen" unten
+
+# Prisma-Client generieren
+npx prisma generate
 
 # Datenbank migrieren
 npx prisma migrate dev
@@ -30,19 +109,38 @@ Die App läuft unter **http://localhost:3000**.
 
 ---
 
-## Tech-Stack
+## Umgebungsvariablen
 
-| Kategorie             | Technologie                                          |
-| --------------------- | ---------------------------------------------------- |
-| **Framework**         | Next.js 16 (App Router)                              |
-| **Sprache**           | TypeScript 5                                         |
-| **Styling**           | Tailwind CSS 4                                       |
-| **Datenbank**         | PostgreSQL via Prisma 7 (`@prisma/adapter-pg`)       |
-| **Authentifizierung** | NextAuth 4 (Credentials, JWT)                        |
-| **Zahlungen**         | Stripe                                               |
-| **Icons**             | Eigene SVG-Komponenten (TypeScript)                  |
-| **Illustrationen**    | Eigene SVG-Szenen mit `ResizeObserver`               |
-| **Commit-System**     | Conventional Commits, Husky, commitlint, lint-staged |
+```env
+# ─── Datenbank ───
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+# ─── NextAuth ───
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+
+# ─── OAuth (optional) ───
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+AZURE_AD_CLIENT_ID=""
+AZURE_AD_CLIENT_SECRET=""
+AZURE_AD_TENANT_ID=""
+
+# ─── Stripe Billing ───
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_PRICE_TEAM_MONTHLY="price_..."
+STRIPE_PRICE_TEAM_ANNUAL="price_..."
+STRIPE_PRICE_BUSINESS_MONTHLY="price_..."
+STRIPE_PRICE_BUSINESS_ANNUAL="price_..."
+
+# ─── Resend (E-Mail) ───
+RESEND_API_KEY=""
+
+# ─── Web Push (optional) ───
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+```
 
 ---
 
@@ -51,57 +149,55 @@ Die App läuft unter **http://localhost:3000**.
 ```
 schichtplan/
 ├── prisma/
-│   └── schema.prisma              # Datenbankschema (User, Workspace, Shift …)
-├── public/                        # Statische Assets
+│   └── schema.prisma              # DB-Schema (30+ Modelle)
+├── messages/
+│   ├── de.json                    # Deutsche Übersetzungen
+│   └── en.json                    # Englische Übersetzungen
+├── public/                        # Statische Assets, PWA Manifest
 ├── src/
 │   ├── app/
-│   │   ├── globals.css            # Design-Tokens & Utility-Klassen
+│   │   ├── globals.css            # Design-Tokens & Farb-Palette
 │   │   ├── layout.tsx             # Root-Layout
-│   │   ├── page.tsx               # Landing-Page / Auth-Redirect
+│   │   ├── page.tsx               # Landing-Page
 │   │   ├── (auth)/
-│   │   │   ├── login/page.tsx     # Anmeldeseite
-│   │   │   └── register/page.tsx  # Registrierungsseite
+│   │   │   ├── login/             # Anmeldung
+│   │   │   ├── register/          # Registrierung + E-Mail-Verifizierung
+│   │   │   └── pricing/           # Preisseite
 │   │   ├── (dashboard)/
-│   │   │   ├── layout.tsx         # Dashboard-Layout (Sidebar + Topbar)
 │   │   │   ├── dashboard/         # Übersichts-Dashboard
 │   │   │   ├── mitarbeiter/       # Mitarbeiterverwaltung
 │   │   │   ├── standorte/         # Standortverwaltung
 │   │   │   ├── schichtplan/       # Wochenkalender-Schichtplan
+│   │   │   ├── stempeluhr/        # Digitale Stempeluhr
+│   │   │   ├── abwesenheiten/     # Abwesenheitsverwaltung
+│   │   │   ├── berichte/          # Berichte & Analysen
+│   │   │   ├── daten/             # Import/Export (CSV, XLSX, PDF)
 │   │   │   └── einstellungen/     # Einstellungen & Profil
 │   │   └── api/
 │   │       ├── auth/              # NextAuth + Registrierung
+│   │       ├── billing/           # Stripe (Checkout, Portal, Webhook)
 │   │       ├── employees/         # CRUD Mitarbeiter
 │   │       ├── locations/         # CRUD Standorte
-│   │       └── shifts/            # CRUD Schichten
+│   │       ├── shifts/            # CRUD Schichten
+│   │       ├── time-entries/      # Zeiterfassung
+│   │       └── webhooks/          # Benutzerdefinierte Webhooks
 │   ├── components/
-│   │   ├── icons/                 # 28 SVG-Icon-Komponenten (TypeScript)
-│   │   │   ├── CalendarIcon.tsx
-│   │   │   ├── ClockIcon.tsx
-│   │   │   ├── ShiftfyMark.tsx
-│   │   │   ├── …                  # + 25 weitere
-│   │   │   └── index.ts           # Barrel-Export
+│   │   ├── icons/                 # 28+ SVG-Icon-Komponenten
 │   │   ├── svgs/                  # 4 SVG-Illustrationen (responsive)
-│   │   │   ├── PlanningIllustration.tsx
-│   │   │   ├── DistributionIllustration.tsx
-│   │   │   ├── DayToDayIllustration.tsx
-│   │   │   ├── ReportingIllustration.tsx
-│   │   │   └── index.ts
-│   │   ├── landing/
-│   │   │   └── LandingPage.tsx    # Connecteam-inspirierte Landing-Page
-│   │   ├── layout/
-│   │   │   ├── sidebar.tsx        # Seitenleiste mit Navigation
-│   │   │   └── topbar.tsx         # Kopfleiste mit Benachrichtigungen
-│   │   ├── ui/                    # Basis-UI-Komponenten (Button, Card …)
-│   │   └── providers.tsx          # SessionProvider-Wrapper
+│   │   ├── landing/               # Landing-Page Komponenten
+│   │   ├── layout/                # Sidebar, Topbar
+│   │   └── ui/                    # Basis-UI (Button, Card, Input …)
 │   └── lib/
 │       ├── auth.ts                # NextAuth-Konfiguration
-│       ├── db.ts                  # Prisma-Client (Singleton, PrismaPg)
-│       └── utils.ts               # Hilfsfunktionen (cn, formatDate …)
+│       ├── db.ts                  # Prisma-Client (PrismaPg Adapter)
+│       ├── stripe.ts              # Stripe-Client & Plan-Konfiguration
+│       ├── subscription.ts        # Subscription DB-Service
+│       ├── authorization.ts       # Rollen-basierte Zugriffskontrolle
+│       └── utils.ts               # Hilfsfunktionen
 ├── .husky/                        # Git-Hooks (commit-msg, pre-commit)
 ├── commitlint.config.ts           # Conventional-Commits-Regeln
 ├── eslint.config.mjs
 ├── next.config.ts
-├── postcss.config.mjs
 ├── prisma.config.ts
 ├── tsconfig.json
 └── package.json
@@ -109,68 +205,109 @@ schichtplan/
 
 ---
 
+## Preismodell
+
+| Plan           | Preis              | Mitarbeiter | Standorte  | Highlights                                  |
+| -------------- | ------------------ | ----------- | ---------- | ------------------------------------------- |
+| **Starter**    | €0 für immer       | bis 5       | 1          | Schichtplanung, Zeiterfassung, Basis-Export |
+| **Team**       | €4,90/Nutzer/Monat | Unbegrenzt  | bis 5      | Vorlagen, Abwesenheiten, CSV/PDF-Export     |
+| **Business**   | €7,90/Nutzer/Monat | Unbegrenzt  | Unbegrenzt | DATEV, API, Rollen, Analysen, Priorität     |
+| **Enterprise** | Individuell        | Unbegrenzt  | Unbegrenzt | SSO/SAML, SLA, Custom-Integrationen         |
+
+Jährliche Zahlung: bis zu 17% Rabatt. 14-Tage-Testphase für Team & Business.
+
+---
+
+## Stripe-Integration
+
+### Architektur
+
+- `src/lib/stripe.ts` — Stripe-Client, Plan-Definitionen, Preis-Mapping
+- `src/lib/subscription.ts` — DB-Service für Subscription-CRUD
+- `prisma/schema.prisma` — `Subscription`-Modell (Plan, Status, Stripe-IDs)
+
+### API-Endpunkte
+
+| Endpunkt                    | Methode | Beschreibung                          |
+| --------------------------- | ------- | ------------------------------------- |
+| `/api/billing/checkout`     | POST    | Stripe Checkout Session erstellen     |
+| `/api/billing/portal`       | POST    | Stripe Customer Portal öffnen         |
+| `/api/billing/webhook`      | POST    | Stripe Webhook Events verarbeiten     |
+| `/api/billing/subscription` | GET     | Aktuellen Subscription-Status abrufen |
+
+### Stripe einrichten
+
+1. Stripe-Account erstellen: [dashboard.stripe.com](https://dashboard.stripe.com)
+2. Produkte & Preise im Stripe Dashboard anlegen (Team Monthly/Annual, Business Monthly/Annual)
+3. Preis-IDs in `.env` eintragen (`STRIPE_PRICE_TEAM_MONTHLY`, etc.)
+4. Webhook-Endpunkt konfigurieren: `https://yourdomain.com/api/billing/webhook`
+5. Events abonnieren: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`
+
+---
+
+## Datenbank-Schema
+
+### Kern-Modelle
+
+`User` → `Workspace` → `Employee` → `Shift`, `TimeEntry`, `AbsenceRequest`
+
+### Billing
+
+`Workspace` → `Subscription` (1:1) mit Stripe-IDs, Plan, Status, Seat-Count
+
+### Weitere Modelle
+
+`Location`, `Department`, `Skill`, `ShiftTemplate`, `Availability`, `ShiftSwapRequest`, `ShiftChangeRequest`, `TimeAccount`, `VacationBalance`, `Notification`, `PushSubscription`, `Client`, `Project`, `MonthClose`, `ExportJob`, `WebhookEndpoint`, `AutomationRule`
+
+---
+
 ## Design-Prinzipien
 
 ### SVG-Architektur
 
-Alle Icons und Illustrationen sind als reine TypeScript-SVG-Komponenten implementiert — **kein externer Icon-Pack** (kein lucide-react, kein Heroicons).
-
-- **Icons** (`src/components/icons/`): Typ-sicher über `SVGProps<SVGSVGElement>`, mit `<defs>`-Gradienten und eindeutigen IDs, `aria-hidden="true"` für Barrierefreiheit
-- **Illustrationen** (`src/components/svgs/`): Komplexe Szenen mit `useRef` + `ResizeObserver` für responsive Skalierung bei jeder Viewportgröße
+Alle Icons und Illustrationen sind als reine TypeScript-SVG-Komponenten implementiert — **kein externer Icon-Pack**.
 
 ### UI / UX
 
-- Connecteam-inspiriertes Design, angepasst an den deutschen Markt
-- Markenfarben: Violett-Palette (`#7C3AED` → `#A78BFA`) mit neutralen Grautönen
-- Glass-Effekte, subtile Animationen (`fadeInUp`, `fadeIn`), Grid-Pattern-Hintergründe
-- Landing-Page mit Hero, Feature-Sektionen, Benefits-Grid, FAQ-Akkordeon
+- Violett-Palette (`#7C3AED` → `#A78BFA`) mit neutralen Grautönen
+- Glass-Effekte, subtile Animationen, Grid-Pattern-Hintergründe
+- Landing-Page: Hero → Features → Pricing → Benefits → FAQ → CTA
 
 ### Datenbank
 
 - Prisma 7 mit PostgreSQL über Driver-Adapter (`@prisma/adapter-pg` + `pg.Pool`)
-- Modelle: `User` (Rollen: OWNER, ADMIN, MANAGER, EMPLOYEE), `Workspace`, `Employee`, `Location`, `Shift`, `Absence`
-- Deutsche Enum-Werte: `AbsenceType` → URLAUB, KRANK, FEIERTAG, SONSTIGES
+- Deutsche Enum-Werte: `AbsenceCategory` → URLAUB, KRANK, ELTERNZEIT, etc.
 
 ---
 
 ## Commit-Konventionen
 
-Dieses Projekt nutzt [Conventional Commits](https://www.conventionalcommits.org/) — erzwungen durch Husky + commitlint.
+[Conventional Commits](https://www.conventionalcommits.org/) — erzwungen durch Husky + commitlint.
 
 ```
 feat(scope): Neue Funktion hinzufügen
 fix(scope): Fehler beheben
 docs: Dokumentation aktualisieren
-style: Formatierung anpassen (kein Code-Effekt)
 refactor(scope): Code umstrukturieren
-perf(scope): Performance verbessern
-test(scope): Tests hinzufügen oder anpassen
 chore: Build-Prozess oder Tooling ändern
-ci: CI/CD-Konfiguration anpassen
-```
-
-### Beispiele
-
-```bash
-git commit -m "feat(schichtplan): Wochenansicht mit Drag-and-Drop"
-git commit -m "fix(auth): Session-Ablauf korrekt behandeln"
-git commit -m "docs: README mit Projektstruktur ergänzt"
-git commit -m "chore: Husky und commitlint konfiguriert"
 ```
 
 ---
 
 ## Skripte
 
-| Befehl          | Beschreibung                |
-| --------------- | --------------------------- |
-| `npm run dev`   | Entwicklungsserver starten  |
-| `npm run build` | Produktions-Build erstellen |
-| `npm start`     | Produktionsserver starten   |
-| `npm run lint`  | ESLint ausführen            |
+| Befehl                   | Beschreibung                  |
+| ------------------------ | ----------------------------- |
+| `npm run dev`            | Entwicklungsserver starten    |
+| `npm run build`          | Produktions-Build erstellen   |
+| `npm start`              | Produktionsserver starten     |
+| `npm run lint`           | ESLint ausführen              |
+| `npx prisma generate`    | Prisma-Client generieren      |
+| `npx prisma migrate dev` | Datenbank-Migration ausführen |
+| `npx prisma studio`      | Prisma Studio (DB-Browser)    |
 
 ---
 
 ## Lizenz
 
-Proprietär — © 2025 Shiftfy. Alle Rechte vorbehalten.
+Proprietär — © 2025–2026 Shiftfy. Alle Rechte vorbehalten.

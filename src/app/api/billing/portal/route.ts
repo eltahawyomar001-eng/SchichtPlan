@@ -3,15 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { getStripe } from "@/lib/stripe";
+import { getSubscription } from "@/lib/subscription";
 
 /**
  * POST /api/billing/portal
  * Creates a Stripe Customer Portal session so users can manage
- * their subscription, update payment methods, etc.
- *
- * Body: { customerId: string }
+ * their subscription, update payment methods, view invoices, etc.
  */
-export async function POST(req: Request) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -22,33 +22,27 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
+    const sub = await getSubscription(user.workspaceId);
+    if (!sub?.stripeCustomerId) {
       return NextResponse.json(
-        { error: "Stripe is not configured" },
-        { status: 501 },
+        { error: "No active subscription found" },
+        { status: 404 },
       );
     }
 
-    const Stripe = (await import("stripe")).default;
-    const stripe = new Stripe(stripeKey);
-
-    const { customerId } = await req.json();
-    if (!customerId) {
-      return NextResponse.json(
-        { error: "customerId is required" },
-        { status: 400 },
-      );
-    }
+    const stripe = getStripe();
 
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
+      customer: sub.stripeCustomerId,
       return_url: `${process.env.NEXTAUTH_URL}/einstellungen`,
     });
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
-    console.error("Portal error:", error);
-    return NextResponse.json({ error: "Portal failed" }, { status: 500 });
+    console.error("[Stripe] Portal error:", error);
+    return NextResponse.json(
+      { error: "Portal session failed" },
+      { status: 500 },
+    );
   }
 }

@@ -1,4 +1,4 @@
-# SchichtPlan — Intelligente Schichtplanung für Teams
+# Shiftfy — Intelligente Schichtplanung für Teams
 
 Moderne SaaS-Plattform zur Schichtplanung, Mitarbeiterverwaltung und Standortorganisation.
 Entwickelt für den deutschen Markt mit Next.js, Prisma und TypeScript.
@@ -77,7 +77,7 @@ schichtplan/
 │   │   ├── icons/                 # 28 SVG-Icon-Komponenten (TypeScript)
 │   │   │   ├── CalendarIcon.tsx
 │   │   │   ├── ClockIcon.tsx
-│   │   │   ├── SchichtPlanMark.tsx
+│   │   │   ├── ShiftfyMark.tsx
 │   │   │   ├── …                  # + 25 weitere
 │   │   │   └── index.ts           # Barrel-Export
 │   │   ├── svgs/                  # 4 SVG-Illustrationen (responsive)
@@ -173,4 +173,4 @@ git commit -m "chore: Husky und commitlint konfiguriert"
 
 ## Lizenz
 
-Proprietär — © 2025 SchichtPlan. Alle Rechte vorbehalten.
+Proprietär — © 2025 Shiftfy. Alle Rechte vorbehalten.

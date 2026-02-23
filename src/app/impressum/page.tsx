@@ -36,7 +36,7 @@ export default function ImpressumPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Kontakt
             </h2>
-            <p>E-Mail: kontakt@schichtplan.plan</p>
+            <p>E-Mail: kontakt@shiftfy.de</p>
           </section>
 
           <section>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SchichtPlan - Business & Investment Report Generator
+Shiftfy - Business & Investment Report Generator
 Generates a professional dual-language (DE/EN) PDF report
 covering product capabilities, gaps, architecture, and roadmap.
 """
@@ -357,7 +357,7 @@ ROADMAP = [
 # ─────────────────────────────────────────────
 
 class ReportPDF(FPDF):
-    """Custom PDF class with SchichtPlan branding."""
+    """Custom PDF class with Shiftfy branding."""
 
     BRAND_DARK = (15, 23, 42)       # slate-900
     BRAND_PRIMARY = (59, 130, 246)   # blue-500
@@ -387,7 +387,7 @@ class ReportPDF(FPDF):
             return  # cover page has its own header
         self.set_font("DejaVu", "B", 9)
         self.set_text_color(*self.BRAND_GRAY)
-        title = "SchichtPlan - Produktbericht" if self.lang == "de" else "SchichtPlan - Product Report"
+        title = "Shiftfy - Produktbericht" if self.lang == "de" else "Shiftfy - Product Report"
         self.cell(0, 8, title, align="L")
         self.cell(0, 8, TODAY, align="R", new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(*self.BRAND_PRIMARY)
@@ -400,9 +400,9 @@ class ReportPDF(FPDF):
         self.set_font("DejaVu", "", 8)
         self.set_text_color(*self.BRAND_GRAY)
         if self.lang == "de":
-            txt = f"SchichtPlan  |  Vertraulich  |  Seite {self.page_no()}/{{nb}}"
+            txt = f"Shiftfy  |  Vertraulich  |  Seite {self.page_no()}/{{nb}}"
         else:
-            txt = f"SchichtPlan  |  Confidential  |  Page {self.page_no()}/{{nb}}"
+            txt = f"Shiftfy  |  Confidential  |  Page {self.page_no()}/{{nb}}"
         self.cell(0, 10, txt, align="C")
 
     # ── Helpers ──
@@ -499,7 +499,7 @@ class ReportPDF(FPDF):
         self.set_y(45)
         self.set_font("DejaVu", "B", 36)
         self.set_text_color(*self.WHITE)
-        self.cell(0, 16, "SchichtPlan", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 16, "Shiftfy", align="C", new_x="LMARGIN", new_y="NEXT")
         self.set_font("DejaVu", "", 14)
         if self.lang == "de":
             self.cell(0, 8, "Intelligente Schichtplanung für den deutschen Markt", align="C", new_x="LMARGIN", new_y="NEXT")
@@ -549,7 +549,7 @@ class ReportPDF(FPDF):
         self._section_title("1", "Executive Summary")
         if self.lang == "de":
             self._body(
-                "SchichtPlan ist eine vollständig entwickelte SaaS-Lösung für die Schichtplanung, "
+                "Shiftfy ist eine vollständig entwickelte SaaS-Lösung für die Schichtplanung, "
                 "die speziell für den deutschen Markt konzipiert wurde. Die Plattform deckt den gesamten "
                 "Lebenszyklus der Personalschichtplanung ab: von der Mitarbeiter- und Standortverwaltung "
                 "über die Schichtplanung und Zeiterfassung bis hin zum Lohnexport im DATEV-Format."
@@ -576,7 +576,7 @@ class ReportPDF(FPDF):
             )
         else:
             self._body(
-                "SchichtPlan is a fully developed SaaS solution for shift scheduling, specifically designed "
+                "Shiftfy is a fully developed SaaS solution for shift scheduling, specifically designed "
                 "for the German market. The platform covers the complete lifecycle of workforce shift management: "
                 "from employee and location management, through shift planning and time tracking, to payroll "
                 "export in DATEV format."
@@ -794,7 +794,7 @@ class ReportPDF(FPDF):
         self._section_title("9", title)
         if self.lang == "de":
             self._body(
-                "SchichtPlan ist ein technisch ausgereiftes Produkt mit einer soliden Architektur "
+                "Shiftfy ist ein technisch ausgereiftes Produkt mit einer soliden Architektur "
                 "und einem umfassenden Funktionsumfang. Die Plattform adressiert ein klar definiertes "
                 "Marktsegment - die Schichtplanung für kleine und mittlere Unternehmen im deutschen Markt - "
                 "mit besonderem Fokus auf ArbZG-Konformitaet."
@@ -822,7 +822,7 @@ class ReportPDF(FPDF):
                 self._bullet(h)
         else:
             self._body(
-                "SchichtPlan is a technically mature product with a solid architecture "
+                "Shiftfy is a technically mature product with a solid architecture "
                 "and comprehensive feature set. The platform addresses a clearly defined "
                 "market segment - shift scheduling for small and medium enterprises in the German market - "
                 "with special focus on ArbZG (Working Time Act) compliance."
@@ -865,7 +865,7 @@ class ReportPDF(FPDF):
         self.section_conclusion()
 
         os.makedirs(OUTPUT_DIR, exist_ok=True)
-        filename = f"SchichtPlan_Report_{self.lang.upper()}_{TODAY.replace('.', '-')}.pdf"
+        filename = f"Shiftfy_Report_{self.lang.upper()}_{TODAY.replace('.', '-')}.pdf"
         path = os.path.join(OUTPUT_DIR, filename)
         self.output(path)
         return path
@@ -877,7 +877,7 @@ class ReportPDF(FPDF):
 
 def main():
     print("=" * 60)
-    print("  SchichtPlan Report Generator")
+    print("  Shiftfy Report Generator")
     print("=" * 60)
     print()
 

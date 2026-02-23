@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand palette — purple */
+  /* ── Brand palette — purple ── */
   --brand-50: #f5f3ff;
   --brand-100: #ede9fe;
   --brand-200: #ddd6fe;
@@ -13,7 +13,7 @@
   --brand-800: #5b21b6;
   --brand-900: #4c1d95;
 
-  /* Neutral */
+  /* ── Neutral ── */
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -25,25 +25,62 @@
   --gray-800: #1f2937;
   --gray-900: #111827;
 
-  /* Semantic */
+  /* ── Semantic (status) ── */
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --destructive: #ef4444;
+  --destructive-light: #fee2e2;
+  --info: #3b82f6;
+  --info-light: #dbeafe;
+
+  /* ── Accent (CTA / upgrade banners) ── */
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+
+  /* ── Surface / Layout ── */
   --background: #ffffff;
   --foreground: #111827;
+  --surface: #f8f7ff;
   --muted: #f9fafb;
   --muted-foreground: #6b7280;
   --border: #e5e7eb;
   --ring: #7c3aed;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --destructive: #ef4444;
+
+  /* ── Sidebar (dark indigo — premium feel) ── */
+  --sidebar-bg: #1e1b4b;
+  --sidebar-text: #e0e7ff;
+  --sidebar-text-muted: #a5b4fc;
+  --sidebar-hover: #312e81;
+  --sidebar-active: #7c3aed;
+  --sidebar-border: #3730a3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-destructive: var(--destructive);
+  --color-destructive-light: var(--destructive-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-text-muted: var(--sidebar-text-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
   --font-sans:
     var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;

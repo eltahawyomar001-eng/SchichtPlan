@@ -36,8 +36,8 @@ export default function BarrierefreiheitPage() {
             </h2>
             <p>
               Diese Erklärung zur Barrierefreiheit gilt für die Webanwendung
-              Shiftfy, erreichbar unter <strong>schichtplan.plan</strong>. Wir
-              sind bestrebt, unsere Webanwendung im Einklang mit dem{" "}
+              Shiftfy, erreichbar unter <strong>shiftfy.de</strong>. Wir sind
+              bestrebt, unsere Webanwendung im Einklang mit dem{" "}
               <strong>Barrierefreiheitsstärkungsgesetz (BFSG)</strong> sowie der{" "}
               <strong>Europäischen Norm EN 301 549</strong> und den{" "}
               <strong>
@@ -119,10 +119,10 @@ export default function BarrierefreiheitPage() {
             <p className="mt-2">
               E-Mail:{" "}
               <a
-                href="mailto:kontakt@schichtplan.plan"
+                href="mailto:kontakt@shiftfy.de"
                 className="text-violet-600 hover:text-violet-700 underline"
               >
-                kontakt@schichtplan.plan
+                kontakt@shiftfy.de
               </a>
             </p>
             <p className="mt-2">

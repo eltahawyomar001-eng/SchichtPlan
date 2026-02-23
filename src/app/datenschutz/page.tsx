@@ -58,7 +58,7 @@ export default function DatenschutzPage() {
               <br />
               Fulda, Deutschland
               <br />
-              E-Mail: kontakt@schichtplan.plan
+              E-Mail: kontakt@shiftfy.de
             </p>
             <p className="mt-2">
               Verantwortliche Stelle ist die natürliche oder juristische Person,
@@ -340,7 +340,7 @@ export default function DatenschutzPage() {
               Zur Ausübung Ihrer Rechte oder bei Fragen zum Datenschutz wenden
               Sie sich bitte an:
             </p>
-            <p className="mt-2">E-Mail: kontakt@schichtplan.plan</p>
+            <p className="mt-2">E-Mail: kontakt@shiftfy.de</p>
             <p className="mt-1 text-xs text-gray-500">
               Wir werden Ihr Anliegen schnellstmöglich, spätestens innerhalb
               eines Monats (Art. 12 Abs. 3 DSGVO), bearbeiten.

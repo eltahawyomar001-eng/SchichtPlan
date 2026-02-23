@@ -71,7 +71,7 @@ export async function GET(req: Request) {
       status: 200,
       headers: {
         "Content-Type": "text/calendar; charset=utf-8",
-        "Content-Disposition": "attachment; filename=schichtplan.ics",
+        "Content-Disposition": "attachment; filename=shiftfy-schichtplan.ics",
       },
     });
   } catch (error) {

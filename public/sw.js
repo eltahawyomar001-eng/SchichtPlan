@@ -13,13 +13,13 @@ sw.addEventListener("push", (event) => {
     body: data.body || "",
     icon: data.icon || "/android-chrome-192x192.png",
     badge: data.badge || "/favicon-32x32.png",
-    tag: data.tag || "schichtplan",
+    tag: data.tag || "shiftfy",
     data: { url: data.url || "/dashboard" },
     vibrate: [200, 100, 200],
     requireInteraction: false,
   };
 
-  event.waitUntil(sw.registration.showNotification(data.title || "SchichtPlan", options));
+  event.waitUntil(sw.registration.showNotification(data.title || "Shiftfy", options));
 });
 
 // Notification click handler
@@ -55,7 +55,7 @@ sw.addEventListener("pushsubscriptionchange", (event) => {
 });
 
 // Cache strategies for offline support
-const CACHE_NAME = "schichtplan-v1";
+const CACHE_NAME = "shiftfy-v1";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   "/",

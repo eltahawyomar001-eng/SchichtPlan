@@ -24,7 +24,7 @@ export function buildEmailHtml(params: {
   const ctaHref = link
     ? link.startsWith("http")
       ? link
-      : `${process.env.NEXTAUTH_URL || "https://app.schichtplan.de"}${link}`
+      : `${process.env.NEXTAUTH_URL || "https://app.shiftfy.de"}${link}`
     : null;
 
   const ctaBlock = ctaHref

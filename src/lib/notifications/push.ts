@@ -4,8 +4,7 @@ import { prisma } from "@/lib/db";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
-const VAPID_SUBJECT =
-  process.env.VAPID_SUBJECT || "mailto:admin@schichtplan.de";
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@shiftfy.de";
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
@@ -37,7 +36,7 @@ export async function sendPushNotification(params: {
       title: params.title,
       body: params.body,
       url: params.url || "/dashboard",
-      tag: params.tag || "schichtplan",
+      tag: params.tag || "shiftfy",
       icon: "/android-chrome-192x192.png",
       badge: "/favicon-32x32.png",
     });

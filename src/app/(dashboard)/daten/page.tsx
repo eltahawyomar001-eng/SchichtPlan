@@ -79,7 +79,7 @@ export default function DatenSeite() {
         const a = document.createElement("a");
         a.href = url;
         const ext = exportFormat === "csv" ? "csv" : "xlsx";
-        a.download = `schichtplan-${exportType}.${ext}`;
+        a.download = `shiftfy-${exportType}.${ext}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

@@ -173,7 +173,7 @@ export async function GET() {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="schichtplan-datenexport-${new Date().toISOString().slice(0, 10)}.json"`,
+        "Content-Disposition": `attachment; filename="shiftfy-datenexport-${new Date().toISOString().slice(0, 10)}.json"`,
       },
     });
   } catch (error) {

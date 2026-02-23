@@ -54,7 +54,7 @@ function PricingContent() {
         t("featureEnt5"),
       ],
       cta: t("contactUs"),
-      href: "mailto:info@schichtplan.app",
+      href: "mailto:info@shiftfy.de",
       highlighted: false,
     },
   ];

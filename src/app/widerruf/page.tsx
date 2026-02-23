@@ -60,7 +60,7 @@ export default function WiderrufPage() {
               <br />
               Fulda, Deutschland
               <br />
-              E-Mail: kontakt@schichtplan.plan
+              E-Mail: kontakt@shiftfy.de
             </p>
             <p className="mt-2">
               Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die
@@ -130,7 +130,7 @@ export default function WiderrufPage() {
                 <br />
                 Shiftfy — Omar Rageh
                 <br />
-                E-Mail: kontakt@schichtplan.plan
+                E-Mail: kontakt@shiftfy.de
               </p>
               <p>
                 Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*)

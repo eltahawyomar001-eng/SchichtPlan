@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SchichtPlan – Full App Audit Report Generator
+Shiftfy – Full App Audit Report Generator
 Generates a professional bilingual (DE/EN) PDF report.
 """
 
@@ -44,7 +44,7 @@ GRAY_500 = HexColor("#6b7280")
 GRAY_700 = HexColor("#374151")
 GRAY_900 = HexColor("#111827")
 
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "SchichtPlan_Audit_Report.pdf")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "Shiftfy_Audit_Report.pdf")
 
 # ─── Styles ──────────────────────────────────────────────────────
 
@@ -558,7 +558,7 @@ def draw_page_footer(canvas, doc):
     canvas.setFillColor(GRAY_500)
     canvas.drawCentredString(
         w / 2, 10 * mm,
-        f"SchichtPlan Audit Report  •  {datetime.now().strftime('%d.%m.%Y')}  •  Seite / Page {doc.page}",
+        f"Shiftfy Audit Report  •  {datetime.now().strftime('%d.%m.%Y')}  •  Seite / Page {doc.page}",
     )
 
 
@@ -580,7 +580,7 @@ def build_pdf():
     # ── Cover Page ───────────────────────────────────────────────
 
     story.append(Spacer(1, 100 * mm))
-    story.append(Paragraph("SchichtPlan", styles["title"]))
+    story.append(Paragraph("Shiftfy", styles["title"]))
     story.append(Paragraph("App-Audit-Bericht / App Audit Report", styles["subtitle"]))
     story.append(Spacer(1, 8 * mm))
     story.append(
@@ -635,7 +635,7 @@ def build_pdf():
     story.append(Paragraph("<b>DE:</b>", styles["body"]))
     story.append(
         Paragraph(
-            f"SchichtPlan ist eine <b>Schichtplanungs-SaaS</b> für den deutschen Markt, "
+            f"Shiftfy ist eine <b>Schichtplanungs-SaaS</b> für den deutschen Markt, "
             f"gebaut mit Next.js 16, TypeScript, Prisma und PostgreSQL. "
             f"Die App ist als <b>Progressive Web App (PWA)</b> installierbar und "
             f"vollständig in Deutsch und Englisch lokalisiert.",
@@ -657,7 +657,7 @@ def build_pdf():
     story.append(Paragraph("<b>EN:</b>", styles["body"]))
     story.append(
         Paragraph(
-            f"SchichtPlan is a <b>shift scheduling SaaS</b> for the German market, "
+            f"Shiftfy is a <b>shift scheduling SaaS</b> for the German market, "
             f"built with Next.js 16, TypeScript, Prisma, and PostgreSQL. "
             f"The app is installable as a <b>Progressive Web App (PWA)</b> and "
             f"fully localized in German and English.",

@@ -103,7 +103,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error("2FA_REQUIRED");
           }
 
-          // Try TOTP validation first
+          // Try TOTP validation first (window: 2 = ±60 s tolerance)
           const secret = OTPAuth.Secret.fromHex(user.twoFactorSecret);
           const totp = new OTPAuth.TOTP({
             issuer: "Shiftfy",
@@ -113,11 +113,11 @@ export const authOptions: NextAuthOptions = {
             period: 30,
             secret,
           });
-          const delta = totp.validate({ token: totpCode, window: 1 });
+          const delta = totp.validate({ token: totpCode, window: 2 });
 
           if (delta === null) {
             // TOTP failed — try recovery code
-            const recoveryCodes = (user as any).twoFactorRecoveryCodes;  
+            const recoveryCodes = (user as any).twoFactorRecoveryCodes;
             if (recoveryCodes) {
               const codes: string[] = JSON.parse(recoveryCodes);
               const hashedMatch = await findMatchingRecoveryCode(
@@ -127,7 +127,7 @@ export const authOptions: NextAuthOptions = {
               if (hashedMatch !== null) {
                 // Remove used recovery code
                 codes.splice(hashedMatch, 1);
-                 
+
                 await (prisma.user as any).update({
                   where: { id: user.id },
                   data: {

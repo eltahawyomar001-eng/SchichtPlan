@@ -57,8 +57,9 @@ export async function GET(req: Request) {
 
     const user = session.user as SessionUser;
 
-    // If query param ?status=1, return current 2FA state
     const url = new URL(req.url);
+
+    // If query param ?status=1, return current 2FA state only
     if (url.searchParams.get("status") === "1") {
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
@@ -69,17 +70,33 @@ export async function GET(req: Request) {
       });
     }
 
-    // Generate new secret and QR code for setup
-    const secret = generateSecret();
+    // Check if there's already a pending secret (2FA not yet enabled).
+    // Reuse it to prevent race conditions where multiple GET calls
+    // overwrite the DB secret while the QR code shown has the old one.
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { twoFactorSecret: true, twoFactorEnabled: true },
+    });
+
+    const forceNew = url.searchParams.get("force") === "1";
+    const existingSecret =
+      dbUser?.twoFactorSecret && !dbUser.twoFactorEnabled && !forceNew
+        ? dbUser.twoFactorSecret
+        : null;
+
+    const secret = existingSecret ?? generateSecret();
+
     const totp = buildTOTP(secret, user.email);
     const otpauthUrl = totp.toString();
     const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
 
-    // Store secret temporarily (2FA not yet enabled)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { twoFactorSecret: secret },
-    });
+    // Only write to DB if we generated a new secret
+    if (!existingSecret) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { twoFactorSecret: secret },
+      });
+    }
 
     return NextResponse.json({
       secret,
@@ -116,9 +133,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Setup 2FA first" }, { status: 400 });
     }
 
-    // Validate the TOTP code
+    // Validate the TOTP code (window: 2 = ±60 s tolerance)
     const totp = buildTOTP(dbUser.twoFactorSecret, user.email);
-    const delta = totp.validate({ token: code, window: 1 });
+    const delta = totp.validate({ token: code, window: 2 });
     if (delta === null) {
       return NextResponse.json({ error: "Invalid code" }, { status: 400 });
     }

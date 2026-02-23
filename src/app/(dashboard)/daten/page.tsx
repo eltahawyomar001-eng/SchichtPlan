@@ -78,7 +78,12 @@ export default function DatenSeite() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        const ext = exportFormat === "csv" ? "csv" : "xlsx";
+        const ext =
+          exportFormat === "csv"
+            ? "csv"
+            : exportFormat === "pdf"
+              ? "pdf"
+              : "xlsx";
         a.download = `shiftfy-${exportType}.${ext}`;
         document.body.appendChild(a);
         a.click();
@@ -184,6 +189,7 @@ export default function DatenSeite() {
               >
                 <option value="xlsx">Excel (.xlsx)</option>
                 <option value="csv">CSV (.csv)</option>
+                <option value="pdf">PDF (.pdf)</option>
               </select>
             </div>
             <div>

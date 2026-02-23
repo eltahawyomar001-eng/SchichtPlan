@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { toIndustrialHours } from "@/lib/time-utils";
+import { requirePlanFeature } from "@/lib/subscription";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
 // Returns a DATEV-compatible CSV for payroll
@@ -27,6 +28,10 @@ export async function GET(req: Request) {
         { status: 403 },
       );
     }
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(workspaceId, "datevExport");
+    if (planGate) return planGate;
 
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("start");

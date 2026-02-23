@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requirePlanFeature } from "@/lib/subscription";
 import crypto from "crypto";
 
 /** GET /api/webhooks — list all webhook endpoints */
@@ -22,6 +23,10 @@ export async function GET() {
 
     const forbidden = requirePermission(user, "webhooks", "read");
     if (forbidden) return forbidden;
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(user.workspaceId!, "apiWebhooks");
+    if (planGate) return planGate;
 
     const hooks = await (prisma as any).webhookEndpoint.findMany({
       where: { workspaceId: user.workspaceId },
@@ -50,6 +55,10 @@ export async function POST(req: Request) {
 
     const forbidden = requirePermission(user, "webhooks", "create");
     if (forbidden) return forbidden;
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(user.workspaceId!, "apiWebhooks");
+    if (planGate) return planGate;
 
     const { url, events } = await req.json();
 

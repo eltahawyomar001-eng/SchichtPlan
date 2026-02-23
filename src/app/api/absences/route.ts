@@ -8,6 +8,7 @@ import {
   tryAutoApproveAbsence,
   createSystemNotification,
 } from "@/lib/automations";
+import { requirePlanFeature } from "@/lib/subscription";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
 export async function GET(req: Request) {
@@ -69,6 +70,10 @@ export async function POST(req: Request) {
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(workspaceId, "absenceManagement");
+    if (planGate) return planGate;
 
     const body = await req.json();
 

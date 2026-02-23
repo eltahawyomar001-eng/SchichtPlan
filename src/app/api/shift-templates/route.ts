@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requirePlanFeature } from "@/lib/subscription";
 
 export async function GET() {
   try {
@@ -53,6 +54,10 @@ export async function POST(req: Request) {
 
     const forbidden = requirePermission(user, "shifts", "create");
     if (forbidden) return forbidden;
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(workspaceId, "shiftTemplates");
+    if (planGate) return planGate;
 
     const { name, startTime, endTime, color, locationId } = await req.json();
 

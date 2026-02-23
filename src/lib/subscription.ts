@@ -1,5 +1,6 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { PLANS, type PlanId } from "@/lib/stripe";
+import { PLANS, type PlanId, type PlanConfig } from "@/lib/stripe";
 
 /* ═══════════════════════════════════════════════════════════════
    Subscription service — database operations
@@ -208,4 +209,107 @@ function mapStripeStatus(status: string): PrismaSubscriptionStatus {
     paused: "PAUSED",
   };
   return map[status] ?? "ACTIVE";
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Feature gating — server-side enforcement
+   ═══════════════════════════════════════════════════════════════ */
+
+export type FeatureKey = keyof PlanConfig["limits"];
+
+/**
+ * Get the plan config for a workspace. Falls back to STARTER.
+ */
+export async function getWorkspacePlan(
+  workspaceId: string,
+): Promise<PlanConfig> {
+  const sub = await getSubscription(workspaceId);
+  if (!sub) return PLANS.starter;
+
+  // Only active/trialing subscriptions unlock paid features
+  const activeStatuses = ["ACTIVE", "TRIALING"];
+  if (!activeStatuses.includes(sub.status)) return PLANS.starter;
+
+  const planId = sub.plan.toLowerCase() as PlanId;
+  return PLANS[planId] ?? PLANS.starter;
+}
+
+/**
+ * Check if a workspace has access to a boolean feature.
+ */
+export async function canUseFeature(
+  workspaceId: string,
+  feature: FeatureKey,
+): Promise<boolean> {
+  const plan = await getWorkspacePlan(workspaceId);
+  const value = plan.limits[feature];
+  if (typeof value === "boolean") return value;
+  // Numeric limits always "available" — use canAddEmployee/canAddLocation
+  return true;
+}
+
+/**
+ * Server-side guard. Returns a 403 NextResponse if the feature is gated,
+ * or null if access is allowed. Use in API routes:
+ *
+ *   const denied = await requirePlanFeature(workspaceId, "datevExport");
+ *   if (denied) return denied;
+ */
+export async function requirePlanFeature(
+  workspaceId: string,
+  feature: FeatureKey,
+): Promise<NextResponse | null> {
+  const allowed = await canUseFeature(workspaceId, feature);
+  if (allowed) return null;
+
+  return NextResponse.json(
+    {
+      error: "PLAN_LIMIT",
+      message: `Your current plan does not include this feature. Please upgrade to access it.`,
+      feature,
+    },
+    { status: 403 },
+  );
+}
+
+/**
+ * Server-side guard for employee creation. Returns 403 if limit reached.
+ */
+export async function requireEmployeeSlot(
+  workspaceId: string,
+): Promise<NextResponse | null> {
+  const allowed = await canAddEmployee(workspaceId);
+  if (allowed) return null;
+
+  const plan = await getWorkspacePlan(workspaceId);
+  return NextResponse.json(
+    {
+      error: "PLAN_LIMIT",
+      message: `You have reached the maximum of ${plan.limits.maxEmployees} employees on your current plan. Please upgrade to add more.`,
+      feature: "maxEmployees",
+      limit: plan.limits.maxEmployees,
+    },
+    { status: 403 },
+  );
+}
+
+/**
+ * Server-side guard for location creation. Returns 403 if limit reached.
+ */
+export async function requireLocationSlot(
+  workspaceId: string,
+): Promise<NextResponse | null> {
+  const allowed = await canAddLocation(workspaceId);
+  if (allowed) return null;
+
+  const plan = await getWorkspacePlan(workspaceId);
+  return NextResponse.json(
+    {
+      error: "PLAN_LIMIT",
+      message: `You have reached the maximum of ${plan.limits.maxLocations} locations on your current plan. Please upgrade to add more.`,
+      feature: "maxLocations",
+      limit: plan.limits.maxLocations,
+    },
+    { status: 403 },
+  );
 }

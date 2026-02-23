@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requirePlanFeature } from "@/lib/subscription";
 import ExcelJS from "exceljs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -26,6 +27,13 @@ export async function GET(req: Request) {
 
     const forbidden = requirePermission(user, "reports", "read");
     if (forbidden) return forbidden;
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(
+      user.workspaceId!,
+      "csvPdfExport",
+    );
+    if (planGate) return planGate;
 
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "shifts";

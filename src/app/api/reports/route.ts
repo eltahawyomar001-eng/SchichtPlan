@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requirePlanFeature } from "@/lib/subscription";
 
 /**
  * GET /api/reports?start=2025-01-01&end=2025-01-31
@@ -25,6 +26,10 @@ export async function GET(req: Request) {
     // Only management can view reports
     const forbidden = requirePermission(user, "employees", "read");
     if (forbidden) return forbidden;
+
+    // Check plan feature
+    const planGate = await requirePlanFeature(workspaceId, "analytics");
+    if (planGate) return planGate;
 
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("start");
@@ -62,7 +67,6 @@ export async function GET(req: Request) {
       { name: string; hours: number; shifts: number }
     > = {};
 
-     
     let openShifts = 0;
     let nightShifts = 0;
     let holidayShifts = 0;

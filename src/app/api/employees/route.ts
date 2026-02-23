@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requireEmployeeSlot } from "@/lib/subscription";
 
 export async function GET() {
   try {
@@ -45,6 +46,10 @@ export async function POST(req: Request) {
     // Only OWNER, ADMIN, MANAGER can create employees
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
+
+    // Check plan limit
+    const planLimit = await requireEmployeeSlot(workspaceId);
+    if (planLimit) return planLimit;
 
     const body = await req.json();
     const {

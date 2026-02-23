@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requireLocationSlot } from "@/lib/subscription";
 
 export async function GET() {
   try {
@@ -45,6 +46,10 @@ export async function POST(req: Request) {
     // Only OWNER, ADMIN, MANAGER can create locations
     const forbidden = requirePermission(user, "locations", "create");
     if (forbidden) return forbidden;
+
+    // Check plan limit
+    const planLimit = await requireLocationSlot(workspaceId);
+    if (planLimit) return planLimit;
 
     const { name, address } = await req.json();
 

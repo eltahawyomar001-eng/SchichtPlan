@@ -7,17 +7,16 @@ import { useTranslations } from "next-intl";
 import {
   ShiftfyMark,
   CalendarIcon,
-  SendIcon,
-  UsersIcon,
-  BarChartIcon,
+  ClockIcon,
   CheckCircleIcon,
   ZapIcon,
   ShieldCheckIcon,
   ArrowRightIcon,
   ChevronRightIcon,
-  StarIcon,
   MenuIcon,
   XIcon,
+  DownloadIcon,
+  MapPinIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { CookieSettingsButton } from "@/components/cookie-banner";
@@ -373,15 +372,15 @@ function HeroSection() {
   );
 }
 
-/** Inline SVG mockup showing a simplified Shiftfy dashboard */
+/** Inline SVG mockup showing a simplified Shiftfy time-tracking dashboard */
 function HeroMockup() {
   const t = useTranslations("landing");
-  const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-  const shifts = [
-    { name: "Anna M.", shifts: [1, 1, 0, 1, 1, 0, 0], color: "#7C3AED" },
-    { name: "Lukas B.", shifts: [0, 1, 1, 1, 0, 1, 0], color: "#6D28D9" },
-    { name: "Sara K.", shifts: [1, 0, 1, 0, 1, 1, 0], color: "#8B5CF6" },
-    { name: "Tom W.", shifts: [0, 0, 1, 1, 1, 0, 1], color: "#A78BFA" },
+
+  const entries = [
+    { name: "Anna M.", time: "08:00 – 16:30", net: "7h 45m", status: "✓" },
+    { name: "Lukas B.", time: "09:15 – …", net: "live", status: "●" },
+    { name: "Sara K.", time: "06:00 – 14:00", net: "7h 30m", status: "✓" },
+    { name: "Tom W.", time: "—", net: "—", status: "○" },
   ];
 
   return (
@@ -411,7 +410,7 @@ function HeroMockup() {
           <div className="grid grid-cols-3 gap-3 mb-5">
             <div className="rounded-xl bg-violet-50 p-3 text-center">
               <div className="text-xl sm:text-2xl font-bold text-violet-700">
-                24
+                16
               </div>
               <div className="text-[10px] sm:text-xs text-violet-500 font-medium mt-0.5">
                 {t("heroMockupShifts")}
@@ -435,43 +434,48 @@ function HeroMockup() {
             </div>
           </div>
 
-          {/* Mini schedule grid */}
+          {/* Time tracking table */}
           <div className="rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-8 bg-gray-50 text-[10px] sm:text-xs font-semibold text-gray-500">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] bg-gray-50 text-[10px] sm:text-xs font-semibold text-gray-500">
               <div className="px-2 sm:px-3 py-2">{t("heroMockupTeam")}</div>
-              {days.map((d) => (
-                <div key={d} className="px-1 py-2 text-center">
-                  {d}
-                </div>
-              ))}
+              <div className="px-2 sm:px-3 py-2 text-center">Zeit</div>
+              <div className="px-2 sm:px-3 py-2 text-center">Netto</div>
+              <div className="px-2 sm:px-3 py-2 text-center w-8" />
             </div>
             {/* Rows */}
-            {shifts.map((row) => (
+            {entries.map((row) => (
               <div
                 key={row.name}
-                className="grid grid-cols-8 border-t border-gray-50 items-center"
+                className="grid grid-cols-[1fr_auto_auto_auto] border-t border-gray-50 items-center"
               >
                 <div className="px-2 sm:px-3 py-2.5 text-xs font-medium text-gray-700 truncate">
                   {row.name}
                 </div>
-                {row.shifts.map((s, i) => (
-                  <div key={i} className="px-1 py-2 flex justify-center">
-                    {s ? (
-                      <div
-                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center"
-                        style={{ backgroundColor: `${row.color}18` }}
-                      >
-                        <div
-                          className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
-                          style={{ backgroundColor: row.color }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-6 h-6 sm:w-7 sm:h-7" />
-                    )}
-                  </div>
-                ))}
+                <div className="px-2 sm:px-3 py-2.5 text-xs text-gray-500 text-center whitespace-nowrap">
+                  {row.time}
+                </div>
+                <div
+                  className={`px-2 sm:px-3 py-2.5 text-xs font-semibold text-center whitespace-nowrap ${row.net === "live" ? "text-emerald-600" : "text-gray-700"}`}
+                >
+                  {row.net === "live" ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      4h 12m
+                    </span>
+                  ) : (
+                    row.net
+                  )}
+                </div>
+                <div className="px-2 sm:px-3 py-2.5 text-center text-xs w-8">
+                  {row.status === "✓" ? (
+                    <span className="text-emerald-500">✓</span>
+                  ) : row.status === "●" ? (
+                    <span className="text-emerald-500">●</span>
+                  ) : (
+                    <span className="text-gray-300">○</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -506,13 +510,13 @@ function HeroMockup() {
 
 function TrustedByBar() {
   const t = useTranslations("landing");
-  // Placeholder logos rendered as SVG text for now
-  const companies = [
-    "Backwerk",
-    "Café Milano",
-    "GastroHaus",
-    "ShiftPro",
-    "TeamServe",
+
+  const industries = [
+    { label: "Gastronomie", icon: "🍽️" },
+    { label: "Einzelhandel", icon: "🛒" },
+    { label: "Pflege", icon: "🏥" },
+    { label: "Handwerk", icon: "🔧" },
+    { label: "Logistik", icon: "📦" },
   ];
 
   return (
@@ -521,13 +525,14 @@ function TrustedByBar() {
         <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
           {t("trustedBy")}
         </p>
-        <div className="flex items-center justify-center gap-6 sm:gap-12 flex-wrap opacity-40">
-          {companies.map((name) => (
+        <div className="flex items-center justify-center gap-6 sm:gap-12 flex-wrap">
+          {industries.map((item) => (
             <span
-              key={name}
-              className="text-xl font-bold text-gray-400 tracking-tight"
+              key={item.label}
+              className="flex items-center gap-2 text-base font-semibold text-gray-400 tracking-tight"
             >
-              {name}
+              <span>{item.icon}</span>
+              {item.label}
             </span>
           ))}
         </div>
@@ -555,7 +560,7 @@ function FeatureSection({
   reversed: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const stepIcons = [CalendarIcon, SendIcon, UsersIcon, BarChartIcon];
+  const stepIcons = [ClockIcon, CheckCircleIcon, CalendarIcon, DownloadIcon];
   const StepIcon = stepIcons[step - 1];
 
   return (
@@ -741,12 +746,12 @@ function BenefitsSection() {
 
   const benefits = [
     {
-      icon: ZapIcon,
+      icon: ClockIcon,
       title: t("benefit1Title"),
       desc: t("benefit1Desc"),
     },
     {
-      icon: UsersIcon,
+      icon: MapPinIcon,
       title: t("benefit2Title"),
       desc: t("benefit2Desc"),
     },
@@ -756,7 +761,7 @@ function BenefitsSection() {
       desc: t("benefit3Desc"),
     },
     {
-      icon: BarChartIcon,
+      icon: DownloadIcon,
       title: t("benefit4Title"),
       desc: t("benefit4Desc"),
     },
@@ -766,7 +771,7 @@ function BenefitsSection() {
       desc: t("benefit5Desc"),
     },
     {
-      icon: StarIcon,
+      icon: ZapIcon,
       title: t("benefit6Title"),
       desc: t("benefit6Desc"),
     },

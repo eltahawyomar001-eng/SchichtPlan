@@ -23,7 +23,7 @@ function PricingContent() {
         t("featureFree6"),
       ],
       cta: t("getStarted"),
-      href: "/register",
+      href: "/register?plan=starter",
       highlighted: false,
     },
     {
@@ -40,7 +40,7 @@ function PricingContent() {
         t("featurePro6"),
       ],
       cta: t("startTrial"),
-      href: "/register",
+      href: "/register?plan=team",
       highlighted: true,
     },
     {
@@ -58,7 +58,7 @@ function PricingContent() {
         t("featureEnt7"),
       ],
       cta: t("startTrial"),
-      href: "/register",
+      href: "/register?plan=business",
       highlighted: false,
     },
     {

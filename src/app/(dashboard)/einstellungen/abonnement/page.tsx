@@ -110,6 +110,20 @@ function BillingContent() {
     fetchSubscription();
   }, [fetchSubscription]);
 
+  // Auto-trigger checkout if user came from landing page with a plan
+  useEffect(() => {
+    const storedPlan = localStorage.getItem("shiftfy_selected_plan");
+    if (storedPlan && (storedPlan === "team" || storedPlan === "business")) {
+      localStorage.removeItem("shiftfy_selected_plan");
+      // Small delay to let subscription data load first
+      const timer = setTimeout(() => {
+        handleCheckout(storedPlan);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Plan options
   const plans: PlanOption[] = [
     {

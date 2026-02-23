@@ -26,6 +26,7 @@ function RegisterForm() {
 
   const invitationToken = searchParams.get("invitation") || "";
   const invitedEmail = searchParams.get("email") || "";
+  const selectedPlan = searchParams.get("plan") || "";
   const isInvitation = !!invitationToken;
 
   const [formData, setFormData] = useState({
@@ -84,6 +85,9 @@ function RegisterForm() {
       }
 
       // Redirect to verification page (check your email)
+      if (selectedPlan && selectedPlan !== "starter") {
+        localStorage.setItem("shiftfy_selected_plan", selectedPlan);
+      }
       router.push("/verifizierung");
     } catch {
       setError(t("genericError"));

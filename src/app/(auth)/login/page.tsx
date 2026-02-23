@@ -72,7 +72,13 @@ function LoginForm() {
       }
       setLoading(false);
     } else {
-      router.push(callbackUrl);
+      // If user selected a plan from pricing, redirect to billing page
+      const storedPlan = localStorage.getItem("shiftfy_selected_plan");
+      if (storedPlan) {
+        router.push("/einstellungen/abonnement");
+      } else {
+        router.push(callbackUrl);
+      }
     }
   };
 

@@ -78,7 +78,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error("2FA_REQUIRED");
           }
           const totp = new OTPAuth.TOTP({
-            issuer: "SchichtPlan",
+            issuer: "Shiftfy",
             label: user.email,
             algorithm: "SHA1",
             digits: 6,

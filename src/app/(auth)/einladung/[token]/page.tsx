@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
-  SchichtPlanMark,
+  ShiftfyMark,
   CheckCircleIcon,
   UsersIcon,
   AlertCircleIcon,
@@ -150,8 +150,8 @@ export default function EinladungPage() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
-            <SchichtPlanMark className="h-8 w-8" />
-            <span className="text-lg font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-8 w-8" />
+            <span className="text-lg font-bold text-gray-900">Shiftfy</span>
           </Link>
           <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
             <AlertCircleIcon className="h-7 w-7 text-red-500" />
@@ -187,8 +187,8 @@ export default function EinladungPage() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
-            <SchichtPlanMark className="h-8 w-8" />
-            <span className="text-lg font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-8 w-8" />
+            <span className="text-lg font-bold text-gray-900">Shiftfy</span>
           </Link>
           <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
             <CheckCircleIcon className="h-7 w-7 text-green-500" />
@@ -214,8 +214,8 @@ export default function EinladungPage() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
-            <SchichtPlanMark className="h-8 w-8" />
-            <span className="text-lg font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-8 w-8" />
+            <span className="text-lg font-bold text-gray-900">Shiftfy</span>
           </Link>
           <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-50">
             <UsersIcon className="h-7 w-7 text-violet-600" />

@@ -5,7 +5,7 @@ import { getRequestConfig } from "next-intl/server";
  * Request-scoped i18n configuration.
  *
  * Reads the user's preferred locale from the "locale" cookie.
- * Falls back to "de" (German) since SchichtPlan is a German-market SaaS.
+ * Falls back to "de" (German) since Shiftfy is a German-market SaaS.
  *
  * Supported locales: "de" | "en"
  */

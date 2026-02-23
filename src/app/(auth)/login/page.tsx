@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
-  SchichtPlanMark,
+  ShiftfyMark,
   MailIcon,
   LockIcon,
   EyeIcon,
@@ -110,13 +110,13 @@ function LoginForm() {
         <div className="relative z-10 max-w-md px-10 text-center">
           {/* Brand mark large */}
           <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-            <SchichtPlanMark className="h-14 w-14" />
+            <ShiftfyMark className="h-14 w-14" />
           </div>
 
           <h2 className="text-3xl font-bold text-white">
             {t("welcomeBack")}
             <br />
-            <span className="text-white/90">SchichtPlan.</span>
+            <span className="text-white/90">Shiftfy.</span>
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-white/70">
             {t("teamWaiting")}
@@ -166,8 +166,8 @@ function LoginForm() {
             href="/"
             className="mb-8 inline-flex items-center gap-3 lg:hidden"
           >
-            <SchichtPlanMark className="h-10 w-10" />
-            <span className="text-xl font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-10 w-10" />
+            <span className="text-xl font-bold text-gray-900">Shiftfy</span>
           </Link>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">

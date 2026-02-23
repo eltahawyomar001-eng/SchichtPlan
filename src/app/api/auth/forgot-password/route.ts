@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       await sendEmail({
         to: email,
         type: "password-reset",
-        title: "Passwort zurücksetzen — SchichtPlan",
+        title: "Passwort zurücksetzen — Shiftfy",
         message: `Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den folgenden Link, um ein neues Passwort zu vergeben. Dieser Link ist 1 Stunde gültig. Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.`,
         link: resetUrl,
         locale: "de",

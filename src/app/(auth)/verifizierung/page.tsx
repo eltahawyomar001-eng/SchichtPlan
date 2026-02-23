@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
-  SchichtPlanMark,
+  ShiftfyMark,
   CheckCircleIcon,
   AlertTriangleIcon,
   MailIcon,
@@ -77,8 +77,8 @@ function VerifizierungContent() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link href="/" className="mb-8 flex items-center justify-center gap-3">
-          <SchichtPlanMark className="h-10 w-10" />
-          <span className="text-xl font-bold text-gray-900">SchichtPlan</span>
+          <ShiftfyMark className="h-10 w-10" />
+          <span className="text-xl font-bold text-gray-900">Shiftfy</span>
         </Link>
 
         <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-100 text-center">

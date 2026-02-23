@@ -17,14 +17,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "SchichtPlan – Intelligente Schichtplanung",
+  title: "Shiftfy – Intelligente Schichtplanung",
   description:
     "Die einfachste Schichtplanungs-Software für Sicherheitsdienste, Gastronomie und Dienstleister.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SchichtPlan",
+    title: "Shiftfy",
   },
   icons: {
     icon: [

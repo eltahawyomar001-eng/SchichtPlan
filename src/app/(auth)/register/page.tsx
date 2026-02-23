@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
-  SchichtPlanMark,
+  ShiftfyMark,
   UserIcon,
   MailIcon,
   BuildingIcon,
@@ -107,8 +107,8 @@ function RegisterForm() {
         <div className="mx-auto w-full max-w-[460px]">
           {/* Logo + headline */}
           <Link href="/" className="mb-8 inline-flex items-center gap-3">
-            <SchichtPlanMark className="h-10 w-10" />
-            <span className="text-xl font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-10 w-10" />
+            <span className="text-xl font-bold text-gray-900">Shiftfy</span>
           </Link>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
-  SchichtPlanMark,
+  ShiftfyMark,
   LockIcon,
   EyeIcon,
   EyeOffIcon,
@@ -29,7 +29,7 @@ function ResetPasswordForm() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md text-center">
-          <SchichtPlanMark className="mx-auto mb-4 h-12 w-12" />
+          <ShiftfyMark className="mx-auto mb-4 h-12 w-12" />
           <h1 className="text-xl font-bold text-gray-900">
             {t("invalidResetLink")}
           </h1>
@@ -90,8 +90,8 @@ function ResetPasswordForm() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
-            <SchichtPlanMark className="h-10 w-10" />
-            <span className="text-xl font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-10 w-10" />
+            <span className="text-xl font-bold text-gray-900">Shiftfy</span>
           </Link>
         </div>
 

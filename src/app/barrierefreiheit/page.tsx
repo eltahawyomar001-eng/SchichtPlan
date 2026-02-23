@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SchichtPlanMark } from "@/components/icons";
+import { ShiftfyMark } from "@/components/icons";
 
 export default function BarrierefreiheitPage() {
   return (
@@ -7,7 +7,7 @@ export default function BarrierefreiheitPage() {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-[max(1rem,env(safe-area-inset-top))] flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <SchichtPlanMark className="h-7 w-7" />
+            <ShiftfyMark className="h-7 w-7" />
             <span className="text-lg font-bold text-gray-900">
               Schicht<span className="text-gradient">Plan</span>
             </span>
@@ -36,8 +36,8 @@ export default function BarrierefreiheitPage() {
             </h2>
             <p>
               Diese Erklärung zur Barrierefreiheit gilt für die Webanwendung
-              SchichtPlan, erreichbar unter <strong>schichtplan.plan</strong>.
-              Wir sind bestrebt, unsere Webanwendung im Einklang mit dem{" "}
+              Shiftfy, erreichbar unter <strong>schichtplan.plan</strong>. Wir
+              sind bestrebt, unsere Webanwendung im Einklang mit dem{" "}
               <strong>Barrierefreiheitsstärkungsgesetz (BFSG)</strong> sowie der{" "}
               <strong>Europäischen Norm EN 301 549</strong> und den{" "}
               <strong>
@@ -159,10 +159,10 @@ export default function BarrierefreiheitPage() {
               6. Technische Informationen
             </h2>
             <p>
-              SchichtPlan ist eine webbasierte Anwendung und funktioniert in
-              allen modernen Browsern (Chrome, Firefox, Safari, Edge). Die
-              Anwendung ist responsive und kann auf Desktop, Tablet und
-              Mobilgeräten genutzt werden.
+              Shiftfy ist eine webbasierte Anwendung und funktioniert in allen
+              modernen Browsern (Chrome, Firefox, Safari, Edge). Die Anwendung
+              ist responsive und kann auf Desktop, Tablet und Mobilgeräten
+              genutzt werden.
             </p>
             <p className="mt-2">
               Für die bestmögliche Nutzung mit assistiven Technologien empfehlen

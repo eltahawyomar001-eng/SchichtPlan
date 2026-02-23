@@ -40,8 +40,8 @@ export async function dispatchWebhook(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-SchichtPlan-Signature": `sha256=${signature}`,
-              "X-SchichtPlan-Event": event,
+              "X-Shiftfy-Signature": `sha256=${signature}`,
+              "X-Shiftfy-Event": event,
             },
             body,
             signal: AbortSignal.timeout(10000),

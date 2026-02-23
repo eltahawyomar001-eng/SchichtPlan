@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
-  SchichtPlanMark,
+  ShiftfyMark,
   CalendarIcon,
   SendIcon,
   UsersIcon,
@@ -27,7 +27,7 @@ import {
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 /**
- * Full Connecteam-style landing page for SchichtPlan.
+ * Full Connecteam-style landing page for Shiftfy.
  *
  * Structure:
  * 1. Navbar
@@ -147,7 +147,7 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <SchichtPlanMark className="w-8 h-8" />
+          <ShiftfyMark className="w-8 h-8" />
           <span className="font-bold text-lg text-gray-900">
             Schicht<span className="text-gradient">Plan</span>
           </span>
@@ -560,11 +560,11 @@ function Footer() {
     <footer className="border-t border-gray-100 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
         <div className="flex items-center gap-2">
-          <SchichtPlanMark className="w-6 h-6" />
-          <span className="font-bold text-sm text-gray-900">SchichtPlan</span>
+          <ShiftfyMark className="w-6 h-6" />
+          <span className="font-bold text-sm text-gray-900">Shiftfy</span>
         </div>
         <p className="text-sm text-gray-400 text-center">
-          © {new Date().getFullYear()} SchichtPlan. {t("footerRights")}
+          © {new Date().getFullYear()} Shiftfy. {t("footerRights")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
           <Link

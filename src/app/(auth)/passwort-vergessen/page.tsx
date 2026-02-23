@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { SchichtPlanMark, MailIcon, CheckCircleIcon } from "@/components/icons";
+import { ShiftfyMark, MailIcon, CheckCircleIcon } from "@/components/icons";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");
@@ -42,8 +42,8 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
-            <SchichtPlanMark className="h-10 w-10" />
-            <span className="text-xl font-bold text-gray-900">SchichtPlan</span>
+            <ShiftfyMark className="h-10 w-10" />
+            <span className="text-xl font-bold text-gray-900">Shiftfy</span>
           </Link>
         </div>
 

@@ -17,8 +17,8 @@ export function buildEmailHtml(params: {
     locale === "de" ? "Im Dashboard ansehen" : "View in dashboard";
   const footerText =
     locale === "de"
-      ? "Sie erhalten diese E-Mail, weil Sie Benachrichtigungen in SchichtPlan aktiviert haben."
-      : "You are receiving this email because you have notifications enabled in SchichtPlan.";
+      ? "Sie erhalten diese E-Mail, weil Sie Benachrichtigungen in Shiftfy aktiviert haben."
+      : "You are receiving this email because you have notifications enabled in Shiftfy.";
 
   // If link is already an absolute URL, use it directly; otherwise prepend base URL
   const ctaHref = link
@@ -49,7 +49,7 @@ export function buildEmailHtml(params: {
           <!-- Header -->
           <tr>
             <td style="padding:24px 32px;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#ffffff;">
-              <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.3px;">SchichtPlan</h1>
+              <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.3px;">Shiftfy</h1>
             </td>
           </tr>
           <!-- Title -->

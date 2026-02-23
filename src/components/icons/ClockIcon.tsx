@@ -2,7 +2,7 @@ import { type SVGProps } from "react";
 
 /**
  * Clock icon with gradient stroke from Brand/600 (#7C3AED) to Brand/400 (#A78BFA).
- * Used in the SchichtPlan brand mark and time-related UI elements.
+ * Used in the Shiftfy brand mark and time-related UI elements.
  * Animation-ready with unique gradient ID.
  */
 export function ClockIcon(props: SVGProps<SVGSVGElement>) {

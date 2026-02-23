@@ -1,7 +1,7 @@
 /**
  * Automations Engine
  *
- * Pure rule-based automations for the SchichtPlan platform.
+ * Pure rule-based automations for the Shiftfy platform.
  * No AI/SLM — all logic is deterministic and based on German labor law (ArbZG).
  *
  * Categories:

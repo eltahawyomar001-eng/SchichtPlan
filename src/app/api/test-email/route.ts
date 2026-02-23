@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const result = await sendEmail({
       to,
       type: "TEST",
-      title: "SchichtPlan — Test E-Mail",
+      title: "Shiftfy — Test E-Mail",
       message:
         "Diese E-Mail bestätigt, dass Ihre E-Mail-Benachrichtigungen korrekt funktionieren. Sie können diese Nachricht ignorieren.",
       link: "/dashboard",

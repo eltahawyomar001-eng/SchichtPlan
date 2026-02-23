@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SchichtPlanMark } from "@/components/icons";
+import { ShiftfyMark } from "@/components/icons";
 
 export default function AGBPage() {
   return (
@@ -7,7 +7,7 @@ export default function AGBPage() {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-[max(1rem,env(safe-area-inset-top))] flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <SchichtPlanMark className="h-7 w-7" />
+            <ShiftfyMark className="h-7 w-7" />
             <span className="text-lg font-bold text-gray-900">
               Schicht<span className="text-gradient">Plan</span>
             </span>
@@ -27,7 +27,7 @@ export default function AGBPage() {
             </h2>
             <p>
               Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung der
-              webbasierten Schichtplanungssoftware SchichtPlan. Mit der
+              webbasierten Schichtplanungssoftware Shiftfy. Mit der
               Registrierung und Nutzung des Dienstes erkennen Sie diese AGB an.
             </p>
           </section>
@@ -37,7 +37,7 @@ export default function AGBPage() {
               § 2 Leistungsbeschreibung
             </h2>
             <p>
-              SchichtPlan stellt eine webbasierte Plattform zur Schichtplanung,
+              Shiftfy stellt eine webbasierte Plattform zur Schichtplanung,
               Zeiterfassung und Personalverwaltung bereit. Der genaue
               Funktionsumfang ergibt sich aus der aktuellen Produktbeschreibung
               auf der Website.
@@ -49,10 +49,10 @@ export default function AGBPage() {
               § 3 Registrierung und Nutzerkonto
             </h2>
             <p>
-              Für die Nutzung von SchichtPlan ist eine Registrierung
-              erforderlich. Sie sind verpflichtet, wahrheitsgemäße Angaben zu
-              machen und Ihre Zugangsdaten vertraulich zu behandeln. Sie haften
-              für alle Aktivitäten, die unter Ihrem Konto stattfinden.
+              Für die Nutzung von Shiftfy ist eine Registrierung erforderlich.
+              Sie sind verpflichtet, wahrheitsgemäße Angaben zu machen und Ihre
+              Zugangsdaten vertraulich zu behandeln. Sie haften für alle
+              Aktivitäten, die unter Ihrem Konto stattfinden.
             </p>
           </section>
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SchichtPlanMark } from "@/components/icons";
+import { ShiftfyMark } from "@/components/icons";
 
 export default function WiderrufPage() {
   return (
@@ -7,7 +7,7 @@ export default function WiderrufPage() {
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-[max(1rem,env(safe-area-inset-top))] flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <SchichtPlanMark className="h-7 w-7" />
+            <ShiftfyMark className="h-7 w-7" />
             <span className="text-lg font-bold text-gray-900">
               Schicht<span className="text-gradient">Plan</span>
             </span>
@@ -40,7 +40,7 @@ export default function WiderrufPage() {
             </p>
             <p className="mt-2">
               Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des
-              Vertragsschlusses (Registrierung bei SchichtPlan).
+              Vertragsschlusses (Registrierung bei Shiftfy).
             </p>
             <p className="mt-2">
               Um Ihr Widerrufsrecht auszuüben, müssen Sie uns mittels einer
@@ -54,7 +54,7 @@ export default function WiderrufPage() {
               <strong>Kontakt für den Widerruf:</strong>
             </p>
             <p>
-              SchichtPlan
+              Shiftfy
               <br />
               Omar Rageh
               <br />
@@ -108,7 +108,7 @@ export default function WiderrufPage() {
             </p>
             <p className="mt-2">
               Bei der Registrierung stimmen Sie zu, dass die Bereitstellung der
-              digitalen Inhalte (Zugang zur SchichtPlan-Plattform) sofort nach
+              digitalen Inhalte (Zugang zur Shiftfy-Plattform) sofort nach
               Vertragsschluss beginnt. Sie bestätigen damit, dass Sie Kenntnis
               davon haben, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald
               wir mit der Ausführung des Vertrags vollständig begonnen haben.
@@ -128,7 +128,7 @@ export default function WiderrufPage() {
               <p>
                 An:
                 <br />
-                SchichtPlan — Omar Rageh
+                Shiftfy — Omar Rageh
                 <br />
                 E-Mail: kontakt@schichtplan.plan
               </p>
@@ -138,8 +138,8 @@ export default function WiderrufPage() {
                 Dienstleistung:
               </p>
               <p className="text-gray-500 italic">
-                Nutzung der SchichtPlan-Plattform (Schichtplanung,
-                Zeiterfassung, Personalverwaltung)
+                Nutzung der Shiftfy-Plattform (Schichtplanung, Zeiterfassung,
+                Personalverwaltung)
               </p>
               <ul className="list-none space-y-2 pl-0">
                 <li>Bestellt am / erhalten am (*): _______________</li>

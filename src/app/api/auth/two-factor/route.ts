@@ -23,7 +23,7 @@ export async function GET() {
     const secret = crypto.randomBytes(20).toString("hex").slice(0, 20);
 
     const totp = new OTPAuth.TOTP({
-      issuer: "SchichtPlan",
+      issuer: "Shiftfy",
       label: user.email,
       algorithm: "SHA1",
       digits: 6,
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     }
 
     const totp = new OTPAuth.TOTP({
-      issuer: "SchichtPlan",
+      issuer: "Shiftfy",
       label: user.email,
       algorithm: "SHA1",
       digits: 6,

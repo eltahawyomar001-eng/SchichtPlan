@@ -42,7 +42,7 @@ export async function GET(req: Request) {
     });
 
     const cal = ical({
-      name: "SchichtPlan",
+      name: "Shiftfy",
       method: ICalCalendarMethod.PUBLISH,
     });
 

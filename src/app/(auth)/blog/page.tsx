@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Blog – SchichtPlan",
+  title: "Blog – Shiftfy",
   description:
     "Tipps & Neuigkeiten rund um Schichtplanung, Personalmanagement und Arbeitsrecht.",
 };
@@ -48,7 +48,7 @@ const posts: BlogPost[] = [
     slug: "digitale-stempeluhr-vorteile",
     title: "Digitale Stempeluhr: Vorteile gegenüber Papier",
     excerpt:
-      "Warum Unternehmen auf digitale Zeiterfassung umsteigen und wie SchichtPlan die Umstellung erleichtert.",
+      "Warum Unternehmen auf digitale Zeiterfassung umsteigen und wie Shiftfy die Umstellung erleichtert.",
     date: "2024-12-20",
     readTime: "4 min",
     category: "Technologie",

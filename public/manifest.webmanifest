@@ -1,6 +1,6 @@
 {
-  "name": "SchichtPlan – Intelligente Schichtplanung",
-  "short_name": "SchichtPlan",
+  "name": "Shiftfy – Intelligente Schichtplanung",
+  "short_name": "Shiftfy",
   "description": "Die einfachste Schichtplanungs-Software für Sicherheitsdienste, Gastronomie und Dienstleister.",
   "start_url": "/dashboard",
   "display": "standalone",

@@ -123,7 +123,7 @@ export async function POST(req: Request) {
   await sendEmail({
     to: email,
     type: "INVITATION",
-    title: `You've been invited to join ${workspaceName} on SchichtPlan`,
+    title: `You've been invited to join ${workspaceName} on Shiftfy`,
     message: `${inviterName} has invited you to join "${workspaceName}" as ${role.charAt(0) + role.slice(1).toLowerCase()}. Click the button below to accept the invitation. This invitation expires in 7 days.`,
     link: inviteLink,
   });

@@ -1,11 +1,11 @@
 import { type SVGProps } from "react";
 
 /**
- * SchichtPlan brand mark — abstract clock/calendar hybrid.
+ * Shiftfy brand mark — abstract clock/calendar hybrid.
  * Features gradient fills from brand purple (#7C3AED) to lighter purple (#A78BFA).
  * Animation-ready with separate path elements for the clock face and calendar grid.
  */
-export function SchichtPlanMark(props: SVGProps<SVGSVGElement>) {
+export function ShiftfyMark(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 40 40"

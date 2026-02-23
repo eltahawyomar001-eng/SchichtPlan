@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     const projectId = searchParams.get("projectId");
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "SchichtPlan";
+    workbook.creator = "Shiftfy";
 
     if (type === "employees") {
       const employees = await prisma.employee.findMany({
@@ -137,7 +137,6 @@ export async function GET(req: Request) {
     let ext: string;
 
     if (format === "pdf") {
-       
       const doc = new jsPDF() as any;
       const ws = workbook.worksheets[0];
       if (ws) {
@@ -156,7 +155,7 @@ export async function GET(req: Request) {
         });
 
         doc.setFontSize(14);
-        doc.text(`SchichtPlan – ${type}`, 14, 15);
+        doc.text(`Shiftfy – ${type}`, 14, 15);
         doc.setFontSize(8);
         doc.text(
           `Erstellt am ${new Date().toLocaleDateString("de-DE")}`,

@@ -51,10 +51,10 @@ export default function RollenPage() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
 
-      <div className="p-4 sm:p-6 max-w-4xl">
+      <div className="p-4 sm:p-6 space-y-6 max-w-4xl">
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
           </div>
         )}
 

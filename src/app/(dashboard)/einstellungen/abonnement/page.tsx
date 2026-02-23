@@ -306,7 +306,7 @@ function BillingContent() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Success message */}
         {successMsg && (
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-medium text-emerald-700">
@@ -459,7 +459,7 @@ function BillingContent() {
 
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
 
-                <div className="mt-4 flex items-baseline gap-1">
+                <div className="mt-4 flex flex-wrap items-baseline gap-1">
                   {plan.isFree ? (
                     <span className="text-3xl font-extrabold text-gray-900">
                       {t("free")}
@@ -473,20 +473,27 @@ function BillingContent() {
                       <span className="text-3xl font-extrabold text-gray-900">
                         {formatPrice(price)}
                       </span>
-                      <span className="text-sm text-gray-400">
+                      <span className="text-sm text-gray-400 break-words">
                         {t("perUserMonth")}
                       </span>
                     </>
                   )}
                 </div>
 
-                <p className="mt-2 text-sm text-gray-500">{plan.description}</p>
+                <p className="mt-2 text-sm text-gray-500 break-words">
+                  {plan.description}
+                </p>
 
-                <ul className="mt-5 space-y-2.5 flex-1">
+                <ul className="mt-5 space-y-2.5 flex-1 min-w-0">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
+                    <li
+                      key={f}
+                      className="flex items-start gap-2 text-sm min-w-0"
+                    >
                       <CheckCircleIcon className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{f}</span>
+                      <span className="text-gray-700 break-words min-w-0">
+                        {f}
+                      </span>
                     </li>
                   ))}
                 </ul>

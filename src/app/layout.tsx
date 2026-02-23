@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { CookieBanner } from "@/components/cookie-banner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,8 +12,7 @@ export const viewport: Viewport = {
   themeColor: "#7c3aed",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
   viewportFit: "cover",
 };
 
@@ -51,6 +51,7 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
+          <CookieBanner />
         </NextIntlClientProvider>
       </body>
     </html>

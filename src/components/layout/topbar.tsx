@@ -23,6 +23,7 @@ export function Topbar({ title, description, actions }: TopbarProps) {
         {/* Mobile hamburger */}
         <button
           onClick={openSidebar}
+          aria-label="Menü öffnen"
           className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors lg:hidden flex-shrink-0"
         >
           <MenuIcon className="h-5 w-5" />

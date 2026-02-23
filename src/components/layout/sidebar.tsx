@@ -242,6 +242,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <button
             onClick={onClose}
+            aria-label="Menü schließen"
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 lg:hidden"
           >
             <XIcon className="h-5 w-5" />

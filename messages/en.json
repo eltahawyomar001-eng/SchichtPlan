@@ -1332,5 +1332,24 @@
       "customRoles": "custom roles",
       "analytics": "advanced analytics"
     }
+  },
+  "cookieBanner": {
+    "title": "Cookie Settings",
+    "description": "We use cookies to ensure website functionality and improve our service. Technically necessary cookies are always set. Analytics cookies are only set with your consent (§ 25 TDDDG, Art. 6(1)(a) GDPR). Learn more in our",
+    "privacyLink": "Privacy Policy.",
+    "acceptAll": "Accept All",
+    "rejectAll": "Necessary Only",
+    "settings": "Settings",
+    "settingsTitle": "Manage Cookie Settings",
+    "settingsDescription": "Choose which categories of cookies you would like to allow. Necessary cookies cannot be disabled.",
+    "necessary": "Necessary",
+    "necessaryDesc": "These cookies are essential for basic website functions (login, language setting, security). They cannot be disabled (§ 25(2)(2) TDDDG).",
+    "analytics": "Analytics & Performance",
+    "analyticsDesc": "These cookies help us understand website usage and detect errors (e.g. Sentry error monitoring). No data is shared with advertising networks.",
+    "marketing": "Marketing",
+    "marketingDesc": "No marketing cookies are currently used. This category is reserved for future integrations.",
+    "saveSettings": "Save Settings",
+    "back": "Back",
+    "footerLink": "Cookie Settings"
   }
 }

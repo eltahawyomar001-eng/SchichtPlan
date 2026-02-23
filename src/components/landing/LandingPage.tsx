@@ -20,6 +20,7 @@ import {
   XIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { CookieSettingsButton } from "@/components/cookie-banner";
 
 /* ── Lazy-load heavy SVG illustrations below the fold (LCP optimisation) ── */
 const PlanningIllustration = dynamic(
@@ -70,91 +71,101 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Skip-to-content link (BFSG/WCAG 2.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-violet-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none"
+      >
+        Zum Inhalt springen
+      </a>
+
       {/* ─── Navbar ─── */}
       <Navbar />
 
-      {/* ─── Hero ─── */}
-      <HeroSection />
+      <main id="main-content">
+        {/* ─── Hero ─── */}
+        <HeroSection />
 
-      {/* ─── Trusted By ─── */}
-      <TrustedByBar />
+        {/* ─── Trusted By ─── */}
+        <TrustedByBar />
 
-      {/* ─── 4-Step Feature Flow ─── */}
-      <FeatureSection
-        step={1}
-        label={t("step1Label")}
-        title={t("step1Title")}
-        description={t("step1Desc")}
-        features={[
-          t("step1Feature1"),
-          t("step1Feature2"),
-          t("step1Feature3"),
-          t("step1Feature4"),
-        ]}
-        illustration={<PlanningIllustration />}
-        reversed={false}
-        t={t}
-      />
+        {/* ─── 4-Step Feature Flow ─── */}
+        <FeatureSection
+          step={1}
+          label={t("step1Label")}
+          title={t("step1Title")}
+          description={t("step1Desc")}
+          features={[
+            t("step1Feature1"),
+            t("step1Feature2"),
+            t("step1Feature3"),
+            t("step1Feature4"),
+          ]}
+          illustration={<PlanningIllustration />}
+          reversed={false}
+          t={t}
+        />
 
-      <FeatureSection
-        step={2}
-        label={t("step2Label")}
-        title={t("step2Title")}
-        description={t("step2Desc")}
-        features={[
-          t("step2Feature1"),
-          t("step2Feature2"),
-          t("step2Feature3"),
-          t("step2Feature4"),
-        ]}
-        illustration={<DistributionIllustration />}
-        reversed={true}
-        t={t}
-      />
+        <FeatureSection
+          step={2}
+          label={t("step2Label")}
+          title={t("step2Title")}
+          description={t("step2Desc")}
+          features={[
+            t("step2Feature1"),
+            t("step2Feature2"),
+            t("step2Feature3"),
+            t("step2Feature4"),
+          ]}
+          illustration={<DistributionIllustration />}
+          reversed={true}
+          t={t}
+        />
 
-      <FeatureSection
-        step={3}
-        label={t("step3Label")}
-        title={t("step3Title")}
-        description={t("step3Desc")}
-        features={[
-          t("step3Feature1"),
-          t("step3Feature2"),
-          t("step3Feature3"),
-          t("step3Feature4"),
-        ]}
-        illustration={<DayToDayIllustration />}
-        reversed={false}
-        t={t}
-      />
+        <FeatureSection
+          step={3}
+          label={t("step3Label")}
+          title={t("step3Title")}
+          description={t("step3Desc")}
+          features={[
+            t("step3Feature1"),
+            t("step3Feature2"),
+            t("step3Feature3"),
+            t("step3Feature4"),
+          ]}
+          illustration={<DayToDayIllustration />}
+          reversed={false}
+          t={t}
+        />
 
-      <FeatureSection
-        step={4}
-        label={t("step4Label")}
-        title={t("step4Title")}
-        description={t("step4Desc")}
-        features={[
-          t("step4Feature1"),
-          t("step4Feature2"),
-          t("step4Feature3"),
-          t("step4Feature4"),
-        ]}
-        illustration={<ReportingIllustration />}
-        reversed={true}
-        t={t}
-      />
+        <FeatureSection
+          step={4}
+          label={t("step4Label")}
+          title={t("step4Title")}
+          description={t("step4Desc")}
+          features={[
+            t("step4Feature1"),
+            t("step4Feature2"),
+            t("step4Feature3"),
+            t("step4Feature4"),
+          ]}
+          illustration={<ReportingIllustration />}
+          reversed={true}
+          t={t}
+        />
 
-      {/* ─── Benefits Grid ─── */}
-      <BenefitsSection />
+        {/* ─── Benefits Grid ─── */}
+        <BenefitsSection />
 
-      {/* ─── Pricing ─── */}
-      <PricingSection />
+        {/* ─── Pricing ─── */}
+        <PricingSection />
 
-      {/* ─── FAQ ─── */}
-      <FAQSection />
+        {/* ─── FAQ ─── */}
+        <FAQSection />
 
-      {/* ─── CTA Footer ─── */}
-      <CTAFooter />
+        {/* ─── CTA Footer ─── */}
+        <CTAFooter />
+      </main>
 
       {/* ─── Footer ─── */}
       <Footer />
@@ -228,6 +239,8 @@ function Navbar() {
           </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Menü schließen" : "Menü öffnen"}
+            aria-expanded={mobileOpen}
             className="md:hidden rounded-lg p-2 text-gray-500 hover:bg-gray-100 transition-colors"
           >
             {mobileOpen ? (
@@ -909,6 +922,7 @@ function Footer() {
           >
             {t("footerAccessibility")}
           </Link>
+          <CookieSettingsButton />
         </div>
       </div>
     </footer>

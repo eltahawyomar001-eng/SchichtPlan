@@ -247,9 +247,13 @@ export default function DatenschutzPage() {
               </li>
             </ul>
             <p className="mt-2">
-              Es werden <strong>keine</strong> Tracking-, Analyse- oder
-              Marketing-Cookies eingesetzt. Ein Cookie-Banner ist daher nicht
-              erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG).
+              Technisch notwendige Cookies (Session, Spracheinstellung) werden
+              ohne Einwilligung gesetzt (§ 25 Abs. 2 Nr. 2 TDDDG). Für optionale
+              Analyse-Cookies (z. B. Sentry Fehlerüberwachung) holen wir Ihre
+              ausdrückliche Einwilligung über unseren Cookie-Banner ein (Art. 6
+              Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Sie können Ihre
+              Einstellungen jederzeit über den Link
+              &quot;Cookie-Einstellungen&quot; in der Fußzeile ändern.
             </p>
           </section>
 

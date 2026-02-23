@@ -1333,5 +1333,24 @@
       "customRoles": "Benutzerdefinierte Rollen",
       "analytics": "Erweiterte Analysen"
     }
+  },
+  "cookieBanner": {
+    "title": "Cookie-Einstellungen",
+    "description": "Wir verwenden Cookies, um die Funktionalität unserer Website sicherzustellen und unseren Service zu verbessern. Technisch notwendige Cookies werden immer gesetzt. Analyse-Cookies setzen wir nur mit Ihrer Einwilligung (§ 25 TDDDG, Art. 6 Abs. 1 lit. a DSGVO). Weitere Informationen finden Sie in unserer",
+    "privacyLink": "Datenschutzerklärung.",
+    "acceptAll": "Alle akzeptieren",
+    "rejectAll": "Nur Notwendige",
+    "settings": "Einstellungen",
+    "settingsTitle": "Cookie-Einstellungen verwalten",
+    "settingsDescription": "Wählen Sie, welche Kategorien von Cookies Sie zulassen möchten. Notwendige Cookies können nicht deaktiviert werden.",
+    "necessary": "Notwendig",
+    "necessaryDesc": "Diese Cookies sind für die Grundfunktionen der Website unerlässlich (Anmeldung, Spracheinstellung, Sicherheit). Sie können nicht deaktiviert werden (§ 25 Abs. 2 Nr. 2 TDDDG).",
+    "analytics": "Analyse & Performance",
+    "analyticsDesc": "Diese Cookies helfen uns, die Nutzung der Website zu verstehen und Fehler zu erkennen (z. B. Sentry Fehlerüberwachung). Keine Daten werden an Werbenetzwerke weitergegeben.",
+    "marketing": "Marketing",
+    "marketingDesc": "Derzeit werden keine Marketing-Cookies verwendet. Diese Kategorie ist für zukünftige Integrationen vorgesehen.",
+    "saveSettings": "Auswahl speichern",
+    "back": "Zurück",
+    "footerLink": "Cookie-Einstellungen"
   }
 }

@@ -9,7 +9,7 @@ export default function DatenschutzPage() {
           <Link href="/" className="flex items-center gap-2">
             <ShiftfyMark className="h-7 w-7" />
             <span className="text-lg font-bold text-gray-900">
-              Schicht<span className="text-gradient">Plan</span>
+              Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
         </div>

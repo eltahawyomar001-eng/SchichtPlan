@@ -149,7 +149,7 @@ function Navbar() {
         <Link href="/" className="flex items-center gap-2.5">
           <ShiftfyMark className="w-8 h-8" />
           <span className="font-bold text-lg text-gray-900">
-            Schicht<span className="text-gradient">Plan</span>
+            Shift<span className="text-gradient">fy</span>
           </span>
         </Link>
 

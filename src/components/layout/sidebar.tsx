@@ -223,7 +223,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex items-center gap-2.5">
             <ShiftfyMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">
-              Schicht<span className="text-gradient">Plan</span>
+              Shift<span className="text-gradient">fy</span>
             </span>
           </div>
           <button

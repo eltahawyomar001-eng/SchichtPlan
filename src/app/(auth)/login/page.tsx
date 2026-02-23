@@ -63,37 +63,77 @@ function LoginForm() {
     setResent(false);
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      totpCode: twoFAStep ? totpCode : undefined,
-      redirect: false,
-    });
+    try {
+      // If we're already on the 2FA step, go straight to signIn
+      if (twoFAStep) {
+        const result = await signIn("credentials", {
+          email,
+          password,
+          totpCode,
+          redirect: false,
+        });
 
-    if (result?.error) {
-      if (result.error.includes("2FA_REQUIRED")) {
-        // Show 2FA challenge step
+        if (result?.error) {
+          // Any error at this point means the code was invalid
+          setError(t("twoFAInvalidCode"));
+          setTotpCode("");
+        } else {
+          const storedPlan = localStorage.getItem("shiftfy_selected_plan");
+          router.push(storedPlan ? "/einstellungen/abonnement" : callbackUrl);
+          return;
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Step 1: Pre-login check — validate credentials & detect 2FA
+      const preRes = await fetch("/api/auth/pre-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!preRes.ok) {
+        const data = await preRes.json();
+        if (data.error === "EMAIL_NOT_VERIFIED") {
+          setEmailNotVerified(true);
+        } else {
+          setError(t("invalidCredentials"));
+        }
+        setLoading(false);
+        return;
+      }
+
+      const { requires2FA } = await preRes.json();
+
+      if (requires2FA) {
+        // Show 2FA challenge — don't call signIn yet
         setTwoFAStep(true);
         setTotpCode("");
         setUseRecoveryCode(false);
-      } else if (result.error.includes("2FA_INVALID")) {
-        setError(t("twoFAInvalidCode"));
-        setTotpCode("");
-      } else if (result.error.includes("EMAIL_NOT_VERIFIED")) {
-        setEmailNotVerified(true);
-      } else {
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: No 2FA required — sign in directly
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
         setError(t("invalidCredentials"));
-      }
-      setLoading(false);
-    } else {
-      // If user selected a plan from pricing, redirect to billing page
-      const storedPlan = localStorage.getItem("shiftfy_selected_plan");
-      if (storedPlan) {
-        router.push("/einstellungen/abonnement");
       } else {
-        router.push(callbackUrl);
+        const storedPlan = localStorage.getItem("shiftfy_selected_plan");
+        router.push(storedPlan ? "/einstellungen/abonnement" : callbackUrl);
+        return;
       }
+    } catch {
+      setError(t("invalidCredentials"));
     }
+
+    setLoading(false);
   };
 
   return (

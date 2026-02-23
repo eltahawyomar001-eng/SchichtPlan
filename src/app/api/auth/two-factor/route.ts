@@ -137,18 +137,6 @@ export async function POST(req: Request) {
     const totp = buildTOTP(dbUser.twoFactorSecret, user.email);
     const delta = totp.validate({ token: code, window: 2 });
 
-    // DEBUG: log validation details (remove after confirming fix)
-    log.error("2FA DEBUG", {
-      codeReceived: code,
-      codeLength: code.length,
-      codeType: typeof code,
-      secretHex: dbUser.twoFactorSecret.slice(0, 8) + "...",
-      secretLength: dbUser.twoFactorSecret.length,
-      delta,
-      serverTime: new Date().toISOString(),
-      expectedCode: totp.generate(),
-    });
-
     if (delta === null) {
       return NextResponse.json({ error: "Invalid code" }, { status: 400 });
     }

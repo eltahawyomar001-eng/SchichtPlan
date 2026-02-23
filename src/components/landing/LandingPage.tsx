@@ -250,64 +250,221 @@ function HeroSection() {
   const t = useTranslations("landing");
 
   return (
-    <section className="relative pt-28 sm:pt-36 pb-14 sm:pb-20 bg-hero-gradient bg-grid overflow-hidden">
-      {/* Decorative gradient blobs */}
-      <div className="absolute top-20 -left-32 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl" />
+    <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-violet-50/60 via-white to-white">
+      {/* Subtle decorative elements */}
+      <div className="absolute top-20 -left-40 w-[500px] h-[500px] bg-violet-100/40 rounded-full blur-3xl" />
+      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-purple-100/30 rounded-full blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-6">
-          <ZapIcon className="w-4 h-4" />
-          {t("heroBadge")}
-        </div>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          {/* ─── Left: Text content ─── */}
+          <div className="flex-1 max-w-xl text-center lg:text-left">
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.5rem] xl:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.08]">
+              {t("heroTitle")}{" "}
+              <span className="text-gradient">{t("heroTitleHighlight")}</span>
+            </h1>
 
-        {/* Headline */}
-        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 max-w-4xl mx-auto leading-[1.1]">
-          {t("heroTitle")}{" "}
-          <span className="text-gradient">{t("heroTitleHighlight")}</span>
-        </h1>
+            {/* Subtitle */}
+            <p className="mt-5 sm:mt-6 text-base sm:text-lg text-gray-500 leading-relaxed max-w-lg mx-auto lg:mx-0">
+              {t("heroSubtitle")}
+            </p>
 
-        {/* Subheadline */}
-        <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-          {t("heroSubtitle")}
-        </p>
+            {/* Trust badges */}
+            <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                <CheckCircleIcon className="w-4 h-4 text-violet-600" />
+                {t("heroProof1")}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                <CheckCircleIcon className="w-4 h-4 text-violet-600" />
+                {t("heroProof2")}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                <CheckCircleIcon className="w-4 h-4 text-violet-600" />
+                {t("heroProof3")}
+              </div>
+            </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
-          <Link
-            href="/register"
-            className="bg-brand-gradient text-white font-semibold px-8 py-3.5 rounded-full text-base hover:shadow-xl hover:shadow-violet-200 transition-all flex items-center gap-2"
-          >
-            {t("heroCtaPrimary")}
-            <ArrowRightIcon className="w-5 h-5" />
-          </Link>
-          <a
-            href="#features"
-            className="flex items-center gap-2 text-gray-600 font-medium hover:text-gray-900 transition-colors"
-          >
-            {t("heroCtaSecondary")}
-            <ChevronRightIcon className="w-4 h-4" />
-          </a>
-        </div>
+            {/* CTA */}
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+              <Link
+                href="/register"
+                className="bg-brand-gradient text-white font-semibold px-8 py-4 rounded-full text-base hover:shadow-xl hover:shadow-violet-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+              >
+                {t("heroCtaPrimary")}
+                <ArrowRightIcon className="w-5 h-5" />
+              </Link>
+              <span className="text-sm text-gray-400">
+                {t("heroCtaSubNote")}
+              </span>
+            </div>
 
-        {/* Social proof */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-gray-400">
-          <div className="flex items-center gap-1">
-            <CheckCircleIcon className="w-4 h-4" />
-            {t("heroProof1")}
+            {/* Pricing teaser */}
+            <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm">
+              <div className="flex flex-col items-center lg:items-start">
+                <span className="text-2xl font-extrabold text-gray-900">
+                  {t("heroPriceFree")}
+                </span>
+                <span className="text-gray-400">{t("heroPriceFreeLabel")}</span>
+              </div>
+              <div className="w-px h-10 bg-gray-200 hidden sm:block" />
+              <div className="flex flex-col items-center lg:items-start">
+                <span className="text-2xl font-extrabold text-gray-900">
+                  {t("heroPriceTeam")}
+                </span>
+                <span className="text-gray-400">{t("heroPriceTeamLabel")}</span>
+              </div>
+              <div className="w-px h-10 bg-gray-200 hidden sm:block" />
+              <div className="flex flex-col items-center lg:items-start">
+                <span className="text-2xl font-extrabold text-gray-900">
+                  {t("heroPriceBusiness")}
+                </span>
+                <span className="text-gray-400">
+                  {t("heroPriceBusinessLabel")}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <CheckCircleIcon className="w-4 h-4" />
-            {t("heroProof2")}
-          </div>
-          <div className="flex items-center gap-1">
-            <CheckCircleIcon className="w-4 h-4" />
-            {t("heroProof3")}
+
+          {/* ─── Right: App mockup ─── */}
+          <div className="flex-1 w-full max-w-[560px] lg:max-w-none">
+            <HeroMockup />
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+/** Inline SVG mockup showing a simplified Shiftfy dashboard */
+function HeroMockup() {
+  const t = useTranslations("landing");
+  const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const shifts = [
+    { name: "Anna M.", shifts: [1, 1, 0, 1, 1, 0, 0], color: "#7C3AED" },
+    { name: "Lukas B.", shifts: [0, 1, 1, 1, 0, 1, 0], color: "#6D28D9" },
+    { name: "Sara K.", shifts: [1, 0, 1, 0, 1, 1, 0], color: "#8B5CF6" },
+    { name: "Tom W.", shifts: [0, 0, 1, 1, 1, 0, 1], color: "#A78BFA" },
+  ];
+
+  return (
+    <div className="relative">
+      {/* Glow behind */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-200/50 to-purple-200/30 rounded-3xl blur-2xl scale-105" />
+
+      {/* Main card */}
+      <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-violet-100/50 overflow-hidden">
+        {/* Title bar */}
+        <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-green-400" />
+          </div>
+          <div className="flex-1 text-center">
+            <span className="text-xs font-medium text-gray-400">
+              {t("heroMockupTitle")}
+            </span>
+          </div>
+        </div>
+
+        {/* Dashboard content */}
+        <div className="p-4 sm:p-5">
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="rounded-xl bg-violet-50 p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-violet-700">
+                24
+              </div>
+              <div className="text-[10px] sm:text-xs text-violet-500 font-medium mt-0.5">
+                {t("heroMockupShifts")}
+              </div>
+            </div>
+            <div className="rounded-xl bg-emerald-50 p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-emerald-600">
+                12
+              </div>
+              <div className="text-[10px] sm:text-xs text-emerald-500 font-medium mt-0.5">
+                {t("heroMockupEmployees")}
+              </div>
+            </div>
+            <div className="rounded-xl bg-amber-50 p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-amber-600">
+                98%
+              </div>
+              <div className="text-[10px] sm:text-xs text-amber-500 font-medium mt-0.5">
+                {t("heroMockupCoverage")}
+              </div>
+            </div>
+          </div>
+
+          {/* Mini schedule grid */}
+          <div className="rounded-xl border border-gray-100 overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-8 bg-gray-50 text-[10px] sm:text-xs font-semibold text-gray-500">
+              <div className="px-2 sm:px-3 py-2">{t("heroMockupTeam")}</div>
+              {days.map((d) => (
+                <div key={d} className="px-1 py-2 text-center">
+                  {d}
+                </div>
+              ))}
+            </div>
+            {/* Rows */}
+            {shifts.map((row) => (
+              <div
+                key={row.name}
+                className="grid grid-cols-8 border-t border-gray-50 items-center"
+              >
+                <div className="px-2 sm:px-3 py-2.5 text-xs font-medium text-gray-700 truncate">
+                  {row.name}
+                </div>
+                {row.shifts.map((s, i) => (
+                  <div key={i} className="px-1 py-2 flex justify-center">
+                    {s ? (
+                      <div
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center"
+                        style={{ backgroundColor: `${row.color}18` }}
+                      >
+                        <div
+                          className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
+                          style={{ backgroundColor: row.color }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 sm:w-7 sm:h-7" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Floating notification card */}
+      <div className="absolute -bottom-4 -left-4 sm:-left-6 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-3 flex items-center gap-3 max-w-[220px]">
+        <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-gray-900">
+            {t("heroMockupNotifTitle")}
+          </div>
+          <div className="text-[10px] text-gray-400">
+            {t("heroMockupNotifDesc")}
+          </div>
+        </div>
+      </div>
+
+      {/* Floating stat badge */}
+      <div className="absolute -top-3 -right-3 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-violet-100/40 px-4 py-2.5 text-center">
+        <div className="text-lg font-bold text-violet-700">€0</div>
+        <div className="text-[10px] font-medium text-gray-400">
+          {t("heroMockupFreeBadge")}
+        </div>
+      </div>
+    </div>
   );
 }
 

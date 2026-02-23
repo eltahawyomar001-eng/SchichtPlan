@@ -11,14 +11,16 @@ function PricingContent() {
   const plans = [
     {
       name: t("free"),
-      price: "0€",
-      period: t("perMonth"),
+      price: t("freePrice"),
+      priceNote: t("freePriceNote"),
       description: t("freeDesc"),
       features: [
         t("featureFree1"),
         t("featureFree2"),
         t("featureFree3"),
         t("featureFree4"),
+        t("featureFree5"),
+        t("featureFree6"),
       ],
       cta: t("getStarted"),
       href: "/register",
@@ -26,8 +28,8 @@ function PricingContent() {
     },
     {
       name: t("pro"),
-      price: "9€",
-      period: t("perMonth"),
+      price: t("proPrice"),
+      priceNote: t("proPriceNote"),
       description: t("proDesc"),
       features: [
         t("featurePro1"),
@@ -43,8 +45,8 @@ function PricingContent() {
     },
     {
       name: t("enterprise"),
-      price: t("custom"),
-      period: "",
+      price: t("enterprisePrice"),
+      priceNote: t("enterprisePriceNote"),
       description: t("enterpriseDesc"),
       features: [
         t("featureEnt1"),
@@ -52,6 +54,25 @@ function PricingContent() {
         t("featureEnt3"),
         t("featureEnt4"),
         t("featureEnt5"),
+        t("featureEnt6"),
+        t("featureEnt7"),
+      ],
+      cta: t("startTrial"),
+      href: "/register",
+      highlighted: false,
+    },
+    {
+      name: t("custom"),
+      price: t("customPrice"),
+      priceNote: t("customPriceNote"),
+      description: t("customDesc"),
+      features: [
+        t("featureCustom1"),
+        t("featureCustom2"),
+        t("featureCustom3"),
+        t("featureCustom4"),
+        t("featureCustom5"),
+        t("featureCustom6"),
       ],
       cta: t("contactUs"),
       href: "mailto:info@shiftfy.de",
@@ -71,11 +92,11 @@ function PricingContent() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-2xl border p-8 shadow-sm flex flex-col ${
+              className={`rounded-2xl border p-6 shadow-sm flex flex-col ${
                 plan.highlighted
                   ? "border-violet-500 ring-2 ring-violet-500 bg-white"
                   : "border-gray-200 bg-white"
@@ -91,10 +112,8 @@ function PricingContent() {
                 <span className="text-4xl font-extrabold text-gray-900">
                   {plan.price}
                 </span>
-                {plan.period && (
-                  <span className="text-gray-500">/{plan.period}</span>
-                )}
               </div>
+              <p className="text-xs text-gray-400 mt-1">{plan.priceNote}</p>
               <p className="mt-3 text-sm text-gray-600">{plan.description}</p>
               <ul className="mt-6 space-y-3 flex-1">
                 {plan.features.map((f) => (

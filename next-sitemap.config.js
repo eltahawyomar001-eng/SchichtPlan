@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 const config = {
-  siteUrl: process.env.SITE_URL || "https://schichtplan-wine.vercel.app",
+  siteUrl: process.env.SITE_URL || "https://app.shiftfy.de",
   generateRobotsTxt: true,
   exclude: [
     "/dashboard*",

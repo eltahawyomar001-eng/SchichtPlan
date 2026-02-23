@@ -31,8 +31,7 @@ export async function sendVerificationEmail(
     },
   });
 
-  const baseUrl =
-    process.env.NEXTAUTH_URL || "https://schichtplan-wine.vercel.app";
+  const baseUrl = process.env.NEXTAUTH_URL || "https://app.shiftfy.de";
   const verifyUrl = `${baseUrl}/verifizierung?token=${token}&email=${encodeURIComponent(email)}`;
 
   const isDE = locale === "de";

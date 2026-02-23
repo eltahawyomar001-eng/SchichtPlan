@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { randomBytes } from "crypto";
 import type { SessionUser } from "@/lib/types";
+import { createInvitationSchema, validateBody } from "@/lib/validations";
 
 /**
  * GET /api/invitations — list all invitations for the current workspace
@@ -55,14 +56,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { email, role } = await req.json();
-
-  if (!email || !role) {
-    return NextResponse.json(
-      { error: "Email and role are required" },
-      { status: 400 },
-    );
-  }
+  const body = await req.json();
+  const parsed = validateBody(createInvitationSchema, body);
+  if (!parsed.success) return parsed.response;
+  const { email, role } = parsed.data;
 
   // Validate role — cannot invite as OWNER
   const allowedRoles = ["ADMIN", "MANAGER", "EMPLOYEE"];

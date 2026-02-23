@@ -2,27 +2,17 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
+import { resetPasswordSchema, validateBody } from "@/lib/validations";
 
 export async function POST(req: Request) {
   const limited = rateLimit(req, "auth");
   if (limited) return limited;
 
   try {
-    const { token, password } = await req.json();
-
-    if (!token || !password) {
-      return NextResponse.json(
-        { error: "Token und Passwort sind erforderlich." },
-        { status: 400 },
-      );
-    }
-
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Das Passwort muss mindestens 8 Zeichen lang sein." },
-        { status: 400 },
-      );
-    }
+    const body = await req.json();
+    const parsed = validateBody(resetPasswordSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { token, password } = parsed.data;
 
     // Find the reset token
     const resetToken = await prisma.passwordResetToken.findUnique({

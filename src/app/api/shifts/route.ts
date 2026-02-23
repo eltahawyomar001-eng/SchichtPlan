@@ -15,6 +15,7 @@ import {
   isNightShift,
   calculateSurcharge,
 } from "@/lib/holidays";
+import { createShiftSchema, validateBody } from "@/lib/validations";
 
 export async function GET(req: Request) {
   try {
@@ -87,6 +88,8 @@ export async function POST(req: Request) {
     if (forbidden) return forbidden;
 
     const body = await req.json();
+    const parsed = validateBody(createShiftSchema, body);
+    if (!parsed.success) return parsed.response;
     const {
       date,
       startTime,
@@ -95,16 +98,7 @@ export async function POST(req: Request) {
       locationId,
       notes,
       repeatWeeks,
-    } = body;
-
-    if (!date || !startTime || !endTime) {
-      return NextResponse.json(
-        {
-          error: "Date, start time and end time are required",
-        },
-        { status: 400 },
-      );
-    }
+    } = parsed.data;
 
     // ── Automation: Conflict detection (only if assigned) ──
     if (employeeId) {
@@ -174,7 +168,14 @@ export async function POST(req: Request) {
     let recurringResult = null;
     if (repeatWeeks && repeatWeeks > 0) {
       recurringResult = await createRecurringShifts({
-        baseShift: { date, startTime, endTime, employeeId, locationId, notes },
+        baseShift: {
+          date,
+          startTime,
+          endTime,
+          employeeId: employeeId ?? "",
+          locationId: locationId || null,
+          notes: notes || null,
+        },
         repeatWeeks: Math.min(repeatWeeks, 52),
         workspaceId,
       });

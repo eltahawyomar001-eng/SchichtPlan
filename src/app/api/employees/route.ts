@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requireEmployeeSlot } from "@/lib/subscription";
+import { createEmployeeSchema, validateBody } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -52,6 +53,8 @@ export async function POST(req: Request) {
     if (planLimit) return planLimit;
 
     const body = await req.json();
+    const parsed = validateBody(createEmployeeSchema, body);
+    if (!parsed.success) return parsed.response;
     const {
       firstName,
       lastName,
@@ -61,28 +64,7 @@ export async function POST(req: Request) {
       hourlyRate,
       weeklyHours,
       color,
-    } = body;
-
-    if (!firstName || !lastName) {
-      return NextResponse.json(
-        { error: "First and last name are required" },
-        { status: 400 },
-      );
-    }
-
-    if (
-      (hourlyRate !== undefined &&
-        hourlyRate !== "" &&
-        parseFloat(hourlyRate) < 0) ||
-      (weeklyHours !== undefined &&
-        weeklyHours !== "" &&
-        parseFloat(weeklyHours) < 0)
-    ) {
-      return NextResponse.json(
-        { error: "Hourly rate and weekly hours must not be negative" },
-        { status: 400 },
-      );
-    }
+    } = parsed.data;
 
     const employee = await prisma.employee.create({
       data: {
@@ -91,8 +73,8 @@ export async function POST(req: Request) {
         email: email || null,
         phone: phone || null,
         position: position || null,
-        hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
-        weeklyHours: weeklyHours ? parseFloat(weeklyHours) : null,
+        hourlyRate: hourlyRate ?? null,
+        weeklyHours: weeklyHours ?? null,
         color:
           color ||
           `#${Math.floor(Math.random() * 16777215)

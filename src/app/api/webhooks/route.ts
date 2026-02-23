@@ -7,6 +7,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import crypto from "crypto";
+import { createWebhookSchema, validateBody } from "@/lib/validations";
 
 /** GET /api/webhooks — list all webhook endpoints */
 export async function GET() {
@@ -60,14 +61,10 @@ export async function POST(req: Request) {
     const planGate = await requirePlanFeature(user.workspaceId!, "apiWebhooks");
     if (planGate) return planGate;
 
-    const { url, events } = await req.json();
-
-    if (!url || !events || !Array.isArray(events) || events.length === 0) {
-      return NextResponse.json(
-        { error: "url and events[] are required" },
-        { status: 400 },
-      );
-    }
+    const body = await req.json();
+    const parsed = validateBody(createWebhookSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { url, events } = parsed.data;
 
     const secret = crypto.randomBytes(32).toString("hex");
 

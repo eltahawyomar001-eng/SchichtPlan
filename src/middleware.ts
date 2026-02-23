@@ -166,6 +166,8 @@ export default withAuth(
         const { pathname } = req.nextUrl;
         // Auth routes don't require authentication
         if (pathname.startsWith("/api/auth")) return true;
+        // Stripe webhook is called server-to-server (no session)
+        if (pathname === "/api/billing/webhook") return true;
         // Password reset pages are public
         if (
           pathname === "/passwort-vergessen" ||
@@ -205,6 +207,11 @@ export const config = {
     "/qualifikationen/:path*",
     "/schichtvorlagen/:path*",
     "/urlaubskonto/:path*",
+    "/monatsabschluss/:path*",
+    "/automatisierung/:path*",
+    "/projekte/:path*",
+    "/webhooks/:path*",
+    "/teamkalender/:path*",
     // Protect API routes (except auth and public invitation token lookup)
     "/api/employees/:path*",
     "/api/locations/:path*",
@@ -228,5 +235,17 @@ export const config = {
     "/api/vacation-balances/:path*",
     "/api/holidays/:path*",
     "/api/reports/:path*",
+    // Previously missing API routes
+    "/api/billing/:path*",
+    "/api/import/:path*",
+    "/api/ical/:path*",
+    "/api/webhooks/:path*",
+    "/api/custom-roles/:path*",
+    "/api/push-subscriptions/:path*",
+    "/api/month-close/:path*",
+    "/api/clients/:path*",
+    "/api/projects/:path*",
+    "/api/shift-change-requests/:path*",
+    "/api/automation-rules/:path*",
   ],
 };

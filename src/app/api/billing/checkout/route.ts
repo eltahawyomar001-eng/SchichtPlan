@@ -5,6 +5,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe, getPlanByPriceId } from "@/lib/stripe";
 import { ensureSubscription } from "@/lib/subscription";
+import { checkoutSchema, validateBody } from "@/lib/validations";
 
 /**
  * POST /api/billing/checkout
@@ -26,13 +27,10 @@ export async function POST(req: Request) {
 
     const stripe = getStripe();
 
-    const { priceId, quantity } = await req.json();
-    if (!priceId) {
-      return NextResponse.json(
-        { error: "priceId is required" },
-        { status: 400 },
-      );
-    }
+    const body = await req.json();
+    const parsed = validateBody(checkoutSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { priceId, quantity } = parsed.data;
 
     // Validate the price ID maps to a known plan
     const plan = getPlanByPriceId(priceId);

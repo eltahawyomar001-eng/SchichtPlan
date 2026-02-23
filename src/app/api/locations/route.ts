@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requireLocationSlot } from "@/lib/subscription";
+import { createLocationSchema, validateBody } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -51,11 +52,10 @@ export async function POST(req: Request) {
     const planLimit = await requireLocationSlot(workspaceId);
     if (planLimit) return planLimit;
 
-    const { name, address } = await req.json();
-
-    if (!name) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
+    const body = await req.json();
+    const parsed = validateBody(createLocationSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { name, address } = parsed.data;
 
     const location = await prisma.location.create({
       data: {

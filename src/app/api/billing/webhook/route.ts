@@ -7,6 +7,33 @@ import {
   updateSubscriptionFromStripe,
   cancelSubscription,
 } from "@/lib/subscription";
+import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/notifications/email";
+
+/* ── Idempotency guard ──────────────────────────────────────────
+ * Prevent processing the same Stripe event twice (e.g. on retries).
+ * We use a simple in-memory Map with TTL. For multi-instance
+ * deployments, replace with a DB-backed check or Redis.
+ * ─────────────────────────────────────────────────────────────── */
+const PROCESSED_EVENTS = new Map<string, number>();
+const EVENT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function isEventProcessed(eventId: string): boolean {
+  const ts = PROCESSED_EVENTS.get(eventId);
+  if (ts && Date.now() - ts < EVENT_TTL_MS) return true;
+  return false;
+}
+
+function markEventProcessed(eventId: string): void {
+  PROCESSED_EVENTS.set(eventId, Date.now());
+  // Cleanup old entries
+  if (PROCESSED_EVENTS.size > 500) {
+    const now = Date.now();
+    for (const [id, ts] of PROCESSED_EVENTS) {
+      if (now - ts > EVENT_TTL_MS) PROCESSED_EVENTS.delete(id);
+    }
+  }
+}
 
 /**
  * POST /api/billing/webhook
@@ -44,6 +71,13 @@ export async function POST(req: Request) {
       console.error("[Stripe] Signature verification failed:", err);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
+
+    // ── Idempotency: skip already-processed events ──
+    if (isEventProcessed(event.id)) {
+      console.log(`[Stripe] Skipping duplicate event: ${event.id}`);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    markEventProcessed(event.id);
 
     switch (event.type) {
       /* ─── Checkout completed → activate subscription ─── */
@@ -122,10 +156,60 @@ export async function POST(req: Request) {
         break;
       }
 
-      /* ─── Payment failed → log for alerting ─── */
+      /* ─── Payment failed → notify workspace owner ─── */
       case "invoice.payment_failed": {
         const invoice = event.data.object;
         console.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
+
+        // Find the workspace owner and notify them
+        const customerId =
+          typeof invoice.customer === "string"
+            ? invoice.customer
+            : invoice.customer?.id;
+
+        if (customerId) {
+          try {
+            // Two-step lookup to avoid stale Prisma relation-filter types
+            const sub = await prisma.subscription.findFirst({
+              where: { stripeCustomerId: customerId },
+              select: { workspaceId: true },
+            });
+
+            if (sub) {
+              const workspace = await prisma.workspace.findUnique({
+                where: { id: sub.workspaceId },
+                select: { name: true },
+              });
+
+              const owner = await prisma.user.findFirst({
+                where: { workspaceId: sub.workspaceId, role: "OWNER" },
+                select: { email: true, name: true },
+              });
+
+              if (owner?.email) {
+                await sendEmail({
+                  to: owner.email,
+                  type: "SYSTEM",
+                  title: "Zahlung fehlgeschlagen – Aktion erforderlich",
+                  message:
+                    `Ihre letzte Zahlung für "${workspace?.name ?? "Ihren Arbeitsbereich"}" ` +
+                    `konnte nicht verarbeitet werden. ` +
+                    `Bitte aktualisieren Sie Ihre Zahlungsmethode in den Einstellungen, ` +
+                    `um eine Unterbrechung Ihres Abonnements zu vermeiden.`,
+                  link: "/einstellungen/abonnement",
+                });
+                console.log(
+                  `[Stripe] Payment failure notification sent to ${owner.email}`,
+                );
+              }
+            }
+          } catch (notifyErr) {
+            console.error(
+              "[Stripe] Failed to send payment failure notification:",
+              notifyErr,
+            );
+          }
+        }
         break;
       }
 

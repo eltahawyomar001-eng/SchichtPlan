@@ -4,12 +4,17 @@ import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/verification";
 import { rateLimit } from "@/lib/rate-limit";
+import { registerSchema, validateBody } from "@/lib/validations";
 
 export async function POST(req: Request) {
   const limited = rateLimit(req, "auth");
   if (limited) return limited;
 
   try {
+    const body = await req.json();
+    const parsed = validateBody(registerSchema, body);
+    if (!parsed.success) return parsed.response;
+
     const {
       name,
       email,
@@ -17,22 +22,10 @@ export async function POST(req: Request) {
       workspaceName,
       invitationToken,
       consentGiven,
-    } = await req.json();
+    } = parsed.data;
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: "Alle Felder sind erforderlich." },
-        { status: 400 },
-      );
-    }
-
-    // DSGVO: Consent to Datenschutzerklärung + AGB is mandatory
-    if (!consentGiven) {
-      return NextResponse.json(
-        { error: "Bitte stimmen Sie der Datenschutzerklärung und den AGB zu." },
-        { status: 400 },
-      );
-    }
+    // Suppress unused var warning — consentGiven is validated by Zod (must be true)
+    void consentGiven;
 
     // If no invitation token, workspace name is required
     if (!invitationToken && !workspaceName) {
@@ -165,8 +158,8 @@ export async function POST(req: Request) {
     const result = await prisma.$transaction(async (tx: any) => {
       const workspace = await tx.workspace.create({
         data: {
-          name: workspaceName,
-          slug: slugify(workspaceName) + "-" + Date.now().toString(36),
+          name: workspaceName!,
+          slug: slugify(workspaceName!) + "-" + Date.now().toString(36),
         },
       });
 

@@ -153,8 +153,8 @@ export default function ZeitkontenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-blue-50 p-2">
-                  <ScaleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                <div className="rounded-lg bg-emerald-50 p-2">
+                  <ScaleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
@@ -229,7 +229,7 @@ export default function ZeitkontenPage() {
                           className="h-10 w-10 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                           style={{
                             backgroundColor:
-                              account.employee.color || "#2563EB",
+                              account.employee.color || "#059669",
                           }}
                         >
                           {account.employee.firstName.charAt(0)}

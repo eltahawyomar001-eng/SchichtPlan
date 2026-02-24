@@ -490,10 +490,10 @@ export default function EinstellungenPage() {
 
         {/* Automations Card */}
         <Link href="/einstellungen/automationen" className="block group">
-          <Card className="transition-colors group-hover:border-blue-200 group-hover:bg-blue-50/30">
+          <Card className="transition-colors group-hover:border-emerald-200 group-hover:bg-emerald-50/30">
             <CardContent className="flex items-center gap-4 p-4 sm:p-6">
-              <div className="rounded-xl bg-blue-50 p-3 group-hover:bg-blue-100 transition-colors">
-                <ZapIcon className="h-6 w-6 text-blue-600" />
+              <div className="rounded-xl bg-emerald-50 p-3 group-hover:bg-emerald-100 transition-colors">
+                <ZapIcon className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-gray-900">
@@ -503,17 +503,17 @@ export default function EinstellungenPage() {
                   {t("automationsDesc")}
                 </p>
               </div>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
             </CardContent>
           </Card>
         </Link>
 
         {/* Notification Channels Card */}
         <Link href="/einstellungen/benachrichtigungen" className="block group">
-          <Card className="transition-colors group-hover:border-blue-200 group-hover:bg-blue-50/30">
+          <Card className="transition-colors group-hover:border-emerald-200 group-hover:bg-emerald-50/30">
             <CardContent className="flex items-center gap-4 p-4 sm:p-6">
-              <div className="rounded-xl bg-blue-50 p-3 group-hover:bg-blue-100 transition-colors">
-                <BellIcon className="h-6 w-6 text-blue-600" />
+              <div className="rounded-xl bg-emerald-50 p-3 group-hover:bg-emerald-100 transition-colors">
+                <BellIcon className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-gray-900">
@@ -523,7 +523,7 @@ export default function EinstellungenPage() {
                   {t("notificationPrefsDesc")}
                 </p>
               </div>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
             </CardContent>
           </Card>
         </Link>
@@ -801,7 +801,7 @@ export default function EinstellungenPage() {
                     onClick={handleTogglePush}
                     disabled={pushLoading || !pushSupported || pushDenied}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      pushEnabled ? "bg-blue-600" : "bg-gray-200"
+                      pushEnabled ? "bg-emerald-600" : "bg-gray-200"
                     } ${pushLoading || !pushSupported || pushDenied ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <span

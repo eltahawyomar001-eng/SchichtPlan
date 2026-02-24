@@ -153,7 +153,7 @@ export function NotificationDropdown() {
     string,
     { icon: ComponentType<SVGProps<SVGSVGElement>>; color: string }
   > = {
-    SHIFT_ASSIGNED: { icon: CalendarIcon, color: "text-blue-500" },
+    SHIFT_ASSIGNED: { icon: CalendarIcon, color: "text-emerald-500" },
     SHIFTS_CANCELLED_ABSENCE: {
       icon: AlertTriangleIcon,
       color: "text-amber-500",
@@ -162,11 +162,11 @@ export function NotificationDropdown() {
     ABSENCE_AUTO_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
     ABSENCE_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
     ABSENCE_REJECTED: { icon: CircleXIcon, color: "text-red-500" },
-    SWAP_REQUESTED: { icon: RefreshIcon, color: "text-blue-500" },
+    SWAP_REQUESTED: { icon: RefreshIcon, color: "text-emerald-500" },
     SWAP_AUTO_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
     SWAP_GENEHMIGT: { icon: CircleCheckIcon, color: "text-emerald-500" },
     SWAP_ABGELEHNT: { icon: CircleXIcon, color: "text-red-500" },
-    TIME_ENTRY_SUBMITTED: { icon: ClockIcon, color: "text-blue-500" },
+    TIME_ENTRY_SUBMITTED: { icon: ClockIcon, color: "text-emerald-500" },
     TIME_ENTRY_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
     TIME_ENTRY_REJECTED: { icon: CircleXIcon, color: "text-red-500" },
     TIME_ENTRY_CORRECTED: { icon: PencilIcon, color: "text-amber-500" },
@@ -220,7 +220,7 @@ export function NotificationDropdown() {
                 <button
                   onClick={markAllRead}
                   disabled={loading}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+                  className="text-xs text-emerald-600 hover:text-emerald-800 font-medium disabled:opacity-50"
                 >
                   {t("markAllRead")}
                 </button>
@@ -239,7 +239,7 @@ export function NotificationDropdown() {
                     key={n.id}
                     onClick={() => handleNotificationClick(n)}
                     className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                      !n.read ? "bg-blue-50/50" : ""
+                      !n.read ? "bg-emerald-50/50" : ""
                     }`}
                   >
                     <div className="flex gap-2.5">
@@ -256,7 +256,7 @@ export function NotificationDropdown() {
                             {getTranslatedTitle(n)}
                           </span>
                           {!n.read && (
-                            <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
                           )}
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">

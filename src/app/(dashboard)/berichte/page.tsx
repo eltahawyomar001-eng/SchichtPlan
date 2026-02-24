@@ -44,14 +44,14 @@ interface ReportData {
 }
 
 const COLORS = [
-  "#2563EB",
-  "#3B82F6",
+  "#059669",
+  "#10b981",
   "#10B981",
   "#F59E0B",
   "#EF4444",
   "#EC4899",
   "#06B6D4",
-  "#3B82F6",
+  "#10b981",
 ];
 
 export default function BerichteSeite() {
@@ -135,20 +135,20 @@ export default function BerichteSeite() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
           <label className="text-sm text-gray-600">{t("to")}</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : data ? (
           <div className="space-y-6">
@@ -200,7 +200,7 @@ export default function BerichteSeite() {
                       />
                       <Bar
                         dataKey="hours"
-                        fill="#2563EB"
+                        fill="#059669"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -325,7 +325,7 @@ function StatCard({
 }) {
   const accentColors = {
     amber: "text-amber-600",
-    blue: "text-blue-600",
+    blue: "text-emerald-600",
     red: "text-red-600",
   };
 

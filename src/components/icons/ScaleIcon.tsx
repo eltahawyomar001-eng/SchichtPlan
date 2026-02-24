@@ -2,7 +2,7 @@ import { type SVGProps } from "react";
 
 /**
  * Scale/balance icon — used for Arbeitszeitkonten (time accounts / hour balances).
- * Gradient stroke from Brand/600 (#2563EB) to Brand/400 (#60A5FA).
+ * Gradient stroke from Brand/600 (#059669) to Brand/400 (#34d399).
  */
 export function ScaleIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -54,8 +54,8 @@ export function ScaleIcon(props: SVGProps<SVGSVGElement>) {
           y2="21"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
       </defs>
     </svg>

@@ -284,7 +284,7 @@ export default function StempeluhrSeite() {
       <div>
         <Topbar title={t("title")} description={t("description")} />
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
         </div>
       </div>
     );
@@ -493,7 +493,7 @@ export default function StempeluhrSeite() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <UsersIcon className="h-5 w-5 text-blue-600" />
+                    <UsersIcon className="h-5 w-5 text-emerald-600" />
                     <h3 className="text-base font-semibold text-gray-900">
                       {t("teamOverview")}
                     </h3>
@@ -534,7 +534,7 @@ export default function StempeluhrSeite() {
                 {/* Team list */}
                 {teamLoading && teamData.length === 0 ? (
                   <div className="flex justify-center py-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-blue-600 border-t-transparent" />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
                   </div>
                 ) : teamData.length === 0 ? (
                   <p className="py-6 text-center text-sm text-gray-400">
@@ -565,7 +565,7 @@ export default function StempeluhrSeite() {
                           <div
                             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
                             style={{
-                              backgroundColor: m.employee.color || "#3b82f6",
+                              backgroundColor: m.employee.color || "#10b981",
                             }}
                           >
                             {initials}

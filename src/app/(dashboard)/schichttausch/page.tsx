@@ -273,7 +273,7 @@ export default function SchichttauschPage() {
                 onClick={() => setFilterStatus(s)}
                 className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                   filterStatus === s
-                    ? "bg-blue-100 text-blue-700"
+                    ? "bg-emerald-100 text-emerald-700"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -313,7 +313,7 @@ export default function SchichttauschPage() {
                               className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                               style={{
                                 backgroundColor:
-                                  swap.requester.color || "#2563EB",
+                                  swap.requester.color || "#059669",
                               }}
                             >
                               {swap.requester.firstName.charAt(0)}
@@ -339,7 +339,7 @@ export default function SchichttauschPage() {
                                 className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                                 style={{
                                   backgroundColor:
-                                    swap.target.color || "#3B82F6",
+                                    swap.target.color || "#10b981",
                                 }}
                               >
                                 {swap.target.firstName.charAt(0)}
@@ -379,7 +379,7 @@ export default function SchichttauschPage() {
                       )}
 
                       {swap.reviewNote && (
-                        <p className="mt-1 text-xs text-blue-500 line-clamp-1">
+                        <p className="mt-1 text-xs text-emerald-500 line-clamp-1">
                           {tc("note")}: {swap.reviewNote}
                         </p>
                       )}
@@ -502,7 +502,7 @@ export default function SchichttauschPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
-                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[80px] resize-none"
+                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
                     placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>

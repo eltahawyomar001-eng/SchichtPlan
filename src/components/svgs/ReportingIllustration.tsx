@@ -46,9 +46,9 @@ export function ReportingIllustration() {
   }, []);
 
   const employees = [
-    { name: "Anna M.", hours: 38, overtime: 0, color: "#2563EB" },
-    { name: "Ben K.", hours: 42, overtime: 2, color: "#60A5FA" },
-    { name: "Clara S.", hours: 35, overtime: 0, color: "#1D4ED8" },
+    { name: "Anna M.", hours: 38, overtime: 0, color: "#059669" },
+    { name: "Ben K.", hours: 42, overtime: 2, color: "#34d399" },
+    { name: "Clara S.", hours: 35, overtime: 0, color: "#047857" },
     { name: "David R.", hours: 40, overtime: 0, color: "#C4B5FD" },
   ];
 
@@ -147,7 +147,7 @@ export function ReportingIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
+            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-emerald-50 to-emerald-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -168,7 +168,7 @@ export function ReportingIllustration() {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 px-4 py-3">
             {[
-              { label: t("total"), value: "155h", accent: "#2563EB" },
+              { label: t("total"), value: "155h", accent: "#059669" },
               { label: t("overtime"), value: "2h", accent: "#F59E0B" },
               { label: t("absent"), value: "0", accent: "#10B981" },
             ].map((stat, i) => (
@@ -256,7 +256,7 @@ export function ReportingIllustration() {
           {/* Export button */}
           <div className="mx-4 mt-3 mb-3">
             <div
-              className="rounded-xl border-2 border-dashed border-blue-200 py-2.5 text-center"
+              className="rounded-xl border-2 border-dashed border-emerald-200 py-2.5 text-center"
               style={{
                 opacity: isVisible ? 1 : 0,
                 animation: isVisible
@@ -265,7 +265,7 @@ export function ReportingIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              <span className="text-xs font-semibold text-blue-500 inline-flex items-center gap-1">
+              <span className="text-xs font-semibold text-emerald-500 inline-flex items-center gap-1">
                 <DownloadIcon className="w-3.5 h-3.5" />
                 {t("exportCsv")}
               </span>
@@ -284,8 +284,8 @@ export function ReportingIllustration() {
             animationFillMode: "backwards",
           }}
         >
-          <div className="px-4 py-3 bg-gradient-to-br from-blue-600 to-blue-500">
-            <span className="block text-[10px] text-blue-200 font-medium">
+          <div className="px-4 py-3 bg-gradient-to-br from-emerald-600 to-emerald-500">
+            <span className="block text-[10px] text-emerald-200 font-medium">
               {t("laborCosts")}
             </span>
             <span
@@ -383,7 +383,7 @@ export function ReportingIllustration() {
               cx="126"
               cy="8"
               r="3"
-              fill="#2563EB"
+              fill="#059669"
               style={{
                 opacity: isVisible ? 1 : 0,
                 animation: isVisible
@@ -401,8 +401,8 @@ export function ReportingIllustration() {
                 y2="0"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop stopColor="#60A5FA" />
-                <stop offset="1" stopColor="#2563EB" />
+                <stop stopColor="#34d399" />
+                <stop offset="1" stopColor="#059669" />
               </linearGradient>
               <linearGradient
                 id="sparkline-fill"
@@ -412,8 +412,8 @@ export function ReportingIllustration() {
                 y2="40"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop stopColor="#2563EB" stopOpacity="0.15" />
-                <stop offset="1" stopColor="#2563EB" stopOpacity="0" />
+                <stop stopColor="#059669" stopOpacity="0.15" />
+                <stop offset="1" stopColor="#059669" stopOpacity="0" />
               </linearGradient>
             </defs>
           </svg>

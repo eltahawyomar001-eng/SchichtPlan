@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ShiftfyMark } from "@/components/icons";
+
+export const metadata: Metadata = {
+  title: "Impressum",
+  description: "Impressum und Anbieterkennzeichnung der Shiftfy Software.",
+  alternates: { canonical: "/impressum" },
+  robots: { index: true, follow: true },
+};
 
 export default function ImpressumPage() {
   return (
@@ -111,7 +119,7 @@ export default function ImpressumPage() {
                 href="https://ec.europa.eu/consumers/odr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-emerald-600 hover:text-emerald-700 underline"
               >
                 https://ec.europa.eu/consumers/odr
               </a>
@@ -128,7 +136,7 @@ export default function ImpressumPage() {
         <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
           >
             &larr; Zurück zur Startseite
           </Link>

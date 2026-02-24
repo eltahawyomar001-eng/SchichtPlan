@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Brand palette — blue ── */
-  --brand-50: #eff6ff;
-  --brand-100: #dbeafe;
-  --brand-200: #bfdbfe;
-  --brand-300: #93c5fd;
-  --brand-400: #60a5fa;
-  --brand-500: #3b82f6;
-  --brand-600: #2563eb;
-  --brand-700: #1d4ed8;
-  --brand-800: #1e40af;
-  --brand-900: #1e3a8a;
+  /* ── Brand palette — emerald green ── */
+  --brand-50: #ecfdf5;
+  --brand-100: #d1fae5;
+  --brand-200: #a7f3d0;
+  --brand-300: #6ee7b7;
+  --brand-400: #34d399;
+  --brand-500: #10b981;
+  --brand-600: #059669;
+  --brand-700: #047857;
+  --brand-800: #065f46;
+  --brand-900: #064e3b;
 
   /* ── Neutral ── */
   --gray-50: #f9fafb;
@@ -32,8 +32,8 @@
   --warning-light: #fef3c7;
   --destructive: #ef4444;
   --destructive-light: #fee2e2;
-  --info: #3b82f6;
-  --info-light: #dbeafe;
+  --info: #10b981;
+  --info-light: #d1fae5;
 
   /* ── Accent (CTA / upgrade banners) ── */
   --accent: #f59e0b;
@@ -46,14 +46,14 @@
   --muted: #f9fafb;
   --muted-foreground: #6b7280;
   --border: #e5e7eb;
-  --ring: #2563eb;
+  --ring: #059669;
 
   /* ── Sidebar (dark slate — professional feel) ── */
   --sidebar-bg: #0f172a;
   --sidebar-text: #e2e8f0;
   --sidebar-text-muted: #94a3b8;
   --sidebar-hover: #1e293b;
-  --sidebar-active: #2563eb;
+  --sidebar-active: #059669;
   --sidebar-border: #334155;
 }
 
@@ -144,8 +144,8 @@ body {
 /* Subtle grid pattern */
 .bg-grid {
   background-image:
-    linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(5, 150, 105, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(5, 150, 105, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 

@@ -145,7 +145,7 @@ export default function DatenSeite() {
             <button
               onClick={handleImport}
               disabled={importing}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               {importing ? "..." : t("importBtn")}
             </button>
@@ -222,7 +222,7 @@ export default function DatenSeite() {
             <button
               onClick={handleExport}
               disabled={exportingFile}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               {exportingFile ? "..." : t("exportBtn")}

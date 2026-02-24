@@ -24,14 +24,14 @@ export function buildEmailHtml(params: {
   const ctaHref = link
     ? link.startsWith("http")
       ? link
-      : `${process.env.NEXTAUTH_URL || "https://app.shiftfy.de"}${link}`
+      : `${process.env.NEXTAUTH_URL || "https://www.shiftfy.de"}${link}`
     : null;
 
   const ctaBlock = ctaHref
     ? `<tr>
          <td style="padding:24px 32px 0;">
            <a href="${ctaHref}"
-              style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">
+              style="display:inline-block;padding:12px 24px;background:#047857;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">
               ${ctaLabel}
            </a>
          </td>
@@ -48,7 +48,7 @@ export function buildEmailHtml(params: {
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);">
           <!-- Header -->
           <tr>
-            <td style="padding:24px 32px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#ffffff;">
+            <td style="padding:24px 32px;background:linear-gradient(135deg,#047857,#059669);color:#ffffff;">
               <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.3px;">Shiftfy</h1>
             </td>
           </tr>

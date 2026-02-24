@@ -1,7 +1,7 @@
 import { type SVGProps } from "react";
 
 /**
- * Clock icon with gradient stroke from Brand/600 (#2563EB) to Brand/400 (#60A5FA).
+ * Clock icon with gradient stroke from Brand/600 (#059669) to Brand/400 (#34d399).
  * Used in the Shiftfy brand mark and time-related UI elements.
  * Animation-ready with unique gradient ID.
  */
@@ -38,8 +38,8 @@ export function ClockIcon(props: SVGProps<SVGSVGElement>) {
           y2="21"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
         <linearGradient
           id="clock-hand-gradient"
@@ -49,8 +49,8 @@ export function ClockIcon(props: SVGProps<SVGSVGElement>) {
           y2="15"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
       </defs>
     </svg>

@@ -54,7 +54,7 @@ export default function MitarbeiterPage() {
     position: "",
     hourlyRate: "",
     weeklyHours: "",
-    color: "#3B82F6",
+    color: "#10b981",
   });
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function MitarbeiterPage() {
       position: "",
       hourlyRate: "",
       weeklyHours: "",
-      color: "#3B82F6",
+      color: "#10b981",
     });
     setFormError(null);
     setShowForm(true);
@@ -99,7 +99,7 @@ export default function MitarbeiterPage() {
       position: emp.position || "",
       hourlyRate: emp.hourlyRate?.toString() || "",
       weeklyHours: emp.weeklyHours?.toString() || "",
-      color: emp.color || "#3B82F6",
+      color: emp.color || "#10b981",
     });
     setFormError(null);
     setShowForm(true);
@@ -131,7 +131,7 @@ export default function MitarbeiterPage() {
           position: "",
           hourlyRate: "",
           weeklyHours: "",
-          color: "#3B82F6",
+          color: "#10b981",
         });
         fetchEmployees();
       } else {
@@ -405,7 +405,7 @@ export default function MitarbeiterPage() {
                     <div className="flex items-center gap-3">
                       <Avatar
                         name={`${employee.firstName} ${employee.lastName}`}
-                        color={employee.color || "#3B82F6"}
+                        color={employee.color || "#10b981"}
                       />
                       <div>
                         <p className="font-medium text-gray-900">

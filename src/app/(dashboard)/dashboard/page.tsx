@@ -48,12 +48,12 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-center py-20">
           <Card className="mx-4 max-w-md">
             <CardContent className="p-8 text-center">
-              <RocketIcon className="mx-auto mb-4 h-12 w-12 text-blue-500" />
+              <RocketIcon className="mx-auto mb-4 h-12 w-12 text-emerald-500" />
               <CardTitle className="mb-2">{to("welcome")}</CardTitle>
               <p className="text-sm text-gray-500 mb-6">{to("setupDesc")}</p>
               <Link
                 href="/einstellungen"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110"
               >
                 {to("setupButton")}
                 <ArrowRightIcon className="h-4 w-4" />
@@ -140,12 +140,12 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <Link
               href="/schichtplan"
-              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300 hover:shadow-sm transition-all group"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-emerald-300 hover:shadow-sm transition-all group"
             >
-              <div className="rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100">
-                <CalendarIcon className="h-5 w-5 text-blue-600" />
+              <div className="rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100">
+                <CalendarIcon className="h-5 w-5 text-emerald-600" />
               </div>
-              <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
+              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">
                 {t("myShifts")}
               </span>
             </Link>
@@ -173,12 +173,12 @@ export default async function DashboardPage() {
             </Link>
             <Link
               href="/schichttausch"
-              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-blue-300 hover:shadow-sm transition-all group"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 hover:border-emerald-300 hover:shadow-sm transition-all group"
             >
-              <div className="rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100">
-                <SwapIcon className="h-5 w-5 text-blue-600" />
+              <div className="rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100">
+                <SwapIcon className="h-5 w-5 text-emerald-600" />
               </div>
-              <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
+              <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">
                 {t("shiftSwap")}
               </span>
             </Link>
@@ -209,7 +209,7 @@ export default async function DashboardPage() {
                           })}
                         </p>
                       </div>
-                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
+                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600" />
                     </Link>
                   )}
                   {myPendingSwaps > 0 && (
@@ -218,14 +218,14 @@ export default async function DashboardPage() {
                       className="flex items-center justify-between rounded-xl border border-gray-200 p-3 hover:border-gray-300 hover:bg-gray-50 transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-blue-50 p-2">
-                          <SwapIcon className="h-4 w-4 text-blue-600" />
+                        <div className="rounded-lg bg-emerald-50 p-2">
+                          <SwapIcon className="h-4 w-4 text-emerald-600" />
                         </div>
                         <p className="text-sm font-medium text-gray-700">
                           {t("pendingSwaps", { count: myPendingSwaps })}
                         </p>
                       </div>
-                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
+                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600" />
                     </Link>
                   )}
                 </div>
@@ -252,7 +252,7 @@ export default async function DashboardPage() {
                         <div
                           className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0"
                           style={{
-                            backgroundColor: shift.employee.color || "#3B82F6",
+                            backgroundColor: shift.employee.color || "#10b981",
                           }}
                         >
                           {shift.employee.firstName.charAt(0)}
@@ -298,7 +298,7 @@ export default async function DashboardPage() {
                         <div
                           className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0"
                           style={{
-                            backgroundColor: shift.employee.color || "#3B82F6",
+                            backgroundColor: shift.employee.color || "#10b981",
                           }}
                         >
                           {shift.employee.firstName.charAt(0)}
@@ -375,8 +375,8 @@ export default async function DashboardPage() {
       title: t("employees"),
       value: employeeCount,
       icon: UsersIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
     {
       title: t("totalShifts"),
@@ -389,8 +389,8 @@ export default async function DashboardPage() {
       title: t("locations"),
       value: locationCount,
       icon: MapPinIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
     {
       title: t("shiftsToday"),
@@ -420,8 +420,8 @@ export default async function DashboardPage() {
       done: employeeCount > 0,
       href: "/mitarbeiter",
       icon: UsersIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
     {
       title: to("step3Title"),
@@ -429,8 +429,8 @@ export default async function DashboardPage() {
       done: shiftCount > 0,
       href: "/schichtplan",
       icon: CalendarIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
   ];
 
@@ -450,16 +450,16 @@ export default async function DashboardPage() {
       label: t("pendingSwaps", { count: pendingSwaps }),
       href: "/schichttausch",
       icon: SwapIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
     {
       count: pendingTimeEntries,
       label: t("pendingTimeEntries", { count: pendingTimeEntries }),
       href: "/zeiterfassung",
       icon: ClockIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
   ].filter((item) => item.count > 0);
 
@@ -469,7 +469,7 @@ export default async function DashboardPage() {
       <div className="p-4 sm:p-6 space-y-6">
         {/* Onboarding Wizard */}
         {showOnboarding && (
-          <Card className="border-blue-200 bg-gradient-to-br from-blue-50/60 to-white">
+          <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                 <RocketIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -485,7 +485,7 @@ export default async function DashboardPage() {
                     className={`flex items-center gap-3 sm:gap-4 rounded-xl border p-3 sm:p-4 transition-all ${
                       step.done
                         ? "border-green-200 bg-green-50/50"
-                        : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
+                        : "border-gray-200 bg-white hover:border-emerald-300 hover:shadow-sm"
                     }`}
                   >
                     <div
@@ -520,7 +520,7 @@ export default async function DashboardPage() {
                     ) : (
                       <Link
                         href={step.href}
-                        className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 flex-shrink-0"
+                        className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 flex-shrink-0"
                       >
                         <span className="hidden sm:inline">{to("goTo")}</span>
                         <ArrowRightIcon className="h-4 w-4" />
@@ -569,12 +569,12 @@ export default async function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                 <Link
                   href="/mitarbeiter"
-                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-all group min-w-0"
+                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group min-w-0"
                 >
-                  <div className="flex-shrink-0 rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100 transition-colors">
-                    <PlusIcon className="h-4 w-4 text-blue-600" />
+                  <div className="flex-shrink-0 rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100 transition-colors">
+                    <PlusIcon className="h-4 w-4 text-emerald-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 break-words text-left">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 break-words text-left">
                     {t("addEmployee")}
                   </span>
                 </Link>
@@ -591,12 +591,12 @@ export default async function DashboardPage() {
                 </Link>
                 <Link
                   href="/schichtplan"
-                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-all group min-w-0"
+                  className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group min-w-0"
                 >
-                  <div className="flex-shrink-0 rounded-lg bg-blue-50 p-2 group-hover:bg-blue-100 transition-colors">
-                    <CalendarIcon className="h-4 w-4 text-blue-600" />
+                  <div className="flex-shrink-0 rounded-lg bg-emerald-50 p-2 group-hover:bg-emerald-100 transition-colors">
+                    <CalendarIcon className="h-4 w-4 text-emerald-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700 break-words text-left">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 break-words text-left">
                     {t("createShift")}
                   </span>
                 </Link>
@@ -635,7 +635,7 @@ export default async function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs font-medium text-blue-600 group-hover:text-blue-700 flex items-center gap-1">
+                      <span className="text-xs font-medium text-emerald-600 group-hover:text-emerald-700 flex items-center gap-1">
                         <span className="hidden sm:inline">
                           {t("reviewNow")}
                         </span>
@@ -668,7 +668,7 @@ export default async function DashboardPage() {
                       <div
                         className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0"
                         style={{
-                          backgroundColor: shift.employee.color || "#3B82F6",
+                          backgroundColor: shift.employee.color || "#10b981",
                         }}
                       >
                         {shift.employee.firstName.charAt(0)}

@@ -55,14 +55,14 @@ export function PlanningIllustration() {
     t("daySu"),
   ];
   const shifts = [
-    { day: 0, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
-    { day: 1, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
-    { day: 2, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
-    { day: 0, row: 1, color: "#60A5FA", label: t("shiftLate"), w: 1 },
-    { day: 1, row: 1, color: "#60A5FA", label: t("shiftLate"), w: 1 },
-    { day: 3, row: 0, color: "#1D4ED8", label: t("shiftNight"), w: 1 },
-    { day: 4, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
-    { day: 4, row: 1, color: "#60A5FA", label: t("shiftLate"), w: 1 },
+    { day: 0, row: 0, color: "#059669", label: t("shiftEarly"), w: 1 },
+    { day: 1, row: 0, color: "#059669", label: t("shiftEarly"), w: 1 },
+    { day: 2, row: 0, color: "#059669", label: t("shiftEarly"), w: 1 },
+    { day: 0, row: 1, color: "#34d399", label: t("shiftLate"), w: 1 },
+    { day: 1, row: 1, color: "#34d399", label: t("shiftLate"), w: 1 },
+    { day: 3, row: 0, color: "#047857", label: t("shiftNight"), w: 1 },
+    { day: 4, row: 0, color: "#059669", label: t("shiftEarly"), w: 1 },
+    { day: 4, row: 1, color: "#34d399", label: t("shiftLate"), w: 1 },
     { day: 5, row: 0, color: "#C4B5FD", label: t("shiftStandby"), w: 1 },
   ];
 
@@ -125,7 +125,7 @@ export function PlanningIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
+            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-emerald-50 to-emerald-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -235,7 +235,7 @@ export function PlanningIllustration() {
 
         {/* Floating drag indicator */}
         <div
-          className="absolute -right-2 top-[140px] rounded-xl bg-blue-600 text-white px-3 py-2 shadow-lg shadow-blue-200 text-xs font-medium flex items-center gap-1.5"
+          className="absolute -right-2 top-[140px] rounded-xl bg-emerald-600 text-white px-3 py-2 shadow-lg shadow-emerald-200 text-xs font-medium flex items-center gap-1.5"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible

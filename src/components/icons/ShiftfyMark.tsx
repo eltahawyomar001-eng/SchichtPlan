@@ -39,8 +39,8 @@ export function ShiftfyMark(props: SVGProps<SVGSVGElement>) {
           y2="40"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#1E40AF" />
-          <stop offset="1" stopColor="#2563EB" />
+          <stop stopColor="#065f46" />
+          <stop offset="1" stopColor="#059669" />
         </linearGradient>
       </defs>
 

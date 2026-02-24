@@ -42,9 +42,9 @@ interface EmployeeInfo {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  EARLY: "bg-blue-200 text-blue-800",
+  EARLY: "bg-emerald-200 text-emerald-800",
   LATE: "bg-orange-200 text-orange-800",
-  NIGHT: "bg-indigo-200 text-indigo-800",
+  NIGHT: "bg-emerald-200 text-emerald-800",
   NORMAL: "bg-green-200 text-green-800",
   URLAUB: "bg-yellow-200 text-yellow-800",
   KRANK: "bg-red-200 text-red-800",
@@ -145,7 +145,7 @@ export default function TeamkalenderSeite() {
                 onClick={() => setViewMode(m)}
                 className={`rounded-md px-3 py-1 text-sm font-medium transition ${
                   viewMode === m
-                    ? "bg-white text-blue-700 shadow-sm"
+                    ? "bg-white text-emerald-700 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -204,7 +204,7 @@ export default function TeamkalenderSeite() {
                         <div
                           className="h-2.5 w-2.5 rounded-full flex-shrink-0"
                           style={{
-                            backgroundColor: emp.color || "#3b82f6",
+                            backgroundColor: emp.color || "#10b981",
                           }}
                         />
                         {emp.firstName} {emp.lastName}
@@ -254,7 +254,7 @@ export default function TeamkalenderSeite() {
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
                   <div
                     className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: emp.color || "#3b82f6" }}
+                    style={{ backgroundColor: emp.color || "#10b981" }}
                   />
                   <span className="text-sm font-semibold text-gray-800">
                     {emp.firstName} {emp.lastName}

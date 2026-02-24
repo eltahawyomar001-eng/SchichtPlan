@@ -49,10 +49,10 @@ interface AbsenceRequest {
 // ─── Constants ──────────────────────────────────────────────────
 
 const CATEGORY_KEYS = [
-  { value: "URLAUB", color: "bg-blue-100 text-blue-700" },
+  { value: "URLAUB", color: "bg-emerald-100 text-emerald-700" },
   { value: "KRANK", color: "bg-red-100 text-red-700" },
   { value: "ELTERNZEIT", color: "bg-pink-100 text-pink-700" },
-  { value: "SONDERURLAUB", color: "bg-blue-100 text-blue-700" },
+  { value: "SONDERURLAUB", color: "bg-emerald-100 text-emerald-700" },
   { value: "UNBEZAHLT", color: "bg-gray-100 text-gray-700" },
   { value: "FORTBILDUNG", color: "bg-teal-100 text-teal-700" },
   { value: "SONSTIGES", color: "bg-amber-100 text-amber-700" },
@@ -266,8 +266,8 @@ export default function AbwesenheitenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-blue-50 p-2">
-                  <CalendarOffIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                <div className="rounded-lg bg-emerald-50 p-2">
+                  <CalendarOffIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">
@@ -290,7 +290,7 @@ export default function AbwesenheitenPage() {
               onClick={() => setFilterStatus(s)}
               className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                 filterStatus === s
-                  ? "bg-blue-100 text-blue-700"
+                  ? "bg-emerald-100 text-emerald-700"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -326,7 +326,7 @@ export default function AbwesenheitenPage() {
                           className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                           style={{
                             backgroundColor:
-                              absence.employee.color || "#2563EB",
+                              absence.employee.color || "#059669",
                           }}
                         >
                           {absence.employee.firstName.charAt(0)}
@@ -540,7 +540,7 @@ export default function AbwesenheitenPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
-                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[80px] resize-none"
+                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
                     placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>

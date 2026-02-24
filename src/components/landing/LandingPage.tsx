@@ -78,7 +78,7 @@ export function LandingPage() {
       {/* Skip-to-content link (BFSG/WCAG 2.1) */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none"
       >
         Zum Inhalt springen
       </a>
@@ -237,7 +237,7 @@ function Navbar() {
           </Link>
           <Link
             href="/register"
-            className="bg-brand-gradient text-white text-sm font-semibold px-4 sm:px-5 py-2 rounded-full hover:shadow-lg hover:shadow-blue-200 transition-all"
+            className="bg-brand-gradient text-white text-sm font-semibold px-4 sm:px-5 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all"
           >
             {t("navCta")}
           </Link>
@@ -308,10 +308,10 @@ function HeroSection() {
   const t = useTranslations("landing");
 
   return (
-    <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-blue-50/60 via-white to-white">
+    <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-emerald-50/60 via-white to-white">
       {/* Subtle decorative elements */}
-      <div className="absolute top-20 -left-40 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-3xl" />
-      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-blue-100/30 rounded-full blur-3xl" />
+      <div className="absolute top-20 -left-40 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl" />
+      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
@@ -331,15 +331,15 @@ function HeroSection() {
             {/* Trust badges */}
             <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2">
               <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <CheckCircleIcon className="w-4 h-4 text-blue-600" />
+                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
                 {t("heroProof1")}
               </div>
               <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <CheckCircleIcon className="w-4 h-4 text-blue-600" />
+                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
                 {t("heroProof2")}
               </div>
               <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <CheckCircleIcon className="w-4 h-4 text-blue-600" />
+                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
                 {t("heroProof3")}
               </div>
             </div>
@@ -348,14 +348,14 @@ function HeroSection() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
               <Link
                 href="/register"
-                className="bg-brand-gradient text-white font-semibold px-8 py-4 rounded-full text-base hover:shadow-xl hover:shadow-blue-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                className="bg-brand-gradient text-white font-semibold px-8 py-4 rounded-full text-base hover:shadow-xl hover:shadow-emerald-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
               >
                 {t("heroCtaPrimary")}
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
               <a
                 href="#pricing"
-                className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                className="text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1"
               >
                 {t("heroCtaSecondary")}
                 <ChevronRightIcon className="w-4 h-4" />
@@ -391,10 +391,10 @@ function HeroMockup() {
   return (
     <div className="relative">
       {/* Glow behind */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-200/50 to-blue-200/30 rounded-3xl blur-2xl scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/50 to-emerald-200/30 rounded-3xl blur-2xl scale-105" />
 
       {/* Main card */}
-      <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-blue-100/50 overflow-hidden">
+      <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-emerald-100/50 overflow-hidden">
         {/* Title bar */}
         <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
           <div className="flex gap-1.5">
@@ -413,11 +413,11 @@ function HeroMockup() {
         <div className="p-4 sm:p-5">
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mb-5">
-            <div className="rounded-xl bg-blue-50 p-3 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-blue-700">
+            <div className="rounded-xl bg-emerald-50 p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-emerald-700">
                 16
               </div>
-              <div className="text-[10px] sm:text-xs text-blue-500 font-medium mt-0.5">
+              <div className="text-[10px] sm:text-xs text-emerald-500 font-medium mt-0.5">
                 {t("heroMockupShifts")}
               </div>
             </div>
@@ -488,7 +488,7 @@ function HeroMockup() {
       </div>
 
       {/* Floating notification card */}
-      <div className="absolute -bottom-4 left-0 sm:-left-6 rounded-xl bg-white border border-gray-200 shadow-lg shadow-blue-100/40 px-4 py-3 flex items-center gap-3 max-w-[220px]">
+      <div className="absolute -bottom-4 left-0 sm:-left-6 rounded-xl bg-white border border-gray-200 shadow-lg shadow-emerald-100/40 px-4 py-3 flex items-center gap-3 max-w-[220px]">
         <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
           <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
         </div>
@@ -503,8 +503,8 @@ function HeroMockup() {
       </div>
 
       {/* Floating stat badge */}
-      <div className="absolute -top-3 right-0 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-blue-100/40 px-4 py-2.5 text-center">
-        <div className="text-lg font-bold text-blue-700">98%</div>
+      <div className="absolute -top-3 right-0 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-emerald-100/40 px-4 py-2.5 text-center">
+        <div className="text-lg font-bold text-emerald-700">98%</div>
         <div className="text-[10px] font-medium text-gray-400">
           {t("heroMockupCoverage")}
         </div>
@@ -582,7 +582,7 @@ function FeatureSection({
           {/* Text */}
           <div className="flex-1 max-w-lg">
             {/* Step badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">
               <StepIcon className="w-3.5 h-3.5" />
               {t("step")} {step} — {label}
             </div>
@@ -703,12 +703,12 @@ function PricingSection() {
               key={plan.name}
               className={`rounded-2xl border p-6 flex flex-col transition-shadow ${
                 plan.highlighted
-                  ? "border-blue-500 ring-2 ring-blue-500 bg-white shadow-lg shadow-blue-100/50"
+                  ? "border-emerald-500 ring-2 ring-emerald-500 bg-white shadow-lg shadow-emerald-100/50"
                   : "border-gray-200 bg-white shadow-sm hover:shadow-md"
               }`}
             >
               {plan.highlighted && (
-                <span className="inline-block self-start rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
+                <span className="inline-block self-start rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 mb-4">
                   {tp("popular")}
                 </span>
               )}
@@ -723,7 +723,7 @@ function PricingSection() {
               <ul className="mt-6 space-y-3 flex-1">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <CheckCircleIcon className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <span className="text-gray-700">{f}</span>
                   </li>
                 ))}
@@ -732,7 +732,7 @@ function PricingSection() {
                 href={plan.href}
                 className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${
                   plan.highlighted
-                    ? "bg-brand-gradient text-white hover:shadow-lg hover:shadow-blue-200"
+                    ? "bg-brand-gradient text-white hover:shadow-lg hover:shadow-emerald-200"
                     : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -800,7 +800,7 @@ function BenefitsSection() {
               key={b.title}
               className="rounded-2xl bg-white border border-gray-100 shadow-[0px_4px_24px_0px_rgba(37,99,235,0.06)] p-4 sm:p-6 hover:shadow-[0px_8px_32px_0px_rgba(37,99,235,0.12)] transition-shadow"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-4">
                 <b.icon className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-gray-900 text-lg">{b.title}</h3>
@@ -863,7 +863,7 @@ function CTAFooter() {
   return (
     <section className="py-12 sm:py-20">
       <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
+        <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-600 to-emerald-700 p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
           {/* Decorative circles */}
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/5 rounded-full" />
@@ -872,13 +872,13 @@ function CTAFooter() {
             <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
               {t("ctaTitle")}
             </h2>
-            <p className="mt-4 text-blue-200 text-lg max-w-xl mx-auto">
+            <p className="mt-4 text-emerald-200 text-lg max-w-xl mx-auto">
               {t("ctaSubtitle")}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="bg-white text-blue-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                className="bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 {t("ctaButton")}
                 <ArrowRightIcon className="w-5 h-5" />

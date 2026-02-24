@@ -57,8 +57,8 @@ export function DashboardIcon(props: SVGProps<SVGSVGElement>) {
           y2="21"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
       </defs>
     </svg>

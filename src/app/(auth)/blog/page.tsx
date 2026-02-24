@@ -3,9 +3,25 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Blog – Shiftfy",
+  title: "Blog – Tipps zu Zeiterfassung, Schichtplanung & Arbeitsrecht",
   description:
-    "Tipps & Neuigkeiten rund um Zeiterfassung, Personalmanagement und Arbeitsrecht.",
+    "Tipps & Neuigkeiten rund um Zeiterfassung, Schichtplanung, Personalmanagement und Arbeitsrecht in Deutschland. Praxiswissen für Arbeitgeber.",
+  keywords: [
+    "Zeiterfassung Pflicht Deutschland",
+    "Schichtplanung Tipps",
+    "Arbeitsrecht Schichtarbeit",
+    "Personalmanagement Blog",
+    "Arbeitszeitgesetz",
+    "Dienstplan Tipps",
+  ],
+  alternates: {
+    canonical: "/blog",
+  },
+  openGraph: {
+    title: "Shiftfy Blog – Wissen für Schichtplaner",
+    description:
+      "Praxiswissen zu Zeiterfassung, Schichtplanung und Arbeitsrecht.",
+  },
 };
 
 interface BlogPost {
@@ -57,10 +73,10 @@ const posts: BlogPost[] = [
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Planung: "bg-blue-100 text-blue-700",
+  Planung: "bg-emerald-100 text-emerald-700",
   Recht: "bg-amber-100 text-amber-700",
   HR: "bg-green-100 text-green-700",
-  Technologie: "bg-blue-100 text-blue-700",
+  Technologie: "bg-emerald-100 text-emerald-700",
 };
 
 export default async function BlogPage() {
@@ -73,7 +89,7 @@ export default async function BlogPage() {
         <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
           <Link
             href="/"
-            className="text-sm text-blue-600 hover:underline mb-4 inline-block"
+            className="text-sm text-emerald-600 hover:underline mb-4 inline-block"
           >
             {t("backToHome")}
           </Link>
@@ -110,7 +126,7 @@ export default async function BlogPage() {
                 </span>
               </div>
               <Link href={`/blog/${post.slug}`}>
-                <h2 className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+                <h2 className="text-xl font-semibold text-gray-900 hover:text-emerald-600 transition-colors">
                   {post.title}
                 </h2>
               </Link>
@@ -119,7 +135,7 @@ export default async function BlogPage() {
               </p>
               <Link
                 href={`/blog/${post.slug}`}
-                className="inline-block mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="inline-block mt-3 text-sm font-medium text-emerald-600 hover:text-emerald-700"
               >
                 {t("readMore")}
               </Link>

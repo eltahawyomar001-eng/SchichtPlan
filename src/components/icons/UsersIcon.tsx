@@ -44,8 +44,8 @@ export function UsersIcon(props: SVGProps<SVGSVGElement>) {
           y2="21"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
         <linearGradient
           id="users-secondary-gradient"
@@ -55,7 +55,7 @@ export function UsersIcon(props: SVGProps<SVGSVGElement>) {
           y2="21"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#60A5FA" />
+          <stop stopColor="#34d399" />
           <stop offset="1" stopColor="#C4B5FD" />
         </linearGradient>
       </defs>

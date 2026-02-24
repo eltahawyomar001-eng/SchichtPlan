@@ -280,14 +280,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors min-w-0",
                           isActive
-                            ? "bg-blue-50 text-blue-700"
+                            ? "bg-emerald-50 text-emerald-700"
                             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                         )}
                       >
                         <item.icon
                           className={cn(
                             "h-5 w-5 flex-shrink-0",
-                            isActive ? "text-blue-700" : "text-gray-400",
+                            isActive ? "text-emerald-700" : "text-gray-400",
                           )}
                         />
                         <span className="truncate">{t(item.key)}</span>

@@ -62,8 +62,8 @@ export function UpgradeModal({
       <div className="w-full max-w-md mx-4 rounded-xl bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-start gap-3 p-6">
-          <div className="flex-shrink-0 rounded-full bg-indigo-100 p-2.5">
-            <RocketIcon className="h-5 w-5 text-indigo-600" />
+          <div className="flex-shrink-0 rounded-full bg-emerald-100 p-2.5">
+            <RocketIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-semibold text-gray-900">

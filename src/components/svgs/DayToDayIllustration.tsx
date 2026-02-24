@@ -139,7 +139,7 @@ export function DayToDayIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
+            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-emerald-50 to-emerald-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -184,7 +184,7 @@ export function DayToDayIllustration() {
                 }}
               >
                 <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold">
                     {s.name
                       .split(" ")
                       .map((n) => n[0])
@@ -230,7 +230,7 @@ export function DayToDayIllustration() {
 
           {/* Summary bar */}
           <div
-            className="mx-4 px-3 py-2 rounded-lg bg-blue-50 flex items-center justify-between"
+            className="mx-4 px-3 py-2 rounded-lg bg-emerald-50 flex items-center justify-between"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -239,12 +239,12 @@ export function DayToDayIllustration() {
               animationFillMode: "backwards",
             }}
           >
-            <span className="text-xs text-blue-700 font-medium">
+            <span className="text-xs text-emerald-700 font-medium">
               {t("checkedIn")}
             </span>
-            <div className="w-20 h-1.5 rounded-full bg-blue-200 overflow-hidden">
+            <div className="w-20 h-1.5 rounded-full bg-emerald-200 overflow-hidden">
               <div
-                className="h-full rounded-full bg-blue-500"
+                className="h-full rounded-full bg-emerald-500"
                 style={{
                   width: isVisible ? "66%" : "0%",
                   animation: isVisible
@@ -303,7 +303,7 @@ export function DayToDayIllustration() {
               cx={dot.cx}
               cy={dot.cy}
               r={dot.r}
-              fill="#2563EB"
+              fill="#059669"
               fillOpacity={dot.opacity}
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -316,7 +316,7 @@ export function DayToDayIllustration() {
           ))}
           <path
             d="M5 43 C10 80, 15 80, 15 117"
-            stroke="#2563EB"
+            stroke="#059669"
             strokeWidth="1"
             strokeDasharray="3 3"
             style={{
@@ -330,7 +330,7 @@ export function DayToDayIllustration() {
           />
           <path
             d="M15 123 C12 160, 10 160, 10 197"
-            stroke="#2563EB"
+            stroke="#059669"
             strokeWidth="1"
             strokeDasharray="3 3"
             style={{

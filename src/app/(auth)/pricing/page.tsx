@@ -1,5 +1,27 @@
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Preise – Schichtplanung Software ab 0€",
+  description:
+    "Shiftfy Preise: Kostenloser Starter-Plan für bis zu 5 Mitarbeiter. Team ab 2,99€/Mitarbeiter/Monat. Zeiterfassung, Schichtplanung, Lohnexport inklusive.",
+  keywords: [
+    "Schichtplanung Preise",
+    "Zeiterfassung Kosten",
+    "Dienstplan Software Preise",
+    "kostenlose Schichtplanung",
+    "Personalplanung Kosten",
+  ],
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: "Shiftfy Preise – Schichtplanung ab 0€/Monat",
+    description:
+      "Kostenlos starten mit bis zu 5 Mitarbeitern. Team- und Business-Pläne für wachsende Unternehmen.",
+  },
+};
 
 export default function PricingPage() {
   return <PricingContent />;
@@ -98,12 +120,12 @@ function PricingContent() {
               key={plan.name}
               className={`rounded-2xl border p-6 shadow-sm flex flex-col ${
                 plan.highlighted
-                  ? "border-blue-500 ring-2 ring-blue-500 bg-white"
+                  ? "border-emerald-500 ring-2 ring-emerald-500 bg-white"
                   : "border-gray-200 bg-white"
               }`}
             >
               {plan.highlighted && (
-                <span className="inline-block self-start rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
+                <span className="inline-block self-start rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 mb-4">
                   {t("popular")}
                 </span>
               )}
@@ -127,7 +149,7 @@ function PricingContent() {
                 href={plan.href}
                 className={`mt-8 block w-full rounded-lg py-3 text-center text-sm font-semibold transition-colors ${
                   plan.highlighted
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
                     : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >

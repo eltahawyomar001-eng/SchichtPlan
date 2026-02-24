@@ -103,9 +103,9 @@ export default function BenachrichtigungenPage() {
         </Link>
 
         {/* Summary banner */}
-        <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 flex items-center gap-3">
-          <div className="rounded-lg bg-blue-100 p-2">
-            <BellIcon className="h-5 w-5 text-blue-600" />
+        <div className="rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-emerald-50 p-4 flex items-center gap-3">
+          <div className="rounded-lg bg-emerald-100 p-2">
+            <BellIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900">
@@ -132,7 +132,7 @@ export default function BenachrichtigungenPage() {
         <Card className="relative overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <MailIcon className="h-5 w-5 text-blue-600" />
+              <MailIcon className="h-5 w-5 text-emerald-600" />
               {t("email")}
             </CardTitle>
             <CardDescription>{t("emailDesc")}</CardDescription>
@@ -157,8 +157,8 @@ export default function BenachrichtigungenPage() {
               {/* Toggle switch */}
               <button
                 onClick={toggleEmail}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 flex-shrink-0 cursor-pointer ${
-                  emailEnabled ? "bg-blue-600" : "bg-gray-200"
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 flex-shrink-0 cursor-pointer ${
+                  emailEnabled ? "bg-emerald-600" : "bg-gray-200"
                 }`}
                 aria-label="Toggle email notifications"
               >
@@ -219,10 +219,10 @@ export default function BenachrichtigungenPage() {
         </Card>
 
         {/* Info card */}
-        <Card className="border-blue-100">
+        <Card className="border-emerald-100">
           <CardContent className="p-4">
-            <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
-              <p className="text-xs text-blue-700">{t("emailInfo")}</p>
+            <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-4">
+              <p className="text-xs text-emerald-700">{t("emailInfo")}</p>
             </div>
           </CardContent>
         </Card>

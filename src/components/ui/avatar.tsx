@@ -15,7 +15,7 @@ const sizeClasses = {
 
 export function Avatar({
   name,
-  color = "#3B82F6",
+  color = "#10b981",
   size = "md",
   className,
   ...props

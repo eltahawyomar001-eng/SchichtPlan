@@ -46,9 +46,9 @@ export function DistributionIllustration() {
   }, []);
 
   const teamMembers = [
-    { name: "Anna M.", initials: "AM", color: "#2563EB", status: "confirmed" },
-    { name: "Ben K.", initials: "BK", color: "#60A5FA", status: "confirmed" },
-    { name: "Clara S.", initials: "CS", color: "#1D4ED8", status: "pending" },
+    { name: "Anna M.", initials: "AM", color: "#059669", status: "confirmed" },
+    { name: "Ben K.", initials: "BK", color: "#34d399", status: "confirmed" },
+    { name: "Clara S.", initials: "CS", color: "#047857", status: "pending" },
     { name: "David R.", initials: "DR", color: "#C4B5FD", status: "pending" },
   ];
 
@@ -127,7 +127,7 @@ export function DistributionIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
+            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-50 to-emerald-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -145,7 +145,7 @@ export function DistributionIllustration() {
           {/* Action button */}
           <div className="px-5 py-4">
             <div
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white text-center py-3 font-semibold text-sm shadow-lg shadow-blue-200 cursor-pointer"
+              className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-center py-3 font-semibold text-sm shadow-lg shadow-emerald-200 cursor-pointer"
               style={{
                 opacity: isVisible ? 1 : 0,
                 animation: isVisible
@@ -217,7 +217,7 @@ export function DistributionIllustration() {
         <NotificationCard
           name="Anna M."
           initials="AM"
-          color="#2563EB"
+          color="#059669"
           shift={t("shiftEarly0614")}
           top={20}
           left={300}
@@ -227,7 +227,7 @@ export function DistributionIllustration() {
         <NotificationCard
           name="Ben K."
           initials="BK"
-          color="#60A5FA"
+          color="#34d399"
           shift={t("shiftLate1422")}
           top={100}
           left={320}
@@ -237,7 +237,7 @@ export function DistributionIllustration() {
         <NotificationCard
           name="Clara S."
           initials="CS"
-          color="#1D4ED8"
+          color="#047857"
           shift={t("shiftEarly0614")}
           top={180}
           left={310}
@@ -282,8 +282,8 @@ export function DistributionIllustration() {
               y2="260"
               gradientUnits="userSpaceOnUse"
             >
-              <stop stopColor="#2563EB" stopOpacity="0.4" />
-              <stop offset="1" stopColor="#60A5FA" stopOpacity="0.2" />
+              <stop stopColor="#059669" stopOpacity="0.4" />
+              <stop offset="1" stopColor="#34d399" stopOpacity="0.2" />
             </linearGradient>
           </defs>
         </svg>
@@ -361,7 +361,7 @@ function NotificationCard({
         >
           <path
             d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"
-            stroke="#2563EB"
+            stroke="#059669"
             strokeWidth="2"
             strokeLinecap="round"
           />

@@ -105,7 +105,7 @@ export function CookieBanner() {
               {t("description")}{" "}
               <Link
                 href="/datenschutz"
-                className="underline hover:text-blue-600 transition-colors"
+                className="underline hover:text-emerald-600 transition-colors"
               >
                 {t("privacyLink")}
               </Link>
@@ -113,19 +113,19 @@ export function CookieBanner() {
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
               <button
                 onClick={() => setShowSettings(true)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 {t("settings")}
               </button>
               <button
                 onClick={handleRejectAll}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 {t("rejectAll")}
               </button>
               <button
                 onClick={handleAcceptAll}
-                className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 {t("acceptAll")}
               </button>
@@ -175,13 +175,13 @@ export function CookieBanner() {
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
               <button
                 onClick={() => setShowSettings(false)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 {t("back")}
               </button>
               <button
                 onClick={handleSaveSettings}
-                className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 {t("saveSettings")}
               </button>
@@ -253,8 +253,8 @@ function CookieCategory({
         className={`
           relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
           transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2
-          focus:ring-blue-500 focus:ring-offset-2
-          ${checked ? "bg-blue-600" : "bg-gray-200"}
+          focus:ring-emerald-500 focus:ring-offset-2
+          ${checked ? "bg-emerald-600" : "bg-gray-200"}
           ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
         `}
       >

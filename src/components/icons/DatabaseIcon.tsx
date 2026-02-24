@@ -43,8 +43,8 @@ export function DatabaseIcon(props: SVGProps<SVGSVGElement>) {
           y2="22"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
       </defs>
     </svg>

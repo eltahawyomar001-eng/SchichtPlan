@@ -94,8 +94,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = POSTS[slug];
   if (!post) return { title: "Not found" };
   return {
-    title: `${post.title} – Shiftfy Blog`,
+    title: `${post.title}`,
     description: post.content[0]?.slice(0, 160),
+    alternates: {
+      canonical: `/blog/${slug}`,
+    },
+    openGraph: {
+      title: post.title,
+      description: post.content[0]?.slice(0, 160),
+      type: "article",
+      publishedTime: post.date,
+    },
   };
 }
 
@@ -107,10 +116,10 @@ export default async function BlogPostPage({ params }: Props) {
   const t = await getTranslations("blog");
 
   const CATEGORY_COLORS: Record<string, string> = {
-    Planung: "bg-blue-100 text-blue-700",
+    Planung: "bg-emerald-100 text-emerald-700",
     Recht: "bg-amber-100 text-amber-700",
     HR: "bg-green-100 text-green-700",
-    Technologie: "bg-blue-100 text-blue-700",
+    Technologie: "bg-emerald-100 text-emerald-700",
   };
 
   return (
@@ -119,7 +128,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
           <Link
             href="/blog"
-            className="text-sm text-blue-600 hover:underline mb-4 inline-block"
+            className="text-sm text-emerald-600 hover:underline mb-4 inline-block"
           >
             {t("allArticles")}
           </Link>
@@ -156,7 +165,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="mt-12 pt-6 border-t border-gray-200">
           <Link
             href="/blog"
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
           >
             {t("backToBlog")}
           </Link>

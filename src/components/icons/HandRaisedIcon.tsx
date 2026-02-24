@@ -2,7 +2,7 @@ import { type SVGProps } from "react";
 
 /**
  * Raised hand icon — used for Verfügbarkeiten (availability management).
- * Gradient stroke from Brand/600 (#2563EB) to Brand/400 (#60A5FA).
+ * Gradient stroke from Brand/600 (#059669) to Brand/400 (#34d399).
  */
 export function HandRaisedIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -35,8 +35,8 @@ export function HandRaisedIcon(props: SVGProps<SVGSVGElement>) {
           y2="20"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#059669" />
+          <stop offset="1" stopColor="#34d399" />
         </linearGradient>
       </defs>
     </svg>

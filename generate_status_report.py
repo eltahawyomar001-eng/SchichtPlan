@@ -32,9 +32,9 @@ from reportlab.platypus import (
 from reportlab.graphics.shapes import Drawing, Rect, String  # type: ignore[arg-type]
 
 # ── Brand colors ──────────────────────────────────────────────
-BRAND       = HexColor("#7c3aed")      # Purple-600
-BRAND_DARK  = HexColor("#5b21b6")      # Purple-800
-BRAND_LIGHT = HexColor("#ede9fe")      # Purple-100
+BRAND       = HexColor("#059669")      # Emerald-600
+BRAND_DARK  = HexColor("#065f46")      # Emerald-800
+BRAND_LIGHT = HexColor("#ecfdf5")      # Emerald-50
 ACCENT      = HexColor("#10b981")      # Emerald-500
 TEXT_PRIMARY = HexColor("#111827")      # Gray-900
 TEXT_MUTED   = HexColor("#6b7280")     # Gray-500

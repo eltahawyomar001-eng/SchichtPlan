@@ -85,8 +85,8 @@ function VerifizierungContent() {
           {/* ── Verifying ── */}
           {status === "verifying" && (
             <>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-                <div className="h-6 w-6 animate-spin rounded-full border-3 border-blue-600 border-t-transparent" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+                <div className="h-6 w-6 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
               </div>
               <h1 className="text-xl font-bold text-gray-900">
                 {t("verifyingTitle")}
@@ -107,7 +107,7 @@ function VerifizierungContent() {
               <p className="mt-2 text-sm text-gray-500">{t("successDesc")}</p>
               <Link
                 href="/login"
-                className="mt-6 inline-block rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                className="mt-6 inline-block rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
               >
                 {t("goToLogin")}
               </Link>
@@ -128,7 +128,7 @@ function VerifizierungContent() {
                 <button
                   onClick={handleResend}
                   disabled={resending || resent}
-                  className="mt-4 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                  className="mt-4 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {resent ? t("resent") : t("resend")}
                 </button>
@@ -139,8 +139,8 @@ function VerifizierungContent() {
           {/* ── No token (check your email page) ── */}
           {status === "no-token" && (
             <>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-                <MailIcon className="h-8 w-8 text-blue-600" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+                <MailIcon className="h-8 w-8 text-emerald-600" />
               </div>
               <h1 className="text-xl font-bold text-gray-900">
                 {t("checkEmailTitle")}
@@ -153,7 +153,7 @@ function VerifizierungContent() {
               </p>
               <Link
                 href="/login"
-                className="mt-6 inline-block text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="mt-6 inline-block text-sm font-medium text-emerald-600 hover:text-emerald-700"
               >
                 {t("backToLogin")}
               </Link>
@@ -170,7 +170,7 @@ export default function VerifizierungSeite() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
         </div>
       }
     >

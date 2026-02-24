@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ShiftfyMark } from "@/components/icons";
+
+export const metadata: Metadata = {
+  title: "Widerrufsbelehrung",
+  description: "Widerrufsbelehrung und Widerrufsformular für Shiftfy.",
+  alternates: { canonical: "/widerruf" },
+  robots: { index: true, follow: true },
+};
 
 export default function WiderrufPage() {
   return (
@@ -174,7 +182,7 @@ export default function WiderrufPage() {
         <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
           >
             &larr; Zurück zur Startseite
           </Link>

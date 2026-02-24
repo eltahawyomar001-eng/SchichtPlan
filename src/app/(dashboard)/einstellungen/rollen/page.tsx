@@ -54,7 +54,7 @@ export default function RollenPage() {
       <div className="p-4 sm:p-6 space-y-6 max-w-4xl">
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
           </div>
         )}
 
@@ -69,14 +69,14 @@ export default function RollenPage() {
         {!loading && !error && (
           <div className="space-y-4">
             {/* Info banner */}
-            <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
               <div className="flex items-start gap-3">
-                <ShieldCheckIcon className="h-5 w-5 text-indigo-600 mt-0.5" />
+                <ShieldCheckIcon className="h-5 w-5 text-emerald-600 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-indigo-900">
+                  <p className="text-sm font-medium text-emerald-900">
                     {t("builtInInfo")}
                   </p>
-                  <p className="mt-1 text-xs text-indigo-700">
+                  <p className="mt-1 text-xs text-emerald-700">
                     {t("comingSoon")}
                   </p>
                 </div>

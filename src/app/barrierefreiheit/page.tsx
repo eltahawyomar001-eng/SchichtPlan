@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ShiftfyMark } from "@/components/icons";
+
+export const metadata: Metadata = {
+  title: "Barrierefreiheit",
+  description:
+    "Erklärung zur Barrierefreiheit der Shiftfy Software gemäß BITV 2.0.",
+  alternates: { canonical: "/barrierefreiheit" },
+  robots: { index: true, follow: true },
+};
 
 export default function BarrierefreiheitPage() {
   return (
@@ -120,7 +129,7 @@ export default function BarrierefreiheitPage() {
               E-Mail:{" "}
               <a
                 href="mailto:kontakt@shiftfy.de"
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-emerald-600 hover:text-emerald-700 underline"
               >
                 kontakt@shiftfy.de
               </a>
@@ -198,7 +207,7 @@ export default function BarrierefreiheitPage() {
         <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
           >
             &larr; Zurück zur Startseite
           </Link>

@@ -63,7 +63,7 @@ export default function FeiertageSeite() {
           <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -75,7 +75,7 @@ export default function FeiertageSeite() {
           <select
             value={bundesland}
             onChange={(e) => setBundesland(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
             {Object.entries(BUNDESLAENDER).map(([code, name]) => (
               <option key={code} value={code}>
@@ -88,7 +88,7 @@ export default function FeiertageSeite() {
         {/* Holiday list */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : data ? (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">

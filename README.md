@@ -269,7 +269,7 @@ Alle Icons und Illustrationen sind als reine TypeScript-SVG-Komponenten implemen
 
 ### UI / UX
 
-- Violett-Palette (`#7C3AED` → `#A78BFA`) mit neutralen Grautönen
+- Emerald-Green-Palette (`#059669` → `#34d399`) mit neutralen Grautönen
 - Glass-Effekte, subtile Animationen, Grid-Pattern-Hintergründe
 - Landing-Page: Hero → Features → Pricing → Benefits → FAQ → CTA
 

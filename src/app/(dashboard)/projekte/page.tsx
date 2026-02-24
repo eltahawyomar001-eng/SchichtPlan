@@ -82,7 +82,7 @@ export default function ProjekteSeite() {
   const statusColor: Record<string, string> = {
     AKTIV: "bg-green-100 text-green-800",
     PAUSIERT: "bg-yellow-100 text-yellow-800",
-    ABGESCHLOSSEN: "bg-blue-100 text-blue-800",
+    ABGESCHLOSSEN: "bg-emerald-100 text-emerald-800",
     ARCHIVIERT: "bg-gray-100 text-gray-800",
   };
 
@@ -101,7 +101,7 @@ export default function ProjekteSeite() {
         actions={
           <button
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
             {t("newProject")}
@@ -127,7 +127,7 @@ export default function ProjekteSeite() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
               <div>
@@ -141,7 +141,7 @@ export default function ProjekteSeite() {
                   onChange={(e) =>
                     setFormData({ ...formData, costRate: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
               <div>
@@ -155,7 +155,7 @@ export default function ProjekteSeite() {
                   onChange={(e) =>
                     setFormData({ ...formData, billRate: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
               <div>
@@ -168,7 +168,7 @@ export default function ProjekteSeite() {
                   onChange={(e) =>
                     setFormData({ ...formData, budgetMinutes: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
               <div>
@@ -181,7 +181,7 @@ export default function ProjekteSeite() {
                   onChange={(e) =>
                     setFormData({ ...formData, startDate: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
               <div>
@@ -194,7 +194,7 @@ export default function ProjekteSeite() {
                   onChange={(e) =>
                     setFormData({ ...formData, endDate: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function ProjekteSeite() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
               >
                 {saving ? "..." : t("newProject")}
               </button>
@@ -219,7 +219,7 @@ export default function ProjekteSeite() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : projects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 p-12 text-center">
@@ -262,7 +262,7 @@ export default function ProjekteSeite() {
                     </div>
                     <div className="h-2 rounded-full bg-gray-100">
                       <div
-                        className="h-2 rounded-full bg-blue-500"
+                        className="h-2 rounded-full bg-emerald-500"
                         style={{
                           width: `${Math.min(100, (project._count.timeEntries / project.budgetMinutes) * 100)}%`,
                         }}

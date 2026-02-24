@@ -352,7 +352,7 @@ export default function SchichtplanPage() {
                   onClick={() => setViewMode(mode)}
                   className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                     viewMode === mode
-                      ? "bg-blue-100 text-blue-800"
+                      ? "bg-emerald-100 text-emerald-800"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
@@ -377,7 +377,7 @@ export default function SchichtplanPage() {
                 <select
                   value={filterLocationId}
                   onChange={(e) => setFilterLocationId(e.target.value)}
-                  className="h-9 w-full sm:w-auto appearance-none rounded-lg border border-gray-300 bg-white pl-9 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="h-9 w-full sm:w-auto appearance-none rounded-lg border border-gray-300 bg-white pl-9 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <option value="">{t("allLocations")}</option>
                   {locations.map((loc) => (
@@ -440,11 +440,11 @@ export default function SchichtplanPage() {
                         id={format(day, "yyyy-MM-dd")}
                       >
                         <div
-                          className={`bg-white p-1.5 min-h-[80px] ${today ? "ring-2 ring-inset ring-blue-500" : ""}`}
+                          className={`bg-white p-1.5 min-h-[80px] ${today ? "ring-2 ring-inset ring-emerald-500" : ""}`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span
-                              className={`text-xs font-medium ${today ? "text-blue-600" : !isSameMonth(day, currentWeek) ? "text-gray-300" : "text-gray-700"}`}
+                              className={`text-xs font-medium ${today ? "text-emerald-600" : !isSameMonth(day, currentWeek) ? "text-gray-300" : "text-gray-700"}`}
                             >
                               {format(day, "d")}
                             </span>
@@ -484,7 +484,7 @@ export default function SchichtplanPage() {
             {viewMode === "day" && (
               <DroppableDayCell id={format(dayDate, "yyyy-MM-dd")}>
                 <Card
-                  className={isToday(dayDate) ? "ring-2 ring-blue-500" : ""}
+                  className={isToday(dayDate) ? "ring-2 ring-emerald-500" : ""}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
@@ -536,14 +536,16 @@ export default function SchichtplanPage() {
                         key={day.toISOString()}
                         id={format(day, "yyyy-MM-dd")}
                       >
-                        <Card className={today ? "ring-2 ring-blue-500" : ""}>
+                        <Card
+                          className={today ? "ring-2 ring-emerald-500" : ""}
+                        >
                           <CardHeader className="pb-2 px-4 pt-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div
                                   className={`flex flex-col items-center justify-center rounded-lg px-2.5 py-1 ${
                                     today
-                                      ? "bg-blue-600 text-white"
+                                      ? "bg-emerald-600 text-white"
                                       : "bg-gray-100 text-gray-900"
                                   }`}
                                 >
@@ -603,7 +605,9 @@ export default function SchichtplanPage() {
                           key={day.toISOString()}
                           id={format(day, "yyyy-MM-dd")}
                         >
-                          <Card className={today ? "ring-2 ring-blue-500" : ""}>
+                          <Card
+                            className={today ? "ring-2 ring-emerald-500" : ""}
+                          >
                             <CardHeader className="pb-2 px-3 pt-3">
                               <div className="flex items-center justify-between">
                                 <div>
@@ -614,7 +618,9 @@ export default function SchichtplanPage() {
                                   </p>
                                   <p
                                     className={`text-lg font-bold ${
-                                      today ? "text-blue-600" : "text-gray-900"
+                                      today
+                                        ? "text-emerald-600"
+                                        : "text-gray-900"
                                     }`}
                                   >
                                     {format(day, "d")}
@@ -662,8 +668,8 @@ export default function SchichtplanPage() {
                   className="rounded-md p-2 text-xs shadow-lg"
                   style={{
                     backgroundColor:
-                      (activeShift.employee.color || "#3B82F6") + "30",
-                    borderLeft: `3px solid ${activeShift.employee.color || "#3B82F6"}`,
+                      (activeShift.employee.color || "#10b981") + "30",
+                    borderLeft: `3px solid ${activeShift.employee.color || "#10b981"}`,
                   }}
                 >
                   <p className="font-medium text-gray-900">
@@ -753,7 +759,7 @@ export default function SchichtplanPage() {
                           employeeId: e.target.value,
                         }))
                       }
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                       required
                     >
                       <option value="">{t("form.selectEmployee")}</option>
@@ -776,7 +782,7 @@ export default function SchichtplanPage() {
                           locationId: e.target.value,
                         }))
                       }
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                     >
                       <option value="">{t("form.noLocation")}</option>
                       {locations.map((loc) => (
@@ -884,7 +890,7 @@ function DroppableDayCell({
   return (
     <div
       ref={setNodeRef}
-      className={`transition-colors ${isOver ? "bg-blue-50/50 ring-2 ring-blue-300 ring-inset rounded-lg" : ""}`}
+      className={`transition-colors ${isOver ? "bg-emerald-50/50 ring-2 ring-emerald-300 ring-inset rounded-lg" : ""}`}
     >
       {children}
     </div>
@@ -911,8 +917,8 @@ function DraggableShiftChip({
       onClick={canManage ? onEdit : undefined}
       className={`rounded px-1.5 py-0.5 text-[10px] truncate ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""}`}
       style={{
-        backgroundColor: (shift.employee.color || "#3B82F6") + "20",
-        borderLeft: `2px solid ${shift.employee.color || "#3B82F6"}`,
+        backgroundColor: (shift.employee.color || "#10b981") + "20",
+        borderLeft: `2px solid ${shift.employee.color || "#10b981"}`,
       }}
     >
       {shift.employee.firstName.charAt(0)}. {shift.employee.lastName}{" "}
@@ -942,8 +948,8 @@ function DraggableShiftCard({
       {...(canManage ? { ...listeners, ...attributes } : {})}
       className={`group relative flex items-center gap-3 rounded-lg p-3 ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""}`}
       style={{
-        backgroundColor: (shift.employee.color || "#3B82F6") + "15",
-        borderLeft: `3px solid ${shift.employee.color || "#3B82F6"}`,
+        backgroundColor: (shift.employee.color || "#10b981") + "15",
+        borderLeft: `3px solid ${shift.employee.color || "#10b981"}`,
       }}
     >
       <div className="flex-1 min-w-0">
@@ -966,7 +972,7 @@ function DraggableShiftCard({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onEdit}
-            className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-blue-500"
+            className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-emerald-500"
           >
             <EditIcon className="h-4 w-4" />
           </button>

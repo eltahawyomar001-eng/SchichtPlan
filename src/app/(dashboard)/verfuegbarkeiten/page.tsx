@@ -39,7 +39,7 @@ const WEEKDAY_KEYS = [0, 1, 2, 3, 4, 5, 6];
 
 const TYPE_KEYS = [
   { value: "VERFUEGBAR", color: "bg-green-100 text-green-700" },
-  { value: "BEVORZUGT", color: "bg-blue-100 text-blue-700" },
+  { value: "BEVORZUGT", color: "bg-emerald-100 text-emerald-700" },
   { value: "NICHT_VERFUEGBAR", color: "bg-red-100 text-red-700" },
 ];
 
@@ -218,7 +218,7 @@ export default function VerfuegbarkeitenPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
-                      style={{ backgroundColor: employee.color || "#2563EB" }}
+                      style={{ backgroundColor: employee.color || "#059669" }}
                     >
                       {employee.firstName.charAt(0)}
                       {employee.lastName.charAt(0)}

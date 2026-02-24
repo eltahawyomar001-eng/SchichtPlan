@@ -3,12 +3,20 @@ import webpush from "web-push";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@shiftfy.de";
+let vapidConfigured = false;
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+function ensureVapidConfigured() {
+  if (vapidConfigured) return true;
+
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+  const privateKey = process.env.VAPID_PRIVATE_KEY || "";
+  const subject = process.env.VAPID_SUBJECT || "mailto:admin@shiftfy.de";
+
+  if (!publicKey || !privateKey) return false;
+
+  webpush.setVapidDetails(subject, publicKey, privateKey);
+  vapidConfigured = true;
+  return true;
 }
 
 /**
@@ -21,7 +29,7 @@ export async function sendPushNotification(params: {
   url?: string;
   tag?: string;
 }) {
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  if (!ensureVapidConfigured()) {
     log.info("[push] VAPID keys not configured, skipping push");
     return;
   }

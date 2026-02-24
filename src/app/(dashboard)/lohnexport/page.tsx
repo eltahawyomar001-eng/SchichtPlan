@@ -106,16 +106,40 @@ export default function LohnexportPage() {
 
   // ── Download ────────────────────────────────────────────────
 
-  function handleDownload() {
-    const params = new URLSearchParams({
-      start: startDate,
-      end: endDate,
-      format: exportFormat,
-    });
-    if (selectedEmployee) params.set("employeeId", selectedEmployee);
+  async function handleDownload() {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const params = new URLSearchParams({
+        start: startDate,
+        end: endDate,
+        format: exportFormat,
+      });
+      if (selectedEmployee) params.set("employeeId", selectedEmployee);
 
-    // Trigger browser download
-    window.location.href = `/api/export/datev?${params}`;
+      const res = await fetch(`/api/export/datev?${params}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `lohnexport-${startDate}-${endDate}.${exportFormat === "datev" ? "csv" : exportFormat}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (!isPlanLimit) {
+          const data = await res.json().catch(() => ({}));
+          setLoadError(data.error || tc("errorOccurred"));
+        }
+      }
+    } catch {
+      setLoadError(tc("errorOccurred"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ── Quick date presets ──────────────────────────────────────

@@ -114,6 +114,12 @@ const navGroups: NavGroup[] = [
         icon: FolderIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
+      {
+        key: "clients",
+        href: "/kunden",
+        icon: UsersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
     ],
   },
   {

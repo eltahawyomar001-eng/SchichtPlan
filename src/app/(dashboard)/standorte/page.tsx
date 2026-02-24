@@ -96,8 +96,7 @@ export default function StandortePage() {
         const data = await res.json();
         setFormError(data.error || t("saveError"));
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
       setFormError(t("networkError"));
     }
   };

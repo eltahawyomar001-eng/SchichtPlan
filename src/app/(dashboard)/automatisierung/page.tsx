@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PlusIcon } from "@/components/icons";
 
@@ -265,13 +270,10 @@ export default function AutomatisierungSeite() {
         title={t("title")}
         description={t("description")}
         actions={
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-          >
+          <Button onClick={() => setShowForm(!showForm)}>
             <PlusIcon className="h-4 w-4" />
             {t("newRule")}
-          </button>
+          </Button>
         }
       />
       <div className="p-4 sm:p-6 space-y-6">
@@ -284,310 +286,309 @@ export default function AutomatisierungSeite() {
 
         {/* ── Create Form ── */}
         {showForm && (
-          <form
-            onSubmit={handleCreate}
-            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5"
-          >
-            {/* Name + Trigger */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("name")} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="z.B. Nachtschicht-Benachrichtigung"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("trigger")} *
-                </label>
-                <select
-                  value={formTrigger}
-                  onChange={(e) => handleTriggerChange(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                >
-                  {TRIGGER_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {formatTrigger(opt)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("descriptionLabel")}{" "}
-                <span className="text-gray-400 font-normal">
-                  ({t("optional")})
-                </span>
-              </label>
-              <input
-                type="text"
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="z.B. Benachrichtigung bei Nachtschichten"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              />
-            </div>
-
-            {/* ── Conditions ── */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  {t("conditions")}{" "}
-                  <span className="text-gray-400 font-normal">
-                    ({t("optional")})
-                  </span>
-                </label>
-                <button
-                  type="button"
-                  onClick={addCondition}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
-                >
-                  <PlusIcon className="h-3.5 w-3.5" />
-                  {t("addCondition")}
-                </button>
-              </div>
-              {formConditions.length === 0 && (
-                <p className="text-xs text-gray-400 py-2">
-                  Ohne Bedingungen wird die Regel bei jedem Auslöser ausgeführt.
-                </p>
-              )}
-              <div className="space-y-2">
-                {formConditions.map((cond, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
-                  >
-                    <select
-                      value={cond.field}
-                      onChange={(e) =>
-                        updateCondition(idx, { field: e.target.value })
-                      }
-                      className="flex-1 min-w-0 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    >
-                      {availableFields.map((f) => (
-                        <option key={f} value={f}>
-                          {f}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={cond.operator}
-                      onChange={(e) =>
-                        updateCondition(idx, { operator: e.target.value })
-                      }
-                      className="w-40 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    >
-                      {OPERATOR_OPTIONS.map((op) => (
-                        <option key={op} value={op}>
-                          {t(`operatorLabels.${op}` as Parameters<typeof t>[0])}
-                        </option>
-                      ))}
-                    </select>
-                    <input
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("newRule")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreate} className="space-y-5">
+                {/* Name + Trigger */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ruleName">{t("name")} *</Label>
+                    <Input
+                      id="ruleName"
                       type="text"
-                      value={cond.value}
-                      onChange={(e) =>
-                        updateCondition(idx, { value: e.target.value })
-                      }
-                      placeholder={t("value")}
-                      className="flex-1 min-w-0 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      required
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      placeholder="z.B. Nachtschicht-Benachrichtigung"
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ruleTrigger">{t("trigger")} *</Label>
+                    <Select
+                      id="ruleTrigger"
+                      value={formTrigger}
+                      onChange={(e) => handleTriggerChange(e.target.value)}
+                    >
+                      {TRIGGER_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {formatTrigger(opt)}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="ruleDesc">
+                    {t("descriptionLabel")}{" "}
+                    <span className="text-gray-400 font-normal">
+                      ({t("optional")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="ruleDesc"
+                    type="text"
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    placeholder="z.B. Benachrichtigung bei Nachtschichten"
+                  />
+                </div>
+
+                {/* ── Conditions ── */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>
+                      {t("conditions")}{" "}
+                      <span className="text-gray-400 font-normal">
+                        ({t("optional")})
+                      </span>
+                    </Label>
                     <button
                       type="button"
-                      onClick={() => removeCondition(idx)}
-                      className="flex-shrink-0 text-gray-400 hover:text-red-500 p-1"
-                      aria-label={t("remove")}
+                      onClick={addCondition}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <PlusIcon className="h-3.5 w-3.5" />
+                      {t("addCondition")}
                     </button>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Actions ── */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  {t("actions")} *
-                </label>
-                <button
-                  type="button"
-                  onClick={addAction}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
-                >
-                  <PlusIcon className="h-3.5 w-3.5" />
-                  {t("addAction")}
-                </button>
-              </div>
-              {formActions.length === 0 && (
-                <p className="text-xs text-red-400 py-2">
-                  Mindestens eine Aktion ist erforderlich.
-                </p>
-              )}
-              <div className="space-y-3">
-                {formActions.map((action, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={action.type}
-                        onChange={(e) => {
-                          const newType = e.target.value;
-                          const base: ActionItem = { type: newType };
-                          if (
-                            newType === "send_notification" ||
-                            newType === "send_email"
-                          )
-                            base.message = "";
-                          if (newType === "send_email") base.to = "";
-                          if (newType === "apply_surcharge") base.percent = 0;
-                          updateAction(idx, base);
-                        }}
-                        className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  {formConditions.length === 0 && (
+                    <p className="text-xs text-gray-400 py-2">
+                      Ohne Bedingungen wird die Regel bei jedem Auslöser
+                      ausgeführt.
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {formConditions.map((cond, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
                       >
-                        {ACTION_TYPES.map((at) => (
-                          <option key={at} value={at}>
-                            {t(
-                              `actionTypeLabels.${at}` as Parameters<
-                                typeof t
-                              >[0],
-                            )}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => removeAction(idx)}
-                        className="flex-shrink-0 text-gray-400 hover:text-red-500 p-1"
-                        aria-label={t("remove")}
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
+                        <Select
+                          value={cond.field}
+                          onChange={(e) =>
+                            updateCondition(idx, { field: e.target.value })
+                          }
+                          className="flex-1 min-w-0"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Action-specific fields */}
-                    {(action.type === "send_notification" ||
-                      action.type === "send_email") && (
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">
-                          {t("message")}
-                        </label>
-                        <input
-                          type="text"
-                          value={action.message || ""}
+                          {availableFields.map((f) => (
+                            <option key={f} value={f}>
+                              {f}
+                            </option>
+                          ))}
+                        </Select>
+                        <Select
+                          value={cond.operator}
                           onChange={(e) =>
-                            updateAction(idx, { message: e.target.value })
+                            updateCondition(idx, { operator: e.target.value })
                           }
-                          placeholder="z.B. Neue Schicht am {{date}} um {{startTime}}"
-                          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          {
-                            "Platzhalter: {{feld}} — z.B. {{date}}, {{employeeId}}, {{startTime}}"
-                          }
-                        </p>
-                      </div>
-                    )}
-
-                    {action.type === "send_email" && (
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">
-                          {t("recipientEmail")}
-                        </label>
-                        <input
-                          type="email"
-                          value={action.to || ""}
+                          className="w-40"
+                        >
+                          {OPERATOR_OPTIONS.map((op) => (
+                            <option key={op} value={op}>
+                              {t(
+                                `operatorLabels.${op}` as Parameters<
+                                  typeof t
+                                >[0],
+                              )}
+                            </option>
+                          ))}
+                        </Select>
+                        <Input
+                          value={cond.value}
                           onChange={(e) =>
-                            updateAction(idx, { to: e.target.value })
+                            updateCondition(idx, { value: e.target.value })
                           }
-                          placeholder="empfaenger@firma.de"
-                          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          placeholder={t("value")}
+                          className="flex-1 min-w-0"
                         />
+                        <button
+                          type="button"
+                          onClick={() => removeCondition(idx)}
+                          className="flex-shrink-0 text-gray-400 hover:text-red-500 p-1"
+                          aria-label={t("remove")}
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
                       </div>
-                    )}
-
-                    {action.type === "apply_surcharge" && (
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">
-                          {t("surchargePercent")}
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          value={action.percent ?? 0}
-                          onChange={(e) =>
-                            updateAction(idx, {
-                              percent: Number(e.target.value),
-                            })
-                          }
-                          className="w-32 rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                        />
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* Buttons */}
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  resetForm();
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                {t("cancel")}
-              </button>
-              <button
-                type="submit"
-                disabled={saving || formActions.length === 0}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-              >
-                {saving ? "..." : t("save")}
-              </button>
-            </div>
-          </form>
+                {/* ── Actions ── */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>{t("actions")} *</Label>
+                    <button
+                      type="button"
+                      onClick={addAction}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                    >
+                      <PlusIcon className="h-3.5 w-3.5" />
+                      {t("addAction")}
+                    </button>
+                  </div>
+                  {formActions.length === 0 && (
+                    <p className="text-xs text-red-400 py-2">
+                      Mindestens eine Aktion ist erforderlich.
+                    </p>
+                  )}
+                  <div className="space-y-3">
+                    {formActions.map((action, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={action.type}
+                            onChange={(e) => {
+                              const newType = e.target.value;
+                              const base: ActionItem = { type: newType };
+                              if (
+                                newType === "send_notification" ||
+                                newType === "send_email"
+                              )
+                                base.message = "";
+                              if (newType === "send_email") base.to = "";
+                              if (newType === "apply_surcharge")
+                                base.percent = 0;
+                              updateAction(idx, base);
+                            }}
+                            className="flex-1"
+                          >
+                            {ACTION_TYPES.map((at) => (
+                              <option key={at} value={at}>
+                                {t(
+                                  `actionTypeLabels.${at}` as Parameters<
+                                    typeof t
+                                  >[0],
+                                )}
+                              </option>
+                            ))}
+                          </Select>
+                          <button
+                            type="button"
+                            onClick={() => removeAction(idx)}
+                            className="flex-shrink-0 text-gray-400 hover:text-red-500 p-1"
+                            aria-label={t("remove")}
+                          >
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Action-specific fields */}
+                        {(action.type === "send_notification" ||
+                          action.type === "send_email") && (
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">
+                              {t("message")}
+                            </Label>
+                            <Input
+                              value={action.message || ""}
+                              onChange={(e) =>
+                                updateAction(idx, { message: e.target.value })
+                              }
+                              placeholder="z.B. Neue Schicht am {{date}} um {{startTime}}"
+                            />
+                            <p className="text-xs text-gray-400">
+                              {
+                                "Platzhalter: {{feld}} — z.B. {{date}}, {{employeeId}}, {{startTime}}"
+                              }
+                            </p>
+                          </div>
+                        )}
+
+                        {action.type === "send_email" && (
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">
+                              {t("recipientEmail")}
+                            </Label>
+                            <Input
+                              type="email"
+                              value={action.to || ""}
+                              onChange={(e) =>
+                                updateAction(idx, { to: e.target.value })
+                              }
+                              placeholder="empfaenger@firma.de"
+                            />
+                          </div>
+                        )}
+
+                        {action.type === "apply_surcharge" && (
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">
+                              {t("surchargePercent")}
+                            </Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              value={String(action.percent ?? 0)}
+                              onChange={(e) =>
+                                updateAction(idx, {
+                                  percent: Number(e.target.value),
+                                })
+                              }
+                              className="w-32"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowForm(false);
+                      resetForm();
+                    }}
+                  >
+                    {t("cancel")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={saving || formActions.length === 0}
+                  >
+                    {saving ? "..." : t("save")}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         )}
 
         {/* ── Rules List ── */}

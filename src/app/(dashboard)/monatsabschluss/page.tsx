@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface MonthCloseRecord {
   id: string;
@@ -27,6 +28,10 @@ export default function MonatsabschlussSeite() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    month: number;
+    action: "lock" | "unlock" | "export";
+  } | null>(null);
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -49,6 +54,18 @@ export default function MonatsabschlussSeite() {
   }, [fetchRecords]);
 
   async function handleAction(
+    monthNum: number,
+    action: "lock" | "unlock" | "export",
+  ) {
+    // Destructive/irreversible actions require confirmation
+    if (action === "lock" || action === "export") {
+      setConfirmAction({ month: monthNum, action });
+      return;
+    }
+    await executeAction(monthNum, action);
+  }
+
+  async function executeAction(
     monthNum: number,
     action: "lock" | "unlock" | "export",
   ) {
@@ -97,103 +114,132 @@ export default function MonatsabschlussSeite() {
   const currentYear = now.getFullYear();
 
   return (
-    <div>
-      <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-6">
-        {/* Year selector */}
-        <div className="flex items-center gap-3">
-          <Label>{t("year")}:</Label>
-          <Select
-            value={String(year)}
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            className="w-28"
-          >
-            {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </Select>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-            {error}
+    <>
+      <div>
+        <Topbar title={t("title")} description={t("description")} />
+        <div className="p-4 sm:p-6 space-y-6">
+          {/* Year selector */}
+          <div className="flex items-center gap-3">
+            <Label>{t("year")}:</Label>
+            <Select
+              value={String(year)}
+              onChange={(e) => setYear(parseInt(e.target.value))}
+              className="w-28"
+            >
+              {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </Select>
           </div>
-        )}
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {months.map((m) => {
-              const record = records.find((r) => r.month === m);
-              const status = record?.status || "OPEN";
-              const sc = statusConfig[status];
+          {/* Error */}
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              {error}
+            </div>
+          )}
 
-              return (
-                <Card key={m} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-900">
-                        {t(monthKeys[m - 1])}
-                      </h3>
-                      <Badge className={sc.color}>{sc.label}</Badge>
-                    </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {months.map((m) => {
+                const record = records.find((r) => r.month === m);
+                const status = record?.status || "OPEN";
+                const sc = statusConfig[status];
 
-                    <div className="flex gap-2">
-                      {status === "OPEN" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleAction(m, "lock")}
-                          disabled={acting === `${m}-lock`}
-                        >
-                          {t("lock")}
-                        </Button>
-                      )}
-                      {status === "LOCKED" && (
-                        <>
+                return (
+                  <Card key={m} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-gray-900">
+                          {t(monthKeys[m - 1])}
+                        </h3>
+                        <Badge className={sc.color}>{sc.label}</Badge>
+                      </div>
+
+                      <div className="flex gap-2">
+                        {status === "OPEN" && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="flex-1"
-                            onClick={() => handleAction(m, "unlock")}
-                            disabled={acting === `${m}-unlock`}
+                            onClick={() => handleAction(m, "lock")}
+                            disabled={acting === `${m}-lock`}
                           >
-                            {t("unlock")}
+                            {t("lock")}
                           </Button>
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleAction(m, "export")}
-                            disabled={acting === `${m}-export`}
-                          >
-                            {t("export")}
-                          </Button>
-                        </>
-                      )}
-                      {status === "EXPORTED" && (
-                        <p className="text-xs text-gray-400">
-                          {record?.exportedAt
-                            ? new Date(record.exportedAt).toLocaleDateString(
-                                locale === "en" ? "en-GB" : "de-DE",
-                              )
-                            : "—"}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                        )}
+                        {status === "LOCKED" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleAction(m, "unlock")}
+                              disabled={acting === `${m}-unlock`}
+                            >
+                              {t("unlock")}
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleAction(m, "export")}
+                              disabled={acting === `${m}-export`}
+                            >
+                              {t("export")}
+                            </Button>
+                          </>
+                        )}
+                        {status === "EXPORTED" && (
+                          <p className="text-xs text-gray-400">
+                            {record?.exportedAt
+                              ? new Date(record.exportedAt).toLocaleDateString(
+                                  locale === "en" ? "en-GB" : "de-DE",
+                                )
+                              : "—"}
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={
+          confirmAction?.action === "lock"
+            ? t("lockConfirmTitle")
+            : t("exportConfirmTitle")
+        }
+        message={
+          confirmAction?.action === "lock"
+            ? t("lockConfirmMessage")
+            : t("exportConfirmMessage")
+        }
+        confirmLabel={
+          confirmAction?.action === "lock" ? t("lock") : t("export")
+        }
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={async () => {
+          if (confirmAction) {
+            const { month, action } = confirmAction;
+            setConfirmAction(null);
+            await executeAction(month, action);
+          }
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+    </>
   );
 }

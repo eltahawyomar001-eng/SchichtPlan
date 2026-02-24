@@ -86,7 +86,8 @@
     "developer": "Developer",
     "teamCalendar": "Team Calendar",
     "dataIO": "Import / Export",
-    "roles": "Roles"
+    "roles": "Roles",
+    "clients": "Clients"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1308,7 +1309,8 @@
     "save": "Save",
     "saved": "Vacation balance saved.",
     "saveError": "Error saving vacation balance.",
-    "networkError": "Network error — please try again."
+    "networkError": "Network error — please try again.",
+    "errorLoading": "Error loading vacation balances."
   },
   "pwa": {
     "title": "Install App",
@@ -1392,6 +1394,30 @@
     "deleteConfirmTitle": "Delete Project",
     "deleteConfirmMessage": "Are you sure you want to delete this project?"
   },
+  "clients": {
+    "title": "Clients",
+    "description": "Manage client master data",
+    "newClient": "New Client",
+    "editClient": "Edit Client",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Acme Corp",
+    "emailLabel": "Email",
+    "phoneLabel": "Phone",
+    "addressLabel": "Address",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Internal notes about this client",
+    "searchPlaceholder": "Search clients...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "projects": "Projects",
+    "empty": "No clients yet.",
+    "noResults": "No clients found.",
+    "deleteTitle": "Delete Client?",
+    "deleteMessage": "Are you sure you want to delete this client? This action cannot be undone.",
+    "nameRequired": "Name is required."
+  },
   "monthClose": {
     "title": "Month Close",
     "description": "Lock and export monthly periods",
@@ -1415,7 +1441,11 @@
     "september": "September",
     "october": "October",
     "november": "November",
-    "december": "December"
+    "december": "December",
+    "lockConfirmTitle": "Lock month?",
+    "lockConfirmMessage": "The month will be locked. Time entries can no longer be edited afterwards. Continue?",
+    "exportConfirmTitle": "Export month?",
+    "exportConfirmMessage": "The month will be marked as DATEV exported. This action cannot be undone. Continue?"
   },
   "automationRules": {
     "title": "Automation",
@@ -1523,6 +1553,7 @@
     "from": "From",
     "to": "To",
     "exportBtn": "Export",
+    "exportError": "Export failed",
     "icalTitle": "iCal Subscription",
     "icalDesc": "Add this URL to your calendar app (Google, Apple, Outlook) to automatically sync shifts.",
     "copy": "Copy"

@@ -86,7 +86,8 @@
     "developer": "Entwickler",
     "teamCalendar": "Teamkalender",
     "dataIO": "Import / Export",
-    "roles": "Rollen"
+    "roles": "Rollen",
+    "clients": "Kunden"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1308,7 +1309,8 @@
     "save": "Speichern",
     "saved": "Urlaubskonto gespeichert.",
     "saveError": "Fehler beim Speichern.",
-    "networkError": "Netzwerkfehler — bitte erneut versuchen."
+    "networkError": "Netzwerkfehler — bitte erneut versuchen.",
+    "errorLoading": "Fehler beim Laden der Urlaubskonten."
   },
   "pwa": {
     "title": "App installieren",
@@ -1392,6 +1394,30 @@
     "deleteConfirmTitle": "Projekt löschen",
     "deleteConfirmMessage": "Soll dieses Projekt wirklich gelöscht werden?"
   },
+  "clients": {
+    "title": "Kunden",
+    "description": "Kundenstammdaten verwalten",
+    "newClient": "Neuer Kunde",
+    "editClient": "Kunde bearbeiten",
+    "nameLabel": "Name",
+    "namePlaceholder": "z.B. Muster GmbH",
+    "emailLabel": "E-Mail",
+    "phoneLabel": "Telefon",
+    "addressLabel": "Adresse",
+    "notesLabel": "Notizen",
+    "notesPlaceholder": "Interne Notizen zum Kunden",
+    "searchPlaceholder": "Kunden suchen...",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "projects": "Projekte",
+    "empty": "Noch keine Kunden angelegt.",
+    "noResults": "Keine Kunden gefunden.",
+    "deleteTitle": "Kunden löschen?",
+    "deleteMessage": "Soll dieser Kunde wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "nameRequired": "Name ist erforderlich."
+  },
   "monthClose": {
     "title": "Monatsabschluss",
     "description": "Monatliche Zeiträume sperren und exportieren",
@@ -1415,7 +1441,11 @@
     "september": "September",
     "october": "Oktober",
     "november": "November",
-    "december": "Dezember"
+    "december": "Dezember",
+    "lockConfirmTitle": "Monat sperren?",
+    "lockConfirmMessage": "Der Monat wird gesperrt. Zeiteinträge können danach nicht mehr bearbeitet werden. Fortfahren?",
+    "exportConfirmTitle": "Monat exportieren?",
+    "exportConfirmMessage": "Der Monat wird als DATEV-Export markiert. Diese Aktion kann nicht rückgängig gemacht werden. Fortfahren?"
   },
   "automationRules": {
     "title": "Automatisierung",
@@ -1523,6 +1553,7 @@
     "from": "Von",
     "to": "Bis",
     "exportBtn": "Exportieren",
+    "exportError": "Export fehlgeschlagen",
     "icalTitle": "iCal-Abonnement",
     "icalDesc": "Fügen Sie diese URL in Ihren Kalender (Google, Apple, Outlook) ein, um Schichten automatisch zu synchronisieren.",
     "copy": "Kopieren"

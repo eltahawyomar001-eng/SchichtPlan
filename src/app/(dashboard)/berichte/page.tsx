@@ -82,7 +82,7 @@ export default function BerichteSeite() {
         setData(await res.json());
       } else {
         const isPlanLimit = await handlePlanLimit(res);
-        if (isPlanLimit) return;
+        if (!isPlanLimit) setLoadError(tc("errorLoading"));
       }
     } catch {
       setLoadError(tc("errorLoading"));

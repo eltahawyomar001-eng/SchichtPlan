@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { Select } from "@/components/ui/select";
 import { EditIcon, XIcon } from "@/components/icons";
 
 interface VacationBalance {
@@ -24,6 +25,7 @@ export default function UrlaubskontoSeite() {
   const t = useTranslations("vacationBalance");
   const [balances, setBalances] = useState<VacationBalance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [editTarget, setEditTarget] = useState<VacationBalance | null>(null);
   const [editEntitlement, setEditEntitlement] = useState("");
@@ -39,15 +41,17 @@ export default function UrlaubskontoSeite() {
 
   const fetchBalances = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/vacation-balances?year=${year}`);
       if (res.ok) setBalances(await res.json());
+      else setError(t("errorLoading"));
     } catch {
-      // fetchBalances silently fails — save errors handled inline
+      setError(t("networkError"));
     } finally {
       setLoading(false);
     }
-  }, [year]);
+  }, [year, t]);
 
   useEffect(() => {
     fetchBalances();
@@ -96,20 +100,26 @@ export default function UrlaubskontoSeite() {
         title={t("title")}
         description={t("description")}
         actions={
-          <select
-            value={year}
+          <Select
+            value={String(year)}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="w-24"
           >
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
             ))}
-          </select>
+          </Select>
         }
       />
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />

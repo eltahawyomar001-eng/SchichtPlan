@@ -55,7 +55,7 @@ sw.addEventListener("pushsubscriptionchange", (event) => {
 });
 
 // Cache strategies for offline support
-const CACHE_NAME = "shiftfy-v1";
+const CACHE_NAME = "shiftfy-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   "/",
@@ -64,6 +64,8 @@ const PRECACHE_URLS = [
   "/manifest.webmanifest",
   "/icon-192x192.png",
   "/icon-512x512.png",
+  "/favicon.ico",
+  "/favicon-32x32.png",
 ];
 
 sw.addEventListener("install", (event) => {

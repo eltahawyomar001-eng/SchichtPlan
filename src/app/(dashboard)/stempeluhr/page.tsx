@@ -10,6 +10,9 @@ import {
   AlertTriangleIcon,
   MapPinIcon,
   UsersIcon,
+  PlayIcon,
+  LogOutIcon,
+  CheckCircleIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 
@@ -306,74 +309,164 @@ export default function StempeluhrSeite() {
           )}
 
           {/* ── Main clock card ── */}
-          <Card>
-            <CardContent className="p-8 text-center">
-              {/* User name */}
-              {user?.name && (
-                <p className="mb-4 text-sm font-medium text-gray-500">
-                  {user.name}
-                </p>
-              )}
+          <div
+            className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${
+              clockState === "working"
+                ? "border-emerald-200 bg-gradient-to-b from-emerald-50 to-white shadow-emerald-100/60 shadow-xl"
+                : clockState === "break"
+                  ? "border-amber-200 bg-gradient-to-b from-amber-50 to-white shadow-amber-100/60 shadow-xl"
+                  : "border-gray-200 bg-white shadow-md"
+            }`}
+          >
+            {/* Subtle top accent bar */}
+            <div
+              className={`h-1 w-full transition-all duration-500 ${
+                clockState === "working"
+                  ? "bg-gradient-to-r from-emerald-400 to-emerald-600"
+                  : clockState === "break"
+                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
+                    : "bg-gradient-to-r from-gray-200 to-gray-300"
+              }`}
+            />
 
-              {/* Status ring */}
-              <div
-                className={`mx-auto mb-6 flex h-36 w-36 items-center justify-center rounded-full transition-all duration-500 ${
-                  clockState === "working"
-                    ? "bg-green-50 ring-4 ring-green-300 shadow-lg shadow-green-100"
-                    : clockState === "break"
-                      ? "bg-amber-50 ring-4 ring-amber-300 shadow-lg shadow-amber-100"
-                      : "bg-gray-50 ring-4 ring-gray-200"
-                }`}
-              >
-                {clockState === "idle" ? (
-                  <ClockIcon className="h-16 w-16 text-gray-300" />
-                ) : (
-                  <div className="text-center">
-                    <p className="text-3xl font-mono font-bold text-gray-900 tabular-nums">
-                      {elapsed}
-                    </p>
-                    <p
-                      className={`mt-1 text-xs font-medium ${
-                        clockState === "break"
-                          ? "text-amber-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {clockState === "break" ? t("onBreak") : t("working")}
-                    </p>
-                  </div>
+            <div className="px-6 pb-7 pt-6">
+              {/* User + status row */}
+              <div className="mb-6 flex items-center justify-between">
+                {user?.name && (
+                  <p className="text-sm font-medium text-gray-500">
+                    {user.name}
+                  </p>
                 )}
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-300 ${
+                    clockState === "working"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : clockState === "break"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      clockState === "working"
+                        ? "bg-emerald-500 animate-pulse"
+                        : clockState === "break"
+                          ? "bg-amber-500 animate-pulse"
+                          : "bg-gray-400"
+                    }`}
+                  />
+                  {clockState === "working"
+                    ? t("working")
+                    : clockState === "break"
+                      ? t("onBreak")
+                      : t("inactive")}
+                </span>
               </div>
 
-              {/* Clock-in time */}
-              {entry?.clockInAt && clockState !== "idle" && (
-                <p className="mb-4 text-sm text-gray-500">
-                  {t("active")}{" "}
-                  {new Date(entry.clockInAt).toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
+              {/* ── Timer display ── */}
+              {clockState !== "idle" ? (
+                <div className="mb-6 text-center">
+                  {/* Digital clock digits */}
+                  <div
+                    className={`inline-flex items-center gap-1 rounded-2xl px-5 py-4 transition-all duration-500 ${
+                      clockState === "working"
+                        ? "bg-emerald-600/[0.06]"
+                        : "bg-amber-500/[0.08]"
+                    }`}
+                  >
+                    {elapsed.split(":").map((segment, i) => (
+                      <span key={i} className="flex items-center">
+                        {i > 0 && (
+                          <span
+                            className={`mx-0.5 mb-1.5 text-3xl font-light select-none ${
+                              clockState === "working"
+                                ? "text-emerald-400"
+                                : "text-amber-400"
+                            }`}
+                          >
+                            :
+                          </span>
+                        )}
+                        <span
+                          className={`inline-block min-w-[2.8rem] rounded-xl px-1 py-0.5 text-center font-mono text-4xl font-bold tabular-nums tracking-tight ${
+                            clockState === "working"
+                              ? "text-emerald-700"
+                              : "text-amber-700"
+                          } ${i === 2 ? "opacity-70 text-3xl" : ""}`}
+                        >
+                          {segment}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Clock-in time subtitle */}
+                  {entry?.clockInAt && (
+                    <p className="mt-2.5 text-xs text-gray-400 tracking-wide">
+                      {t("active")}{" "}
+                      <span className="font-medium text-gray-500">
+                        {new Date(entry.clockInAt).toLocaleTimeString("de-DE", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* Idle state — large clock icon */
+                <div className="mb-6 flex flex-col items-center gap-3">
+                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-50 ring-1 ring-gray-200">
+                    <ClockIcon className="h-12 w-12 text-gray-300" />
+                  </div>
+                  <p className="text-sm text-gray-400">{t("inactive")}</p>
+                </div>
               )}
 
-              {clockState === "idle" && (
-                <p className="mb-6 text-sm text-gray-500">{t("inactive")}</p>
+              {/* ── Today progress bar (when active) ── */}
+              {clockState !== "idle" && todayTotalMinutes > 0 && (
+                <div className="mb-5">
+                  <div className="mb-1.5 flex items-center justify-between text-xs text-gray-400">
+                    <span>{t("todayLog")}</span>
+                    <span className="font-medium text-gray-600">
+                      {todayHours}h {String(todayMins).padStart(2, "0")}m
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        clockState === "working"
+                          ? "bg-emerald-500"
+                          : "bg-amber-400"
+                      }`}
+                      style={{
+                        width: `${Math.min(100, (todayTotalMinutes / 480) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1 text-right text-[11px] text-gray-300">
+                    / 8h
+                  </p>
+                </div>
               )}
 
               {/* ── Action buttons ── */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {clockState === "idle" && (
                   <button
                     onClick={() => handleClock("in")}
                     disabled={acting}
-                    className="w-full rounded-xl bg-green-600 px-6 py-4 text-lg font-semibold text-white transition-all hover:bg-green-700 active:scale-[0.98] disabled:opacity-50"
+                    className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:scale-[0.98] disabled:opacity-50"
                   >
                     {acting ? (
-                      <span className="flex items-center justify-center gap-2">
+                      <>
                         <Spinner /> {t("processing")}
-                      </span>
+                      </>
                     ) : (
-                      t("clockIn")
+                      <>
+                        <PlayIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
+                        {t("clockIn")}
+                      </>
                     )}
                   </button>
                 )}
@@ -383,27 +476,40 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("break-start")}
                       disabled={acting}
-                      className="w-full rounded-xl bg-amber-500 px-6 py-4 text-lg font-semibold text-white transition-all hover:bg-amber-600 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-amber-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600 hover:shadow-amber-500/30 active:scale-[0.98] disabled:opacity-50"
                     >
                       {acting ? (
-                        <span className="flex items-center justify-center gap-2">
+                        <>
                           <Spinner /> {t("processing")}
-                        </span>
+                        </>
                       ) : (
-                        t("startBreak")
+                        <>
+                          <svg
+                            className="h-5 w-5 transition-transform group-hover:scale-110"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <rect x="6" y="4" width="4" height="16" rx="1.5" />
+                            <rect x="14" y="4" width="4" height="16" rx="1.5" />
+                          </svg>
+                          {t("startBreak")}
+                        </>
                       )}
                     </button>
                     <button
                       onClick={() => handleClock("out")}
                       disabled={acting}
-                      className="w-full rounded-xl bg-red-600 px-6 py-3 text-base font-semibold text-white transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-red-200 bg-white px-6 py-3.5 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:scale-[0.98] disabled:opacity-50"
                     >
                       {acting ? (
-                        <span className="flex items-center justify-center gap-2">
+                        <>
                           <Spinner /> {t("processing")}
-                        </span>
+                        </>
                       ) : (
-                        t("clockOut")
+                        <>
+                          <LogOutIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                          {t("clockOut")}
+                        </>
                       )}
                     </button>
                   </>
@@ -414,21 +520,25 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("break-end")}
                       disabled={acting}
-                      className="w-full rounded-xl bg-green-600 px-6 py-4 text-lg font-semibold text-white transition-all hover:bg-green-700 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:scale-[0.98] disabled:opacity-50"
                     >
                       {acting ? (
-                        <span className="flex items-center justify-center gap-2">
+                        <>
                           <Spinner /> {t("processing")}
-                        </span>
+                        </>
                       ) : (
-                        t("endBreak")
+                        <>
+                          <PlayIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
+                          {t("endBreak")}
+                        </>
                       )}
                     </button>
                     <button
                       onClick={() => handleClock("out")}
                       disabled={acting}
-                      className="w-full rounded-xl border border-red-300 bg-white px-6 py-3 text-base font-semibold text-red-600 transition-all hover:bg-red-50 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-red-200 bg-white px-6 py-3.5 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:scale-[0.98] disabled:opacity-50"
                     >
+                      <LogOutIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                       {t("clockOut")}
                     </button>
                   </>
@@ -440,50 +550,50 @@ export default function StempeluhrSeite() {
                 <MapPinIcon className="h-3.5 w-3.5" />
                 {gpsStatus === "denied" ? t("gpsDenied") : t("gpsNote")}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* ── Today's summary ── */}
+          {/* ── Today's log ── */}
           {todayEntries.length > 0 && (
-            <Card>
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-3">
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
                   <h3 className="text-sm font-semibold text-gray-900">
                     {t("todayLog")}
                   </h3>
-                  <span className="text-xs font-medium text-gray-500">
-                    {t("total")}: {todayHours}h{" "}
-                    {String(todayMins).padStart(2, "0")}m
-                  </span>
                 </div>
-                <div className="space-y-2">
-                  {todayEntries.map((e) => (
-                    <div
-                      key={e.id}
-                      className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {e.startTime} – {e.endTime}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {Math.floor(e.netMinutes / 60)}h{" "}
-                          {String(e.netMinutes % 60).padStart(2, "0")}m
-                        </span>
-                        {e.breakMinutes > 0 && (
-                          <p className="text-[10px] text-gray-400">
-                            {t("breakDuration")}: {e.breakMinutes} min
-                          </p>
-                        )}
-                      </div>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  {todayHours}h {String(todayMins).padStart(2, "0")}m{" "}
+                  {t("total")}
+                </span>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {todayEntries.map((e, idx) => (
+                  <div key={e.id} className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500">
+                      {idx + 1}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">
+                        {e.startTime} – {e.endTime || "–"}
+                      </p>
+                      {e.breakMinutes > 0 && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {t("breakDuration")}: {e.breakMinutes} min
+                        </p>
+                      )}
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span className="text-sm font-bold text-gray-900">
+                        {Math.floor(e.netMinutes / 60)}h
+                        {String(e.netMinutes % 60).padStart(2, "0")}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

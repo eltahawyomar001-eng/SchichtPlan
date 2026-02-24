@@ -140,6 +140,18 @@ export default async function BlogPage() {
               {t("backToHome")}
             </Link>
             <Link
+              href="/pricing"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Preise
+            </Link>
+            <Link
+              href="/login"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Login
+            </Link>
+            <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >

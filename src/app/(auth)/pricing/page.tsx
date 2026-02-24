@@ -144,6 +144,18 @@ export default async function PricingPage() {
               Startseite
             </Link>
             <Link
+              href="/blog"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Blog
+            </Link>
+            <Link
+              href="/login"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Login
+            </Link>
+            <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
@@ -353,6 +365,12 @@ export default async function PricingPage() {
               Startseite
             </Link>
             <Link
+              href="/blog"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Blog
+            </Link>
+            <Link
               href="/datenschutz"
               className="hover:text-gray-600 transition-colors"
             >
@@ -366,6 +384,18 @@ export default async function PricingPage() {
             </Link>
             <Link href="/agb" className="hover:text-gray-600 transition-colors">
               AGB
+            </Link>
+            <Link
+              href="/widerruf"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Widerruf
+            </Link>
+            <Link
+              href="/barrierefreiheit"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Barrierefreiheit
             </Link>
           </div>
         </div>

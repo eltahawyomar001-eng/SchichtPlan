@@ -397,8 +397,8 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-lg bg-purple-50 p-2 sm:p-2.5 flex-shrink-0">
-                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                <div className="rounded-lg bg-blue-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm text-gray-500">

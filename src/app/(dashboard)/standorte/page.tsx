@@ -247,8 +247,8 @@ export default function StandortePage() {
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-purple-50 p-2.5">
-                        <MapPinIcon className="h-5 w-5 text-purple-600" />
+                      <div className="rounded-lg bg-blue-50 p-2.5">
+                        <MapPinIcon className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">

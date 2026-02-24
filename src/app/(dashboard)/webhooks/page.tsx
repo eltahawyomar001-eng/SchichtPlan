@@ -107,7 +107,7 @@ export default function WebhooksSeite() {
         actions={
           <button
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
             {t("newWebhook")}
@@ -130,7 +130,7 @@ export default function WebhooksSeite() {
                 placeholder="https://example.com/webhook"
                 value={formUrl}
                 onChange={(e) => setFormUrl(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -145,7 +145,7 @@ export default function WebhooksSeite() {
                     onClick={() => toggleEvent(event)}
                     className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
                       formEvents.includes(event)
-                        ? "bg-violet-100 text-violet-800 border-violet-300"
+                        ? "bg-blue-100 text-blue-800 border-blue-300"
                         : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                     }`}
                   >
@@ -165,7 +165,7 @@ export default function WebhooksSeite() {
               <button
                 type="submit"
                 disabled={saving || formEvents.length === 0}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? "..." : t("newWebhook")}
               </button>
@@ -175,7 +175,7 @@ export default function WebhooksSeite() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : hooks.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 p-12 text-center">

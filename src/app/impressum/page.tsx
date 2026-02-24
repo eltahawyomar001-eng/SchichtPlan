@@ -111,7 +111,7 @@ export default function ImpressumPage() {
                 href="https://ec.europa.eu/consumers/odr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-violet-600 hover:text-violet-700 underline"
+                className="text-blue-600 hover:text-blue-700 underline"
               >
                 https://ec.europa.eu/consumers/odr
               </a>
@@ -128,7 +128,7 @@ export default function ImpressumPage() {
         <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
-            className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             &larr; Zurück zur Startseite
           </Link>

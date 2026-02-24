@@ -145,7 +145,7 @@ export default function TeamkalenderSeite() {
                 onClick={() => setViewMode(m)}
                 className={`rounded-md px-3 py-1 text-sm font-medium transition ${
                   viewMode === m
-                    ? "bg-white text-violet-700 shadow-sm"
+                    ? "bg-white text-blue-700 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >

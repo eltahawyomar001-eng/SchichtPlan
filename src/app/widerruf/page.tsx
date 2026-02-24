@@ -174,7 +174,7 @@ export default function WiderrufPage() {
         <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
-            className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             &larr; Zurück zur Startseite
           </Link>

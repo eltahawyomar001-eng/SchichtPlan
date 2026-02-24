@@ -47,7 +47,7 @@ export default function DashboardError({
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => reset()}
-            className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Erneut versuchen
           </button>

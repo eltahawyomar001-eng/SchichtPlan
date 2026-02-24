@@ -352,7 +352,7 @@ export default function SchichtplanPage() {
                   onClick={() => setViewMode(mode)}
                   className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                     viewMode === mode
-                      ? "bg-violet-100 text-violet-800"
+                      ? "bg-blue-100 text-blue-800"
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >

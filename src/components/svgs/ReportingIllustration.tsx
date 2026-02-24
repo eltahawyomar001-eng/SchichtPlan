@@ -97,7 +97,7 @@ export function ReportingIllustration() {
         }
         @keyframes rptExportPulse {
           0%, 100% { border-color: rgba(196,181,253,0.5); }
-          50% { border-color: rgba(124,58,237,0.4); }
+          50% { border-color: rgba(37,99,235,0.4); }
         }
         @keyframes rptPayrollSlide {
           0% { opacity: 0; transform: translateX(30px) scale(0.95); }
@@ -137,7 +137,7 @@ export function ReportingIllustration() {
       >
         {/* Main report card */}
         <div
-          className="absolute left-0 top-0 w-[340px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(124,58,237,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
+          className="absolute left-0 top-0 w-[340px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible
@@ -147,7 +147,7 @@ export function ReportingIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-100"
+            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -256,7 +256,7 @@ export function ReportingIllustration() {
           {/* Export button */}
           <div className="mx-4 mt-3 mb-3">
             <div
-              className="rounded-xl border-2 border-dashed border-violet-200 py-2.5 text-center"
+              className="rounded-xl border-2 border-dashed border-blue-200 py-2.5 text-center"
               style={{
                 opacity: isVisible ? 1 : 0,
                 animation: isVisible
@@ -265,7 +265,7 @@ export function ReportingIllustration() {
                 animationFillMode: "backwards",
               }}
             >
-              <span className="text-xs font-semibold text-violet-500 inline-flex items-center gap-1">
+              <span className="text-xs font-semibold text-blue-500 inline-flex items-center gap-1">
                 <DownloadIcon className="w-3.5 h-3.5" />
                 {t("exportCsv")}
               </span>
@@ -275,7 +275,7 @@ export function ReportingIllustration() {
 
         {/* Floating payroll summary */}
         <div
-          className="absolute right-0 top-[20px] w-[160px] rounded-xl bg-white border border-gray-100 shadow-[0px_8px_24px_0px_rgba(124,58,237,0.12)] overflow-hidden"
+          className="absolute right-0 top-[20px] w-[160px] rounded-xl bg-white border border-gray-100 shadow-[0px_8px_24px_0px_rgba(37,99,235,0.12)] overflow-hidden"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible
@@ -284,8 +284,8 @@ export function ReportingIllustration() {
             animationFillMode: "backwards",
           }}
         >
-          <div className="px-4 py-3 bg-gradient-to-br from-violet-600 to-purple-500">
-            <span className="block text-[10px] text-violet-200 font-medium">
+          <div className="px-4 py-3 bg-gradient-to-br from-blue-600 to-blue-500">
+            <span className="block text-[10px] text-blue-200 font-medium">
               {t("laborCosts")}
             </span>
             <span
@@ -333,7 +333,7 @@ export function ReportingIllustration() {
 
         {/* Mini sparkline */}
         <div
-          className="absolute right-[10px] bottom-[40px] w-[150px] rounded-xl bg-white border border-gray-100 shadow-[0px_4px_16px_0px_rgba(124,58,237,0.08)] p-3"
+          className="absolute right-[10px] bottom-[40px] w-[150px] rounded-xl bg-white border border-gray-100 shadow-[0px_4px_16px_0px_rgba(37,99,235,0.08)] p-3"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible

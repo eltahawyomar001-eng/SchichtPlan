@@ -9,7 +9,7 @@ import { type SVGProps } from "react";
  * matches the rest of the UI. If you need a fully self-contained SVG
  * (e.g. for emails or OG images), convert the text to outlines.
  *
- * Aspect ratio ≈ 4.5 : 1 (160 × 36).
+ * Aspect ratio ~ 4.5 : 1 (160 x 36).
  */
 export function ShiftfyLogo(props: SVGProps<SVGSVGElement>) {
   return (
@@ -30,9 +30,8 @@ export function ShiftfyLogo(props: SVGProps<SVGSVGElement>) {
           y2="36"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#2563EB" />
-          <stop offset="0.5" stopColor="#3B82F6" />
-          <stop offset="1" stopColor="#60A5FA" />
+          <stop stopColor="#1D4ED8" />
+          <stop offset="1" stopColor="#3B82F6" />
         </linearGradient>
         <linearGradient
           id="shiftfy-logo-shine"
@@ -42,40 +41,109 @@ export function ShiftfyLogo(props: SVGProps<SVGSVGElement>) {
           y2="36"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="white" stopOpacity="0.15" />
+          <stop stopColor="white" stopOpacity="0.12" />
           <stop offset="1" stopColor="white" stopOpacity="0" />
         </linearGradient>
       </defs>
 
-      {/* ── Mark (scaled to 36 × 36) ── */}
+      {/* -- Mark (scaled to 36 x 36) -- */}
       <rect width="36" height="36" rx="9" fill="url(#shiftfy-logo-bg)" />
       <rect width="36" height="36" rx="9" fill="url(#shiftfy-logo-shine)" />
 
-      {/* Upper bar */}
-      <rect x="9" y="9" width="12.6" height="4.5" rx="2.25" fill="white" />
-      {/* Middle bar */}
-      <rect
-        x="11.7"
-        y="15.75"
-        width="12.6"
-        height="4.5"
-        rx="2.25"
-        fill="white"
-        fillOpacity="0.85"
+      {/* Clock circle */}
+      <circle
+        cx="18"
+        cy="18"
+        r="9.9"
+        stroke="white"
+        strokeWidth="1.8"
+        strokeOpacity="0.9"
       />
-      {/* Lower bar */}
-      <rect
-        x="14.4"
-        y="22.5"
-        width="12.6"
-        height="4.5"
-        rx="2.25"
-        fill="white"
-      />
-      {/* Accent dot */}
-      <circle cx="27.9" cy="9.9" r="1.6" fill="white" fillOpacity="0.6" />
 
-      {/* ── Wordmark ── */}
+      {/* Hour hand — ~10 o'clock */}
+      <line
+        x1="18"
+        y1="18"
+        x2="13.5"
+        y2="12.2"
+        stroke="white"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+
+      {/* Minute hand — ~2 o'clock */}
+      <line
+        x1="18"
+        y1="18"
+        x2="23.4"
+        y2="11.7"
+        stroke="white"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+
+      {/* Centre dot */}
+      <circle cx="18" cy="18" r="1.4" fill="white" />
+
+      {/* Hour markers */}
+      <rect
+        x="17.1"
+        y="6.8"
+        width="1.8"
+        height="2.7"
+        rx="0.9"
+        fill="white"
+        fillOpacity="0.7"
+      />
+      <rect
+        x="26.5"
+        y="17.1"
+        width="2.7"
+        height="1.8"
+        rx="0.9"
+        fill="white"
+        fillOpacity="0.7"
+      />
+      <rect
+        x="17.1"
+        y="26.5"
+        width="1.8"
+        height="2.7"
+        rx="0.9"
+        fill="white"
+        fillOpacity="0.7"
+      />
+      <rect
+        x="6.8"
+        y="17.1"
+        width="2.7"
+        height="1.8"
+        rx="0.9"
+        fill="white"
+        fillOpacity="0.7"
+      />
+
+      {/* Schedule bar accent */}
+      <rect
+        x="26.1"
+        y="27"
+        width="5.4"
+        height="1.6"
+        rx="0.8"
+        fill="white"
+        fillOpacity="0.5"
+      />
+      <rect
+        x="26.1"
+        y="29.7"
+        width="4"
+        height="1.6"
+        rx="0.8"
+        fill="white"
+        fillOpacity="0.35"
+      />
+
+      {/* -- Wordmark -- */}
       <text
         x="44"
         y="25"

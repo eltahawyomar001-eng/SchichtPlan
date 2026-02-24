@@ -60,7 +60,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Planung: "bg-blue-100 text-blue-700",
   Recht: "bg-amber-100 text-amber-700",
   HR: "bg-green-100 text-green-700",
-  Technologie: "bg-violet-100 text-violet-700",
+  Technologie: "bg-blue-100 text-blue-700",
 };
 
 export default async function BlogPage() {
@@ -73,7 +73,7 @@ export default async function BlogPage() {
         <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
           <Link
             href="/"
-            className="text-sm text-violet-600 hover:underline mb-4 inline-block"
+            className="text-sm text-blue-600 hover:underline mb-4 inline-block"
           >
             {t("backToHome")}
           </Link>
@@ -110,7 +110,7 @@ export default async function BlogPage() {
                 </span>
               </div>
               <Link href={`/blog/${post.slug}`}>
-                <h2 className="text-xl font-semibold text-gray-900 hover:text-violet-600 transition-colors">
+                <h2 className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors">
                   {post.title}
                 </h2>
               </Link>
@@ -119,7 +119,7 @@ export default async function BlogPage() {
               </p>
               <Link
                 href={`/blog/${post.slug}`}
-                className="inline-block mt-3 text-sm font-medium text-violet-600 hover:text-violet-700"
+                className="inline-block mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
               >
                 {t("readMore")}
               </Link>

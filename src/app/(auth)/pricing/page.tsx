@@ -98,12 +98,12 @@ function PricingContent() {
               key={plan.name}
               className={`rounded-2xl border p-6 shadow-sm flex flex-col ${
                 plan.highlighted
-                  ? "border-violet-500 ring-2 ring-violet-500 bg-white"
+                  ? "border-blue-500 ring-2 ring-blue-500 bg-white"
                   : "border-gray-200 bg-white"
               }`}
             >
               {plan.highlighted && (
-                <span className="inline-block self-start rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 mb-4">
+                <span className="inline-block self-start rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
                   {t("popular")}
                 </span>
               )}
@@ -127,7 +127,7 @@ function PricingContent() {
                 href={plan.href}
                 className={`mt-8 block w-full rounded-lg py-3 text-center text-sm font-semibold transition-colors ${
                   plan.highlighted
-                    ? "bg-violet-600 text-white hover:bg-violet-700"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >

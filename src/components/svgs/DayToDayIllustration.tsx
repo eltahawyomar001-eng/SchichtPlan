@@ -129,7 +129,7 @@ export function DayToDayIllustration() {
       >
         {/* Active shifts panel */}
         <div
-          className="absolute left-0 top-0 w-[300px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(124,58,237,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
+          className="absolute left-0 top-0 w-[300px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible
@@ -139,7 +139,7 @@ export function DayToDayIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-100"
+            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -184,7 +184,7 @@ export function DayToDayIllustration() {
                 }}
               >
                 <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
                     {s.name
                       .split(" ")
                       .map((n) => n[0])
@@ -230,7 +230,7 @@ export function DayToDayIllustration() {
 
           {/* Summary bar */}
           <div
-            className="mx-4 px-3 py-2 rounded-lg bg-violet-50 flex items-center justify-between"
+            className="mx-4 px-3 py-2 rounded-lg bg-blue-50 flex items-center justify-between"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -239,12 +239,12 @@ export function DayToDayIllustration() {
               animationFillMode: "backwards",
             }}
           >
-            <span className="text-xs text-violet-700 font-medium">
+            <span className="text-xs text-blue-700 font-medium">
               {t("checkedIn")}
             </span>
-            <div className="w-20 h-1.5 rounded-full bg-violet-200 overflow-hidden">
+            <div className="w-20 h-1.5 rounded-full bg-blue-200 overflow-hidden">
               <div
-                className="h-full rounded-full bg-violet-500"
+                className="h-full rounded-full bg-blue-500"
                 style={{
                   width: isVisible ? "66%" : "0%",
                   animation: isVisible
@@ -262,7 +262,7 @@ export function DayToDayIllustration() {
           {activities.map((a, i) => (
             <div
               key={i}
-              className="rounded-xl bg-white border border-gray-100 shadow-[0px_4px_16px_0px_rgba(124,58,237,0.08)] px-3 py-2.5"
+              className="rounded-xl bg-white border border-gray-100 shadow-[0px_4px_16px_0px_rgba(37,99,235,0.08)] px-3 py-2.5"
               style={{
                 opacity: isVisible ? 1 - i * 0.15 : 0,
                 animation: isVisible

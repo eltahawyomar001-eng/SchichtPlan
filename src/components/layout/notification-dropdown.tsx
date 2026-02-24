@@ -166,7 +166,7 @@ export function NotificationDropdown() {
     SWAP_AUTO_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
     SWAP_GENEHMIGT: { icon: CircleCheckIcon, color: "text-emerald-500" },
     SWAP_ABGELEHNT: { icon: CircleXIcon, color: "text-red-500" },
-    TIME_ENTRY_SUBMITTED: { icon: ClockIcon, color: "text-violet-500" },
+    TIME_ENTRY_SUBMITTED: { icon: ClockIcon, color: "text-blue-500" },
     TIME_ENTRY_APPROVED: { icon: CircleCheckIcon, color: "text-emerald-500" },
     TIME_ENTRY_REJECTED: { icon: CircleXIcon, color: "text-red-500" },
     TIME_ENTRY_CORRECTED: { icon: PencilIcon, color: "text-amber-500" },

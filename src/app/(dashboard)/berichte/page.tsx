@@ -135,20 +135,20 @@ export default function BerichteSeite() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <label className="text-sm text-gray-600">{t("to")}</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : data ? (
           <div className="space-y-6">
@@ -321,12 +321,11 @@ function StatCard({
 }: {
   label: string;
   value: string;
-  accent?: "amber" | "blue" | "violet" | "red";
+  accent?: "amber" | "blue" | "red";
 }) {
   const accentColors = {
     amber: "text-amber-600",
     blue: "text-blue-600",
-    violet: "text-violet-600",
     red: "text-red-600",
   };
 

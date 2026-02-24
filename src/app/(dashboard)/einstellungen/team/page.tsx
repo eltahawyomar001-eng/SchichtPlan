@@ -224,7 +224,7 @@ export default function TeamPage() {
 
   const roleBadgeColor: Record<string, string> = {
     OWNER: "bg-amber-100 text-amber-800",
-    ADMIN: "bg-violet-100 text-violet-800",
+    ADMIN: "bg-blue-100 text-blue-800",
     MANAGER: "bg-blue-100 text-blue-800",
     EMPLOYEE: "bg-gray-100 text-gray-700",
   };
@@ -287,7 +287,7 @@ export default function TeamPage() {
                       id="invite-role"
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="EMPLOYEE">{t("roleEmployee")}</option>
                       <option value="MANAGER">{t("roleManager")}</option>
@@ -333,7 +333,7 @@ export default function TeamPage() {
           <CardContent>
             {loadingMembers ? (
               <div className="flex items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
               </div>
             ) : members.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center">
@@ -372,7 +372,7 @@ export default function TeamPage() {
                             handleRoleChange(member.id, e.target.value)
                           }
                           disabled={changingRole === member.id}
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium border-0 cursor-pointer focus:ring-2 focus:ring-violet-500 ${roleBadgeColor[member.role] || roleBadgeColor.EMPLOYEE}`}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium border-0 cursor-pointer focus:ring-2 focus:ring-blue-500 ${roleBadgeColor[member.role] || roleBadgeColor.EMPLOYEE}`}
                         >
                           <option value="ADMIN">{t("roleAdmin")}</option>
                           <option value="MANAGER">{t("roleManager")}</option>
@@ -459,7 +459,7 @@ export default function TeamPage() {
                         <button
                           onClick={() => handleResend(inv.id)}
                           disabled={actionLoading === `resend-${inv.id}`}
-                          className="rounded-lg p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 transition-colors disabled:opacity-50"
+                          className="rounded-lg p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
                           title={t("resend")}
                         >
                           <RefreshIcon className="h-4 w-4" />

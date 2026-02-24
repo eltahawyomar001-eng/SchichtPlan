@@ -137,7 +137,7 @@ export default function EinladungPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           <p className="mt-3 text-sm text-gray-500">{t("loading")}</p>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function EinladungPage() {
           <div className="mt-6 flex flex-col gap-3">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
             >
               {t("goToLogin")}
             </Link>
@@ -217,8 +217,8 @@ export default function EinladungPage() {
             <ShiftfyMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">Shiftfy</span>
           </Link>
-          <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-50">
-            <UsersIcon className="h-7 w-7 text-violet-600" />
+          <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+            <UsersIcon className="h-7 w-7 text-blue-600" />
           </div>
           <h1 className="mt-4 text-xl font-bold text-gray-900">{t("title")}</h1>
           <p className="mt-2 text-sm text-gray-500">
@@ -236,7 +236,7 @@ export default function EinladungPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">{t("role")}</span>
-            <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
               {roleLabels[invitation?.role || "EMPLOYEE"]}
             </span>
           </div>
@@ -282,7 +282,7 @@ export default function EinladungPage() {
               <button
                 onClick={handleAccept}
                 disabled={accepting}
-                className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {accepting ? t("accepting") : t("acceptInvitation")}
               </button>
@@ -308,7 +308,7 @@ export default function EinladungPage() {
               </div>
               <button
                 onClick={handleSignInWithCorrectEmail}
-                className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
               >
                 {t("switchAndSignIn", {
                   email: invitation?.email || "",
@@ -339,7 +339,7 @@ export default function EinladungPage() {
               </p>
               <Link
                 href={`/register?invitation=${token}&email=${encodeURIComponent(invitation?.email || "")}`}
-                className="block w-full rounded-lg bg-violet-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+                className="block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 transition-colors"
               >
                 {t("createAccountAndAccept")}
               </Link>
@@ -347,7 +347,7 @@ export default function EinladungPage() {
                 {t("alreadyHaveAccount")}{" "}
                 <Link
                   href={`/login?callbackUrl=${encodeURIComponent(`/einladung/${token}`)}`}
-                  className="font-medium text-violet-600 hover:text-violet-700"
+                  className="font-medium text-blue-600 hover:text-blue-700"
                 >
                   {t("signInInstead")}
                 </Link>

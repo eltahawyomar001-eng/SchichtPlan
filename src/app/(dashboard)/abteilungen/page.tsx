@@ -106,7 +106,7 @@ export default function AbteilungenSeite() {
               setForm({ name: "", color: "#3b82f6", locationId: "" });
               setShowForm(true);
             }}
-            className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
             {t("add")}
@@ -129,7 +129,7 @@ export default function AbteilungenSeite() {
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -153,7 +153,7 @@ export default function AbteilungenSeite() {
                   onChange={(e) =>
                     setForm({ ...form, locationId: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">— {t("noLocation")} —</option>
                   {locations.map((loc) => (
@@ -167,7 +167,7 @@ export default function AbteilungenSeite() {
             <div className="mt-4 flex gap-2">
               <button
                 type="submit"
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
               >
                 {editId ? t("save") : t("create")}
               </button>
@@ -188,7 +188,7 @@ export default function AbteilungenSeite() {
         {/* List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : departments.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">

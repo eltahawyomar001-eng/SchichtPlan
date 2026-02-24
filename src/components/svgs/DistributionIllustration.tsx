@@ -76,8 +76,8 @@ export function DistributionIllustration() {
           100% { opacity: 1; transform: scale(1); }
         }
         @keyframes distButtonGlow {
-          0%, 100% { box-shadow: 0 4px 14px rgba(124,58,237,0.3); }
-          50% { box-shadow: 0 4px 24px rgba(124,58,237,0.5); }
+          0%, 100% { box-shadow: 0 4px 14px rgba(37,99,235,0.3); }
+          50% { box-shadow: 0 4px 24px rgba(37,99,235,0.5); }
         }
         @keyframes distMemberSlide {
           0% { opacity: 0; transform: translateX(-16px); }
@@ -117,7 +117,7 @@ export function DistributionIllustration() {
       >
         {/* Main dispatch card */}
         <div
-          className="absolute left-0 top-0 w-[280px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(124,58,237,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
+          className="absolute left-0 top-0 w-[280px] h-full rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible
@@ -127,7 +127,7 @@ export function DistributionIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-100"
+            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -145,7 +145,7 @@ export function DistributionIllustration() {
           {/* Action button */}
           <div className="px-5 py-4">
             <div
-              className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white text-center py-3 font-semibold text-sm shadow-lg shadow-violet-200 cursor-pointer"
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white text-center py-3 font-semibold text-sm shadow-lg shadow-blue-200 cursor-pointer"
               style={{
                 opacity: isVisible ? 1 : 0,
                 animation: isVisible
@@ -319,7 +319,7 @@ function NotificationCard({
 
   return (
     <div
-      className="absolute w-[200px] rounded-xl bg-white border border-gray-100 shadow-[0px_8px_24px_0px_rgba(124,58,237,0.12)] p-3 flex items-center gap-3"
+      className="absolute w-[200px] rounded-xl bg-white border border-gray-100 shadow-[0px_8px_24px_0px_rgba(37,99,235,0.12)] p-3 flex items-center gap-3"
       style={{
         top,
         left,

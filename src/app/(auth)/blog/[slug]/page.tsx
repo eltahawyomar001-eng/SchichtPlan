@@ -110,7 +110,7 @@ export default async function BlogPostPage({ params }: Props) {
     Planung: "bg-blue-100 text-blue-700",
     Recht: "bg-amber-100 text-amber-700",
     HR: "bg-green-100 text-green-700",
-    Technologie: "bg-violet-100 text-violet-700",
+    Technologie: "bg-blue-100 text-blue-700",
   };
 
   return (
@@ -119,7 +119,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
           <Link
             href="/blog"
-            className="text-sm text-violet-600 hover:underline mb-4 inline-block"
+            className="text-sm text-blue-600 hover:underline mb-4 inline-block"
           >
             {t("allArticles")}
           </Link>
@@ -156,7 +156,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="mt-12 pt-6 border-t border-gray-200">
           <Link
             href="/blog"
-            className="text-sm font-medium text-violet-600 hover:text-violet-700"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700"
           >
             {t("backToBlog")}
           </Link>

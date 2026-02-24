@@ -285,7 +285,7 @@ function LoginForm() {
                   <button
                     onClick={handleResendVerification}
                     disabled={resending || resent}
-                    className="mt-2 text-xs font-semibold text-violet-600 hover:text-violet-700 disabled:opacity-50"
+                    className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
                   >
                     {resent ? t("verificationResent") : t("resendVerification")}
                   </button>
@@ -317,7 +317,7 @@ function LoginForm() {
             {twoFAStep ? (
               /* ── 2FA Challenge Step ── */
               <div className="space-y-4">
-                <div className="flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700">
+                <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
                   <ShieldCheckIcon className="h-5 w-5 shrink-0" />
                   {t("twoFARequired")}
                 </div>
@@ -401,7 +401,7 @@ function LoginForm() {
                     (!useRecoveryCode && totpCode.length !== 6) ||
                     (useRecoveryCode && totpCode.length < 8)
                   }
-                  className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
+                  className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
                 >
                   {loading ? (
                     <>
@@ -520,7 +520,7 @@ function LoginForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
+                  className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
                 >
                   {loading ? (
                     <>

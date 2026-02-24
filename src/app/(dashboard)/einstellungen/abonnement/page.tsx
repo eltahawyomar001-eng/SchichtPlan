@@ -297,7 +297,7 @@ function BillingContent() {
       <div>
         <Topbar title={t("title")} description={t("description")} />
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         </div>
       </div>
     );
@@ -408,7 +408,7 @@ function BillingContent() {
               onClick={() => setBillingCycle("monthly")}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                 billingCycle === "monthly"
-                  ? "bg-violet-600 text-white shadow-sm"
+                  ? "bg-blue-600 text-white shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -418,7 +418,7 @@ function BillingContent() {
               onClick={() => setBillingCycle("annual")}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                 billingCycle === "annual"
-                  ? "bg-violet-600 text-white shadow-sm"
+                  ? "bg-blue-600 text-white shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -445,14 +445,14 @@ function BillingContent() {
                 key={plan.id}
                 className={`relative rounded-2xl border p-5 sm:p-6 flex flex-col transition-shadow ${
                   plan.highlighted
-                    ? "border-violet-500 ring-2 ring-violet-500 bg-white shadow-lg shadow-violet-100/50"
+                    ? "border-blue-500 ring-2 ring-blue-500 bg-white shadow-lg shadow-blue-100/50"
                     : isCurrentPlan
-                      ? "border-violet-300 bg-violet-50/30 shadow-sm"
+                      ? "border-blue-300 bg-blue-50/30 shadow-sm"
                       : "border-gray-200 bg-white shadow-sm hover:shadow-md"
                 }`}
               >
                 {plan.highlighted && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-600 px-4 py-1 text-xs font-bold text-white whitespace-nowrap">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-1 text-xs font-bold text-white whitespace-nowrap">
                     {t("popular")}
                   </span>
                 )}
@@ -490,7 +490,7 @@ function BillingContent() {
                       key={f}
                       className="flex items-start gap-2 text-sm min-w-0"
                     >
-                      <CheckCircleIcon className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+                      <CheckCircleIcon className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                       <span className="text-gray-700 break-words min-w-0">
                         {f}
                       </span>
@@ -500,7 +500,7 @@ function BillingContent() {
 
                 <div className="mt-6">
                   {isCurrentPlan ? (
-                    <div className="flex items-center justify-center gap-2 rounded-xl border-2 border-violet-300 bg-violet-50 py-3 text-sm font-semibold text-violet-700">
+                    <div className="flex items-center justify-center gap-2 rounded-xl border-2 border-blue-300 bg-blue-50 py-3 text-sm font-semibold text-blue-700">
                       <CheckCircleIcon className="h-4 w-4" />
                       {t("currentPlanLabel")}
                     </div>
@@ -522,7 +522,7 @@ function BillingContent() {
                       disabled={checkoutLoading !== null}
                       className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
                         plan.highlighted
-                          ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-200/50 hover:shadow-xl hover:brightness-110"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-200/50 hover:shadow-xl hover:brightness-110"
                           : "border border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-md"
                       }`}
                     >
@@ -547,8 +547,8 @@ function BillingContent() {
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-violet-50 p-2">
-                  <ShieldCheckIcon className="h-5 w-5 text-violet-600" />
+                <div className="rounded-lg bg-blue-50 p-2">
+                  <ShieldCheckIcon className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
@@ -665,7 +665,7 @@ export default function AbonnementPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         </div>
       }
     >

@@ -377,7 +377,7 @@ function RegisterForm() {
             <button
               type="submit"
               disabled={loading || !consentGiven}
-              className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
+              className="relative flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-500)] text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none"
             >
               {loading ? (
                 <>
@@ -844,7 +844,7 @@ export default function RegisterPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         </div>
       }
     >

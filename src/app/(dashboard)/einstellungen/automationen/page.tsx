@@ -66,7 +66,7 @@ const AUTOMATION_RULES: AutomationRule[] = [
     key: "recurringShifts",
     category: "shiftManagement",
     icon: RefreshIcon,
-    iconColor: "text-violet-500",
+    iconColor: "text-blue-500",
   },
 
   // ── Time Tracking ──
@@ -86,7 +86,7 @@ const AUTOMATION_RULES: AutomationRule[] = [
     key: "timeAccountRecalculation",
     category: "timeTracking",
     icon: ScaleIcon,
-    iconColor: "text-violet-600",
+    iconColor: "text-blue-600",
   },
 
   // ── Approvals ──
@@ -136,7 +136,7 @@ const categoryIcons: Record<
   { icon: ComponentType<SVGProps<SVGSVGElement>>; color: string }
 > = {
   shiftManagement: { icon: CalendarIcon, color: "text-blue-600 bg-blue-50" },
-  timeTracking: { icon: ClockIcon, color: "text-violet-600 bg-violet-50" },
+  timeTracking: { icon: ClockIcon, color: "text-blue-600 bg-blue-50" },
   approvals: {
     icon: CircleCheckIcon,
     color: "text-emerald-600 bg-emerald-50",
@@ -251,7 +251,7 @@ export default function AutomationenPage() {
       <div>
         <Topbar title={t("title")} description={t("description")} />
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         </div>
       </div>
     );
@@ -310,9 +310,9 @@ export default function AutomationenPage() {
         </div>
 
         {/* Summary banner */}
-        <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-violet-50 to-blue-50 border border-violet-100 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-100 px-4 py-3">
           <div className="rounded-lg bg-white p-2 shadow-sm">
-            <ZapIcon className="h-5 w-5 text-violet-600" />
+            <ZapIcon className="h-5 w-5 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900">
@@ -388,8 +388,8 @@ export default function AutomationenPage() {
                         <button
                           onClick={() => toggleSetting(rule.key)}
                           disabled={isSaving}
-                          className={`relative flex-shrink-0 mt-0.5 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50 ${
-                            isEnabled ? "bg-violet-600" : "bg-gray-200"
+                          className={`relative flex-shrink-0 mt-0.5 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
+                            isEnabled ? "bg-blue-600" : "bg-gray-200"
                           }`}
                           role="switch"
                           aria-checked={isEnabled}

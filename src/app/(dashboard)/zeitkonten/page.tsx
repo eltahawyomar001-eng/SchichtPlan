@@ -153,8 +153,8 @@ export default function ZeitkontenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-violet-50 p-2">
-                  <ScaleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600" />
+                <div className="rounded-lg bg-blue-50 p-2">
+                  <ScaleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg sm:text-2xl font-bold text-gray-900">

@@ -185,7 +185,7 @@ export default function DatenschutzPage() {
                 href="https://vercel.com/legal/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-violet-600 hover:text-violet-700 underline"
+                className="text-blue-600 hover:text-blue-700 underline"
               >
                 Datenschutzerklärung von Vercel
               </a>
@@ -201,7 +201,7 @@ export default function DatenschutzPage() {
                 href="https://supabase.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-violet-600 hover:text-violet-700 underline"
+                className="text-blue-600 hover:text-blue-700 underline"
               >
                 Datenschutzerklärung von Supabase
               </a>
@@ -219,7 +219,7 @@ export default function DatenschutzPage() {
                 href="https://resend.com/legal/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-violet-600 hover:text-violet-700 underline"
+                className="text-blue-600 hover:text-blue-700 underline"
               >
                 Datenschutzerklärung von Resend
               </a>
@@ -328,7 +328,7 @@ export default function DatenschutzPage() {
                 href="https://datenschutz.hessen.de"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-violet-600 hover:text-violet-700 underline"
+                className="text-blue-600 hover:text-blue-700 underline"
               >
                 datenschutz.hessen.de
               </a>
@@ -355,7 +355,7 @@ export default function DatenschutzPage() {
         <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <Link
             href="/"
-            className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             &larr; Zurück zur Startseite
           </Link>

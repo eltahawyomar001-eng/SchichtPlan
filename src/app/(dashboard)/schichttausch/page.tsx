@@ -273,7 +273,7 @@ export default function SchichttauschPage() {
                 onClick={() => setFilterStatus(s)}
                 className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                   filterStatus === s
-                    ? "bg-violet-100 text-violet-700"
+                    ? "bg-blue-100 text-blue-700"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -379,7 +379,7 @@ export default function SchichttauschPage() {
                       )}
 
                       {swap.reviewNote && (
-                        <p className="mt-1 text-xs text-violet-500 line-clamp-1">
+                        <p className="mt-1 text-xs text-blue-500 line-clamp-1">
                           {tc("note")}: {swap.reviewNote}
                         </p>
                       )}
@@ -502,7 +502,7 @@ export default function SchichttauschPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
-                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 min-h-[80px] resize-none"
+                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[80px] resize-none"
                     placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>

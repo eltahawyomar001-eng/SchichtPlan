@@ -129,7 +129,7 @@ export function InstallPwaPrompt() {
             <div className="space-y-4">
               {/* Step 1 */}
               <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 flex-shrink-0">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 flex-shrink-0">
                   1
                 </span>
                 <div>
@@ -144,7 +144,7 @@ export function InstallPwaPrompt() {
 
               {/* Step 2 */}
               <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 flex-shrink-0">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 flex-shrink-0">
                   2
                 </span>
                 <div>
@@ -159,7 +159,7 @@ export function InstallPwaPrompt() {
 
               {/* Step 3 */}
               <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 flex-shrink-0">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 flex-shrink-0">
                   3
                 </span>
                 <div>
@@ -175,7 +175,7 @@ export function InstallPwaPrompt() {
 
             <button
               onClick={handleDismiss}
-              className="mt-5 w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
+              className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
             >
               {t("understood")}
             </button>
@@ -192,8 +192,8 @@ export function InstallPwaPrompt() {
   return (
     <div className="fixed bottom-4 inset-x-4 z-[60] sm:inset-x-auto sm:right-4 sm:left-auto sm:w-80 rounded-2xl border border-gray-200 bg-white shadow-xl p-4 animate-slide-up mb-[env(safe-area-inset-bottom)]">
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-violet-50 p-2.5 flex-shrink-0">
-          <SmartphoneIcon className="h-5 w-5 text-violet-600" />
+        <div className="rounded-xl bg-blue-50 p-2.5 flex-shrink-0">
+          <SmartphoneIcon className="h-5 w-5 text-blue-600" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900">{t("title")}</p>
@@ -215,7 +215,7 @@ export function InstallPwaPrompt() {
         </button>
         <button
           onClick={handleInstall}
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
         >
           <DownloadIcon className="h-3.5 w-3.5" />
           {t("install")}

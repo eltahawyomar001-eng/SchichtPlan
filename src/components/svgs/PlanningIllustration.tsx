@@ -117,7 +117,7 @@ export function PlanningIllustration() {
       >
         {/* Calendar card */}
         <div
-          className="absolute inset-0 rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(124,58,237,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
+          className="absolute inset-0 rounded-2xl bg-white shadow-[0px_4px_24px_0px_rgba(37,99,235,0.08),0px_1px_3px_0px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible ? "cardReveal 0.5s ease-out forwards" : "none",
@@ -125,7 +125,7 @@ export function PlanningIllustration() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-100"
+            className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-100"
             style={{
               opacity: isVisible ? 1 : 0,
               animation: isVisible
@@ -235,7 +235,7 @@ export function PlanningIllustration() {
 
         {/* Floating drag indicator */}
         <div
-          className="absolute -right-2 top-[140px] rounded-xl bg-violet-600 text-white px-3 py-2 shadow-lg shadow-violet-200 text-xs font-medium flex items-center gap-1.5"
+          className="absolute -right-2 top-[140px] rounded-xl bg-blue-600 text-white px-3 py-2 shadow-lg shadow-blue-200 text-xs font-medium flex items-center gap-1.5"
           style={{
             opacity: isVisible ? 1 : 0,
             animation: isVisible

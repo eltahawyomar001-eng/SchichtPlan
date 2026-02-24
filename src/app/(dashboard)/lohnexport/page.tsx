@@ -142,7 +142,7 @@ export default function LohnexportPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileExportIcon className="h-5 w-5 text-violet-600" />
+              <FileExportIcon className="h-5 w-5 text-blue-600" />
               {t("configure")}
             </CardTitle>
           </CardHeader>
@@ -161,7 +161,7 @@ export default function LohnexportPage() {
                   <button
                     key={preset.months}
                     onClick={() => setPreset(preset.months)}
-                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 hover:bg-violet-100 hover:text-violet-700 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors"
                   >
                     {preset.label}
                   </button>
@@ -245,8 +245,8 @@ export default function LohnexportPage() {
               <Card>
                 <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-violet-50 p-2">
-                      <UsersIcon className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600" />
+                    <div className="rounded-lg bg-blue-50 p-2">
+                      <UsersIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-lg sm:text-2xl font-bold text-gray-900">

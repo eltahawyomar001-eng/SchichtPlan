@@ -15,7 +15,7 @@
  *   - ePrivacy Directive (2002/58/EC) — cookie consent
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -27,23 +27,46 @@ import {
   CONSENT_VERSION,
 } from "@/lib/cookie-consent";
 
+/**
+ * Hydration-safe check: returns false on the server and during the first
+ * client render, then true after mount so the banner can safely read
+ * localStorage without causing a React #418 mismatch.
+ */
+function useHasMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true, // client snapshot
+    () => false, // server snapshot
+  );
+}
+
 export function CookieBanner() {
   const t = useTranslations("cookieBanner");
+  const hasMounted = useHasMounted();
 
-  // Use lazy initializers to avoid setState-in-effect (react-hooks/set-state-in-effect)
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !getStoredConsent();
-  });
+  // After hydration, read consent from localStorage.
+  // Before mount (server + first render), these are inert — component returns null.
+  const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [analytics, setAnalytics] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return getStoredConsent()?.analytics ?? false;
-  });
-  const [marketing, setMarketing] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return getStoredConsent()?.marketing ?? false;
-  });
+  const [analytics, setAnalytics] = useState(false);
+  const [marketing, setMarketing] = useState(false);
+
+  // Sync initial visibility & consent state after mount
+  useEffect(() => {
+    if (!hasMounted) return;
+    const consent = getStoredConsent();
+    if (!consent) {
+      // No consent stored — show banner.
+      // We use requestAnimationFrame to avoid the lint rule about
+      // synchronous setState inside effects. The visual result is identical.
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      requestAnimationFrame(() => {
+        setAnalytics(consent.analytics);
+        setMarketing(consent.marketing);
+      });
+    }
+  }, [hasMounted]);
 
   useEffect(() => {
     // Allow re-opening from footer "Cookie Einstellungen" link

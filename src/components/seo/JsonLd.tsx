@@ -1,30 +1,130 @@
 /**
  * JSON-LD Structured Data for SEO
- * Generates schema.org markup for Google rich snippets
+ * Generates schema.org markup for Google rich snippets.
+ *
+ * Uses a single @graph to avoid duplicate/unnamed items in Google Search Console.
  */
 
 const SITE_URL = process.env.SITE_URL || "https://www.shiftfy.de";
 
-export function OrganizationJsonLd() {
+/**
+ * Combined JSON-LD for global structured data injected in the root layout `<head>`.
+ * Uses a single `@graph` array so Google sees one cohesive entity, not separate items.
+ */
+export function CombinedJsonLd() {
   const data = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Shiftfy",
-    url: SITE_URL,
-    logo: `${SITE_URL}/icon-512x512.png`,
-    description:
-      "Shiftfy ist die intelligente Schichtplanungs- und Zeiterfassungssoftware für Sicherheitsdienste, Gastronomie, Einzelhandel und Dienstleister in Deutschland.",
-    foundingDate: "2024",
-    sameAs: [],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer support",
-      availableLanguage: ["German", "English"],
-    },
-    address: {
-      "@type": "PostalAddress",
-      addressCountry: "DE",
-    },
+    "@graph": [
+      // ── Organization ──
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "Shiftfy",
+        url: SITE_URL,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/icon-512x512.png`,
+        },
+        description:
+          "Shiftfy ist die intelligente Schichtplanungs- und Zeiterfassungssoftware für Sicherheitsdienste, Gastronomie, Einzelhandel und Dienstleister in Deutschland.",
+        foundingDate: "2024",
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          availableLanguage: ["German", "English"],
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressCountry: "DE",
+        },
+      },
+      // ── WebSite ──
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        name: "Shiftfy",
+        url: SITE_URL,
+        description:
+          "Intelligente Schichtplanung und Zeiterfassung für Deutschland",
+        inLanguage: "de-DE",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: `${SITE_URL}/blog?q={search_term_string}`,
+          },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      // ── SoftwareApplication ──
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${SITE_URL}/#software`,
+        name: "Shiftfy",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        url: SITE_URL,
+        description:
+          "Digitale Schichtplanung, Zeiterfassung und Personalmanagement – alles in einer App. DSGVO-konform, made in Germany.",
+        offers: [
+          {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "EUR",
+            name: "Starter",
+            description: "Kostenlos für bis zu 5 Mitarbeiter",
+          },
+          {
+            "@type": "Offer",
+            price: "2.99",
+            priceCurrency: "EUR",
+            name: "Team",
+            description: "Pro Mitarbeiter/Monat",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: "2.99",
+              priceCurrency: "EUR",
+              unitText: "Mitarbeiter/Monat",
+              billingDuration: "P1M",
+            },
+          },
+          {
+            "@type": "Offer",
+            price: "4.99",
+            priceCurrency: "EUR",
+            name: "Business",
+            description: "Pro Mitarbeiter/Monat",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: "4.99",
+              priceCurrency: "EUR",
+              unitText: "Mitarbeiter/Monat",
+              billingDuration: "P1M",
+            },
+          },
+        ],
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: "4.8",
+          ratingCount: "120",
+          bestRating: "5",
+        },
+        featureList: [
+          "Schichtplanung",
+          "Zeiterfassung",
+          "Abwesenheitsverwaltung",
+          "Urlaubskonto",
+          "Lohnexport",
+          "Stempeluhr",
+          "Mitarbeiterverwaltung",
+          "Standortverwaltung",
+          "Schichttausch",
+          "Automatische Schichtplanung",
+          "DSGVO-konform",
+        ],
+      },
+    ],
   };
 
   return (
@@ -35,82 +135,9 @@ export function OrganizationJsonLd() {
   );
 }
 
-export function SoftwareApplicationJsonLd() {
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Shiftfy",
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    url: SITE_URL,
-    description:
-      "Digitale Schichtplanung, Zeiterfassung und Personalmanagement – alles in einer App. DSGVO-konform, made in Germany.",
-    offers: [
-      {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "EUR",
-        name: "Starter",
-        description: "Kostenlos für bis zu 5 Mitarbeiter",
-      },
-      {
-        "@type": "Offer",
-        price: "2.99",
-        priceCurrency: "EUR",
-        name: "Team",
-        description: "Pro Mitarbeiter/Monat",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "2.99",
-          priceCurrency: "EUR",
-          unitText: "Mitarbeiter/Monat",
-          billingDuration: "P1M",
-        },
-      },
-      {
-        "@type": "Offer",
-        price: "4.99",
-        priceCurrency: "EUR",
-        name: "Business",
-        description: "Pro Mitarbeiter/Monat",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "4.99",
-          priceCurrency: "EUR",
-          unitText: "Mitarbeiter/Monat",
-          billingDuration: "P1M",
-        },
-      },
-    ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "120",
-      bestRating: "5",
-    },
-    featureList: [
-      "Schichtplanung",
-      "Zeiterfassung",
-      "Abwesenheitsverwaltung",
-      "Urlaubskonto",
-      "Lohnexport",
-      "Stempeluhr",
-      "Mitarbeiterverwaltung",
-      "Standortverwaltung",
-      "Schichttausch",
-      "Automatische Schichtplanung",
-      "DSGVO-konform",
-    ],
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  );
-}
-
+/**
+ * FAQ Page structured data — rendered only on the homepage.
+ */
 export function FAQJsonLd() {
   const faqs = [
     {
@@ -156,33 +183,6 @@ export function FAQJsonLd() {
         text: faq.answer,
       },
     })),
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  );
-}
-
-export function WebSiteJsonLd() {
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Shiftfy",
-    url: SITE_URL,
-    description:
-      "Intelligente Schichtplanung und Zeiterfassung für Deutschland",
-    inLanguage: "de-DE",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/blog?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
   };
 
   return (

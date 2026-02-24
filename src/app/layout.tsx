@@ -5,11 +5,7 @@ import { Providers } from "@/components/providers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { CookieBanner } from "@/components/cookie-banner";
-import {
-  OrganizationJsonLd,
-  SoftwareApplicationJsonLd,
-  WebSiteJsonLd,
-} from "@/components/seo/JsonLd";
+import { CombinedJsonLd } from "@/components/seo/JsonLd";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -145,9 +141,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
-        <OrganizationJsonLd />
-        <SoftwareApplicationJsonLd />
-        <WebSiteJsonLd />
+        <CombinedJsonLd />
       </head>
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages}>

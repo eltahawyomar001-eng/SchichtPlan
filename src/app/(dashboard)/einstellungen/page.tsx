@@ -90,6 +90,26 @@ export default function EinstellungenPage() {
   const [pushSupported, setPushSupported] = useState(true);
   const [pushDenied, setPushDenied] = useState(false);
 
+  // Workspace editing state
+  const [editingWorkspace, setEditingWorkspace] = useState(false);
+  const [wsName, setWsName] = useState("");
+  const [wsBundesland, setWsBundesland] = useState("");
+  const [wsIndustry, setWsIndustry] = useState("");
+  const [wsSaving, setWsSaving] = useState(false);
+  const [wsMsg, setWsMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const rawRole = (session?.user as SessionUser)?.role || "OWNER";
+  const roleMap: Record<string, string> = {
+    OWNER: t("roleOwner"),
+    ADMIN: t("roleAdmin"),
+    MANAGER: t("roleManager"),
+    EMPLOYEE: t("roleEmployee"),
+  };
+  const translatedRole = roleMap[rawRole] || rawRole;
+
   // Check existing push subscription on mount
   useEffect(() => {
     async function checkPush() {
@@ -133,14 +153,52 @@ export default function EinstellungenPage() {
     check2FA();
   }, []);
 
-  const roleMap: Record<string, string> = {
-    OWNER: t("roleOwner"),
-    ADMIN: t("roleAdmin"),
-    MANAGER: t("roleManager"),
-    EMPLOYEE: t("roleEmployee"),
+  // Fetch workspace details on mount
+  useEffect(() => {
+    async function fetchWorkspace() {
+      try {
+        const res = await fetch("/api/workspace");
+        if (res.ok) {
+          const data = await res.json();
+          setWsName(data.name || "");
+          setWsBundesland(data.bundesland || "");
+          setWsIndustry(data.industry || "");
+        }
+      } catch {
+        // silent
+      }
+    }
+    if (["OWNER", "ADMIN"].includes(rawRole)) {
+      fetchWorkspace();
+    }
+  }, [rawRole]);
+
+  const handleSaveWorkspace = async () => {
+    setWsSaving(true);
+    setWsMsg(null);
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: wsName,
+          bundesland: wsBundesland || null,
+          industry: wsIndustry || null,
+        }),
+      });
+      if (res.ok) {
+        setEditingWorkspace(false);
+        setWsMsg({ type: "success", text: t("workspaceUpdated") });
+      } else {
+        const data = await res.json();
+        setWsMsg({ type: "error", text: data.error || t("saveError") });
+      }
+    } catch {
+      setWsMsg({ type: "error", text: t("networkError") });
+    } finally {
+      setWsSaving(false);
+    }
   };
-  const rawRole = (session?.user as SessionUser)?.role || "OWNER";
-  const translatedRole = roleMap[rawRole] || rawRole;
 
   const handleSaveProfile = async () => {
     setProfileSaving(true);
@@ -457,35 +515,145 @@ export default function EinstellungenPage() {
         {["OWNER", "ADMIN"].includes(rawRole) && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BuildingIcon className="h-5 w-5" />
-                {t("workspace")}
-              </CardTitle>
-              <CardDescription>{t("workspaceDesc")}</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BuildingIcon className="h-5 w-5" />
+                    {t("workspace")}
+                  </CardTitle>
+                  <CardDescription>{t("workspaceDesc")}</CardDescription>
+                </div>
+                {!editingWorkspace && (
+                  <button
+                    onClick={() => setEditingWorkspace(true)}
+                    className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                  >
+                    <EditIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-500">
-                    {t("workspaceName")}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {(session?.user as SessionUser)?.workspaceName || "–"}
-                  </span>
+              {editingWorkspace ? (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="wsName">{t("workspaceName")}</Label>
+                    <Input
+                      id="wsName"
+                      value={wsName}
+                      onChange={(e) => setWsName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="wsBundesland">{t("bundesland")}</Label>
+                    <select
+                      id="wsBundesland"
+                      value={wsBundesland}
+                      onChange={(e) => setWsBundesland(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="">{t("selectBundesland")}</option>
+                      <option value="BW">Baden-Württemberg</option>
+                      <option value="BY">Bayern</option>
+                      <option value="BE">Berlin</option>
+                      <option value="BB">Brandenburg</option>
+                      <option value="HB">Bremen</option>
+                      <option value="HH">Hamburg</option>
+                      <option value="HE">Hessen</option>
+                      <option value="MV">Mecklenburg-Vorpommern</option>
+                      <option value="NI">Niedersachsen</option>
+                      <option value="NW">Nordrhein-Westfalen</option>
+                      <option value="RP">Rheinland-Pfalz</option>
+                      <option value="SL">Saarland</option>
+                      <option value="SN">Sachsen</option>
+                      <option value="ST">Sachsen-Anhalt</option>
+                      <option value="SH">Schleswig-Holstein</option>
+                      <option value="TH">Thüringen</option>
+                    </select>
+                    <p className="text-xs text-gray-400">
+                      {t("bundeslandHint")}
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="wsIndustry">{t("industry")}</Label>
+                    <Input
+                      id="wsIndustry"
+                      value={wsIndustry}
+                      onChange={(e) => setWsIndustry(e.target.value)}
+                      placeholder={t("industryPlaceholder")}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveWorkspace}
+                      disabled={wsSaving}
+                    >
+                      <CheckIcon className="h-4 w-4" />
+                      {t("saveWorkspace")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingWorkspace(false)}
+                    >
+                      {t("cancelChange")}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-500">
-                    {t("workspaceId")}
-                  </span>
-                  <span className="text-sm font-mono text-gray-900 break-all">
-                    {(session?.user as SessionUser)?.workspaceId || "–"}
-                  </span>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {t("workspaceName")}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {wsName ||
+                        (session?.user as SessionUser)?.workspaceName ||
+                        "–"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {t("bundesland")}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {wsBundesland || "–"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {t("industry")}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {wsIndustry || "–"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {t("workspaceId")}
+                    </span>
+                    <span className="text-sm font-mono text-gray-900 break-all">
+                      {(session?.user as SessionUser)?.workspaceId || "–"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">{t("role")}</span>
+                    <Badge variant="outline">{translatedRole}</Badge>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-500">{t("role")}</span>
-                  <Badge variant="outline">{translatedRole}</Badge>
+              )}
+              {wsMsg && (
+                <div
+                  className={`mt-3 rounded-lg p-3 text-sm ${
+                    wsMsg.type === "success"
+                      ? "bg-green-50 text-green-800 border border-green-200"
+                      : "bg-red-50 text-red-800 border border-red-200"
+                  }`}
+                >
+                  {wsMsg.text}
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         )}

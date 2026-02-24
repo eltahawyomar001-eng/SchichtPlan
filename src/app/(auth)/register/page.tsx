@@ -27,6 +27,7 @@ function RegisterForm() {
   const invitationToken = searchParams.get("invitation") || "";
   const invitedEmail = searchParams.get("email") || "";
   const selectedPlan = searchParams.get("plan") || "";
+  const selectedBilling = searchParams.get("billing") || "annual";
   const isInvitation = !!invitationToken;
 
   const [formData, setFormData] = useState({
@@ -87,6 +88,7 @@ function RegisterForm() {
       // Redirect to verification page (check your email)
       if (selectedPlan && selectedPlan !== "starter") {
         localStorage.setItem("shiftfy_selected_plan", selectedPlan);
+        localStorage.setItem("shiftfy_selected_billing", selectedBilling);
       }
       router.push("/verifizierung");
     } catch {

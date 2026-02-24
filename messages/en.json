@@ -416,6 +416,7 @@
     "noSearchResults": "No employees found",
     "noSearchResultsHint": "Try a different search term.",
     "addEmployee": "Add employee",
+    "view": "View",
     "form": {
       "title": "New Employee",
       "editTitle": "Edit Employee",
@@ -428,6 +429,39 @@
       "weeklyHours": "Weekly hours",
       "color": "Color"
     }
+  },
+  "employeeDetail": {
+    "title": "Employee Details",
+    "back": "Back",
+    "notFound": "Employee not found.",
+    "networkError": "Network error — please try again.",
+    "department": "Department",
+    "recentShifts": "Recent Shifts",
+    "recentTimeEntries": "Recent Time Entries",
+    "absences": "Absences",
+    "vacationRemaining": "Vacation Remaining",
+    "shiftsTitle": "Recent Shifts",
+    "noShifts": "No shifts found.",
+    "timeEntriesTitle": "Recent Time Entries",
+    "noTimeEntries": "No time entries found.",
+    "absencesTitle": "Absence Requests",
+    "noAbsences": "No absence requests found.",
+    "vacationTitle": "Vacation Balance",
+    "entitlement": "Entitlement",
+    "carryOver": "Carry-over",
+    "used": "Used",
+    "planned": "Planned",
+    "remaining": "Remaining",
+    "date": "Date",
+    "time": "Time",
+    "status": "Status",
+    "notes": "Notes",
+    "breakMin": "Break (min)",
+    "netMin": "Net (min)",
+    "category": "Category",
+    "period": "Period",
+    "days": "Days",
+    "createdAt": "Created"
   },
   "locationsPage": {
     "title": "Locations",
@@ -521,7 +555,14 @@
     "pushNotifications": "Push Notifications",
     "pushNotificationsDesc": "Receive push notifications directly on your device.",
     "pushNotSupported": "Push notifications are not supported on this browser or device. On iOS, the app must be installed as a PWA (iOS 16.4+).",
-    "pushDenied": "Push notifications have been blocked. Please enable them in your browser settings."
+    "pushDenied": "Push notifications have been blocked. Please enable them in your browser settings.",
+    "bundesland": "State (Bundesland)",
+    "selectBundesland": "Select state…",
+    "bundeslandHint": "Used for public holiday calculation.",
+    "industry": "Industry",
+    "industryPlaceholder": "e.g. Gastronomy, Retail",
+    "saveWorkspace": "Save",
+    "workspaceUpdated": "Workspace updated."
   },
   "auth": {
     "login": "Sign in",
@@ -715,7 +756,9 @@
     "description": "Manage roles and their access rights",
     "builtIn": "Built-in",
     "builtInInfo": "Shiftfy includes four built-in roles with predefined permissions.",
-    "comingSoon": "Custom roles with individual permissions are coming soon (Business plan)."
+    "customRolesInfo": "Custom roles with individual permissions are available from the Business plan.",
+    "loadError": "Error loading roles",
+    "networkError": "Network error — please try again"
   },
   "pricing": {
     "title": "Transparent pricing for every team size",
@@ -1182,7 +1225,10 @@
     "rejected": "Rejected",
     "employeeHours": "Hours per employee",
     "shifts": "shifts",
-    "noData": "No data for the selected period."
+    "noData": "No data for the selected period.",
+    "exportExcel": "Excel",
+    "exportCsv": "CSV",
+    "exportPdf": "PDF"
   },
   "departments": {
     "title": "Departments",
@@ -1241,7 +1287,17 @@
     "used": "Used",
     "planned": "Planned",
     "remaining": "Remaining",
-    "carryOver": "Carry-over"
+    "carryOver": "Carry-over",
+    "edit": "Edit",
+    "editTitle": "Edit Vacation Balance",
+    "daysPerYear": "Days/Year",
+    "entitlementHint": "Legal min.: 20 days (5-day week)",
+    "days": "days",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saved": "Vacation balance saved.",
+    "saveError": "Error saving vacation balance.",
+    "networkError": "Network error — please try again."
   },
   "pwa": {
     "title": "Install App",

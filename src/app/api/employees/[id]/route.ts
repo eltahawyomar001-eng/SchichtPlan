@@ -21,7 +21,13 @@ export async function GET(
 
     const employee = await prisma.employee.findFirst({
       where: { id, workspaceId },
-      include: { shifts: { orderBy: { date: "desc" }, take: 10 } },
+      include: {
+        shifts: { orderBy: { date: "desc" }, take: 20 },
+        timeEntries: { orderBy: { date: "desc" }, take: 20 },
+        absenceRequests: { orderBy: { startDate: "desc" }, take: 20 },
+        vacationBalances: { orderBy: { year: "desc" }, take: 3 },
+        department: { select: { id: true, name: true } },
+      },
     });
 
     if (!employee) {

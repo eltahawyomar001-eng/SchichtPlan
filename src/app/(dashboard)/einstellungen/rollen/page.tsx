@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,17 +11,65 @@ import { ShieldCheckIcon, LockIcon } from "@/components/icons";
 interface RoleDefinition {
   id: string;
   name: string;
+  nameEn?: string;
   builtIn: boolean;
   permissions: string[];
   description: string;
+  descriptionEn?: string;
 }
+
+// Permission label translations
+const PERM_LABELS_DE: Record<string, string> = {
+  "employees.*": "Mitarbeiter verwalten",
+  "employees.read": "Mitarbeiter einsehen",
+  "shifts.*": "Schichten verwalten",
+  "shifts.read": "Schichten einsehen",
+  "locations.*": "Standorte verwalten",
+  "absences.*": "Abwesenheiten verwalten",
+  "absences.create": "Abwesenheiten einreichen",
+  "absences.approve": "Abwesenheiten genehmigen",
+  "time-entries.*": "Zeiteinträge verwalten",
+  "time-entries.create": "Zeiteinträge erfassen",
+  "time-entries.approve": "Zeiteinträge genehmigen",
+  "settings.*": "Einstellungen verwalten",
+  "settings.read": "Einstellungen einsehen",
+  "billing.*": "Abrechnung verwalten",
+  "team.*": "Team verwalten",
+  "reports.*": "Berichte verwalten",
+  "reports.read": "Berichte einsehen",
+  "availability.manage": "Verfügbarkeiten verwalten",
+};
+
+const PERM_LABELS_EN: Record<string, string> = {
+  "employees.*": "Manage employees",
+  "employees.read": "View employees",
+  "shifts.*": "Manage shifts",
+  "shifts.read": "View shifts",
+  "locations.*": "Manage locations",
+  "absences.*": "Manage absences",
+  "absences.create": "Submit absences",
+  "absences.approve": "Approve absences",
+  "time-entries.*": "Manage time entries",
+  "time-entries.create": "Record time entries",
+  "time-entries.approve": "Approve time entries",
+  "settings.*": "Manage settings",
+  "settings.read": "View settings",
+  "billing.*": "Manage billing",
+  "team.*": "Manage team",
+  "reports.*": "Manage reports",
+  "reports.read": "View reports",
+  "availability.manage": "Manage availability",
+};
 
 export default function RollenPage() {
   const t = useTranslations("roles");
+  const locale = useLocale();
   const { handlePlanLimit } = usePlanLimit();
   const [roles, setRoles] = useState<RoleDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const permLabels = locale === "en" ? PERM_LABELS_EN : PERM_LABELS_DE;
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -34,14 +82,14 @@ export default function RollenPage() {
           setLoading(false);
           return;
         }
-        setError("Failed to load roles");
+        setError(t("loadError"));
       }
     } catch {
-      setError("Network error");
+      setError(t("networkError"));
     } finally {
       setLoading(false);
     }
-  }, [handlePlanLimit]);
+  }, [handlePlanLimit, t]);
 
   useEffect(() => {
     fetchRoles();
@@ -77,7 +125,7 @@ export default function RollenPage() {
                     {t("builtInInfo")}
                   </p>
                   <p className="mt-1 text-xs text-emerald-700">
-                    {t("comingSoon")}
+                    {t("customRolesInfo")}
                   </p>
                 </div>
               </div>
@@ -88,7 +136,9 @@ export default function RollenPage() {
               <Card key={role.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
-                    <CardTitle className="text-base">{role.name}</CardTitle>
+                    <CardTitle className="text-base">
+                      {locale === "en" && role.nameEn ? role.nameEn : role.name}
+                    </CardTitle>
                     {role.builtIn && (
                       <Badge variant="outline">{t("builtIn")}</Badge>
                     )}
@@ -96,7 +146,9 @@ export default function RollenPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-3">
-                    {role.description}
+                    {locale === "en" && role.descriptionEn
+                      ? role.descriptionEn
+                      : role.description}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {role.permissions.map((perm) => (
@@ -105,7 +157,7 @@ export default function RollenPage() {
                         className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
                       >
                         <LockIcon className="h-3 w-3" />
-                        {perm}
+                        {permLabels[perm] || perm}
                       </span>
                     ))}
                   </div>

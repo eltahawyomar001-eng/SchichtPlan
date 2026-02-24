@@ -114,8 +114,14 @@ function BillingContent() {
   // Auto-trigger checkout if user came from landing page with a plan
   useEffect(() => {
     const storedPlan = localStorage.getItem("shiftfy_selected_plan");
+    const storedBilling = localStorage.getItem("shiftfy_selected_billing");
     if (storedPlan && (storedPlan === "team" || storedPlan === "business")) {
       localStorage.removeItem("shiftfy_selected_plan");
+      localStorage.removeItem("shiftfy_selected_billing");
+      // Apply the stored billing cycle
+      if (storedBilling === "monthly" || storedBilling === "annual") {
+        setBillingCycle(storedBilling);
+      }
       // Small delay to let subscription data load first
       const timer = setTimeout(() => {
         handleCheckout(storedPlan);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ interface Employee {
 export default function MitarbeiterPage() {
   const t = useTranslations("employeesPage");
   const tc = useTranslations("common");
+  const router = useRouter();
   const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
@@ -457,6 +459,13 @@ export default function MitarbeiterPage() {
                   </div>
 
                   <div className="mt-4 flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/mitarbeiter/${employee.id}`)}
+                    >
+                      {t("view")}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

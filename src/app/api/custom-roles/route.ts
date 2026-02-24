@@ -19,40 +19,64 @@ import type { SessionUser } from "@/lib/types";
 const BUILT_IN_ROLES = [
   {
     id: "owner",
-    name: "Owner",
-    builtIn: true,
-    permissions: ["*"],
-    description: "Full access — can manage billing, members, and all data.",
-  },
-  {
-    id: "admin",
-    name: "Admin",
+    name: "Inhaber",
+    nameEn: "Owner",
     builtIn: true,
     permissions: [
       "employees.*",
       "shifts.*",
       "locations.*",
-      "reports.read",
-      "settings.read",
+      "absences.*",
+      "time-entries.*",
+      "settings.*",
+      "billing.*",
+      "team.*",
+      "reports.*",
     ],
     description:
-      "Can manage employees, shifts, and locations. Cannot manage billing.",
+      "Vollzugriff – kann Abrechnung, Teammitglieder und alle Daten verwalten.",
+    descriptionEn:
+      "Full access – can manage billing, team members, and all data.",
+  },
+  {
+    id: "admin",
+    name: "Administrator",
+    nameEn: "Admin",
+    builtIn: true,
+    permissions: [
+      "employees.*",
+      "shifts.*",
+      "locations.*",
+      "absences.*",
+      "time-entries.*",
+      "settings.read",
+      "reports.*",
+    ],
+    description:
+      "Kann Mitarbeiter, Schichten und Standorte verwalten. Kein Zugriff auf Abrechnung.",
+    descriptionEn:
+      "Can manage employees, shifts, and locations. No access to billing.",
   },
   {
     id: "manager",
     name: "Manager",
+    nameEn: "Manager",
     builtIn: true,
     permissions: [
       "shifts.*",
       "employees.read",
-      "absences.review",
-      "time-entries.review",
+      "absences.approve",
+      "time-entries.approve",
+      "reports.read",
     ],
-    description: "Can manage shifts and review absences / time entries.",
+    description:
+      "Kann Schichten verwalten sowie Abwesenheiten und Zeiteinträge genehmigen.",
+    descriptionEn: "Can manage shifts and approve absences and time entries.",
   },
   {
     id: "employee",
-    name: "Employee",
+    name: "Mitarbeiter",
+    nameEn: "Employee",
     builtIn: true,
     permissions: [
       "shifts.read",
@@ -60,7 +84,9 @@ const BUILT_IN_ROLES = [
       "time-entries.create",
       "availability.manage",
     ],
-    description: "Can view own shifts, submit absences and clock in/out.",
+    description:
+      "Kann eigene Schichten einsehen, Abwesenheiten einreichen und die Stempeluhr nutzen.",
+    descriptionEn: "Can view own shifts, submit absences, and use time clock.",
   },
 ];
 

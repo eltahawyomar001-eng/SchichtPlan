@@ -17,6 +17,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { DownloadIcon } from "@/components/icons";
 
 interface ReportData {
   period: { start: string; end: string };
@@ -59,6 +60,7 @@ export default function BerichteSeite() {
   const { handlePlanLimit } = usePlanLimit();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   // Default: current month
   const now = new Date();
@@ -90,6 +92,34 @@ export default function BerichteSeite() {
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
+
+  const handleExport = async (format: "xlsx" | "csv" | "pdf") => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        type: "shifts",
+        format,
+        start: startDate,
+        end: endDate,
+      });
+      const res = await fetch(`/api/export/download?${params}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `shiftfy-bericht-${startDate}-${endDate}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Export error:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Prepare chart data
   const shiftTypeData = data
@@ -128,7 +158,7 @@ export default function BerichteSeite() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Date range filter */}
+        {/* Date range filter + export */}
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm text-gray-600">{t("from")}</label>
           <input
@@ -144,6 +174,32 @@ export default function BerichteSeite() {
             onChange={(e) => setEndDate(e.target.value)}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => handleExport("xlsx")}
+              disabled={exporting || !data}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              Excel
+            </button>
+            <button
+              onClick={() => handleExport("csv")}
+              disabled={exporting || !data}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              CSV
+            </button>
+            <button
+              onClick={() => handleExport("pdf")}
+              disabled={exporting || !data}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              PDF
+            </button>
+          </div>
         </div>
 
         {loading ? (

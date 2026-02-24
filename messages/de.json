@@ -416,6 +416,7 @@
     "noSearchResults": "Keine Mitarbeiter gefunden",
     "noSearchResultsHint": "Versuchen Sie einen anderen Suchbegriff.",
     "addEmployee": "Mitarbeiter hinzufügen",
+    "view": "Anzeigen",
     "form": {
       "title": "Neuer Mitarbeiter",
       "editTitle": "Mitarbeiter bearbeiten",
@@ -428,6 +429,39 @@
       "weeklyHours": "Wochenstunden",
       "color": "Farbe"
     }
+  },
+  "employeeDetail": {
+    "title": "Mitarbeiter-Details",
+    "back": "Zurück",
+    "notFound": "Mitarbeiter nicht gefunden.",
+    "networkError": "Netzwerkfehler — bitte erneut versuchen.",
+    "department": "Abteilung",
+    "recentShifts": "Letzte Schichten",
+    "recentTimeEntries": "Letzte Zeiteinträge",
+    "absences": "Abwesenheiten",
+    "vacationRemaining": "Resturlaub",
+    "shiftsTitle": "Letzte Schichten",
+    "noShifts": "Keine Schichten vorhanden.",
+    "timeEntriesTitle": "Letzte Zeiteinträge",
+    "noTimeEntries": "Keine Zeiteinträge vorhanden.",
+    "absencesTitle": "Abwesenheitsanträge",
+    "noAbsences": "Keine Abwesenheitsanträge vorhanden.",
+    "vacationTitle": "Urlaubskonto",
+    "entitlement": "Anspruch",
+    "carryOver": "Übertrag",
+    "used": "Genommen",
+    "planned": "Geplant",
+    "remaining": "Verbleibend",
+    "date": "Datum",
+    "time": "Zeit",
+    "status": "Status",
+    "notes": "Notizen",
+    "breakMin": "Pause (Min)",
+    "netMin": "Netto (Min)",
+    "category": "Kategorie",
+    "period": "Zeitraum",
+    "days": "Tage",
+    "createdAt": "Erstellt am"
   },
   "locationsPage": {
     "title": "Standorte",
@@ -521,7 +555,14 @@
     "pushNotifications": "Push-Benachrichtigungen",
     "pushNotificationsDesc": "Push-Benachrichtigungen direkt auf Ihrem Gerät empfangen.",
     "pushNotSupported": "Push-Benachrichtigungen werden von diesem Browser bzw. Gerät nicht unterstützt. Auf iOS muss die App als PWA installiert sein (iOS 16.4+).",
-    "pushDenied": "Push-Benachrichtigungen wurden blockiert. Bitte aktivieren Sie diese in Ihren Browsereinstellungen."
+    "pushDenied": "Push-Benachrichtigungen wurden blockiert. Bitte aktivieren Sie diese in Ihren Browsereinstellungen.",
+    "bundesland": "Bundesland",
+    "selectBundesland": "Bundesland wählen…",
+    "bundeslandHint": "Wird für die Feiertagsberechnung verwendet.",
+    "industry": "Branche",
+    "industryPlaceholder": "z. B. Gastronomie, Einzelhandel",
+    "saveWorkspace": "Speichern",
+    "workspaceUpdated": "Arbeitsbereich aktualisiert."
   },
   "auth": {
     "login": "Anmelden",
@@ -715,7 +756,9 @@
     "description": "Rollen und deren Zugriffsrechte verwalten",
     "builtIn": "Standard",
     "builtInInfo": "Shiftfy enthält vier Standardrollen mit vordefinierten Berechtigungen.",
-    "comingSoon": "Benutzerdefinierte Rollen mit individuellen Berechtigungen sind bald verfügbar (Business-Plan)."
+    "customRolesInfo": "Benutzerdefinierte Rollen mit individuellen Berechtigungen sind ab dem Business-Plan verfügbar.",
+    "loadError": "Fehler beim Laden der Rollen",
+    "networkError": "Netzwerkfehler — bitte erneut versuchen"
   },
   "pricing": {
     "title": "Transparente Preise für jede Teamgröße",
@@ -1182,7 +1225,10 @@
     "rejected": "Abgelehnt",
     "employeeHours": "Stunden pro Mitarbeiter",
     "shifts": "Schichten",
-    "noData": "Keine Daten für den gewählten Zeitraum."
+    "noData": "Keine Daten für den gewählten Zeitraum.",
+    "exportExcel": "Excel",
+    "exportCsv": "CSV",
+    "exportPdf": "PDF"
   },
   "departments": {
     "title": "Abteilungen",
@@ -1241,7 +1287,17 @@
     "used": "Genommen",
     "planned": "Geplant",
     "remaining": "Verbleibend",
-    "carryOver": "Übertrag"
+    "carryOver": "Übertrag",
+    "edit": "Bearbeiten",
+    "editTitle": "Urlaubskonto bearbeiten",
+    "daysPerYear": "Tage/Jahr",
+    "entitlementHint": "Gesetzl. Minimum: 20 Tage (5-Tage-Woche)",
+    "days": "Tage",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "saved": "Urlaubskonto gespeichert.",
+    "saveError": "Fehler beim Speichern.",
+    "networkError": "Netzwerkfehler — bitte erneut versuchen."
   },
   "pwa": {
     "title": "App installieren",

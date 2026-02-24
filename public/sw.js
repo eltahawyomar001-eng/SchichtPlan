@@ -11,7 +11,7 @@ sw.addEventListener("push", (event) => {
   /** @type {NotificationOptions} */
   const options = {
     body: data.body || "",
-    icon: data.icon || "/android-chrome-192x192.png",
+    icon: data.icon || "/icon-192x192.png",
     badge: data.badge || "/favicon-32x32.png",
     tag: data.tag || "shiftfy",
     data: { url: data.url || "/dashboard" },
@@ -62,8 +62,8 @@ const PRECACHE_URLS = [
   "/dashboard",
   "/offline",
   "/manifest.webmanifest",
-  "/android-chrome-192x192.png",
-  "/android-chrome-512x512.png",
+  "/icon-192x192.png",
+  "/icon-512x512.png",
 ];
 
 sw.addEventListener("install", (event) => {

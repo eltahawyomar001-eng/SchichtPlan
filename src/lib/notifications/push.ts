@@ -38,7 +38,7 @@ export async function sendPushNotification(params: {
       body: params.body,
       url: params.url || "/dashboard",
       tag: params.tag || "shiftfy",
-      icon: "/android-chrome-192x192.png",
+      icon: "/icon-192x192.png",
       badge: "/favicon-32x32.png",
     });
 

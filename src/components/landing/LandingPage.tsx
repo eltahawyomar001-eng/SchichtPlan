@@ -222,6 +222,12 @@ function Navbar() {
           >
             {t("navFaq")}
           </a>
+          <Link
+            href="/blog"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            {t("navBlog")}
+          </Link>
         </div>
 
         {/* CTA + mobile toggle */}
@@ -288,6 +294,13 @@ function Navbar() {
             >
               {t("navFaq")}
             </a>
+            <Link
+              href="/blog"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              {t("navBlog")}
+            </Link>
             <Link
               href="/login"
               className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors sm:hidden"
@@ -905,6 +918,15 @@ function Footer() {
           © {new Date().getFullYear()} Shiftfy. {t("footerRights")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <Link href="/blog" className="hover:text-gray-600 transition-colors">
+            {t("navBlog")}
+          </Link>
+          <Link
+            href="/pricing"
+            className="hover:text-gray-600 transition-colors"
+          >
+            {t("navPricing")}
+          </Link>
           <Link
             href="/datenschutz"
             className="hover:text-gray-600 transition-colors"

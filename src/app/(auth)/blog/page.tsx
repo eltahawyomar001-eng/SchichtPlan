@@ -1,10 +1,11 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Blog – Shiftfy",
   description:
-    "Tipps & Neuigkeiten rund um Schichtplanung, Personalmanagement und Arbeitsrecht.",
+    "Tipps & Neuigkeiten rund um Zeiterfassung, Personalmanagement und Arbeitsrecht.",
 };
 
 interface BlogPost {
@@ -62,7 +63,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   Technologie: "bg-violet-100 text-violet-700",
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const t = await getTranslations("blog");
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -72,13 +75,12 @@ export default function BlogPage() {
             href="/"
             className="text-sm text-violet-600 hover:underline mb-4 inline-block"
           >
-            ← Zurück zur Startseite
+            {t("backToHome")}
           </Link>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Blog</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Tipps &amp; Neuigkeiten rund um Schichtplanung, Personalmanagement
-            und Arbeitsrecht.
-          </p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+            {t("title")}
+          </h1>
+          <p className="mt-2 text-lg text-gray-600">{t("subtitle")}</p>
         </div>
       </header>
 
@@ -104,7 +106,7 @@ export default function BlogPage() {
                   })}
                 </span>
                 <span className="text-xs text-gray-400">
-                  · {post.readTime} Lesezeit
+                  · {post.readTime} {t("readTime")}
                 </span>
               </div>
               <Link href={`/blog/${post.slug}`}>
@@ -119,7 +121,7 @@ export default function BlogPage() {
                 href={`/blog/${post.slug}`}
                 className="inline-block mt-3 text-sm font-medium text-violet-600 hover:text-violet-700"
               >
-                Weiterlesen →
+                {t("readMore")}
               </Link>
             </article>
           ))}

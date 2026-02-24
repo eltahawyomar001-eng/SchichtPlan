@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 interface BlogPostContent {
   title: string;
@@ -91,7 +92,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = POSTS[slug];
-  if (!post) return { title: "Nicht gefunden" };
+  if (!post) return { title: "Not found" };
   return {
     title: `${post.title} – Shiftfy Blog`,
     description: post.content[0]?.slice(0, 160),
@@ -102,6 +103,8 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const post = POSTS[slug];
   if (!post) notFound();
+
+  const t = await getTranslations("blog");
 
   const CATEGORY_COLORS: Record<string, string> = {
     Planung: "bg-blue-100 text-blue-700",
@@ -118,7 +121,7 @@ export default async function BlogPostPage({ params }: Props) {
             href="/blog"
             className="text-sm text-violet-600 hover:underline mb-4 inline-block"
           >
-            ← Alle Artikel
+            {t("allArticles")}
           </Link>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span
@@ -134,7 +137,7 @@ export default async function BlogPostPage({ params }: Props) {
               })}
             </span>
             <span className="text-xs text-gray-400">
-              · {post.readTime} Lesezeit
+              · {post.readTime} {t("readTime")}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -155,7 +158,7 @@ export default async function BlogPostPage({ params }: Props) {
             href="/blog"
             className="text-sm font-medium text-violet-600 hover:text-violet-700"
           >
-            ← Zurück zum Blog
+            {t("backToBlog")}
           </Link>
         </div>
       </main>

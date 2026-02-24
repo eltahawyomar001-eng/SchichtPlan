@@ -1365,5 +1365,15 @@
     "saveSettings": "Auswahl speichern",
     "back": "Zurück",
     "footerLink": "Cookie-Einstellungen"
+  },
+  "blog": {
+    "backToHome": "← Zurück zur Startseite",
+    "title": "Blog",
+    "subtitle": "Tipps & Neuigkeiten rund um Zeiterfassung, Personalmanagement und Arbeitsrecht.",
+    "readTime": "Lesezeit",
+    "readMore": "Weiterlesen →",
+    "allArticles": "← Alle Artikel",
+    "backToBlog": "← Zurück zum Blog",
+    "notFound": "Nicht gefunden"
   }
 }

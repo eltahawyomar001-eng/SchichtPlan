@@ -1365,5 +1365,15 @@
     "saveSettings": "Save Settings",
     "back": "Back",
     "footerLink": "Cookie Settings"
+  },
+  "blog": {
+    "backToHome": "← Back to Home",
+    "title": "Blog",
+    "subtitle": "Tips & news on time tracking, workforce management and labor law.",
+    "readTime": "read",
+    "readMore": "Read more →",
+    "allArticles": "← All Articles",
+    "backToBlog": "← Back to Blog",
+    "notFound": "Not found"
   }
 }

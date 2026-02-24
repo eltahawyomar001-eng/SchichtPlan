@@ -21,7 +21,7 @@ const securityHeaders: Record<string, string> = {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io",
+    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -37,6 +37,7 @@ const securityHeaders: Record<string, string> = {
  * attacker could bypass limits by hitting different instances.
  * For production-grade protection, replace with Redis / Upstash
  * or a dedicated rate-limiting service (e.g. Vercel WAF).
+ * See: https://upstash.com/docs/oss/sdks/ts/ratelimit/overview
  *
  * Limits:
  *   – Auth endpoints (login/register): 10 req / 60 s

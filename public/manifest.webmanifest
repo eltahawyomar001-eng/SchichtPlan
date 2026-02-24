@@ -1,7 +1,7 @@
 {
-  "name": "Shiftfy – Intelligente Schichtplanung",
+  "name": "Shiftfy – Zeiterfassung & Schichtplanung",
   "short_name": "Shiftfy",
-  "description": "Die einfachste Schichtplanungs-Software für Sicherheitsdienste, Gastronomie und Dienstleister.",
+  "description": "Digitale Zeiterfassung per App – mit GPS-Verifizierung, Schichtplanung und Lohnexport für Gastronomie, Sicherheit und Dienstleister.",
   "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "any",

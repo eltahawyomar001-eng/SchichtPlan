@@ -17,6 +17,11 @@ import {
   XIcon,
   DownloadIcon,
   MapPinIcon,
+  UtensilsCrossedIcon,
+  ShoppingCartIcon,
+  HeartPulseIcon,
+  WrenchIcon,
+  TruckIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { CookieSettingsButton } from "@/components/cookie-banner";
@@ -512,11 +517,11 @@ function TrustedByBar() {
   const t = useTranslations("landing");
 
   const industries = [
-    { label: "Gastronomie", icon: "🍽️" },
-    { label: "Einzelhandel", icon: "🛒" },
-    { label: "Pflege", icon: "🏥" },
-    { label: "Handwerk", icon: "🔧" },
-    { label: "Logistik", icon: "📦" },
+    { label: "Gastronomie", Icon: UtensilsCrossedIcon },
+    { label: "Einzelhandel", Icon: ShoppingCartIcon },
+    { label: "Pflege", Icon: HeartPulseIcon },
+    { label: "Handwerk", Icon: WrenchIcon },
+    { label: "Logistik", Icon: TruckIcon },
   ];
 
   return (
@@ -531,7 +536,7 @@ function TrustedByBar() {
               key={item.label}
               className="flex items-center gap-2 text-base font-semibold text-gray-400 tracking-tight"
             >
-              <span>{item.icon}</span>
+              <item.Icon className="h-5 w-5" />
               {item.label}
             </span>
           ))}

@@ -67,3 +67,8 @@ export { TargetIcon } from "./TargetIcon";
 export { ArchiveIcon } from "./ArchiveIcon";
 export { DatabaseIcon } from "./DatabaseIcon";
 export { CalendarUsersIcon } from "./CalendarUsersIcon";
+export { UtensilsCrossedIcon } from "./UtensilsCrossedIcon";
+export { ShoppingCartIcon } from "./ShoppingCartIcon";
+export { HeartPulseIcon } from "./HeartPulseIcon";
+export { WrenchIcon } from "./WrenchIcon";
+export { TruckIcon } from "./TruckIcon";

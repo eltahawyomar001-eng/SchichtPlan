@@ -1,7 +1,14 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { type SVGProps } from "react";
 import { getTranslations } from "next-intl/server";
-import { ShiftfyMark } from "@/components/icons";
+import {
+  ShiftfyMark,
+  ClipboardIcon,
+  ScaleIcon,
+  UsersIcon,
+  ClockIcon,
+} from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Blog – Tipps zu Zeiterfassung, Schichtplanung & Arbeitsrecht",
@@ -32,7 +39,7 @@ interface BlogPost {
   date: string;
   readTime: string;
   category: string;
-  icon: string;
+  Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;
 }
 
 const posts: BlogPost[] = [
@@ -44,7 +51,7 @@ const posts: BlogPost[] = [
     date: "2025-01-15",
     readTime: "5 min",
     category: "Planung",
-    icon: "📋",
+    Icon: ClipboardIcon,
   },
   {
     slug: "arbeitszeitgesetz-2025",
@@ -54,7 +61,7 @@ const posts: BlogPost[] = [
     date: "2025-01-10",
     readTime: "7 min",
     category: "Recht",
-    icon: "⚖️",
+    Icon: ScaleIcon,
   },
   {
     slug: "mitarbeiterbindung-schichtarbeit",
@@ -64,7 +71,7 @@ const posts: BlogPost[] = [
     date: "2025-01-05",
     readTime: "6 min",
     category: "HR",
-    icon: "🤝",
+    Icon: UsersIcon,
   },
   {
     slug: "digitale-stempeluhr-vorteile",
@@ -74,25 +81,37 @@ const posts: BlogPost[] = [
     date: "2024-12-20",
     readTime: "4 min",
     category: "Technologie",
-    icon: "⏱️",
+    Icon: ClockIcon,
   },
 ];
 
 const CATEGORY_STYLES: Record<
   string,
-  { bg: string; text: string; dot: string }
+  { bg: string; text: string; dot: string; iconBg: string }
 > = {
   Planung: {
     bg: "bg-emerald-50",
     text: "text-emerald-700",
     dot: "bg-emerald-500",
+    iconBg: "from-emerald-500 to-emerald-600",
   },
-  Recht: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
-  HR: { bg: "bg-sky-50", text: "text-sky-700", dot: "bg-sky-500" },
+  Recht: {
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    dot: "bg-amber-500",
+    iconBg: "from-amber-500 to-amber-600",
+  },
+  HR: {
+    bg: "bg-sky-50",
+    text: "text-sky-700",
+    dot: "bg-sky-500",
+    iconBg: "from-sky-500 to-sky-600",
+  },
   Technologie: {
     bg: "bg-violet-50",
     text: "text-violet-700",
     dot: "bg-violet-500",
+    iconBg: "from-violet-500 to-violet-600",
   },
 };
 
@@ -154,10 +173,10 @@ export default async function BlogPage() {
         <Link href={`/blog/${featured.slug}`} className="group block -mt-2">
           <article className="relative rounded-2xl border border-gray-200/80 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 transition-all duration-300">
             <div className="grid md:grid-cols-5">
-              <div className="md:col-span-2 bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center p-10 sm:p-14">
-                <span className="text-7xl sm:text-8xl drop-shadow-sm">
-                  {featured.icon}
-                </span>
+              <div
+                className={`md:col-span-2 bg-gradient-to-br ${CATEGORY_STYLES[featured.category]?.iconBg ?? "from-emerald-500 to-emerald-600"} flex items-center justify-center p-10 sm:p-14`}
+              >
+                <featured.Icon className="w-16 h-16 sm:w-20 sm:h-20 text-white drop-shadow-sm" />
               </div>
               <div className="md:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -200,56 +219,61 @@ export default async function BlogPage() {
 
         {/* Articles Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-          {rest.map((post) => (
-            <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              className="group block"
-            >
-              <article className="h-full rounded-2xl border border-gray-200/80 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 transition-all duration-300 flex flex-col">
-                <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:from-emerald-50 group-hover:to-emerald-100/50 transition-colors duration-300">
-                  <span className="text-5xl sm:text-6xl drop-shadow-sm group-hover:scale-110 transition-transform duration-300">
-                    {post.icon}
-                  </span>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <CategoryBadge category={post.category} />
-                    <span className="text-xs text-gray-400">
-                      {formatDate(post.date)}
-                    </span>
+          {rest.map((post) => {
+            const catStyle = CATEGORY_STYLES[post.category];
+            return (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group block"
+              >
+                <article className="h-full rounded-2xl border border-gray-200/80 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 transition-all duration-300 flex flex-col">
+                  <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:from-emerald-50 group-hover:to-emerald-100/50 transition-colors duration-300">
+                    <div
+                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${catStyle?.iconBg ?? "from-gray-500 to-gray-600"} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}
+                    >
+                      <post.Icon className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors leading-snug">
-                    {post.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3 flex-1">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      {post.readTime} {t("readTime")}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 group-hover:gap-2 transition-all">
-                      {t("readMore")}
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </span>
+                  <div className="p-5 sm:p-6 flex flex-col flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <CategoryBadge category={post.category} />
+                      <span className="text-xs text-gray-400">
+                        {formatDate(post.date)}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors leading-snug">
+                      {post.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3 flex-1">
+                      {post.excerpt}
+                    </p>
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-xs text-gray-400">
+                        {post.readTime} {t("readTime")}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 group-hover:gap-2 transition-all">
+                        {t("readMore")}
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </article>
-            </Link>
-          ))}
+                </article>
+              </Link>
+            );
+          })}
         </div>
       </main>
 
@@ -288,6 +312,7 @@ function CategoryBadge({ category }: { category: string }) {
     bg: "bg-gray-50",
     text: "text-gray-700",
     dot: "bg-gray-400",
+    iconBg: "from-gray-500 to-gray-600",
   };
 
   return (

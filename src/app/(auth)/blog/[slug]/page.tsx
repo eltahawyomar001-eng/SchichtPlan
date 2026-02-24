@@ -1,15 +1,22 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { type SVGProps } from "react";
 import { getTranslations } from "next-intl/server";
-import { ShiftfyMark } from "@/components/icons";
+import {
+  ShiftfyMark,
+  ClipboardIcon,
+  ScaleIcon,
+  UsersIcon,
+  ClockIcon,
+} from "@/components/icons";
 
 interface BlogPostContent {
   title: string;
   date: string;
   readTime: string;
   category: string;
-  icon: string;
+  Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;
   content: string[];
 }
 
@@ -19,7 +26,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2025-01-15",
     readTime: "5 min",
     category: "Planung",
-    icon: "📋",
+    Icon: ClipboardIcon,
     content: [
       "Die effiziente Schichtplanung ist eine der größten Herausforderungen im Personalmanagement. Mit den richtigen Strategien und Tools können Sie nicht nur die Produktivität steigern, sondern auch die Zufriedenheit Ihrer Mitarbeiter erhöhen.",
       "1. Frühzeitige Planung: Veröffentlichen Sie Schichtpläne mindestens zwei Wochen im Voraus. Das gibt Ihren Mitarbeitern genügend Zeit, sich darauf einzustellen und eventuelle Konflikte rechtzeitig zu melden.",
@@ -39,7 +46,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2025-01-10",
     readTime: "7 min",
     category: "Recht",
-    icon: "⚖️",
+    Icon: ScaleIcon,
     content: [
       "Das Arbeitszeitgesetz (ArbZG) regelt in Deutschland die zulässigen Arbeitszeiten, Pausen und Ruhezeiten. Für Arbeitgeber, die mit Schichtarbeit planen, ist die Einhaltung dieser Vorschriften besonders wichtig.",
       "Maximale Arbeitszeit: Die werktägliche Arbeitszeit darf 8 Stunden nicht überschreiten. Sie kann auf bis zu 10 Stunden verlängert werden, wenn innerhalb von 6 Kalendermonaten oder 24 Wochen im Durchschnitt 8 Stunden werktäglich nicht überschritten werden.",
@@ -56,7 +63,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2025-01-05",
     readTime: "6 min",
     category: "HR",
-    icon: "🤝",
+    Icon: UsersIcon,
     content: [
       "Fluktuation in schichtbasierten Betrieben ist oft höher als in Unternehmen mit regulären Arbeitszeiten. Doch mit den richtigen Maßnahmen können Sie Ihre Mitarbeiter langfristig binden.",
       "Transparente Planung: Nichts frustriert Mitarbeiter mehr als unvorhersehbare Schichtpläne. Sorgen Sie für Transparenz und Planbarkeit. Mit Shiftfy haben alle Mitarbeiter jederzeit Zugriff auf ihren aktuellen Schichtplan.",
@@ -73,7 +80,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2024-12-20",
     readTime: "4 min",
     category: "Technologie",
-    icon: "⏱️",
+    Icon: ClockIcon,
     content: [
       "Die Zeiten der Stechuhr und handschriftlichen Stundenzettel sind vorbei. Digitale Zeiterfassungssysteme bieten zahlreiche Vorteile für Unternehmen jeder Größe.",
       "Genauigkeit: Digitale Systeme erfassen Arbeitszeiten auf die Minute genau. Rundungsfehler, unleserliche Handschriften und nachträgliche Änderungen gehören der Vergangenheit an.",
@@ -316,7 +323,9 @@ export default async function BlogPostPage({ params }: Props) {
                   >
                     <article className="h-full rounded-xl border border-gray-200/80 bg-white p-5 hover:shadow-lg hover:border-emerald-200/60 transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
-                        <span className="text-2xl">{related.icon}</span>
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                          <related.Icon className="w-4 h-4 text-emerald-600" />
+                        </div>
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${rStyle.bg} ${rStyle.text}`}
                         >

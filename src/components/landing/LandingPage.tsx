@@ -22,6 +22,20 @@ import {
   HeartPulseIcon,
   WrenchIcon,
   TruckIcon,
+  SwapIcon,
+  TemplateIcon,
+  AwardIcon,
+  BarChartIcon,
+  SettingsIcon,
+  CalendarUsersIcon,
+  FlagIcon,
+  DatabaseIcon,
+  LayersIcon,
+  BuildingIcon,
+  BriefcaseIcon,
+  PalmtreeIcon,
+  SmartphoneIcon,
+  LinkIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { CookieSettingsButton } from "@/components/cookie-banner";
@@ -769,6 +783,12 @@ function BenefitsSection() {
       desc: t("benefit1Desc"),
     },
     {
+      icon: BarChartIcon,
+      title: t("benefit7Title"),
+      desc: t("benefit7Desc"),
+      highlight: true,
+    },
+    {
       icon: MapPinIcon,
       title: t("benefit2Title"),
       desc: t("benefit2Desc"),
@@ -789,6 +809,51 @@ function BenefitsSection() {
       desc: t("benefit5Desc"),
     },
     {
+      icon: TemplateIcon,
+      title: t("benefit8Title"),
+      desc: t("benefit8Desc"),
+    },
+    {
+      icon: SwapIcon,
+      title: t("benefit9Title"),
+      desc: t("benefit9Desc"),
+    },
+    {
+      icon: AwardIcon,
+      title: t("benefit10Title"),
+      desc: t("benefit10Desc"),
+    },
+    {
+      icon: SettingsIcon,
+      title: t("benefit11Title"),
+      desc: t("benefit11Desc"),
+    },
+    {
+      icon: CalendarUsersIcon,
+      title: t("benefit12Title"),
+      desc: t("benefit12Desc"),
+    },
+    {
+      icon: PalmtreeIcon,
+      title: t("benefit13Title"),
+      desc: t("benefit13Desc"),
+    },
+    {
+      icon: BuildingIcon,
+      title: t("benefit14Title"),
+      desc: t("benefit14Desc"),
+    },
+    {
+      icon: BriefcaseIcon,
+      title: t("benefit15Title"),
+      desc: t("benefit15Desc"),
+    },
+    {
+      icon: FlagIcon,
+      title: t("benefit16Title"),
+      desc: t("benefit16Desc"),
+    },
+    {
       icon: ZapIcon,
       title: t("benefit6Title"),
       desc: t("benefit6Desc"),
@@ -807,17 +872,27 @@ function BenefitsSection() {
           <p className="mt-4 text-gray-500">{t("benefitsSubtitle")}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           {benefits.map((b) => (
             <div
               key={b.title}
-              className="rounded-2xl bg-white border border-gray-100 shadow-[0px_4px_24px_0px_rgba(37,99,235,0.06)] p-4 sm:p-6 hover:shadow-[0px_8px_32px_0px_rgba(37,99,235,0.12)] transition-shadow"
+              className={`rounded-2xl border p-4 sm:p-5 hover:shadow-[0px_8px_32px_0px_rgba(37,99,235,0.12)] transition-all duration-300 ${
+                b.highlight
+                  ? "bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 shadow-md ring-1 ring-emerald-200/50"
+                  : "bg-white border-gray-100 shadow-[0px_4px_24px_0px_rgba(37,99,235,0.06)]"
+              }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-4">
-                <b.icon className="w-5 h-5" />
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                  b.highlight ? "bg-emerald-600" : "bg-emerald-50"
+                }`}
+              >
+                <b.icon
+                  className={`w-5 h-5 ${b.highlight ? "text-white" : ""}`}
+                />
               </div>
-              <h3 className="font-bold text-gray-900 text-lg">{b.title}</h3>
-              <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+              <h3 className="font-bold text-gray-900">{b.title}</h3>
+              <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
                 {b.desc}
               </p>
             </div>

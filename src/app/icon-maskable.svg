@@ -1,0 +1,10 @@
+<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Full bleed background for maskable icon safe zone -->
+  <rect width="512" height="512" fill="#059669"/>
+  <g transform="translate(128, 128) scale(6.4)">
+    <path d="M10 12 C10 12, 16 12, 20 17 C24 22, 30 18, 30 18" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 28 C30 28, 24 28, 20 23 C16 18, 10 22, 10 22" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M27 16 L30.5 18 L27.5 20" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".85"/>
+    <path d="M13 20 L9.5 22 L12.5 24" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".85"/>
+  </g>
+</svg>

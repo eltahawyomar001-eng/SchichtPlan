@@ -5,9 +5,8 @@ import { type SVGProps } from "react";
  *
  * Usage: <ShiftfyLogo className="h-8 w-auto" />
  *
- * The wordmark uses the Inter/system font stack via a <text> element so it
- * matches the rest of the UI. If you need a fully self-contained SVG
- * (e.g. for emails or OG images), convert the text to outlines.
+ * The mark is the abstract "S" monogram (two interlocking flow arrows).
+ * The wordmark uses the Inter/system font stack via a <text> element.
  *
  * Aspect ratio ~ 4.5 : 1 (160 x 36).
  */
@@ -30,117 +29,54 @@ export function ShiftfyLogo(props: SVGProps<SVGSVGElement>) {
           y2="36"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#1D4ED8" />
-          <stop offset="1" stopColor="#3B82F6" />
-        </linearGradient>
-        <linearGradient
-          id="shiftfy-logo-shine"
-          x1="0"
-          y1="0"
-          x2="18"
-          y2="36"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="white" stopOpacity="0.12" />
-          <stop offset="1" stopColor="white" stopOpacity="0" />
+          <stop stopColor="#1E40AF" />
+          <stop offset="1" stopColor="#2563EB" />
         </linearGradient>
       </defs>
 
       {/* -- Mark (scaled to 36 x 36) -- */}
       <rect width="36" height="36" rx="9" fill="url(#shiftfy-logo-bg)" />
-      <rect width="36" height="36" rx="9" fill="url(#shiftfy-logo-shine)" />
 
-      {/* Clock circle */}
-      <circle
-        cx="18"
-        cy="18"
-        r="9.9"
+      {/* Upper flow */}
+      <path
+        d="M9 10.8 C9 10.8, 14.4 10.8, 18 15.3 C21.6 19.8, 27 16.2, 27 16.2"
+        stroke="white"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+
+      {/* Lower flow */}
+      <path
+        d="M27 25.2 C27 25.2, 21.6 25.2, 18 20.7 C14.4 16.2, 9 19.8, 9 19.8"
+        stroke="white"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+
+      {/* Right arrow tip */}
+      <path
+        d="M24.3 14.4 L27.5 16.2 L24.8 18"
         stroke="white"
         strokeWidth="1.8"
-        strokeOpacity="0.9"
-      />
-
-      {/* Hour hand — ~10 o'clock */}
-      <line
-        x1="18"
-        y1="18"
-        x2="13.5"
-        y2="12.2"
-        stroke="white"
-        strokeWidth="2.2"
         strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        strokeOpacity="0.85"
       />
 
-      {/* Minute hand — ~2 o'clock */}
-      <line
-        x1="18"
-        y1="18"
-        x2="23.4"
-        y2="11.7"
+      {/* Left arrow tip */}
+      <path
+        d="M11.7 18 L8.5 19.8 L11.2 21.6"
         stroke="white"
-        strokeWidth="1.6"
+        strokeWidth="1.8"
         strokeLinecap="round"
-      />
-
-      {/* Centre dot */}
-      <circle cx="18" cy="18" r="1.4" fill="white" />
-
-      {/* Hour markers */}
-      <rect
-        x="17.1"
-        y="6.8"
-        width="1.8"
-        height="2.7"
-        rx="0.9"
-        fill="white"
-        fillOpacity="0.7"
-      />
-      <rect
-        x="26.5"
-        y="17.1"
-        width="2.7"
-        height="1.8"
-        rx="0.9"
-        fill="white"
-        fillOpacity="0.7"
-      />
-      <rect
-        x="17.1"
-        y="26.5"
-        width="1.8"
-        height="2.7"
-        rx="0.9"
-        fill="white"
-        fillOpacity="0.7"
-      />
-      <rect
-        x="6.8"
-        y="17.1"
-        width="2.7"
-        height="1.8"
-        rx="0.9"
-        fill="white"
-        fillOpacity="0.7"
-      />
-
-      {/* Schedule bar accent */}
-      <rect
-        x="26.1"
-        y="27"
-        width="5.4"
-        height="1.6"
-        rx="0.8"
-        fill="white"
-        fillOpacity="0.5"
-      />
-      <rect
-        x="26.1"
-        y="29.7"
-        width="4"
-        height="1.6"
-        rx="0.8"
-        fill="white"
-        fillOpacity="0.35"
+        strokeLinejoin="round"
+        fill="none"
+        strokeOpacity="0.85"
       />
 
       {/* -- Wordmark -- */}

@@ -453,60 +453,64 @@ export default function EinstellungenPage() {
           </CardContent>
         </Card>
 
-        {/* Workspace Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BuildingIcon className="h-5 w-5" />
-              {t("workspace")}
-            </CardTitle>
-            <CardDescription>{t("workspaceDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-500">
-                  {t("workspaceName")}
-                </span>
-                <span className="text-sm font-medium text-gray-900">
-                  {(session?.user as SessionUser)?.workspaceName || "–"}
-                </span>
+        {/* Workspace Card — admin only */}
+        {["OWNER", "ADMIN"].includes(rawRole) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BuildingIcon className="h-5 w-5" />
+                {t("workspace")}
+              </CardTitle>
+              <CardDescription>{t("workspaceDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-500">
+                    {t("workspaceName")}
+                  </span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {(session?.user as SessionUser)?.workspaceName || "–"}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-500">
+                    {t("workspaceId")}
+                  </span>
+                  <span className="text-sm font-mono text-gray-900 break-all">
+                    {(session?.user as SessionUser)?.workspaceId || "–"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-500">{t("role")}</span>
+                  <Badge variant="outline">{translatedRole}</Badge>
+                </div>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-500">
-                  {t("workspaceId")}
-                </span>
-                <span className="text-sm font-mono text-gray-900 break-all">
-                  {(session?.user as SessionUser)?.workspaceId || "–"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-500">{t("role")}</span>
-                <Badge variant="outline">{translatedRole}</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Automations Card */}
-        <Link href="/einstellungen/automationen" className="block group">
-          <Card className="transition-colors group-hover:border-emerald-200 group-hover:bg-emerald-50/30">
-            <CardContent className="flex items-center gap-4 p-4 sm:p-6">
-              <div className="rounded-xl bg-emerald-50 p-3 group-hover:bg-emerald-100 transition-colors">
-                <ZapIcon className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-gray-900">
-                  {t("automations")}
-                </p>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {t("automationsDesc")}
-                </p>
-              </div>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
             </CardContent>
           </Card>
-        </Link>
+        )}
+
+        {/* Automations Card — admin only */}
+        {["OWNER", "ADMIN"].includes(rawRole) && (
+          <Link href="/einstellungen/automationen" className="block group">
+            <Card className="transition-colors group-hover:border-emerald-200 group-hover:bg-emerald-50/30">
+              <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+                <div className="rounded-xl bg-emerald-50 p-3 group-hover:bg-emerald-100 transition-colors">
+                  <ZapIcon className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-gray-900">
+                    {t("automations")}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {t("automationsDesc")}
+                  </p>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        )}
 
         {/* Notification Channels Card */}
         <Link href="/einstellungen/benachrichtigungen" className="block group">

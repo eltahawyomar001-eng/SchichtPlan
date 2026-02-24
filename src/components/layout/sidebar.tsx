@@ -184,7 +184,6 @@ const navGroups: NavGroup[] = [
         key: "settings",
         href: "/einstellungen",
         icon: SettingsIcon,
-        roles: ["OWNER", "ADMIN"],
       },
       {
         key: "billing",

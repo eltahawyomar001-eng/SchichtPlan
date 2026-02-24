@@ -106,7 +106,10 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(400);
 
     const body = await res.json();
-    expect(body.error).toContain("Datenschutzerklärung");
+    const messages = (body.details || []).map(
+      (d: { message: string }) => d.message,
+    );
+    expect(messages.join(" ")).toContain("Datenschutzerklärung");
   });
 
   it("returns 400 when no workspace name and no invitation", async () => {

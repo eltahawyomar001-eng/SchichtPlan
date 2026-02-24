@@ -641,6 +641,7 @@ function FeatureSection({
 function PricingSection() {
   const t = useTranslations("landing");
   const tp = useTranslations("pricing");
+  const [annual, setAnnual] = useState(true);
 
   const plans = [
     {
@@ -662,8 +663,8 @@ function PricingSection() {
     },
     {
       name: tp("pro"),
-      price: tp("proPrice"),
-      priceNote: tp("proPriceNote"),
+      price: annual ? tp("proAnnualPrice") : tp("proMonthlyPrice"),
+      priceNote: `${tp("perUserMonth")} · ${annual ? tp("billedAnnually") : tp("billedMonthly")}`,
       description: tp("proDesc"),
       features: [
         tp("featurePro1"),
@@ -674,13 +675,15 @@ function PricingSection() {
         tp("featurePro6"),
       ],
       cta: tp("startTrial"),
-      href: "/register?plan=team",
+      href: `/register?plan=team&billing=${annual ? "annual" : "monthly"}`,
       highlighted: true,
     },
     {
       name: tp("enterprise"),
-      price: tp("enterprisePrice"),
-      priceNote: tp("enterprisePriceNote"),
+      price: annual
+        ? tp("enterpriseAnnualPrice")
+        : tp("enterpriseMonthlyPrice"),
+      priceNote: `${tp("perUserMonth")} · ${annual ? tp("billedAnnually") : tp("billedMonthly")}`,
       description: tp("enterpriseDesc"),
       features: [
         tp("featureEnt1"),
@@ -692,7 +695,7 @@ function PricingSection() {
         tp("featureEnt7"),
       ],
       cta: tp("startTrial"),
-      href: "/register?plan=business",
+      href: `/register?plan=business&billing=${annual ? "annual" : "monthly"}`,
       highlighted: false,
     },
     {
@@ -722,6 +725,33 @@ function PricingSection() {
             {t("pricingTitle")}
           </h2>
           <p className="mt-4 text-gray-500">{t("pricingSubtitle")}</p>
+
+          {/* ─── Billing Toggle ─── */}
+          <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 p-1">
+            <button
+              onClick={() => setAnnual(false)}
+              className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
+                !annual
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tp("billingMonthly")}
+            </button>
+            <button
+              onClick={() => setAnnual(true)}
+              className={`relative rounded-full px-5 py-2 text-sm font-semibold transition-all ${
+                annual
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tp("billingAnnual")}
+              <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                {tp("saveBadge")}
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">

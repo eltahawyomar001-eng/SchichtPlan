@@ -313,7 +313,7 @@ export default function SchichttauschPage() {
                               className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                               style={{
                                 backgroundColor:
-                                  swap.requester.color || "#7C3AED",
+                                  swap.requester.color || "#2563EB",
                               }}
                             >
                               {swap.requester.firstName.charAt(0)}

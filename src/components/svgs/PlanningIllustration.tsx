@@ -55,14 +55,14 @@ export function PlanningIllustration() {
     t("daySu"),
   ];
   const shifts = [
-    { day: 0, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
-    { day: 1, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
-    { day: 2, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
-    { day: 0, row: 1, color: "#A78BFA", label: t("shiftLate"), w: 1 },
-    { day: 1, row: 1, color: "#A78BFA", label: t("shiftLate"), w: 1 },
-    { day: 3, row: 0, color: "#6D28D9", label: t("shiftNight"), w: 1 },
-    { day: 4, row: 0, color: "#7C3AED", label: t("shiftEarly"), w: 1 },
-    { day: 4, row: 1, color: "#A78BFA", label: t("shiftLate"), w: 1 },
+    { day: 0, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
+    { day: 1, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
+    { day: 2, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
+    { day: 0, row: 1, color: "#60A5FA", label: t("shiftLate"), w: 1 },
+    { day: 1, row: 1, color: "#60A5FA", label: t("shiftLate"), w: 1 },
+    { day: 3, row: 0, color: "#1D4ED8", label: t("shiftNight"), w: 1 },
+    { day: 4, row: 0, color: "#2563EB", label: t("shiftEarly"), w: 1 },
+    { day: 4, row: 1, color: "#60A5FA", label: t("shiftLate"), w: 1 },
     { day: 5, row: 0, color: "#C4B5FD", label: t("shiftStandby"), w: 1 },
   ];
 

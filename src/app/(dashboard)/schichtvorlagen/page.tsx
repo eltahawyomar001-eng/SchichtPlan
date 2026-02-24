@@ -32,7 +32,7 @@ export default function SchichtvorlagenSeite() {
     name: "",
     startTime: "06:00",
     endTime: "14:00",
-    color: "#8b5cf6",
+    color: "#3b82f6",
     locationId: "",
   });
 
@@ -77,7 +77,7 @@ export default function SchichtvorlagenSeite() {
           name: "",
           startTime: "06:00",
           endTime: "14:00",
-          color: "#8b5cf6",
+          color: "#3b82f6",
           locationId: "",
         });
         fetchData();
@@ -108,7 +108,7 @@ export default function SchichtvorlagenSeite() {
       name: tmpl.name,
       startTime: tmpl.startTime,
       endTime: tmpl.endTime,
-      color: tmpl.color || "#8b5cf6",
+      color: tmpl.color || "#3b82f6",
       locationId: tmpl.location?.id || "",
     });
     setShowForm(true);
@@ -138,7 +138,7 @@ export default function SchichtvorlagenSeite() {
                 name: "",
                 startTime: "06:00",
                 endTime: "14:00",
-                color: "#8b5cf6",
+                color: "#3b82f6",
                 locationId: "",
               });
               setShowForm(true);
@@ -291,7 +291,7 @@ export default function SchichtvorlagenSeite() {
                     <div
                       className="h-4 w-4 rounded-full"
                       style={{
-                        backgroundColor: tmpl.color || "#8b5cf6",
+                        backgroundColor: tmpl.color || "#3b82f6",
                       }}
                     />
                     <h3 className="text-sm font-semibold text-gray-900">

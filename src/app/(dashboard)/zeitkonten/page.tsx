@@ -229,7 +229,7 @@ export default function ZeitkontenPage() {
                           className="h-10 w-10 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                           style={{
                             backgroundColor:
-                              account.employee.color || "#7C3AED",
+                              account.employee.color || "#2563EB",
                           }}
                         >
                           {account.employee.firstName.charAt(0)}

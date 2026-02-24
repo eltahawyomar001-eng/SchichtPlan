@@ -7,8 +7,8 @@
   <circle cx="26" cy="8" r="1.5" fill="#fff" fill-opacity=".7"/>
   <defs>
     <linearGradient id="fg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7C3AED"/>
-      <stop offset="1" stop-color="#A78BFA"/>
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#60A5FA"/>
     </linearGradient>
   </defs>
 </svg>

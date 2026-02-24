@@ -29,8 +29,8 @@ export function StarIcon(props: SVGProps<SVGSVGElement>) {
           y2="22"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#7C3AED" />
-          <stop offset="1" stopColor="#A78BFA" />
+          <stop stopColor="#2563EB" />
+          <stop offset="1" stopColor="#60A5FA" />
         </linearGradient>
       </defs>
     </svg>

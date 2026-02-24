@@ -565,7 +565,7 @@ export default function StempeluhrSeite() {
                           <div
                             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
                             style={{
-                              backgroundColor: m.employee.color || "#8b5cf6",
+                              backgroundColor: m.employee.color || "#3b82f6",
                             }}
                           >
                             {initials}

@@ -303,7 +303,7 @@ export function DayToDayIllustration() {
               cx={dot.cx}
               cy={dot.cy}
               r={dot.r}
-              fill="#7C3AED"
+              fill="#2563EB"
               fillOpacity={dot.opacity}
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -316,7 +316,7 @@ export function DayToDayIllustration() {
           ))}
           <path
             d="M5 43 C10 80, 15 80, 15 117"
-            stroke="#7C3AED"
+            stroke="#2563EB"
             strokeWidth="1"
             strokeDasharray="3 3"
             style={{
@@ -330,7 +330,7 @@ export function DayToDayIllustration() {
           />
           <path
             d="M15 123 C12 160, 10 160, 10 197"
-            stroke="#7C3AED"
+            stroke="#2563EB"
             strokeWidth="1"
             strokeDasharray="3 3"
             style={{

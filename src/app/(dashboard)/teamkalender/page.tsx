@@ -204,7 +204,7 @@ export default function TeamkalenderSeite() {
                         <div
                           className="h-2.5 w-2.5 rounded-full flex-shrink-0"
                           style={{
-                            backgroundColor: emp.color || "#8b5cf6",
+                            backgroundColor: emp.color || "#3b82f6",
                           }}
                         />
                         {emp.firstName} {emp.lastName}
@@ -254,7 +254,7 @@ export default function TeamkalenderSeite() {
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
                   <div
                     className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: emp.color || "#8b5cf6" }}
+                    style={{ backgroundColor: emp.color || "#3b82f6" }}
                   />
                   <span className="text-sm font-semibold text-gray-800">
                     {emp.firstName} {emp.lastName}

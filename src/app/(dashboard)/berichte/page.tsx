@@ -44,14 +44,14 @@ interface ReportData {
 }
 
 const COLORS = [
-  "#7C3AED",
+  "#2563EB",
   "#3B82F6",
   "#10B981",
   "#F59E0B",
   "#EF4444",
   "#EC4899",
   "#06B6D4",
-  "#8B5CF6",
+  "#3B82F6",
 ];
 
 export default function BerichteSeite() {
@@ -200,7 +200,7 @@ export default function BerichteSeite() {
                       />
                       <Bar
                         dataKey="hours"
-                        fill="#7C3AED"
+                        fill="#2563EB"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>

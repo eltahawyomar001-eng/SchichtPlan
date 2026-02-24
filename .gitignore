@@ -45,3 +45,4 @@ next-env.d.ts
 .vscode/
 generate_report.py
 Shiftfy_Status_Report.pdf
+*.bak

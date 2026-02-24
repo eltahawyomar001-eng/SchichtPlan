@@ -46,9 +46,9 @@ export function ReportingIllustration() {
   }, []);
 
   const employees = [
-    { name: "Anna M.", hours: 38, overtime: 0, color: "#7C3AED" },
-    { name: "Ben K.", hours: 42, overtime: 2, color: "#A78BFA" },
-    { name: "Clara S.", hours: 35, overtime: 0, color: "#6D28D9" },
+    { name: "Anna M.", hours: 38, overtime: 0, color: "#2563EB" },
+    { name: "Ben K.", hours: 42, overtime: 2, color: "#60A5FA" },
+    { name: "Clara S.", hours: 35, overtime: 0, color: "#1D4ED8" },
     { name: "David R.", hours: 40, overtime: 0, color: "#C4B5FD" },
   ];
 
@@ -168,7 +168,7 @@ export function ReportingIllustration() {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 px-4 py-3">
             {[
-              { label: t("total"), value: "155h", accent: "#7C3AED" },
+              { label: t("total"), value: "155h", accent: "#2563EB" },
               { label: t("overtime"), value: "2h", accent: "#F59E0B" },
               { label: t("absent"), value: "0", accent: "#10B981" },
             ].map((stat, i) => (
@@ -383,7 +383,7 @@ export function ReportingIllustration() {
               cx="126"
               cy="8"
               r="3"
-              fill="#7C3AED"
+              fill="#2563EB"
               style={{
                 opacity: isVisible ? 1 : 0,
                 animation: isVisible
@@ -401,8 +401,8 @@ export function ReportingIllustration() {
                 y2="0"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop stopColor="#A78BFA" />
-                <stop offset="1" stopColor="#7C3AED" />
+                <stop stopColor="#60A5FA" />
+                <stop offset="1" stopColor="#2563EB" />
               </linearGradient>
               <linearGradient
                 id="sparkline-fill"
@@ -412,8 +412,8 @@ export function ReportingIllustration() {
                 y2="40"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop stopColor="#7C3AED" stopOpacity="0.15" />
-                <stop offset="1" stopColor="#7C3AED" stopOpacity="0" />
+                <stop stopColor="#2563EB" stopOpacity="0.15" />
+                <stop offset="1" stopColor="#2563EB" stopOpacity="0" />
               </linearGradient>
             </defs>
           </svg>

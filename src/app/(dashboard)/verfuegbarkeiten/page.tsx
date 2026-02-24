@@ -218,7 +218,7 @@ export default function VerfuegbarkeitenPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
-                      style={{ backgroundColor: employee.color || "#7C3AED" }}
+                      style={{ backgroundColor: employee.color || "#2563EB" }}
                     >
                       {employee.firstName.charAt(0)}
                       {employee.lastName.charAt(0)}

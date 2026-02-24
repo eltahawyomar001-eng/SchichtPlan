@@ -2,7 +2,7 @@ import { type SVGProps } from "react";
 
 /**
  * Award/medal icon — used for Qualifikationen (skills).
- * Gradient stroke from Brand/600 (#7C3AED) to Brand/400 (#A78BFA).
+ * Gradient stroke from Brand/600 (#2563EB) to Brand/400 (#60A5FA).
  */
 export function AwardIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -36,8 +36,8 @@ export function AwardIcon(props: SVGProps<SVGSVGElement>) {
           y2="22"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#7C3AED" />
-          <stop offset="1" stopColor="#A78BFA" />
+          <stop stopColor="#2563EB" />
+          <stop offset="1" stopColor="#60A5FA" />
         </linearGradient>
       </defs>
     </svg>

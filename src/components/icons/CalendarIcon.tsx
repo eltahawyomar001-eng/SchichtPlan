@@ -40,8 +40,8 @@ export function CalendarIcon(props: SVGProps<SVGSVGElement>) {
           y2="22"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#7C3AED" />
-          <stop offset="1" stopColor="#A78BFA" />
+          <stop stopColor="#2563EB" />
+          <stop offset="1" stopColor="#60A5FA" />
         </linearGradient>
         <linearGradient
           id="calendar-line-gradient"
@@ -51,8 +51,8 @@ export function CalendarIcon(props: SVGProps<SVGSVGElement>) {
           y2="10"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#7C3AED" />
-          <stop offset="1" stopColor="#A78BFA" />
+          <stop stopColor="#2563EB" />
+          <stop offset="1" stopColor="#60A5FA" />
         </linearGradient>
         <linearGradient
           id="calendar-dot-gradient"
@@ -62,8 +62,8 @@ export function CalendarIcon(props: SVGProps<SVGSVGElement>) {
           y2="16"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#7C3AED" />
-          <stop offset="1" stopColor="#A78BFA" />
+          <stop stopColor="#2563EB" />
+          <stop offset="1" stopColor="#60A5FA" />
         </linearGradient>
       </defs>
     </svg>

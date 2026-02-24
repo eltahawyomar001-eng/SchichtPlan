@@ -556,7 +556,7 @@ function RegisterForm() {
                 width="48"
                 height="28"
                 rx="6"
-                fill="#7C3AED"
+                fill="#2563EB"
                 fillOpacity="0.15"
               />
               <text
@@ -564,7 +564,7 @@ function RegisterForm() {
                 y="108"
                 fontSize="9"
                 fontWeight="600"
-                fill="#7C3AED"
+                fill="#2563EB"
                 textAnchor="middle"
               >
                 06–14
@@ -575,7 +575,7 @@ function RegisterForm() {
                 width="48"
                 height="28"
                 rx="6"
-                fill="#7C3AED"
+                fill="#2563EB"
                 fillOpacity="0.15"
               />
               <text
@@ -583,7 +583,7 @@ function RegisterForm() {
                 y="108"
                 fontSize="9"
                 fontWeight="600"
-                fill="#7C3AED"
+                fill="#2563EB"
                 textAnchor="middle"
               >
                 06–14
@@ -632,7 +632,7 @@ function RegisterForm() {
                 width="48"
                 height="28"
                 rx="6"
-                fill="#7C3AED"
+                fill="#2563EB"
                 fillOpacity="0.15"
               />
               <text
@@ -640,7 +640,7 @@ function RegisterForm() {
                 y="108"
                 fontSize="9"
                 fontWeight="600"
-                fill="#7C3AED"
+                fill="#2563EB"
                 textAnchor="middle"
               >
                 06–14
@@ -691,7 +691,7 @@ function RegisterForm() {
                 width="48"
                 height="28"
                 rx="6"
-                fill="#7C3AED"
+                fill="#2563EB"
                 fillOpacity="0.15"
               />
               <text
@@ -699,7 +699,7 @@ function RegisterForm() {
                 y="144"
                 fontSize="9"
                 fontWeight="600"
-                fill="#7C3AED"
+                fill="#2563EB"
                 textAnchor="middle"
               >
                 06–14
@@ -729,7 +729,7 @@ function RegisterForm() {
                 width="48"
                 height="28"
                 rx="6"
-                fill="#7C3AED"
+                fill="#2563EB"
                 fillOpacity="0.15"
               />
               <text
@@ -737,7 +737,7 @@ function RegisterForm() {
                 y="144"
                 fontSize="9"
                 fontWeight="600"
-                fill="#7C3AED"
+                fill="#2563EB"
                 textAnchor="middle"
               >
                 06–14
@@ -748,7 +748,7 @@ function RegisterForm() {
                 cx="40"
                 cy="178"
                 r="12"
-                fill="#7C3AED"
+                fill="#2563EB"
                 fillOpacity="0.2"
               />
               <UsersIcon

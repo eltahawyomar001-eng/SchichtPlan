@@ -9,7 +9,7 @@ import { CookieBanner } from "@/components/cookie-banner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const viewport: Viewport = {
-  themeColor: "#7c3aed",
+  themeColor: "#2563eb",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,

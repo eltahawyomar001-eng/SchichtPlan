@@ -326,7 +326,7 @@ export default function AbwesenheitenPage() {
                           className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                           style={{
                             backgroundColor:
-                              absence.employee.color || "#7C3AED",
+                              absence.employee.color || "#2563EB",
                           }}
                         >
                           {absence.employee.firstName.charAt(0)}

@@ -27,7 +27,7 @@ export default function AbteilungenSeite() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
-    color: "#8b5cf6",
+    color: "#3b82f6",
     locationId: "",
   });
 
@@ -64,7 +64,7 @@ export default function AbteilungenSeite() {
       if (res.ok) {
         setShowForm(false);
         setEditId(null);
-        setForm({ name: "", color: "#8b5cf6", locationId: "" });
+        setForm({ name: "", color: "#3b82f6", locationId: "" });
         fetchData();
       }
     } catch (err) {
@@ -88,7 +88,7 @@ export default function AbteilungenSeite() {
     setEditId(dept.id);
     setForm({
       name: dept.name,
-      color: dept.color || "#8b5cf6",
+      color: dept.color || "#3b82f6",
       locationId: dept.location?.id || "",
     });
     setShowForm(true);
@@ -103,7 +103,7 @@ export default function AbteilungenSeite() {
           <button
             onClick={() => {
               setEditId(null);
-              setForm({ name: "", color: "#8b5cf6", locationId: "" });
+              setForm({ name: "", color: "#3b82f6", locationId: "" });
               setShowForm(true);
             }}
             className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
@@ -206,7 +206,7 @@ export default function AbteilungenSeite() {
                     <div
                       className="h-4 w-4 rounded-full"
                       style={{
-                        backgroundColor: dept.color || "#8b5cf6",
+                        backgroundColor: dept.color || "#3b82f6",
                       }}
                     />
                     <h3 className="text-sm font-semibold text-gray-900">

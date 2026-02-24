@@ -46,9 +46,9 @@ export function DistributionIllustration() {
   }, []);
 
   const teamMembers = [
-    { name: "Anna M.", initials: "AM", color: "#7C3AED", status: "confirmed" },
-    { name: "Ben K.", initials: "BK", color: "#A78BFA", status: "confirmed" },
-    { name: "Clara S.", initials: "CS", color: "#6D28D9", status: "pending" },
+    { name: "Anna M.", initials: "AM", color: "#2563EB", status: "confirmed" },
+    { name: "Ben K.", initials: "BK", color: "#60A5FA", status: "confirmed" },
+    { name: "Clara S.", initials: "CS", color: "#1D4ED8", status: "pending" },
     { name: "David R.", initials: "DR", color: "#C4B5FD", status: "pending" },
   ];
 
@@ -217,7 +217,7 @@ export function DistributionIllustration() {
         <NotificationCard
           name="Anna M."
           initials="AM"
-          color="#7C3AED"
+          color="#2563EB"
           shift={t("shiftEarly0614")}
           top={20}
           left={300}
@@ -227,7 +227,7 @@ export function DistributionIllustration() {
         <NotificationCard
           name="Ben K."
           initials="BK"
-          color="#A78BFA"
+          color="#60A5FA"
           shift={t("shiftLate1422")}
           top={100}
           left={320}
@@ -237,7 +237,7 @@ export function DistributionIllustration() {
         <NotificationCard
           name="Clara S."
           initials="CS"
-          color="#6D28D9"
+          color="#1D4ED8"
           shift={t("shiftEarly0614")}
           top={180}
           left={310}
@@ -282,8 +282,8 @@ export function DistributionIllustration() {
               y2="260"
               gradientUnits="userSpaceOnUse"
             >
-              <stop stopColor="#7C3AED" stopOpacity="0.4" />
-              <stop offset="1" stopColor="#A78BFA" stopOpacity="0.2" />
+              <stop stopColor="#2563EB" stopOpacity="0.4" />
+              <stop offset="1" stopColor="#60A5FA" stopOpacity="0.2" />
             </linearGradient>
           </defs>
         </svg>
@@ -361,7 +361,7 @@ function NotificationCard({
         >
           <path
             d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"
-            stroke="#7C3AED"
+            stroke="#2563EB"
             strokeWidth="2"
             strokeLinecap="round"
           />

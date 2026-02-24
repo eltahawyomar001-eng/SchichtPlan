@@ -11,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function AGBPage() {
+  const effectiveDate = "24.02.2026";
+
   return (
     <div className="min-h-screen bg-gray-50/50">
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
@@ -60,6 +62,7 @@ export default function AGBPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Allgemeine Geschäftsbedingungen (AGB)
         </h1>
+        <p className="text-xs text-gray-400 mb-8">Stand: {effectiveDate}</p>
 
         <div className="prose prose-gray max-w-none space-y-6 text-sm text-gray-700 leading-relaxed">
           <section>
@@ -67,9 +70,14 @@ export default function AGBPage() {
               § 1 Geltungsbereich
             </h2>
             <p>
-              Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung der
-              webbasierten Schichtplanungssoftware Shiftfy. Mit der
-              Registrierung und Nutzung des Dienstes erkennen Sie diese AGB an.
+              Diese Allgemeinen Geschäftsbedingungen (nachfolgend
+              &quot;AGB&quot;) gelten für die Nutzung der webbasierten
+              Schichtplanungssoftware Shiftfy, angeboten von Omar Rageh
+              (nachfolgend &quot;Anbieter&quot;). Mit der Registrierung und
+              Nutzung des Dienstes erkennen Sie diese AGB an. Entgegenstehende
+              oder abweichende Bedingungen des Nutzers werden nicht anerkannt,
+              es sei denn, der Anbieter stimmt ihrer Geltung ausdrücklich
+              schriftlich zu.
             </p>
           </section>
 
@@ -80,7 +88,13 @@ export default function AGBPage() {
             <p>
               Shiftfy stellt eine webbasierte Plattform zur Schichtplanung,
               Zeiterfassung und Personalverwaltung bereit. Der genaue
-              Funktionsumfang ergibt sich aus der aktuellen Produktbeschreibung
+              Funktionsumfang der einzelnen Tarifstufen ergibt sich aus der{" "}
+              <Link
+                href="/pricing"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                aktuellen Produktbeschreibung und Preisübersicht
+              </Link>{" "}
               auf der Website.
             </p>
           </section>
@@ -99,19 +113,60 @@ export default function AGBPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 4 Verfügbarkeit
+              § 4 Entgelt, Abrechnung und Zahlung
             </h2>
             <p>
-              Wir bemühen uns um eine möglichst hohe Verfügbarkeit des Dienstes.
-              Eine Verfügbarkeit von 100% kann technisch nicht gewährleistet
-              werden. Wartungsarbeiten werden nach Möglichkeit vorab
-              angekündigt.
+              Shiftfy wird in verschiedenen Tarifstufen angeboten. Der
+              STARTER-Tarif ist dauerhaft kostenlos. Kostenpflichtige Tarife
+              (TEAM, BUSINESS, ENTERPRISE) werden monatlich im Voraus
+              abgerechnet. Die jeweils aktuellen Preise sind auf der{" "}
+              <Link
+                href="/pricing"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Preisseite
+              </Link>{" "}
+              einsehbar.
+            </p>
+            <p className="mt-2">
+              <strong>Abonnement und automatische Verlängerung:</strong>{" "}
+              Kostenpflichtige Abonnements verlängern sich automatisch um einen
+              weiteren Abrechnungszeitraum (Monat), sofern sie nicht vor Ablauf
+              der laufenden Periode gekündigt werden. Die Kündigung ist
+              jederzeit zum Ende des jeweiligen Abrechnungszeitraums möglich.
+            </p>
+            <p className="mt-2">
+              <strong>Zahlungsabwicklung:</strong> Die Zahlungsabwicklung
+              erfolgt über den Zahlungsdienstleister Stripe, Inc. Es werden
+              gängige Zahlungsmethoden (Kreditkarte, SEPA-Lastschrift
+              u.&nbsp;a.) akzeptiert. Alle Preise verstehen sich zzgl. der
+              jeweils gültigen gesetzlichen Mehrwertsteuer, sofern nicht anders
+              angegeben.
+            </p>
+            <p className="mt-2">
+              <strong>Zahlungsverzug:</strong> Bei fehlgeschlagenem
+              Zahlungseinzug unternehmen wir bis zu drei Wiederholungsversuche.
+              Schlägt die Zahlung endgültig fehl, wird das Konto auf den
+              kostenfreien STARTER-Tarif herabgestuft. Gesetzliche Verzugszinsen
+              und Mahnkosten bleiben vorbehalten.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 5 Datenschutz
+              § 5 Verfügbarkeit
+            </h2>
+            <p>
+              Wir bemühen uns um eine möglichst hohe Verfügbarkeit des Dienstes.
+              Eine Verfügbarkeit von 100&nbsp;% kann technisch nicht
+              gewährleistet werden. Wartungsarbeiten werden nach Möglichkeit
+              vorab angekündigt.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              § 6 Datenschutz und Auftragsverarbeitung
             </h2>
             <p>
               Die Verarbeitung personenbezogener Daten erfolgt gemäß unserer{" "}
@@ -123,11 +178,36 @@ export default function AGBPage() {
               </Link>
               .
             </p>
+            <p className="mt-2">
+              <strong>Auftragsverarbeitung (B2B):</strong> Soweit Nutzer Shiftfy
+              zur Verarbeitung personenbezogener Daten ihrer eigenen
+              Mitarbeitenden einsetzen, handeln sie als Verantwortliche im Sinne
+              der DSGVO; der Anbieter ist insoweit Auftragsverarbeiter gemäß
+              Art.&nbsp;28 DSGVO. Ein Auftragsverarbeitungsvertrag (AVV) wird
+              auf Anfrage unter{" "}
+              <a
+                href="mailto:kontakt@shiftfy.de"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                kontakt@shiftfy.de
+              </a>{" "}
+              zur Verfügung gestellt.
+            </p>
+            <p className="mt-2">
+              <strong>Betriebsverfassungsrecht (BetrVG § 87):</strong> Der
+              Einsatz von Shiftfy zur elektronischen Zeiterfassung, GPS-Ortung
+              und Leistungskontrolle kann der Mitbestimmung des Betriebsrats
+              gemäß § 87 Abs.&nbsp;1 Nr.&nbsp;6 BetrVG unterliegen. Der Nutzer
+              ist als Arbeitgeber allein verantwortlich dafür, vor dem Einsatz
+              von Shiftfy die erforderlichen Betriebsvereinbarungen einzuholen
+              und etwaige Mitbestimmungsrechte des Betriebsrats zu wahren. Der
+              Anbieter übernimmt hierfür keine Haftung.
+            </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 6 Haftung
+              § 7 Haftung
             </h2>
             <p>
               Wir haften unbeschränkt für Vorsatz und grobe Fahrlässigkeit. Bei
@@ -139,18 +219,23 @@ export default function AGBPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 7 Kündigung
+              § 8 Kündigung
             </h2>
             <p>
-              Sie können Ihr Konto jederzeit löschen. Mit der Löschung werden
-              alle Ihre Daten unwiderruflich entfernt. Wir behalten uns das
-              Recht vor, Konten bei Verstoß gegen diese AGB zu sperren.
+              Kostenpflichtige Abonnements können jederzeit zum Ende des
+              laufenden Abrechnungszeitraums gekündigt werden. Nach der
+              Kündigung wird das Konto auf den kostenfreien STARTER-Tarif
+              herabgestuft; alle Daten bleiben bis zur aktiven Kontolöschung
+              erhalten. Sie können Ihr Konto jederzeit vollständig löschen. Mit
+              der Löschung werden alle Ihre Daten unwiderruflich entfernt. Wir
+              behalten uns das Recht vor, Konten bei Verstoß gegen diese AGB
+              fristlos zu sperren.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 8 Widerrufsrecht
+              § 9 Widerrufsrecht
             </h2>
             <p>
               Verbrauchern steht ein gesetzliches Widerrufsrecht gemäß
@@ -169,7 +254,7 @@ export default function AGBPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 9 Änderungen der AGB
+              § 10 Änderungen der AGB
             </h2>
             <p>
               Wir behalten uns vor, diese AGB zu ändern. Über wesentliche
@@ -183,7 +268,7 @@ export default function AGBPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 10 Online-Streitbeilegung
+              § 11 Online-Streitbeilegung
             </h2>
             <p>
               Die Europäische Kommission stellt eine Plattform zur
@@ -204,7 +289,7 @@ export default function AGBPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              § 11 Schlussbestimmungen
+              § 12 Schlussbestimmungen
             </h2>
             <p>
               Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand

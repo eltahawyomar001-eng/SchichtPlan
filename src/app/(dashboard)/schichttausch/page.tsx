@@ -89,6 +89,7 @@ export default function SchichttauschPage() {
   const [shifts, setShifts] = useState<ShiftInfo[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
 
   const [formData, setFormData] = useState({
@@ -107,12 +108,12 @@ export default function SchichttauschPage() {
       if (filterStatus !== "all") params.set("status", filterStatus);
       const res = await fetch(`/api/shift-swaps?${params}`);
       if (res.ok) setSwaps(await res.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [filterStatus]);
+  }, [filterStatus, tc]);
 
   const fetchMeta = useCallback(async () => {
     try {
@@ -128,8 +129,8 @@ export default function SchichttauschPage() {
       ]);
       if (empRes.ok) setEmployees(await empRes.json());
       if (shiftRes.ok) setShifts(await shiftRes.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      // Non-critical — supplementary form data
     }
   }, []);
 
@@ -165,8 +166,8 @@ export default function SchichttauschPage() {
         });
         fetchSwaps();
       }
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   }
 
@@ -182,8 +183,8 @@ export default function SchichttauschPage() {
         body: JSON.stringify({ status, ...extra }),
       });
       fetchSwaps();
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   }
 
@@ -226,6 +227,13 @@ export default function SchichttauschPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Load/action error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Summary */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <Card>

@@ -1205,7 +1205,9 @@
     "holidaysCount": "Feiertage",
     "national": "Bundesweit",
     "regional": "Regional",
-    "noData": "Keine Feiertagsdaten verfügbar."
+    "noData": "Keine Feiertagsdaten verfügbar.",
+    "year": "Jahr",
+    "state": "Bundesland"
   },
   "reports": {
     "title": "Berichte",
@@ -1234,6 +1236,7 @@
     "title": "Abteilungen",
     "description": "Abteilungen erstellen und verwalten",
     "add": "Abteilung hinzufügen",
+    "edit": "Abteilung bearbeiten",
     "name": "Name",
     "color": "Farbe",
     "location": "Standort",
@@ -1242,6 +1245,8 @@
     "create": "Erstellen",
     "cancel": "Abbrechen",
     "confirmDelete": "Soll diese Abteilung wirklich gelöscht werden?",
+    "deleteConfirmTitle": "Abteilung löschen",
+    "deleteConfirmMessage": "Soll diese Abteilung wirklich gelöscht werden?",
     "empty": "Noch keine Abteilungen vorhanden.",
     "employees": "Mitarbeiter"
   },
@@ -1258,7 +1263,10 @@
     "confirmDelete": "Soll diese Qualifikation wirklich gelöscht werden?",
     "empty": "Noch keine Qualifikationen vorhanden.",
     "assigned": "zugewiesen",
-    "general": "Allgemein"
+    "general": "Allgemein",
+    "editSkill": "Qualifikation bearbeiten",
+    "deleteConfirmTitle": "Qualifikation löschen",
+    "deleteConfirmMessage": "Soll diese Qualifikation wirklich gelöscht werden?"
   },
   "shiftTemplates": {
     "title": "Schichtvorlagen",
@@ -1275,7 +1283,10 @@
     "create": "Erstellen",
     "cancel": "Abbrechen",
     "confirmDelete": "Soll diese Vorlage wirklich gelöscht werden?",
-    "empty": "Noch keine Schichtvorlagen vorhanden."
+    "empty": "Noch keine Schichtvorlagen vorhanden.",
+    "editTemplate": "Vorlage bearbeiten",
+    "deleteConfirmTitle": "Vorlage löschen",
+    "deleteConfirmMessage": "Soll diese Schichtvorlage wirklich gelöscht werden?"
   },
   "vacationBalance": {
     "title": "Urlaubskonto",
@@ -1373,7 +1384,13 @@
     "budgetMinutes": "Budget (Minuten)",
     "startDate": "Startdatum",
     "endDate": "Enddatum",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "editProject": "Projekt bearbeiten",
+    "noClient": "Kein Kunde",
+    "save": "Speichern",
+    "create": "Erstellen",
+    "deleteConfirmTitle": "Projekt löschen",
+    "deleteConfirmMessage": "Soll dieses Projekt wirklich gelöscht werden?"
   },
   "monthClose": {
     "title": "Monatsabschluss",
@@ -1453,7 +1470,9 @@
     "conditionsCount": "{count, plural, =0 {Keine Bedingungen} one {1 Bedingung} other {# Bedingungen}}",
     "actionsCount": "{count, plural, =0 {Keine Aktionen} one {1 Aktion} other {# Aktionen}}",
     "deleteConfirm": "Regel wirklich löschen?",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "deleteConfirmTitle": "Regel löschen",
+    "deleteConfirmMessage": "Soll diese Automatisierungsregel wirklich gelöscht werden?"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -1465,7 +1484,16 @@
     "active": "Aktiv",
     "inactive": "Inaktiv",
     "noWebhooks": "Keine Webhooks konfiguriert.",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "deleteConfirmTitle": "Webhook löschen",
+    "deleteConfirmMessage": "Soll dieser Webhook wirklich gelöscht werden?",
+    "test": "Testen",
+    "testSuccess": "Test erfolgreich",
+    "testFailed": "Test fehlgeschlagen",
+    "showSecret": "Secret anzeigen",
+    "hideSecret": "Secret verbergen",
+    "copySecret": "Secret kopieren",
+    "secretCopied": "Kopiert!"
   },
   "teamCalendar": {
     "title": "Teamkalender",

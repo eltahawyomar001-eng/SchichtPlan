@@ -33,6 +33,7 @@ export default function StandortePage() {
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -47,8 +48,8 @@ export default function StandortePage() {
       const res = await fetch("/api/locations");
       const data = await res.json();
       setLocations(data);
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
@@ -107,8 +108,8 @@ export default function StandortePage() {
       await fetch(`/api/locations/${deleteTarget}`, { method: "DELETE" });
       setDeleteTarget(null);
       fetchLocations();
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setError(tc("errorOccurred"));
     }
   };
 
@@ -133,6 +134,13 @@ export default function StandortePage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
         {/* Search */}
         {locations.length > 0 && (
           <div className="relative max-w-full sm:max-w-md">

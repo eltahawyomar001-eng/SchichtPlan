@@ -3,7 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { PlusIcon } from "@/components/icons";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  PlusIcon,
+  TrashIcon,
+  XIcon,
+  EyeIcon,
+  EyeOffIcon,
+  ClipboardIcon,
+  PlayIcon,
+} from "@/components/icons";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 
 interface WebhookEndpoint {
@@ -15,39 +29,50 @@ interface WebhookEndpoint {
   createdAt: string;
 }
 
+const ALL_EVENTS = [
+  "shift.created",
+  "shift.updated",
+  "shift.deleted",
+  "time-entry.created",
+  "time-entry.submitted",
+  "absence.created",
+  "absence.approved",
+  "employee.created",
+  "employee.updated",
+];
+
 export default function WebhooksSeite() {
   const t = useTranslations("webhooks");
+  const tc = useTranslations("common");
   const { handlePlanLimit } = usePlanLimit();
   const [hooks, setHooks] = useState<WebhookEndpoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formUrl, setFormUrl] = useState("");
   const [formEvents, setFormEvents] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
-
-  const allEvents = [
-    "shift.created",
-    "shift.updated",
-    "shift.deleted",
-    "time-entry.created",
-    "time-entry.submitted",
-    "absence.created",
-    "absence.approved",
-    "employee.created",
-    "employee.updated",
-  ];
+  const [copiedSecret, setCopiedSecret] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [testingHook, setTestingHook] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    id: string;
+    ok: boolean;
+  } | null>(null);
 
   const fetchHooks = useCallback(async () => {
+    setError(null);
     try {
       const res = await fetch("/api/webhooks");
       if (res.ok) setHooks(await res.json());
+      else setError(tc("errorLoading"));
     } catch {
-      // ignore
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     fetchHooks();
@@ -70,27 +95,66 @@ export default function WebhooksSeite() {
         fetchHooks();
       } else {
         const isPlanLimit = await handlePlanLimit(res);
-        if (isPlanLimit) return;
+        if (!isPlanLimit) {
+          const data = await res.json();
+          setError(data.error || tc("errorOccurred"));
+        }
       }
     } catch {
-      // ignore
+      setError(tc("errorOccurred"));
     } finally {
       setSaving(false);
     }
   }
 
   async function toggleActive(hook: WebhookEndpoint) {
-    await fetch(`/api/webhooks/${hook.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !hook.isActive }),
-    });
-    fetchHooks();
+    try {
+      await fetch(`/api/webhooks/${hook.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !hook.isActive }),
+      });
+      fetchHooks();
+    } catch {
+      setError(tc("errorOccurred"));
+    }
   }
 
-  async function deleteHook(id: string) {
-    await fetch(`/api/webhooks/${id}`, { method: "DELETE" });
-    fetchHooks();
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`/api/webhooks/${deleteTarget}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      fetchHooks();
+    } catch {
+      setError(tc("errorOccurred"));
+      setDeleteTarget(null);
+    }
+  }
+
+  async function testWebhook(hook: WebhookEndpoint) {
+    setTestingHook(hook.id);
+    setTestResult(null);
+    try {
+      const res = await fetch(`/api/webhooks/${hook.id}/test`, {
+        method: "POST",
+      });
+      setTestResult({ id: hook.id, ok: res.ok });
+    } catch {
+      setTestResult({ id: hook.id, ok: false });
+    } finally {
+      setTestingHook(null);
+    }
+  }
+
+  async function copySecret(secret: string, hookId: string) {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopiedSecret(hookId);
+      setTimeout(() => setCopiedSecret(null), 2000);
+    } catch {
+      // Clipboard API not available
+    }
   }
 
   function toggleEvent(event: string) {
@@ -105,144 +169,229 @@ export default function WebhooksSeite() {
         title={t("title")}
         description={t("description")}
         actions={
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-          >
+          <Button size="sm" onClick={() => setShowForm(!showForm)}>
             <PlusIcon className="h-4 w-4" />
-            {t("newWebhook")}
-          </button>
+            <span className="hidden sm:inline">{t("newWebhook")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
+          </Button>
         }
       />
       <div className="p-4 sm:p-6 space-y-6">
-        {showForm && (
-          <form
-            onSubmit={handleCreate}
-            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4"
-          >
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("url")} *
-              </label>
-              <input
-                type="url"
-                required
-                placeholder="https://example.com/webhook"
-                value={formUrl}
-                onChange={(e) => setFormUrl(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("events")} *
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {allEvents.map((event) => (
-                  <button
-                    key={event}
-                    type="button"
-                    onClick={() => toggleEvent(event)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                      formEvents.includes(event)
-                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                        : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                    }`}
-                  >
-                    {event}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {t("cancel")}
-              </button>
-              <button
-                type="submit"
-                disabled={saving || formEvents.length === 0}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {saving ? "..." : t("newWebhook")}
-              </button>
-            </div>
-          </form>
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
         )}
 
+        {/* Create Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
+              <div className="flex items-center justify-between p-6 pb-0">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {t("newWebhook")}
+                </h2>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="rounded-lg p-1 hover:bg-gray-100"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <CardContent className="pt-4">
+                <form onSubmit={handleCreate} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t("url")} *</Label>
+                    <Input
+                      type="url"
+                      required
+                      placeholder="https://example.com/webhook"
+                      value={formUrl}
+                      onChange={(e) => setFormUrl(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("events")} *</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_EVENTS.map((event) => (
+                        <button
+                          key={event}
+                          type="button"
+                          onClick={() => toggleEvent(event)}
+                          className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                            formEvents.includes(event)
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                              : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                          }`}
+                        >
+                          {event}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowForm(false)}
+                    >
+                      {tc("cancel")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={saving || formEvents.length === 0}
+                    >
+                      {saving ? "..." : t("newWebhook")}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Webhook list */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : hooks.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 p-12 text-center">
-            <p className="text-gray-500">{t("noWebhooks")}</p>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <p className="text-lg font-medium text-gray-900">
+                {t("noWebhooks")}
+              </p>
+              <Button className="mt-4" onClick={() => setShowForm(true)}>
+                <PlusIcon className="h-4 w-4" />
+                {t("newWebhook")}
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             {hooks.map((hook) => (
-              <div
-                key={hook.id}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-mono text-sm text-gray-900 truncate">
-                      {hook.url}
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {hook.events.map((ev) => (
-                        <span
-                          key={ev}
-                          className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
-                        >
-                          {ev}
-                        </span>
-                      ))}
-                    </div>
-                    {revealedSecret === hook.id && (
-                      <p className="mt-2 font-mono text-xs text-gray-400 break-all">
-                        {t("secret")}: {hook.secret}
+              <Card key={hook.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-mono text-sm text-gray-900 truncate">
+                        {hook.url}
                       </p>
-                    )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {hook.events.map((ev) => (
+                          <Badge
+                            key={ev}
+                            className="bg-gray-100 text-gray-600 text-xs"
+                          >
+                            {ev}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* Secret (masked by default) */}
+                      <div className="mt-2 flex items-center gap-2">
+                        <p className="font-mono text-xs text-gray-400 break-all">
+                          {t("secret")}:{" "}
+                          {revealedSecret === hook.id
+                            ? hook.secret
+                            : "••••••••••••••••"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setRevealedSecret(
+                              revealedSecret === hook.id ? null : hook.id,
+                            )
+                          }
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                          title={
+                            revealedSecret === hook.id
+                              ? t("hideSecret")
+                              : t("showSecret")
+                          }
+                        >
+                          {revealedSecret === hook.id ? (
+                            <EyeOffIcon className="h-3.5 w-3.5" />
+                          ) : (
+                            <EyeIcon className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copySecret(hook.secret, hook.id)}
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                          title={t("copySecret")}
+                        >
+                          <ClipboardIcon className="h-3.5 w-3.5" />
+                        </button>
+                        {copiedSecret === hook.id && (
+                          <span className="text-xs text-emerald-600">
+                            {t("secretCopied")}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Test result */}
+                      {testResult?.id === hook.id && (
+                        <p
+                          className={`mt-1 text-xs ${testResult.ok ? "text-emerald-600" : "text-red-600"}`}
+                        >
+                          {testResult.ok ? t("testSuccess") : t("testFailed")}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => testWebhook(hook)}
+                        disabled={testingHook === hook.id}
+                      >
+                        <PlayIcon className="h-3.5 w-3.5" />
+                        {testingHook === hook.id ? "..." : t("test")}
+                      </Button>
+                      <Button
+                        variant={hook.isActive ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleActive(hook)}
+                        className={
+                          hook.isActive
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : ""
+                        }
+                      >
+                        {hook.isActive ? t("active") : t("inactive")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-red-600"
+                        onClick={() => setDeleteTarget(hook.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() =>
-                        setRevealedSecret(
-                          revealedSecret === hook.id ? null : hook.id,
-                        )
-                      }
-                      className="text-xs text-gray-500 hover:text-gray-700"
-                    >
-                      {revealedSecret === hook.id ? "🙈" : "🔑"}
-                    </button>
-                    <button
-                      onClick={() => toggleActive(hook)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        hook.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {hook.isActive ? t("active") : t("inactive")}
-                    </button>
-                    <button
-                      onClick={() => deleteHook(hook.id)}
-                      className="text-sm text-red-500 hover:text-red-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

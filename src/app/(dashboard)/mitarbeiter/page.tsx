@@ -46,6 +46,7 @@ export default function MitarbeiterPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -68,8 +69,8 @@ export default function MitarbeiterPage() {
       const res = await fetch("/api/employees");
       const data = await res.json();
       setEmployees(data);
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
@@ -156,8 +157,8 @@ export default function MitarbeiterPage() {
       await fetch(`/api/employees/${deleteTarget}`, { method: "DELETE" });
       setDeleteTarget(null);
       fetchEmployees();
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setError(tc("errorOccurred"));
     }
   };
 
@@ -169,8 +170,8 @@ export default function MitarbeiterPage() {
         body: JSON.stringify({ ...emp, isActive: !emp.isActive }),
       });
       fetchEmployees();
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setError(tc("errorOccurred"));
     }
   };
 
@@ -195,6 +196,13 @@ export default function MitarbeiterPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
         {/* Search */}
         <div className="relative max-w-full sm:max-w-md">
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

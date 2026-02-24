@@ -109,6 +109,7 @@ export default function ZeiterfassungPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState("");
@@ -151,8 +152,8 @@ export default function ZeiterfassungPage() {
       const res = await fetch(`/api/time-entries?${params.toString()}`);
       const data = await res.json();
       setEntries(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching entries:", error);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
@@ -170,8 +171,8 @@ export default function ZeiterfassungPage() {
       ]);
       setEmployees(Array.isArray(empData) ? empData : []);
       setLocations(Array.isArray(locData) ? locData : []);
-    } catch (error) {
-      console.error("Error fetching master data:", error);
+    } catch {
+      // Non-critical master data — silently ignore
     }
   }, []);
 
@@ -280,10 +281,10 @@ export default function ZeiterfassungPage() {
         setActionComment("");
       } else {
         const data = await res.json();
-        alert(data.error || t("error"));
+        setLoadError(data.error || tc("errorOccurred"));
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   };
 
@@ -301,8 +302,8 @@ export default function ZeiterfassungPage() {
         fetchEntries();
         setSelectedEntry(null);
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     } finally {
       setDeleteTarget(null);
     }
@@ -376,6 +377,13 @@ export default function ZeiterfassungPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Load/action error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>

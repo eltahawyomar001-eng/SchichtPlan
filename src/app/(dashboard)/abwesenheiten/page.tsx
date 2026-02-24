@@ -90,6 +90,7 @@ export default function AbwesenheitenPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
 
   const [formData, setFormData] = useState({
@@ -120,19 +121,19 @@ export default function AbwesenheitenPage() {
       if (filterStatus !== "all") params.set("status", filterStatus);
       const res = await fetch(`/api/absences?${params}`);
       if (res.ok) setAbsences(await res.json());
-    } catch (err) {
-      console.error("Error loading:", err);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [filterStatus]);
+  }, [filterStatus, tc]);
 
   const fetchEmployees = useCallback(async () => {
     try {
       const res = await fetch("/api/employees");
       if (res.ok) setEmployees(await res.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      // Non-critical employee list — silently ignore
     }
   }, []);
 
@@ -166,9 +167,11 @@ export default function AbwesenheitenPage() {
       } else {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
+        const data = await res.json();
+        setLoadError(data.error || tc("errorOccurred"));
       }
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   }
 
@@ -185,8 +188,8 @@ export default function AbwesenheitenPage() {
         return next;
       });
       fetchAbsences();
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   }
 
@@ -227,6 +230,13 @@ export default function AbwesenheitenPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Load/action error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
           <Card>

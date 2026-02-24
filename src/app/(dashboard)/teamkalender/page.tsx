@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   format,
   startOfWeek,
@@ -25,7 +26,8 @@ interface ShiftEntry {
   date: string;
   startTime: string;
   endTime: string;
-  type: string;
+  status: string;
+  isNightShift?: boolean;
   employee?: {
     id: string;
     firstName: string;
@@ -41,18 +43,45 @@ interface EmployeeInfo {
   color: string | null;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  EARLY: "bg-emerald-200 text-emerald-800",
-  LATE: "bg-orange-200 text-orange-800",
-  NIGHT: "bg-emerald-200 text-emerald-800",
-  NORMAL: "bg-green-200 text-green-800",
-  URLAUB: "bg-yellow-200 text-yellow-800",
-  KRANK: "bg-red-200 text-red-800",
-  FREI: "bg-gray-200 text-gray-800",
+/**
+ * Derive a visual shift category from time-of-day.
+ * German scheduling industry standard:
+ *  - Frühschicht: start before 10:00
+ *  - Spätschicht: start 10:00–17:59
+ *  - Nachtschicht: start >= 18:00 OR flagged isNightShift
+ */
+function deriveShiftCategory(
+  shift: ShiftEntry,
+): "FRUEH" | "SPAET" | "NACHT" | "FREI" {
+  if (shift.isNightShift) return "NACHT";
+  if (shift.status === "CANCELLED") return "FREI";
+
+  const hour = parseInt(shift.startTime.split(":")[0], 10);
+  if (hour < 10) return "FRUEH";
+  if (hour < 18) return "SPAET";
+  return "NACHT";
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  FRUEH: "bg-blue-100 text-blue-800",
+  SPAET: "bg-orange-100 text-orange-800",
+  NACHT: "bg-purple-100 text-purple-800",
+  FREI: "bg-gray-100 text-gray-500",
+};
+
+const STATUS_BORDER: Record<string, string> = {
+  SCHEDULED: "border-l-2 border-l-gray-400",
+  CONFIRMED: "border-l-2 border-l-emerald-500",
+  IN_PROGRESS: "border-l-2 border-l-blue-500",
+  COMPLETED: "border-l-2 border-l-green-500",
+  CANCELLED: "border-l-2 border-l-red-400",
+  NO_SHOW: "border-l-2 border-l-red-600",
+  OPEN: "border-l-2 border-l-amber-400",
 };
 
 export default function TeamkalenderSeite() {
   const t = useTranslations("teamCalendar");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const dateFnsLocale = locale === "en" ? enUS : de;
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
@@ -60,8 +89,8 @@ export default function TeamkalenderSeite() {
   const [shifts, setShifts] = useState<ShiftEntry[]>([]);
   const [employees, setEmployees] = useState<EmployeeInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Date range based on view
   const dateRange = useMemo(() => {
     if (viewMode === "week") {
       return {
@@ -80,7 +109,6 @@ export default function TeamkalenderSeite() {
     [dateRange],
   );
 
-  // Pad for month view grid
   const padStart = useMemo(() => {
     if (viewMode !== "month") return 0;
     const d = getDay(dateRange.start);
@@ -94,6 +122,7 @@ export default function TeamkalenderSeite() {
 
   async function fetchData() {
     setLoading(true);
+    setError(null);
     try {
       const startStr = format(dateRange.start, "yyyy-MM-dd");
       const endStr = format(dateRange.end, "yyyy-MM-dd");
@@ -101,13 +130,15 @@ export default function TeamkalenderSeite() {
         fetch(`/api/shifts?start=${startStr}&end=${endStr}`),
         fetch("/api/employees"),
       ]);
-      if (sRes.ok) setShifts(await sRes.json());
-      if (eRes.ok) {
-        const d = await eRes.json();
-        setEmployees(Array.isArray(d) ? d : (d.employees ?? []));
+      if (!sRes.ok || !eRes.ok) {
+        setError(tc("errorLoading"));
+        return;
       }
+      setShifts(await sRes.json());
+      const d = await eRes.json();
+      setEmployees(Array.isArray(d) ? d : (d.employees ?? []));
     } catch {
-      // ignore
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
@@ -133,7 +164,7 @@ export default function TeamkalenderSeite() {
   }
 
   const DAY_HEADERS = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(2024, 0, 1 + i); // Mon 1 Jan 2024 = index 0
+    const d = new Date(2024, 0, 1 + i);
     return format(d, "EEE", { locale: dateFnsLocale });
   });
 
@@ -175,12 +206,34 @@ export default function TeamkalenderSeite() {
               <ChevronRightIcon className="h-5 w-5" />
             </button>
           </div>
+
+          {/* Legend */}
+          <div className="ml-auto hidden sm:flex items-center gap-3 text-xs text-gray-500">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-200" />
+              {t("early")}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-orange-200" />
+              {t("late")}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-purple-200" />
+              {t("night")}
+            </span>
+          </div>
         </div>
+
+        {/* Error state */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <div className="py-20 text-center text-gray-500">{t("loading")}</div>
         ) : viewMode === "week" ? (
-          /* WEEK VIEW — employee rows × day columns */
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
@@ -208,9 +261,7 @@ export default function TeamkalenderSeite() {
                       <div className="flex items-center gap-2">
                         <div
                           className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                          style={{
-                            backgroundColor: emp.color || "#10b981",
-                          }}
+                          style={{ backgroundColor: emp.color || "#10b981" }}
                         />
                         {emp.firstName} {emp.lastName}
                       </div>
@@ -222,14 +273,17 @@ export default function TeamkalenderSeite() {
                           key={d.toISOString()}
                           className="px-1 py-1 text-center align-top"
                         >
-                          {dayShifts.map((s) => (
-                            <div
-                              key={s.id}
-                              className={`mb-0.5 rounded px-1.5 py-0.5 text-xs font-medium ${TYPE_COLORS[s.type] ?? "bg-gray-100 text-gray-700"}`}
-                            >
-                              {s.startTime}–{s.endTime}
-                            </div>
-                          ))}
+                          {dayShifts.map((s) => {
+                            const cat = deriveShiftCategory(s);
+                            return (
+                              <div
+                                key={s.id}
+                                className={`mb-0.5 rounded px-1.5 py-0.5 text-xs font-medium ${CATEGORY_COLORS[cat]} ${STATUS_BORDER[s.status] ?? ""}`}
+                              >
+                                {s.startTime}–{s.endTime}
+                              </div>
+                            );
+                          })}
                         </td>
                       );
                     })}
@@ -249,13 +303,9 @@ export default function TeamkalenderSeite() {
             </table>
           </div>
         ) : (
-          /* MONTH VIEW — grid per employee row */
           <div className="space-y-4">
             {employees.map((emp) => (
-              <div
-                key={emp.id}
-                className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
-              >
+              <Card key={emp.id} className="overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
                   <div
                     className="h-3 w-3 rounded-full"
@@ -265,43 +315,48 @@ export default function TeamkalenderSeite() {
                     {emp.firstName} {emp.lastName}
                   </span>
                 </div>
-                <div className="grid grid-cols-7 text-center text-xs text-gray-500 border-b border-gray-100">
-                  {DAY_HEADERS.map((dh) => (
-                    <div key={dh} className="py-1">
-                      {dh}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7">
-                  {Array.from({ length: padStart }).map((_, i) => (
-                    <div
-                      key={`pad-${i}`}
-                      className="border-t border-r border-gray-100 min-h-[48px]"
-                    />
-                  ))}
-                  {days.map((d) => {
-                    const dayShifts = shiftsForEmployeeDay(emp.id, d);
-                    return (
-                      <div
-                        key={d.toISOString()}
-                        className="border-t border-r border-gray-100 p-1 min-h-[48px]"
-                      >
-                        <div className="text-xs text-gray-400 mb-0.5">
-                          {format(d, "d")}
-                        </div>
-                        {dayShifts.map((s) => (
-                          <div
-                            key={s.id}
-                            className={`rounded px-1 py-0.5 text-[10px] font-medium leading-tight mb-0.5 ${TYPE_COLORS[s.type] ?? "bg-gray-100 text-gray-700"}`}
-                          >
-                            {s.startTime}
-                          </div>
-                        ))}
+                <CardContent className="p-0">
+                  <div className="grid grid-cols-7 text-center text-xs text-gray-500 border-b border-gray-100">
+                    {DAY_HEADERS.map((dh) => (
+                      <div key={dh} className="py-1">
+                        {dh}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7">
+                    {Array.from({ length: padStart }).map((_, i) => (
+                      <div
+                        key={`pad-${i}`}
+                        className="border-t border-r border-gray-100 min-h-[48px]"
+                      />
+                    ))}
+                    {days.map((d) => {
+                      const dayShifts = shiftsForEmployeeDay(emp.id, d);
+                      return (
+                        <div
+                          key={d.toISOString()}
+                          className="border-t border-r border-gray-100 p-1 min-h-[48px]"
+                        >
+                          <div className="text-xs text-gray-400 mb-0.5">
+                            {format(d, "d")}
+                          </div>
+                          {dayShifts.map((s) => {
+                            const cat = deriveShiftCategory(s);
+                            return (
+                              <div
+                                key={s.id}
+                                className={`rounded px-1 py-0.5 text-[10px] font-medium leading-tight mb-0.5 ${CATEGORY_COLORS[cat]}`}
+                              >
+                                {s.startTime}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
             {employees.length === 0 && (
               <div className="py-12 text-center text-gray-500">

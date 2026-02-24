@@ -46,20 +46,22 @@ interface ReportData {
 
 const COLORS = [
   "#059669",
-  "#10b981",
   "#10B981",
+  "#3B82F6",
   "#F59E0B",
   "#EF4444",
   "#EC4899",
   "#06B6D4",
-  "#10b981",
+  "#8B5CF6",
 ];
 
 export default function BerichteSeite() {
   const t = useTranslations("reports");
+  const tc = useTranslations("common");
   const { handlePlanLimit } = usePlanLimit();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
   // Default: current month
@@ -82,12 +84,12 @@ export default function BerichteSeite() {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
       }
-    } catch (err) {
-      console.error("Error fetching report:", err);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, tc]);
 
   useEffect(() => {
     fetchReport();
@@ -114,8 +116,8 @@ export default function BerichteSeite() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
-    } catch (err) {
-      console.error("Export error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     } finally {
       setExporting(false);
     }
@@ -158,6 +160,13 @@ export default function BerichteSeite() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Date range filter + export */}
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm text-gray-600">{t("from")}</label>

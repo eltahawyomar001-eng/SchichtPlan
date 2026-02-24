@@ -3,95 +3,266 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { PlusIcon } from "@/components/icons";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  PlusIcon,
+  EditIcon,
+  TrashIcon,
+  XIcon,
+  UsersIcon,
+  SearchIcon,
+} from "@/components/icons";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
+
+interface Client {
+  id: string;
+  name: string;
+}
+
+interface ProjectMember {
+  id: string;
+  employee: { id: string; firstName: string; lastName: string };
+}
 
 interface Project {
   id: string;
   name: string;
+  description: string | null;
   status: string;
-  client?: { id: string; name: string } | null;
-  members: { id: string; employee: { firstName: string; lastName: string } }[];
+  client?: Client | null;
+  members: ProjectMember[];
   _count: { timeEntries: number };
   budgetMinutes?: number | null;
   costRate?: number | null;
   billRate?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  totalMinutesLogged?: number;
 }
+
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+const INITIAL_FORM = {
+  name: "",
+  description: "",
+  clientId: "",
+  costRate: "",
+  billRate: "",
+  budgetMinutes: "",
+  startDate: "",
+  endDate: "",
+  status: "AKTIV",
+};
 
 export default function ProjekteSeite() {
   const t = useTranslations("projects");
+  const tc = useTranslations("common");
+  const { handlePlanLimit } = usePlanLimit();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    clientId: "",
-    costRate: "",
-    billRate: "",
-    budgetMinutes: "",
-    startDate: "",
-    endDate: "",
-  });
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  // Member management
+  const [memberProject, setMemberProject] = useState<Project | null>(null);
+  const [memberEmployeeId, setMemberEmployeeId] = useState("");
 
-  const fetchProjects = useCallback(async () => {
+  const fetchData = useCallback(async () => {
+    setError(null);
     try {
-      const res = await fetch("/api/projects");
-      if (res.ok) setProjects(await res.json());
+      const [pRes, cRes, eRes] = await Promise.all([
+        fetch("/api/projects"),
+        fetch("/api/clients"),
+        fetch("/api/employees"),
+      ]);
+      if (pRes.ok) setProjects(await pRes.json());
+      else setError(tc("errorLoading"));
+      if (cRes.ok) setClients(await cRes.json());
+      if (eRes.ok) {
+        const d = await eRes.json();
+        setEmployees(Array.isArray(d) ? d : (d.employees ?? []));
+      }
     } catch {
-      // ignore
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    fetchData();
+  }, [fetchData]);
 
-  async function handleCreate(e: React.FormEvent) {
+  function openCreateForm() {
+    setEditingProject(null);
+    setFormData(INITIAL_FORM);
+    setFormError(null);
+    setShowForm(true);
+  }
+
+  function openEditForm(project: Project) {
+    setEditingProject(project);
+    setFormData({
+      name: project.name,
+      description: project.description || "",
+      clientId: project.client?.id || "",
+      costRate: project.costRate?.toString() || "",
+      billRate: project.billRate?.toString() || "",
+      budgetMinutes: project.budgetMinutes?.toString() || "",
+      startDate: project.startDate ? project.startDate.split("T")[0] : "",
+      endDate: project.endDate ? project.endDate.split("T")[0] : "",
+      status: project.status,
+    });
+    setFormError(null);
+    setShowForm(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setFormError(null);
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
+      const url = editingProject
+        ? `/api/projects/${editingProject.id}`
+        : "/api/projects";
+      const method = editingProject ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          costRate: formData.costRate ? parseFloat(formData.costRate) : null,
+          billRate: formData.billRate ? parseFloat(formData.billRate) : null,
+          budgetMinutes: formData.budgetMinutes
+            ? parseInt(formData.budgetMinutes)
+            : null,
+        }),
       });
       if (res.ok) {
         setShowForm(false);
-        setFormData({
-          name: "",
-          description: "",
-          clientId: "",
-          costRate: "",
-          billRate: "",
-          budgetMinutes: "",
-          startDate: "",
-          endDate: "",
-        });
-        fetchProjects();
+        setEditingProject(null);
+        setFormData(INITIAL_FORM);
+        fetchData();
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (isPlanLimit) return;
+        const data = await res.json();
+        setFormError(data.error || tc("errorOccurred"));
       }
     } catch {
-      // ignore
+      setFormError(tc("errorOccurred"));
     } finally {
       setSaving(false);
     }
   }
 
-  const statusColor: Record<string, string> = {
-    AKTIV: "bg-green-100 text-green-800",
-    PAUSIERT: "bg-yellow-100 text-yellow-800",
-    ABGESCHLOSSEN: "bg-emerald-100 text-emerald-800",
-    ARCHIVIERT: "bg-gray-100 text-gray-800",
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`/api/projects/${deleteTarget}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      fetchData();
+    } catch {
+      setError(tc("errorOccurred"));
+    }
+  }
+
+  async function addMember() {
+    if (!memberProject || !memberEmployeeId) return;
+    try {
+      const res = await fetch(`/api/projects/${memberProject.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId: memberEmployeeId }),
+      });
+      if (res.ok) {
+        setMemberEmployeeId("");
+        fetchData();
+        // Refresh the memberProject from updated list
+        const updated = await res.json();
+        if (updated) {
+          const refreshed = await fetch(`/api/projects`);
+          if (refreshed.ok) {
+            const all = await refreshed.json();
+            setProjects(all);
+            setMemberProject(
+              all.find((p: Project) => p.id === memberProject.id) || null,
+            );
+          }
+        }
+      }
+    } catch {
+      setError(tc("errorOccurred"));
+    }
+  }
+
+  async function removeMember(memberId: string) {
+    if (!memberProject) return;
+    try {
+      await fetch(`/api/projects/${memberProject.id}/members/${memberId}`, {
+        method: "DELETE",
+      });
+      fetchData();
+      const refreshed = await fetch("/api/projects");
+      if (refreshed.ok) {
+        const all = await refreshed.json();
+        setProjects(all);
+        setMemberProject(
+          all.find((p: Project) => p.id === memberProject.id) || null,
+        );
+      }
+    } catch {
+      setError(tc("errorOccurred"));
+    }
+  }
+
+  const statusConfig: Record<string, { color: string; label: string }> = {
+    AKTIV: { color: "bg-green-100 text-green-800", label: t("active") },
+    PAUSIERT: { color: "bg-yellow-100 text-yellow-800", label: t("paused") },
+    ABGESCHLOSSEN: {
+      color: "bg-emerald-100 text-emerald-800",
+      label: t("completed"),
+    },
+    ARCHIVIERT: { color: "bg-gray-100 text-gray-800", label: t("archived") },
   };
 
-  const statusLabel: Record<string, string> = {
-    AKTIV: t("active"),
-    PAUSIERT: t("paused"),
-    ABGESCHLOSSEN: t("completed"),
-    ARCHIVIERT: t("archived"),
-  };
+  const filteredProjects = projects.filter((p) =>
+    `${p.name} ${p.client?.name || ""} ${p.description || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+
+  function formatBudgetProgress(project: Project): {
+    percent: number;
+    label: string;
+  } {
+    if (!project.budgetMinutes) return { percent: 0, label: "" };
+    const logged = project.totalMinutesLogged || 0;
+    const percent = Math.min(100, (logged / project.budgetMinutes) * 100);
+    const loggedH = Math.floor(logged / 60);
+    const budgetH = Math.floor(project.budgetMinutes / 60);
+    return {
+      percent,
+      label: `${loggedH}h / ${budgetH}h`,
+    };
+  }
 
   return (
     <div>
@@ -99,182 +270,425 @@ export default function ProjekteSeite() {
         title={t("title")}
         description={t("description")}
         actions={
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-          >
+          <Button size="sm" onClick={openCreateForm}>
             <PlusIcon className="h-4 w-4" />
-            {t("newProject")}
-          </button>
+            <span className="hidden sm:inline">{t("newProject")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
+          </Button>
         }
       />
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Create form */}
-        {showForm && (
-          <form
-            onSubmit={handleCreate}
-            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4"
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("name")} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("costRate")}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.costRate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, costRate: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("billRate")}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.billRate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, billRate: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("budgetMinutes")}
-                </label>
-                <input
-                  type="number"
-                  value={formData.budgetMinutes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, budgetMinutes: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("startDate")}
-                </label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("endDate")}
-                </label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endDate: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {t("cancel")}
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {saving ? "..." : t("newProject")}
-              </button>
-            </div>
-          </form>
+        {/* Search */}
+        {projects.length > 0 && (
+          <div className="relative max-w-full sm:max-w-md">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder={tc("search")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         )}
 
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
+        {/* Create/Edit Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>
+                  {editingProject ? t("editProject") : t("newProject")}
+                </CardTitle>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="rounded-lg p-1 hover:bg-gray-100"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t("name")} *</Label>
+                    <Input
+                      required
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, name: e.target.value }))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("description")}</Label>
+                    <Input
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          description: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("client")}</Label>
+                      <Select
+                        value={formData.clientId}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            clientId: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">— {t("noClient")} —</option>
+                        {clients.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    {editingProject && (
+                      <div className="space-y-2">
+                        <Label>{t("status")}</Label>
+                        <Select
+                          value={formData.status}
+                          onChange={(e) =>
+                            setFormData((p) => ({
+                              ...p,
+                              status: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="AKTIV">{t("active")}</option>
+                          <option value="PAUSIERT">{t("paused")}</option>
+                          <option value="ABGESCHLOSSEN">
+                            {t("completed")}
+                          </option>
+                          <option value="ARCHIVIERT">{t("archived")}</option>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("costRate")}</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formData.costRate}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            costRate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("billRate")}</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formData.billRate}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            billRate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("budgetHours")}</Label>
+                    <Input
+                      type="number"
+                      value={
+                        formData.budgetMinutes
+                          ? String(
+                              Math.round(parseInt(formData.budgetMinutes) / 60),
+                            )
+                          : ""
+                      }
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          budgetMinutes: e.target.value
+                            ? String(parseInt(e.target.value) * 60)
+                            : "",
+                        }))
+                      }
+                      placeholder="z. B. 100"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("startDate")}</Label>
+                      <Input
+                        type="date"
+                        value={formData.startDate}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            startDate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("endDate")}</Label>
+                      <Input
+                        type="date"
+                        value={formData.endDate}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            endDate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {formError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                      {formError}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowForm(false)}
+                    >
+                      {tc("cancel")}
+                    </Button>
+                    <Button type="submit" disabled={saving}>
+                      {saving
+                        ? "..."
+                        : editingProject
+                          ? tc("save")
+                          : t("newProject")}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Member Management Modal */}
+        {memberProject && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>
+                  {t("members")} — {memberProject.name}
+                </CardTitle>
+                <button
+                  onClick={() => setMemberProject(null)}
+                  className="rounded-lg p-1 hover:bg-gray-100"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Add member */}
+                <div className="flex gap-2">
+                  <Select
+                    value={memberEmployeeId}
+                    onChange={(e) => setMemberEmployeeId(e.target.value)}
+                    className="flex-1"
+                  >
+                    <option value="">{tc("selectPlaceholder")}</option>
+                    {employees
+                      .filter(
+                        (emp) =>
+                          !memberProject.members.some(
+                            (m) => m.employee.id === emp.id,
+                          ),
+                      )
+                      .map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.firstName} {emp.lastName}
+                        </option>
+                      ))}
+                  </Select>
+                  <Button
+                    onClick={addMember}
+                    disabled={!memberEmployeeId}
+                    size="sm"
+                  >
+                    {tc("add")}
+                  </Button>
+                </div>
+
+                {/* Current members */}
+                {memberProject.members.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    {t("noMembers")}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-gray-100">
+                    {memberProject.members.map((m) => (
+                      <li
+                        key={m.id}
+                        className="flex items-center justify-between py-2"
+                      >
+                        <span className="text-sm text-gray-900">
+                          {m.employee.firstName} {m.employee.lastName}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-gray-400 hover:text-red-600"
+                          onClick={() => removeMember(m.id)}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Project list */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
-        ) : projects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 p-12 text-center">
-            <p className="text-gray-500">{t("noProjects")}</p>
-          </div>
+        ) : filteredProjects.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <p className="text-lg font-medium text-gray-900">
+                {search ? tc("noResults") : t("noProjects")}
+              </p>
+              {!search && (
+                <Button className="mt-4" onClick={openCreateForm}>
+                  <PlusIcon className="h-4 w-4" />
+                  {t("newProject")}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">
-                    {project.name}
-                  </h3>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[project.status] || "bg-gray-100 text-gray-800"}`}
-                  >
-                    {statusLabel[project.status] || project.status}
-                  </span>
-                </div>
-                {project.client && (
-                  <p className="text-sm text-gray-500 mb-2">
-                    {t("client")}: {project.client.name}
-                  </p>
-                )}
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>
-                    {t("members")}: {project.members.length}
-                  </span>
-                  <span>
-                    {t("timeSpent")}: {project._count.timeEntries}
-                  </span>
-                </div>
-                {project.budgetMinutes && (
-                  <div className="mt-3">
-                    <div className="text-xs text-gray-400 mb-1">
-                      {t("budget")}
+            {filteredProjects.map((project) => {
+              const sc = statusConfig[project.status] || {
+                color: "bg-gray-100 text-gray-800",
+                label: project.status,
+              };
+              const budget = formatBudgetProgress(project);
+
+              return (
+                <Card
+                  key={project.id}
+                  className="hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900 truncate pr-2">
+                        {project.name}
+                      </h3>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Badge className={sc.color}>{sc.label}</Badge>
+                      </div>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div
-                        className="h-2 rounded-full bg-emerald-500"
-                        style={{
-                          width: `${Math.min(100, (project._count.timeEntries / project.budgetMinutes) * 100)}%`,
-                        }}
-                      />
+
+                    {project.description && (
+                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                        {project.description}
+                      </p>
+                    )}
+
+                    {project.client && (
+                      <p className="text-sm text-gray-500 mb-2">
+                        {t("client")}: {project.client.name}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                      <span>
+                        {t("members")}: {project.members.length}
+                      </span>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+
+                    {budget.label && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                          <span>{t("budget")}</span>
+                          <span>{budget.label}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div
+                            className={`h-2 rounded-full ${budget.percent > 90 ? "bg-red-500" : "bg-emerald-500"}`}
+                            style={{ width: `${budget.percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditForm(project)}
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMemberProject(project)}
+                      >
+                        <UsersIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-red-600"
+                        onClick={() => setDeleteTarget(project.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

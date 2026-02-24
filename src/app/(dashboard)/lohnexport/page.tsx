@@ -47,6 +47,7 @@ export default function LohnexportPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [preview, setPreview] = useState<ExportSummary[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [previewLoaded, setPreviewLoaded] = useState(false);
 
   // Default to previous month
@@ -66,8 +67,8 @@ export default function LohnexportPage() {
     try {
       const res = await fetch("/api/employees");
       if (res.ok) setEmployees(await res.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      // Non-critical — filter dropdown
     }
   }, []);
 
@@ -96,8 +97,8 @@ export default function LohnexportPage() {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
       }
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     } finally {
       setLoading(false);
     }
@@ -138,6 +139,13 @@ export default function LohnexportPage() {
       <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Configuration */}
         <Card>
           <CardHeader>

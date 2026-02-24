@@ -86,6 +86,7 @@ export default function SchichtplanPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [filterLocationId, setFilterLocationId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -152,12 +153,12 @@ export default function SchichtplanPage() {
       setShifts(shiftsData);
       setEmployees(employeesData);
       setLocations(locationsData);
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [currentWeek, viewMode]);
+  }, [currentWeek, viewMode, tc]);
 
   useEffect(() => {
     fetchData();
@@ -248,8 +249,8 @@ export default function SchichtplanPage() {
       await fetch(`/api/shifts/${deleteTarget}`, { method: "DELETE" });
       setDeleteTarget(null);
       fetchData();
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   };
 
@@ -330,6 +331,13 @@ export default function SchichtplanPage() {
       <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Load error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Navigation + View Toggle + Location Filter */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-4">

@@ -42,8 +42,8 @@ export default function UrlaubskontoSeite() {
     try {
       const res = await fetch(`/api/vacation-balances?year=${year}`);
       if (res.ok) setBalances(await res.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      // fetchBalances silently fails — save errors handled inline
     } finally {
       setLoading(false);
     }

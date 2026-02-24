@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PlusIcon } from "@/components/icons";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -105,11 +106,14 @@ const TRIGGER_FIELDS: Record<string, string[]> = {
 // ─── Page Component ─────────────────────────────────────────────
 export default function AutomatisierungSeite() {
   const t = useTranslations("automationRules");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -123,11 +127,11 @@ export default function AutomatisierungSeite() {
       const res = await fetch("/api/automation-rules");
       if (res.ok) setRules(await res.json());
     } catch {
-      // ignore
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     fetchRules();
@@ -160,9 +164,12 @@ export default function AutomatisierungSeite() {
         setShowForm(false);
         resetForm();
         fetchRules();
+      } else {
+        const data = await res.json();
+        setLoadError(data.error || tc("errorOccurred"));
       }
     } catch {
-      // ignore
+      setLoadError(tc("errorOccurred"));
     } finally {
       setSaving(false);
     }
@@ -177,10 +184,18 @@ export default function AutomatisierungSeite() {
     fetchRules();
   }
 
-  async function deleteRule(id: string) {
-    if (!confirm(t("deleteConfirm"))) return;
-    await fetch(`/api/automation-rules/${id}`, { method: "DELETE" });
-    fetchRules();
+  async function deleteRule() {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`/api/automation-rules/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      setDeleteTarget(null);
+      fetchRules();
+    } catch {
+      setLoadError(tc("errorOccurred"));
+      setDeleteTarget(null);
+    }
   }
 
   // ── Condition helpers ──
@@ -260,6 +275,13 @@ export default function AutomatisierungSeite() {
         }
       />
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* ── Create Form ── */}
         {showForm && (
           <form
@@ -625,7 +647,7 @@ export default function AutomatisierungSeite() {
                       {rule.isActive ? t("active") : t("inactive")}
                     </button>
                     <button
-                      onClick={() => deleteRule(rule.id)}
+                      onClick={() => setDeleteTarget(rule.id)}
                       className="rounded-md p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       aria-label={t("remove")}
                     >
@@ -650,6 +672,17 @@ export default function AutomatisierungSeite() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={deleteRule}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

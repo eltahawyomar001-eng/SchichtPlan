@@ -1205,7 +1205,9 @@
     "holidaysCount": "holidays",
     "national": "National",
     "regional": "Regional",
-    "noData": "No holiday data available."
+    "noData": "No holiday data available.",
+    "year": "Year",
+    "state": "Federal State"
   },
   "reports": {
     "title": "Reports",
@@ -1243,7 +1245,10 @@
     "cancel": "Cancel",
     "confirmDelete": "Are you sure you want to delete this department?",
     "empty": "No departments yet.",
-    "employees": "Employees"
+    "employees": "Employees",
+    "edit": "Edit Department",
+    "deleteConfirmTitle": "Delete Department",
+    "deleteConfirmMessage": "Are you sure you want to delete this department?"
   },
   "skills": {
     "title": "Skills",
@@ -1258,7 +1263,10 @@
     "confirmDelete": "Are you sure you want to delete this skill?",
     "empty": "No skills yet.",
     "assigned": "assigned",
-    "general": "General"
+    "general": "General",
+    "editSkill": "Edit Skill",
+    "deleteConfirmTitle": "Delete Skill",
+    "deleteConfirmMessage": "Are you sure you want to delete this skill?"
   },
   "shiftTemplates": {
     "title": "Shift Templates",
@@ -1275,7 +1283,10 @@
     "create": "Create",
     "cancel": "Cancel",
     "confirmDelete": "Are you sure you want to delete this template?",
-    "empty": "No shift templates yet."
+    "empty": "No shift templates yet.",
+    "editTemplate": "Edit Template",
+    "deleteConfirmTitle": "Delete Template",
+    "deleteConfirmMessage": "Are you sure you want to delete this shift template?"
   },
   "vacationBalance": {
     "title": "Vacation Balance",
@@ -1373,7 +1384,13 @@
     "budgetMinutes": "Budget (minutes)",
     "startDate": "Start date",
     "endDate": "End date",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "editProject": "Edit Project",
+    "noClient": "No Client",
+    "save": "Save",
+    "create": "Create",
+    "deleteConfirmTitle": "Delete Project",
+    "deleteConfirmMessage": "Are you sure you want to delete this project?"
   },
   "monthClose": {
     "title": "Month Close",
@@ -1453,7 +1470,9 @@
     "conditionsCount": "{count, plural, =0 {No conditions} one {1 condition} other {# conditions}}",
     "actionsCount": "{count, plural, =0 {No actions} one {1 action} other {# actions}}",
     "deleteConfirm": "Really delete this rule?",
-    "remove": "Remove"
+    "remove": "Remove",
+    "deleteConfirmTitle": "Delete Rule",
+    "deleteConfirmMessage": "Are you sure you want to delete this automation rule?"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -1465,7 +1484,16 @@
     "active": "Active",
     "inactive": "Inactive",
     "noWebhooks": "No webhooks configured.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "deleteConfirmTitle": "Delete Webhook",
+    "deleteConfirmMessage": "Are you sure you want to delete this webhook?",
+    "test": "Test",
+    "testSuccess": "Test successful",
+    "testFailed": "Test failed",
+    "showSecret": "Show secret",
+    "hideSecret": "Hide secret",
+    "copySecret": "Copy secret",
+    "secretCopied": "Copied!"
   },
   "teamCalendar": {
     "title": "Team Calendar",

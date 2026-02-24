@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface MonthCloseRecord {
   id: string;
@@ -16,24 +21,28 @@ interface MonthCloseRecord {
 
 export default function MonatsabschlussSeite() {
   const t = useTranslations("monthClose");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const [records, setRecords] = useState<MonthCloseRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
 
   const fetchRecords = useCallback(async () => {
+    setError(null);
     try {
       const res = await fetch(`/api/month-close?year=${year}`);
       if (res.ok) setRecords(await res.json());
+      else setError(tc("errorLoading"));
     } catch {
-      // ignore
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [year]);
+  }, [year, tc]);
 
   useEffect(() => {
     fetchRecords();
@@ -46,14 +55,18 @@ export default function MonatsabschlussSeite() {
     const key = `${monthNum}-${action}`;
     setActing(key);
     try {
-      await fetch("/api/month-close", {
+      const res = await fetch("/api/month-close", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ year, month: monthNum, action }),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || tc("errorOccurred"));
+      }
       fetchRecords();
     } catch {
-      // ignore
+      setError(tc("errorOccurred"));
     } finally {
       setActing(null);
     }
@@ -75,11 +88,13 @@ export default function MonatsabschlussSeite() {
     "december",
   ] as const;
 
-  const statusBadge: Record<string, string> = {
-    OPEN: "bg-gray-100 text-gray-700",
-    LOCKED: "bg-yellow-100 text-yellow-800",
-    EXPORTED: "bg-green-100 text-green-800",
+  const statusConfig: Record<string, { color: string; label: string }> = {
+    OPEN: { color: "bg-gray-100 text-gray-700", label: t("open") },
+    LOCKED: { color: "bg-yellow-100 text-yellow-800", label: t("locked") },
+    EXPORTED: { color: "bg-green-100 text-green-800", label: t("exported") },
   };
+
+  const currentYear = now.getFullYear();
 
   return (
     <div>
@@ -87,21 +102,26 @@ export default function MonatsabschlussSeite() {
       <div className="p-4 sm:p-6 space-y-6">
         {/* Year selector */}
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700">
-            {t("year")}:
-          </label>
-          <select
-            value={year}
+          <Label>{t("year")}:</Label>
+          <Select
+            value={String(year)}
             onChange={(e) => setYear(parseInt(e.target.value))}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="w-28"
           >
-            {[year - 1, year, year + 1].map((y) => (
+            {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -112,64 +132,63 @@ export default function MonatsabschlussSeite() {
             {months.map((m) => {
               const record = records.find((r) => r.month === m);
               const status = record?.status || "OPEN";
+              const sc = statusConfig[status];
 
               return (
-                <div
-                  key={m}
-                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">
-                      {t(monthKeys[m - 1])}
-                    </h3>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge[status]}`}
-                    >
-                      {t(
-                        status.toLowerCase() as "open" | "locked" | "exported",
-                      )}
-                    </span>
-                  </div>
+                <Card key={m} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">
+                        {t(monthKeys[m - 1])}
+                      </h3>
+                      <Badge className={sc.color}>{sc.label}</Badge>
+                    </div>
 
-                  <div className="flex gap-2">
-                    {status === "OPEN" && (
-                      <button
-                        onClick={() => handleAction(m, "lock")}
-                        disabled={acting === `${m}-lock`}
-                        className="flex-1 rounded-lg bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-800 hover:bg-yellow-100 disabled:opacity-50"
-                      >
-                        {t("lock")}
-                      </button>
-                    )}
-                    {status === "LOCKED" && (
-                      <>
-                        <button
-                          onClick={() => handleAction(m, "unlock")}
-                          disabled={acting === `${m}-unlock`}
-                          className="flex-1 rounded-lg bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                    <div className="flex gap-2">
+                      {status === "OPEN" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleAction(m, "lock")}
+                          disabled={acting === `${m}-lock`}
                         >
-                          {t("unlock")}
-                        </button>
-                        <button
-                          onClick={() => handleAction(m, "export")}
-                          disabled={acting === `${m}-export`}
-                          className="flex-1 rounded-lg bg-green-50 px-3 py-1.5 text-sm font-medium text-green-800 hover:bg-green-100 disabled:opacity-50"
-                        >
-                          {t("export")}
-                        </button>
-                      </>
-                    )}
-                    {status === "EXPORTED" && (
-                      <p className="text-xs text-gray-400">
-                        {record?.exportedAt
-                          ? new Date(record.exportedAt).toLocaleDateString(
-                              locale === "en" ? "en-GB" : "de-DE",
-                            )
-                          : "—"}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                          {t("lock")}
+                        </Button>
+                      )}
+                      {status === "LOCKED" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleAction(m, "unlock")}
+                            disabled={acting === `${m}-unlock`}
+                          >
+                            {t("unlock")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleAction(m, "export")}
+                            disabled={acting === `${m}-export`}
+                          >
+                            {t("export")}
+                          </Button>
+                        </>
+                      )}
+                      {status === "EXPORTED" && (
+                        <p className="text-xs text-gray-400">
+                          {record?.exportedAt
+                            ? new Date(record.exportedAt).toLocaleDateString(
+                                locale === "en" ? "en-GB" : "de-DE",
+                              )
+                            : "—"}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>

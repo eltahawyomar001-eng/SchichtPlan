@@ -66,6 +66,7 @@ export default function VerfuegbarkeitenPage() {
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const defaultEntries = (): WeekdayEntry[] =>
     WEEKDAY_KEYS.map((i) => ({
@@ -92,12 +93,12 @@ export default function VerfuegbarkeitenPage() {
       ]);
       if (avRes.ok) setAvailabilities(await avRes.json());
       if (empRes.ok) setEmployees(await empRes.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [selectedEmployee]);
+  }, [selectedEmployee, tc]);
 
   useEffect(() => {
     fetchData();
@@ -138,8 +139,8 @@ export default function VerfuegbarkeitenPage() {
         setFormEmployee("");
         fetchData();
       }
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   }
 
@@ -183,6 +184,13 @@ export default function VerfuegbarkeitenPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Employee filter (management only) */}
         {canManage && (
           <div className="max-w-xs">

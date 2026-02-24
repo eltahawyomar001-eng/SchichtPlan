@@ -63,6 +63,7 @@ export default function ZeitkontenPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -81,12 +82,12 @@ export default function ZeitkontenPage() {
       ]);
       if (accRes.ok) setAccounts(await accRes.json());
       if (empRes.ok) setEmployees(await empRes.json());
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     fetchData();
@@ -117,8 +118,8 @@ export default function ZeitkontenPage() {
         });
         fetchData();
       }
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setLoadError(tc("errorOccurred"));
     }
   }
 
@@ -148,6 +149,13 @@ export default function ZeitkontenPage() {
       />
 
       <div className="p-4 sm:p-6 space-y-6">
+        {/* Load/action error */}
+        {loadError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {loadError}
+          </div>
+        )}
+
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
           <Card>

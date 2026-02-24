@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { BUNDESLAENDER } from "@/lib/holidays";
 
 interface Holiday {
@@ -20,18 +24,19 @@ interface HolidayResponse {
 
 export default function FeiertageSeite() {
   const t = useTranslations("holidays");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const [data, setData] = useState<HolidayResponse | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [bundesland, setBundesland] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchHolidays = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const params = new URLSearchParams({
-        year: String(year),
-      });
+      const params = new URLSearchParams({ year: String(year) });
       if (bundesland) params.set("bundesland", bundesland);
       const res = await fetch(`/api/holidays?${params.toString()}`);
       if (res.ok) {
@@ -40,13 +45,15 @@ export default function FeiertageSeite() {
         if (!bundesland && json.bundesland) {
           setBundesland(json.bundesland);
         }
+      } else {
+        setError(tc("errorLoading"));
       }
-    } catch (err) {
-      console.error("Error fetching holidays:", err);
+    } catch {
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [year, bundesland]);
+  }, [year, bundesland, tc]);
 
   useEffect(() => {
     fetchHolidays();
@@ -60,31 +67,43 @@ export default function FeiertageSeite() {
       <Topbar title={t("title")} description={t("description")} />
       <div className="p-4 sm:p-6 space-y-6">
         {/* Filters */}
-        <div className="flex flex-wrap gap-3">
-          <select
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={bundesland}
-            onChange={(e) => setBundesland(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            {Object.entries(BUNDESLAENDER).map(([code, name]) => (
-              <option key={code} value={code}>
-                {name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="space-y-1">
+            <Label>{t("year")}</Label>
+            <Select
+              value={String(year)}
+              onChange={(e) => setYear(parseInt(e.target.value, 10))}
+              className="w-28"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>{t("state")}</Label>
+            <Select
+              value={bundesland}
+              onChange={(e) => setBundesland(e.target.value)}
+              className="w-52"
+            >
+              {Object.entries(BUNDESLAENDER).map(([code, name]) => (
+                <option key={code} value={code}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
 
         {/* Holiday list */}
         {loading ? (
@@ -92,61 +111,63 @@ export default function FeiertageSeite() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : data ? (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <Card>
             <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
               <p className="text-sm font-medium text-gray-700">
                 {data.bundeslandName} — {data.year} ({data.holidays.length}{" "}
                 {t("holidaysCount")})
               </p>
             </div>
-            <ul className="divide-y divide-gray-100">
-              {data.holidays.map((holiday, idx) => {
-                const d = new Date(holiday.date + "T00:00:00");
-                const weekday = d.toLocaleDateString(
-                  locale === "en" ? "en-GB" : "de-DE",
-                  {
-                    weekday: "long",
-                  },
-                );
-                const dateFormatted = d.toLocaleDateString(
-                  locale === "en" ? "en-GB" : "de-DE",
-                  {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  },
-                );
-                const isPast = d < new Date();
+            <CardContent className="p-0">
+              <ul className="divide-y divide-gray-100">
+                {data.holidays.map((holiday, idx) => {
+                  const d = new Date(holiday.date + "T00:00:00");
+                  const weekday = d.toLocaleDateString(
+                    locale === "en" ? "en-GB" : "de-DE",
+                    { weekday: "long" },
+                  );
+                  const dateFormatted = d.toLocaleDateString(
+                    locale === "en" ? "en-GB" : "de-DE",
+                    { day: "2-digit", month: "2-digit", year: "numeric" },
+                  );
+                  const isPast = d < new Date();
 
-                return (
-                  <li
-                    key={idx}
-                    className={`flex items-center justify-between px-6 py-3 ${isPast ? "opacity-50" : ""}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`h-2 w-2 rounded-full ${holiday.isNational ? "bg-red-500" : "bg-amber-500"}`}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {holiday.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {holiday.isNational ? t("national") : t("regional")}
-                        </p>
+                  return (
+                    <li
+                      key={idx}
+                      className={`flex items-center justify-between px-6 py-3 ${isPast ? "opacity-50" : ""}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`h-2 w-2 rounded-full ${holiday.isNational ? "bg-red-500" : "bg-amber-500"}`}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {holiday.name}
+                          </p>
+                          <Badge
+                            className={`text-xs ${holiday.isNational ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}
+                          >
+                            {holiday.isNational ? t("national") : t("regional")}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-900">{dateFormatted}</p>
-                      <p className="text-xs text-gray-500">{weekday}</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-900">{dateFormatted}</p>
+                        <p className="text-xs text-gray-500">{weekday}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
         ) : (
-          <p className="text-sm text-gray-500">{t("noData")}</p>
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <p className="text-sm text-gray-500">{t("noData")}</p>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

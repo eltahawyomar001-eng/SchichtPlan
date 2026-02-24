@@ -3,7 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { PlusIcon, TrashIcon } from "@/components/icons";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  PlusIcon,
+  TrashIcon,
+  EditIcon,
+  XIcon,
+  SearchIcon,
+} from "@/components/icons";
 
 interface Skill {
   id: string;
@@ -12,69 +24,105 @@ interface Skill {
   _count: { employeeSkills: number };
 }
 
+const INITIAL_FORM = { name: "", category: "" };
+
 export default function QualifikationenSeite() {
   const t = useTranslations("skills");
+  const tc = useTranslations("common");
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-  });
-  const [error, setError] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchSkills = useCallback(async () => {
-    setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/skills");
       if (res.ok) setSkills(await res.json());
-    } catch (err) {
-      console.error("Error:", err);
+      else setError(tc("errorLoading"));
+    } catch {
+      setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     fetchSkills();
   }, [fetchSkills]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  function openCreate() {
+    setEditId(null);
+    setForm(INITIAL_FORM);
+    setFormError(null);
+    setShowForm(true);
+  }
+
+  function openEdit(skill: Skill) {
+    setEditId(skill.id);
+    setForm({ name: skill.name, category: skill.category || "" });
+    setFormError(null);
+    setShowForm(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setFormError(null);
     try {
-      const res = await fetch("/api/skills", {
-        method: "POST",
+      const url = editId ? `/api/skills/${editId}` : "/api/skills";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       if (res.ok) {
         setShowForm(false);
-        setForm({ name: "", category: "" });
+        setEditId(null);
+        setForm(INITIAL_FORM);
         fetchSkills();
       } else {
         const data = await res.json();
-        setError(data.error || "Error");
+        setFormError(data.error || tc("errorOccurred"));
       }
-    } catch (err) {
-      console.error("Error:", err);
+    } catch {
+      setFormError(tc("errorOccurred"));
     }
-  };
+  }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return;
+  async function handleDelete() {
+    if (!deleteTarget) return;
     try {
-      const res = await fetch(`/api/skills/${id}`, {
+      const res = await fetch(`/api/skills/${deleteTarget}`, {
         method: "DELETE",
       });
-      if (res.ok) fetchSkills();
-    } catch (err) {
-      console.error("Error:", err);
+      if (res.ok) {
+        setDeleteTarget(null);
+        fetchSkills();
+      } else {
+        const data = await res.json();
+        setError(data.error || tc("errorOccurred"));
+        setDeleteTarget(null);
+      }
+    } catch {
+      setError(tc("errorOccurred"));
+      setDeleteTarget(null);
     }
-  };
+  }
 
   // Group by category
-  const grouped = skills.reduce(
+  const filtered = skills.filter((s) =>
+    `${s.name} ${s.category || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+
+  const grouped = filtered.reduce(
     (acc, skill) => {
       const cat = skill.category || t("general");
       if (!acc[cat]) acc[cat] = [];
@@ -90,90 +138,117 @@ export default function QualifikationenSeite() {
         title={t("title")}
         description={t("description")}
         actions={
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-          >
+          <Button size="sm" onClick={openCreate}>
             <PlusIcon className="h-4 w-4" />
-            {t("add")}
-          </button>
+            <span className="hidden sm:inline">{t("add")}</span>
+            <span className="sm:hidden">{tc("new")}</span>
+          </Button>
         }
       />
       <div className="p-4 sm:p-6 space-y-6">
-        {/* Form */}
-        {showForm && (
-          <form
-            onSubmit={handleSubmit}
-            className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-          >
-            {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  {t("name")}
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder={t("namePlaceholder")}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  {t("category")}
-                </label>
-                <input
-                  type="text"
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      category: e.target.value,
-                    })
-                  }
-                  placeholder={t("categoryPlaceholder")}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <button
-                type="submit"
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-              >
-                {t("create")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setError("");
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                {t("cancel")}
-              </button>
-            </div>
-          </form>
+        {/* Search */}
+        {skills.length > 0 && (
+          <div className="relative max-w-full sm:max-w-md">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder={tc("search")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         )}
 
-        {/* List */}
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
+        {/* Create/Edit Modal */}
+        {showForm && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
+              <div className="flex items-center justify-between p-6 pb-0">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {editId ? t("editSkill") : t("add")}
+                </h2>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="rounded-lg p-1 hover:bg-gray-100"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <CardContent className="pt-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t("name")} *</Label>
+                    <Input
+                      required
+                      placeholder={t("namePlaceholder")}
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("category")}</Label>
+                    <Input
+                      placeholder={t("categoryPlaceholder")}
+                      value={form.category}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, category: e.target.value }))
+                      }
+                    />
+                  </div>
+
+                  {formError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                      {formError}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowForm(false)}
+                    >
+                      {tc("cancel")}
+                    </Button>
+                    <Button type="submit">
+                      {editId ? tc("save") : t("create")}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Skill list */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
-        ) : skills.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
-            <p className="text-sm text-gray-500">{t("empty")}</p>
-          </div>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <p className="text-lg font-medium text-gray-900">
+                {search ? tc("noResults") : t("empty")}
+              </p>
+              {!search && (
+                <Button className="mt-4" onClick={openCreate}>
+                  <PlusIcon className="h-4 w-4" />
+                  {t("add")}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-6">
             {Object.entries(grouped).map(([category, items]) => (
@@ -183,25 +258,38 @@ export default function QualifikationenSeite() {
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((skill) => (
-                    <div
+                    <Card
                       key={skill.id}
-                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                      className="hover:shadow-md transition-shadow"
                     >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {skill.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {skill._count.employeeSkills} {t("assigned")}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleDelete(skill.id)}
-                        className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {skill.name}
+                          </p>
+                          <Badge className="mt-1 bg-gray-100 text-gray-600 text-xs">
+                            {skill._count.employeeSkills} {t("assigned")}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(skill)}
+                          >
+                            <EditIcon className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-gray-400 hover:text-red-600"
+                            onClick={() => setDeleteTarget(skill.id)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -209,6 +297,17 @@ export default function QualifikationenSeite() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

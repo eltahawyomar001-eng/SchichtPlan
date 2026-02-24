@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ensureLegalBreak } from "@/lib/automations";
+import { ensureLegalBreak, executeCustomRules } from "@/lib/automations";
 import type { SessionUser } from "@/lib/types";
 import { log } from "@/lib/logger";
 
@@ -71,6 +71,15 @@ export async function POST(req: Request) {
           status: "ENTWURF",
         },
       });
+
+      // Fire custom automation rules
+      executeCustomRules("time-entry.created", workspaceId, {
+        id: entry.id,
+        employeeId,
+        date: localDateStr,
+        startTime: timeStr,
+        action: "clock-in",
+      }).catch((err) => log.error("Custom rule error:", { error: err }));
 
       return NextResponse.json(entry, { status: 201 });
     }
@@ -160,6 +169,19 @@ export async function POST(req: Request) {
           netMinutes,
         },
       });
+
+      // Fire custom automation rules for clock-out
+      executeCustomRules("time-entry.submitted", workspaceId, {
+        id: entry.id,
+        employeeId,
+        date: localDateStr,
+        startTime: open.startTime,
+        endTime: timeStr,
+        grossMinutes,
+        netMinutes,
+        breakMinutes: legalBreak,
+        action: "clock-out",
+      }).catch((err) => log.error("Custom rule error:", { error: err }));
 
       return NextResponse.json(entry);
     }

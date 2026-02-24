@@ -1326,7 +1326,49 @@
     "active": "Active",
     "inactive": "Inactive",
     "noRules": "No automation rules configured.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "save": "Save",
+    "descriptionLabel": "Description",
+    "optional": "optional",
+    "addCondition": "Add Condition",
+    "addAction": "Add Action",
+    "field": "Field",
+    "operator": "Operator",
+    "value": "Value",
+    "actionType": "Action Type",
+    "message": "Message",
+    "recipientEmail": "Recipient Email",
+    "surchargePercent": "Surcharge (%)",
+    "triggerLabels": {
+      "shift.created": "Shift created",
+      "shift.updated": "Shift updated",
+      "shift.deleted": "Shift deleted",
+      "time-entry.created": "Time entry created (Clock in)",
+      "time-entry.submitted": "Time entry submitted (Clock out)",
+      "absence.created": "Absence request created",
+      "absence.approved": "Absence approved",
+      "employee.created": "Employee created"
+    },
+    "operatorLabels": {
+      "equals": "equals",
+      "not_equals": "does not equal",
+      "contains": "contains",
+      "gt": "greater than",
+      "lt": "less than",
+      "gte": "greater or equal",
+      "lte": "less or equal"
+    },
+    "actionTypeLabels": {
+      "send_notification": "Send notification",
+      "send_email": "Send email",
+      "apply_surcharge": "Apply surcharge"
+    },
+    "lastTriggered": "Last triggered",
+    "never": "Never",
+    "conditionsCount": "{count, plural, =0 {No conditions} one {1 condition} other {# conditions}}",
+    "actionsCount": "{count, plural, =0 {No actions} one {1 action} other {# actions}}",
+    "deleteConfirm": "Really delete this rule?",
+    "remove": "Remove"
   },
   "webhooks": {
     "title": "Webhooks",

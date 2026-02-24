@@ -43,6 +43,8 @@ interface TeamMember {
     startTime: string;
     breakStart: string | null;
     breakEnd: string | null;
+    clockInLat: number | null;
+    clockInLng: number | null;
   } | null;
   completedCount: number;
   totalNetMinutes: number;
@@ -595,6 +597,18 @@ export default function StempeluhrSeite() {
                                 {m.active?.startTime &&
                                   ` · ${t("since")} ${m.active.startTime}`}
                               </span>
+                              {m.active?.clockInLat != null &&
+                                m.active?.clockInLng != null && (
+                                  <a
+                                    href={`https://www.google.com/maps?q=${m.active.clockInLat},${m.active.clockInLng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-emerald-600 hover:text-emerald-700 transition-colors"
+                                    title={`GPS: ${m.active.clockInLat.toFixed(4)}, ${m.active.clockInLng.toFixed(4)}`}
+                                  >
+                                    <MapPinIcon className="h-3 w-3" />
+                                  </a>
+                                )}
                             </div>
                           </div>
 

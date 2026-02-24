@@ -126,7 +126,7 @@ export default async function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50/50">
       {/* ─── Navbar ─── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
@@ -212,13 +212,13 @@ export default async function PricingPage() {
       <main>
         {/* ─── Plan Cards ─── */}
         <section className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pb-16 sm:pb-20 -mt-2">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 lg:items-start">
             {plans.map((plan) => (
               <div
                 key={plan.name}
                 className={`relative rounded-2xl border p-6 sm:p-7 flex flex-col transition-all duration-200 ${
                   plan.highlighted
-                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-white shadow-xl shadow-emerald-100/60 lg:scale-105"
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-white shadow-xl shadow-emerald-100/60 lg:-mt-3 lg:pb-10"
                     : "border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-gray-300"
                 }`}
               >
@@ -267,7 +267,7 @@ export default async function PricingPage() {
         </section>
 
         {/* ─── "Included in every plan" Section ─── */}
-        <section className="border-t border-gray-100 bg-gradient-to-b from-gray-50/80 to-white py-14 sm:py-20">
+        <section className="border-t border-gray-100 bg-white py-14 sm:py-20">
           <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
@@ -361,15 +361,6 @@ export default async function PricingPage() {
             © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
-            <Link href="/" className="hover:text-gray-600 transition-colors">
-              Startseite
-            </Link>
-            <Link
-              href="/blog"
-              className="hover:text-gray-600 transition-colors"
-            >
-              Blog
-            </Link>
             <Link
               href="/datenschutz"
               className="hover:text-gray-600 transition-colors"

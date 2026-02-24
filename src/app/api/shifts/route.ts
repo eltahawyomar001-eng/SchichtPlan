@@ -8,6 +8,7 @@ import {
   checkShiftConflicts,
   createRecurringShifts,
   createSystemNotification,
+  executeCustomRules,
 } from "@/lib/automations";
 import {
   isPublicHoliday,
@@ -208,6 +209,24 @@ export async function POST(req: Request) {
     } else {
       log.info(`[shifts/POST] Open shift created (no employee assigned)`);
     }
+
+    // ── Automation: Execute custom rules ──
+    const shiftContext = {
+      id: shift.id,
+      date,
+      startTime,
+      endTime,
+      employeeId: employeeId || "",
+      employeeEmail: shiftAny?.employee?.email || "",
+      status: shift.status,
+      surchargePercent: surcharge,
+      isNightShift: nightCheck,
+      isSundayShift: sundayCheck,
+      isHolidayShift: holidayCheck.isHoliday,
+    };
+    executeCustomRules("shift.created", workspaceId, shiftContext).catch(
+      (err) => log.error("Custom rule execution error:", { error: err }),
+    );
 
     return NextResponse.json(
       { ...shift, recurring: recurringResult },

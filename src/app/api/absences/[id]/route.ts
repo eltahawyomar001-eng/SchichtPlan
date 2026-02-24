@@ -7,6 +7,7 @@ import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   cascadeAbsenceApproval,
   createSystemNotification,
+  executeCustomRules,
 } from "@/lib/automations";
 import { log } from "@/lib/logger";
 
@@ -103,6 +104,19 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         workspaceId: user.workspaceId!,
         recipientType: "employee",
         employeeEmail: updated.employee.email,
+      });
+    }
+
+    // ── Automation: Execute custom rules ──
+    if (body.status === "GENEHMIGT") {
+      executeCustomRules("absence.approved", user.workspaceId!, {
+        id,
+        employeeId: existing.employeeId,
+        employeeEmail: updated.employee.email || "",
+        category: existing.category,
+        startDate: existing.startDate.toISOString(),
+        endDate: existing.endDate.toISOString(),
+        totalDays: existing.totalDays,
       });
     }
 

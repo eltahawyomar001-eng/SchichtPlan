@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requireEmployeeSlot } from "@/lib/subscription";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
+import { executeCustomRules } from "@/lib/automations";
 import { log } from "@/lib/logger";
 
 export async function GET() {
@@ -83,6 +84,15 @@ export async function POST(req: Request) {
             .padStart(6, "0")}`,
         workspaceId,
       },
+    });
+
+    // ── Automation: Execute custom rules ──
+    executeCustomRules("employee.created", workspaceId, {
+      id: employee.id,
+      firstName,
+      lastName,
+      email: email || "",
+      position: position || "",
     });
 
     return NextResponse.json(employee, { status: 201 });

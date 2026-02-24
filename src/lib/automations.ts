@@ -1104,3 +1104,198 @@ function calcRestBetween(
   }
   return startMin - endMin;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. CUSTOM AUTOMATION RULE EXECUTION
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Supported action types for custom automation rules:
+ *
+ * - send_notification: Creates an in-app notification
+ *   { type: "send_notification", title: string, message: string, employeeId?: string }
+ *
+ * - send_email: Sends an email notification
+ *   { type: "send_email", subject: string, body: string }
+ *
+ * - apply_surcharge: Records a surcharge percentage in remarks
+ *   { type: "apply_surcharge", percentage: number, label: string }
+ */
+
+interface RuleAction {
+  type: "send_notification" | "send_email" | "apply_surcharge";
+  [key: string]: unknown;
+}
+
+interface RuleCondition {
+  field: string;
+  operator: "equals" | "not_equals" | "contains" | "gt" | "lt" | "gte" | "lte";
+  value: unknown;
+}
+
+/**
+ * Execute all active custom automation rules matching a given trigger.
+ *
+ * @param trigger - The event trigger (e.g. "shift.created", "time-entry.submitted")
+ * @param workspaceId - The workspace ID to scope rules
+ * @param context - Event context data (the created/updated entity)
+ */
+export async function executeCustomRules(
+  trigger: string,
+  workspaceId: string,
+  context: Record<string, unknown>,
+): Promise<void> {
+  try {
+    if (!(await isAutomationEnabled(workspaceId, "notifications"))) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rules = await (prisma as any).automationRule.findMany({
+      where: { workspaceId, trigger, isActive: true },
+    });
+
+    if (!rules || rules.length === 0) return;
+
+    for (const rule of rules) {
+      try {
+        const conditions: RuleCondition[] = JSON.parse(rule.conditions || "[]");
+        const actions: RuleAction[] = JSON.parse(rule.actions || "[]");
+
+        // Check all conditions
+        if (!evaluateConditions(conditions, context)) continue;
+
+        // Execute all actions
+        for (const action of actions) {
+          await executeAction(action, workspaceId, context);
+        }
+
+        // Update lastTriggered
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (prisma as any).automationRule.update({
+          where: { id: rule.id },
+          data: { lastTriggered: new Date() },
+        });
+      } catch (err) {
+        log.error("Error executing automation rule", {
+          ruleId: rule.id,
+          trigger,
+          error: err,
+        });
+      }
+    }
+  } catch (err) {
+    log.error("Error fetching automation rules", { trigger, error: err });
+  }
+}
+
+/** Evaluate all conditions against the event context */
+function evaluateConditions(
+  conditions: RuleCondition[],
+  context: Record<string, unknown>,
+): boolean {
+  if (!conditions || conditions.length === 0) return true;
+
+  return conditions.every((c) => {
+    const fieldValue = context[c.field];
+    switch (c.operator) {
+      case "equals":
+        return fieldValue === c.value;
+      case "not_equals":
+        return fieldValue !== c.value;
+      case "contains":
+        return (
+          typeof fieldValue === "string" &&
+          typeof c.value === "string" &&
+          fieldValue.toLowerCase().includes(c.value.toLowerCase())
+        );
+      case "gt":
+        return typeof fieldValue === "number" && fieldValue > Number(c.value);
+      case "lt":
+        return typeof fieldValue === "number" && fieldValue < Number(c.value);
+      case "gte":
+        return typeof fieldValue === "number" && fieldValue >= Number(c.value);
+      case "lte":
+        return typeof fieldValue === "number" && fieldValue <= Number(c.value);
+      default:
+        return true;
+    }
+  });
+}
+
+/** Execute a single action */
+async function executeAction(
+  action: RuleAction,
+  workspaceId: string,
+  context: Record<string, unknown>,
+): Promise<void> {
+  switch (action.type) {
+    case "send_notification": {
+      const employeeEmail =
+        (action.employeeEmail as string) || (context.employeeEmail as string);
+      if (!employeeEmail) break;
+      await createSystemNotification({
+        workspaceId,
+        recipientType: "employee",
+        employeeEmail,
+        title: interpolate(action.title as string, context),
+        message: interpolate(action.message as string, context),
+        type: "AUTOMATION",
+      });
+      break;
+    }
+
+    case "send_email": {
+      const email = (action.to as string) || (context.employeeEmail as string);
+      if (!email) break;
+      await sendEmail({
+        to: email,
+        type: "AUTOMATION",
+        title: interpolate(action.title as string, context),
+        message: interpolate(action.message as string, context),
+      });
+      break;
+    }
+
+    case "apply_surcharge": {
+      const entryId = context.id as string;
+      if (!entryId) break;
+      const pct = Number(action.percentage) || 0;
+      const label = (action.label as string) || "Zuschlag";
+      try {
+        const existing = await prisma.timeEntry.findUnique({
+          where: { id: entryId },
+        });
+        if (existing) {
+          const remarkSuffix = `[${label}: +${pct}%]`;
+          const remarks = existing.remarks
+            ? `${existing.remarks} ${remarkSuffix}`
+            : remarkSuffix;
+          await prisma.timeEntry.update({
+            where: { id: entryId },
+            data: { remarks },
+          });
+        }
+      } catch {
+        // Silently skip if entry doesn't exist
+      }
+      break;
+    }
+
+    default:
+      log.warn("Unknown automation action type", {
+        type: action.type,
+        workspaceId,
+      });
+  }
+}
+
+/** Replace {{field}} placeholders in strings with context values */
+function interpolate(
+  template: string | undefined,
+  context: Record<string, unknown>,
+): string {
+  if (!template) return "";
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    const val = context[key];
+    return val != null ? String(val) : "";
+  });
+}

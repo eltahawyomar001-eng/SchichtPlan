@@ -161,7 +161,7 @@ export default async function BlogPostPage({ params }: Props) {
     <div className="min-h-screen bg-gray-50/50">
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
-        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="w-7 h-7" />
             <span className="font-bold text-base text-gray-900">

@@ -7,6 +7,7 @@ import { isEmployee } from "@/lib/authorization";
 import {
   tryAutoApproveAbsence,
   createSystemNotification,
+  executeCustomRules,
 } from "@/lib/automations";
 import { requirePlanFeature } from "@/lib/subscription";
 import { log } from "@/lib/logger";
@@ -188,6 +189,21 @@ export async function POST(req: Request) {
         });
       }
     }
+
+    // ── Automation: Execute custom rules ──
+    executeCustomRules("absence.created", workspaceId, {
+      id: absence.id,
+      employeeId: absence.employeeId,
+      employeeEmail: absence.employee.email || "",
+      category: absence.category,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      totalDays,
+      halfDayStart: body.halfDayStart || false,
+      halfDayEnd: body.halfDayEnd || false,
+      reason: body.reason || "",
+      autoApproved,
+    });
 
     // Re-fetch to get updated status if auto-approved
     const result = autoApproved

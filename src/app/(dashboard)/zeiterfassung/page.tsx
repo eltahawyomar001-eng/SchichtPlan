@@ -82,6 +82,11 @@ interface TimeEntry {
   submittedAt: string | null;
   confirmedAt: string | null;
   confirmedBy: string | null;
+  clockInLat: number | null;
+  clockInLng: number | null;
+  clockOutLat: number | null;
+  clockOutLng: number | null;
+  isLiveClock: boolean;
   employee: Employee;
   location: Location | null;
   auditLog: AuditEntry[];
@@ -1011,6 +1016,18 @@ export default function ZeiterfassungPage() {
                             {entry.location.name}
                           </div>
                         )}
+                        {entry.clockInLat != null &&
+                          entry.clockInLng != null && (
+                            <a
+                              href={`https://www.google.com/maps?q=${entry.clockInLat},${entry.clockInLng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 transition-colors"
+                            >
+                              <MapPinIcon className="h-3 w-3" />
+                              GPS-Einstempelung
+                            </a>
+                          )}
                       </div>
                     );
                   })}
@@ -1101,14 +1118,30 @@ export default function ZeiterfassungPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-gray-600">
-                              {entry.location ? (
-                                <span className="flex items-center gap-1">
-                                  <MapPinIcon className="h-3 w-3" />
-                                  {entry.location.name}
-                                </span>
-                              ) : (
-                                "–"
-                              )}
+                              <div className="space-y-1">
+                                {entry.location && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPinIcon className="h-3 w-3" />
+                                    {entry.location.name}
+                                  </span>
+                                )}
+                                {entry.clockInLat != null &&
+                                  entry.clockInLng != null && (
+                                    <a
+                                      href={`https://www.google.com/maps?q=${entry.clockInLat},${entry.clockInLng}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 transition-colors"
+                                      title={`GPS: ${entry.clockInLat.toFixed(5)}, ${entry.clockInLng.toFixed(5)}`}
+                                    >
+                                      <MapPinIcon className="h-3 w-3" />
+                                      GPS-Einstempelung
+                                    </a>
+                                  )}
+                                {!entry.location &&
+                                  entry.clockInLat == null &&
+                                  "–"}
+                              </div>
                             </td>
                             <td className="px-4 py-3">
                               <Badge

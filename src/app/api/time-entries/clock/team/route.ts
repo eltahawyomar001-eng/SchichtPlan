@@ -144,6 +144,8 @@ export async function GET(req: Request) {
               startTime: active.startTime,
               breakStart: active.breakStart,
               breakEnd: active.breakEnd,
+              clockInLat: active.clockInLat,
+              clockInLng: active.clockInLng,
             }
           : null,
         completedCount: completed.length,

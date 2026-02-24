@@ -1326,7 +1326,49 @@
     "active": "Aktiv",
     "inactive": "Inaktiv",
     "noRules": "Keine Automatisierungsregeln vorhanden.",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "descriptionLabel": "Beschreibung",
+    "optional": "optional",
+    "addCondition": "Bedingung hinzufügen",
+    "addAction": "Aktion hinzufügen",
+    "field": "Feld",
+    "operator": "Operator",
+    "value": "Wert",
+    "actionType": "Aktionstyp",
+    "message": "Nachricht",
+    "recipientEmail": "Empfänger-E-Mail",
+    "surchargePercent": "Zuschlag (%)",
+    "triggerLabels": {
+      "shift.created": "Schicht erstellt",
+      "shift.updated": "Schicht aktualisiert",
+      "shift.deleted": "Schicht gelöscht",
+      "time-entry.created": "Zeiteintrag erstellt (Einstempeln)",
+      "time-entry.submitted": "Zeiteintrag abgegeben (Ausstempeln)",
+      "absence.created": "Abwesenheitsantrag erstellt",
+      "absence.approved": "Abwesenheit genehmigt",
+      "employee.created": "Mitarbeiter angelegt"
+    },
+    "operatorLabels": {
+      "equals": "ist gleich",
+      "not_equals": "ist nicht gleich",
+      "contains": "enthält",
+      "gt": "größer als",
+      "lt": "kleiner als",
+      "gte": "größer oder gleich",
+      "lte": "kleiner oder gleich"
+    },
+    "actionTypeLabels": {
+      "send_notification": "Benachrichtigung senden",
+      "send_email": "E-Mail senden",
+      "apply_surcharge": "Zuschlag anwenden"
+    },
+    "lastTriggered": "Zuletzt ausgelöst",
+    "never": "Nie",
+    "conditionsCount": "{count, plural, =0 {Keine Bedingungen} one {1 Bedingung} other {# Bedingungen}}",
+    "actionsCount": "{count, plural, =0 {Keine Aktionen} one {1 Aktion} other {# Aktionen}}",
+    "deleteConfirm": "Regel wirklich löschen?",
+    "remove": "Entfernen"
   },
   "webhooks": {
     "title": "Webhooks",

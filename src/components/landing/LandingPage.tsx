@@ -337,8 +337,8 @@ function HeroSection() {
   return (
     <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-emerald-50/60 via-white to-white">
       {/* Subtle decorative elements */}
-      <div className="absolute top-20 -left-40 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl" />
-      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl" />
+      <div className="absolute top-32 -left-40 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">

@@ -315,6 +315,47 @@ export default async function BlogPage() {
           </div>
         </div>
       </section>
+
+      <footer className="border-t border-gray-100 py-10">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
+          <div className="flex items-center gap-2">
+            <ShiftfyMark className="w-6 h-6" />
+            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+          </div>
+          <p className="text-sm text-gray-400 text-center">
+            © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+            <Link
+              href="/datenschutz"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Datenschutz
+            </Link>
+            <Link
+              href="/impressum"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Impressum
+            </Link>
+            <Link href="/agb" className="hover:text-gray-600 transition-colors">
+              AGB
+            </Link>
+            <Link
+              href="/widerruf"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Widerruf
+            </Link>
+            <Link
+              href="/barrierefreiheit"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Barrierefreiheit
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -11,17 +11,49 @@ export const metadata: Metadata = {
 
 export default function ImpressumPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 pt-[max(1rem,env(safe-area-inset-top))] flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2">
+    <div className="min-h-screen bg-gray-50/50">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="h-7 w-7" />
-            <span className="text-lg font-bold text-gray-900">
+            <span className="font-bold text-base text-gray-900">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Startseite
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Preise
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Blog
+            </Link>
+            <Link
+              href="/login"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
+            >
+              Kostenlos starten
+            </Link>
+          </div>
         </div>
-      </header>
+      </nav>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Impressum</h1>
@@ -132,16 +164,48 @@ export default function ImpressumPage() {
             </p>
           </section>
         </div>
-
-        <div className="mt-12 pt-6 border-t border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <Link
-            href="/"
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-          >
-            &larr; Zurück zur Startseite
-          </Link>
-        </div>
       </main>
+
+      <footer className="border-t border-gray-100 py-10">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
+          <div className="flex items-center gap-2">
+            <ShiftfyMark className="w-6 h-6" />
+            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+          </div>
+          <p className="text-sm text-gray-400 text-center">
+            © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+            <Link
+              href="/datenschutz"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Datenschutz
+            </Link>
+            <Link
+              href="/impressum"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Impressum
+            </Link>
+            <Link href="/agb" className="hover:text-gray-600 transition-colors">
+              AGB
+            </Link>
+            <Link
+              href="/widerruf"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Widerruf
+            </Link>
+            <Link
+              href="/barrierefreiheit"
+              className="hover:text-gray-600 transition-colors"
+            >
+              Barrierefreiheit
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

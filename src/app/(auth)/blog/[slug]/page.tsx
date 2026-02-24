@@ -2,12 +2,14 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { ShiftfyMark } from "@/components/icons";
 
 interface BlogPostContent {
   title: string;
   date: string;
   readTime: string;
   category: string;
+  icon: string;
   content: string[];
 }
 
@@ -17,6 +19,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2025-01-15",
     readTime: "5 min",
     category: "Planung",
+    icon: "📋",
     content: [
       "Die effiziente Schichtplanung ist eine der größten Herausforderungen im Personalmanagement. Mit den richtigen Strategien und Tools können Sie nicht nur die Produktivität steigern, sondern auch die Zufriedenheit Ihrer Mitarbeiter erhöhen.",
       "1. Frühzeitige Planung: Veröffentlichen Sie Schichtpläne mindestens zwei Wochen im Voraus. Das gibt Ihren Mitarbeitern genügend Zeit, sich darauf einzustellen und eventuelle Konflikte rechtzeitig zu melden.",
@@ -36,6 +39,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2025-01-10",
     readTime: "7 min",
     category: "Recht",
+    icon: "⚖️",
     content: [
       "Das Arbeitszeitgesetz (ArbZG) regelt in Deutschland die zulässigen Arbeitszeiten, Pausen und Ruhezeiten. Für Arbeitgeber, die mit Schichtarbeit planen, ist die Einhaltung dieser Vorschriften besonders wichtig.",
       "Maximale Arbeitszeit: Die werktägliche Arbeitszeit darf 8 Stunden nicht überschreiten. Sie kann auf bis zu 10 Stunden verlängert werden, wenn innerhalb von 6 Kalendermonaten oder 24 Wochen im Durchschnitt 8 Stunden werktäglich nicht überschritten werden.",
@@ -52,6 +56,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2025-01-05",
     readTime: "6 min",
     category: "HR",
+    icon: "🤝",
     content: [
       "Fluktuation in schichtbasierten Betrieben ist oft höher als in Unternehmen mit regulären Arbeitszeiten. Doch mit den richtigen Maßnahmen können Sie Ihre Mitarbeiter langfristig binden.",
       "Transparente Planung: Nichts frustriert Mitarbeiter mehr als unvorhersehbare Schichtpläne. Sorgen Sie für Transparenz und Planbarkeit. Mit Shiftfy haben alle Mitarbeiter jederzeit Zugriff auf ihren aktuellen Schichtplan.",
@@ -68,6 +73,7 @@ const POSTS: Record<string, BlogPostContent> = {
     date: "2024-12-20",
     readTime: "4 min",
     category: "Technologie",
+    icon: "⏱️",
     content: [
       "Die Zeiten der Stechuhr und handschriftlichen Stundenzettel sind vorbei. Digitale Zeiterfassungssysteme bieten zahlreiche Vorteile für Unternehmen jeder Größe.",
       "Genauigkeit: Digitale Systeme erfassen Arbeitszeiten auf die Minute genau. Rundungsfehler, unleserliche Handschriften und nachträgliche Änderungen gehören der Vergangenheit an.",
@@ -78,6 +84,24 @@ const POSTS: Record<string, BlogPostContent> = {
       "Mobile Nutzung: Über die Progressive Web App von Shiftfy können Mitarbeiter direkt vom Smartphone ein- und ausstempeln – ideal für dezentrale Teams und Außendienstmitarbeiter.",
       "Integration: Digitale Zeiterfassung lässt sich nahtlos mit der Schichtplanung, dem Abwesenheitsmanagement und der Lohnbuchhaltung verbinden. Ein durchgängiger Datenfluss eliminiert doppelte Erfassung und reduziert Fehlerquellen.",
     ],
+  },
+};
+
+const CATEGORY_STYLES: Record<
+  string,
+  { bg: string; text: string; dot: string }
+> = {
+  Planung: {
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    dot: "bg-emerald-500",
+  },
+  Recht: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+  HR: { bg: "bg-sky-50", text: "text-sky-700", dot: "bg-sky-500" },
+  Technologie: {
+    bg: "bg-violet-50",
+    text: "text-violet-700",
+    dot: "bg-violet-500",
   },
 };
 
@@ -96,9 +120,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${post.title}`,
     description: post.content[0]?.slice(0, 160),
-    alternates: {
-      canonical: `/blog/${slug}`,
-    },
+    alternates: { canonical: `/blog/${slug}` },
     openGraph: {
       title: post.title,
       description: post.content[0]?.slice(0, 160),
@@ -114,63 +136,237 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const t = await getTranslations("blog");
+  const allSlugs = Object.keys(POSTS);
+  const currentIdx = allSlugs.indexOf(slug);
 
-  const CATEGORY_COLORS: Record<string, string> = {
-    Planung: "bg-emerald-100 text-emerald-700",
-    Recht: "bg-amber-100 text-amber-700",
-    HR: "bg-green-100 text-green-700",
-    Technologie: "bg-emerald-100 text-emerald-700",
+  const relatedPosts = allSlugs
+    .filter((s) => s !== slug)
+    .slice(0, 3)
+    .map((s) => ({ slug: s, ...POSTS[s] }));
+
+  const style = CATEGORY_STYLES[post.category] ?? {
+    bg: "bg-gray-50",
+    text: "text-gray-700",
+    dot: "bg-gray-400",
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <ShiftfyMark className="w-7 h-7" />
+            <span className="font-bold text-base text-gray-900">
+              Shift<span className="text-gradient">fy</span>
+            </span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/blog"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex items-center gap-1.5"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              {t("allArticles")}
+            </Link>
+            <Link
+              href="/register"
+              className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
+            >
+              Kostenlos starten
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Article Hero */}
+      <header className="relative overflow-hidden bg-white border-b border-gray-200/60">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white to-transparent" />
+        <div className="relative max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-14 sm:pb-10">
           <Link
             href="/blog"
-            className="text-sm text-emerald-600 hover:underline mb-4 inline-block"
+            className="inline-flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors mb-6 sm:hidden"
           >
-            {t("allArticles")}
-          </Link>
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span
-              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_COLORS[post.category] ?? "bg-gray-100 text-gray-700"}`}
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            {t("backToBlog")}
+          </Link>
+
+          <div className="flex flex-wrap items-center gap-3 mb-5">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
               {post.category}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-sm text-gray-400">
               {new Date(post.date).toLocaleDateString("de-DE", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
               })}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-sm text-gray-400">
               · {post.readTime} {t("readTime")}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
             {post.title}
           </h1>
+          <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+            {post.content[0]}
+          </p>
         </div>
       </header>
-      <main className="max-w-3xl mx-auto px-4 py-8 sm:px-6 sm:py-12">
-        <article className="space-y-4">
-          {post.content.map((p, i) => (
-            <p key={i} className="text-gray-700 leading-relaxed text-base">
-              {p}
-            </p>
-          ))}
+
+      {/* Article Content */}
+      <main className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-10 sm:py-14">
+        <article className="space-y-0">
+          {post.content.slice(1).map((paragraph, i) => {
+            const numberMatch = paragraph.match(/^(\d+)\.\s+(.+?):\s+(.*)/);
+
+            if (numberMatch) {
+              return (
+                <div key={i} className="pt-8 first:pt-0">
+                  <div className="flex items-start gap-4">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold flex items-center justify-center mt-0.5">
+                      {numberMatch[1]}
+                    </span>
+                    <div>
+                      <h2 className="text-lg font-bold text-gray-900 mb-2">
+                        {numberMatch[2]}
+                      </h2>
+                      <p className="text-gray-600 leading-relaxed">
+                        {numberMatch[3]}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const headerMatch = paragraph.match(/^(.+?):\s+(.*)/);
+
+            if (headerMatch) {
+              return (
+                <div key={i} className="pt-8 first:pt-0">
+                  <h2 className="text-lg font-bold text-gray-900 mb-2">
+                    {headerMatch[1]}
+                  </h2>
+                  <p className="text-gray-600 leading-relaxed">
+                    {headerMatch[2]}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <p
+                key={i}
+                className="pt-6 first:pt-0 text-gray-600 leading-relaxed"
+              >
+                {paragraph}
+              </p>
+            );
+          })}
         </article>
-        <div className="mt-12 pt-6 border-t border-gray-200">
-          <Link
-            href="/blog"
-            className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
-          >
-            {t("backToBlog")}
-          </Link>
-        </div>
+
+        {/* Related Articles */}
+        {relatedPosts.length > 0 && (
+          <section className="mt-14 pt-10 border-t border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Weitere Artikel
+            </h2>
+            <div className="grid sm:grid-cols-3 gap-5">
+              {relatedPosts.map((related) => {
+                const rStyle = CATEGORY_STYLES[related.category] ?? {
+                  bg: "bg-gray-50",
+                  text: "text-gray-700",
+                  dot: "bg-gray-400",
+                };
+                return (
+                  <Link
+                    key={related.slug}
+                    href={`/blog/${related.slug}`}
+                    className="group block"
+                  >
+                    <article className="h-full rounded-xl border border-gray-200/80 bg-white p-5 hover:shadow-lg hover:border-emerald-200/60 transition-all duration-300">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-2xl">{related.icon}</span>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${rStyle.bg} ${rStyle.text}`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${rStyle.dot}`}
+                          />
+                          {related.category}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 group-hover:text-emerald-600 transition-colors leading-snug text-sm">
+                        {related.title}
+                      </h3>
+                      <p className="mt-2 text-xs text-gray-400">
+                        {related.readTime} {t("readTime")}
+                      </p>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
+
+      {/* Footer CTA */}
+      <section className="border-t border-gray-200/60 bg-white">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Bereit für effiziente Schichtplanung?
+          </h2>
+          <p className="mt-3 text-gray-600 max-w-lg mx-auto">
+            Starten Sie kostenlos mit bis zu 5 Mitarbeitern – keine Kreditkarte
+            nötig.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/register"
+              className="bg-brand-gradient text-white font-semibold px-6 py-3 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
+            >
+              Kostenlos starten
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-3"
+            >
+              Preise ansehen →
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

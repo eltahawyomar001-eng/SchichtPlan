@@ -1043,7 +1043,8 @@
     "sendTestEmail": "Send test email",
     "testEmailSending": "Sending…",
     "testEmailSent": "Test email sent",
-    "testEmailFailed": "Test email failed"
+    "testEmailFailed": "Test email failed",
+    "fetchError": "Could not load settings. Please try again later."
   },
   "automations": {
     "title": "Automations",

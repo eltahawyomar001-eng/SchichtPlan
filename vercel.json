@@ -15,6 +15,10 @@
     {
       "path": "/api/automations/break-reminder",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/admin/gps-cleanup",
+      "schedule": "0 5 * * 0"
     }
   ]
 }

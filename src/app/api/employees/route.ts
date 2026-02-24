@@ -7,7 +7,11 @@ import { requirePermission } from "@/lib/authorization";
 import { requireEmployeeSlot } from "@/lib/subscription";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
 import { executeCustomRules } from "@/lib/automations";
+import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+
+/** MiLoG minimum wage (€/h) — updated annually */
+const MILOG_MIN_WAGE = 12.82;
 
 export async function GET() {
   try {
@@ -95,7 +99,28 @@ export async function POST(req: Request) {
       position: position || "",
     });
 
-    return NextResponse.json(employee, { status: 201 });
+    // ── Audit log ──
+    createAuditLog({
+      action: "CREATE",
+      entityType: "employee",
+      entityId: employee.id,
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      workspaceId,
+      changes: { firstName, lastName, email, position, hourlyRate },
+    });
+
+    const warnings: string[] = [];
+    if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {
+      warnings.push(
+        `Stundenlohn (${hourlyRate.toFixed(2)} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toFixed(2)} €/h, MiLoG)`,
+      );
+    }
+
+    return NextResponse.json(
+      { ...employee, ...(warnings.length ? { warnings } : {}) },
+      { status: 201 },
+    );
   } catch (error) {
     log.error("Error creating employee:", { error: error });
     return NextResponse.json(

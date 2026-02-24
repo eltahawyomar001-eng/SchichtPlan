@@ -4,7 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+
+/** MiLoG minimum wage (€/h) — updated annually */
+const MILOG_MIN_WAGE = 12.82;
 
 export async function GET(
   req: Request,
@@ -79,7 +83,29 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(employee);
+    const warnings: string[] = [];
+    const parsedRate = body.hourlyRate ? parseFloat(body.hourlyRate) : null;
+    if (parsedRate != null && parsedRate < MILOG_MIN_WAGE) {
+      warnings.push(
+        `Stundenlohn (${parsedRate.toFixed(2)} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toFixed(2)} €/h, MiLoG)`,
+      );
+    }
+
+    // ── Audit log ──
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "employee",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      workspaceId: workspaceId!,
+      changes: body,
+    });
+
+    return NextResponse.json({
+      ...employee,
+      ...(warnings.length ? { warnings } : {}),
+    });
   } catch (error) {
     log.error("Error updating employee:", { error: error });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
@@ -106,6 +132,16 @@ export async function DELETE(
 
     await prisma.employee.deleteMany({
       where: { id, workspaceId },
+    });
+
+    // ── Audit log ──
+    createAuditLog({
+      action: "DELETE",
+      entityType: "employee",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      workspaceId: workspaceId!,
     });
 
     return NextResponse.json({ message: "Employee deleted" });

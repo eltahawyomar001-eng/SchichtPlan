@@ -133,6 +133,7 @@ model Workspace {
   exportJobs  ExportJob[]
   webhookEndpoints WebhookEndpoint[]
   automationRules AutomationRule[]
+  auditLogs       AuditLog[]
   subscription    Subscription?
 }
 
@@ -748,4 +749,36 @@ model AutomationRule {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([workspaceId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUDIT LOG
+// ═══════════════════════════════════════════════════════════════
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  ARCHIVE
+  LOGIN
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  entityType  String      // e.g. "shift", "employee", "absence"
+  entityId    String?     // ID of the affected entity
+  userId      String?     // User who performed the action
+  userEmail   String?     // Denormalized for readability
+  changes     String?     @db.Text // JSON diff of changed fields
+  metadata    String?     @db.Text // Additional context (IP, user-agent, etc.)
+  createdAt   DateTime    @default(now())
+  workspaceId String
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }

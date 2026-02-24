@@ -1043,7 +1043,8 @@
     "sendTestEmail": "Test-E-Mail senden",
     "testEmailSending": "Wird gesendet…",
     "testEmailSent": "Test-E-Mail gesendet",
-    "testEmailFailed": "Test-E-Mail fehlgeschlagen"
+    "testEmailFailed": "Test-E-Mail fehlgeschlagen",
+    "fetchError": "Einstellungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
   },
   "automations": {
     "title": "Automatisierungen",

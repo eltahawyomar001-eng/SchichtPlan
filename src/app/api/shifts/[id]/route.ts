@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { checkShiftConflicts, executeCustomRules } from "@/lib/automations";
+import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
 
 export async function PATCH(
@@ -77,6 +78,17 @@ export async function PATCH(
       status: body.status,
     });
 
+    // ── Audit log ──
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "shift",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      workspaceId: workspaceId!,
+      changes: body,
+    });
+
     return NextResponse.json(shift);
   } catch (error) {
     log.error("Error updating shift:", { error: error });
@@ -108,6 +120,16 @@ export async function DELETE(
 
     // ── Automation: Execute custom rules ──
     executeCustomRules("shift.deleted", workspaceId!, { id });
+
+    // ── Audit log ──
+    createAuditLog({
+      action: "DELETE",
+      entityType: "shift",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      workspaceId: workspaceId!,
+    });
 
     return NextResponse.json({ message: "Shift deleted" });
   } catch (error) {

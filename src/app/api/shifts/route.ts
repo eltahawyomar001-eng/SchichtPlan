@@ -17,6 +17,7 @@ import {
   calculateSurcharge,
 } from "@/lib/holidays";
 import { createShiftSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
 
 export async function GET(req: Request) {
@@ -227,6 +228,17 @@ export async function POST(req: Request) {
     executeCustomRules("shift.created", workspaceId, shiftContext).catch(
       (err) => log.error("Custom rule execution error:", { error: err }),
     );
+
+    // ── Audit log ──
+    createAuditLog({
+      action: "CREATE",
+      entityType: "shift",
+      entityId: shift.id,
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      workspaceId,
+      changes: { date, startTime, endTime, employeeId, locationId },
+    });
 
     return NextResponse.json(
       { ...shift, recurring: recurringResult },

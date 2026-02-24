@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { toIndustrialHours } from "@/lib/time-utils";
+import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { log } from "@/lib/logger";
 
@@ -23,12 +24,8 @@ export async function GET(req: Request) {
     }
 
     // Only managers/admins/owners can export
-    if (user.role === "EMPLOYEE") {
-      return NextResponse.json(
-        { error: "No permission for export" },
-        { status: 403 },
-      );
-    }
+    const forbidden = requirePermission(user, "payroll-export", "read");
+    if (forbidden) return forbidden;
 
     // Check plan feature
     const planGate = await requirePlanFeature(workspaceId, "datevExport");

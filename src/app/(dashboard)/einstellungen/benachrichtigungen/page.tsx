@@ -23,19 +23,23 @@ export default function BenachrichtigungenPage() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [testStatus, setTestStatus] = useState<
     "idle" | "sending" | "sent" | "failed"
   >("idle");
 
   const fetchPrefs = useCallback(async () => {
     try {
+      setFetchError(false);
       const res = await fetch("/api/notification-preferences");
       if (res.ok) {
         const data = await res.json();
         setEmailEnabled(data.emailEnabled);
+      } else {
+        setFetchError(true);
       }
     } catch {
-      console.error("Failed to fetch notification preferences");
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -93,6 +97,13 @@ export default function BenachrichtigungenPage() {
       <Topbar title={t("title")} description={t("description")} />
 
       <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
+        {fetchError && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4 text-sm text-red-700">
+              {t("fetchError")}
+            </CardContent>
+          </Card>
+        )}
         {/* Back link */}
         <Link
           href="/einstellungen"

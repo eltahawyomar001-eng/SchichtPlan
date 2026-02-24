@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requirePlanFeature } from "@/lib/subscription";
 import ExcelJS from "exceljs";
 import { log } from "@/lib/logger";
 
@@ -28,6 +29,13 @@ export async function POST(req: Request) {
 
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
+
+    // Check plan feature — CSV import requires paid plan
+    const planGate = await requirePlanFeature(
+      user.workspaceId!,
+      "csvPdfExport",
+    );
+    if (planGate) return planGate;
 
     const formData = await req.formData();
     const file = formData.get("file") as File;

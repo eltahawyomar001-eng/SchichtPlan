@@ -51,7 +51,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     }
 
     const user = session.user as SessionUser;
-    const forbidden = requirePermission(user, "reports", "update");
+    const forbidden = requirePermission(user, "clients", "update");
     if (forbidden) return forbidden;
 
     const { id } = await params;
@@ -94,7 +94,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     }
 
     const user = session.user as SessionUser;
-    const forbidden = requirePermission(user, "reports", "delete");
+    const forbidden = requirePermission(user, "clients", "delete");
     if (forbidden) return forbidden;
 
     const { id } = await params;

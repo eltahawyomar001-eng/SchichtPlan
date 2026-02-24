@@ -19,6 +19,10 @@ export async function GET() {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
+    // Check plan feature
+    const planGate = await requirePlanFeature(workspaceId, "shiftTemplates");
+    if (planGate) return planGate;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const templates = await (prisma as any).shiftTemplate.findMany({
       where: { workspaceId },

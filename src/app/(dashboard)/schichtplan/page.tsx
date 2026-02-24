@@ -357,16 +357,10 @@ export default function SchichtplanPage() {
                   }`}
                 >
                   {mode === "day"
-                    ? locale === "de"
-                      ? "Tag"
-                      : "Day"
+                    ? t("viewDay")
                     : mode === "week"
-                      ? locale === "de"
-                        ? "Woche"
-                        : "Week"
-                      : locale === "de"
-                        ? "Monat"
-                        : "Month"}
+                      ? t("viewWeek")
+                      : t("viewMonth")}
                 </button>
               ))}
             </div>
@@ -560,7 +554,9 @@ export default function SchichtplanPage() {
                                 </div>
                                 <span className="text-sm text-gray-500">
                                   {dayShifts.length > 0
-                                    ? `${dayShifts.length} ${dayShifts.length === 1 ? (locale === "de" ? "Schicht" : "shift") : locale === "de" ? "Schichten" : "shifts"}`
+                                    ? t("shiftsCount", {
+                                        count: dayShifts.length,
+                                      })
                                     : t("noShifts")}
                                 </span>
                               </div>

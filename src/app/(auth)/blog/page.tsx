@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { type SVGProps } from "react";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   ShiftfyMark,
   ClipboardIcon,
@@ -34,53 +34,49 @@ export const metadata: Metadata = {
 
 interface BlogPost {
   slug: string;
-  title: string;
-  excerpt: string;
+  titleKey: string;
+  excerptKey: string;
   date: string;
   readTime: string;
-  category: string;
+  categoryKey: string;
   Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;
 }
 
-const posts: BlogPost[] = [
+const postDefs: BlogPost[] = [
   {
     slug: "schichtplanung-best-practices",
-    title: "10 Best Practices für die Schichtplanung",
-    excerpt:
-      "Erfahren Sie, wie Sie Ihren Schichtplan effizient gestalten, Mitarbeiterzufriedenheit steigern und gesetzliche Vorgaben einhalten.",
+    titleKey: "post1Title",
+    excerptKey: "post1Excerpt",
     date: "2025-01-15",
     readTime: "5 min",
-    category: "Planung",
+    categoryKey: "categoryPlanning",
     Icon: ClipboardIcon,
   },
   {
     slug: "arbeitszeitgesetz-2025",
-    title: "Arbeitszeitgesetz 2025 – Was Arbeitgeber wissen müssen",
-    excerpt:
-      "Die wichtigsten Änderungen im Arbeitszeitgesetz und deren Auswirkungen auf Ihre Personalplanung im Überblick.",
+    titleKey: "post2Title",
+    excerptKey: "post2Excerpt",
     date: "2025-01-10",
     readTime: "7 min",
-    category: "Recht",
+    categoryKey: "categoryLaw",
     Icon: ScaleIcon,
   },
   {
     slug: "mitarbeiterbindung-schichtarbeit",
-    title: "Mitarbeiterbindung in der Schichtarbeit",
-    excerpt:
-      "Strategien und Tools, um Mitarbeiter in schichtbasierten Betrieben langfristig zu binden und Fluktuation zu senken.",
+    titleKey: "post3Title",
+    excerptKey: "post3Excerpt",
     date: "2025-01-05",
     readTime: "6 min",
-    category: "HR",
+    categoryKey: "categoryHR",
     Icon: UsersIcon,
   },
   {
     slug: "digitale-stempeluhr-vorteile",
-    title: "Digitale Stempeluhr: Vorteile gegenüber Papier",
-    excerpt:
-      "Warum Unternehmen auf digitale Zeiterfassung umsteigen und wie Shiftfy die Umstellung erleichtert.",
+    titleKey: "post4Title",
+    excerptKey: "post4Excerpt",
     date: "2024-12-20",
     readTime: "4 min",
-    category: "Technologie",
+    categoryKey: "categoryTech",
     Icon: ClockIcon,
   },
 ];
@@ -89,25 +85,25 @@ const CATEGORY_STYLES: Record<
   string,
   { bg: string; text: string; dot: string; iconBg: string }
 > = {
-  Planung: {
+  categoryPlanning: {
     bg: "bg-emerald-50",
     text: "text-emerald-700",
     dot: "bg-emerald-500",
     iconBg: "from-emerald-500 to-emerald-600",
   },
-  Recht: {
+  categoryLaw: {
     bg: "bg-amber-50",
     text: "text-amber-700",
     dot: "bg-amber-500",
     iconBg: "from-amber-500 to-amber-600",
   },
-  HR: {
+  categoryHR: {
     bg: "bg-sky-50",
     text: "text-sky-700",
     dot: "bg-sky-500",
     iconBg: "from-sky-500 to-sky-600",
   },
-  Technologie: {
+  categoryTech: {
     bg: "bg-violet-50",
     text: "text-violet-700",
     dot: "bg-violet-500",
@@ -117,6 +113,16 @@ const CATEGORY_STYLES: Record<
 
 export default async function BlogPage() {
   const t = await getTranslations("blog");
+  const tc = await getTranslations("common");
+  const tf = await getTranslations("footer");
+  const locale = await getLocale();
+
+  const posts = postDefs.map((p) => ({
+    ...p,
+    title: t(p.titleKey as Parameters<typeof t>[0]),
+    excerpt: t(p.excerptKey as Parameters<typeof t>[0]),
+    category: t(p.categoryKey as Parameters<typeof t>[0]),
+  }));
 
   const featured = posts[0];
   const rest = posts.slice(1);
@@ -143,19 +149,19 @@ export default async function BlogPage() {
               href="/pricing"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
-              Preise
+              {tc("pricing")}
             </Link>
             <Link
               href="/login"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
-              Login
+              {tc("login")}
             </Link>
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              {tc("startFree")}
             </Link>
           </div>
         </div>
@@ -192,9 +198,12 @@ export default async function BlogPage() {
               </div>
               <div className="md:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <CategoryBadge category={featured.category} />
+                  <CategoryBadge
+                    category={featured.category}
+                    categoryKey={featured.categoryKey}
+                  />
                   <span className="text-sm text-gray-400">
-                    {formatDate(featured.date)}
+                    {formatDate(featured.date, locale)}
                   </span>
                   <span className="text-sm text-gray-400">
                     · {featured.readTime} {t("readTime")}
@@ -249,9 +258,12 @@ export default async function BlogPage() {
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <CategoryBadge category={post.category} />
+                      <CategoryBadge
+                        category={post.category}
+                        categoryKey={post.categoryKey}
+                      />
                       <span className="text-xs text-gray-400">
-                        {formatDate(post.date)}
+                        {formatDate(post.date, locale)}
                       </span>
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors leading-snug">
@@ -293,24 +305,23 @@ export default async function BlogPage() {
       <section className="border-t border-gray-200/60 bg-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Bereit für effiziente Schichtplanung?
+            {t("ctaTitle")}
           </h2>
           <p className="mt-3 text-gray-600 max-w-lg mx-auto">
-            Starten Sie kostenlos mit bis zu 5 Mitarbeitern – keine Kreditkarte
-            nötig.
+            {t("ctaSubtitle")}
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/register"
               className="bg-brand-gradient text-white font-semibold px-6 py-3 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              {tc("startFree")}
             </Link>
             <Link
               href="/pricing"
               className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-3"
             >
-              Preise ansehen →
+              {tc("viewPricing")}
             </Link>
           </div>
         </div>
@@ -323,35 +334,35 @@ export default async function BlogPage() {
             <span className="font-bold text-sm text-gray-900">Shiftfy</span>
           </div>
           <p className="text-sm text-gray-400 text-center">
-            © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
+            © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
             <Link
               href="/datenschutz"
               className="hover:text-gray-600 transition-colors"
             >
-              Datenschutz
+              {tf("privacy")}
             </Link>
             <Link
               href="/impressum"
               className="hover:text-gray-600 transition-colors"
             >
-              Impressum
+              {tf("imprint")}
             </Link>
             <Link href="/agb" className="hover:text-gray-600 transition-colors">
-              AGB
+              {tf("terms")}
             </Link>
             <Link
               href="/widerruf"
               className="hover:text-gray-600 transition-colors"
             >
-              Widerruf
+              {tf("revocation")}
             </Link>
             <Link
               href="/barrierefreiheit"
               className="hover:text-gray-600 transition-colors"
             >
-              Barrierefreiheit
+              {tf("accessibility")}
             </Link>
           </div>
         </div>
@@ -360,8 +371,14 @@ export default async function BlogPage() {
   );
 }
 
-function CategoryBadge({ category }: { category: string }) {
-  const style = CATEGORY_STYLES[category] ?? {
+function CategoryBadge({
+  category,
+  categoryKey,
+}: {
+  category: string;
+  categoryKey: string;
+}) {
+  const style = CATEGORY_STYLES[categoryKey] ?? {
     bg: "bg-gray-50",
     text: "text-gray-700",
     dot: "bg-gray-400",
@@ -378,10 +395,13 @@ function CategoryBadge({ category }: { category: string }) {
   );
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+function formatDate(dateStr: string, locale: string) {
+  return new Date(dateStr).toLocaleDateString(
+    locale === "en" ? "en-GB" : "de-DE",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  );
 }

@@ -37,6 +37,8 @@ export const metadata: Metadata = {
 
 export default async function PricingPage() {
   const t = await getTranslations("pricing");
+  const tc = await getTranslations("common");
+  const tf = await getTranslations("footer");
 
   const plans = [
     {
@@ -141,7 +143,7 @@ export default async function PricingPage() {
               href="/"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
-              Startseite
+              {tc("home")}
             </Link>
             <Link
               href="/blog"
@@ -153,13 +155,13 @@ export default async function PricingPage() {
               href="/login"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
-              Login
+              {tc("login")}
             </Link>
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              {tc("startFree")}
             </Link>
           </div>
         </div>
@@ -176,7 +178,7 @@ export default async function PricingPage() {
             <div className="flex items-center justify-center gap-2 mb-5">
               <div className="h-1 w-8 rounded-full bg-brand-gradient" />
               <span className="text-sm font-semibold text-emerald-600 uppercase tracking-wider">
-                Preise
+                {tc("pricing")}
               </span>
               <div className="h-1 w-8 rounded-full bg-brand-gradient" />
             </div>
@@ -358,35 +360,35 @@ export default async function PricingPage() {
             <span className="font-bold text-sm text-gray-900">Shiftfy</span>
           </div>
           <p className="text-sm text-gray-400 text-center">
-            © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
+            © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
             <Link
               href="/datenschutz"
               className="hover:text-gray-600 transition-colors"
             >
-              Datenschutz
+              {tf("privacy")}
             </Link>
             <Link
               href="/impressum"
               className="hover:text-gray-600 transition-colors"
             >
-              Impressum
+              {tf("imprint")}
             </Link>
             <Link href="/agb" className="hover:text-gray-600 transition-colors">
-              AGB
+              {tf("terms")}
             </Link>
             <Link
               href="/widerruf"
               className="hover:text-gray-600 transition-colors"
             >
-              Widerruf
+              {tf("revocation")}
             </Link>
             <Link
               href="/barrierefreiheit"
               className="hover:text-gray-600 transition-colors"
             >
-              Barrierefreiheit
+              {tf("accessibility")}
             </Link>
           </div>
         </div>

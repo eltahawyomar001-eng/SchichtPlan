@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import {
   format,
@@ -17,7 +17,7 @@ import {
   getDay,
   isSameDay,
 } from "date-fns";
-import { de } from "date-fns/locale";
+import { de, enUS } from "date-fns/locale";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 
 interface ShiftEntry {
@@ -53,6 +53,8 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function TeamkalenderSeite() {
   const t = useTranslations("teamCalendar");
+  const locale = useLocale();
+  const dateFnsLocale = locale === "en" ? enUS : de;
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [shifts, setShifts] = useState<ShiftEntry[]>([]);
@@ -121,8 +123,8 @@ export default function TeamkalenderSeite() {
 
   const headerLabel =
     viewMode === "week"
-      ? `${format(dateRange.start, "d. MMM", { locale: de })} – ${format(dateRange.end, "d. MMM yyyy", { locale: de })}`
-      : format(currentDate, "MMMM yyyy", { locale: de });
+      ? `${format(dateRange.start, "d. MMM", { locale: dateFnsLocale })} – ${format(dateRange.end, "d. MMM yyyy", { locale: dateFnsLocale })}`
+      : format(currentDate, "MMMM yyyy", { locale: dateFnsLocale });
 
   function shiftsForEmployeeDay(empId: string, day: Date) {
     return shifts.filter(
@@ -130,7 +132,10 @@ export default function TeamkalenderSeite() {
     );
   }
 
-  const DAY_HEADERS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const DAY_HEADERS = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(2024, 0, 1 + i); // Mon 1 Jan 2024 = index 0
+    return format(d, "EEE", { locale: dateFnsLocale });
+  });
 
   return (
     <div>
@@ -188,7 +193,7 @@ export default function TeamkalenderSeite() {
                       key={d.toISOString()}
                       className="border-b border-gray-200 px-2 py-2 text-center text-gray-600 min-w-[100px]"
                     >
-                      <div>{format(d, "EEE", { locale: de })}</div>
+                      <div>{format(d, "EEE", { locale: dateFnsLocale })}</div>
                       <div className="text-xs font-normal text-gray-400">
                         {format(d, "d.M.")}
                       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Topbar } from "@/components/layout/topbar";
@@ -67,6 +67,7 @@ interface PlanOption {
 function BillingContent() {
   const { data: session } = useSession();
   const t = useTranslations("billing");
+  const locale = useLocale();
   const searchParams = useSearchParams();
 
   const user = session?.user as SessionUser | undefined;
@@ -251,7 +252,7 @@ function BillingContent() {
   };
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat("de-DE", {
+    new Intl.NumberFormat(locale === "en" ? "en-GB" : "de-DE", {
       style: "currency",
       currency: "EUR",
     }).format(price);
@@ -367,7 +368,7 @@ function BillingContent() {
                   {subscription?.currentPeriodEnd
                     ? new Date(
                         subscription.currentPeriodEnd,
-                      ).toLocaleDateString("de-DE")
+                      ).toLocaleDateString(locale === "en" ? "en-GB" : "de-DE")
                     : "—"}
                 </p>
                 {subscription?.cancelAtPeriodEnd && (

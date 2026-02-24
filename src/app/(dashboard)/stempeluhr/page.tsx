@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -65,6 +65,7 @@ type ClockState = "idle" | "working" | "break";
 export default function StempeluhrSeite() {
   const { data: session } = useSession();
   const t = useTranslations("punchClock");
+  const locale = useLocale();
   const user = session?.user as SessionUser | undefined;
 
   const [clockState, setClockState] = useState<ClockState>("idle");
@@ -405,10 +406,13 @@ export default function StempeluhrSeite() {
                     <p className="mt-2.5 text-xs text-gray-400 tracking-wide">
                       {t("active")}{" "}
                       <span className="font-medium text-gray-500">
-                        {new Date(entry.clockInAt).toLocaleTimeString("de-DE", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(entry.clockInAt).toLocaleTimeString(
+                          locale === "en" ? "en-GB" : "de-DE",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </span>
                     </p>
                   )}

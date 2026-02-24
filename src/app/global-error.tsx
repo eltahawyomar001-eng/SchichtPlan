@@ -1,7 +1,28 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+
+// Global error is outside NextIntlClientProvider, so we read the cookie directly
+function getLocaleFromCookie(): "de" | "en" {
+  if (typeof document === "undefined") return "de";
+  const match = document.cookie.match(/(?:^|;\s*)locale=([^;]*)/);
+  return match?.[1] === "en" ? "en" : "de";
+}
+
+const messages = {
+  de: {
+    title: "Etwas ist schiefgelaufen",
+    description:
+      "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    tryAgain: "Erneut versuchen",
+  },
+  en: {
+    title: "Something went wrong",
+    description: "An unexpected error occurred. Please try again.",
+    tryAgain: "Try again",
+  },
+};
 
 export default function GlobalError({
   error,
@@ -10,12 +31,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const locale = useMemo(() => getLocaleFromCookie(), []);
+  const t = messages[locale];
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
 
   return (
-    <html lang="de">
+    <html lang={locale}>
       <body className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
@@ -34,17 +58,14 @@ export default function GlobalError({
             </svg>
           </div>
           <h1 className="mb-2 text-xl font-semibold text-gray-900">
-            Etwas ist schiefgelaufen
+            {t.title}
           </h1>
-          <p className="mb-6 text-sm text-gray-500">
-            Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es
-            erneut.
-          </p>
+          <p className="mb-6 text-sm text-gray-500">{t.description}</p>
           <button
             onClick={() => reset()}
             className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
           >
-            Erneut versuchen
+            {t.tryAgain}
           </button>
         </div>
       </body>

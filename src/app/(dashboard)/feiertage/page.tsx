@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { BUNDESLAENDER } from "@/lib/holidays";
 
@@ -20,6 +20,7 @@ interface HolidayResponse {
 
 export default function FeiertageSeite() {
   const t = useTranslations("holidays");
+  const locale = useLocale();
   const [data, setData] = useState<HolidayResponse | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [bundesland, setBundesland] = useState("");
@@ -101,14 +102,20 @@ export default function FeiertageSeite() {
             <ul className="divide-y divide-gray-100">
               {data.holidays.map((holiday, idx) => {
                 const d = new Date(holiday.date + "T00:00:00");
-                const weekday = d.toLocaleDateString("de-DE", {
-                  weekday: "long",
-                });
-                const dateFormatted = d.toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                });
+                const weekday = d.toLocaleDateString(
+                  locale === "en" ? "en-GB" : "de-DE",
+                  {
+                    weekday: "long",
+                  },
+                );
+                const dateFormatted = d.toLocaleDateString(
+                  locale === "en" ? "en-GB" : "de-DE",
+                  {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  },
+                );
                 const isPast = d < new Date();
 
                 return (

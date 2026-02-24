@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { Topbar } from "@/components/layout/topbar";
 import {
@@ -53,6 +53,7 @@ type Invitation = {
 export default function TeamPage() {
   const { data: session } = useSession();
   const t = useTranslations("team");
+  const locale = useLocale();
   const user = session?.user as SessionUser | undefined;
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -449,7 +450,7 @@ export default function TeamPage() {
                             <span>
                               {t("expiresOn")}{" "}
                               {new Date(inv.expiresAt).toLocaleDateString(
-                                "de-DE",
+                                locale === "en" ? "en-GB" : "de-DE",
                               )}
                             </span>
                           )}
@@ -510,7 +511,9 @@ export default function TeamPage() {
                       </p>
                       <p className="text-xs text-gray-400">
                         {roleLabels[inv.role]} &middot;{" "}
-                        {new Date(inv.createdAt).toLocaleDateString("de-DE")}
+                        {new Date(inv.createdAt).toLocaleDateString(
+                          locale === "en" ? "en-GB" : "de-DE",
+                        )}
                       </p>
                     </div>
                     <span

@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function Error({
   error,
@@ -10,6 +11,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("common");
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -33,16 +36,14 @@ export default function Error({
           </svg>
         </div>
         <h2 className="mb-2 text-lg font-semibold text-gray-900">
-          Fehler aufgetreten
+          {t("errorOccurred")}
         </h2>
-        <p className="mb-6 text-sm text-gray-500">
-          Beim Laden dieser Seite ist ein Fehler aufgetreten.
-        </p>
+        <p className="mb-6 text-sm text-gray-500">{t("errorLoadingPage")}</p>
         <button
           onClick={() => reset()}
           className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
         >
-          Erneut versuchen
+          {t("tryAgain")}
         </button>
       </div>
     </div>

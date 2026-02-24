@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { PlusIcon } from "@/components/icons";
 
@@ -105,6 +105,7 @@ const TRIGGER_FIELDS: Record<string, string[]> = {
 // ─── Page Component ─────────────────────────────────────────────
 export default function AutomatisierungSeite() {
   const t = useTranslations("automationRules");
+  const locale = useLocale();
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -234,7 +235,7 @@ export default function AutomatisierungSeite() {
   }
 
   function formatDate(iso: string): string {
-    return new Date(iso).toLocaleString("de-DE", {
+    return new Date(iso).toLocaleString(locale === "en" ? "en-GB" : "de-DE", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

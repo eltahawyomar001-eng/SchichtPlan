@@ -18,7 +18,7 @@ import {
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,7 @@ export default async function DashboardPage() {
   const workspaceId = user?.workspaceId;
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
+  const locale = await getLocale();
 
   // Guard: if no workspace yet (e.g. fresh OAuth sign-up), show setup prompt
   if (!workspaceId) {
@@ -317,7 +318,9 @@ export default async function DashboardPage() {
                       </div>
                       <div className="text-left sm:text-right">
                         <p className="text-xs text-gray-400">
-                          {new Date(shift.date).toLocaleDateString("de-DE")}
+                          {new Date(shift.date).toLocaleDateString(
+                            locale === "en" ? "en-GB" : "de-DE",
+                          )}
                         </p>
                         <p className="text-xs sm:text-sm text-gray-500">
                           {statusLabel(shift.status)}

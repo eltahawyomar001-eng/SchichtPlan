@@ -3,6 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function DashboardError({
   error,
@@ -11,6 +12,8 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("common");
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -34,14 +37,12 @@ export default function DashboardError({
           </svg>
         </div>
         <h2 className="mb-2 text-lg font-semibold text-gray-900">
-          Fehler aufgetreten
+          {t("errorOccurred")}
         </h2>
-        <p className="mb-1 text-sm text-gray-500">
-          Beim Laden ist ein Fehler aufgetreten.
-        </p>
+        <p className="mb-1 text-sm text-gray-500">{t("errorLoading")}</p>
         {error.digest && (
           <p className="mb-4 font-mono text-xs text-gray-400">
-            Fehlercode: {error.digest}
+            {t("errorCode")}: {error.digest}
           </p>
         )}
         <div className="flex items-center justify-center gap-3">
@@ -49,13 +50,13 @@ export default function DashboardError({
             onClick={() => reset()}
             className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
           >
-            Erneut versuchen
+            {t("tryAgain")}
           </button>
           <Link
             href="/dashboard"
             className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Zum Dashboard
+            {t("goToDashboard")}
           </Link>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 
 interface MonthCloseRecord {
@@ -16,6 +16,7 @@ interface MonthCloseRecord {
 
 export default function MonatsabschlussSeite() {
   const t = useTranslations("monthClose");
+  const locale = useLocale();
   const [records, setRecords] = useState<MonthCloseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
@@ -162,7 +163,7 @@ export default function MonatsabschlussSeite() {
                       <p className="text-xs text-gray-400">
                         {record?.exportedAt
                           ? new Date(record.exportedAt).toLocaleDateString(
-                              "de-DE",
+                              locale === "en" ? "en-GB" : "de-DE",
                             )
                           : "—"}
                       </p>

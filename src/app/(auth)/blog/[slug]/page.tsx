@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type SVGProps } from "react";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   ShiftfyMark,
   ClipboardIcon,
@@ -15,7 +15,7 @@ interface BlogPostContent {
   title: string;
   date: string;
   readTime: string;
-  category: string;
+  categoryKey: string;
   Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;
   content: string[];
 }
@@ -25,7 +25,7 @@ const POSTS: Record<string, BlogPostContent> = {
     title: "10 Best Practices für die Schichtplanung",
     date: "2025-01-15",
     readTime: "5 min",
-    category: "Planung",
+    categoryKey: "categoryPlanning",
     Icon: ClipboardIcon,
     content: [
       "Die effiziente Schichtplanung ist eine der größten Herausforderungen im Personalmanagement. Mit den richtigen Strategien und Tools können Sie nicht nur die Produktivität steigern, sondern auch die Zufriedenheit Ihrer Mitarbeiter erhöhen.",
@@ -45,7 +45,7 @@ const POSTS: Record<string, BlogPostContent> = {
     title: "Arbeitszeitgesetz 2025 – Was Arbeitgeber wissen müssen",
     date: "2025-01-10",
     readTime: "7 min",
-    category: "Recht",
+    categoryKey: "categoryLaw",
     Icon: ScaleIcon,
     content: [
       "Das Arbeitszeitgesetz (ArbZG) regelt in Deutschland die zulässigen Arbeitszeiten, Pausen und Ruhezeiten. Für Arbeitgeber, die mit Schichtarbeit planen, ist die Einhaltung dieser Vorschriften besonders wichtig.",
@@ -62,7 +62,7 @@ const POSTS: Record<string, BlogPostContent> = {
     title: "Mitarbeiterbindung in der Schichtarbeit",
     date: "2025-01-05",
     readTime: "6 min",
-    category: "HR",
+    categoryKey: "categoryHR",
     Icon: UsersIcon,
     content: [
       "Fluktuation in schichtbasierten Betrieben ist oft höher als in Unternehmen mit regulären Arbeitszeiten. Doch mit den richtigen Maßnahmen können Sie Ihre Mitarbeiter langfristig binden.",
@@ -79,7 +79,7 @@ const POSTS: Record<string, BlogPostContent> = {
     title: "Digitale Stempeluhr: Vorteile gegenüber Papier",
     date: "2024-12-20",
     readTime: "4 min",
-    category: "Technologie",
+    categoryKey: "categoryTech",
     Icon: ClockIcon,
     content: [
       "Die Zeiten der Stechuhr und handschriftlichen Stundenzettel sind vorbei. Digitale Zeiterfassungssysteme bieten zahlreiche Vorteile für Unternehmen jeder Größe.",
@@ -98,14 +98,18 @@ const CATEGORY_STYLES: Record<
   string,
   { bg: string; text: string; dot: string }
 > = {
-  Planung: {
+  categoryPlanning: {
     bg: "bg-emerald-50",
     text: "text-emerald-700",
     dot: "bg-emerald-500",
   },
-  Recht: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
-  HR: { bg: "bg-sky-50", text: "text-sky-700", dot: "bg-sky-500" },
-  Technologie: {
+  categoryLaw: {
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    dot: "bg-amber-500",
+  },
+  categoryHR: { bg: "bg-sky-50", text: "text-sky-700", dot: "bg-sky-500" },
+  categoryTech: {
     bg: "bg-violet-50",
     text: "text-violet-700",
     dot: "bg-violet-500",
@@ -143,15 +147,23 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const t = await getTranslations("blog");
+  const tc = await getTranslations("common");
+  const tf = await getTranslations("footer");
+  const locale = await getLocale();
   const allSlugs = Object.keys(POSTS);
-  const currentIdx = allSlugs.indexOf(slug);
+
+  const category = t(post.categoryKey as Parameters<typeof t>[0]);
 
   const relatedPosts = allSlugs
     .filter((s) => s !== slug)
     .slice(0, 3)
-    .map((s) => ({ slug: s, ...POSTS[s] }));
+    .map((s) => ({
+      slug: s,
+      ...POSTS[s],
+      category: t(POSTS[s].categoryKey as Parameters<typeof t>[0]),
+    }));
 
-  const style = CATEGORY_STYLES[post.category] ?? {
+  const style = CATEGORY_STYLES[post.categoryKey] ?? {
     bg: "bg-gray-50",
     text: "text-gray-700",
     dot: "bg-gray-400",
@@ -192,19 +204,19 @@ export default async function BlogPostPage({ params }: Props) {
               href="/pricing"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
-              Preise
+              {tc("pricing")}
             </Link>
             <Link
               href="/login"
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
-              Login
+              {tc("login")}
             </Link>
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              {tc("startFree")}
             </Link>
           </div>
         </div>
@@ -239,14 +251,17 @@ export default async function BlogPostPage({ params }: Props) {
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-              {post.category}
+              {category}
             </span>
             <span className="text-sm text-gray-400">
-              {new Date(post.date).toLocaleDateString("de-DE", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
+              {new Date(post.date).toLocaleDateString(
+                locale === "en" ? "en-GB" : "de-DE",
+                {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                },
+              )}
             </span>
             <span className="text-sm text-gray-400">
               · {post.readTime} {t("readTime")}
@@ -318,11 +333,11 @@ export default async function BlogPostPage({ params }: Props) {
         {relatedPosts.length > 0 && (
           <section className="mt-14 pt-10 border-t border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Weitere Artikel
+              {t("relatedArticles")}
             </h2>
             <div className="grid sm:grid-cols-3 gap-5">
               {relatedPosts.map((related) => {
-                const rStyle = CATEGORY_STYLES[related.category] ?? {
+                const rStyle = CATEGORY_STYLES[related.categoryKey] ?? {
                   bg: "bg-gray-50",
                   text: "text-gray-700",
                   dot: "bg-gray-400",
@@ -366,24 +381,23 @@ export default async function BlogPostPage({ params }: Props) {
       <section className="border-t border-gray-200/60 bg-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Bereit für effiziente Schichtplanung?
+            {t("ctaTitle")}
           </h2>
           <p className="mt-3 text-gray-600 max-w-lg mx-auto">
-            Starten Sie kostenlos mit bis zu 5 Mitarbeitern – keine Kreditkarte
-            nötig.
+            {t("ctaSubtitle")}
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/register"
               className="bg-brand-gradient text-white font-semibold px-6 py-3 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              {tc("startFree")}
             </Link>
             <Link
               href="/pricing"
               className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-3"
             >
-              Preise ansehen →
+              {tc("viewPricing")}
             </Link>
           </div>
         </div>
@@ -396,35 +410,35 @@ export default async function BlogPostPage({ params }: Props) {
             <span className="font-bold text-sm text-gray-900">Shiftfy</span>
           </div>
           <p className="text-sm text-gray-400 text-center">
-            © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
+            © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
             <Link
               href="/datenschutz"
               className="hover:text-gray-600 transition-colors"
             >
-              Datenschutz
+              {tf("privacy")}
             </Link>
             <Link
               href="/impressum"
               className="hover:text-gray-600 transition-colors"
             >
-              Impressum
+              {tf("imprint")}
             </Link>
             <Link href="/agb" className="hover:text-gray-600 transition-colors">
-              AGB
+              {tf("terms")}
             </Link>
             <Link
               href="/widerruf"
               className="hover:text-gray-600 transition-colors"
             >
-              Widerruf
+              {tf("revocation")}
             </Link>
             <Link
               href="/barrierefreiheit"
               className="hover:text-gray-600 transition-colors"
             >
-              Barrierefreiheit
+              {tf("accessibility")}
             </Link>
           </div>
         </div>

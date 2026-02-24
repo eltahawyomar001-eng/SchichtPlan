@@ -950,7 +950,8 @@
       "timeEntryRejected": "Zeiteintrag abgelehnt",
       "timeEntryCorrected": "Korrektur angefordert",
       "timeEntryConfirmed": "Zeiteintrag bestätigt",
-      "overtimeAlert": "Überstundenwarnung"
+      "overtimeAlert": "Überstundenwarnung",
+      "breakReminder": "Pausenerinnerung"
     }
   },
   "notificationPrefs": {

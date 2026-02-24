@@ -950,7 +950,8 @@
       "timeEntryRejected": "Time entry rejected",
       "timeEntryCorrected": "Correction requested",
       "timeEntryConfirmed": "Time entry confirmed",
-      "overtimeAlert": "Overtime alert"
+      "overtimeAlert": "Overtime alert",
+      "breakReminder": "Break reminder"
     }
   },
   "notificationPrefs": {

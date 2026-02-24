@@ -53,6 +53,7 @@ export function NotificationDropdown() {
     TIME_ENTRY_CORRECTED: t("types.timeEntryCorrected"),
     TIME_ENTRY_CONFIRMED: t("types.timeEntryConfirmed"),
     OVERTIME_ALERT: t("types.overtimeAlert"),
+    BREAK_REMINDER: t("types.breakReminder"),
   };
 
   function getTranslatedTitle(n: Notification) {
@@ -172,6 +173,7 @@ export function NotificationDropdown() {
     TIME_ENTRY_CORRECTED: { icon: PencilIcon, color: "text-amber-500" },
     TIME_ENTRY_CONFIRMED: { icon: CircleCheckIcon, color: "text-emerald-600" },
     OVERTIME_ALERT: { icon: AlertCircleIcon, color: "text-red-600" },
+    BREAK_REMINDER: { icon: AlertTriangleIcon, color: "text-orange-500" },
   };
 
   function getNotificationIcon(type: string) {

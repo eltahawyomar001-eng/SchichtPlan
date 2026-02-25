@@ -4,13 +4,15 @@ import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe } from "@/lib/stripe";
-import { getSubscription } from "@/lib/subscription";
+import { getSubscription, isSimulationMode } from "@/lib/subscription";
 import { log } from "@/lib/logger";
 
 /**
  * POST /api/billing/portal
  * Creates a Stripe Customer Portal session so users can manage
  * their subscription, update payment methods, view invoices, etc.
+ *
+ * In simulation mode, redirects to the billing page with a sim flag.
  */
 export async function POST() {
   try {
@@ -22,6 +24,14 @@ export async function POST() {
     const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
+
+    // In simulation mode, redirect to the billing page
+    if (isSimulationMode()) {
+      return NextResponse.json({
+        url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?portal=sim`,
+        simulation: true,
+      });
+    }
 
     const sub = await getSubscription(user.workspaceId);
     if (!sub?.stripeCustomerId) {

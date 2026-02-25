@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
+import { requireAdmin } from "@/lib/authorization";
 import { sendEmail } from "@/lib/notifications";
 import { log } from "@/lib/logger";
 
 /**
  * POST /api/test-email
  * Send a test email to verify Resend is working.
- * Only accessible to authenticated users.
+ * Only accessible to OWNER / ADMIN.
  */
 export async function POST(req: Request) {
   try {
@@ -17,8 +18,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = session.user as SessionUser;
+    const forbidden = requireAdmin(user);
+    if (forbidden) return forbidden;
+
     const body = await req.json();
-    const to = body.to || (session.user as SessionUser).email;
+    const to = body.to || user.email;
 
     if (!to) {
       return NextResponse.json(

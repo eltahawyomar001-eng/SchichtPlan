@@ -133,6 +133,16 @@ export async function POST(req: Request, { params }: RouteParams) {
       );
     }
 
+    // EMPLOYEE can only submit their own time entries
+    if (action === "submit" && user.role === "EMPLOYEE") {
+      if (!user.employeeId || entry.employeeId !== user.employeeId) {
+        return NextResponse.json(
+          { error: "Sie können nur eigene Zeiteinträge einreichen." },
+          { status: 403 },
+        );
+      }
+    }
+
     // Build update data
     const updateData: Record<string, unknown> = {
       status: transition.to,

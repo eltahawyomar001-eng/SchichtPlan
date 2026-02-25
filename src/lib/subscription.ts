@@ -313,3 +313,107 @@ export async function requireLocationSlot(
     { status: 403 },
   );
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Stripe Simulation Mode
+   ═══════════════════════════════════════════════════════════════
+   When STRIPE_SIMULATION_MODE=true, billing flows skip real Stripe
+   and directly update the database. This lets testers subscribe,
+   upgrade, and downgrade without real payments.
+
+   Set STRIPE_SIMULATION_MODE=true in .env for testing.
+   Remove or set to false before connecting real Stripe.
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Check if Stripe simulation mode is enabled.
+ */
+export function isSimulationMode(): boolean {
+  return process.env.STRIPE_SIMULATION_MODE === "true";
+}
+
+/**
+ * Simulate a plan change without Stripe.
+ * Directly updates the subscription in the database.
+ */
+export async function simulateSubscription({
+  workspaceId,
+  plan,
+  billingCycle,
+}: {
+  workspaceId: string;
+  plan: PlanId;
+  billingCycle: "monthly" | "annual";
+}) {
+  const planConfig = PLANS[plan];
+  if (!planConfig) throw new Error(`Unknown plan: ${plan}`);
+
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(
+    periodEnd.getMonth() + (billingCycle === "annual" ? 12 : 1),
+  );
+
+  // For starter (free), downgrade
+  if (plan === "starter") {
+    return prisma.subscription.upsert({
+      where: { workspaceId },
+      update: {
+        plan: "STARTER",
+        status: "ACTIVE",
+        stripePriceId: null,
+        stripeSubscriptionId: null,
+        stripeCustomerId: null,
+        cancelAtPeriodEnd: false,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        trialStart: null,
+        trialEnd: null,
+      },
+      create: {
+        workspaceId,
+        plan: "STARTER",
+        status: "ACTIVE",
+        seatCount: 1,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+      },
+    });
+  }
+
+  // For paid plans, simulate activation
+  const trialEnd =
+    planConfig.trialDays > 0
+      ? new Date(now.getTime() + planConfig.trialDays * 24 * 60 * 60 * 1000)
+      : null;
+
+  return prisma.subscription.upsert({
+    where: { workspaceId },
+    update: {
+      plan: planConfig.prismaKey,
+      status: trialEnd ? "TRIALING" : "ACTIVE",
+      stripeCustomerId: `sim_cus_${workspaceId.slice(0, 8)}`,
+      stripeSubscriptionId: `sim_sub_${Date.now()}`,
+      stripePriceId: `sim_price_${plan}_${billingCycle}`,
+      seatCount: 1,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      trialStart: trialEnd ? now : null,
+      trialEnd,
+      cancelAtPeriodEnd: false,
+    },
+    create: {
+      workspaceId,
+      plan: planConfig.prismaKey,
+      status: trialEnd ? "TRIALING" : "ACTIVE",
+      stripeCustomerId: `sim_cus_${workspaceId.slice(0, 8)}`,
+      stripeSubscriptionId: `sim_sub_${Date.now()}`,
+      stripePriceId: `sim_price_${plan}_${billingCycle}`,
+      seatCount: 1,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      trialStart: trialEnd ? now : null,
+      trialEnd,
+    },
+  });
+}

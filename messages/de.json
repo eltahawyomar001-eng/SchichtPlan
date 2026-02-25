@@ -751,7 +751,10 @@
     "faqInvoice": "Wo finde ich meine Rechnungen?",
     "faqInvoiceAnswer": "Alle Rechnungen sind über das Stripe-Kundenportal verfügbar. Klicken Sie auf „Abonnement verwalten“.",
     "faqTax": "Ist Umsatzsteuer enthalten?",
-    "faqTaxAnswer": "Die Preise verstehen sich zzgl. MwSt. Beim Checkout wird die gesetzliche MwSt. ausgewiesen. Sie können dort Ihre USt-IdNr. hinterlegen."
+    "faqTaxAnswer": "Die Preise verstehen sich zzgl. MwSt. Beim Checkout wird die gesetzliche MwSt. ausgewiesen. Sie können dort Ihre USt-IdNr. hinterlegen.",
+    "sandboxBanner": "Sandbox-Modus",
+    "sandboxBannerDesc": "Abrechnungsänderungen werden simuliert — es werden keine echten Zahlungen verarbeitet. Pläne werden sofort in der Datenbank aktualisiert.",
+    "simPortalMsg": "Die Abonnement-Verwaltung wird simuliert — kein Stripe-Portal im Sandbox-Modus verfügbar."
   },
   "roles": {
     "title": "Rollen und Berechtigungen",

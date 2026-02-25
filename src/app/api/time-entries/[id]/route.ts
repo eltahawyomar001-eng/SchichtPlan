@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { isEmployee } from "@/lib/authorization";
 import {
   calcGrossMinutes,
   calcBreakMinutes,
@@ -38,6 +39,16 @@ export async function GET(_req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    // EMPLOYEE can only view their own time entries
+    const user = session.user as SessionUser;
+    if (
+      isEmployee(user) &&
+      user.employeeId &&
+      entry.employeeId !== user.employeeId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     return NextResponse.json(entry);
   } catch (error) {
     log.error("Error fetching time entry:", { error: error });
@@ -63,6 +74,15 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // EMPLOYEE can only edit their own time entries
+    if (
+      isEmployee(user) &&
+      user.employeeId &&
+      existing.employeeId !== user.employeeId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Only ENTWURF or KORREKTUR can be edited
@@ -160,6 +180,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
 
     const { id } = await params;
     const workspaceId = (session.user as SessionUser).workspaceId;
+    const currentUser = session.user as SessionUser;
 
     const existing = await prisma.timeEntry.findFirst({
       where: { id, workspaceId: workspaceId ?? undefined },
@@ -167,6 +188,15 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
 
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // EMPLOYEE can only delete their own time entries
+    if (
+      isEmployee(currentUser) &&
+      currentUser.employeeId &&
+      existing.employeeId !== currentUser.employeeId
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Only drafts can be deleted

@@ -4,7 +4,13 @@ import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe, getPlanByPriceId } from "@/lib/stripe";
-import { ensureSubscription } from "@/lib/subscription";
+import {
+  ensureSubscription,
+  isSimulationMode,
+  simulateSubscription,
+} from "@/lib/subscription";
+import type { PlanId } from "@/lib/stripe";
+import { PLANS } from "@/lib/stripe";
 import { checkoutSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
@@ -26,9 +32,36 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
+    const body = await req.json();
+
+    // ── Simulation mode: skip Stripe entirely ──
+    if (isSimulationMode()) {
+      const planId = (body.plan as string)?.toLowerCase() as PlanId;
+      const billingCycle = body.billingCycle ?? "monthly";
+
+      if (!planId || !PLANS[planId]) {
+        return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+      }
+
+      await simulateSubscription({
+        workspaceId: user.workspaceId,
+        plan: planId,
+        billingCycle,
+      });
+
+      log.info(
+        `[Billing:Simulate] Checkout → ${planId} (${billingCycle}) for workspace ${user.workspaceId}`,
+      );
+
+      // Return the success URL so the UI redirects back to the billing page
+      return NextResponse.json({
+        url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
+        simulation: true,
+      });
+    }
+
     const stripe = getStripe();
 
-    const body = await req.json();
     const parsed = validateBody(checkoutSchema, body);
     if (!parsed.success) return parsed.response;
     const { priceId, quantity } = parsed.data;

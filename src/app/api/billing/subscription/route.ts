@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
-import { getSubscription, ensureSubscription } from "@/lib/subscription";
+import {
+  getSubscription,
+  ensureSubscription,
+  isSimulationMode,
+} from "@/lib/subscription";
 import { PLANS, type PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 
@@ -37,6 +41,7 @@ export async function GET() {
       trialEnd: sub.trialEnd,
       hasStripeSubscription: !!sub.stripeSubscriptionId,
       limits: planConfig?.limits ?? PLANS.starter.limits,
+      simulationMode: isSimulationMode(),
     });
   } catch (error) {
     log.error("[Billing] Subscription fetch error:", { error: error });

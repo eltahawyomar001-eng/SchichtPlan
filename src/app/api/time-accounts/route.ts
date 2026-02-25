@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { requirePermission, isEmployee } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/time-accounts ────────────────────────────────────
@@ -24,6 +25,11 @@ export async function GET(req: Request) {
 
     const where: Record<string, unknown> = { workspaceId };
     if (employeeId) where.employeeId = employeeId;
+
+    // EMPLOYEE can only see their own time account
+    if (isEmployee(user) && user.employeeId) {
+      where.employeeId = user.employeeId;
+    }
 
     const accounts = await prisma.timeAccount.findMany({
       where,
@@ -87,6 +93,10 @@ export async function POST(req: Request) {
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
+
+    // Only management can create/update time accounts
+    const forbidden = requirePermission(user, "time-accounts", "create");
+    if (forbidden) return forbidden;
 
     const body = await req.json();
 

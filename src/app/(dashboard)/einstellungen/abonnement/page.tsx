@@ -33,6 +33,7 @@ interface SubscriptionData {
   seatCount: number;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  simulationMode?: boolean;
   limits: {
     maxEmployees: number;
     maxLocations: number;
@@ -86,9 +87,20 @@ function BillingContent() {
   // Check for success/cancel from Stripe redirect
   useEffect(() => {
     const billingParam = searchParams.get("billing");
+    const portalParam = searchParams.get("portal");
     if (billingParam === "success") {
       setSuccessMsg(t("checkoutSuccess"));
-      // Clear the URL param
+      // Re-fetch subscription to reflect the updated plan
+      fetch("/api/billing/subscription")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) setSubscription(data);
+        })
+        .catch(() => {});
+      window.history.replaceState({}, "", "/einstellungen/abonnement");
+    }
+    if (portalParam === "sim") {
+      setSuccessMsg(t("simPortalMsg"));
       window.history.replaceState({}, "", "/einstellungen/abonnement");
     }
   }, [searchParams, t]);
@@ -319,6 +331,17 @@ function BillingContent() {
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-medium text-emerald-700">
             <CheckCircleIcon className="h-5 w-5 shrink-0" />
             {successMsg}
+          </div>
+        )}
+
+        {/* Sandbox mode banner */}
+        {subscription?.simulationMode && (
+          <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800">
+            <span className="text-lg leading-none mt-0.5">🧪</span>
+            <div>
+              <p className="font-semibold">{t("sandboxBanner")}</p>
+              <p className="mt-0.5 text-amber-700">{t("sandboxBannerDesc")}</p>
+            </div>
           </div>
         )}
 

@@ -751,7 +751,10 @@
     "faqInvoice": "Where can I find my invoices?",
     "faqInvoiceAnswer": "All invoices are available through the Stripe customer portal. Click “Manage Subscription” above.",
     "faqTax": "Is VAT included?",
-    "faqTaxAnswer": "Prices are shown excluding VAT. The applicable VAT is displayed during checkout. You can add your VAT ID at that time."
+    "faqTaxAnswer": "Prices are shown excluding VAT. The applicable VAT is displayed during checkout. You can add your VAT ID at that time.",
+    "sandboxBanner": "Sandbox Mode",
+    "sandboxBannerDesc": "Billing changes are simulated — no real payments are processed. Plans update instantly in the database.",
+    "simPortalMsg": "Billing management is simulated — no Stripe portal available in sandbox mode."
   },
   "roles": {
     "title": "Roles and Permissions",

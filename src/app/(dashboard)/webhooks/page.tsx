@@ -65,14 +65,18 @@ export default function WebhooksSeite() {
     setError(null);
     try {
       const res = await fetch("/api/webhooks");
-      if (res.ok) setHooks(await res.json());
-      else setError(tc("errorLoading"));
+      if (res.ok) {
+        setHooks(await res.json());
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (!isPlanLimit) setError(tc("errorLoading"));
+      }
     } catch {
       setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }, [tc]);
+  }, [tc, handlePlanLimit]);
 
   useEffect(() => {
     fetchHooks();

@@ -40,6 +40,7 @@ export { HandRaisedIcon } from "./HandRaisedIcon";
 export { SwapIcon } from "./SwapIcon";
 export { ScaleIcon } from "./ScaleIcon";
 export { FileExportIcon } from "./FileExportIcon";
+export { PaperclipIcon } from "./PaperclipIcon";
 export { GlobeIcon } from "./GlobeIcon";
 export { DEFlagIcon } from "./DEFlagIcon";
 export { GBFlagIcon } from "./GBFlagIcon";

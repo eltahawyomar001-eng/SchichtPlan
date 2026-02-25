@@ -155,6 +155,7 @@ export async function POST(req: Request) {
         halfDayEnd: body.halfDayEnd || false,
         totalDays,
         reason: body.reason || null,
+        documentUrl: body.documentUrl || null,
         employeeId: body.employeeId,
         workspaceId,
       },

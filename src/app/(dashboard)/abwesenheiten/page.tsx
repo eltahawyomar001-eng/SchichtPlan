@@ -16,6 +16,7 @@ import {
   XIcon,
   CheckCircleIcon,
   CalendarOffIcon,
+  PaperclipIcon,
 } from "@/components/icons";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
@@ -40,6 +41,7 @@ interface AbsenceRequest {
   halfDayEnd: boolean;
   totalDays: number;
   reason: string | null;
+  documentUrl: string | null;
   status: string;
   reviewNote: string | null;
   createdAt: string;
@@ -103,11 +105,20 @@ export default function AbwesenheitenPage() {
     reason: "",
   });
 
+  // Document upload state
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [documentName, setDocumentName] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // Auto-fill employeeId for EMPLOYEE role
   const openForm = useCallback(() => {
     if (!canManage && user?.employeeId) {
       setFormData((prev) => ({ ...prev, employeeId: user.employeeId! }));
     }
+    setDocumentUrl(null);
+    setDocumentName(null);
+    setUploadError(null);
     setShowForm(true);
   }, [canManage, user]);
 
@@ -150,7 +161,7 @@ export default function AbwesenheitenPage() {
       const res = await fetch("/api/absences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, documentUrl }),
       });
       if (res.ok) {
         setShowForm(false);
@@ -163,6 +174,9 @@ export default function AbwesenheitenPage() {
           halfDayEnd: false,
           reason: "",
         });
+        setDocumentUrl(null);
+        setDocumentName(null);
+        setUploadError(null);
         fetchAbsences();
       } else {
         const isPlanLimit = await handlePlanLimit(res);
@@ -190,6 +204,38 @@ export default function AbwesenheitenPage() {
       fetchAbsences();
     } catch {
       setLoadError(tc("errorOccurred"));
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/absences/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUploadError(data.error || t("form.uploadError"));
+        return;
+      }
+
+      setDocumentUrl(data.url);
+      setDocumentName(file.name);
+    } catch {
+      setUploadError(t("form.uploadError"));
+    } finally {
+      setUploading(false);
+      // Reset the input so the same file can be re-selected
+      e.target.value = "";
     }
   }
 
@@ -375,6 +421,17 @@ export default function AbwesenheitenPage() {
                               {absence.reason}
                             </p>
                           )}
+                          {absence.documentUrl && (
+                            <a
+                              href={absence.documentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 mt-1"
+                            >
+                              <PaperclipIcon className="h-3.5 w-3.5" />
+                              {t("form.viewDocument")}
+                            </a>
+                          )}
                           {absence.reviewNote &&
                             absence.status !== "AUSSTEHEND" && (
                               <p className="text-xs text-gray-500 mt-1 italic">
@@ -553,6 +610,62 @@ export default function AbwesenheitenPage() {
                     className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
                     placeholder={t("form.reasonPlaceholder")}
                   />
+                </div>
+
+                {/* Document upload */}
+                <div>
+                  <Label>{t("form.document")}</Label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {formData.category === "KRANK"
+                      ? t("form.documentHintKrank")
+                      : t("form.documentHint")}
+                  </p>
+
+                  {documentUrl ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+                      <PaperclipIcon className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span className="text-sm text-emerald-700 truncate flex-1">
+                        {documentName || t("form.uploadSuccess")}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDocumentUrl(null);
+                          setDocumentName(null);
+                        }}
+                        className="text-emerald-500 hover:text-red-500 transition-colors"
+                        title={t("form.removeDocument")}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-3 py-4 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors">
+                      {uploading ? (
+                        <span className="text-sm text-gray-500">
+                          {t("form.uploading")}
+                        </span>
+                      ) : (
+                        <>
+                          <PaperclipIcon className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-500">
+                            {t("form.document")}
+                          </span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+
+                  {uploadError && (
+                    <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">

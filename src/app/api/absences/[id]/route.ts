@@ -38,6 +38,19 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const data: Record<string, unknown> = {};
 
+    // ── Document attachment (employee can add to own, management to any) ──
+    if (body.documentUrl !== undefined) {
+      if (isEmployee(user)) {
+        const linkedEmployee = await prisma.employee.findFirst({
+          where: { workspaceId: user.workspaceId, email: user.email },
+        });
+        if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+      data.documentUrl = body.documentUrl || null;
+    }
+
     if (body.status) {
       // Approve/reject requires management role
       if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {

@@ -445,6 +445,7 @@ model AbsenceRequest {
   halfDayEnd   Boolean            @default(false)
   totalDays   Float               @default(0)
   reason      String?             @db.Text
+  documentUrl String?
   status      AbsenceRequestStatus @default(AUSSTEHEND)
   reviewedBy  String?
   reviewedAt  DateTime?

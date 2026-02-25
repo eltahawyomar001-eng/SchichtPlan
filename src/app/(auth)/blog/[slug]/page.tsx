@@ -23,7 +23,7 @@ interface BlogPostContent {
 const POSTS: Record<string, BlogPostContent> = {
   "schichtplanung-best-practices": {
     title: "10 Best Practices für die Schichtplanung",
-    date: "2025-01-15",
+    date: "2026-01-15",
     readTime: "5 min",
     categoryKey: "categoryPlanning",
     Icon: ClipboardIcon,
@@ -43,7 +43,7 @@ const POSTS: Record<string, BlogPostContent> = {
   },
   "arbeitszeitgesetz-2025": {
     title: "Arbeitszeitgesetz 2025 – Was Arbeitgeber wissen müssen",
-    date: "2025-01-10",
+    date: "2026-01-10",
     readTime: "7 min",
     categoryKey: "categoryLaw",
     Icon: ScaleIcon,
@@ -60,7 +60,7 @@ const POSTS: Record<string, BlogPostContent> = {
   },
   "mitarbeiterbindung-schichtarbeit": {
     title: "Mitarbeiterbindung in der Schichtarbeit",
-    date: "2025-01-05",
+    date: "2026-01-05",
     readTime: "6 min",
     categoryKey: "categoryHR",
     Icon: UsersIcon,
@@ -77,7 +77,7 @@ const POSTS: Record<string, BlogPostContent> = {
   },
   "digitale-stempeluhr-vorteile": {
     title: "Digitale Stempeluhr: Vorteile gegenüber Papier",
-    date: "2024-12-20",
+    date: "2026-06-20",
     readTime: "4 min",
     categoryKey: "categoryTech",
     Icon: ClockIcon,

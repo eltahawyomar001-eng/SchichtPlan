@@ -73,33 +73,35 @@ export function CombinedJsonLd() {
             price: "0",
             priceCurrency: "EUR",
             name: "Starter",
-            description: "Kostenlos für bis zu 5 Mitarbeiter",
+            description: "Kostenlos für bis zu 5 Mitarbeiter und 1 Standort",
           },
           {
             "@type": "Offer",
-            price: "2.99",
+            price: "29",
             priceCurrency: "EUR",
             name: "Team",
-            description: "Pro Mitarbeiter/Monat",
+            description:
+              "Pauschal pro Workspace/Monat — unbegrenzte Mitarbeiter",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: "2.99",
+              price: "29",
               priceCurrency: "EUR",
-              unitText: "Mitarbeiter/Monat",
+              unitText: "Workspace/Monat",
               billingDuration: "P1M",
             },
           },
           {
             "@type": "Offer",
-            price: "4.99",
+            price: "59",
             priceCurrency: "EUR",
             name: "Business",
-            description: "Pro Mitarbeiter/Monat",
+            description:
+              "Pauschal pro Workspace/Monat — DATEV, API, Analysen, Priority-Support",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: "4.99",
+              price: "59",
               priceCurrency: "EUR",
-              unitText: "Mitarbeiter/Monat",
+              unitText: "Workspace/Monat",
               billingDuration: "P1M",
             },
           },
@@ -143,7 +145,7 @@ export function FAQJsonLd() {
     {
       question: "Was kostet Shiftfy?",
       answer:
-        "Shiftfy bietet einen kostenlosen Starter-Plan für bis zu 5 Mitarbeiter. Der Team-Plan kostet 2,99€ pro Mitarbeiter/Monat und der Business-Plan 4,99€ pro Mitarbeiter/Monat.",
+        "Shiftfy bietet einen kostenlosen Starter-Plan für bis zu 5 Mitarbeiter. Der Team-Plan kostet pauschal 29 € pro Workspace/Monat (24 € bei jährlicher Zahlung) und der Business-Plan 59 € pro Workspace/Monat (49 € jährlich) — jeweils mit unbegrenzter Mitarbeiterzahl.",
     },
     {
       question: "Ist Shiftfy DSGVO-konform?",

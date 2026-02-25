@@ -7,12 +7,14 @@ const config = {
   exclude: [
     "/dashboard*",
     "/mitarbeiter*",
-    "/schichtplan*",
+    "/schichtplan",
+    "/schichtplan/**",
     "/einstellungen*",
     "/standorte*",
     "/abteilungen*",
     "/qualifikationen*",
-    "/zeiterfassung*",
+    "/zeiterfassung",
+    "/zeiterfassung/**",
     "/abwesenheiten*",
     "/verfuegbarkeiten*",
     "/schichttausch*",
@@ -38,7 +40,13 @@ const config = {
   ],
   transform: async (config, path) => {
     // Assign higher priority to key SEO pages
-    const highPriority = ["/", "/pricing", "/blog"];
+    const highPriority = [
+      "/",
+      "/pricing",
+      "/blog",
+      "/zeiterfassung-software",
+      "/schichtplanung-software",
+    ];
     const medPriority = ["/login", "/register"];
 
     let priority = config.priority;

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import {
   ShiftfyMark,
@@ -17,11 +16,6 @@ import {
   XIcon,
   DownloadIcon,
   MapPinIcon,
-  UtensilsCrossedIcon,
-  ShoppingCartIcon,
-  HeartPulseIcon,
-  WrenchIcon,
-  TruckIcon,
   SwapIcon,
   TemplateIcon,
   AwardIcon,
@@ -29,64 +23,36 @@ import {
   SettingsIcon,
   CalendarUsersIcon,
   FlagIcon,
-  DatabaseIcon,
-  LayersIcon,
   BuildingIcon,
   BriefcaseIcon,
   PalmtreeIcon,
   SmartphoneIcon,
-  LinkIcon,
+  StarIcon,
+  TabletIcon,
+  MonitorIcon,
+  HeadsetIcon,
+  QuoteIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 
-/* ── Lazy-load heavy SVG illustrations below the fold (LCP optimisation) ── */
-const PlanningIllustration = dynamic(
-  () =>
-    import("@/components/svgs/PlanningIllustration").then(
-      (m) => m.PlanningIllustration,
-    ),
-  { ssr: false },
-);
-const DistributionIllustration = dynamic(
-  () =>
-    import("@/components/svgs/DistributionIllustration").then(
-      (m) => m.DistributionIllustration,
-    ),
-  { ssr: false },
-);
-const DayToDayIllustration = dynamic(
-  () =>
-    import("@/components/svgs/DayToDayIllustration").then(
-      (m) => m.DayToDayIllustration,
-    ),
-  { ssr: false },
-);
-const ReportingIllustration = dynamic(
-  () =>
-    import("@/components/svgs/ReportingIllustration").then(
-      (m) => m.ReportingIllustration,
-    ),
-  { ssr: false },
-);
-
 /**
- * Full Connecteam-style landing page for Shiftfy.
+ * Full landing page for Shiftfy — Clockify-inspired redesign.
  *
  * Structure:
  * 1. Navbar
- * 2. Hero section
- * 3. Trusted-by bar
- * 4. Four-step feature sections (Planning → Distribution → Day-to-Day → Reporting)
- * 5. Benefits grid
- * 6. FAQ accordion
- * 7. CTA footer
- *
- * All icons/graphics are inline SVG TypeScript components — animation-ready.
+ * 2. Hero section with social proof stats
+ * 3. Interactive feature tabs (Zeiterfassung / Schichtplanung / Abwesenheiten / Berichte)
+ * 4. Benefits grid
+ * 5. Testimonials carousel
+ * 6. App showcase (PWA on all devices)
+ * 7. Trust / Security section
+ * 8. Pricing
+ * 9. FAQ
+ * 10. CTA footer
+ * 11. Mega-footer
  */
 export function LandingPage() {
-  const t = useTranslations("landing");
-
   return (
     <div className="min-h-screen bg-white">
       {/* Skip-to-content link (BFSG/WCAG 2.1) */}
@@ -97,95 +63,20 @@ export function LandingPage() {
         Zum Inhalt springen
       </a>
 
-      {/* ─── Navbar ─── */}
       <Navbar />
 
       <main id="main-content">
-        {/* ─── Hero ─── */}
         <HeroSection />
-
-        {/* ─── Trusted By ─── */}
-        <TrustedByBar />
-
-        {/* ─── 4-Step Feature Flow ─── */}
-        <FeatureSection
-          step={1}
-          label={t("step1Label")}
-          title={t("step1Title")}
-          description={t("step1Desc")}
-          features={[
-            t("step1Feature1"),
-            t("step1Feature2"),
-            t("step1Feature3"),
-            t("step1Feature4"),
-          ]}
-          illustration={<PlanningIllustration />}
-          reversed={false}
-          t={t}
-        />
-
-        <FeatureSection
-          step={2}
-          label={t("step2Label")}
-          title={t("step2Title")}
-          description={t("step2Desc")}
-          features={[
-            t("step2Feature1"),
-            t("step2Feature2"),
-            t("step2Feature3"),
-            t("step2Feature4"),
-          ]}
-          illustration={<DistributionIllustration />}
-          reversed={true}
-          t={t}
-        />
-
-        <FeatureSection
-          step={3}
-          label={t("step3Label")}
-          title={t("step3Title")}
-          description={t("step3Desc")}
-          features={[
-            t("step3Feature1"),
-            t("step3Feature2"),
-            t("step3Feature3"),
-            t("step3Feature4"),
-          ]}
-          illustration={<DayToDayIllustration />}
-          reversed={false}
-          t={t}
-        />
-
-        <FeatureSection
-          step={4}
-          label={t("step4Label")}
-          title={t("step4Title")}
-          description={t("step4Desc")}
-          features={[
-            t("step4Feature1"),
-            t("step4Feature2"),
-            t("step4Feature3"),
-            t("step4Feature4"),
-          ]}
-          illustration={<ReportingIllustration />}
-          reversed={true}
-          t={t}
-        />
-
-        {/* ─── Benefits Grid ─── */}
+        <FeatureTabsSection />
         <BenefitsSection />
-
-        {/* ─── Pricing ─── */}
+        <TestimonialsSection />
+        <AppShowcaseSection />
+        <TrustSection />
         <PricingSection />
-
-        {/* ─── FAQ ─── */}
         <FAQSection />
-
-        {/* ─── CTA Footer ─── */}
         <CTAFooter />
       </main>
 
-      {/* ─── Footer ─── */}
       <Footer />
     </div>
   );
@@ -331,44 +222,102 @@ function Navbar() {
   );
 }
 
+/* ─── Animated Counter Component ─── */
+function AnimatedCounter({
+  end,
+  duration = 2000,
+  suffix = "",
+  className,
+}: {
+  end: number;
+  duration?: number;
+  suffix?: string;
+  className?: string;
+}) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const startTime = performance.now();
+          const step = (now: number) => {
+            const progress = Math.min((now - startTime) / duration, 1);
+            setCount(Math.floor(progress * end));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, duration]);
+
+  return (
+    <span ref={ref} className={className}>
+      {count.toLocaleString("de-DE")}
+      {suffix}
+    </span>
+  );
+}
+
 function HeroSection() {
   const t = useTranslations("landing");
 
   return (
     <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-emerald-50/60 via-white to-white">
-      {/* Subtle decorative elements */}
+      {/* Decorative blurs */}
       <div className="absolute top-32 -left-40 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-          {/* ─── Left: Text content ─── */}
+          {/* Left: Text */}
           <div className="flex-1 max-w-xl text-center lg:text-left">
-            {/* Headline */}
+            {/* Rating badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 mb-5">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <StarIcon
+                    key={i}
+                    className="w-3.5 h-3.5 text-amber-400 fill-amber-400"
+                  />
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-amber-700">
+                4.9 {t("heroRating")}
+              </span>
+            </div>
+
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.5rem] xl:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.08]">
               {t("heroTitle")}{" "}
               <span className="text-gradient">{t("heroTitleHighlight")}</span>
             </h1>
 
-            {/* Subtitle */}
             <p className="mt-5 sm:mt-6 text-base sm:text-lg text-gray-500 leading-relaxed max-w-lg mx-auto lg:mx-0">
               {t("heroSubtitle")}
             </p>
 
             {/* Trust badges */}
             <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2">
-              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
-                {t("heroProof1")}
-              </div>
-              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
-                {t("heroProof2")}
-              </div>
-              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
-                {t("heroProof3")}
-              </div>
+              {(["heroProof1", "heroProof2", "heroProof3"] as const).map(
+                (key) => (
+                  <div
+                    key={key}
+                    className="flex items-center gap-1.5 text-sm font-medium text-gray-700"
+                  >
+                    <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+                    {t(key)}
+                  </div>
+                ),
+              )}
             </div>
 
             {/* CTA */}
@@ -388,15 +337,48 @@ function HeroSection() {
                 <ChevronRightIcon className="w-4 h-4" />
               </a>
             </div>
-
             <p className="mt-3 text-sm text-gray-400 text-center lg:text-left">
               {t("heroCtaSubNote")}
             </p>
           </div>
 
-          {/* ─── Right: App mockup ─── */}
+          {/* Right: App mockup */}
           <div className="flex-1 w-full max-w-[560px] lg:max-w-none">
             <HeroMockup />
+          </div>
+        </div>
+
+        {/* Social proof counter bar */}
+        <div className="mt-14 sm:mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+          <div className="text-center">
+            <div className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+              <AnimatedCounter end={500} suffix="+" />
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              {t("heroStatTeams")}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+              <AnimatedCounter end={10000} duration={2500} suffix="+" />
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              {t("heroStatEmployees")}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600">
+              4.9/5
+            </div>
+            <div className="text-sm text-gray-500 mt-1">{t("heroRating")}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600">
+              98 %
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              {t("heroStatSatisfaction")}
+            </div>
           </div>
         </div>
       </div>
@@ -417,10 +399,8 @@ function HeroMockup() {
 
   return (
     <div className="relative">
-      {/* Glow behind */}
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/50 to-emerald-200/30 rounded-3xl blur-2xl scale-105" />
 
-      {/* Main card */}
       <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-emerald-100/50 overflow-hidden">
         {/* Title bar */}
         <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
@@ -436,7 +416,6 @@ function HeroMockup() {
           </div>
         </div>
 
-        {/* Dashboard content */}
         <div className="p-4 sm:p-5">
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mb-5">
@@ -468,14 +447,12 @@ function HeroMockup() {
 
           {/* Time tracking table */}
           <div className="rounded-xl border border-gray-100 overflow-hidden">
-            {/* Header */}
             <div className="grid grid-cols-[1fr_auto_auto_auto] bg-gray-50 text-[10px] sm:text-xs font-semibold text-gray-500">
               <div className="px-2 sm:px-3 py-2">{t("heroMockupTeam")}</div>
               <div className="px-2 sm:px-3 py-2 text-center">Zeit</div>
               <div className="px-2 sm:px-3 py-2 text-center">Netto</div>
               <div className="px-2 sm:px-3 py-2 text-center w-8" />
             </div>
-            {/* Rows */}
             {entries.map((row) => (
               <div
                 key={row.name}
@@ -540,101 +517,375 @@ function HeroMockup() {
   );
 }
 
-function TrustedByBar() {
+/* ─── Interactive Feature Tabs Section (Clockify-style) ─── */
+function FeatureTabsSection() {
   const t = useTranslations("landing");
+  const [activeTab, setActiveTab] = useState(0);
 
-  const industries = [
-    { label: "Gastronomie", Icon: UtensilsCrossedIcon },
-    { label: "Einzelhandel", Icon: ShoppingCartIcon },
-    { label: "Pflege", Icon: HeartPulseIcon },
-    { label: "Handwerk", Icon: WrenchIcon },
-    { label: "Logistik", Icon: TruckIcon },
+  const tabs = [
+    {
+      label: t("featureTab1"),
+      icon: ClockIcon,
+      title: t("featureTab1Title"),
+      desc: t("featureTab1Desc"),
+      bullets: [
+        t("featureTab1Bullet1"),
+        t("featureTab1Bullet2"),
+        t("featureTab1Bullet3"),
+        t("featureTab1Bullet4"),
+      ],
+    },
+    {
+      label: t("featureTab2"),
+      icon: CalendarIcon,
+      title: t("featureTab2Title"),
+      desc: t("featureTab2Desc"),
+      bullets: [
+        t("featureTab2Bullet1"),
+        t("featureTab2Bullet2"),
+        t("featureTab2Bullet3"),
+        t("featureTab2Bullet4"),
+      ],
+    },
+    {
+      label: t("featureTab3"),
+      icon: CalendarUsersIcon,
+      title: t("featureTab3Title"),
+      desc: t("featureTab3Desc"),
+      bullets: [
+        t("featureTab3Bullet1"),
+        t("featureTab3Bullet2"),
+        t("featureTab3Bullet3"),
+        t("featureTab3Bullet4"),
+      ],
+    },
+    {
+      label: t("featureTab4"),
+      icon: BarChartIcon,
+      title: t("featureTab4Title"),
+      desc: t("featureTab4Desc"),
+      bullets: [
+        t("featureTab4Bullet1"),
+        t("featureTab4Bullet2"),
+        t("featureTab4Bullet3"),
+        t("featureTab4Bullet4"),
+      ],
+    },
   ];
 
+  const active = tabs[activeTab];
+
   return (
-    <section className="py-10 border-b border-gray-100">
+    <section id="features" className="py-16 sm:py-24">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-        <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
-          {t("trustedBy")}
-        </p>
-        <div className="flex items-center justify-center gap-6 sm:gap-12 flex-wrap">
-          {industries.map((item) => (
-            <span
-              key={item.label}
-              className="flex items-center gap-2 text-base font-semibold text-gray-400 tracking-tight"
+        {/* Title */}
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
+            {t("featureTabsTitle")}
+          </h2>
+          <p className="mt-4 text-gray-500">{t("featureTabsSubtitle")}</p>
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex flex-wrap justify-center gap-2 rounded-2xl bg-gray-100 p-1.5">
+            {tabs.map((tab, i) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setActiveTab(i)}
+                  className={`flex items-center gap-2 rounded-xl px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
+                    activeTab === i
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+          {/* Left: Text */}
+          <div className="flex-1 max-w-lg">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">
+              <active.icon className="w-3.5 h-3.5" />
+              {active.label}
+            </div>
+
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+              {active.title}
+            </h3>
+            <p className="mt-4 text-gray-500 leading-relaxed">{active.desc}</p>
+
+            <ul className="mt-6 space-y-3">
+              {active.bullets.map((b) => (
+                <li key={b} className="flex items-start gap-3">
+                  <CheckCircleIcon className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
+                  <span className="text-sm text-gray-700">{b}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/register"
+              className="mt-8 inline-flex items-center gap-2 bg-brand-gradient text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-200 transition-all"
             >
-              <item.Icon className="h-5 w-5" />
-              {item.label}
-            </span>
-          ))}
+              {t("heroCtaPrimary")}
+              <ArrowRightIcon className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Right: Feature mockup */}
+          <div className="flex-1 w-full max-w-[540px]">
+            <FeatureTabMockup tab={activeTab} />
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FeatureSection({
-  step,
-  label,
-  title,
-  description,
-  features,
-  illustration,
-  reversed,
-  t,
-}: {
-  step: number;
-  label: string;
-  title: string;
-  description: string;
-  features: string[];
-  illustration: React.ReactNode;
-  reversed: boolean;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const stepIcons = [ClockIcon, CheckCircleIcon, CalendarIcon, DownloadIcon];
-  const StepIcon = stepIcons[step - 1];
-
+/** App-like mockup for each feature tab */
+function FeatureTabMockup({ tab }: { tab: number }) {
   return (
-    <section
-      id={step === 1 ? "features" : undefined}
-      className={`py-12 sm:py-20 ${step % 2 === 0 ? "bg-section-alt" : ""}`}
-    >
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-        <div
-          className={`flex flex-col ${
-            reversed ? "lg:flex-row-reverse" : "lg:flex-row"
-          } items-center gap-10 lg:gap-16`}
-        >
-          {/* Text */}
-          <div className="flex-1 max-w-lg">
-            {/* Step badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">
-              <StepIcon className="w-3.5 h-3.5" />
-              {t("step")} {step} — {label}
-            </div>
+    <div className="relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/40 to-emerald-100/20 rounded-3xl blur-2xl scale-105" />
 
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-              {title}
-            </h2>
-            <p className="mt-4 text-gray-500 leading-relaxed">{description}</p>
-
-            {/* Feature checklist */}
-            <ul className="mt-6 space-y-3">
-              {features.map((f) => (
-                <li key={f} className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">{f}</span>
-                </li>
-              ))}
-            </ul>
+      <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-emerald-100/50 overflow-hidden">
+        {/* Browser chrome */}
+        <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-green-400" />
           </div>
+          <div className="flex-1 mx-4 rounded-md bg-white border border-gray-200 px-3 py-1">
+            <span className="text-xs text-gray-400">app.shiftfy.de</span>
+          </div>
+        </div>
 
-          {/* Illustration */}
-          <div className="flex-1 w-full max-w-[520px]">{illustration}</div>
+        <div className="p-4 sm:p-6">
+          {tab === 0 && <TimeTrackingMockup />}
+          {tab === 1 && <ShiftPlanMockup />}
+          {tab === 2 && <AbsenceMockup />}
+          {tab === 3 && <ReportsMockup />}
         </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+function TimeTrackingMockup() {
+  const t = useTranslations("landing");
+  const rows = [
+    {
+      name: t("featureTabMockup1Name1"),
+      time: t("featureTabMockup1Time1"),
+      active: true,
+    },
+    {
+      name: t("featureTabMockup1Name2"),
+      time: t("featureTabMockup1Time2"),
+      active: false,
+    },
+    {
+      name: t("featureTabMockup1Name3"),
+      time: t("featureTabMockup1Time3"),
+      active: true,
+    },
+  ];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-sm font-bold text-gray-900">
+          {t("featureTabMockup1Title")}
+        </h4>
+        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+          {t("featureTabMockup1Hours")}
+        </span>
+      </div>
+      <div className="space-y-2.5">
+        {rows.map((r) => (
+          <div
+            key={r.name}
+            className="flex items-center justify-between rounded-xl bg-gray-50 p-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-700">
+                {r.name.charAt(0)}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">
+                  {r.name}
+                </div>
+                <div className="text-xs text-gray-400">{r.time}</div>
+              </div>
+            </div>
+            {r.active && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                {t("featureTabMockup1Active")}
+              </span>
+            )}
+            {!r.active && (
+              <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShiftPlanMockup() {
+  const t = useTranslations("landing");
+  const days = ["Mo", "Di", "Mi", "Do", "Fr"];
+  const shifts = [
+    {
+      label: t("featureTabMockup2Early"),
+      color: "bg-emerald-100 text-emerald-700",
+    },
+    { label: t("featureTabMockup2Late"), color: "bg-amber-100 text-amber-700" },
+    {
+      label: t("featureTabMockup2Night"),
+      color: "bg-indigo-100 text-indigo-700",
+    },
+  ];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-sm font-bold text-gray-900">
+          {t("featureTabMockup2Title")}
+        </h4>
+        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+          {t("featureTabMockup2Covered")}
+        </span>
+      </div>
+      <div className="grid grid-cols-5 gap-1.5">
+        {days.map((day) => (
+          <div
+            key={day}
+            className="text-center text-xs font-semibold text-gray-400 pb-1"
+          >
+            {day}
+          </div>
+        ))}
+        {days.map((day, di) =>
+          shifts.map((s, si) => (
+            <div
+              key={`${day}-${si}`}
+              className={`rounded-lg p-1.5 text-center text-[10px] font-semibold ${s.color} ${di === 2 && si === 1 ? "ring-2 ring-emerald-500 ring-offset-1" : ""}`}
+            >
+              {s.label}
+            </div>
+          )),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AbsenceMockup() {
+  const t = useTranslations("landing");
+  const items = [
+    {
+      name: "Anna M.",
+      type: t("featureTabMockup3Vacation"),
+      status: t("featureTabMockup3Approved"),
+      statusColor: "text-emerald-600 bg-emerald-50",
+    },
+    {
+      name: "Ben K.",
+      type: t("featureTabMockup3Sick"),
+      status: t("featureTabMockup3Approved"),
+      statusColor: "text-emerald-600 bg-emerald-50",
+    },
+    {
+      name: "Clara S.",
+      type: t("featureTabMockup3Vacation"),
+      status: t("featureTabMockup3Pending"),
+      statusColor: "text-amber-600 bg-amber-50",
+    },
+  ];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-sm font-bold text-gray-900">
+          {t("featureTabMockup3Title")}
+        </h4>
+      </div>
+      <div className="space-y-2.5">
+        {items.map((item) => (
+          <div
+            key={item.name}
+            className="flex items-center justify-between rounded-xl bg-gray-50 p-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-700">
+                {item.name.charAt(0)}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900">
+                  {item.name}
+                </div>
+                <div className="text-xs text-gray-400">{item.type}</div>
+              </div>
+            </div>
+            <span
+              className={`text-xs font-semibold px-2 py-1 rounded-full ${item.statusColor}`}
+            >
+              {item.status}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReportsMockup() {
+  const t = useTranslations("landing");
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-sm font-bold text-gray-900">
+          {t("featureTabMockup4Title")}
+        </h4>
+        <button className="text-xs font-semibold text-white bg-emerald-600 px-3 py-1.5 rounded-lg">
+          {t("featureTabMockup4Export")}
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="rounded-xl bg-emerald-50 p-3 text-center">
+          <div className="text-2xl font-bold text-emerald-700">1.247 h</div>
+          <div className="text-xs text-emerald-500 mt-1">
+            {t("featureTabMockup4Total")}
+          </div>
+        </div>
+        <div className="rounded-xl bg-amber-50 p-3 text-center">
+          <div className="text-2xl font-bold text-amber-600">+42 h</div>
+          <div className="text-xs text-amber-500 mt-1">
+            {t("featureTabMockup4Overtime")}
+          </div>
+        </div>
+      </div>
+      {/* Mini bar chart */}
+      <div className="flex items-end gap-1.5 h-20 px-2">
+        {[65, 80, 55, 90, 70, 85, 45, 95, 75, 60, 88, 72].map((h, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-t bg-gradient-to-t from-emerald-500 to-emerald-400 transition-all"
+            style={{ height: `${h}%` }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1009,56 +1260,398 @@ function CTAFooter() {
   );
 }
 
+function TestimonialsSection() {
+  const t = useTranslations("landing");
+
+  const testimonials = [
+    {
+      quote: t("testimonial1Quote"),
+      name: t("testimonial1Name"),
+      role: t("testimonial1Role"),
+    },
+    {
+      quote: t("testimonial2Quote"),
+      name: t("testimonial2Name"),
+      role: t("testimonial2Role"),
+    },
+    {
+      quote: t("testimonial3Quote"),
+      name: t("testimonial3Name"),
+      role: t("testimonial3Role"),
+    },
+    {
+      quote: t("testimonial4Quote"),
+      name: t("testimonial4Name"),
+      role: t("testimonial4Role"),
+    },
+  ];
+
+  return (
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
+            {t("testimonialsTitle")}
+          </h2>
+          <p className="mt-4 text-gray-500">{t("testimonialsSubtitle")}</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {testimonials.map((item) => (
+            <div
+              key={item.name}
+              className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <QuoteIcon className="w-8 h-8 text-emerald-200 mb-4" />
+              <p className="text-gray-700 leading-relaxed mb-6">
+                &ldquo;{item.quote}&rdquo;
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-700">
+                  {item.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-900">
+                    {item.name}
+                  </div>
+                  <div className="text-xs text-gray-400">{item.role}</div>
+                </div>
+                <div className="ml-auto flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      className="w-3.5 h-3.5 text-amber-400 fill-amber-400"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AppShowcaseSection() {
+  const t = useTranslations("landing");
+
+  const devices = [
+    {
+      icon: MonitorIcon,
+      title: t("appShowcaseDesktop"),
+      desc: t("appShowcaseDesktopDesc"),
+    },
+    {
+      icon: SmartphoneIcon,
+      title: t("appShowcaseMobile"),
+      desc: t("appShowcaseMobileDesc"),
+    },
+    {
+      icon: TabletIcon,
+      title: t("appShowcaseTablet"),
+      desc: t("appShowcaseTabletDesc"),
+    },
+  ];
+
+  const badges = [
+    t("appShowcaseOffline"),
+    t("appShowcaseInstant"),
+    t("appShowcaseNoInstall"),
+  ];
+
+  return (
+    <section className="py-16 sm:py-24">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
+            {t("appShowcaseTitle")}
+          </h2>
+          <p className="mt-4 text-gray-500">{t("appShowcaseSubtitle")}</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
+          {devices.map((d) => {
+            const Icon = d.icon;
+            return (
+              <div
+                key={d.title}
+                className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 text-center shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                  <Icon className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">{d.title}</h3>
+                <p className="mt-2 text-sm text-gray-500">{d.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-3">
+          {badges.map((b) => (
+            <span
+              key={b}
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700"
+            >
+              <CheckCircleIcon className="w-4 h-4" />
+              {b}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrustSection() {
+  const t = useTranslations("landing");
+
+  const stats = [
+    {
+      icon: ShieldCheckIcon,
+      value: t("trustStat1Value"),
+      label: t("trustStat1Label"),
+      desc: t("trustStat1Desc"),
+    },
+    {
+      icon: ZapIcon,
+      value: t("trustStat2Value"),
+      label: t("trustStat2Label"),
+      desc: t("trustStat2Desc"),
+    },
+    {
+      icon: HeadsetIcon,
+      value: t("trustStat3Value"),
+      label: t("trustStat3Label"),
+      desc: t("trustStat3Desc"),
+    },
+    {
+      icon: ShieldCheckIcon,
+      value: t("trustStat4Value"),
+      label: t("trustStat4Label"),
+      desc: t("trustStat4Desc"),
+    },
+  ];
+
+  return (
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
+            {t("trustTitle")}
+          </h2>
+          <p className="mt-4 text-gray-500">{t("trustSubtitle")}</p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((s) => {
+            const Icon = s.icon;
+            return (
+              <div
+                key={s.label}
+                className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm"
+              >
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                  <Icon className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div className="text-3xl font-extrabold text-gray-900">
+                  {s.value}
+                </div>
+                <div className="text-sm font-semibold text-emerald-600 mt-1">
+                  {s.label}
+                </div>
+                <p className="mt-2 text-xs text-gray-400">{s.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Footer() {
   const t = useTranslations("landing");
 
   return (
-    <footer className="border-t border-gray-100 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
-        <div className="flex items-center gap-2">
-          <ShiftfyMark className="w-6 h-6" />
-          <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+    <footer className="border-t border-gray-100 bg-gray-50 pt-12 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        {/* Mega-footer grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+          {/* Brand column */}
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-2 mb-4">
+              <ShiftfyMark className="w-7 h-7" />
+              <span className="font-bold text-gray-900">Shiftfy</span>
+            </div>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              {t("heroSubtitle").slice(0, 100)}…
+            </p>
+          </div>
+
+          {/* Product */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+              {t("footerProduct")}
+            </h4>
+            <ul className="space-y-2.5 text-sm text-gray-500">
+              <li>
+                <a
+                  href="#features"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerFeatures")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#pricing"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("navPricing")}
+                </a>
+              </li>
+              <li>
+                <Link
+                  href="/blog"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("navBlog")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Features */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+              {t("footerFeatures")}
+            </h4>
+            <ul className="space-y-2.5 text-sm text-gray-500">
+              <li>
+                <a
+                  href="#features"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerTimeTracking")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#features"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerShiftPlanning")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#features"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerAbsences")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#features"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerReports")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#features"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerAutomation")}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+              {t("footerResources")}
+            </h4>
+            <ul className="space-y-2.5 text-sm text-gray-500">
+              <li>
+                <Link
+                  href="/blog"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("navBlog")}
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="mailto:info@shiftfy.de"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerContact")}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+              {t("footerLegal")}
+            </h4>
+            <ul className="space-y-2.5 text-sm text-gray-500">
+              <li>
+                <Link
+                  href="/datenschutz"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerPrivacy")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/impressum"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerImprint")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/agb"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerTerms")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/widerruf"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerWithdrawal")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/barrierefreiheit"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerAccessibility")}
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
-        <p className="text-sm text-gray-400 text-center">
-          © {new Date().getFullYear()} Shiftfy. {t("footerRights")}
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
-          <Link href="/blog" className="hover:text-gray-600 transition-colors">
-            {t("navBlog")}
-          </Link>
-          <Link
-            href="/pricing"
-            className="hover:text-gray-600 transition-colors"
-          >
-            {t("navPricing")}
-          </Link>
-          <Link
-            href="/datenschutz"
-            className="hover:text-gray-600 transition-colors"
-          >
-            {t("footerPrivacy")}
-          </Link>
-          <Link
-            href="/impressum"
-            className="hover:text-gray-600 transition-colors"
-          >
-            {t("footerImprint")}
-          </Link>
-          <Link href="/agb" className="hover:text-gray-600 transition-colors">
-            {t("footerTerms")}
-          </Link>
-          <Link
-            href="/widerruf"
-            className="hover:text-gray-600 transition-colors"
-          >
-            {t("footerWithdrawal")}
-          </Link>
-          <Link
-            href="/barrierefreiheit"
-            className="hover:text-gray-600 transition-colors"
-          >
-            {t("footerAccessibility")}
-          </Link>
+
+        {/* Bottom bar */}
+        <div className="border-t border-gray-200 pt-6 flex flex-col items-center gap-4 md:flex-row md:justify-between">
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} Shiftfy. {t("footerRights")}
+          </p>
           <CookieSettingsButton />
         </div>
       </div>

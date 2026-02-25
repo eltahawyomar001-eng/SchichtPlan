@@ -80,3 +80,8 @@ export { MoreVerticalIcon } from "./MoreVerticalIcon";
 export { SmileIcon } from "./SmileIcon";
 export { HashIcon } from "./HashIcon";
 export { AtSignIcon } from "./AtSignIcon";
+export { LaptopIcon } from "./LaptopIcon";
+export { TabletIcon } from "./TabletIcon";
+export { MonitorIcon } from "./MonitorIcon";
+export { HeadsetIcon } from "./HeadsetIcon";
+export { QuoteIcon } from "./QuoteIcon";

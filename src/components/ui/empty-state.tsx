@@ -48,19 +48,17 @@ export function EmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center text-center",
-        "rounded-2xl border border-dashed border-gray-200 bg-gray-50/40 px-6 py-14 sm:py-16",
+        "rounded-2xl border-2 border-dashed border-gray-200/80 bg-gradient-to-b from-gray-50/60 to-white px-6 py-16 sm:py-20",
         className,
       )}
     >
       {/* Icon */}
-      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 shadow-sm">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 shadow-sm ring-1 ring-emerald-200/30">
         {icon}
       </div>
 
       {/* Heading */}
-      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-        {title}
-      </h3>
+      <h3 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h3>
 
       {/* Description */}
       {description && (
@@ -71,13 +69,13 @@ export function EmptyState({
 
       {/* Feature tips */}
       {tips && tips.length > 0 && (
-        <ul className="mt-5 space-y-1.5 text-left w-full max-w-xs">
+        <ul className="mt-6 space-y-2 text-left w-full max-w-xs">
           {tips.map((tip, i) => (
             <li
               key={i}
-              className="flex items-start gap-2 text-sm text-gray-500"
+              className="flex items-start gap-2.5 text-sm text-gray-500"
             >
-              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
               {tip}
             </li>
           ))}
@@ -86,13 +84,13 @@ export function EmptyState({
 
       {/* Actions */}
       {actions && actions.length > 0 && (
-        <div className="mt-7 flex flex-col sm:flex-row items-center gap-3">
+        <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
           {actions.map((action, i) =>
             action.variant === "secondary" ? (
               <button
                 key={i}
                 onClick={action.onClick}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
                 {action.label}
               </button>
@@ -100,7 +98,7 @@ export function EmptyState({
               <button
                 key={i}
                 onClick={action.onClick}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-200 hover:shadow-md hover:brightness-105 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
                 {action.label}
               </button>

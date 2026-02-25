@@ -26,7 +26,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarContext.Provider value={{ openSidebar }}>
       <PlanLimitProvider>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-dashboard">
           {/* Skip-to-content link for keyboard/screen-reader users (BFSG/WCAG 2.1) */}
           <a
             href="#main-content"

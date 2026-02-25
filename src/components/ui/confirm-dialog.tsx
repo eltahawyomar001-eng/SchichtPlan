@@ -43,28 +43,30 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-sm mx-4 rounded-xl bg-white shadow-xl">
-        <div className="flex items-start gap-3 p-5">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-sm mx-4 rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 animate-fade-in">
+        <div className="flex items-start gap-3 p-6">
           <div
-            className={`flex-shrink-0 rounded-full p-2 ${variant === "danger" ? "bg-red-100" : "bg-amber-100"}`}
+            className={`flex-shrink-0 rounded-xl p-2.5 ${variant === "danger" ? "bg-red-50 ring-1 ring-red-200/50" : "bg-amber-50 ring-1 ring-amber-200/50"}`}
           >
             <AlertTriangleIcon
               className={`h-5 w-5 ${variant === "danger" ? "text-red-600" : "text-amber-600"}`}
             />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{message}</p>
+            <h3 className="text-base font-bold text-gray-900">{title}</h3>
+            <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
+              {message}
+            </p>
           </div>
           <button
             onClick={onCancel}
-            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100"
+            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 transition-colors"
           >
             <XIcon className="h-4 w-4 text-gray-400" />
           </button>
         </div>
-        <div className="flex justify-end gap-3 border-t border-gray-100 px-5 py-3">
+        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
           <Button
             ref={cancelRef}
             variant="outline"

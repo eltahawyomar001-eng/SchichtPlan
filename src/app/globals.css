@@ -149,6 +149,122 @@ body {
   background-size: 40px 40px;
 }
 
+/* ── Dashboard-specific utilities ── */
+
+/* Dashboard page background — subtle warm gray with faint dot pattern */
+.bg-dashboard {
+  background-color: #f8fafb;
+  background-image: radial-gradient(
+    circle,
+    rgba(5, 150, 105, 0.025) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* Elevated card — premium hover-lift with refined shadow */
+.card-elevated {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.02);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.card-elevated:hover {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+/* Stat card gradient icon background */
+.stat-icon-emerald {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.stat-icon-amber {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.stat-icon-blue {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.stat-icon-purple {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+/* Subtle emerald accent line (topbar / card header) */
+.accent-line {
+  position: relative;
+}
+
+.accent-line::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--brand-500),
+    var(--brand-400),
+    transparent
+  );
+  opacity: 0.5;
+}
+
+/* Shimmer animation for loading skeletons */
+.shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Sidebar active glow */
+.sidebar-active-glow {
+  box-shadow: inset 3px 0 0 var(--brand-500);
+}
+
+/* Focus ring for interactive elements */
+.focus-ring {
+  transition: box-shadow 0.15s ease;
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px white,
+    0 0 0 4px var(--brand-500);
+}
+
+/* Notification dot pulse */
+.notification-pulse {
+  animation: notifPulse 2s ease-in-out infinite;
+}
+
+@keyframes notifPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 /* Animation prep classes */
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out both;

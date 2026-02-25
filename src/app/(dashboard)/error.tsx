@@ -20,10 +20,10 @@ export default function DashboardError({
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center p-6">
-      <div className="mx-auto max-w-lg rounded-xl border border-red-200 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+      <div className="mx-auto max-w-lg rounded-2xl border border-red-100 bg-white p-8 sm:p-10 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04)] ring-1 ring-red-100/50">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-red-50 to-red-100 ring-4 ring-red-50">
           <svg
-            className="h-6 w-6 text-red-600"
+            className="h-7 w-7 text-red-600"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -36,25 +36,27 @@ export default function DashboardError({
             />
           </svg>
         </div>
-        <h2 className="mb-2 text-lg font-semibold text-gray-900">
+        <h2 className="mb-2 text-lg font-bold text-gray-900">
           {t("errorOccurred")}
         </h2>
-        <p className="mb-1 text-sm text-gray-500">{t("errorLoading")}</p>
+        <p className="mb-1 text-sm text-gray-500 leading-relaxed">
+          {t("errorLoading")}
+        </p>
         {error.digest && (
-          <p className="mb-4 font-mono text-xs text-gray-400">
+          <p className="mb-5 font-mono text-xs text-gray-400">
             {t("errorCode")}: {error.digest}
           </p>
         )}
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => reset()}
-            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-200 hover:shadow-md hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-150"
           >
             {t("tryAgain")}
           </button>
           <Link
             href="/dashboard"
-            className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-all duration-150"
           >
             {t("goToDashboard")}
           </Link>

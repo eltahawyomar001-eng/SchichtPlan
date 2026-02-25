@@ -66,17 +66,15 @@ export function UpgradeModal({
   });
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md mx-4 rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-md mx-4 rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 animate-fade-in">
         {/* Header */}
         <div className="flex items-start gap-3 p-6">
-          <div className="flex-shrink-0 rounded-full bg-emerald-100 p-2.5">
+          <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 ring-1 ring-emerald-200/30">
             <RocketIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {t("title")}
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900">{t("title")}</h3>
             <p className="mt-2 text-sm text-gray-600">
               {planLimitError.limit
                 ? t("limitReached", {
@@ -92,7 +90,7 @@ export function UpgradeModal({
           <button
             ref={closeRef}
             onClick={onClose}
-            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100"
+            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 transition-colors"
           >
             <XIcon className="h-4 w-4 text-gray-400" />
           </button>

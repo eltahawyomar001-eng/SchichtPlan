@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -683,10 +682,16 @@ export default function NachrichtenPage() {
 
   if (loading) {
     return (
-      <div>
+      <div className="flex h-[calc(100dvh-3.5rem)] flex-col sm:h-[calc(100dvh-4rem)]">
         <Topbar title={t("title")} description={t("description")} />
-        <div className="flex items-center justify-center p-6">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+        <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+          <div className="relative">
+            <div className="absolute -inset-2 animate-pulse rounded-full bg-emerald-100/40" />
+            <div className="relative h-10 w-10 animate-spin rounded-full border-[3px] border-emerald-200 border-t-emerald-600" />
+          </div>
+          <p className="mt-4 text-sm font-medium text-gray-400">
+            {t("title")}…
+          </p>
         </div>
       </div>
     );
@@ -694,20 +699,20 @@ export default function NachrichtenPage() {
 
   if (planGated) {
     return (
-      <div>
+      <div className="flex h-[calc(100dvh-3.5rem)] flex-col sm:h-[calc(100dvh-4rem)]">
         <Topbar title={t("title")} description={t("description")} />
-        <div className="p-4 sm:p-6">
-          <Card>
-            <CardContent className="py-12 text-center sm:py-16">
-              <MessageCircleIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-              <p className="mb-2 text-base font-semibold text-gray-800 sm:text-lg">
-                {t("planRequired")}
-              </p>
-              <p className="mx-auto max-w-md text-sm text-gray-500">
-                {t("planRequiredDesc")}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white p-6">
+          <div className="flex flex-col items-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 sm:h-20 sm:w-20">
+              <MessageCircleIcon className="h-8 w-8 text-gray-300 sm:h-10 sm:w-10" />
+            </div>
+            <p className="mb-2 text-center text-base font-bold text-gray-800 sm:text-lg">
+              {t("planRequired")}
+            </p>
+            <p className="mx-auto max-w-md text-center text-sm leading-relaxed text-gray-500">
+              {t("planRequiredDesc")}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -718,15 +723,15 @@ export default function NachrichtenPage() {
   const channelListContent = (
     <>
       {/* Sidebar header */}
-      <div className="flex-shrink-0 border-b border-gray-100 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">
+      <div className="flex-shrink-0 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-3.5 py-3 sm:px-4">
+        <div className="mb-2.5 flex items-center justify-between">
+          <h2 className="text-sm font-bold tracking-tight text-gray-800">
             {t("channels")}
           </h2>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <button
               onClick={() => setShowNewDM(true)}
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+              className="rounded-lg p-2 text-gray-400 transition-all hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm active:scale-95"
               title={t("newDM")}
             >
               <UserIcon className="h-4 w-4" />
@@ -736,7 +741,7 @@ export default function NachrichtenPage() {
                 setShowNewChannel(true);
                 if (workspaceUsers.length === 0) fetchWorkspaceUsers();
               }}
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+              className="rounded-lg p-2 text-gray-400 transition-all hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm active:scale-95"
               title={t("newChannel")}
             >
               <PlusIcon className="h-4 w-4" />
@@ -745,13 +750,13 @@ export default function NachrichtenPage() {
         </div>
         {/* Channel search */}
         <div className="relative">
-          <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={channelSearch}
             onChange={(e) => setChannelSearch(e.target.value)}
             placeholder={t("searchChannels")}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs text-gray-700 shadow-sm placeholder:text-gray-400 transition-all focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
           />
         </div>
       </div>
@@ -759,21 +764,26 @@ export default function NachrichtenPage() {
       {/* Channel list */}
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {channels.length === 0 ? (
-          <div className="p-4 text-center">
-            <p className="text-sm text-gray-400">{t("noChannels")}</p>
+          <div className="flex flex-col items-center px-4 py-10 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50">
+              <MessageCircleIcon className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-medium text-gray-500">
+              {t("noChannels")}
+            </p>
             <button
               onClick={() => setShowNewChannel(true)}
-              className="mt-2 text-sm text-emerald-600 hover:underline"
+              className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow active:scale-[0.98]"
             >
               {t("createFirst")}
             </button>
           </div>
         ) : (
-          <div className="p-2">
+          <div className="px-2.5 py-2">
             {/* Group Channels */}
             {groupChannels.length > 0 && (
               <div className="mb-3">
-                <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   {t("channels")}
                 </p>
                 <ul className="space-y-0.5">
@@ -781,18 +791,26 @@ export default function NachrichtenPage() {
                     <li key={ch.id}>
                       <button
                         onClick={() => selectChannel(ch)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                        className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-all ${
                           activeChannel?.id === ch.id
-                            ? "bg-emerald-50 font-medium text-emerald-700"
-                            : "text-gray-700 hover:bg-gray-50"
+                            ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
+                            : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                         }`}
                       >
-                        <span className="flex min-w-0 items-center gap-1.5">
-                          <span className="flex-shrink-0 text-gray-400">#</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                              activeChannel?.id === ch.id
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            #
+                          </span>
                           <span className="truncate">{ch.name}</span>
                         </span>
                         {ch.unreadCount > 0 && (
-                          <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[11px] font-bold text-white">
+                          <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
                             {ch.unreadCount}
                           </span>
                         )}
@@ -806,36 +824,43 @@ export default function NachrichtenPage() {
             {/* DM Channels */}
             {dmChannels.length > 0 && (
               <div>
-                <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   {t("directMessages")}
                 </p>
                 <ul className="space-y-0.5">
-                  {dmChannels.map((ch) => (
-                    <li key={ch.id}>
-                      <button
-                        onClick={() => selectChannel(ch)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                          activeChannel?.id === ch.id
-                            ? "bg-emerald-50 font-medium text-emerald-700"
-                            : "text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        <span className="flex min-w-0 items-center gap-1.5">
-                          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] text-gray-600">
-                            {(getDMPartnerName(ch) || "?")[0]?.toUpperCase()}
+                  {dmChannels.map((ch) => {
+                    const partnerName = getDMPartnerName(ch) || "?";
+                    return (
+                      <li key={ch.id}>
+                        <button
+                          onClick={() => selectChannel(ch)}
+                          className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-all ${
+                            activeChannel?.id === ch.id
+                              ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
+                              : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span
+                              className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                                activeChannel?.id === ch.id
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600"
+                              }`}
+                            >
+                              {partnerName[0]?.toUpperCase()}
+                            </span>
+                            <span className="truncate">{partnerName}</span>
                           </span>
-                          <span className="truncate">
-                            {getDMPartnerName(ch)}
-                          </span>
-                        </span>
-                        {ch.unreadCount > 0 && (
-                          <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[11px] font-bold text-white">
-                            {ch.unreadCount}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
+                          {ch.unreadCount > 0 && (
+                            <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                              {ch.unreadCount}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -1002,7 +1027,7 @@ export default function NachrichtenPage() {
         {/* ─── Mobile sidebar overlay ─── */}
         {mobileSidebar && (
           <div
-            className="fixed inset-0 z-40 bg-black/30 md:hidden"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity md:hidden"
             onClick={() => setMobileSidebar(false)}
           />
         )}
@@ -1011,33 +1036,36 @@ export default function NachrichtenPage() {
         <aside
           className={`
             ${mobileSidebar ? "translate-x-0" : "-translate-x-full"}
-            fixed inset-y-0 left-0 z-50 flex w-[280px] max-w-[85vw] flex-col bg-white shadow-lg transition-transform duration-200 ease-in-out
-            md:static md:z-auto md:w-64 md:max-w-none md:translate-x-0 md:shadow-none md:transition-none
+            fixed inset-y-0 left-0 z-50 flex w-[300px] max-w-[85vw] flex-col bg-white transition-transform duration-300 ease-in-out
+            md:static md:z-auto md:w-64 md:max-w-none md:translate-x-0 md:transition-none
             lg:w-72
-            border-r border-gray-200
+            border-r border-gray-200 shadow-xl md:shadow-none
           `}
         >
-          {/* Mobile close button */}
-          <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2 md:hidden">
-            <span className="text-sm font-semibold text-gray-800">
-              {t("title")}
-            </span>
+          {/* Mobile header with safe-area padding */}
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
+            <div className="flex items-center gap-2">
+              <MessageCircleIcon className="h-5 w-5" />
+              <span className="text-sm font-bold text-gray-900">
+                {t("title")}
+              </span>
+            </div>
             <button
               onClick={() => setMobileSidebar(false)}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+              className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
             >
-              <XIcon className="h-4 w-4" />
+              <XIcon className="h-4.5 w-4.5" />
             </button>
           </div>
           {channelListContent}
         </aside>
 
         {/* ─── Main Message Area ─── */}
-        <main className="flex min-w-0 flex-1 flex-col bg-gray-50">
+        <main className="flex min-w-0 flex-1 flex-col bg-gradient-to-b from-gray-50/50 to-gray-50">
           {activeChannel ? (
             <>
               {/* Channel header */}
-              <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white/95 px-3 py-2.5 backdrop-blur-sm sm:px-4 sm:py-3">
                 <div className="flex min-w-0 items-center gap-2">
                   {/* Mobile back / menu button */}
                   <button
@@ -1045,7 +1073,7 @@ export default function NachrichtenPage() {
                       setActiveChannel(null);
                       setMobileSidebar(true);
                     }}
-                    className="flex-shrink-0 rounded-lg p-1 text-gray-500 hover:bg-gray-100 md:hidden"
+                    className="flex-shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 active:bg-gray-200 md:hidden"
                   >
                     <ArrowLeftIcon className="h-5 w-5" />
                   </button>
@@ -1113,10 +1141,15 @@ export default function NachrichtenPage() {
                     )}
 
                     {messages.length === 0 && (
-                      <div className="py-8 text-center sm:py-12">
-                        <MessageCircleIcon className="mx-auto mb-2 h-8 w-8 text-gray-300 sm:h-10 sm:w-10" />
-                        <p className="text-sm text-gray-400">
+                      <div className="flex flex-col items-center py-12 text-center sm:py-16">
+                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 sm:h-16 sm:w-16">
+                          <MessageCircleIcon className="h-7 w-7 sm:h-8 sm:w-8" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-500">
                           {t("noMessages")}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                          {t("sendFirstMessage")}
                         </p>
                       </div>
                     )}
@@ -1378,24 +1411,24 @@ export default function NachrichtenPage() {
                   </div>
 
                   {/* Compose area */}
-                  <div className="relative flex-shrink-0 border-t border-gray-200 bg-white p-2.5 sm:p-3">
+                  <div className="relative flex-shrink-0 border-t border-gray-200 bg-white/95 px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-4 sm:py-3">
                     {/* @mention autocomplete popup */}
                     {showMentions && filteredMentionUsers.length > 0 && (
                       <div
                         ref={mentionRef}
-                        className="absolute bottom-full left-2 right-2 mb-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg sm:left-3 sm:right-3"
+                        className="absolute bottom-full left-2 right-2 mb-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg sm:left-3 sm:right-3"
                       >
                         {filteredMentionUsers.map((mu, i) => (
                           <button
                             key={mu.id}
                             onClick={() => insertMention(mu)}
-                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${
+                            className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors ${
                               i === mentionIndex
                                 ? "bg-emerald-50 text-emerald-700"
                                 : "text-gray-700 hover:bg-gray-50"
                             }`}
                           >
-                            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+                            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-xs font-bold text-gray-600">
                               {(mu.name || mu.email)[0]?.toUpperCase()}
                             </span>
                             <div className="min-w-0">
@@ -1422,20 +1455,20 @@ export default function NachrichtenPage() {
                         onKeyDown={handleMentionKeyDown}
                         placeholder={t("messagePlaceholder")}
                         disabled={sendingMsg}
-                        className="min-w-0 flex-1 text-sm"
+                        className="min-w-0 flex-1 rounded-xl text-sm"
                         maxLength={5000}
                       />
                       <Button
                         type="submit"
                         disabled={!newMessage.trim() || sendingMsg}
                         size="sm"
-                        className="flex-shrink-0"
+                        className="flex-shrink-0 rounded-xl"
                       >
                         <SendIcon className="h-4 w-4" />
                         <span className="sr-only">{t("send")}</span>
                       </Button>
                     </form>
-                    <p className="mt-1 hidden text-xs text-gray-400 sm:block">
+                    <p className="mt-1.5 hidden text-[11px] text-gray-400 sm:block">
                       {t("mentionHint")}
                     </p>
                   </div>
@@ -1446,13 +1479,13 @@ export default function NachrichtenPage() {
                   <>
                     {/* Mobile overlay backdrop */}
                     <div
-                      className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+                      className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
                       onClick={() => setShowSettings(false)}
                     />
                     <aside
                       className={`
-                        fixed inset-y-0 right-0 z-50 flex w-[280px] max-w-[85vw] flex-col bg-white shadow-lg
-                        lg:static lg:z-auto lg:w-64 lg:max-w-none lg:shadow-none
+                        fixed inset-y-0 right-0 z-50 flex w-[300px] max-w-[85vw] flex-col bg-white shadow-xl transition-transform duration-300 ease-in-out
+                        lg:static lg:z-auto lg:w-64 lg:max-w-none lg:shadow-none lg:transition-none
                         xl:w-72
                         border-l border-gray-200
                       `}
@@ -1464,22 +1497,40 @@ export default function NachrichtenPage() {
               </div>
             </>
           ) : (
-            /* No channel selected */
-            <div className="flex flex-1 flex-col items-center justify-center p-6">
-              {/* Mobile: show sidebar toggle */}
-              <button
-                onClick={() => setMobileSidebar(true)}
-                className="mb-4 rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 md:hidden"
-              >
-                <MenuIcon className="h-5 w-5" />
-              </button>
-              <MessageCircleIcon className="mb-4 h-12 w-12 text-gray-300 sm:h-16 sm:w-16" />
-              <p className="text-center text-sm font-medium text-gray-500 sm:text-base">
-                {t("selectChannel")}
-              </p>
-              <p className="mt-1 max-w-xs text-center text-xs text-gray-400 sm:text-sm">
-                {t("selectChannelDesc")}
-              </p>
+            /* No channel selected — modern empty state */
+            <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white p-6">
+              <div className="flex flex-col items-center">
+                {/* Decorative circle with icon */}
+                <div className="relative mb-6">
+                  <div className="absolute -inset-3 animate-pulse rounded-full bg-emerald-100/60" />
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-50 to-emerald-100 shadow-lg shadow-emerald-100/50 ring-4 ring-white sm:h-24 sm:w-24">
+                    <MessageCircleIcon className="h-9 w-9 sm:h-11 sm:w-11" />
+                  </div>
+                </div>
+
+                <h3 className="text-center text-base font-bold text-gray-900 sm:text-lg">
+                  {t("selectChannel")}
+                </h3>
+                <p className="mt-1.5 max-w-[280px] text-center text-xs leading-relaxed text-gray-500 sm:max-w-xs sm:text-sm">
+                  {t("selectChannelDesc")}
+                </p>
+
+                {/* Action button — visible only on mobile where sidebar is hidden */}
+                <button
+                  onClick={() => setMobileSidebar(true)}
+                  className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition-all hover:bg-emerald-700 hover:shadow-lg active:scale-[0.97] md:hidden"
+                >
+                  <MenuIcon className="h-4 w-4" />
+                  {t("channels")}
+                </button>
+
+                {/* Subtle decorative dots */}
+                <div className="mt-8 flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-200" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-200" />
+                </div>
+              </div>
             </div>
           )}
         </main>

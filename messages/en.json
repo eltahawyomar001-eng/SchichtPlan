@@ -1865,6 +1865,7 @@
     "selectChannel": "Select a channel",
     "selectChannelDesc": "Select a channel on the left to read and send messages.",
     "noMessages": "No messages in this channel yet.",
+    "sendFirstMessage": "Send the first message to start the conversation.",
     "messagePlaceholder": "Type a message…",
     "send": "Send",
     "channelName": "Channel name",

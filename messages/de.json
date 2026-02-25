@@ -1865,6 +1865,7 @@
     "selectChannel": "Kanal auswählen",
     "selectChannelDesc": "Wählen Sie links einen Kanal aus, um Nachrichten zu lesen und zu senden.",
     "noMessages": "Noch keine Nachrichten in diesem Kanal.",
+    "sendFirstMessage": "Senden Sie die erste Nachricht, um das Gespräch zu starten.",
     "messagePlaceholder": "Nachricht eingeben…",
     "send": "Senden",
     "channelName": "Kanalname",

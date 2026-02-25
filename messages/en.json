@@ -1102,8 +1102,8 @@
         "desc": "Allows creating recurring shifts over multiple weeks with automatic conflict checking."
       },
       "autoApproveAbsence": {
-        "name": "Auto-approve absences",
-        "desc": "Automatically approves sick leave immediately. Other absences are auto-approved if no shift conflicts exist."
+        "name": "Auto-approve sick leave",
+        "desc": "Automatically approves sick leave (KRANK) immediately and cancels affected shifts. All other absence types (vacation, special leave, etc.) always require manual manager approval."
       },
       "autoApproveSwap": {
         "name": "Auto-approve shift swaps",

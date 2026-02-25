@@ -161,7 +161,7 @@ export async function POST(req: Request) {
       include: { employee: true },
     });
 
-    // ── Automation: Try auto-approve (sick leave or no conflicts) ──
+    // ── Automation: Try auto-approve (sick leave only) ──
     const autoApproved = await tryAutoApproveAbsence(absence.id);
 
     // ── Automation: Notify managers about new request ──

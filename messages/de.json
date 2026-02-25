@@ -1102,8 +1102,8 @@
         "desc": "Ermöglicht das Erstellen wiederkehrender Schichten über mehrere Wochen mit automatischer Konfliktprüfung."
       },
       "autoApproveAbsence": {
-        "name": "Automatische Abwesenheitsgenehmigung",
-        "desc": "Genehmigt Krankmeldungen sofort automatisch. Andere Abwesenheiten werden automatisch genehmigt, sofern keine Schichtkonflikte bestehen."
+        "name": "Automatische Krankmeldungsgenehmigung",
+        "desc": "Genehmigt Krankmeldungen (KRANK) sofort automatisch und sagt betroffene Schichten ab. Alle anderen Abwesenheitsarten (Urlaub, Sonderurlaub usw.) erfordern immer eine manuelle Genehmigung durch einen Vorgesetzten."
       },
       "autoApproveSwap": {
         "name": "Automatische Schichttausch-Genehmigung",

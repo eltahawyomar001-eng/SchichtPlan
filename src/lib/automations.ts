@@ -781,9 +781,15 @@ export async function createRecurringShifts(params: {
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * Auto-approve an absence request if:
- * 1. Category is KRANK (sick leave — always auto-approve)
- * 2. No conflicting shifts exist
+ * Auto-approve an absence request — ONLY for KRANK (sick leave).
+ *
+ * German industry standard (BUrlG / ArbZG):
+ *  - KRANK: Employer must accept sick notes; auto-approve is standard.
+ *  - URLAUB: Requires explicit manager approval (team coverage, quotas,
+ *    business needs must be evaluated). §7 BUrlG gives the employer the
+ *    right to schedule vacations considering operational requirements.
+ *  - All other categories (SONDERURLAUB, ELTERNZEIT, UNBEZAHLT,
+ *    FORTBILDUNG, SONSTIGES): Require human review.
  *
  * Returns true if auto-approved.
  */
@@ -802,52 +808,30 @@ export async function tryAutoApproveAbsence(
     return false;
   }
 
-  // Auto-approve sick leave immediately
-  if (absence.category === "KRANK") {
-    await prisma.absenceRequest.update({
-      where: { id: absenceId },
-      data: {
-        status: "GENEHMIGT",
-        reviewedAt: new Date(),
-        reviewNote: "Automatisch genehmigt (Krankmeldung)",
-      },
-    });
-
-    await cascadeAbsenceApproval({
-      absenceId,
-      employeeId: absence.employeeId,
-      startDate: absence.startDate,
-      endDate: absence.endDate,
-      workspaceId: absence.workspaceId,
-      reviewerId: "system",
-    });
-
-    return true;
+  // Only auto-approve sick leave — all other categories require manager review
+  if (absence.category !== "KRANK") {
+    return false;
   }
 
-  // For other categories: auto-approve if no conflicting shifts
-  const conflictingShifts = await prisma.shift.findMany({
-    where: {
-      employeeId: absence.employeeId,
-      workspaceId: absence.workspaceId,
-      date: { gte: absence.startDate, lte: absence.endDate },
-      status: { not: "CANCELLED" },
+  await prisma.absenceRequest.update({
+    where: { id: absenceId },
+    data: {
+      status: "GENEHMIGT",
+      reviewedAt: new Date(),
+      reviewNote: "Automatisch genehmigt (Krankmeldung)",
     },
   });
 
-  if (conflictingShifts.length === 0) {
-    await prisma.absenceRequest.update({
-      where: { id: absenceId },
-      data: {
-        status: "GENEHMIGT",
-        reviewedAt: new Date(),
-        reviewNote: "Automatisch genehmigt (keine Konflikte)",
-      },
-    });
-    return true;
-  }
+  await cascadeAbsenceApproval({
+    absenceId,
+    employeeId: absence.employeeId,
+    startDate: absence.startDate,
+    endDate: absence.endDate,
+    workspaceId: absence.workspaceId,
+    reviewerId: "system",
+  });
 
-  return false;
+  return true;
 }
 
 /**

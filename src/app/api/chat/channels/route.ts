@@ -33,6 +33,13 @@ export async function GET() {
         channel: {
           include: {
             _count: { select: { members: true, messages: true } },
+            members: {
+              include: {
+                user: {
+                  select: { id: true, name: true, email: true },
+                },
+              },
+            },
             messages: {
               take: 1,
               orderBy: { createdAt: "desc" as const },
@@ -41,6 +48,7 @@ export async function GET() {
                 content: true,
                 senderName: true,
                 createdAt: true,
+                deletedAt: true,
               },
             },
           },
@@ -49,26 +57,32 @@ export async function GET() {
     });
 
     // Filter to only workspace channels
-     
+
     const channels = memberships
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((m: any) => m.channel.workspaceId === user.workspaceId)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((m: any) => ({
-        ...m.channel,
-        lastReadAt: m.lastReadAt,
-        lastMessage: m.channel.messages[0] ?? null,
-        memberCount: m.channel._count.members,
-        messageCount: m.channel._count.messages,
-        unreadCount:
-          m.lastReadAt && m.channel.messages[0]
-            ? new Date(m.channel.messages[0].createdAt) > new Date(m.lastReadAt)
-              ? 1
-              : 0
-            : m.channel._count.messages > 0
-              ? 1
-              : 0,
-      }));
+      .map((m: any) => {
+        const lastMsg = m.channel.messages[0] ?? null;
+        const lastMsgContent = lastMsg?.deletedAt
+          ? "[Nachricht gelöscht]"
+          : lastMsg?.content;
+        return {
+          ...m.channel,
+          lastReadAt: m.lastReadAt,
+          lastMessage: lastMsg ? { ...lastMsg, content: lastMsgContent } : null,
+          memberCount: m.channel._count.members,
+          messageCount: m.channel._count.messages,
+          unreadCount:
+            m.lastReadAt && lastMsg
+              ? new Date(lastMsg.createdAt) > new Date(m.lastReadAt)
+                ? 1
+                : 0
+              : m.channel._count.messages > 0
+                ? 1
+                : 0,
+        };
+      });
 
     return NextResponse.json(channels);
   } catch (error) {

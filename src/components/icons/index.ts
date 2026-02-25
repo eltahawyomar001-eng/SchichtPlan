@@ -75,3 +75,7 @@ export { HeartPulseIcon } from "./HeartPulseIcon";
 export { WrenchIcon } from "./WrenchIcon";
 export { TruckIcon } from "./TruckIcon";
 export { BeakerIcon } from "./BeakerIcon";
+export { MoreVerticalIcon } from "./MoreVerticalIcon";
+export { SmileIcon } from "./SmileIcon";
+export { HashIcon } from "./HashIcon";
+export { AtSignIcon } from "./AtSignIcon";

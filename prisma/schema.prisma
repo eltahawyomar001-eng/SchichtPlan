@@ -31,6 +31,7 @@ model User {
   pushSubscriptions PushSubscription[]
   chatChannelMemberships ChatChannelMember[]
   chatMessages    ChatMessage[]
+  chatReactions   ChatReaction[]
 }
 
 model Account {
@@ -872,6 +873,19 @@ model ChatMessage {
   channel    ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   senderId   String
   sender     User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions  ChatReaction[]
   @@index([channelId, createdAt(sort: Desc)])
   @@index([senderId])
+}
+
+model ChatReaction {
+  id        String   @id @default(cuid())
+  emoji     String
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }

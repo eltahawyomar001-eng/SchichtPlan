@@ -51,7 +51,6 @@ export async function GET(
     const messages = await (prisma as any).chatMessage.findMany({
       where: {
         channelId,
-        deletedAt: null,
       },
       orderBy: { createdAt: "desc" as const },
       take: limit + 1, // +1 to determine hasMore
@@ -62,7 +61,15 @@ export async function GET(
         senderName: true,
         senderId: true,
         editedAt: true,
+        deletedAt: true,
         createdAt: true,
+        reactions: {
+          select: {
+            id: true,
+            emoji: true,
+            userId: true,
+          },
+        },
       },
     });
 

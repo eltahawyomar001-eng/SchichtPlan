@@ -46,3 +46,15 @@ next-env.d.ts
 generate_report.py
 Shiftfy_Status_Report.pdf
 *.bak
+
+# Python tooling (local only — not to be committed)
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated reports (build artifacts — regenerate via scripts/)
+reports/
+
+# Root-level generator scripts (use scripts/ instead)
+generate_*.py

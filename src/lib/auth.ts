@@ -9,6 +9,14 @@ import * as OTPAuth from "otpauth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 
+/** Workspace shape that includes the onboardingCompleted field.
+ *  Used for casting until moduleResolution:bundler fully resolves
+ *  the Prisma 7 generated client types. */
+interface WorkspaceWithOnboarding {
+  onboardingCompleted: boolean;
+  [key: string]: unknown;
+}
+
 /** Compare a plain-text recovery code against an array of bcrypt hashes. */
 async function findMatchingRecoveryCode(
   plainCode: string,
@@ -153,7 +161,8 @@ export const authOptions: NextAuthOptions = {
           workspaceName: user.workspace?.name || null,
           employeeId: user.employee?.id || null,
           onboardingCompleted:
-            (user.workspace as any)?.onboardingCompleted ?? false,
+            (user.workspace as unknown as WorkspaceWithOnboarding | null)
+              ?.onboardingCompleted ?? false,
         };
       },
     }),
@@ -235,7 +244,8 @@ export const authOptions: NextAuthOptions = {
             token.workspaceName = dbUser.workspace?.name || null;
             token.employeeId = dbUser.employee?.id || null;
             token.onboardingCompleted =
-              (dbUser.workspace as any)?.onboardingCompleted ?? false;
+              (dbUser.workspace as unknown as WorkspaceWithOnboarding | null)
+                ?.onboardingCompleted ?? false;
           }
         }
       }
@@ -263,19 +273,19 @@ export const authOptions: NextAuthOptions = {
             },
           });
           if (dbUser) {
+            const ws =
+              dbUser.workspace as unknown as WorkspaceWithOnboarding | null;
             token.role = dbUser.role;
             token.workspaceId = dbUser.workspaceId;
             token.workspaceName = dbUser.workspace?.name || null;
             token.employeeId = dbUser.employee?.id || null;
-            token.onboardingCompleted =
-              (dbUser.workspace as any)?.onboardingCompleted ?? false;
+            token.onboardingCompleted = ws?.onboardingCompleted ?? false;
             jwtCache.set(token.sub, {
               role: dbUser.role,
               workspaceId: dbUser.workspaceId,
               workspaceName: dbUser.workspace?.name || null,
               employeeId: dbUser.employee?.id || null,
-              onboardingCompleted:
-                (dbUser.workspace as any)?.onboardingCompleted ?? false,
+              onboardingCompleted: ws?.onboardingCompleted ?? false,
               ts: now,
             });
           }

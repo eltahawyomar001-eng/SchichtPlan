@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { LandingPage } from "@/components/landing/LandingPage";
-import { FAQJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title:
@@ -25,10 +24,5 @@ export default async function Home() {
     // Auth not configured yet — show landing page
   }
 
-  return (
-    <>
-      <FAQJsonLd />
-      <LandingPage />
-    </>
-  );
+  return <LandingPage />;
 }

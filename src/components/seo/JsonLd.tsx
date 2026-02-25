@@ -126,65 +126,62 @@ export function CombinedJsonLd() {
           "DSGVO-konform",
         ],
       },
-    ],
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  );
-}
-
-/**
- * FAQ Page structured data — rendered only on the homepage.
- */
-export function FAQJsonLd() {
-  const faqs = [
-    {
-      question: "Was kostet Shiftfy?",
-      answer:
-        "Shiftfy bietet einen kostenlosen Starter-Plan für bis zu 5 Mitarbeiter. Der Team-Plan kostet pauschal 29 € pro Workspace/Monat (24 € bei jährlicher Zahlung) und der Business-Plan 59 € pro Workspace/Monat (49 € jährlich) — jeweils mit unbegrenzter Mitarbeiterzahl.",
-    },
-    {
-      question: "Ist Shiftfy DSGVO-konform?",
-      answer:
-        "Ja, Shiftfy ist vollständig DSGVO-konform. Alle Daten werden auf deutschen/europäischen Servern gespeichert und nach den strengsten Datenschutzrichtlinien verarbeitet.",
-    },
-    {
-      question: "Für welche Branchen eignet sich Shiftfy?",
-      answer:
-        "Shiftfy eignet sich für alle Branchen mit Schichtarbeit: Sicherheitsdienste, Gastronomie, Einzelhandel, Produktion, Gesundheitswesen, Logistik und weitere Dienstleistungsbranchen.",
-    },
-    {
-      question: "Wie funktioniert die digitale Zeiterfassung?",
-      answer:
-        "Mitarbeiter können ihre Arbeitszeiten über die integrierte Stempeluhr, manuell oder per Schichtplan erfassen. Alle Zeiten werden automatisch in Stunden- und Urlaubskonten übernommen.",
-    },
-    {
-      question: "Kann ich Shiftfy kostenlos testen?",
-      answer:
-        "Ja, der Starter-Plan ist dauerhaft kostenlos und enthält Schichtplanung, Zeiterfassung und bis zu 5 Mitarbeiter. Kein Vertrag, keine Kreditkarte nötig.",
-    },
-    {
-      question: "Unterstützt Shiftfy automatische Schichtplanung?",
-      answer:
-        "Ja, mit dem Business-Plan können Schichten automatisch anhand von Verfügbarkeiten, Qualifikationen und Arbeitszeitregeln erstellt werden.",
-    },
-  ];
-
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
+      // ── FAQPage (merged into @graph to avoid duplicate FAQPage items) ──
+      {
+        "@type": "FAQPage",
+        "@id": `${SITE_URL}/#faq`,
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "Was kostet Shiftfy?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Shiftfy bietet einen kostenlosen Starter-Plan für bis zu 5 Mitarbeiter. Der Team-Plan kostet pauschal 29 € pro Workspace/Monat (24 € bei jährlicher Zahlung) und der Business-Plan 59 € pro Workspace/Monat (49 € jährlich) — jeweils mit unbegrenzter Mitarbeiterzahl.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Ist Shiftfy DSGVO-konform?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Ja, Shiftfy ist vollständig DSGVO-konform. Alle Daten werden auf deutschen/europäischen Servern gespeichert und nach den strengsten Datenschutzrichtlinien verarbeitet.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Für welche Branchen eignet sich Shiftfy?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Shiftfy eignet sich für alle Branchen mit Schichtarbeit: Sicherheitsdienste, Gastronomie, Einzelhandel, Produktion, Gesundheitswesen, Logistik und weitere Dienstleistungsbranchen.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Wie funktioniert die digitale Zeiterfassung?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Mitarbeiter können ihre Arbeitszeiten über die integrierte Stempeluhr, manuell oder per Schichtplan erfassen. Alle Zeiten werden automatisch in Stunden- und Urlaubskonten übernommen.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Kann ich Shiftfy kostenlos testen?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Ja, der Starter-Plan ist dauerhaft kostenlos und enthält Schichtplanung, Zeiterfassung und bis zu 5 Mitarbeiter. Kein Vertrag, keine Kreditkarte nötig.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Unterstützt Shiftfy automatische Schichtplanung?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Ja, mit dem Business-Plan können Schichten automatisch anhand von Verfügbarkeiten, Qualifikationen und Arbeitszeitregeln erstellt werden.",
+            },
+          },
+        ],
       },
-    })),
+    ],
   };
 
   return (

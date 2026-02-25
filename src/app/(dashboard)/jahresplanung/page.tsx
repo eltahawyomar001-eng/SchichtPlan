@@ -258,9 +258,9 @@ export default function JahresplanungSeite() {
     <>
       <Topbar title={t("title")} description={t("description")} />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Controls bar */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Year selector */}
           <div className="flex items-center gap-1">
             <button
@@ -273,7 +273,7 @@ export default function JahresplanungSeite() {
             <Select
               value={String(year)}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="w-28"
+              className="w-24 sm:w-28"
             >
               {years.map((y) => (
                 <option key={y} value={y}>
@@ -295,7 +295,7 @@ export default function JahresplanungSeite() {
             <Select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-48"
+              className="w-40 sm:w-48"
             >
               <option value="">{t("allDepartments")}</option>
               {departments.map(([id, name]) => (
@@ -306,29 +306,31 @@ export default function JahresplanungSeite() {
             </Select>
           )}
 
-          {/* View tabs */}
-          <div className="ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+          {/* View tabs — full width on mobile, auto on sm+ */}
+          <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1">
             <button
               onClick={() => setActiveTab("calendar")}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
                 activeTab === "calendar"
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-500 hover:text-gray-700",
               )}
             >
-              {t("calendarView")}
+              <span className="hidden sm:inline">{t("calendarView")}</span>
+              <span className="sm:hidden">Kalender</span>
             </button>
             <button
               onClick={() => setActiveTab("summary")}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
                 activeTab === "summary"
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-500 hover:text-gray-700",
               )}
             >
-              {t("summaryView")}
+              <span className="hidden sm:inline">{t("summaryView")}</span>
+              <span className="sm:hidden">Auswertung</span>
             </button>
           </div>
         </div>
@@ -433,7 +435,7 @@ function YearCalendar({
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
       {Array.from({ length: 12 }, (_, month) => (
         <MonthMiniCard
           key={month}
@@ -495,22 +497,22 @@ function MonthMiniCard({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow border-gray-200"
+      className="cursor-pointer hover:shadow-md transition-shadow border-gray-200 overflow-hidden"
       onClick={onClick}
     >
-      <CardContent className="p-3">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-900">
+      <CardContent className="p-2.5 sm:p-3">
+        <div className="flex items-start justify-between mb-2 gap-1">
+          <h3 className="text-sm font-semibold text-gray-900 shrink-0">
             {MONTH_NAMES_DE[month]}
           </h3>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center justify-end gap-1 text-xs min-w-0">
             {monthAbsences > 0 && (
-              <span className="rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 font-medium">
+              <span className="rounded-full bg-amber-100 text-amber-800 px-1.5 py-0.5 font-medium whitespace-nowrap">
                 {monthAbsences} {t("absenceDays")}
               </span>
             )}
             {maxOverlap >= 2 && (
-              <span className="rounded-full bg-rose-100 text-rose-700 px-2 py-0.5 font-medium">
+              <span className="rounded-full bg-rose-100 text-rose-700 px-1.5 py-0.5 font-medium whitespace-nowrap">
                 ⚠ {maxOverlap}×
               </span>
             )}
@@ -518,11 +520,14 @@ function MonthMiniCard({
         </div>
 
         {/* Mini day grid — employee rows × day columns */}
-        <div className="overflow-x-auto">
-          <div className="min-w-0">
+        <div
+          className="-mx-2.5 sm:-mx-3 px-2.5 sm:px-3 overflow-x-auto overscroll-x-contain"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <div className="min-w-max">
             {/* Day numbers header */}
             <div className="flex gap-px mb-px">
-              <div className="w-16 shrink-0" />
+              <div className="w-14 shrink-0" />
               {Array.from({ length: daysInMonth }, (_, d) => {
                 const day = d + 1;
                 const we = isWeekend(year, month, day);
@@ -546,7 +551,7 @@ function MonthMiniCard({
               return (
                 <div key={emp.id} className="flex gap-px mb-px">
                   <div
-                    className="w-16 shrink-0 truncate text-[8px] text-gray-500 leading-3 pr-1"
+                    className="w-14 shrink-0 truncate text-[8px] text-gray-500 leading-3 pr-1"
                     title={`${emp.firstName} ${emp.lastName}`}
                   >
                     {emp.lastName}
@@ -639,8 +644,8 @@ function MonthDetail({
     <Card className="border-gray-200">
       <CardContent className="p-0">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-b border-gray-200 px-3 sm:px-4 py-3">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             {MONTH_NAMES_DE[month]} {year}
           </h2>
           <button
@@ -653,11 +658,14 @@ function MonthDetail({
         </div>
 
         {/* Scrollable grid */}
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto overscroll-x-contain -webkit-overflow-scrolling-touch"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 w-44 min-w-[11rem]">
+                <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 w-44 min-w-[11rem] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
                   {t("employee")}
                 </th>
                 {Array.from({ length: daysInMonth }, (_, d) => {
@@ -695,7 +703,7 @@ function MonthDetail({
               </tr>
               {/* Overlap indicator row */}
               <tr className="border-b border-gray-200">
-                <td className="sticky left-0 z-10 bg-white px-3 py-1 text-[10px] text-gray-400 font-medium">
+                <td className="sticky left-0 z-10 bg-white px-3 py-1 text-[10px] text-gray-400 font-medium after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
                   {t("absenceCount")}
                 </td>
                 {Array.from({ length: daysInMonth }, (_, d) => {
@@ -732,13 +740,13 @@ function MonthDetail({
                     key={emp.id}
                     className="border-b border-gray-50 hover:bg-gray-50/50"
                   >
-                    <td className="sticky left-0 z-10 bg-white px-3 py-1.5">
+                    <td className="sticky left-0 z-10 bg-white px-3 py-1.5 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: emp.color || "#9ca3af" }}
                         />
-                        <span className="text-xs font-medium text-gray-700 truncate">
+                        <span className="text-xs font-medium text-gray-700 truncate max-w-[8rem]">
                           {emp.firstName} {emp.lastName}
                         </span>
                       </div>
@@ -802,7 +810,7 @@ function MonthDetail({
         </div>
 
         {/* Week summary at bottom */}
-        <div className="border-t border-gray-200 px-4 py-3">
+        <div className="border-t border-gray-200 px-3 sm:px-4 py-3">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t("weekOverview")}
           </h3>
@@ -887,18 +895,21 @@ function SummaryTable({
   return (
     <Card className="border-gray-200">
       <CardContent className="p-0">
-        <div className="border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="border-b border-gray-200 px-3 sm:px-4 py-3">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             {t("yearSummary")} {year}
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">{t("yearSummaryDesc")}</p>
         </div>
 
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto overscroll-x-contain"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="sticky left-0 z-10 bg-gray-50 px-4 py-2.5 text-left text-xs font-medium text-gray-500 w-48">
+                <th className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-left text-xs font-medium text-gray-500 w-48 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
                   {t("employee")}
                 </th>
                 <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
@@ -945,7 +956,7 @@ function SummaryTable({
                     key={emp.id}
                     className="border-b border-gray-50 hover:bg-gray-50/50"
                   >
-                    <td className="sticky left-0 z-10 bg-white px-4 py-2.5">
+                    <td className="sticky left-0 z-10 bg-white px-3 sm:px-4 py-2.5 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -1019,7 +1030,7 @@ function SummaryTable({
             {/* Totals footer */}
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50/80 font-semibold">
-                <td className="sticky left-0 z-10 bg-gray-50 px-4 py-2.5 text-sm text-gray-900">
+                <td className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm text-gray-900 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
                   {t("total")} ({employees.length} {t("employeesCount")})
                 </td>
                 <td className="px-3 py-2.5 text-right text-sm text-gray-700">

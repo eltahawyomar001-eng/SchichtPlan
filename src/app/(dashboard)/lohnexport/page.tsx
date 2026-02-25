@@ -14,6 +14,7 @@ import {
   DownloadIcon,
   ClockIcon,
   UsersIcon,
+  CheckCircleIcon,
 } from "@/components/icons";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { de, enUS } from "date-fns/locale";
@@ -49,6 +50,17 @@ export default function LohnexportPage() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewLoaded, setPreviewLoaded] = useState(false);
+
+  // DATEV Online Upload state
+  const [datevOnlineLoading, setDatevOnlineLoading] = useState(false);
+  const [datevOnlineResult, setDatevOnlineResult] = useState<{
+    reference: string;
+    recordCount: number;
+    employeeCount: number;
+    uploadedAt: string;
+    exportJobId: string;
+  } | null>(null);
+  const [datevOnlineError, setDatevOnlineError] = useState<string | null>(null);
 
   // Default to previous month
   const lastMonth = subMonths(new Date(), 1);
@@ -139,6 +151,46 @@ export default function LohnexportPage() {
       setLoadError(tc("errorOccurred"));
     } finally {
       setLoading(false);
+    }
+  }
+
+  // ── DATEV Online Upload ─────────────────────────────────────
+
+  async function handleDatevOnlineUpload() {
+    setDatevOnlineLoading(true);
+    setDatevOnlineError(null);
+    setDatevOnlineResult(null);
+    try {
+      const res = await fetch("/api/export/datev-online", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          start: startDate,
+          end: endDate,
+          ...(selectedEmployee ? { employeeId: selectedEmployee } : {}),
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setDatevOnlineResult({
+          reference: data.upload.datevReference,
+          recordCount: data.upload.recordCount,
+          employeeCount: data.upload.employeeCount,
+          uploadedAt: data.upload.uploadedAt,
+          exportJobId: data.exportJob.id,
+        });
+      } else {
+        const isPlanLimit = await handlePlanLimit(res);
+        if (!isPlanLimit) {
+          const data = await res.json().catch(() => ({}));
+          setDatevOnlineError(data.error || tc("errorOccurred"));
+        }
+      }
+    } catch {
+      setDatevOnlineError(tc("errorOccurred"));
+    } finally {
+      setDatevOnlineLoading(false);
     }
   }
 
@@ -267,6 +319,71 @@ export default function LohnexportPage() {
                 <span className="sm:hidden">{tc("download")}</span>
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* DATEV Online Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileExportIcon className="h-5 w-5 text-emerald-600" />
+              {t("datevOnlineTitle")}
+              <span className="ml-auto text-xs font-normal bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                Business+
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">{t("datevOnlineDesc")}</p>
+
+            {datevOnlineError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {datevOnlineError}
+              </div>
+            )}
+
+            {datevOnlineResult ? (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-700 font-medium">
+                  <CheckCircleIcon className="h-5 w-5" />
+                  {t("datevOnlineSuccess")}
+                </div>
+                <div className="text-sm text-emerald-700 space-y-1">
+                  <p>
+                    {t("datevReference")}:{" "}
+                    <code className="bg-emerald-100 px-1 rounded">
+                      {datevOnlineResult.reference}
+                    </code>
+                  </p>
+                  <p>
+                    {datevOnlineResult.recordCount} {t("records")} ·{" "}
+                    {datevOnlineResult.employeeCount} {tc("employees")}
+                  </p>
+                  <p className="text-xs text-emerald-600">
+                    {new Date(datevOnlineResult.uploadedAt).toLocaleString(
+                      "de-DE",
+                    )}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDatevOnlineResult(null)}
+                  className="mt-2"
+                >
+                  {t("datevOnlineNew")}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={handleDatevOnlineUpload}
+                disabled={datevOnlineLoading}
+                variant="outline"
+              >
+                <FileExportIcon className="h-4 w-4 mr-2" />
+                {datevOnlineLoading ? tc("loading") : t("datevOnlineUpload")}
+              </Button>
+            )}
           </CardContent>
         </Card>
 

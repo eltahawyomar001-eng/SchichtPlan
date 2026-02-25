@@ -17,6 +17,7 @@ import {
   EditIcon,
   TrashIcon,
   FilterIcon,
+  ZapIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -101,6 +102,18 @@ export default function SchichtplanPage() {
     notes: "",
     repeatWeeks: 0,
   });
+
+  // Auto-schedule state
+  const [showAutoSchedule, setShowAutoSchedule] = useState(false);
+  const [autoScheduleLoading, setAutoScheduleLoading] = useState(false);
+  const [autoScheduleResult, setAutoScheduleResult] = useState<{
+    assigned: number;
+    unresolved: number;
+    dryRun: boolean;
+  } | null>(null);
+  const [autoScheduleError, setAutoScheduleError] = useState<string | null>(
+    null,
+  );
 
   // DnD sensors
   const sensors = useSensors(
@@ -254,6 +267,53 @@ export default function SchichtplanPage() {
     }
   };
 
+  const handleAutoSchedule = async (dryRun: boolean) => {
+    setAutoScheduleLoading(true);
+    setAutoScheduleError(null);
+    setAutoScheduleResult(null);
+    try {
+      let startDate: string, endDate: string;
+      if (viewMode === "month") {
+        startDate = format(startOfMonth(currentWeek), "yyyy-MM-dd");
+        endDate = format(endOfMonth(currentWeek), "yyyy-MM-dd");
+      } else if (viewMode === "day") {
+        startDate = endDate = format(currentWeek, "yyyy-MM-dd");
+      } else {
+        startDate = format(weekStart, "yyyy-MM-dd");
+        endDate = format(weekEnd, "yyyy-MM-dd");
+      }
+
+      const res = await fetch("/api/shifts/auto-schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate,
+          endDate,
+          ...(filterLocationId ? { locationId: filterLocationId } : {}),
+          dryRun,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setAutoScheduleResult({
+          assigned: data.assigned,
+          unresolved: data.unresolved,
+          dryRun: data.dryRun,
+        });
+        if (!dryRun && data.assigned > 0) {
+          fetchData(); // Refresh grid
+        }
+      } else {
+        setAutoScheduleError(data.error || tc("errorOccurred"));
+      }
+    } catch {
+      setAutoScheduleError(tc("errorOccurred"));
+    } finally {
+      setAutoScheduleLoading(false);
+    }
+  };
+
   const getShiftsForDay = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     return shifts
@@ -397,6 +457,22 @@ export default function SchichtplanPage() {
             >
               {tc("today")}
             </Button>
+            {/* Auto-schedule button — management only */}
+            {canManage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowAutoSchedule(true);
+                  setAutoScheduleResult(null);
+                  setAutoScheduleError(null);
+                }}
+                className="gap-1.5"
+              >
+                <ZapIcon className="h-4 w-4 text-amber-500" />
+                <span className="hidden sm:inline">{t("autoSchedule")}</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -876,6 +952,95 @@ export default function SchichtplanPage() {
           onConfirm={handleDeleteShift}
           onCancel={() => setDeleteTarget(null)}
         />
+      )}
+
+      {/* Auto-schedule modal */}
+      {showAutoSchedule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <ZapIcon className="h-5 w-5 text-amber-500" />
+                <h2 className="font-semibold text-gray-900">
+                  {t("autoScheduleTitle")}
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowAutoSchedule(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">{t("autoScheduleDesc")}</p>
+
+              {autoScheduleError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                  {autoScheduleError}
+                </div>
+              )}
+
+              {autoScheduleResult ? (
+                <div
+                  className={`rounded-lg border p-4 space-y-2 ${autoScheduleResult.dryRun ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
+                >
+                  <p
+                    className={`font-medium text-sm ${autoScheduleResult.dryRun ? "text-amber-700" : "text-emerald-700"}`}
+                  >
+                    {autoScheduleResult.dryRun
+                      ? t("autoScheduleDryRun")
+                      : t("autoScheduleDone")}
+                  </p>
+                  <ul className="text-sm space-y-1 text-gray-700">
+                    <li>
+                      ✅ {autoScheduleResult.assigned}{" "}
+                      {t("autoScheduleAssigned")}
+                    </li>
+                    {autoScheduleResult.unresolved > 0 && (
+                      <li>
+                        ⚠️ {autoScheduleResult.unresolved}{" "}
+                        {t("autoScheduleUnresolved")}
+                      </li>
+                    )}
+                  </ul>
+                  {autoScheduleResult.dryRun && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleAutoSchedule(false)}
+                      disabled={autoScheduleLoading}
+                      className="mt-2"
+                    >
+                      {autoScheduleLoading
+                        ? tc("loading")
+                        : t("autoScheduleApply")}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAutoSchedule(true)}
+                    disabled={autoScheduleLoading}
+                  >
+                    {autoScheduleLoading
+                      ? tc("loading")
+                      : t("autoSchedulePreview")}
+                  </Button>
+                  <Button
+                    onClick={() => handleAutoSchedule(false)}
+                    disabled={autoScheduleLoading}
+                  >
+                    <ZapIcon className="h-4 w-4 mr-1.5" />
+                    {autoScheduleLoading ? tc("loading") : t("autoScheduleRun")}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

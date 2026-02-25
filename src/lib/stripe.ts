@@ -51,6 +51,9 @@ export interface PlanConfig {
     absenceManagement: boolean;
     csvPdfExport: boolean;
     datevExport: boolean;
+    datevOnlineUpload: boolean;
+    autoScheduling: boolean;
+    teamChat: boolean;
     apiWebhooks: boolean;
     customRoles: boolean;
     analytics: boolean;
@@ -85,6 +88,9 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       absenceManagement: false,
       csvPdfExport: false,
       datevExport: false,
+      datevOnlineUpload: false,
+      autoScheduling: false,
+      teamChat: false,
       apiWebhooks: false,
       customRoles: false,
       analytics: false,
@@ -110,6 +116,9 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: false,
+      datevOnlineUpload: false,
+      autoScheduling: true,
+      teamChat: true,
       apiWebhooks: false,
       customRoles: false,
       analytics: false,
@@ -135,6 +144,9 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: true,
+      datevOnlineUpload: true,
+      autoScheduling: true,
+      teamChat: true,
       apiWebhooks: true,
       customRoles: true,
       analytics: true,
@@ -160,6 +172,9 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: true,
+      datevOnlineUpload: true,
+      autoScheduling: true,
+      teamChat: true,
       apiWebhooks: true,
       customRoles: true,
       analytics: true,

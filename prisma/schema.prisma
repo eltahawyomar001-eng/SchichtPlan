@@ -29,6 +29,8 @@ model User {
   invitationsSent Invitation[]
   employee       Employee?
   pushSubscriptions PushSubscription[]
+  chatChannelMemberships ChatChannelMember[]
+  chatMessages    ChatMessage[]
 }
 
 model Account {
@@ -136,6 +138,7 @@ model Workspace {
   automationRules AutomationRule[]
   auditLogs       AuditLog[]
   eSignatures     ESignature[]
+  chatChannels    ChatChannel[]
   subscription    Subscription?
 }
 
@@ -235,6 +238,7 @@ model Location {
   timeEntries TimeEntry[]
   departments Department[]
   shiftTemplates ShiftTemplate[]
+  chatChannels ChatChannel[]
 }
 
 model Department {
@@ -248,6 +252,7 @@ model Department {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   employees   Employee[]
+  chatChannels ChatChannel[]
   @@index([workspaceId])
 }
 
@@ -818,4 +823,55 @@ model AuditLog {
   @@index([workspaceId])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEAM CHAT
+// ═══════════════════════════════════════════════════════════════
+
+model ChatChannel {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  type         String   @default("GROUP") // GROUP | DIRECT | LOCATION | DEPARTMENT
+  createdBy    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  locationId   String?
+  location     Location?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  workspaceId  String
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members      ChatChannelMember[]
+  messages     ChatMessage[]
+  @@index([workspaceId])
+}
+
+model ChatChannelMember {
+  id         String    @id @default(cuid())
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+  channelId  String
+  channel    ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([channelId, userId])
+  @@index([userId])
+  @@index([channelId])
+}
+
+model ChatMessage {
+  id         String    @id @default(cuid())
+  content    String    @db.Text
+  senderName String
+  editedAt   DateTime?
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  channelId  String
+  channel    ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  @@index([channelId, createdAt(sort: Desc)])
+  @@index([senderId])
 }

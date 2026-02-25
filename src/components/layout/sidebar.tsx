@@ -35,6 +35,7 @@ import {
   CalendarRangeIcon,
   CreditCardIcon,
   ShieldCheckIcon,
+  MessageCircleIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -62,10 +63,11 @@ const navGroups: NavGroup[] = [
       { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
       { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
       { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
+      { key: "punchClock", href: "/stempeluhr", icon: TargetIcon },
       {
-        key: "punchClock",
-        href: "/stempeluhr",
-        icon: TargetIcon,
+        key: "teamChat",
+        href: "/nachrichten",
+        icon: MessageCircleIcon,
       },
       {
         key: "teamCalendar",

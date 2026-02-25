@@ -88,7 +88,8 @@
     "annualPlanning": "Annual Planning",
     "dataIO": "Import / Export",
     "roles": "Roles",
-    "clients": "Clients"
+    "clients": "Clients",
+    "teamChat": "Messages"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -229,7 +230,17 @@
     "viewWeek": "Week",
     "viewMonth": "Month",
     "shiftSingular": "shift",
-    "shiftPlural": "shifts"
+    "shiftPlural": "shifts",
+    "autoSchedule": "Auto-Schedule",
+    "autoScheduleTitle": "Automatic Shift Scheduling",
+    "autoScheduleDesc": "Automatically assigns available employees to open shifts. Respects availabilities, absences, rest periods (ArbZG §5), and contracted hours.",
+    "autoSchedulePreview": "Preview",
+    "autoScheduleRun": "Schedule Now",
+    "autoScheduleApply": "Apply Schedule",
+    "autoScheduleDryRun": "Preview (not saved)",
+    "autoScheduleDone": "Scheduling complete",
+    "autoScheduleAssigned": "shifts assigned",
+    "autoScheduleUnresolved": "shifts without assignment"
   },
   "timeTracking": {
     "title": "Time Tracking",
@@ -463,7 +474,14 @@
     "break": "Break",
     "net": "Net",
     "helpText": "Select a period and click “Preview” to review the data.",
-    "helpHint": "The export contains only confirmed time entries and is compatible with DATEV, Lexware, and other payroll software."
+    "helpHint": "The export contains only confirmed time entries and is compatible with DATEV, Lexware, and other payroll software.",
+    "datevOnlineTitle": "DATEV Unternehmen Online Upload",
+    "datevOnlineDesc": "Submit payroll data directly to DATEV Unternehmen Online. The API creates a complete DATEV LODAS dataset and securely transfers it to your tax advisor.",
+    "datevOnlineUpload": "Upload to DATEV",
+    "datevOnlineSuccess": "Data submitted successfully",
+    "datevReference": "DATEV Reference",
+    "records": "records",
+    "datevOnlineNew": "New submission"
   },
   "employeesPage": {
     "title": "Employees",
@@ -1836,5 +1854,25 @@
       "MANAGER": "Manager",
       "EMPLOYEE": "Employee"
     }
+  },
+  "teamChat": {
+    "title": "Team Messages",
+    "description": "Communicate directly with your team",
+    "channels": "Channels",
+    "newChannel": "New Channel",
+    "createFirst": "Create first channel",
+    "noChannels": "No channels yet",
+    "selectChannel": "Select a channel",
+    "selectChannelDesc": "Select a channel on the left to read and send messages.",
+    "noMessages": "No messages in this channel yet.",
+    "messagePlaceholder": "Type a message…",
+    "send": "Send",
+    "channelName": "Channel name",
+    "channelNamePlaceholder": "e.g. general, early-shift",
+    "channelDesc": "Description (optional)",
+    "channelDescPlaceholder": "What is this channel about?",
+    "createChannel": "Create channel",
+    "planRequired": "Team Chat requires Team plan",
+    "planRequiredDesc": "Upgrade to Team or Business plan to use internal team communication."
   }
 }

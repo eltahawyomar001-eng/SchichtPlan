@@ -88,7 +88,8 @@
     "annualPlanning": "Jahresplanung",
     "dataIO": "Import / Export",
     "roles": "Rollen",
-    "clients": "Kunden"
+    "clients": "Kunden",
+    "teamChat": "Nachrichten"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -229,7 +230,17 @@
     "viewWeek": "Woche",
     "viewMonth": "Monat",
     "shiftSingular": "Schicht",
-    "shiftPlural": "Schichten"
+    "shiftPlural": "Schichten",
+    "autoSchedule": "Auto-Planung",
+    "autoScheduleTitle": "Automatische Schichtplanung",
+    "autoScheduleDesc": "Ordnet verfügbare Mitarbeitende automatisch offenen Schichten zu. Berücksichtigt Verfügbarkeiten, Abwesenheiten, Ruhezeiten (ArbZG §5) und Wochenstunden.",
+    "autoSchedulePreview": "Vorschau",
+    "autoScheduleRun": "Jetzt planen",
+    "autoScheduleApply": "Planung anwenden",
+    "autoScheduleDryRun": "Vorschau (nicht gespeichert)",
+    "autoScheduleDone": "Planung abgeschlossen",
+    "autoScheduleAssigned": "Schichten zugewiesen",
+    "autoScheduleUnresolved": "Schichten ohne Zuweisung"
   },
   "timeTracking": {
     "title": "Zeiterfassung",
@@ -463,7 +474,14 @@
     "break": "Pause",
     "net": "Netto",
     "helpText": "Wählen Sie einen Zeitraum und klicken Sie auf „Vorschau“, um die Daten zu prüfen.",
-    "helpHint": "Der Export enthält ausschließlich bestätigte Zeiteinträge und ist kompatibel mit DATEV, Lexware und anderen Lohnabrechnungsprogrammen."
+    "helpHint": "Der Export enthält ausschließlich bestätigte Zeiteinträge und ist kompatibel mit DATEV, Lexware und anderen Lohnabrechnungsprogrammen.",
+    "datevOnlineTitle": "DATEV Unternehmen Online Upload",
+    "datevOnlineDesc": "Lohndaten direkt an DATEV Unternehmen Online übermitteln. Die API erstellt einen vollständigen DATEV LODAS-Datensatz und überträgt ihn sicher zu Ihrem Steuerberater.",
+    "datevOnlineUpload": "Jetzt zu DATEV hochladen",
+    "datevOnlineSuccess": "Daten erfolgreich übermittelt",
+    "datevReference": "DATEV-Referenz",
+    "records": "Datensätze",
+    "datevOnlineNew": "Neue Übermittlung"
   },
   "employeesPage": {
     "title": "Mitarbeiter",
@@ -1574,7 +1592,7 @@
     "active": "Aktiv",
     "inactive": "Inaktiv",
     "noRules": "Noch keine eigenen Regeln erstellt",
-    "emptyDescription": "Erstellen Sie benutzerdefinierte Automatisierungsregeln, die bei bestimmten Ereignissen automatisch Aktionen auslösen — z.\u00a0B. Benachrichtigungen bei Nachtschichten oder E-Mails bei neuen Abwesenheitsanträgen.",
+    "emptyDescription": "Erstellen Sie benutzerdefinierte Automatisierungsregeln, die bei bestimmten Ereignissen automatisch Aktionen auslösen — z. B. Benachrichtigungen bei Nachtschichten oder E-Mails bei neuen Abwesenheitsanträgen.",
     "exampleTemplatesTitle": "Beispiele für Regeln",
     "exampleNotifyNightShift": "Benachrichtigung an Manager, wenn eine Nachtschicht erstellt wird",
     "exampleEmailAbsence": "E-Mail an HR-Abteilung bei neuen Abwesenheitsanträgen",
@@ -1836,5 +1854,25 @@
       "MANAGER": "Manager",
       "EMPLOYEE": "Mitarbeiter"
     }
+  },
+  "teamChat": {
+    "title": "Team-Nachrichten",
+    "description": "Kommunizieren Sie direkt mit Ihrem Team",
+    "channels": "Kanäle",
+    "newChannel": "Neuer Kanal",
+    "createFirst": "Ersten Kanal erstellen",
+    "noChannels": "Noch keine Kanäle",
+    "selectChannel": "Kanal auswählen",
+    "selectChannelDesc": "Wählen Sie links einen Kanal aus, um Nachrichten zu lesen und zu senden.",
+    "noMessages": "Noch keine Nachrichten in diesem Kanal.",
+    "messagePlaceholder": "Nachricht eingeben…",
+    "send": "Senden",
+    "channelName": "Kanalname",
+    "channelNamePlaceholder": "z.B. allgemein, schicht-frühteam",
+    "channelDesc": "Beschreibung (optional)",
+    "channelDescPlaceholder": "Worum geht es in diesem Kanal?",
+    "createChannel": "Kanal erstellen",
+    "planRequired": "Team Chat benötigt Team-Plan",
+    "planRequiredDesc": "Upgraden Sie auf den Team- oder Business-Plan, um die interne Team-Kommunikation zu nutzen."
   }
 }

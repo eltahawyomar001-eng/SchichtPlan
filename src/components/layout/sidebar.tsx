@@ -32,6 +32,7 @@ import {
   ZapIcon,
   DatabaseIcon,
   CalendarUsersIcon,
+  CalendarRangeIcon,
   CreditCardIcon,
   ShieldCheckIcon,
 } from "@/components/icons";
@@ -70,6 +71,12 @@ const navGroups: NavGroup[] = [
         key: "teamCalendar",
         href: "/teamkalender",
         icon: CalendarUsersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "annualPlanning",
+        href: "/jahresplanung",
+        icon: CalendarRangeIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
     ],

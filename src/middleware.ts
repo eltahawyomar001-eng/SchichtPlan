@@ -1,12 +1,15 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 /* ──────────────────────────────────────────────────────────────
  * Security headers (DSGVO Art. 32 — appropriate technical measures)
  * ────────────────────────────────────────────────────────────── */
 const isDev = process.env.NODE_ENV === "development";
 
-const securityHeaders: Record<string, string> = {
+/** Static security headers (CSP is computed per-request for nonce) */
+const staticHeaders: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
@@ -14,94 +17,90 @@ const securityHeaders: Record<string, string> = {
   "Permissions-Policy":
     "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-  "Content-Security-Policy": [
+};
+
+/** Build CSP header with per-request nonce */
+function buildCsp(nonce: string): string {
+  return [
     "default-src 'self'",
-    // Next.js HMR requires unsafe-eval in dev; production only allows unsafe-inline
-    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-  ].join("; "),
-};
+  ].join("; ");
+}
+
+/** Generate a cryptographic nonce (Edge-compatible) */
+function generateNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  // Convert to base64 in Edge runtime (no Buffer)
+  return btoa(String.fromCharCode(...bytes));
+}
 
 /* ──────────────────────────────────────────────────────────────
- * In-memory rate limiter (per IP)
+ * Upstash Redis rate limiter (serverless-safe)
  *
- * ⚠️  SERVERLESS WARNING: This rate limiter uses an in-memory Map
- * which is NOT shared across serverless instances. On platforms
- * like Vercel, each cold-start gets its own Map, so a determined
- * attacker could bypass limits by hitting different instances.
- * For production-grade protection, replace with Redis / Upstash
- * or a dedicated rate-limiting service (e.g. Vercel WAF).
- * See: https://upstash.com/docs/oss/sdks/ts/ratelimit/overview
+ * Uses @upstash/ratelimit with sliding-window algorithm.
+ * Shared across all serverless instances via Redis.
+ * Falls back to allowing requests if UPSTASH env vars are missing
+ * (dev mode / early staging) — logs a warning instead of blocking.
  *
  * Limits:
  *   – Auth endpoints (login/register): 10 req / 60 s
  *   – API endpoints:                    60 req / 60 s
  * ────────────────────────────────────────────────────────────── */
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+const hasUpstash =
+  !!process.env.UPSTASH_REDIS_REST_URL &&
+  !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-const rateLimitMap = new Map<string, RateLimitEntry>();
+const redis = hasUpstash
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
+  : undefined;
 
-// Cleanup stale entries every 5 minutes
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, entry] of rateLimitMap) {
-      if (entry.resetAt <= now) rateLimitMap.delete(key);
-    }
-  },
-  5 * 60 * 1000,
-);
+const authLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "60 s"),
+      prefix: "ratelimit:auth",
+    })
+  : undefined;
 
-function rateLimit(
-  ip: string,
-  bucket: string,
-  maxRequests: number,
-  windowMs: number,
-): { allowed: boolean; remaining: number; resetAt: number } {
-  const key = `${bucket}:${ip}`;
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-
-  if (!entry || entry.resetAt <= now) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
-    return {
-      allowed: true,
-      remaining: maxRequests - 1,
-      resetAt: now + windowMs,
-    };
-  }
-
-  entry.count++;
-  const allowed = entry.count <= maxRequests;
-  return {
-    allowed,
-    remaining: Math.max(0, maxRequests - entry.count),
-    resetAt: entry.resetAt,
-  };
-}
+const apiLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(60, "60 s"),
+      prefix: "ratelimit:api",
+    })
+  : undefined;
 
 /* ──────────────────────────────────────────────────────────────
  * Middleware
  * ────────────────────────────────────────────────────────────── */
 export default withAuth(
-  function middleware(req) {
+  async function middleware(req) {
     const res = NextResponse.next();
 
-    // Apply security headers to every response
-    for (const [header, value] of Object.entries(securityHeaders)) {
+    // Generate per-request nonce for CSP
+    const nonce = generateNonce();
+
+    // Apply static security headers
+    for (const [header, value] of Object.entries(staticHeaders)) {
       res.headers.set(header, value);
     }
+    // Apply nonce-based CSP
+    res.headers.set("Content-Security-Policy", buildCsp(nonce));
+    // Pass nonce to Next.js for inline scripts (server components)
+    res.headers.set("x-nonce", nonce);
 
-    // Rate limiting
+    // Rate limiting (Upstash Redis — serverless-safe)
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??
@@ -110,57 +109,63 @@ export default withAuth(
 
     // Auth endpoints — strict limit (10 req / 60s)
     if (pathname.startsWith("/api/auth/") || pathname === "/api/auth") {
-      const result = rateLimit(ip, "auth", 10, 60_000);
-      res.headers.set("X-RateLimit-Limit", "10");
-      res.headers.set("X-RateLimit-Remaining", String(result.remaining));
-      res.headers.set(
-        "X-RateLimit-Reset",
-        String(Math.ceil(result.resetAt / 1000)),
-      );
-      if (!result.allowed) {
-        return new NextResponse(
-          JSON.stringify({
-            error: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
-          }),
-          {
-            status: 429,
-            headers: {
-              "Content-Type": "application/json",
-              "Retry-After": String(
-                Math.ceil((result.resetAt - Date.now()) / 1000),
-              ),
-              ...Object.fromEntries(Object.entries(securityHeaders)),
-            },
-          },
+      if (authLimiter) {
+        const result = await authLimiter.limit(ip);
+        res.headers.set("X-RateLimit-Limit", "10");
+        res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+        res.headers.set(
+          "X-RateLimit-Reset",
+          String(Math.ceil(result.reset / 1000)),
         );
+        if (!result.success) {
+          return new NextResponse(
+            JSON.stringify({
+              error: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "Retry-After": String(
+                  Math.ceil((result.reset - Date.now()) / 1000),
+                ),
+                ...staticHeaders,
+                "Content-Security-Policy": buildCsp(nonce),
+              },
+            },
+          );
+        }
       }
     }
 
     // API endpoints — moderate limit (60 req / 60s)
     if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth")) {
-      const result = rateLimit(ip, "api", 60, 60_000);
-      res.headers.set("X-RateLimit-Limit", "60");
-      res.headers.set("X-RateLimit-Remaining", String(result.remaining));
-      res.headers.set(
-        "X-RateLimit-Reset",
-        String(Math.ceil(result.resetAt / 1000)),
-      );
-      if (!result.allowed) {
-        return new NextResponse(
-          JSON.stringify({
-            error: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
-          }),
-          {
-            status: 429,
-            headers: {
-              "Content-Type": "application/json",
-              "Retry-After": String(
-                Math.ceil((result.resetAt - Date.now()) / 1000),
-              ),
-              ...Object.fromEntries(Object.entries(securityHeaders)),
-            },
-          },
+      if (apiLimiter) {
+        const result = await apiLimiter.limit(ip);
+        res.headers.set("X-RateLimit-Limit", "60");
+        res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+        res.headers.set(
+          "X-RateLimit-Reset",
+          String(Math.ceil(result.reset / 1000)),
         );
+        if (!result.success) {
+          return new NextResponse(
+            JSON.stringify({
+              error: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "Retry-After": String(
+                  Math.ceil((result.reset - Date.now()) / 1000),
+                ),
+                ...staticHeaders,
+                "Content-Security-Policy": buildCsp(nonce),
+              },
+            },
+          );
+        }
       }
     }
 

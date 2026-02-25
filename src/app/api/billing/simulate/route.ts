@@ -13,11 +13,20 @@ import { log } from "@/lib/logger";
  *
  * Simulates a plan change without Stripe. Only works when
  * STRIPE_SIMULATION_MODE=true. Used for testing/demo purposes.
+ * Blocked entirely in production for security.
  *
  * Body: { plan: "starter"|"team"|"business"|"enterprise", billingCycle: "monthly"|"annual" }
  */
 export async function POST(req: Request) {
   try {
+    // Hard block in production — never allow simulation with real billing
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Not available in production" },
+        { status: 404 },
+      );
+    }
+
     // Guard: only works in simulation mode
     if (!isSimulationMode()) {
       return NextResponse.json(
@@ -91,9 +100,15 @@ export async function POST(req: Request) {
 
 /**
  * GET /api/billing/simulate
- * Returns whether simulation mode is enabled. Public for UI detection.
+ * Returns whether simulation mode is enabled. Blocked in production.
  */
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "Not available in production" },
+      { status: 404 },
+    );
+  }
   return NextResponse.json({
     simulationMode: isSimulationMode(),
   });

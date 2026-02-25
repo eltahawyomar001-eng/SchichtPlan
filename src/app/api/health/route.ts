@@ -12,8 +12,8 @@ export async function GET() {
   const start = Date.now();
 
   try {
-    // Simple DB connectivity check
-    await prisma.$queryRawUnsafe("SELECT 1");
+    // Simple DB connectivity check (tagged template — safe)
+    await prisma.$queryRaw`SELECT 1`;
     const dbLatencyMs = Date.now() - start;
 
     return NextResponse.json(

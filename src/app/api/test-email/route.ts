@@ -9,10 +9,18 @@ import { log } from "@/lib/logger";
 /**
  * POST /api/test-email
  * Send a test email to verify Resend is working.
- * Only accessible to OWNER / ADMIN.
+ * Only accessible to OWNER / ADMIN. Blocked in production.
  */
 export async function POST(req: Request) {
   try {
+    // Debug tool — block in production
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Not available in production" },
+        { status: 404 },
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

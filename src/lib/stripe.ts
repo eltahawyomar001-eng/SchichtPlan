@@ -33,9 +33,9 @@ export interface PlanConfig {
   prismaKey: "STARTER" | "TEAM" | "BUSINESS" | "ENTERPRISE";
   /** Human-readable name */
   name: string;
-  /** Monthly price per seat in EUR cents (0 = free) */
+  /** Flat monthly workspace price in EUR cents (0 = free/custom) */
   monthlyPriceCents: number;
-  /** Annual price per seat in EUR cents per month (0 = free) */
+  /** Flat annual workspace price in EUR cents per month (0 = free/custom) */
   annualPriceCents: number;
   /**
    * Stripe Price IDs — set via env vars.
@@ -98,14 +98,14 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     id: "team",
     prismaKey: "TEAM",
     name: "Team",
-    monthlyPriceCents: 590, // €5.90
-    annualPriceCents: 490, // €4.90
+    monthlyPriceCents: 2900, // €29 flat/workspace
+    annualPriceCents: 2400, // €24 flat/workspace (saves ~17%)
     stripePriceIdMonthly: process.env.STRIPE_PRICE_TEAM_MONTHLY ?? null,
     stripePriceIdAnnual: process.env.STRIPE_PRICE_TEAM_ANNUAL ?? null,
     trialDays: 14,
     limits: {
       maxEmployees: Infinity,
-      maxLocations: 5,
+      maxLocations: 3,
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
@@ -123,8 +123,8 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     id: "business",
     prismaKey: "BUSINESS",
     name: "Business",
-    monthlyPriceCents: 950, // €9.50
-    annualPriceCents: 790, // €7.90
+    monthlyPriceCents: 5900, // €59 flat/workspace
+    annualPriceCents: 4900, // €49 flat/workspace (saves ~17%)
     stripePriceIdMonthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? null,
     stripePriceIdAnnual: process.env.STRIPE_PRICE_BUSINESS_ANNUAL ?? null,
     trialDays: 14,

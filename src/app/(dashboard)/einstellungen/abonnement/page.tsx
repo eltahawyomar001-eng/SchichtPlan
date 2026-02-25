@@ -167,8 +167,8 @@ function BillingContent() {
     {
       id: "team",
       name: t("planTeam"),
-      monthlyPrice: 5.9,
-      annualPrice: 4.9,
+      monthlyPrice: 29,
+      annualPrice: 24,
       description: t("planTeamDesc"),
       features: [
         t("featureUnlimitedEmployees"),
@@ -185,8 +185,8 @@ function BillingContent() {
     {
       id: "business",
       name: t("planBusiness"),
-      monthlyPrice: 9.5,
-      annualPrice: 7.9,
+      monthlyPrice: 59,
+      annualPrice: 49,
       description: t("planBusinessDesc"),
       features: [
         t("featureUnlimitedAll"),

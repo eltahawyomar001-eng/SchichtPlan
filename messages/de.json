@@ -1676,6 +1676,23 @@
     "fullyPlanned": "Voll verplant",
     "remainingLeave": "Resturlaub",
     "total": "Gesamt",
-    "employeesCount": "Mitarbeitende"
+    "employeesCount": "Mitarbeitende",
+    "calendarViewShort": "Kalender",
+    "summaryViewShort": "Auswertung",
+    "months": [
+      "Januar",
+      "Februar",
+      "März",
+      "April",
+      "Mai",
+      "Juni",
+      "Juli",
+      "August",
+      "September",
+      "Oktober",
+      "November",
+      "Dezember"
+    ],
+    "dayAbbrev": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
   }
 }

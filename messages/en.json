@@ -1676,6 +1676,23 @@
     "fullyPlanned": "Fully planned",
     "remainingLeave": "Remaining",
     "total": "Total",
-    "employeesCount": "employees"
+    "employeesCount": "employees",
+    "calendarViewShort": "Calendar",
+    "summaryViewShort": "Summary",
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "dayAbbrev": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
   }
 }

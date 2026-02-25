@@ -151,23 +151,6 @@ function getISOWeek(date: Date): number {
   );
 }
 
-const MONTH_NAMES_DE = [
-  "Januar",
-  "Februar",
-  "März",
-  "April",
-  "Mai",
-  "Juni",
-  "Juli",
-  "August",
-  "September",
-  "Oktober",
-  "November",
-  "Dezember",
-];
-
-const DAY_ABBREV_DE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-
 // ─── Main component ─────────────────────────────────────────
 export default function JahresplanungSeite() {
   const t = useTranslations("annualPlanning");
@@ -318,7 +301,7 @@ export default function JahresplanungSeite() {
               )}
             >
               <span className="hidden sm:inline">{t("calendarView")}</span>
-              <span className="sm:hidden">Kalender</span>
+              <span className="sm:hidden">{t("calendarViewShort")}</span>
             </button>
             <button
               onClick={() => setActiveTab("summary")}
@@ -330,7 +313,7 @@ export default function JahresplanungSeite() {
               )}
             >
               <span className="hidden sm:inline">{t("summaryView")}</span>
-              <span className="sm:hidden">Auswertung</span>
+              <span className="sm:hidden">{t("summaryViewShort")}</span>
             </button>
           </div>
         </div>
@@ -503,7 +486,7 @@ function MonthMiniCard({
       <CardContent className="p-2.5 sm:p-3">
         <div className="flex items-start justify-between mb-2 gap-1">
           <h3 className="text-sm font-semibold text-gray-900 shrink-0">
-            {MONTH_NAMES_DE[month]}
+            {t(`months.${month}`)}
           </h3>
           <div className="flex flex-wrap items-center justify-end gap-1 text-xs min-w-0">
             {monthAbsences > 0 && (
@@ -646,7 +629,7 @@ function MonthDetail({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-3 sm:px-4 py-3">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-            {MONTH_NAMES_DE[month]} {year}
+            {t(`months.${month}`)} {year}
           </h2>
           <button
             onClick={onClose}
@@ -687,7 +670,7 @@ function MonthDetail({
                           we ? "text-gray-300" : "text-gray-400",
                         )}
                       >
-                        {DAY_ABBREV_DE[dow]}
+                        {t(`dayAbbrev.${dow}`)}
                       </div>
                       <div
                         className={cn(

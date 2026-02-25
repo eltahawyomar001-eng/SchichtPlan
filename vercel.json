@@ -1,4 +1,7 @@
 {
+  "env": {
+    "STRIPE_SIMULATION_MODE": "true"
+  },
   "crons": [
     {
       "path": "/api/automations/generate-time-entries",

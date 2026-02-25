@@ -83,6 +83,7 @@ function BillingContent() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Check for success/cancel from Stripe redirect
   useEffect(() => {
@@ -222,30 +223,33 @@ function BillingContent() {
   const handleCheckout = async (planId: string) => {
     if (!user) return;
     setCheckoutLoading(planId);
+    setErrorMsg(null);
+    setSuccessMsg(null);
 
     try {
-      const priceKey =
-        billingCycle === "annual"
-          ? `STRIPE_PRICE_${planId.toUpperCase()}_ANNUAL`
-          : `STRIPE_PRICE_${planId.toUpperCase()}_MONTHLY`;
-
-      // The priceId comes from the checkout endpoint which reads env vars
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          priceId: priceKey,
-          billingCycle,
           plan: planId,
+          billingCycle,
         }),
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error ?? t("checkoutError"));
+        return;
+      }
+
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        setErrorMsg(t("checkoutError"));
       }
     } catch {
-      // silent
+      setErrorMsg(t("checkoutError"));
     } finally {
       setCheckoutLoading(null);
     }
@@ -253,17 +257,24 @@ function BillingContent() {
 
   const handlePortal = async () => {
     setPortalLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetch("/api/billing/portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error ?? t("checkoutError"));
+        return;
+      }
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        setErrorMsg(t("checkoutError"));
       }
     } catch {
-      // silent
+      setErrorMsg(t("checkoutError"));
     } finally {
       setPortalLoading(false);
     }
@@ -331,6 +342,20 @@ function BillingContent() {
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-medium text-emerald-700">
             <CheckCircleIcon className="h-5 w-5 shrink-0" />
             {successMsg}
+          </div>
+        )}
+
+        {/* Error message */}
+        {errorMsg && (
+          <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
+            <span className="shrink-0">⚠️</span>
+            <span className="flex-1">{errorMsg}</span>
+            <button
+              onClick={() => setErrorMsg(null)}
+              className="ml-auto text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
           </div>
         )}
 

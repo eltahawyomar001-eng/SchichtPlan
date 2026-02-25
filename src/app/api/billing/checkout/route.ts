@@ -3,23 +3,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
-import { getStripe, getPlanByPriceId } from "@/lib/stripe";
+import { getStripe, getPlanByPriceId, PLANS } from "@/lib/stripe";
 import {
   ensureSubscription,
   isSimulationMode,
   simulateSubscription,
 } from "@/lib/subscription";
 import type { PlanId } from "@/lib/stripe";
-import { PLANS } from "@/lib/stripe";
-import { checkoutSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
  * POST /api/billing/checkout
- * Creates a Stripe Checkout session for the given plan.
  *
- * Body: { priceId: string; quantity?: number }
- * quantity = number of seats (defaults to active employee count).
+ * Handles both simulation mode (STRIPE_SIMULATION_MODE=true) and
+ * real Stripe checkout. In simulation mode no real payment is processed.
+ *
+ * Body: { plan: string; billingCycle: "monthly"|"annual"; priceId?: string }
  */
 export async function POST(req: Request) {
   try {
@@ -29,20 +28,37 @@ export async function POST(req: Request) {
     }
 
     const user = session.user as SessionUser;
+
+    if (!user.workspaceId) {
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
+    }
+
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
     const body = await req.json();
+    const planId = (body.plan as string)?.toLowerCase() as PlanId;
+    const billingCycle: "monthly" | "annual" =
+      body.billingCycle === "monthly" ? "monthly" : "annual";
+
+    if (!planId || !PLANS[planId]) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid plan. Must be starter, team, business, or enterprise.",
+        },
+        { status: 400 },
+      );
+    }
 
     // ── Simulation mode: skip Stripe entirely ──
-    if (isSimulationMode()) {
-      const planId = (body.plan as string)?.toLowerCase() as PlanId;
-      const billingCycle = body.billingCycle ?? "monthly";
+    // Active when STRIPE_SIMULATION_MODE=true OR when Stripe price IDs are not configured
+    const stripeUnconfigured =
+      !process.env.STRIPE_SECRET_KEY ||
+      process.env.STRIPE_SECRET_KEY.startsWith("sk_test_YOUR") ||
+      process.env.STRIPE_SECRET_KEY === "";
 
-      if (!planId || !PLANS[planId]) {
-        return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-      }
-
+    if (isSimulationMode() || stripeUnconfigured) {
       await simulateSubscription({
         workspaceId: user.workspaceId,
         plan: planId,
@@ -53,29 +69,48 @@ export async function POST(req: Request) {
         `[Billing:Simulate] Checkout → ${planId} (${billingCycle}) for workspace ${user.workspaceId}`,
       );
 
-      // Return the success URL so the UI redirects back to the billing page
+      const baseUrl =
+        (process.env.NEXTAUTH_URL ?? process.env.VERCEL_URL)
+          ? `https://${process.env.VERCEL_URL}`
+          : "http://localhost:3000";
+
       return NextResponse.json({
-        url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
+        url: `${process.env.NEXTAUTH_URL ?? baseUrl}/einstellungen/abonnement?billing=success`,
         simulation: true,
       });
     }
 
+    // ── Real Stripe checkout ──
     const stripe = getStripe();
 
-    const parsed = validateBody(checkoutSchema, body);
-    if (!parsed.success) return parsed.response;
-    const { priceId, quantity } = parsed.data;
+    const planConfig = PLANS[planId];
+    const priceId =
+      billingCycle === "annual"
+        ? planConfig.stripePriceIdAnnual
+        : planConfig.stripePriceIdMonthly;
+
+    if (!priceId) {
+      log.error(
+        `[Stripe] No price ID configured for plan=${planId} cycle=${billingCycle}`,
+      );
+      return NextResponse.json(
+        { error: "Plan price not configured. Please contact support." },
+        { status: 500 },
+      );
+    }
 
     // Validate the price ID maps to a known plan
-    const plan = getPlanByPriceId(priceId);
-    if (!plan) {
-      return NextResponse.json({ error: "Invalid priceId" }, { status: 400 });
+    const resolvedPlan = getPlanByPriceId(priceId);
+    if (!resolvedPlan) {
+      return NextResponse.json(
+        { error: "Invalid price configuration" },
+        { status: 400 },
+      );
     }
 
     // Ensure subscription row exists
     const sub = await ensureSubscription(user.workspaceId);
 
-    // If workspace already has a Stripe customer, reuse it
     const customerParams: Record<string, string> = {};
     if (sub.stripeCustomerId) {
       customerParams.customer = sub.stripeCustomerId;
@@ -83,14 +118,12 @@ export async function POST(req: Request) {
       customerParams.customer_email = user.email;
     }
 
-    const seatCount = quantity ?? 1;
-
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card", "sepa_debit"],
-      line_items: [{ price: priceId, quantity: seatCount }],
+      line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: plan.trialDays || undefined,
+        trial_period_days: resolvedPlan.trialDays || undefined,
       },
       success_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
       cancel_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=cancel`,
@@ -103,6 +136,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     log.error("[Stripe] Checkout error:", { error: error });
-    return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Checkout failed. Please try again or contact support." },
+      { status: 500 },
+    );
   }
 }

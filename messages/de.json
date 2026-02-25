@@ -754,6 +754,7 @@
     "faqTaxAnswer": "Die Preise verstehen sich zzgl. MwSt. Beim Checkout wird die gesetzliche MwSt. ausgewiesen. Sie können dort Ihre USt-IdNr. hinterlegen.",
     "sandboxBanner": "Sandbox-Modus",
     "sandboxBannerDesc": "Abrechnungsänderungen werden simuliert — es werden keine echten Zahlungen verarbeitet. Pläne werden sofort in der Datenbank aktualisiert.",
+    "checkoutError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
     "simPortalMsg": "Die Abonnement-Verwaltung wird simuliert — kein Stripe-Portal im Sandbox-Modus verfügbar."
   },
   "roles": {

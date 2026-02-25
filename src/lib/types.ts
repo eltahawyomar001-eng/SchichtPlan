@@ -7,4 +7,5 @@ export interface SessionUser {
   workspaceId: string;
   workspaceName?: string | null;
   employeeId?: string | null;
+  onboardingCompleted?: boolean;
 }

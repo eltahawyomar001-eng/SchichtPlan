@@ -109,6 +109,7 @@ model Workspace {
   slug       String   @unique
   industry   String?
   bundesland String?
+  onboardingCompleted Boolean @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   members    User[]

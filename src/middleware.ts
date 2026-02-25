@@ -266,5 +266,8 @@ export const config = {
     "/api/shift-change-requests/:path*",
     "/api/automation-rules/:path*",
     "/api/health",
+    // Onboarding wizard (protected, outside dashboard group)
+    "/onboarding",
+    "/api/onboarding/:path*",
   ],
 };

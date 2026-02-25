@@ -23,6 +23,7 @@ import {
   MapPinIcon,
   CalendarIcon,
 } from "@/components/icons";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ESignatureBadge } from "@/components/e-signature-badge";
 import {
   formatMinutesToHHmm,
@@ -983,10 +984,13 @@ export default function ZeiterfassungPage() {
                 <p className="text-gray-500">{tc("loading")}</p>
               </div>
             ) : filteredEntries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                <ClockIcon className="h-12 w-12 mb-3" />
-                <p className="text-lg font-medium">{t("noEntries")}</p>
-                <p className="text-sm">{t("noEntriesHint")}</p>
+              <div className="p-4">
+                <EmptyState
+                  icon={<ClockIcon className="h-8 w-8 text-emerald-500" />}
+                  title={t("noEntries")}
+                  description={t("noEntriesHint")}
+                  tips={[t("emptyTip1"), t("emptyTip2"), t("emptyTip3")]}
+                />
               </div>
             ) : (
               <>

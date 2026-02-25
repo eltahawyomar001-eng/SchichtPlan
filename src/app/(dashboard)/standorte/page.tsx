@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
@@ -225,25 +226,20 @@ export default function StandortePage() {
             <p className="text-gray-500">{tc("loading")}</p>
           </div>
         ) : filteredLocations.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="rounded-full bg-gray-100 p-4 mb-4">
-                <MapPinIcon className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="text-lg font-medium text-gray-900">
-                {search ? tc("noResults") : t("noLocations")}
-              </p>
-              <p className="mt-1 text-sm text-gray-500">
-                {!search && t("noLocationsHint")}
-              </p>
-              {!search && (
-                <Button className="mt-4" onClick={openCreateForm}>
-                  <PlusIcon className="h-4 w-4" />
-                  {t("addLocation")}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          search ? (
+            <EmptyState
+              icon={<MapPinIcon className="h-8 w-8 text-emerald-500" />}
+              title={tc("noResults")}
+            />
+          ) : (
+            <EmptyState
+              icon={<MapPinIcon className="h-8 w-8 text-emerald-500" />}
+              title={t("noLocations")}
+              description={t("noLocationsHint")}
+              tips={[t("emptyTip1"), t("emptyTip2"), t("emptyTip3")]}
+              actions={[{ label: t("addLocation"), onClick: openCreateForm }]}
+            />
+          )
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredLocations.map((location) => (

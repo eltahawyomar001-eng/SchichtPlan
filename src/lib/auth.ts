@@ -31,6 +31,7 @@ const jwtCache = new Map<
     workspaceId: string | null;
     workspaceName: string | null;
     employeeId: string | null;
+    onboardingCompleted: boolean;
     ts: number;
   }
 >();
@@ -77,7 +78,7 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: {
-            workspace: { select: { name: true } },
+            workspace: true,
             employee: { select: { id: true } },
           },
         });
@@ -151,6 +152,8 @@ export const authOptions: NextAuthOptions = {
           workspaceId: user.workspaceId,
           workspaceName: user.workspace?.name || null,
           employeeId: user.employee?.id || null,
+          onboardingCompleted:
+            (user.workspace as any)?.onboardingCompleted ?? false,
         };
       },
     }),
@@ -191,6 +194,7 @@ export const authOptions: NextAuthOptions = {
         token.workspaceId = authUser.workspaceId;
         token.workspaceName = authUser.workspaceName;
         token.employeeId = authUser.employeeId;
+        token.onboardingCompleted = authUser.onboardingCompleted ?? false;
       }
 
       // For OAuth sign-ins, bootstrap workspace if missing
@@ -198,7 +202,7 @@ export const authOptions: NextAuthOptions = {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
           include: {
-            workspace: { select: { name: true } },
+            workspace: true,
             employee: { select: { id: true } },
           },
         });
@@ -224,11 +228,14 @@ export const authOptions: NextAuthOptions = {
             token.workspaceId = workspace.id;
             token.workspaceName = workspace.name;
             token.employeeId = null;
+            token.onboardingCompleted = false;
           } else {
             token.role = dbUser.role;
             token.workspaceId = dbUser.workspaceId;
             token.workspaceName = dbUser.workspace?.name || null;
             token.employeeId = dbUser.employee?.id || null;
+            token.onboardingCompleted =
+              (dbUser.workspace as any)?.onboardingCompleted ?? false;
           }
         }
       }
@@ -244,13 +251,14 @@ export const authOptions: NextAuthOptions = {
           token.workspaceId = cached.workspaceId;
           token.workspaceName = cached.workspaceName;
           token.employeeId = cached.employeeId;
+          token.onboardingCompleted = cached.onboardingCompleted;
         } else {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
             select: {
               role: true,
               workspaceId: true,
-              workspace: { select: { name: true } },
+              workspace: true,
               employee: { select: { id: true } },
             },
           });
@@ -259,11 +267,15 @@ export const authOptions: NextAuthOptions = {
             token.workspaceId = dbUser.workspaceId;
             token.workspaceName = dbUser.workspace?.name || null;
             token.employeeId = dbUser.employee?.id || null;
+            token.onboardingCompleted =
+              (dbUser.workspace as any)?.onboardingCompleted ?? false;
             jwtCache.set(token.sub, {
               role: dbUser.role,
               workspaceId: dbUser.workspaceId,
               workspaceName: dbUser.workspace?.name || null,
               employeeId: dbUser.employee?.id || null,
+              onboardingCompleted:
+                (dbUser.workspace as any)?.onboardingCompleted ?? false,
               ts: now,
             });
           }
@@ -280,6 +292,8 @@ export const authOptions: NextAuthOptions = {
         sessionUser.workspaceId = token.workspaceId as string;
         sessionUser.workspaceName = (token.workspaceName as string) || null;
         sessionUser.employeeId = (token.employeeId as string) || null;
+        sessionUser.onboardingCompleted =
+          (token.onboardingCompleted as boolean) ?? false;
       }
       return session;
     },

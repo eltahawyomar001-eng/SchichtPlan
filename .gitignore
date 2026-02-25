@@ -57,4 +57,4 @@ __pycache__/
 reports/
 
 # Root-level generator scripts (use scripts/ instead)
-generate_*.py
+/generate_*.py

@@ -3,8 +3,11 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { RocketIcon, XIcon } from "@/components/icons";
+import type { SessionUser } from "@/lib/types";
+import { isAdmin } from "@/lib/authorization";
 
 export interface PlanLimitError {
   error: "PLAN_LIMIT";
@@ -21,7 +24,9 @@ interface UpgradeModalProps {
 
 /**
  * Modal that appears when a 403 PLAN_LIMIT is returned from an API call.
- * Guides the user to the billing page to upgrade their plan.
+ * - For OWNER/ADMIN: shows an "Upgrade Now" button that routes to billing.
+ * - For MANAGER/EMPLOYEE: shows a "Contact Administrator" message instead —
+ *   they cannot upgrade the account themselves.
  */
 export function UpgradeModal({
   open,
@@ -31,6 +36,9 @@ export function UpgradeModal({
   const router = useRouter();
   const t = useTranslations("planLimit");
   const closeRef = useRef<HTMLButtonElement>(null);
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+  const canUpgrade = user ? isAdmin(user) : false;
 
   useEffect(() => {
     if (open) closeRef.current?.focus();
@@ -77,7 +85,9 @@ export function UpgradeModal({
                   })
                 : t("featureGated", { feature: featureLabel })}
             </p>
-            <p className="mt-3 text-sm text-gray-500">{t("upgradeHint")}</p>
+            <p className="mt-3 text-sm text-gray-500">
+              {canUpgrade ? t("upgradeHint") : t("upgradeHintEmployee")}
+            </p>
           </div>
           <button
             ref={closeRef}
@@ -91,12 +101,14 @@ export function UpgradeModal({
         {/* Actions */}
         <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>
-            {t("dismiss")}
+            {canUpgrade ? t("dismiss") : t("dismissEmployee")}
           </Button>
-          <Button size="sm" onClick={handleUpgrade}>
-            <RocketIcon className="mr-1.5 h-4 w-4" />
-            {t("upgradeCta")}
-          </Button>
+          {canUpgrade && (
+            <Button size="sm" onClick={handleUpgrade}>
+              <RocketIcon className="mr-1.5 h-4 w-4" />
+              {t("upgradeCta")}
+            </Button>
+          )}
         </div>
       </div>
     </div>

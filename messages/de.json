@@ -1577,7 +1577,10 @@
       "apiWebhooks": "API und Webhooks",
       "customRoles": "Benutzerdefinierte Rollen",
       "analytics": "Erweiterte Analysen"
-    }
+    },
+    "upgradeHintEmployee": "Diese Funktion erfordert einen höheren Plan. Bitte bitten Sie Ihren Administrator oder den Kontoinhaber, ein Upgrade durchzuführen.",
+    "dismissEmployee": "OK, Verstanden",
+    "contactAdmin": "Administrator kontaktieren"
   },
   "cookieBanner": {
     "title": "Cookie-Einstellungen",

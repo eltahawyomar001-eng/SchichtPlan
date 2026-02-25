@@ -1577,7 +1577,10 @@
       "apiWebhooks": "API and webhooks",
       "customRoles": "custom roles",
       "analytics": "advanced analytics"
-    }
+    },
+    "upgradeHintEmployee": "This feature requires a higher plan. Please ask your administrator or account owner to upgrade.",
+    "dismissEmployee": "OK, Got It",
+    "contactAdmin": "Contact Administrator"
   },
   "cookieBanner": {
     "title": "Cookie Settings",

@@ -32,6 +32,8 @@ interface Employee {
   position: string | null;
   hourlyRate: number | null;
   weeklyHours: number | null;
+  workDaysPerWeek: number;
+  contractType: string;
   color: string | null;
   isActive: boolean;
 }
@@ -57,6 +59,8 @@ export default function MitarbeiterPage() {
     position: "",
     hourlyRate: "",
     weeklyHours: "",
+    workDaysPerWeek: "5",
+    contractType: "VOLLZEIT",
     color: "#10b981",
   });
 
@@ -86,6 +90,8 @@ export default function MitarbeiterPage() {
       position: "",
       hourlyRate: "",
       weeklyHours: "",
+      workDaysPerWeek: "5",
+      contractType: "VOLLZEIT",
       color: "#10b981",
     });
     setFormError(null);
@@ -102,6 +108,8 @@ export default function MitarbeiterPage() {
       position: emp.position || "",
       hourlyRate: emp.hourlyRate?.toString() || "",
       weeklyHours: emp.weeklyHours?.toString() || "",
+      workDaysPerWeek: emp.workDaysPerWeek?.toString() || "5",
+      contractType: emp.contractType || "VOLLZEIT",
       color: emp.color || "#10b981",
     });
     setFormError(null);
@@ -134,6 +142,8 @@ export default function MitarbeiterPage() {
           position: "",
           hourlyRate: "",
           weeklyHours: "",
+          workDaysPerWeek: "5",
+          contractType: "VOLLZEIT",
           color: "#10b981",
         });
         fetchEmployees();
@@ -333,6 +343,57 @@ export default function MitarbeiterPage() {
                           }))
                         }
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="workDaysPerWeek">
+                        {t("form.workDaysPerWeek")}
+                      </Label>
+                      <Input
+                        id="workDaysPerWeek"
+                        type="number"
+                        step="1"
+                        min="1"
+                        max="7"
+                        value={formData.workDaysPerWeek}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            workDaysPerWeek: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contractType">
+                        {t("form.contractType")}
+                      </Label>
+                      <select
+                        id="contractType"
+                        value={formData.contractType}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            contractType: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      >
+                        <option value="VOLLZEIT">
+                          {t("form.contractVollzeit")}
+                        </option>
+                        <option value="TEILZEIT">
+                          {t("form.contractTeilzeit")}
+                        </option>
+                        <option value="MINIJOB">
+                          {t("form.contractMinijob")}
+                        </option>
+                        <option value="MIDIJOB">
+                          {t("form.contractMidijob")}
+                        </option>
+                      </select>
                     </div>
                   </div>
 

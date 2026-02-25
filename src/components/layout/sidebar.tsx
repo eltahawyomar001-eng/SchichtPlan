@@ -137,7 +137,7 @@ const navGroups: NavGroup[] = [
         key: "vacationBalance",
         href: "/urlaubskonto",
         icon: PalmtreeIcon,
-        roles: ["OWNER", "ADMIN", "MANAGER"],
+        roles: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
       },
       {
         key: "timeAccounts",

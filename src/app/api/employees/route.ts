@@ -69,6 +69,8 @@ export async function POST(req: Request) {
       position,
       hourlyRate,
       weeklyHours,
+      workDaysPerWeek,
+      contractType,
       color,
     } = parsed.data;
 
@@ -81,6 +83,8 @@ export async function POST(req: Request) {
         position: position || null,
         hourlyRate: hourlyRate ?? null,
         weeklyHours: weeklyHours ?? null,
+        workDaysPerWeek: workDaysPerWeek ?? 5,
+        contractType: contractType ?? "VOLLZEIT",
         color:
           color ||
           `#${Math.floor(Math.random() * 16777215)

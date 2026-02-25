@@ -160,6 +160,13 @@ enum SubscriptionStatus {
   PAUSED
 }
 
+enum ContractType {
+  VOLLZEIT
+  TEILZEIT
+  MINIJOB
+  MIDIJOB
+}
+
 model Subscription {
   id                   String             @id @default(cuid())
   plan                 SubscriptionPlan   @default(STARTER)
@@ -190,6 +197,8 @@ model Employee {
   position     String?
   hourlyRate   Float?
   weeklyHours  Float?
+  workDaysPerWeek Float @default(5)
+  contractType ContractType @default(VOLLZEIT)
   color        String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())

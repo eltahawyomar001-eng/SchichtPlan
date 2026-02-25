@@ -78,6 +78,10 @@ export async function PATCH(
         position: body.position || null,
         hourlyRate: body.hourlyRate ? parseFloat(body.hourlyRate) : null,
         weeklyHours: body.weeklyHours ? parseFloat(body.weeklyHours) : null,
+        workDaysPerWeek: body.workDaysPerWeek
+          ? parseFloat(body.workDaysPerWeek)
+          : undefined,
+        contractType: body.contractType || undefined,
         color: body.color,
         isActive: body.isActive,
       },

@@ -7,6 +7,17 @@ import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 
 /**
+ * Calculate the BUrlG (Bundesurlaubsgesetz) legal minimum vacation days.
+ * §3 BUrlG: 24 work days per year based on 6-day week.
+ * Pro-rata for fewer work days: (workDaysPerWeek / 6) × 24
+ * Which equals (workDaysPerWeek / 6) × 24 = workDaysPerWeek × 4
+ * Common results: 5-day week → 20 days, 4-day week → 16 days, 3-day week → 12 days
+ */
+function calculateMinEntitlement(workDaysPerWeek: number): number {
+  return Math.round(workDaysPerWeek * 4 * 10) / 10; // round to 1 decimal
+}
+
+/**
  * GET /api/vacation-balances?year=2025&employeeId=xxx
  * Returns vacation balances. Managers see all, employees see own.
  */
@@ -48,13 +59,22 @@ export async function GET(req: Request) {
             id: true,
             firstName: true,
             lastName: true,
+            workDaysPerWeek: true,
+            contractType: true,
           },
         },
       },
       orderBy: [{ employee: { lastName: "asc" } }, { year: "desc" }],
     });
 
-    return NextResponse.json(balances);
+    // Enrich response with legal minimum for each balance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const enriched = balances.map((bal: any) => ({
+      ...bal,
+      legalMinimum: calculateMinEntitlement(bal.employee.workDaysPerWeek ?? 5),
+    }));
+
+    return NextResponse.json(enriched);
   } catch (error) {
     log.error("Error fetching vacation balances:", { error: error });
     return NextResponse.json(
@@ -68,6 +88,9 @@ export async function GET(req: Request) {
  * POST /api/vacation-balances
  * Create/update vacation balance for an employee.
  * Body: { employeeId, year, totalEntitlement, carryOver }
+ *
+ * Validates against BUrlG §3: entitlement must not be below legal minimum
+ * based on employee's workDaysPerWeek.
  */
 export async function POST(req: Request) {
   try {
@@ -96,9 +119,44 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fetch employee to get workDaysPerWeek for BUrlG validation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const employee = await (prisma as any).employee.findFirst({
+      where: { id: employeeId, workspaceId },
+      select: { id: true, workDaysPerWeek: true },
+    });
+
+    if (!employee) {
+      return NextResponse.json(
+        { error: "Mitarbeiter nicht gefunden." },
+        { status: 404 },
+      );
+    }
+
+    const workDays = employee.workDaysPerWeek ?? 5;
+    const legalMin = calculateMinEntitlement(workDays);
+
     const entitlement =
-      totalEntitlement !== undefined ? parseFloat(totalEntitlement) : 20; // BUrlG minimum
+      totalEntitlement !== undefined ? parseFloat(totalEntitlement) : legalMin;
     const carry = carryOver !== undefined ? parseFloat(carryOver) : 0;
+
+    // BUrlG §3: Entitlement must not be below legal minimum
+    if (entitlement < legalMin) {
+      return NextResponse.json(
+        {
+          error: `Urlaubsanspruch darf nicht unter dem gesetzlichen Minimum liegen (${legalMin} Tage bei ${workDays}-Tage-Woche gem. §3 BUrlG).`,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (carry < 0) {
+      return NextResponse.json(
+        { error: "Übertrag darf nicht negativ sein." },
+        { status: 400 },
+      );
+    }
+
     const remaining = entitlement + carry;
 
     // Upsert — create or update

@@ -9,7 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PlusIcon } from "@/components/icons";
+import {
+  PlusIcon,
+  BellIcon,
+  MailIcon,
+  CreditCardIcon,
+} from "@/components/icons";
 
 // ─── Types ──────────────────────────────────────────────────────
 interface Condition {
@@ -635,15 +640,24 @@ export default function AutomatisierungSeite() {
                 </p>
                 <div className="space-y-1.5">
                   {[
-                    { icon: "🔔", label: t("exampleNotifyNightShift") },
-                    { icon: "📧", label: t("exampleEmailAbsence") },
-                    { icon: "💰", label: t("exampleSurchargeSunday") },
+                    {
+                      icon: <BellIcon className="h-4 w-4" />,
+                      label: t("exampleNotifyNightShift"),
+                    },
+                    {
+                      icon: <MailIcon className="h-4 w-4" />,
+                      label: t("exampleEmailAbsence"),
+                    },
+                    {
+                      icon: <CreditCardIcon className="h-4 w-4" />,
+                      label: t("exampleSurchargeSunday"),
+                    },
                   ].map((ex, idx) => (
                     <div
                       key={idx}
                       className="flex items-start gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-sm text-gray-600"
                     >
-                      <span className="flex-shrink-0">{ex.icon}</span>
+                      <span className="flex-shrink-0 mt-0.5">{ex.icon}</span>
                       <span>{ex.label}</span>
                     </div>
                   ))}

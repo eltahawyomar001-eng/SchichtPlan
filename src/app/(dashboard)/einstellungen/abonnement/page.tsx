@@ -20,6 +20,8 @@ import {
   ArrowRightIcon,
   ShieldCheckIcon,
   StarIcon,
+  AlertTriangleIcon,
+  BeakerIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 
@@ -348,7 +350,7 @@ function BillingContent() {
         {/* Error message */}
         {errorMsg && (
           <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
-            <span className="shrink-0">⚠️</span>
+            <AlertTriangleIcon className="h-5 w-5 shrink-0" />
             <span className="flex-1">{errorMsg}</span>
             <button
               onClick={() => setErrorMsg(null)}
@@ -362,7 +364,7 @@ function BillingContent() {
         {/* Sandbox mode banner */}
         {subscription?.simulationMode && (
           <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800">
-            <span className="text-lg leading-none mt-0.5">🧪</span>
+            <BeakerIcon className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">{t("sandboxBanner")}</p>
               <p className="mt-0.5 text-amber-700">{t("sandboxBannerDesc")}</p>

@@ -25,6 +25,10 @@ const timeString = trimmedString.regex(
 const dateString = trimmedString.min(1, "Datum ist erforderlich");
 
 // ── Employee ────────────────────────────────────────────────────
+const contractTypeEnum = z
+  .enum(["VOLLZEIT", "TEILZEIT", "MINIJOB", "MIDIJOB"])
+  .optional();
+
 export const createEmployeeSchema = z.object({
   firstName: requiredString.max(100, "Maximal 100 Zeichen"),
   lastName: requiredString.max(100, "Maximal 100 Zeichen"),
@@ -33,6 +37,12 @@ export const createEmployeeSchema = z.object({
   position: optionalString.pipe(z.string().max(100).optional()),
   hourlyRate: positiveNumber,
   weeklyHours: positiveNumber,
+  workDaysPerWeek: z
+    .number()
+    .min(1, "Min. 1 Tag/Woche")
+    .max(7, "Max. 7 Tage/Woche")
+    .optional(),
+  contractType: contractTypeEnum,
   color: optionalString,
 });
 

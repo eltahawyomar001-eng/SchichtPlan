@@ -140,6 +140,8 @@ export default function NachrichtenPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mentionRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [pickerAbove, setPickerAbove] = useState(true);
 
   // ── Fetch workspace users ───────────────────────────────────
 
@@ -1140,6 +1142,10 @@ export default function NachrichtenPage() {
                           }}
                         >
                           <div
+                            ref={(el) => {
+                              if (el) messageRefs.current.set(msg.id, el);
+                              else messageRefs.current.delete(msg.id);
+                            }}
                             className={`relative max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}
                           >
                             {showSender && !isDeleted && (
@@ -1220,13 +1226,24 @@ export default function NachrichtenPage() {
                                     }`}
                                   >
                                     <button
-                                      onClick={() =>
-                                        setShowReactionPicker(
-                                          showReactionPicker === msg.id
-                                            ? null
-                                            : msg.id,
-                                        )
-                                      }
+                                      onClick={() => {
+                                        if (showReactionPicker === msg.id) {
+                                          setShowReactionPicker(null);
+                                        } else {
+                                          const el = messageRefs.current.get(
+                                            msg.id,
+                                          );
+                                          if (el) {
+                                            const { top } =
+                                              el.getBoundingClientRect();
+                                            // If message top is within 200px of viewport top, open picker below
+                                            setPickerAbove(top > 200);
+                                          } else {
+                                            setPickerAbove(true);
+                                          }
+                                          setShowReactionPicker(msg.id);
+                                        }
+                                      }}
                                       className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                                       title={t("addReaction")}
                                     >
@@ -1291,11 +1308,15 @@ export default function NachrichtenPage() {
                                   </div>
                                 )}
 
-                                {/* Reaction picker */}
+                                {/* Reaction picker — flips above or below depending on viewport position */}
                                 {showReactionPicker === msg.id && (
                                   <div
-                                    className={`absolute -top-11 z-20 flex flex-wrap gap-0.5 rounded-xl border border-gray-200 bg-white p-1 shadow-lg sm:gap-1 sm:p-1.5 ${
+                                    className={`absolute z-20 flex flex-wrap gap-0.5 rounded-xl border border-gray-200 bg-white p-1 shadow-lg sm:gap-1 sm:p-1.5 ${
                                       isOwn ? "right-0" : "left-0"
+                                    } ${
+                                      pickerAbove
+                                        ? "bottom-full mb-1"
+                                        : "top-full mt-1"
                                     }`}
                                   >
                                     {REACTION_EMOJIS.map((emoji) => (

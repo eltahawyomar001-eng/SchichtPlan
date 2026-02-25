@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
-import { requirePermission } from "@/lib/authorization";
 import {
   getSignaturesForEntity,
   verifySignatureIntegrity,
@@ -14,6 +13,9 @@ import { log } from "@/lib/logger";
  *
  * Returns all e-signature records for a specific entity.
  * Each record includes an `isValid` field indicating integrity check result.
+ *
+ * Any authenticated workspace member can view signatures — the workspace
+ * scope ensures data isolation, and signatures are read-only audit records.
  */
 export async function GET(req: Request) {
   try {
@@ -26,9 +28,6 @@ export async function GET(req: Request) {
     if (!user.workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
-
-    const forbidden = requirePermission(user, "automations", "read");
-    if (forbidden) return forbidden;
 
     const { searchParams } = new URL(req.url);
     const entityType = searchParams.get("entityType");

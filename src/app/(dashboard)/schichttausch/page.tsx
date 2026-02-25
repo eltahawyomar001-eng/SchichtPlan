@@ -16,6 +16,7 @@ import {
   CheckCircleIcon,
   ArrowRightIcon,
 } from "@/components/icons";
+import { ESignatureBadge } from "@/components/e-signature-badge";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -390,6 +391,15 @@ export default function SchichttauschPage() {
                         <p className="mt-1 text-xs text-emerald-500 line-clamp-1">
                           {tc("note")}: {swap.reviewNote}
                         </p>
+                      )}
+
+                      {/* E-Signature */}
+                      {(swap.status === "GENEHMIGT" ||
+                        swap.status === "ABGELEHNT") && (
+                        <ESignatureBadge
+                          entityType="ShiftSwapRequest"
+                          entityId={swap.id}
+                        />
                       )}
 
                       {/* Manager actions */}

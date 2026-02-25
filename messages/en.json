@@ -1733,5 +1733,25 @@
       "December"
     ],
     "dayAbbrev": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+  },
+  "eSignature": {
+    "title": "Electronic Signature",
+    "signedBy": "Signed by",
+    "signedAt": "Signed at",
+    "role": "Role",
+    "consentStatement": "Consent statement",
+    "integrityValid": "Signature verified",
+    "integrityInvalid": "Signature integrity compromised",
+    "hashLabel": "Signature hash",
+    "showDetails": "Show signature details",
+    "hideDetails": "Hide signature details",
+    "noSignatures": "No signatures found",
+    "verifiedBadge": "Electronically signed",
+    "roles": {
+      "OWNER": "Owner",
+      "ADMIN": "Administrator",
+      "MANAGER": "Manager",
+      "EMPLOYEE": "Employee"
+    }
   }
 }

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ESignatureBadge } from "@/components/e-signature-badge";
 
 interface MonthCloseRecord {
   id: string;
@@ -162,7 +163,17 @@ export default function MonatsabschlussSeite() {
                         <Badge className={sc.color}>{sc.label}</Badge>
                       </div>
 
-                      <div className="flex gap-2">
+                      {/* E-Signature for locked/exported months */}
+                      {record &&
+                        (status === "LOCKED" || status === "EXPORTED") && (
+                          <ESignatureBadge
+                            entityType="MonthClose"
+                            entityId={record.id}
+                            compact
+                          />
+                        )}
+
+                      <div className="flex gap-2 mt-2">
                         {status === "OPEN" && (
                           <Button
                             variant="outline"

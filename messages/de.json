@@ -1733,5 +1733,25 @@
       "Dezember"
     ],
     "dayAbbrev": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+  },
+  "eSignature": {
+    "title": "Elektronische Signatur",
+    "signedBy": "Signiert von",
+    "signedAt": "Signiert am",
+    "role": "Rolle",
+    "consentStatement": "Einwilligungserklaerung",
+    "integrityValid": "Signatur verifiziert",
+    "integrityInvalid": "Signatur ungueltig",
+    "hashLabel": "Signatur-Hash",
+    "showDetails": "Signaturdetails anzeigen",
+    "hideDetails": "Signaturdetails ausblenden",
+    "noSignatures": "Keine Signaturen vorhanden",
+    "verifiedBadge": "Elektronisch signiert",
+    "roles": {
+      "OWNER": "Inhaber",
+      "ADMIN": "Administrator",
+      "MANAGER": "Manager",
+      "EMPLOYEE": "Mitarbeiter"
+    }
   }
 }

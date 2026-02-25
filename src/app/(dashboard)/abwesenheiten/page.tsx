@@ -18,6 +18,7 @@ import {
   CalendarOffIcon,
   PaperclipIcon,
 } from "@/components/icons";
+import { ESignatureBadge } from "@/components/e-signature-badge";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -438,6 +439,13 @@ export default function AbwesenheitenPage() {
                                 {t("reviewNoteLabel")}: {absence.reviewNote}
                               </p>
                             )}
+                          {(absence.status === "GENEHMIGT" ||
+                            absence.status === "ABGELEHNT") && (
+                            <ESignatureBadge
+                              entityType="AbsenceRequest"
+                              entityId={absence.id}
+                            />
+                          )}
                         </div>
                       </div>
 

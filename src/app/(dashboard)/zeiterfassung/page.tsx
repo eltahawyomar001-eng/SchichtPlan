@@ -23,6 +23,7 @@ import {
   MapPinIcon,
   CalendarIcon,
 } from "@/components/icons";
+import { ESignatureBadge } from "@/components/e-signature-badge";
 import {
   formatMinutesToHHmm,
   formatIndustrial,
@@ -819,6 +820,16 @@ export default function ZeiterfassungPage() {
                     </div>
                   )}
                 </div>
+
+                {/* E-Signature */}
+                {["GEPRUEFT", "BESTAETIGT", "ZURUECKGEWIESEN"].includes(
+                  selectedEntry.status,
+                ) && (
+                  <ESignatureBadge
+                    entityType="TimeEntry"
+                    entityId={selectedEntry.id}
+                  />
+                )}
 
                 {/* Actions */}
                 <div className="border-t pt-4 space-y-3">

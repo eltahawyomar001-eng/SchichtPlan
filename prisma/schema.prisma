@@ -134,6 +134,7 @@ model Workspace {
   webhookEndpoints WebhookEndpoint[]
   automationRules AutomationRule[]
   auditLogs       AuditLog[]
+  eSignatures     ESignature[]
   subscription    Subscription?
 }
 
@@ -750,6 +751,31 @@ model AutomationRule {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([workspaceId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// E-SIGNATURE (SES — Simple Electronic Signature per eIDAS Art. 25)
+// ═══════════════════════════════════════════════════════════════
+
+model ESignature {
+  id            String   @id @default(cuid())
+  action        String   // e.g. "absence.approve", "time-entry.confirm"
+  entityType    String   // e.g. "AbsenceRequest", "TimeEntry"
+  entityId      String   // ID of the signed entity
+  signedBy      String   // User ID who signed
+  signerName    String   // Full name at time of signing (denormalized)
+  signerEmail   String   // Email at time of signing (denormalized)
+  signerRole    String   // Role at time of signing
+  signatureHash String   // SHA-256 hash of action+entity+timestamp+signer
+  ipAddress     String?  // IP address of the signer
+  userAgent     String?  // Browser user-agent string
+  statement     String   @db.Text // The consent statement the user agreed to
+  signedAt      DateTime @default(now())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+  @@index([entityType, entityId])
+  @@index([signedBy])
 }
 
 // ═══════════════════════════════════════════════════════════════

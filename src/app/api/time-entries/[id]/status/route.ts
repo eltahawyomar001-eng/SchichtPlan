@@ -8,6 +8,7 @@ import {
   isMonthLocked,
   createSystemNotification,
 } from "@/lib/automations";
+import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
 type TimeEntryStatusValue =
@@ -171,6 +172,30 @@ export async function POST(req: Request, { params }: RouteParams) {
         timeEntryId: id,
       },
     });
+
+    // ── E-Signature: Record signed approval/rejection/confirmation ──
+    if (["approve", "reject", "confirm"].includes(action)) {
+      const esigAction =
+        action === "approve"
+          ? "time-entry.confirm"
+          : action === "reject"
+            ? "time-entry.reject"
+            : "time-entry.confirm";
+      createESignature({
+        action: esigAction,
+        entityType: "TimeEntry",
+        entityId: id,
+        signer: {
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email,
+          role: user.role,
+        },
+        workspaceId: workspaceId!,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => log.error("E-signature failed", { error: err }));
+    }
 
     // Create notification
     await createNotification(entry, action, user, workspaceId ?? "");

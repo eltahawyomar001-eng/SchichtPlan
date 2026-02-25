@@ -8,6 +8,7 @@ import {
   checkShiftConflicts,
   createSystemNotification,
 } from "@/lib/automations";
+import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
 interface RouteParams {
@@ -109,6 +110,22 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         include: { requester: true, shift: true },
       });
 
+      // ── E-Signature: Record signed rejection ──
+      createESignature({
+        action: "shift-change.reject",
+        entityType: "ShiftChangeRequest",
+        entityId: id,
+        signer: {
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email,
+          role: user.role,
+        },
+        workspaceId: workspaceId!,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => log.error("E-signature failed", { error: err }));
+
       // Notify the employee
       if (updated.requester.email) {
         try {
@@ -194,6 +211,22 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           },
         }),
       ]);
+
+      // ── E-Signature: Record signed approval ──
+      createESignature({
+        action: "shift-change.approve",
+        entityType: "ShiftChangeRequest",
+        entityId: id,
+        signer: {
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email,
+          role: user.role,
+        },
+        workspaceId: workspaceId!,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => log.error("E-signature failed", { error: err }));
 
       // Notify the employee
       if (changeRequest.requester.email) {

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
 /** GET /api/month-close — list month-close records for workspace */
@@ -101,6 +102,22 @@ export async function POST(req: Request) {
               workspaceId: user.workspaceId,
             },
           });
+
+      // ── E-Signature: Record signed month lock ──
+      createESignature({
+        action: "month-close.lock",
+        entityType: "MonthClose",
+        entityId: record.id,
+        signer: {
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email,
+          role: user.role,
+        },
+        workspaceId: user.workspaceId,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => log.error("E-signature failed", { error: err }));
 
       return NextResponse.json(record);
     }

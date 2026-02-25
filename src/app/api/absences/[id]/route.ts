@@ -9,6 +9,7 @@ import {
   createSystemNotification,
   executeCustomRules,
 } from "@/lib/automations";
+import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
 interface RouteParams {
@@ -81,6 +82,25 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       data,
       include: { employee: true },
     });
+
+    // ── E-Signature: Record signed approval/rejection ──
+    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+      createESignature({
+        action:
+          body.status === "GENEHMIGT" ? "absence.approve" : "absence.reject",
+        entityType: "AbsenceRequest",
+        entityId: id,
+        signer: {
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email,
+          role: user.role,
+        },
+        workspaceId: user.workspaceId!,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => log.error("E-signature failed", { error: err }));
+    }
 
     // ── Automation: Cascade on approval ──
     if (body.status === "GENEHMIGT") {

@@ -8,6 +8,7 @@ import {
   tryAutoApproveSwap,
   createSystemNotification,
 } from "@/lib/automations";
+import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
 interface RouteParams {
@@ -150,6 +151,25 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     // ── Automation: Notify on manual approval/rejection ──
     if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+      // ── E-Signature: Record signed approval/rejection ──
+      createESignature({
+        action:
+          body.status === "GENEHMIGT"
+            ? "shift-swap.approve"
+            : "shift-swap.reject",
+        entityType: "ShiftSwapRequest",
+        entityId: id,
+        signer: {
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email,
+          role: user.role,
+        },
+        workspaceId: user.workspaceId!,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get("user-agent") || undefined,
+      }).catch((err) => log.error("E-signature failed", { error: err }));
+
       const statusText =
         body.status === "GENEHMIGT" ? "genehmigt" : "abgelehnt";
 

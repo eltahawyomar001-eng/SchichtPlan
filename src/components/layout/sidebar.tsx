@@ -170,18 +170,18 @@ const navGroups: NavGroup[] = [
         roles: ["OWNER", "ADMIN"],
       },
       { key: "holidays", href: "/feiertage", icon: FlagIcon },
-    ],
-  },
-  {
-    // Settings & Developer
-    labelKey: "developer",
-    items: [
       {
         key: "automationRules",
         href: "/automatisierung",
         icon: ZapIcon,
         roles: ["OWNER", "ADMIN"],
       },
+    ],
+  },
+  {
+    // Developer
+    labelKey: "developer",
+    items: [
       {
         key: "webhooks",
         href: "/webhooks",

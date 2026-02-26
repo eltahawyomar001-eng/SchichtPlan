@@ -138,35 +138,45 @@ export default function WohlbefindenSeite() {
 
   /* ─── Render ──────────────────────────────────────────── */
 
+  const periodSelector = (
+    <div className="flex items-center gap-2">
+      <select
+        value={days}
+        onChange={(e) => setDays(Number(e.target.value))}
+        className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+      >
+        <option value={7}>{t("last7")}</option>
+        <option value={14}>{t("last14")}</option>
+        <option value={30}>{t("last30")}</option>
+      </select>
+      <button
+        onClick={fetchData}
+        disabled={loading}
+        className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50"
+        title={t("retry")}
+      >
+        <RefreshIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+      </button>
+    </div>
+  );
+
   return (
     <>
       <Topbar
         title={t("title")}
         description={t("description")}
-        actions={
-          <div className="flex items-center gap-2">
-            <select
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
-            >
-              <option value={7}>{t("last7")}</option>
-              <option value={14}>{t("last14")}</option>
-              <option value={30}>{t("last30")}</option>
-            </select>
-            <button
-              onClick={fetchData}
-              disabled={loading}
-              className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50"
-              title={t("retry")}
-            >
-              <RefreshIcon
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-              />
-            </button>
-          </div>
-        }
+        actions={periodSelector}
+        hideMobile
       />
+      {/* iOS mobile header */}
+      <div className="lg:hidden pt-[max(0.75rem,env(safe-area-inset-top))] px-4 pb-2">
+        <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1]">
+          {t("title")}
+        </h1>
+        <p className="text-[15px] text-gray-500 mt-1">{t("description")}</p>
+        {/* Period selector inline on mobile */}
+        <div className="mt-3">{periodSelector}</div>
+      </div>
 
       <PageContent>
         {/* Loading */}
@@ -202,7 +212,7 @@ export default function WohlbefindenSeite() {
             {/* ── Summary Cards ── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               {/* Average Score */}
-              <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="rounded-2xl bg-white p-4 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
                     <HeartPulseIcon className="h-4 w-4 text-emerald-600" />
@@ -220,7 +230,7 @@ export default function WohlbefindenSeite() {
               </div>
 
               {/* Employees */}
-              <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="rounded-2xl bg-white p-4 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
                     <UsersIcon className="h-4 w-4 text-blue-600" />
@@ -235,7 +245,7 @@ export default function WohlbefindenSeite() {
               </div>
 
               {/* Critical/Warning */}
-              <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="rounded-2xl bg-white p-4 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50">
                     <AlertTriangleIcon className="h-4 w-4 text-red-600" />
@@ -250,7 +260,7 @@ export default function WohlbefindenSeite() {
               </div>
 
               {/* Healthy */}
-              <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="rounded-2xl bg-white p-4 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
                     <ShieldCheckIcon className="h-4 w-4 text-emerald-600" />
@@ -266,7 +276,7 @@ export default function WohlbefindenSeite() {
             </div>
 
             {/* ── Distribution Bar ── */}
-            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+            <div className="rounded-2xl bg-white p-4 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm sm:p-5">
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 {t("distribution")}
               </h3>
@@ -363,7 +373,7 @@ export default function WohlbefindenSeite() {
                   return (
                     <div
                       key={emp.employeeId}
-                      className={`overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md`}
+                      className={`overflow-hidden rounded-2xl bg-white shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm transition-shadow hover:shadow-md`}
                     >
                       {/* Row */}
                       <button
@@ -471,7 +481,7 @@ export default function WohlbefindenSeite() {
                                 .map((factor) => (
                                   <div
                                     key={factor.key}
-                                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-white px-3 py-2"
+                                    className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-3 py-2"
                                   >
                                     <div className="flex items-center gap-2.5">
                                       <span

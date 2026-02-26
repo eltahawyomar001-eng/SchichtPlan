@@ -249,6 +249,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
 
       <aside
+        role="navigation"
+        aria-label="Hauptnavigation"
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white transition-transform duration-300 ease-in-out",
           "border-r border-gray-100 shadow-[1px_0_8px_rgba(0,0,0,0.04)]",
@@ -306,6 +308,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         key={item.href}
                         href={item.href}
                         onClick={onClose}
+                        aria-current={isActive ? "page" : undefined}
                         className={cn(
                           "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 min-w-0",
                           isActive
@@ -349,6 +352,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           )}
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
+            aria-label={t("logout")}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOutIcon className="h-[18px] w-[18px]" />

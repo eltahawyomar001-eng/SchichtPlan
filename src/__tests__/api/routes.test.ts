@@ -78,13 +78,17 @@ describe("GET /api/employees", () => {
 
   it("returns 401 when not authenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(
+      new Request("http://localhost/api/employees"),
+    );
     expect(res.status).toBe(401);
   });
 
   it("returns 400 when user has no workspaceId", async () => {
     mockSession.user = buildOwner({ workspaceId: "" as string });
-    const res = await handler.GET();
+    const res = await handler.GET(
+      new Request("http://localhost/api/employees"),
+    );
     // Route checks for falsy workspaceId
     expect(res.status).toBe(400);
   });
@@ -97,13 +101,16 @@ describe("GET /api/employees", () => {
       { id: "e2", firstName: "Erika", lastName: "Musterfrau" },
     ];
     mockEmployeeFindMany.mockResolvedValue(mockEmps);
+    mockEmployeeCount.mockResolvedValue(2);
 
-    const res = await handler.GET();
+    const res = await handler.GET(
+      new Request("http://localhost/api/employees"),
+    );
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toHaveLength(2);
-    expect(body[0].firstName).toBe("Max");
+    expect(body.data).toHaveLength(2);
+    expect(body.data[0].firstName).toBe("Max");
   });
 });
 

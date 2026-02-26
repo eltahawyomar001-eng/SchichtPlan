@@ -10,6 +10,7 @@ import {
   executeCustomRules,
 } from "@/lib/automations";
 import { requirePlanFeature } from "@/lib/subscription";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
@@ -46,13 +47,20 @@ export async function GET(req: Request) {
       where.employeeId = user.employeeId;
     }
 
-    const absences = await prisma.absenceRequest.findMany({
-      where,
-      include: { employee: true },
-      orderBy: { startDate: "desc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(absences);
+    const [absences, total] = await Promise.all([
+      prisma.absenceRequest.findMany({
+        where,
+        include: { employee: true },
+        orderBy: { startDate: "desc" },
+        take,
+        skip,
+      }),
+      prisma.absenceRequest.count({ where }),
+    ]);
+
+    return paginatedResponse(absences, total, take, skip);
   } catch (error) {
     log.error("Error fetching absences:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

@@ -11,6 +11,7 @@ import {
   calcNetMinutes,
 } from "@/lib/time-utils";
 import { ensureLegalBreak } from "@/lib/automations";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/time-entries ─────────────────────────────────────
@@ -49,17 +50,24 @@ export async function GET(req: Request) {
       if (employee) where.employeeId = employee.id;
     }
 
-    const entries = await prisma.timeEntry.findMany({
-      where,
-      include: {
-        employee: true,
-        location: true,
-        auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
-      },
-      orderBy: [{ date: "desc" }, { startTime: "desc" }],
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(entries);
+    const [entries, total] = await Promise.all([
+      prisma.timeEntry.findMany({
+        where,
+        include: {
+          employee: true,
+          location: true,
+          auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
+        },
+        orderBy: [{ date: "desc" }, { startTime: "desc" }],
+        take,
+        skip,
+      }),
+      prisma.timeEntry.count({ where }),
+    ]);
+
+    return paginatedResponse(entries, total, take, skip);
   } catch (error) {
     log.error("Error fetching time entries:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

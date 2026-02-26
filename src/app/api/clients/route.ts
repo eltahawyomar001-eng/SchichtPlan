@@ -5,10 +5,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 /** GET /api/clients — list all clients for the workspace */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -23,13 +24,24 @@ export async function GET() {
     const forbidden = requirePermission(user, "clients", "read");
     if (forbidden) return forbidden;
 
-    const clients = await (prisma as any).client.findMany({
-      where: { workspaceId: user.workspaceId },
-      include: { projects: { select: { id: true, name: true, status: true } } },
-      orderBy: { name: "asc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(clients);
+    const [clients, total] = await Promise.all([
+      (prisma as any).client.findMany({
+        where: { workspaceId: user.workspaceId },
+        include: {
+          projects: { select: { id: true, name: true, status: true } },
+        },
+        orderBy: { name: "asc" },
+        take,
+        skip,
+      }),
+      (prisma as any).client.count({
+        where: { workspaceId: user.workspaceId },
+      }),
+    ]);
+
+    return paginatedResponse(clients, total, take, skip);
   } catch (error) {
     log.error("Error fetching clients:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });

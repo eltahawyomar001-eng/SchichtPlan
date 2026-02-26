@@ -4,9 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -18,17 +19,25 @@ export async function GET() {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const departments = await (prisma as any).department.findMany({
-      where: { workspaceId },
-      include: {
-        location: { select: { id: true, name: true } },
-        _count: { select: { employees: true } },
-      },
-      orderBy: { name: "asc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(departments);
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const [departments, total] = await Promise.all([
+      (prisma as any).department.findMany({
+        where: { workspaceId },
+        include: {
+          location: { select: { id: true, name: true } },
+          _count: { select: { employees: true } },
+        },
+        orderBy: { name: "asc" },
+        take,
+        skip,
+      }),
+      (prisma as any).department.count({ where: { workspaceId } }),
+    ]);
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    return paginatedResponse(departments, total, take, skip);
   } catch (error) {
     log.error("Error fetching departments:", { error: error });
     return NextResponse.json(

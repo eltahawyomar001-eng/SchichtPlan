@@ -5,10 +5,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 /** GET /api/automation-rules — list workspace automation rules */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -23,10 +24,19 @@ export async function GET() {
     const forbidden = requirePermission(user, "automations", "read");
     if (forbidden) return forbidden;
 
-    const rules = await (prisma as any).automationRule.findMany({
-      where: { workspaceId: user.workspaceId },
-      orderBy: { createdAt: "desc" },
-    });
+    const { take, skip } = parsePagination(req);
+
+    const [rules, total] = await Promise.all([
+      (prisma as any).automationRule.findMany({
+        where: { workspaceId: user.workspaceId },
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      (prisma as any).automationRule.count({
+        where: { workspaceId: user.workspaceId },
+      }),
+    ]);
 
     // Parse JSON strings to objects
     const parsed = rules.map((r: any) => ({
@@ -35,7 +45,7 @@ export async function GET() {
       actions: JSON.parse(r.actions || "[]"),
     }));
 
-    return NextResponse.json(parsed);
+    return paginatedResponse(parsed, total, take, skip);
   } catch (error) {
     log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });

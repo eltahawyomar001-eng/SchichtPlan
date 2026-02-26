@@ -17,6 +17,7 @@ const {
   mockClientUpdate,
   mockClientDelete,
   mockShiftTemplateFindMany,
+  mockShiftTemplateCount,
   mockEmployeeCreate,
   mockEmployeeCount,
   mockEmployeeUpdateMany,
@@ -27,6 +28,7 @@ const {
   mockClientUpdate: vi.fn(),
   mockClientDelete: vi.fn(),
   mockShiftTemplateFindMany: vi.fn(),
+  mockShiftTemplateCount: vi.fn(),
   mockEmployeeCreate: vi.fn(),
   mockEmployeeCount: vi.fn(),
   mockEmployeeUpdateMany: vi.fn(),
@@ -60,6 +62,7 @@ vi.mock("@/lib/db", () => ({
     },
     shiftTemplate: {
       findMany: mockShiftTemplateFindMany,
+      count: mockShiftTemplateCount,
     },
   },
 }));
@@ -166,7 +169,9 @@ describe("GET /api/shift-templates — plan gate", () => {
       workspaceId: owner.workspaceId,
     });
 
-    const res = await handler.GET();
+    const res = await handler.GET(
+      new Request("http://localhost/api/shift-templates"),
+    );
     expect(res.status).toBe(403);
   });
 
@@ -180,8 +185,11 @@ describe("GET /api/shift-templates — plan gate", () => {
       workspaceId: owner.workspaceId,
     });
     mockShiftTemplateFindMany.mockResolvedValue([]);
+    mockShiftTemplateCount.mockResolvedValue(0);
 
-    const res = await handler.GET();
+    const res = await handler.GET(
+      new Request("http://localhost/api/shift-templates"),
+    );
     expect(res.status).toBe(200);
   });
 });

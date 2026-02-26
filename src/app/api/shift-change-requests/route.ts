@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────
@@ -37,25 +38,35 @@ export async function GET(req: Request) {
       if (linkedEmployee) {
         where.requesterId = linkedEmployee.id;
       } else {
-        return NextResponse.json([]);
+        return NextResponse.json({
+          data: [],
+          pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+        });
       }
     }
 
-    const requests = await prisma.shiftChangeRequest.findMany({
-      where,
-      include: {
-        shift: {
-          include: {
-            employee: true,
-            location: true,
-          },
-        },
-        requester: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(requests);
+    const [requests, total] = await Promise.all([
+      prisma.shiftChangeRequest.findMany({
+        where,
+        include: {
+          shift: {
+            include: {
+              employee: true,
+              location: true,
+            },
+          },
+          requester: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      prisma.shiftChangeRequest.count({ where }),
+    ]);
+
+    return paginatedResponse(requests, total, take, skip);
   } catch (error) {
     log.error("Error fetching shift change requests:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/availability ─────────────────────────────────────
@@ -26,13 +27,20 @@ export async function GET(req: Request) {
     const where: Record<string, unknown> = { workspaceId };
     if (employeeId) where.employeeId = employeeId;
 
-    const availabilities = await prisma.availability.findMany({
-      where,
-      include: { employee: true },
-      orderBy: [{ employeeId: "asc" }, { weekday: "asc" }],
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(availabilities);
+    const [availabilities, total] = await Promise.all([
+      prisma.availability.findMany({
+        where,
+        include: { employee: true },
+        orderBy: [{ employeeId: "asc" }, { weekday: "asc" }],
+        take,
+        skip,
+      }),
+      prisma.availability.count({ where }),
+    ]);
+
+    return paginatedResponse(availabilities, total, take, skip);
   } catch (error) {
     log.error("Error fetching availability:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

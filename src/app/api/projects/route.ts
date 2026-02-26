@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 /** GET /api/projects — list all projects for the workspace */
@@ -31,17 +32,24 @@ export async function GET(req: Request) {
     if (clientId) where.clientId = clientId;
     if (status) where.status = status;
 
-    const projects = await (prisma as any).project.findMany({
-      where,
-      include: {
-        client: { select: { id: true, name: true } },
-        members: { include: { employee: true } },
-        _count: { select: { timeEntries: true } },
-      },
-      orderBy: { name: "asc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(projects);
+    const [projects, total] = await Promise.all([
+      (prisma as any).project.findMany({
+        where,
+        include: {
+          client: { select: { id: true, name: true } },
+          members: { include: { employee: true } },
+          _count: { select: { timeEntries: true } },
+        },
+        orderBy: { name: "asc" },
+        take,
+        skip,
+      }),
+      (prisma as any).project.count({ where }),
+    ]);
+
+    return paginatedResponse(projects, total, take, skip);
   } catch (error) {
     log.error("Error fetching projects:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });

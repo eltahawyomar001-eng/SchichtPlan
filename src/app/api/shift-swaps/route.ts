@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
@@ -35,18 +36,25 @@ export async function GET(req: Request) {
       ];
     }
 
-    const swaps = await prisma.shiftSwapRequest.findMany({
-      where,
-      include: {
-        requester: true,
-        target: true,
-        shift: { include: { location: true } },
-        targetShift: { include: { location: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(swaps);
+    const [swaps, total] = await Promise.all([
+      prisma.shiftSwapRequest.findMany({
+        where,
+        include: {
+          requester: true,
+          target: true,
+          shift: { include: { location: true } },
+          targetShift: { include: { location: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      prisma.shiftSwapRequest.count({ where }),
+    ]);
+
+    return paginatedResponse(swaps, total, take, skip);
   } catch (error) {
     log.error("Error fetching shift swaps:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

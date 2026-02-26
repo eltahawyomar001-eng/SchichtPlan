@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { parsePagination } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/notifications ────────────────────────────────────
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -14,18 +15,31 @@ export async function GET() {
     }
 
     const user = session.user as SessionUser;
+    const { take, skip } = parsePagination(req);
 
-    const notifications = await prisma.notification.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
+    const [notifications, total, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      prisma.notification.count({ where: { userId: user.id } }),
+      prisma.notification.count({
+        where: { userId: user.id, read: false },
+      }),
+    ]);
+
+    return NextResponse.json({
+      data: notifications,
+      unreadCount,
+      pagination: {
+        total,
+        limit: take,
+        offset: skip,
+        hasMore: skip + take < total,
+      },
     });
-
-    const unreadCount = await prisma.notification.count({
-      where: { userId: user.id, read: false },
-    });
-
-    return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
     log.error("Error fetching notifications:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

@@ -8,10 +8,11 @@ import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import crypto from "crypto";
 import { createWebhookSchema, validateBody } from "@/lib/validations";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 /** GET /api/webhooks — list all webhook endpoints */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -30,12 +31,21 @@ export async function GET() {
     const planGate = await requirePlanFeature(user.workspaceId!, "apiWebhooks");
     if (planGate) return planGate;
 
-    const hooks = await (prisma as any).webhookEndpoint.findMany({
-      where: { workspaceId: user.workspaceId },
-      orderBy: { createdAt: "desc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(hooks);
+    const [hooks, total] = await Promise.all([
+      (prisma as any).webhookEndpoint.findMany({
+        where: { workspaceId: user.workspaceId },
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      (prisma as any).webhookEndpoint.count({
+        where: { workspaceId: user.workspaceId },
+      }),
+    ]);
+
+    return paginatedResponse(hooks, total, take, skip);
   } catch (error) {
     log.error("Error:", { error: error });
     return NextResponse.json({ error: "Server error" }, { status: 500 });

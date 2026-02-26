@@ -18,6 +18,7 @@ import {
 } from "@/lib/holidays";
 import { createShiftSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 export async function GET(req: Request) {
@@ -57,16 +58,23 @@ export async function GET(req: Request) {
       where.employeeId = user.employeeId;
     }
 
-    const shifts = await prisma.shift.findMany({
-      where,
-      include: {
-        employee: true,
-        location: true,
-      },
-      orderBy: [{ date: "asc" }, { startTime: "asc" }],
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(shifts);
+    const [shifts, total] = await Promise.all([
+      prisma.shift.findMany({
+        where,
+        include: {
+          employee: true,
+          location: true,
+        },
+        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+        take,
+        skip,
+      }),
+      prisma.shift.count({ where }),
+    ]);
+
+    return paginatedResponse(shifts, total, take, skip);
   } catch (error) {
     log.error("Error fetching shifts:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

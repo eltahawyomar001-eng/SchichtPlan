@@ -6,9 +6,10 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requireLocationSlot } from "@/lib/subscription";
 import { createLocationSchema, validateBody } from "@/lib/validations";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -20,12 +21,19 @@ export async function GET() {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const locations = await prisma.location.findMany({
-      where: { workspaceId },
-      orderBy: { name: "asc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(locations);
+    const [locations, total] = await Promise.all([
+      prisma.location.findMany({
+        where: { workspaceId },
+        orderBy: { name: "asc" },
+        take,
+        skip,
+      }),
+      prisma.location.count({ where: { workspaceId } }),
+    ]);
+
+    return paginatedResponse(locations, total, take, skip);
   } catch (error) {
     log.error("Error fetching locations:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

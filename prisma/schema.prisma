@@ -32,6 +32,7 @@ model User {
   chatChannelMemberships ChatChannelMember[]
   chatMessages    ChatMessage[]
   chatReactions   ChatReaction[]
+  autoScheduleRuns AutoScheduleRun[]
 }
 
 model Account {
@@ -141,6 +142,8 @@ model Workspace {
   eSignatures     ESignature[]
   chatChannels    ChatChannel[]
   subscription    Subscription?
+  staffingRequirements StaffingRequirement[]
+  autoScheduleRuns     AutoScheduleRun[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -208,6 +211,7 @@ model Employee {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
   workspaceId  String
   workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   userId       String?  @unique
@@ -240,6 +244,8 @@ model Location {
   departments Department[]
   shiftTemplates ShiftTemplate[]
   chatChannels ChatChannel[]
+  staffingRequirements StaffingRequirement[]
+  autoScheduleRuns     AutoScheduleRun[]
 }
 
 model Department {
@@ -254,6 +260,7 @@ model Department {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   employees   Employee[]
   chatChannels ChatChannel[]
+  staffingRequirements StaffingRequirement[]
   @@index([workspaceId])
 }
 
@@ -265,6 +272,7 @@ model Skill {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   employeeSkills EmployeeSkill[]
+  staffingRequirements StaffingRequirement[]
   @@unique([name, workspaceId])
   @@index([workspaceId])
 }
@@ -308,6 +316,7 @@ model Shift {
   surchargePercent Float @default(0)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
   employeeId  String?
   employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId  String?
@@ -394,6 +403,7 @@ model TimeEntry {
   isLiveClock  Boolean         @default(false)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
   employeeId   String
   employee     Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId   String?
@@ -908,4 +918,69 @@ model ChatAttachment {
   message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   @@index([messageId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-SCHEDULING
+// ═══════════════════════════════════════════════════════════════
+
+enum AutoScheduleStatus {
+  PREVIEW
+  APPLIED
+  PARTIALLY_APPLIED
+  DISCARDED
+  FAILED
+}
+
+model StaffingRequirement {
+  id             String    @id @default(cuid())
+  name           String
+  weekday        Int       // 0=Mon, 6=Sun (ISO weekday)
+  startTime      String    // HH:mm
+  endTime        String    // HH:mm
+  minEmployees   Int       @default(1)
+  maxEmployees   Int?
+  requiredSkillId String?
+  requiredSkill   Skill?   @relation(fields: [requiredSkillId], references: [id], onDelete: SetNull)
+  locationId     String?
+  location       Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  isActive       Boolean   @default(true)
+  validFrom      DateTime? @db.Date
+  validUntil     DateTime? @db.Date
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+  @@index([locationId])
+  @@index([weekday])
+}
+
+model AutoScheduleRun {
+  id              String             @id @default(cuid())
+  status          AutoScheduleStatus @default(PREVIEW)
+  startDate       DateTime           @db.Date
+  endDate         DateTime           @db.Date
+  locationId      String?
+  location        Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  totalOpenShifts Int                @default(0)
+  assignedCount   Int                @default(0)
+  unresolvedCount Int                @default(0)
+  totalCostEstimate Float?
+  fairnessScore     Float?
+  assignments       Json             @default("[]")
+  unresolvedShifts  Json             @default("[]")
+  configSnapshot    Json             @default("{}")
+  createdAt         DateTime         @default(now())
+  appliedAt         DateTime?
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  workspace         Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
 }

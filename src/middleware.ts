@@ -17,20 +17,25 @@ const staticHeaders: Record<string, string> = {
   "Permissions-Policy":
     "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "X-API-Version": "1",
 };
 
 /** Build CSP header with per-request nonce */
 function buildCsp(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
+    // 'unsafe-inline' is ignored by modern browsers when nonce is present (backward compat for older browsers)
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://vercel.live`,
+    // Use 'unsafe-inline' only for styles — no nonce, so it is respected by all browsers
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com",
+    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com https://vercel.live",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "require-trusted-types-for 'script'",
   ].join("; ");
 }
 
@@ -88,13 +93,16 @@ export default withAuth(
   async function middleware(req) {
     const res = NextResponse.next();
 
-    // Generate per-request nonce for CSP
+    // Generate per-request IDs
     const nonce = generateNonce();
+    const requestId = crypto.randomUUID();
 
     // Apply static security headers
     for (const [header, value] of Object.entries(staticHeaders)) {
       res.headers.set(header, value);
     }
+    // Request tracing header
+    res.headers.set("X-Request-Id", requestId);
     // Apply nonce-based CSP
     res.headers.set("Content-Security-Policy", buildCsp(nonce));
     // Pass nonce to Next.js for inline scripts (server components)

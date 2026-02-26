@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -20,8 +21,12 @@ import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
 import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
+import {
+  DashboardSkeleton,
+  EmployeeDashboardSkeleton,
+} from "./_components/dashboard-skeleton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 0; // Always fresh data, but allows bfcache (no cache-control: no-store)
 
 interface ShiftWithRelations {
   id: string;
@@ -33,13 +38,42 @@ interface ShiftWithRelations {
   location: { name: string } | null;
 }
 
+/* ── Helper: Berlin "today" bounds ── */
+function getTodayBounds() {
+  const berlinDate = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Europe/Berlin",
+  });
+  return {
+    todayStart: new Date(`${berlinDate}T00:00:00.000Z`),
+    todayEnd: new Date(`${berlinDate}T23:59:59.999Z`),
+  };
+}
+
+/* ── Helper: shift status label ── */
+function getStatusLabel(t: Awaited<ReturnType<typeof getTranslations>>) {
+  return (s: string) => {
+    const map: Record<string, string> = {
+      SCHEDULED: t("shiftStatuses.SCHEDULED"),
+      CONFIRMED: t("shiftStatuses.CONFIRMED"),
+      IN_PROGRESS: t("shiftStatuses.IN_PROGRESS"),
+      COMPLETED: t("shiftStatuses.COMPLETED"),
+      CANCELLED: t("shiftStatuses.CANCELLED"),
+      NO_SHOW: t("shiftStatuses.NO_SHOW"),
+    };
+    return map[s] || s;
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * Page component — renders Topbar immediately (LCP),
+ * streams data sections via Suspense
+ * ══════════════════════════════════════════════════════════════ */
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const user = session?.user as SessionUser;
   const workspaceId = user?.workspaceId;
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
-  const locale = await getLocale();
 
   // Guard: if no workspace yet (e.g. fresh OAuth sign-up), show setup prompt
   if (!workspaceId) {
@@ -68,278 +102,300 @@ export default async function DashboardPage() {
 
   const isManager = user ? isManagement(user) : false;
 
-  const statusLabel = (s: string) => {
-    const map: Record<string, string> = {
-      SCHEDULED: t("shiftStatuses.SCHEDULED"),
-      CONFIRMED: t("shiftStatuses.CONFIRMED"),
-      IN_PROGRESS: t("shiftStatuses.IN_PROGRESS"),
-      COMPLETED: t("shiftStatuses.COMPLETED"),
-      CANCELLED: t("shiftStatuses.CANCELLED"),
-      NO_SHOW: t("shiftStatuses.NO_SHOW"),
-    };
-    return map[s] || s;
-  };
-
-  // Compute "today" in Europe/Berlin timezone for correct date matching.
-  const berlinDate = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Europe/Berlin",
-  });
-  const todayStart = new Date(`${berlinDate}T00:00:00.000Z`);
-  const todayEnd = new Date(`${berlinDate}T23:59:59.999Z`);
-
-  // ── Employee-only data fetching ──
-  // Employees see only their own shifts and their own pending requests.
+  // Render Topbar immediately (LCP), stream data sections via Suspense
   if (!isManager) {
-    const employeeId = user?.employeeId;
-
-    const [myTodayShifts, myUpcomingShifts, myPendingAbsences, myPendingSwaps] =
-      await Promise.all([
-        employeeId
-          ? prisma.shift.findMany({
-              where: {
-                workspaceId,
-                employeeId,
-                date: { gte: todayStart, lt: todayEnd },
-              },
-              include: { employee: true, location: true },
-              orderBy: { startTime: "asc" },
-            })
-          : Promise.resolve([]),
-        employeeId
-          ? prisma.shift.findMany({
-              where: {
-                workspaceId,
-                employeeId,
-                date: { gt: todayEnd },
-              },
-              include: { employee: true, location: true },
-              orderBy: [{ date: "asc" }, { startTime: "asc" }],
-              take: 5,
-            })
-          : Promise.resolve([]),
-        employeeId
-          ? prisma.absenceRequest.count({
-              where: { workspaceId, employeeId, status: "AUSSTEHEND" },
-            })
-          : Promise.resolve(0),
-        employeeId
-          ? prisma.shiftSwapRequest.count({
-              where: {
-                workspaceId,
-                requesterId: employeeId,
-                status: "ANGEFRAGT",
-              },
-            })
-          : Promise.resolve(0),
-      ]);
-
     return (
       <div>
         <Topbar title={t("title")} description={t("employeeDashboardDesc")} />
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-          {/* Employee Quick Links */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            <Link
-              href="/schichtplan"
-              className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md"
-            >
-              <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-                <CalendarIcon className="h-5 w-5 text-emerald-600" />
-              </div>
-              <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 sm:text-sm">
-                {t("myShifts")}
-              </span>
-            </Link>
-            <Link
-              href="/abwesenheiten"
-              className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-orange-200 sm:hover:shadow-md"
-            >
-              <div className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-2.5 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
-                <CalendarOffIcon className="h-5 w-5 text-orange-600" />
-              </div>
-              <span className="text-[15px] font-semibold text-gray-700 group-hover:text-orange-700 sm:text-sm">
-                {t("requestAbsence")}
-              </span>
-            </Link>
-            <Link
-              href="/verfuegbarkeiten"
-              className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md"
-            >
-              <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-                <HandRaisedIcon className="h-5 w-5 text-emerald-600" />
-              </div>
-              <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 sm:text-sm">
-                {t("myAvailability")}
-              </span>
-            </Link>
-            <Link
-              href="/schichttausch"
-              className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md"
-            >
-              <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-                <SwapIcon className="h-5 w-5 text-emerald-600" />
-              </div>
-              <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 sm:text-sm">
-                {t("shiftSwap")}
-              </span>
-            </Link>
-          </div>
-
-          {/* My Pending Requests */}
-          {(myPendingAbsences > 0 || myPendingSwaps > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  {t("myPendingRequests")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {myPendingAbsences > 0 && (
-                    <Link
-                      href="/abwesenheiten"
-                      className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-2">
-                          <CalendarOffIcon className="h-4 w-4 text-orange-600" />
-                        </div>
-                        <p className="text-sm font-medium text-gray-700">
-                          {t("pendingAbsences", {
-                            count: myPendingAbsences,
-                          })}
-                        </p>
-                      </div>
-                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
-                    </Link>
-                  )}
-                  {myPendingSwaps > 0 && (
-                    <Link
-                      href="/schichttausch"
-                      className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2">
-                          <SwapIcon className="h-4 w-4 text-emerald-600" />
-                        </div>
-                        <p className="text-sm font-medium text-gray-700">
-                          {t("pendingSwaps", { count: myPendingSwaps })}
-                        </p>
-                      </div>
-                      <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
-                    </Link>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* My Shifts Today */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("myShiftsToday")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(myTodayShifts as ShiftWithRelations[]).length === 0 ? (
-                <p className="text-sm text-gray-500 py-2">
-                  {t("noShiftsToday")}
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {(myTodayShifts as ShiftWithRelations[]).map((shift) => (
-                    <div
-                      key={shift.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
-                    >
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div
-                          className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
-                          style={{
-                            backgroundColor: shift.employee.color || "#10b981",
-                          }}
-                        >
-                          {shift.employee.firstName.charAt(0)}
-                          {shift.employee.lastName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {shift.startTime} - {shift.endTime}
-                          </p>
-                          {shift.location && (
-                            <p className="text-sm text-gray-500 mt-0.5">
-                              {shift.location.name}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          {statusLabel(shift.status)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Upcoming Shifts */}
-          {(myUpcomingShifts as ShiftWithRelations[]).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("upcomingShifts")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {(myUpcomingShifts as ShiftWithRelations[]).map((shift) => (
-                    <div
-                      key={shift.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
-                    >
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div
-                          className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
-                          style={{
-                            backgroundColor: shift.employee.color || "#10b981",
-                          }}
-                        >
-                          {shift.employee.firstName.charAt(0)}
-                          {shift.employee.lastName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {shift.startTime} - {shift.endTime}
-                          </p>
-                          {shift.location && (
-                            <p className="text-sm text-gray-500 mt-0.5">
-                              {shift.location.name}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-xs text-gray-400">
-                          {new Date(shift.date).toLocaleDateString(
-                            locale === "en" ? "en-GB" : "de-DE",
-                          )}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                          {statusLabel(shift.status)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        <Suspense fallback={<EmployeeDashboardSkeleton />}>
+          <EmployeeDashboardContent
+            workspaceId={workspaceId}
+            employeeId={user?.employeeId ?? undefined}
+          />
+        </Suspense>
       </div>
     );
   }
 
-  // ── Management dashboard (OWNER / ADMIN / MANAGER) ──
+  return (
+    <div>
+      <Topbar title={t("title")} description={t("description")} />
+      <Suspense fallback={<DashboardSkeleton />}>
+        <ManagerDashboardContent workspaceId={workspaceId} />
+      </Suspense>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * Employee Dashboard — async server component (streamed)
+ * ══════════════════════════════════════════════════════════════ */
+async function EmployeeDashboardContent({
+  workspaceId,
+  employeeId,
+}: {
+  workspaceId: string;
+  employeeId?: string;
+}) {
+  const t = await getTranslations("dashboard");
+  const locale = await getLocale();
+  const statusLabel = getStatusLabel(t);
+  const { todayStart, todayEnd } = getTodayBounds();
+
+  const [myTodayShifts, myUpcomingShifts, myPendingAbsences, myPendingSwaps] =
+    await Promise.all([
+      employeeId
+        ? prisma.shift.findMany({
+            where: {
+              workspaceId,
+              employeeId,
+              date: { gte: todayStart, lt: todayEnd },
+            },
+            include: { employee: true, location: true },
+            orderBy: { startTime: "asc" },
+          })
+        : Promise.resolve([]),
+      employeeId
+        ? prisma.shift.findMany({
+            where: {
+              workspaceId,
+              employeeId,
+              date: { gt: todayEnd },
+            },
+            include: { employee: true, location: true },
+            orderBy: [{ date: "asc" }, { startTime: "asc" }],
+            take: 5,
+          })
+        : Promise.resolve([]),
+      employeeId
+        ? prisma.absenceRequest.count({
+            where: { workspaceId, employeeId, status: "AUSSTEHEND" },
+          })
+        : Promise.resolve(0),
+      employeeId
+        ? prisma.shiftSwapRequest.count({
+            where: {
+              workspaceId,
+              requesterId: employeeId,
+              status: "ANGEFRAGT",
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Employee Quick Links */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <Link
+          href="/schichtplan"
+          className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md"
+        >
+          <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
+            <CalendarIcon className="h-5 w-5 text-emerald-600" />
+          </div>
+          <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 sm:text-sm">
+            {t("myShifts")}
+          </span>
+        </Link>
+        <Link
+          href="/abwesenheiten"
+          className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-orange-200 sm:hover:shadow-md"
+        >
+          <div className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-2.5 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
+            <CalendarOffIcon className="h-5 w-5 text-orange-600" />
+          </div>
+          <span className="text-[15px] font-semibold text-gray-700 group-hover:text-orange-700 sm:text-sm">
+            {t("requestAbsence")}
+          </span>
+        </Link>
+        <Link
+          href="/verfuegbarkeiten"
+          className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md"
+        >
+          <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
+            <HandRaisedIcon className="h-5 w-5 text-emerald-600" />
+          </div>
+          <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 sm:text-sm">
+            {t("myAvailability")}
+          </span>
+        </Link>
+        <Link
+          href="/schichttausch"
+          className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md"
+        >
+          <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
+            <SwapIcon className="h-5 w-5 text-emerald-600" />
+          </div>
+          <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 sm:text-sm">
+            {t("shiftSwap")}
+          </span>
+        </Link>
+      </div>
+
+      {/* My Pending Requests */}
+      {(myPendingAbsences > 0 || myPendingSwaps > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t("myPendingRequests")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {myPendingAbsences > 0 && (
+                <Link
+                  href="/abwesenheiten"
+                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-2">
+                      <CalendarOffIcon className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700">
+                      {t("pendingAbsences", {
+                        count: myPendingAbsences,
+                      })}
+                    </p>
+                  </div>
+                  <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                </Link>
+              )}
+              {myPendingSwaps > 0 && (
+                <Link
+                  href="/schichttausch"
+                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2">
+                      <SwapIcon className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700">
+                      {t("pendingSwaps", { count: myPendingSwaps })}
+                    </p>
+                  </div>
+                  <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                </Link>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* My Shifts Today */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("myShiftsToday")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(myTodayShifts as ShiftWithRelations[]).length === 0 ? (
+            <p className="text-sm text-gray-500 py-2">{t("noShiftsToday")}</p>
+          ) : (
+            <div className="space-y-3">
+              {(myTodayShifts as ShiftWithRelations[]).map((shift) => (
+                <div
+                  key={shift.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div
+                      className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
+                      style={{
+                        backgroundColor: shift.employee.color || "#10b981",
+                      }}
+                    >
+                      {shift.employee.firstName.charAt(0)}
+                      {shift.employee.lastName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {shift.startTime} - {shift.endTime}
+                      </p>
+                      {shift.location && (
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {shift.location.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {statusLabel(shift.status)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Shifts */}
+      {(myUpcomingShifts as ShiftWithRelations[]).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("upcomingShifts")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(myUpcomingShifts as ShiftWithRelations[]).map((shift) => (
+                <div
+                  key={shift.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div
+                      className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
+                      style={{
+                        backgroundColor: shift.employee.color || "#10b981",
+                      }}
+                    >
+                      {shift.employee.firstName.charAt(0)}
+                      {shift.employee.lastName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {shift.startTime} - {shift.endTime}
+                      </p>
+                      {shift.location && (
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {shift.location.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-xs text-gray-400">
+                      {new Date(shift.date).toLocaleDateString(
+                        locale === "en" ? "en-GB" : "de-DE",
+                      )}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                      {statusLabel(shift.status)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * Manager Dashboard — async server component (streamed)
+ * ══════════════════════════════════════════════════════════════ */
+async function ManagerDashboardContent({
+  workspaceId,
+}: {
+  workspaceId: string;
+}) {
+  const t = await getTranslations("dashboard");
+  const to = await getTranslations("onboarding");
+  const statusLabel = getStatusLabel(t);
+  const { todayStart, todayEnd } = getTodayBounds();
 
   const [
     employeeCount,
@@ -356,10 +412,7 @@ export default async function DashboardPage() {
     prisma.shift.findMany({
       where: {
         workspaceId,
-        date: {
-          gte: todayStart,
-          lt: todayEnd,
-        },
+        date: { gte: todayStart, lt: todayEnd },
       },
       include: { employee: true, location: true },
       orderBy: { startTime: "asc" },
@@ -469,268 +522,261 @@ export default async function DashboardPage() {
   ].filter((item) => item.count > 0);
 
   return (
-    <div>
-      <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Onboarding Wizard */}
-        {showOnboarding && (
-          <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-emerald-50/20 overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 p-2 shadow-sm">
-                  <RocketIcon className="h-5 w-5 text-white" />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Onboarding Wizard */}
+      {showOnboarding && (
+        <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-emerald-50/20 overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 p-2 shadow-sm">
+                <RocketIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-lg sm:text-xl">
+                  {to("welcomeTitle")}
+                </CardTitle>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {to("welcomeSubtitle")}
+                </p>
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                <span>{to("progress") || "Fortschritt"}</span>
+                <span>
+                  {onboardingSteps.filter((s) => s.done).length}/
+                  {onboardingSteps.length}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                  style={{
+                    width: `${(onboardingSteps.filter((s) => s.done).length / onboardingSteps.length) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {onboardingSteps.map((step, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 sm:gap-4 rounded-xl border p-3.5 sm:p-4 transition-all duration-200 ${
+                    step.done
+                      ? "border-green-100 bg-green-50/40"
+                      : "border-gray-100 bg-white hover:border-emerald-200 hover:shadow-sm"
+                  }`}
+                >
+                  <div
+                    className={`flex-shrink-0 rounded-xl p-2.5 ${
+                      step.done ? "bg-green-100" : step.bg
+                    }`}
+                  >
+                    {step.done ? (
+                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <step.icon className={`h-5 w-5 ${step.color}`} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`font-medium text-sm ${
+                        step.done
+                          ? "text-green-700 line-through"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {step.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{step.desc}</p>
+                  </div>
+                  {step.done ? (
+                    <span className="text-xs font-medium text-green-600 flex-shrink-0">
+                      {to("completed")} ✓
+                    </span>
+                  ) : (
+                    <Link
+                      href={step.href}
+                      className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 flex-shrink-0"
+                    >
+                      <span className="hidden sm:inline">{to("goTo")}</span>
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  )}
                 </div>
-                <div>
-                  <CardTitle className="text-lg sm:text-xl">
-                    {to("welcomeTitle")}
-                  </CardTitle>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    {to("welcomeSubtitle")}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title} className="card-elevated">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 break-words">
+                    {stat.title}
+                  </p>
+                  <p className="mt-1.5 text-2xl sm:text-3xl font-bold text-gray-900">
+                    {stat.value}
                   </p>
                 </div>
-              </div>
-              {/* Progress bar */}
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-                  <span>{to("progress") || "Fortschritt"}</span>
-                  <span>
-                    {onboardingSteps.filter((s) => s.done).length}/
-                    {onboardingSteps.length}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-                    style={{
-                      width: `${(onboardingSteps.filter((s) => s.done).length / onboardingSteps.length) * 100}%`,
-                    }}
+                <div className={`rounded-xl p-2.5 sm:p-3 ${stat.bg}`}>
+                  <stat.icon
+                    className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`}
                   />
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {onboardingSteps.map((step, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-3 sm:gap-4 rounded-xl border p-3.5 sm:p-4 transition-all duration-200 ${
-                      step.done
-                        ? "border-green-100 bg-green-50/40"
-                        : "border-gray-100 bg-white hover:border-emerald-200 hover:shadow-sm"
-                    }`}
-                  >
-                    <div
-                      className={`flex-shrink-0 rounded-xl p-2.5 ${
-                        step.done ? "bg-green-100" : step.bg
-                      }`}
-                    >
-                      {step.done ? (
-                        <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <step.icon className={`h-5 w-5 ${step.color}`} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`font-medium text-sm ${
-                          step.done
-                            ? "text-green-700 line-through"
-                            : "text-gray-900"
-                        }`}
-                      >
-                        {step.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {step.desc}
-                      </p>
-                    </div>
-                    {step.done ? (
-                      <span className="text-xs font-medium text-green-600 flex-shrink-0">
-                        {to("completed")} ✓
-                      </span>
-                    ) : (
-                      <Link
-                        href={step.href}
-                        className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 flex-shrink-0"
-                      >
-                        <span className="hidden sm:inline">{to("goTo")}</span>
-                        <ArrowRightIcon className="h-4 w-4" />
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
-        )}
+        ))}
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.title} className="card-elevated">
-              <CardContent className="p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-gray-500 break-words">
-                      {stat.title}
-                    </p>
-                    <p className="mt-1.5 text-2xl sm:text-3xl font-bold text-gray-900">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`rounded-xl p-2.5 sm:p-3 ${stat.bg}`}>
-                    <stat.icon
-                      className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Quick Actions + Pending Items row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("quickActions")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                <Link
-                  href="/mitarbeiter"
-                  className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:bg-emerald-50/30"
-                >
-                  <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-                    <PlusIcon className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 break-words text-left sm:text-sm">
-                    {t("addEmployee")}
-                  </span>
-                </Link>
-                <Link
-                  href="/standorte"
-                  className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-blue-200 sm:hover:bg-blue-50/30"
-                >
-                  <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-2 group-hover:from-blue-100 group-hover:to-blue-200 transition-colors">
-                    <PlusIcon className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-[15px] font-semibold text-gray-700 group-hover:text-blue-700 break-words text-left sm:text-sm">
-                    {t("addLocation")}
-                  </span>
-                </Link>
-                <Link
-                  href="/schichtplan"
-                  className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-purple-200 sm:hover:bg-purple-50/30"
-                >
-                  <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 p-2 group-hover:from-purple-100 group-hover:to-purple-200 transition-colors">
-                    <CalendarIcon className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="text-[15px] font-semibold text-gray-700 group-hover:text-purple-700 break-words text-left sm:text-sm">
-                    {t("createShift")}
-                  </span>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Pending Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("pendingItems")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {totalPending === 0 ? (
-                <div className="flex items-center gap-3 py-2">
-                  <div className="rounded-xl bg-gradient-to-br from-green-50 to-green-100 p-2">
-                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                  </div>
-                  <p className="text-sm text-gray-500">{t("noPending")}</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {pendingItems.map((item, i) => (
-                    <Link
-                      key={i}
-                      href={item.href}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all duration-200 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`rounded-xl p-2 ${item.bg}`}>
-                          <item.icon className={`h-4 w-4 ${item.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            {item.label}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-xs font-semibold text-emerald-600 group-hover:text-emerald-700 flex items-center gap-1">
-                        <span className="hidden sm:inline">
-                          {t("reviewNow")}
-                        </span>
-                        <ArrowRightIcon className="h-3.5 w-3.5" />
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Today's Shifts */}
+      {/* Quick Actions + Pending Items row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("todayShifts")}</CardTitle>
+            <CardTitle className="text-base">{t("quickActions")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {todayShifts.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">{t("noShiftsToday")}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              <Link
+                href="/mitarbeiter"
+                className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:bg-emerald-50/30"
+              >
+                <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
+                  <PlusIcon className="h-4 w-4 text-emerald-600" />
+                </div>
+                <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 break-words text-left sm:text-sm">
+                  {t("addEmployee")}
+                </span>
+              </Link>
+              <Link
+                href="/standorte"
+                className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-blue-200 sm:hover:bg-blue-50/30"
+              >
+                <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-2 group-hover:from-blue-100 group-hover:to-blue-200 transition-colors">
+                  <PlusIcon className="h-4 w-4 text-blue-600" />
+                </div>
+                <span className="text-[15px] font-semibold text-gray-700 group-hover:text-blue-700 break-words text-left sm:text-sm">
+                  {t("addLocation")}
+                </span>
+              </Link>
+              <Link
+                href="/schichtplan"
+                className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-purple-200 sm:hover:bg-purple-50/30"
+              >
+                <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 p-2 group-hover:from-purple-100 group-hover:to-purple-200 transition-colors">
+                  <CalendarIcon className="h-4 w-4 text-purple-600" />
+                </div>
+                <span className="text-[15px] font-semibold text-gray-700 group-hover:text-purple-700 break-words text-left sm:text-sm">
+                  {t("createShift")}
+                </span>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pending Items */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("pendingItems")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {totalPending === 0 ? (
+              <div className="flex items-center gap-3 py-2">
+                <div className="rounded-xl bg-gradient-to-br from-green-50 to-green-100 p-2">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                </div>
+                <p className="text-sm text-gray-500">{t("noPending")}</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {(todayShifts as ShiftWithRelations[]).map((shift) => (
-                  <div
-                    key={shift.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+              <div className="space-y-2">
+                {pendingItems.map((item, i) => (
+                  <Link
+                    key={i}
+                    href={item.href}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all duration-200 group"
                   >
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div
-                        className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
-                        style={{
-                          backgroundColor: shift.employee.color || "#10b981",
-                        }}
-                      >
-                        {shift.employee.firstName.charAt(0)}
-                        {shift.employee.lastName.charAt(0)}
+                    <div className="flex items-center gap-3">
+                      <div className={`rounded-xl p-2 ${item.bg}`}>
+                        <item.icon className={`h-4 w-4 ${item.color}`} />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">
-                          {shift.employee.firstName} {shift.employee.lastName}
+                        <p className="text-sm font-medium text-gray-700">
+                          {item.label}
                         </p>
-                        {shift.location && (
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            {shift.location.name}
-                          </p>
-                        )}
                       </div>
                     </div>
-                    <div className="text-left sm:text-right">
-                      <p className="font-semibold text-sm sm:text-base text-gray-900">
-                        {shift.startTime} - {shift.endTime}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                        {statusLabel(shift.status)}
-                      </p>
-                    </div>
-                  </div>
+                    <span className="text-xs font-semibold text-emerald-600 group-hover:text-emerald-700 flex items-center gap-1">
+                      <span className="hidden sm:inline">{t("reviewNow")}</span>
+                      <ArrowRightIcon className="h-3.5 w-3.5" />
+                    </span>
+                  </Link>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Today's Shifts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("todayShifts")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {todayShifts.length === 0 ? (
+            <p className="text-sm text-gray-500 py-2">{t("noShiftsToday")}</p>
+          ) : (
+            <div className="space-y-3">
+              {(todayShifts as ShiftWithRelations[]).map((shift) => (
+                <div
+                  key={shift.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div
+                      className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
+                      style={{
+                        backgroundColor: shift.employee.color || "#10b981",
+                      }}
+                    >
+                      {shift.employee.firstName.charAt(0)}
+                      {shift.employee.lastName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {shift.employee.firstName} {shift.employee.lastName}
+                      </p>
+                      {shift.location && (
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {shift.location.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="font-semibold text-sm sm:text-base text-gray-900">
+                      {shift.startTime} - {shift.endTime}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                      {statusLabel(shift.status)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

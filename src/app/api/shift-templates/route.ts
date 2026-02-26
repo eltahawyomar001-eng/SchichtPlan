@@ -5,9 +5,10 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -23,18 +24,26 @@ export async function GET() {
     const planGate = await requirePlanFeature(workspaceId, "shiftTemplates");
     if (planGate) return planGate;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const templates = await (prisma as any).shiftTemplate.findMany({
-      where: { workspaceId },
-      include: {
-        location: {
-          select: { id: true, name: true },
-        },
-      },
-      orderBy: { startTime: "asc" },
-    });
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(templates);
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const [templates, total] = await Promise.all([
+      (prisma as any).shiftTemplate.findMany({
+        where: { workspaceId },
+        include: {
+          location: {
+            select: { id: true, name: true },
+          },
+        },
+        orderBy: { startTime: "asc" },
+        take,
+        skip,
+      }),
+      (prisma as any).shiftTemplate.count({ where: { workspaceId } }),
+    ]);
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    return paginatedResponse(templates, total, take, skip);
   } catch (error) {
     log.error("Error fetching templates:", { error: error });
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { sanitize } from "@/lib/sanitize";
 
 /* ═══════════════════════════════════════════════════════════════
    Shared Zod schemas for API input validation
@@ -67,6 +68,50 @@ export const createShiftSchema = z.object({
   notes: optionalString.pipe(z.string().max(1000).optional()),
   repeatWeeks: z.coerce.number().int().min(0).max(52).optional(),
 });
+
+// ── Auto-Schedule ───────────────────────────────────────────────
+export const autoScheduleSchema = z.object({
+  startDate: dateString,
+  endDate: dateString,
+  locationId: optionalString,
+  dryRun: z.boolean().optional().default(false),
+  weights: z
+    .object({
+      fairness: z.number().min(0).max(100).optional(),
+      preference: z.number().min(0).max(100).optional(),
+      cost: z.number().min(0).max(100).optional(),
+      continuity: z.number().min(0).max(100).optional(),
+      staffing: z.number().min(0).max(100).optional(),
+      fatigue: z.number().min(0).max(100).optional(),
+      rotation: z.number().min(0).max(100).optional(),
+    })
+    .optional(),
+});
+
+// ── Backfill (single-shift replacement) ─────────────────────────
+export const backfillSchema = z.object({
+  shiftId: requiredString,
+  maxCandidates: z.coerce.number().int().min(1).max(20).optional().default(5),
+});
+
+// ── Staffing Requirement ────────────────────────────────────────
+export const createStaffingRequirementSchema = z.object({
+  name: requiredString.max(200, "Maximal 200 Zeichen"),
+  weekday: z.coerce.number().int().min(0).max(6),
+  startTime: timeString,
+  endTime: timeString,
+  minEmployees: z.coerce.number().int().min(1).default(1),
+  maxEmployees: z.coerce.number().int().min(1).optional().nullable(),
+  requiredSkillId: optionalString,
+  locationId: optionalString,
+  departmentId: optionalString,
+  isActive: z.boolean().optional().default(true),
+  validFrom: optionalString,
+  validUntil: optionalString,
+});
+
+export const updateStaffingRequirementSchema =
+  createStaffingRequirementSchema.partial();
 
 // ── Time Entry ──────────────────────────────────────────────────
 export const createTimeEntrySchema = z.object({
@@ -138,7 +183,26 @@ type ValidationFailure = { success: false; response: NextResponse };
 type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
 
 /**
+ * Recursively sanitize all string values in a data structure.
+ * Prevents XSS/HTML injection at the validation layer.
+ */
+function deepSanitize(value: unknown): unknown {
+  if (typeof value === "string") return sanitize(value);
+  if (Array.isArray(value)) return value.map(deepSanitize);
+  if (value !== null && typeof value === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      result[key] = deepSanitize(val);
+    }
+    return result;
+  }
+  return value;
+}
+
+/**
  * Validate request body against a Zod schema.
+ * Automatically sanitizes all string fields in the input before validation
+ * to prevent XSS and HTML injection attacks.
  * Returns `{ success: true, data }` or `{ success: false, response }`
  * where `response` is a 400 NextResponse with structured errors.
  */
@@ -146,7 +210,9 @@ export function validateBody<T>(
   schema: z.ZodSchema<T>,
   body: unknown,
 ): ValidationResult<T> {
-  const result = schema.safeParse(body);
+  // Sanitize all string fields recursively before validation
+  const sanitized = deepSanitize(body);
+  const result = schema.safeParse(sanitized);
 
   if (!result.success) {
     const errors = result.error.issues.map((issue) => ({

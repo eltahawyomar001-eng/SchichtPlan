@@ -8,12 +8,13 @@ import { requireEmployeeSlot } from "@/lib/subscription";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
 import { executeCustomRules } from "@/lib/automations";
 import { createAuditLog } from "@/lib/audit";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -25,12 +26,30 @@ export async function GET() {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const employees = await prisma.employee.findMany({
-      where: { workspaceId },
-      orderBy: { lastName: "asc" },
-    });
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
+    const { take, skip } = parsePagination(req);
 
-    return NextResponse.json(employees);
+    const where: Record<string, unknown> = { workspaceId };
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const [employees, total] = await Promise.all([
+      prisma.employee.findMany({
+        where,
+        orderBy: { lastName: "asc" },
+        take,
+        skip,
+      }),
+      prisma.employee.count({ where }),
+    ]);
+
+    return paginatedResponse(employees, total, take, skip);
   } catch (error) {
     log.error("Error fetching employees:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });

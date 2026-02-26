@@ -70,10 +70,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   alternates: {
-    canonical: SITE_URL,
     languages: {
-      "de-DE": SITE_URL,
-      "en-US": `${SITE_URL}?locale=en`,
+      "de-DE": "/",
+      "en-US": "/?locale=en",
     },
   },
   openGraph: {
@@ -146,6 +145,15 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
+        {/* Preconnect to critical third-party origins */}
+        <link
+          rel="preconnect"
+          href="https://hhhjirjyfnzzvuefeeme.supabase.co"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://hhhjirjyfnzzvuefeeme.supabase.co"
+        />
         <CombinedJsonLd />
       </head>
       <body className={inter.className}>

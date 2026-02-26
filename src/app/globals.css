@@ -381,6 +381,13 @@ body {
 
 /* ─── Mobile Native Feel ─────────────────────────────────── */
 
+/* iOS system background color on mobile */
+@media (max-width: 1023px) {
+  body {
+    background-color: #f2f2f7;
+  }
+}
+
 /* Remove tap highlight on all mobile interactive elements */
 @media (max-width: 1023px) {
   button,
@@ -391,15 +398,37 @@ body {
   textarea {
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* iOS-style font rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Prevent text size adjust on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Smoother scrolling for all containers */
+  * {
+    scroll-behavior: smooth;
+  }
 }
 
-/* Touch-friendly active states for cards and buttons on mobile */
+/* Touch-friendly active states for cards on mobile */
 @media (max-width: 1023px) {
+  .card-elevated {
+    transition:
+      transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 0.2s ease;
+    will-change: transform;
+  }
+
   .card-elevated:active {
-    transform: scale(0.98);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      0 0 1px rgba(0, 0, 0, 0.02);
+    transform: scale(0.97);
   }
 }
 
@@ -413,5 +442,63 @@ body {
 @media (max-width: 1023px) {
   .pb-bottom-nav {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── iOS-Style Animations ───────────────────────────────── */
+
+/* Spring-like page transitions */
+@keyframes ios-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ios-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ios-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Used for mobile modals and sheets */
+@keyframes ios-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1023px) {
+  .ios-animate-in {
+    animation: ios-slide-up 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+
+  .ios-fade-in {
+    animation: ios-fade-in 0.2s ease-out both;
+  }
+
+  .ios-scale-in {
+    animation: ios-scale-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1) both;
   }
 }

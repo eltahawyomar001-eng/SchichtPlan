@@ -1175,49 +1175,51 @@ export default function NachrichtenPage() {
         {/* ─── Channel List (mobile: full screen when no channel selected, hidden when chat active) ─── */}
         <aside
           className={cn(
-            "flex flex-col bg-white border-r border-gray-200",
+            "flex flex-col bg-white/80 backdrop-blur-xl md:border-r md:border-gray-200",
             // Mobile: full screen channel list, hidden when a channel is selected
             activeChannel ? "hidden md:flex" : "flex w-full",
             // Desktop: fixed width sidebar
             "md:w-64 lg:w-72 md:flex",
           )}
         >
-          {/* Mobile channel list header — modern app style */}
-          <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3">
-            <h1 className="text-xl font-bold text-gray-900 md:text-sm">
+          {/* Mobile channel list header — iOS style */}
+          <div className="flex items-center justify-between bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3 md:bg-white md:backdrop-blur-none">
+            <h1 className="text-[34px] font-bold tracking-tight text-gray-900 md:text-sm md:font-semibold">
               {t("title")}
             </h1>
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               <button
                 onClick={() => setShowNewDM(true)}
-                className="rounded-full p-2 text-gray-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
+                className="rounded-full p-2 text-emerald-600 transition-all active:opacity-60 md:text-gray-500 md:hover:bg-emerald-50 md:hover:text-emerald-600"
                 title={t("newDM")}
               >
-                <UserIcon className="h-5 w-5 md:h-4 md:w-4" />
+                <UserIcon className="h-[22px] w-[22px] md:h-4 md:w-4" />
               </button>
               <button
                 onClick={() => {
                   setShowNewChannel(true);
                   if (workspaceUsers.length === 0) fetchWorkspaceUsers();
                 }}
-                className="rounded-full p-2 text-gray-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
+                className="rounded-full p-2 text-emerald-600 transition-all active:opacity-60 md:text-gray-500 md:hover:bg-emerald-50 md:hover:text-emerald-600"
                 title={t("newChannel")}
               >
-                <PlusIcon className="h-5 w-5 md:h-4 md:w-4" />
+                <PlusIcon className="h-[22px] w-[22px] md:h-4 md:w-4" />
               </button>
             </div>
           </div>
+          {/* iOS hairline separator */}
+          <div className="h-px bg-black/[0.08] md:bg-gray-100" />
 
-          {/* Channel search */}
-          <div className="flex-shrink-0 px-3.5 py-2.5 md:px-3 md:py-2">
+          {/* Channel search — iOS style */}
+          <div className="flex-shrink-0 px-3.5 py-2 md:px-3 md:py-2">
             <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 md:h-3.5 md:w-3.5" />
+              <SearchIcon className="absolute left-2.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-[#8e8e93] md:h-3.5 md:w-3.5" />
               <input
                 type="text"
                 value={channelSearch}
                 onChange={(e) => setChannelSearch(e.target.value)}
                 placeholder={t("searchChannels")}
-                className="w-full rounded-xl border-0 bg-gray-100 py-2.5 pl-10 pr-3 text-sm text-gray-700 placeholder:text-gray-400 transition-all focus:bg-white focus:ring-2 focus:ring-emerald-100 focus:outline-none md:py-2 md:pl-9 md:text-xs md:border md:border-gray-200 md:bg-white md:shadow-sm"
+                className="w-full rounded-[10px] border-0 bg-[#767680]/[0.12] py-[7px] pl-8 pr-3 text-[15px] text-gray-900 placeholder:text-[#8e8e93] transition-all focus:bg-[#767680]/[0.18] focus:ring-0 focus:outline-none md:py-2 md:pl-9 md:text-xs md:rounded-xl md:border md:border-gray-200 md:bg-white md:shadow-sm md:placeholder:text-gray-400 md:focus:ring-2 md:focus:ring-emerald-100 md:focus:bg-white"
               />
             </div>
           </div>
@@ -1244,7 +1246,7 @@ export default function NachrichtenPage() {
                 {/* Group Channels */}
                 {groupChannels.length > 0 && (
                   <div className="mb-2">
-                    <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    <p className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93]">
                       {t("channels")}
                     </p>
                     <ul className="space-y-0.5">
@@ -1253,29 +1255,29 @@ export default function NachrichtenPage() {
                           <button
                             onClick={() => selectChannel(ch)}
                             className={cn(
-                              "flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-3 text-left transition-all md:rounded-xl md:py-2.5",
+                              "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-all active:opacity-60 md:rounded-xl md:py-2.5",
                               activeChannel?.id === ch.id
-                                ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
-                                : "text-gray-700 hover:bg-gray-50 active:bg-gray-100",
+                                ? "bg-emerald-600/[0.1] font-semibold text-emerald-700"
+                                : "text-gray-900 active:bg-black/[0.04]",
                             )}
                           >
                             <span className="flex min-w-0 items-center gap-3 md:gap-2">
                               <span
                                 className={cn(
-                                  "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold md:h-6 md:w-6 md:text-xs md:rounded-lg",
+                                  "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[13px] font-semibold md:h-6 md:w-6 md:text-xs md:rounded-lg",
                                   activeChannel?.id === ch.id
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : "bg-gray-100 text-gray-500",
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-[#f2f2f7] text-[#8e8e93]",
                                 )}
                               >
                                 #
                               </span>
                               <div className="min-w-0">
-                                <span className="block truncate text-sm md:text-sm">
+                                <span className="block truncate text-[15px] font-medium md:text-sm">
                                   {ch.name}
                                 </span>
                                 {ch.lastMessage && (
-                                  <span className="block truncate text-xs text-gray-400 mt-0.5 md:hidden">
+                                  <span className="block truncate text-[13px] text-[#8e8e93] mt-0.5 md:hidden">
                                     {ch.lastMessage.senderName}:{" "}
                                     {ch.lastMessage.content}
                                   </span>
@@ -1297,7 +1299,7 @@ export default function NachrichtenPage() {
                 {/* DM Channels */}
                 {dmChannels.length > 0 && (
                   <div>
-                    <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    <p className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93]">
                       {t("directMessages")}
                     </p>
                     <ul className="space-y-0.5">
@@ -1308,29 +1310,29 @@ export default function NachrichtenPage() {
                             <button
                               onClick={() => selectChannel(ch)}
                               className={cn(
-                                "flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-3 text-left transition-all md:rounded-xl md:py-2.5",
+                                "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-all active:opacity-60 md:rounded-xl md:py-2.5",
                                 activeChannel?.id === ch.id
-                                  ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
-                                  : "text-gray-700 hover:bg-gray-50 active:bg-gray-100",
+                                  ? "bg-emerald-600/[0.1] font-semibold text-emerald-700"
+                                  : "text-gray-900 active:bg-black/[0.04]",
                               )}
                             >
                               <span className="flex min-w-0 items-center gap-3 md:gap-2">
                                 <span
                                   className={cn(
-                                    "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold md:h-6 md:w-6 md:text-[10px]",
+                                    "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-semibold md:h-6 md:w-6 md:text-[10px]",
                                     activeChannel?.id === ch.id
-                                      ? "bg-emerald-100 text-emerald-700"
-                                      : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600",
+                                      ? "bg-emerald-600 text-white"
+                                      : "bg-gradient-to-br from-[#f2f2f7] to-[#e5e5ea] text-[#8e8e93]",
                                   )}
                                 >
                                   {partnerName[0]?.toUpperCase()}
                                 </span>
                                 <div className="min-w-0">
-                                  <span className="block truncate text-sm md:text-sm">
+                                  <span className="block truncate text-[15px] font-medium md:text-sm">
                                     {partnerName}
                                   </span>
                                   {ch.lastMessage && (
-                                    <span className="block truncate text-xs text-gray-400 mt-0.5 md:hidden">
+                                    <span className="block truncate text-[13px] text-[#8e8e93] mt-0.5 md:hidden">
                                       {ch.lastMessage.content}
                                     </span>
                                   )}
@@ -1356,24 +1358,34 @@ export default function NachrichtenPage() {
         {/* ─── Main Message Area ─── */}
         <main
           className={cn(
-            "flex min-w-0 flex-1 flex-col bg-gradient-to-b from-gray-50/50 to-gray-50",
+            "flex min-w-0 flex-1 flex-col bg-white",
             // Mobile: full screen when channel active, hidden when no channel
             activeChannel ? "flex" : "hidden md:flex",
           )}
         >
           {activeChannel ? (
             <>
-              {/* Channel header — mobile: iOS-style nav bar with back; desktop: standard header */}
-              <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white/95 px-3 py-2 backdrop-blur-sm pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-2 sm:px-4 sm:py-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  {/* Mobile back button */}
+              {/* Channel header — mobile: iOS nav bar; desktop: standard header */}
+              <div className="flex flex-shrink-0 items-center justify-between gap-2 bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-2 sm:px-4 sm:py-3 md:bg-white md:backdrop-blur-none">
+                <div className="flex min-w-0 items-center gap-1">
+                  {/* Mobile back — iOS chevron style */}
                   <button
                     onClick={() => {
                       setActiveChannel(null);
                     }}
-                    className="flex-shrink-0 rounded-full p-2 text-emerald-600 transition-colors hover:bg-gray-100 active:bg-gray-200 md:hidden"
+                    className="flex flex-shrink-0 items-center gap-0.5 -ml-1 py-1 pr-1 text-emerald-600 transition-all active:opacity-60 md:hidden"
                   >
-                    <ArrowLeftIcon className="h-5 w-5" />
+                    <svg
+                      className="h-[22px] w-[22px]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
                   {activeChannel.type === "DIRECT" ? (
                     <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-medium text-emerald-700">
@@ -1476,11 +1488,13 @@ export default function NachrichtenPage() {
                   </button>
                 </div>
               </div>
+              {/* iOS hairline separator */}
+              <div className="h-px bg-black/[0.08] md:bg-gray-200" />
 
               <div className="relative flex min-h-0 flex-1">
                 {/* Messages column */}
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <div className="flex-1 space-y-1.5 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4">
+                  <div className="flex-1 space-y-1.5 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4 bg-[#f2f2f7] md:bg-transparent">
                     {error && (
                       <div className="mb-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-sm text-red-800 sm:p-3">
                         <span className="break-words">{error}</span>
@@ -1584,10 +1598,10 @@ export default function NachrichtenPage() {
                             ) : (
                               <>
                                 <div
-                                  className={`rounded-2xl px-3 py-2 text-sm sm:px-4 sm:py-2.5 ${
+                                  className={`rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug sm:px-4 sm:py-2.5 sm:text-sm ${
                                     isOwn
                                       ? "rounded-br-md bg-emerald-600 text-white"
-                                      : "rounded-bl-md border border-gray-100 bg-white text-gray-800 shadow-sm"
+                                      : "rounded-bl-md bg-[#e9e9eb] text-gray-900 md:bg-white md:border md:border-gray-100 md:shadow-sm"
                                   }`}
                                   style={{
                                     overflowWrap: "break-word",
@@ -1972,7 +1986,8 @@ export default function NachrichtenPage() {
 
                   {/* Typing indicator */}
                   {typingUsers.length > 0 && (
-                    <div className="flex-shrink-0 border-t border-gray-100 bg-white/80 px-4 py-1.5">
+                    <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm px-4 py-1.5">
+                      <div className="h-px bg-black/[0.06] -mx-4 mb-1.5" />
                       <p className="flex items-center gap-1.5 text-xs text-gray-500">
                         <span className="inline-flex gap-0.5">
                           <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:0ms]" />
@@ -2134,7 +2149,9 @@ export default function NachrichtenPage() {
                   )}
 
                   {/* Compose area */}
-                  <div className="relative flex-shrink-0 border-t border-gray-200 bg-white/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-4 sm:py-2.5">
+                  <div className="relative flex-shrink-0 bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-2.5 md:bg-white md:backdrop-blur-none">
+                    {/* iOS hairline separator */}
+                    <div className="absolute inset-x-0 top-0 h-px bg-black/[0.08] md:bg-gray-200" />
                     {/* @mention autocomplete popup */}
                     {showMentions && filteredMentionUsers.length > 0 && (
                       <div

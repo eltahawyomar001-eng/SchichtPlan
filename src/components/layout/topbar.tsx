@@ -18,10 +18,13 @@ export function Topbar({ title, description, actions }: TopbarProps) {
   const { openSidebar } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-md px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))] accent-line">
-      <div className="flex items-center justify-between py-2 sm:py-3 gap-2 sm:gap-3">
+    <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] [-webkit-backdrop-filter:saturate(180%)_blur(20px)] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+      {/* Hairline bottom border — 0.5px like iOS */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-black/[0.06]" />
+
+      <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-          {/* Hamburger — hidden on mobile (bottom nav handles navigation), visible on tablet-only where no bottom nav */}
+          {/* Hamburger — only visible on tablet (md-lg range), hidden on mobile (bottom nav) and desktop (sidebar) */}
           <button
             onClick={openSidebar}
             aria-label="Menü öffnen"
@@ -31,11 +34,11 @@ export function Topbar({ title, description, actions }: TopbarProps) {
           </button>
 
           <div className="min-w-0">
-            <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">
+            <h1 className="text-[17px] sm:text-xl font-semibold text-gray-900 truncate">
               {title}
             </h1>
             {description && (
-              <p className="text-xs sm:text-sm text-gray-500 truncate hidden sm:block mt-0.5">
+              <p className="text-[13px] sm:text-sm text-gray-500 truncate hidden sm:block mt-0.5">
                 {description}
               </p>
             )}

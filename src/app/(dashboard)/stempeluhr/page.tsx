@@ -304,7 +304,7 @@ export default function StempeluhrSeite() {
         <div className="mx-auto max-w-md space-y-4">
           {/* ── Error banner ── */}
           {error && (
-            <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
+            <div className="flex items-center gap-2 rounded-[14px] bg-red-50 px-4 py-3 text-[15px] font-medium text-red-700">
               <AlertTriangleIcon className="h-5 w-5 shrink-0" />
               {error}
             </div>
@@ -312,25 +312,14 @@ export default function StempeluhrSeite() {
 
           {/* ── Main clock card ── */}
           <div
-            className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${
+            className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
               clockState === "working"
-                ? "border-emerald-200 bg-gradient-to-b from-emerald-50 to-white shadow-emerald-100/60 shadow-xl"
+                ? "bg-gradient-to-b from-emerald-50 to-white shadow-[0_2px_20px_-4px_rgba(5,150,105,0.2)]"
                 : clockState === "break"
-                  ? "border-amber-200 bg-gradient-to-b from-amber-50 to-white shadow-amber-100/60 shadow-xl"
-                  : "border-gray-200 bg-white shadow-md"
+                  ? "bg-gradient-to-b from-amber-50 to-white shadow-[0_2px_20px_-4px_rgba(217,119,6,0.2)]"
+                  : "bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)]"
             }`}
           >
-            {/* Subtle top accent bar */}
-            <div
-              className={`h-1 w-full transition-all duration-500 ${
-                clockState === "working"
-                  ? "bg-gradient-to-r from-emerald-400 to-emerald-600"
-                  : clockState === "break"
-                    ? "bg-gradient-to-r from-amber-400 to-amber-500"
-                    : "bg-gradient-to-r from-gray-200 to-gray-300"
-              }`}
-            />
-
             <div className="px-6 pb-7 pt-6">
               {/* User + status row */}
               <div className="mb-6 flex items-center justify-between">
@@ -421,10 +410,10 @@ export default function StempeluhrSeite() {
               ) : (
                 /* Idle state — large clock icon */
                 <div className="mb-6 flex flex-col items-center gap-3">
-                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-50 ring-1 ring-gray-200">
-                    <ClockIcon className="h-12 w-12 text-gray-300" />
+                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#f2f2f7]">
+                    <ClockIcon className="h-12 w-12 text-[#c7c7cc]" />
                   </div>
-                  <p className="text-sm text-gray-400">{t("inactive")}</p>
+                  <p className="text-[15px] text-[#8e8e93]">{t("inactive")}</p>
                 </div>
               )}
 
@@ -461,7 +450,7 @@ export default function StempeluhrSeite() {
                   <button
                     onClick={() => handleClock("in")}
                     disabled={acting}
-                    className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:scale-[0.98] disabled:opacity-50"
+                    className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] bg-emerald-600 px-6 py-4 text-[17px] font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:opacity-70 disabled:opacity-50"
                   >
                     {acting ? (
                       <>
@@ -481,7 +470,7 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("break-start")}
                       disabled={acting}
-                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-amber-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600 hover:shadow-amber-500/30 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] bg-amber-500 px-6 py-4 text-[17px] font-semibold text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600 hover:shadow-amber-500/30 active:opacity-70 disabled:opacity-50"
                     >
                       {acting ? (
                         <>
@@ -504,7 +493,7 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("out")}
                       disabled={acting}
-                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-red-200 bg-white px-6 py-3.5 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
                     >
                       {acting ? (
                         <>
@@ -525,7 +514,7 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("break-end")}
                       disabled={acting}
-                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] bg-emerald-600 px-6 py-4 text-[17px] font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700 hover:shadow-emerald-600/35 active:opacity-70 disabled:opacity-50"
                     >
                       {acting ? (
                         <>
@@ -541,7 +530,7 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("out")}
                       disabled={acting}
-                      className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-red-200 bg-white px-6 py-3.5 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:scale-[0.98] disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
                     >
                       <LogOutIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                       {t("clockOut")}
@@ -560,11 +549,11 @@ export default function StempeluhrSeite() {
 
           {/* ── Today's log ── */}
           {todayEntries.length > 0 && (
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+            <div className="rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 className="text-[15px] font-semibold text-gray-900">
                     {t("todayLog")}
                   </h3>
                 </div>
@@ -573,6 +562,7 @@ export default function StempeluhrSeite() {
                   {t("total")}
                 </span>
               </div>
+              <div className="mx-4 h-px bg-black/[0.06]" />
               <div className="divide-y divide-gray-50">
                 {todayEntries.map((e, idx) => (
                   <div key={e.id} className="flex items-center gap-3 px-4 py-3">
@@ -605,20 +595,20 @@ export default function StempeluhrSeite() {
         {/* ── Team Overview (management only) ── */}
         {isManager && (
           <div className="mx-auto mt-6 max-w-4xl">
-            <Card>
-              <CardContent className="p-4 sm:p-6">
+            <div className="rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
+              <div className="p-4 sm:p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <UsersIcon className="h-5 w-5 text-emerald-600" />
-                    <h3 className="text-base font-semibold text-gray-900">
+                    <h3 className="text-[15px] font-semibold text-gray-900">
                       {t("teamOverview")}
                     </h3>
                   </div>
                   <button
                     onClick={fetchTeam}
                     disabled={teamLoading}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded-[10px] bg-[#f2f2f7] px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors active:opacity-70 hover:bg-[#e5e5ea] disabled:opacity-50"
                   >
                     {teamLoading ? <Spinner /> : t("refreshTeam")}
                   </button>
@@ -670,12 +660,12 @@ export default function StempeluhrSeite() {
                       return (
                         <div
                           key={m.employee.id}
-                          className={`flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors ${
+                          className={`flex items-center gap-3 rounded-xl px-3 py-3 transition-colors ${
                             m.status === "working"
-                              ? "border-green-200 bg-green-50/50"
+                              ? "bg-green-50/70"
                               : m.status === "break"
-                                ? "border-amber-200 bg-amber-50/50"
-                                : "border-gray-100 bg-gray-50/30"
+                                ? "bg-amber-50/70"
+                                : "bg-[#f2f2f7]/60"
                           }`}
                         >
                           {/* Avatar */}
@@ -738,8 +728,8 @@ export default function StempeluhrSeite() {
                     })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
       </PageContent>

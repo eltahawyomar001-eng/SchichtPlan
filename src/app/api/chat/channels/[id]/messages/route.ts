@@ -47,8 +47,6 @@ export async function GET(
     const cursor = searchParams.get("cursor");
     const limit = Math.min(Number(searchParams.get("limit")) || 50, 100);
     const search = searchParams.get("search")?.trim();
-    const pinnedOnly = searchParams.get("pinned") === "true";
-    const parentId = searchParams.get("parentId"); // For thread replies
 
     // Build where clause
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,19 +56,13 @@ export async function GET(
       where.content = { contains: search, mode: "insensitive" };
       where.deletedAt = null;
     }
-    if (pinnedOnly) {
-      where.pinnedAt = { not: null };
-    }
-    if (parentId) {
-      where.parentId = parentId; // Thread replies
-    } else if (!search && !pinnedOnly) {
-      where.parentId = null; // Top-level messages only (not thread replies)
-    }
+    // Note: pinnedOnly and parentId (thread) filters are disabled until
+    // the corresponding DB columns are created via `prisma db push`.
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const messages = await (prisma as any).chatMessage.findMany({
       where,
-      orderBy: { createdAt: parentId ? ("asc" as const) : ("desc" as const) },
+      orderBy: { createdAt: "desc" as const },
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       select: {
@@ -80,20 +72,7 @@ export async function GET(
         senderId: true,
         editedAt: true,
         deletedAt: true,
-        pinnedAt: true,
-        pinnedBy: true,
-        parentId: true,
         createdAt: true,
-        _count: { select: { replies: true } },
-        attachments: {
-          select: {
-            id: true,
-            fileName: true,
-            fileUrl: true,
-            fileType: true,
-            fileSize: true,
-          },
-        },
         reactions: {
           select: {
             id: true,
@@ -164,7 +143,6 @@ export async function POST(
 
     const body = await req.json();
     const content = body.content?.trim();
-    const parentId = body.parentId || null;
 
     if (!content || content.length > 5000) {
       return NextResponse.json(
@@ -180,24 +158,13 @@ export async function POST(
         channelId,
         senderId: user.id,
         senderName: user.name || user.email,
-        parentId,
       },
       select: {
         id: true,
         content: true,
         senderName: true,
         senderId: true,
-        parentId: true,
         createdAt: true,
-        attachments: {
-          select: {
-            id: true,
-            fileName: true,
-            fileUrl: true,
-            fileType: true,
-            fileSize: true,
-          },
-        },
       },
     });
 

@@ -1164,7 +1164,7 @@ export default function NachrichtenPage() {
 
   const settingsPanelContent = activeChannel && (
     <>
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-3">
         <h3 className="truncate text-sm font-semibold text-gray-900">
           {t("channelSettings")}
         </h3>
@@ -1176,7 +1176,7 @@ export default function NachrichtenPage() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+      <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:pb-4">
         {/* Channel info */}
         {activeChannel.type !== "DIRECT" && (
           <div className="mb-4">
@@ -2200,7 +2200,8 @@ export default function NachrichtenPage() {
                     <aside
                       className={`
                         fixed inset-y-0 right-0 z-50 flex w-[300px] max-w-[85vw] flex-col bg-white shadow-xl transition-transform duration-300 ease-in-out
-                        lg:static lg:z-auto lg:w-64 lg:max-w-none lg:shadow-none lg:transition-none
+                        pr-[env(safe-area-inset-right)]
+                        lg:static lg:z-auto lg:w-64 lg:max-w-none lg:pr-0 lg:shadow-none lg:transition-none
                         xl:w-72
                         border-l border-gray-200
                       `}
@@ -2220,9 +2221,9 @@ export default function NachrichtenPage() {
                         setThreadMessages([]);
                       }}
                     />
-                    <aside className="fixed inset-y-0 right-0 z-50 flex w-[340px] max-w-[90vw] flex-col border-l border-gray-200 bg-white shadow-xl lg:static lg:z-auto lg:w-80 lg:max-w-none lg:shadow-none xl:w-96">
+                    <aside className="fixed inset-y-0 right-0 z-50 flex w-[340px] max-w-[90vw] flex-col border-l border-gray-200 bg-white pr-[env(safe-area-inset-right)] shadow-xl lg:static lg:z-auto lg:w-80 lg:max-w-none lg:pr-0 lg:shadow-none xl:w-96">
                       {/* Thread header */}
-                      <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
+                      <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-3">
                         <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                           <svg
                             className="h-4 w-4 text-emerald-600"

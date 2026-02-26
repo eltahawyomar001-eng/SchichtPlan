@@ -220,6 +220,7 @@ export const config = {
     "/zeitkonten/:path*",
     "/lohnexport/:path*",
     "/berichte/:path*",
+    "/wohlbefinden/:path*",
     "/feiertage/:path*",
     "/abteilungen/:path*",
     "/qualifikationen/:path*",

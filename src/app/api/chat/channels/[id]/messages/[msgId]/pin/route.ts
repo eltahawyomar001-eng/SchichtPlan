@@ -8,6 +8,7 @@ import { log } from "@/lib/logger";
 /**
  * POST /api/chat/channels/[id]/messages/[msgId]/pin
  * Pin or unpin a message.
+ * NOTE: Disabled until pinnedAt/pinnedBy columns are created via `prisma db push`.
  */
 export async function POST(
   req: Request,
@@ -35,36 +36,48 @@ export async function POST(
       return NextResponse.json({ error: "Not a member" }, { status: 403 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = await (prisma as any).chatMessage.findUnique({
-      where: { id: msgId },
-      select: { id: true, channelId: true, pinnedAt: true },
-    });
+    // Try to toggle pin — will fail gracefully if columns don't exist yet
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const message = await (prisma as any).chatMessage.findUnique({
+        where: { id: msgId },
+        select: { id: true, channelId: true, pinnedAt: true },
+      });
 
-    if (!message || message.channelId !== channelId) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      if (!message || message.channelId !== channelId) {
+        return NextResponse.json(
+          { error: "Message not found" },
+          { status: 404 },
+        );
+      }
+
+      // Toggle pin
+      const isPinned = !!message.pinnedAt;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updated = await (prisma as any).chatMessage.update({
+        where: { id: msgId },
+        data: {
+          pinnedAt: isPinned ? null : new Date(),
+          pinnedBy: isPinned ? null : user.id,
+        },
+        select: {
+          id: true,
+          pinnedAt: true,
+          pinnedBy: true,
+        },
+      });
+
+      return NextResponse.json({
+        ...updated,
+        action: isPinned ? "unpinned" : "pinned",
+      });
+    } catch {
+      // pinnedAt/pinnedBy columns likely don't exist yet
+      return NextResponse.json(
+        { error: "Pin feature not available yet. Run prisma db push." },
+        { status: 501 },
+      );
     }
-
-    // Toggle pin
-    const isPinned = !!message.pinnedAt;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).chatMessage.update({
-      where: { id: msgId },
-      data: {
-        pinnedAt: isPinned ? null : new Date(),
-        pinnedBy: isPinned ? null : user.id,
-      },
-      select: {
-        id: true,
-        pinnedAt: true,
-        pinnedBy: true,
-      },
-    });
-
-    return NextResponse.json({
-      ...updated,
-      action: isPinned ? "unpinned" : "pinned",
-    });
   } catch (error) {
     log.error("Error toggling pin:", { error });
     return NextResponse.json({ error: "Error" }, { status: 500 });

@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
   TrashIcon,
-  XIcon,
   EyeIcon,
   EyeOffIcon,
   ClipboardIcon,
@@ -180,82 +181,70 @@ export default function WebhooksSeite() {
           </Button>
         }
       />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
 
         {/* Create Form Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <div className="flex items-center justify-between p-6 pb-0">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {t("newWebhook")}
-                </h2>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
-                >
-                  <XIcon className="h-5 w-5" />
-                </button>
+        <Modal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          title={t("newWebhook")}
+          size="lg"
+        >
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("url")} *</Label>
+              <Input
+                type="url"
+                required
+                placeholder="https://example.com/webhook"
+                value={formUrl}
+                onChange={(e) => setFormUrl(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("events")} *</Label>
+              <div className="flex flex-wrap gap-2">
+                {ALL_EVENTS.map((event) => (
+                  <button
+                    key={event}
+                    type="button"
+                    onClick={() => toggleEvent(event)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                      formEvents.includes(event)
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                    }`}
+                  >
+                    {event}
+                  </button>
+                ))}
               </div>
-              <CardContent className="pt-4">
-                <form onSubmit={handleCreate} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t("url")} *</Label>
-                    <Input
-                      type="url"
-                      required
-                      placeholder="https://example.com/webhook"
-                      value={formUrl}
-                      onChange={(e) => setFormUrl(e.target.value)}
-                    />
-                  </div>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label>{t("events")} *</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {ALL_EVENTS.map((event) => (
-                        <button
-                          key={event}
-                          type="button"
-                          onClick={() => toggleEvent(event)}
-                          className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                            formEvents.includes(event)
-                              ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                              : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                          }`}
-                        >
-                          {event}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={saving || formEvents.length === 0}
-                    >
-                      {saving ? "..." : t("newWebhook")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving || formEvents.length === 0}
+              >
+                {saving ? "..." : t("newWebhook")}
+              </Button>
+            </ModalFooter>
+          </form>
+        </Modal>
 
         {/* Webhook list */}
         {loading ? (
@@ -277,7 +266,7 @@ export default function WebhooksSeite() {
         ) : (
           <div className="space-y-3">
             {hooks.map((hook) => (
-              <Card key={hook.id} className="hover:shadow-md transition-shadow">
+              <Card key={hook.id} className="card-elevated">
                 <CardContent className="p-4">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -384,7 +373,7 @@ export default function WebhooksSeite() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <ConfirmDialog
         open={!!deleteTarget}

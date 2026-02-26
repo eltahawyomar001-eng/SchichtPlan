@@ -5,12 +5,11 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Select } from "@/components/ui/select";
-import {
-  EditIcon,
-  XIcon,
-  PalmtreeIcon,
-  AlertTriangleIcon,
-} from "@/components/icons";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
+import { EditIcon, PalmtreeIcon, AlertTriangleIcon } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 
 interface VacationBalance {
@@ -127,10 +126,10 @@ export default function UrlaubskontoSeite() {
           </Select>
         }
       />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -343,99 +342,85 @@ export default function UrlaubskontoSeite() {
             </div>
           </>
         )}
-      </div>
+      </PageContent>
 
       {/* Edit Modal */}
-      {editTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md mx-4 rounded-xl bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {t("editTitle")} – {editTarget.employee.firstName}{" "}
-                {editTarget.employee.lastName}
-              </h3>
-              <button
-                onClick={() => setEditTarget(null)}
-                className="rounded-lg p-1 hover:bg-gray-100"
-              >
-                <XIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              {/* Legal minimum info */}
-              {editTarget.legalMinimum && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-                  <p className="font-medium">{t("legalMinInfo")}</p>
-                  <p className="mt-0.5">
-                    {t("legalMinDetail", {
-                      days: editTarget.legalMinimum,
-                      workDays: editTarget.employee.workDaysPerWeek,
-                    })}
-                  </p>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("entitlement")} ({t("daysPerYear")})
-                </label>
-                <input
-                  type="number"
-                  min={editTarget.legalMinimum ?? 0}
-                  step="0.5"
-                  value={editEntitlement}
-                  onChange={(e) => setEditEntitlement(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <p className="mt-1 text-xs text-gray-400">
-                  {t("entitlementHintDynamic", {
-                    min: editTarget.legalMinimum ?? 20,
-                    workDays: editTarget.employee.workDaysPerWeek ?? 5,
+      <Modal
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        title={
+          editTarget
+            ? `${t("editTitle")} – ${editTarget.employee.firstName} ${editTarget.employee.lastName}`
+            : ""
+        }
+        size="md"
+      >
+        {editTarget && (
+          <div className="space-y-4">
+            {/* Legal minimum info */}
+            {editTarget.legalMinimum && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                <p className="font-medium">{t("legalMinInfo")}</p>
+                <p className="mt-0.5">
+                  {t("legalMinDetail", {
+                    days: editTarget.legalMinimum,
+                    workDays: editTarget.employee.workDaysPerWeek,
                   })}
                 </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("carryOver")} ({t("days")})
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={editCarryOver}
-                  onChange={(e) => setEditCarryOver(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              {saveMsg && (
-                <div
-                  className={`rounded-lg p-3 text-sm ${
-                    saveMsg.type === "success"
-                      ? "bg-green-50 text-green-800 border border-green-200"
-                      : "bg-red-50 text-red-800 border border-red-200"
-                  }`}
-                >
-                  {saveMsg.text}
-                </div>
-              )}
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => setEditTarget(null)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  {t("cancel")}
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {saving ? "..." : t("save")}
-                </button>
-              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("entitlement")} ({t("daysPerYear")})
+              </label>
+              <Input
+                type="number"
+                min={editTarget.legalMinimum ?? 0}
+                step="0.5"
+                value={editEntitlement}
+                onChange={(e) => setEditEntitlement(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                {t("entitlementHintDynamic", {
+                  min: editTarget.legalMinimum ?? 20,
+                  workDays: editTarget.employee.workDaysPerWeek ?? 5,
+                })}
+              </p>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("carryOver")} ({t("days")})
+              </label>
+              <Input
+                type="number"
+                min="0"
+                step="0.5"
+                value={editCarryOver}
+                onChange={(e) => setEditCarryOver(e.target.value)}
+              />
+            </div>
+            {saveMsg && (
+              <div
+                className={`rounded-xl p-3 text-sm ${
+                  saveMsg.type === "success"
+                    ? "bg-green-50 text-green-800 border border-green-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {saveMsg.text}
+              </div>
+            )}
+            <ModalFooter>
+              <Button variant="outline" onClick={() => setEditTarget(null)}>
+                {t("cancel")}
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "..." : t("save")}
+              </Button>
+            </ModalFooter>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

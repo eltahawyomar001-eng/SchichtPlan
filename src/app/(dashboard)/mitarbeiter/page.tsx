@@ -4,19 +4,21 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
   SearchIcon,
-  XIcon,
   MailIcon,
   PhoneIcon,
   BriefcaseIcon,
@@ -206,10 +208,10 @@ export default function MitarbeiterPage() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -226,224 +228,216 @@ export default function MitarbeiterPage() {
         </div>
 
         {/* Add/Edit Employee Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>
-                  {editingEmployee ? t("form.editTitle") : t("form.title")}
-                </CardTitle>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
+        <Modal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          title={editingEmployee ? t("form.editTitle") : t("form.title")}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">{t("form.firstName")} *</Label>
+                <Input
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      firstName: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">{t("form.lastName")} *</Label>
+                <Input
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      lastName: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("form.email")}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, email: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">{t("form.phone")}</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, phone: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position">{t("form.position")}</Label>
+              <Input
+                id="position"
+                value={formData.position}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    position: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRate">{t("form.hourlyRate")}</Label>
+                <Input
+                  id="hourlyRate"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.hourlyRate}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      hourlyRate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="weeklyHours">{t("form.weeklyHours")}</Label>
+                <Input
+                  id="weeklyHours"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={formData.weeklyHours}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      weeklyHours: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="workDaysPerWeek">
+                  {t("form.workDaysPerWeek")}
+                </Label>
+                <Input
+                  id="workDaysPerWeek"
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="7"
+                  value={formData.workDaysPerWeek}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      workDaysPerWeek: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contractType">{t("form.contractType")}</Label>
+                <Select
+                  id="contractType"
+                  value={formData.contractType}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      contractType: e.target.value,
+                    }))
+                  }
                 >
-                  <XIcon className="h-5 w-5" />
-                </button>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">{t("form.firstName")} *</Label>
-                      <Input
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            firstName: e.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">{t("form.lastName")} *</Label>
-                      <Input
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            lastName: e.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                  </div>
+                  <option value="VOLLZEIT">{t("form.contractVollzeit")}</option>
+                  <option value="TEILZEIT">{t("form.contractTeilzeit")}</option>
+                  <option value="MINIJOB">{t("form.contractMinijob")}</option>
+                  <option value="MIDIJOB">{t("form.contractMidijob")}</option>
+                </Select>
+              </div>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("form.email")}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, email: e.target.value }))
-                      }
-                    />
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="color">{t("form.color")}</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, color: e.target.value }))
+                  }
+                  className="h-9 w-12 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                />
+                <span className="text-sm text-gray-500 font-mono">
+                  {formData.color}
+                </span>
+              </div>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t("form.phone")}</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, phone: e.target.value }))
-                      }
-                    />
-                  </div>
+            {formError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {formError}
+              </div>
+            )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="position">{t("form.position")}</Label>
-                    <Input
-                      id="position"
-                      value={formData.position}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          position: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hourlyRate">{t("form.hourlyRate")}</Label>
-                      <Input
-                        id="hourlyRate"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.hourlyRate}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            hourlyRate: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="weeklyHours">
-                        {t("form.weeklyHours")}
-                      </Label>
-                      <Input
-                        id="weeklyHours"
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        value={formData.weeklyHours}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            weeklyHours: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="workDaysPerWeek">
-                        {t("form.workDaysPerWeek")}
-                      </Label>
-                      <Input
-                        id="workDaysPerWeek"
-                        type="number"
-                        step="1"
-                        min="1"
-                        max="7"
-                        value={formData.workDaysPerWeek}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            workDaysPerWeek: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="contractType">
-                        {t("form.contractType")}
-                      </Label>
-                      <select
-                        id="contractType"
-                        value={formData.contractType}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            contractType: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      >
-                        <option value="VOLLZEIT">
-                          {t("form.contractVollzeit")}
-                        </option>
-                        <option value="TEILZEIT">
-                          {t("form.contractTeilzeit")}
-                        </option>
-                        <option value="MINIJOB">
-                          {t("form.contractMinijob")}
-                        </option>
-                        <option value="MIDIJOB">
-                          {t("form.contractMidijob")}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="color">{t("form.color")}</Label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        id="color"
-                        type="color"
-                        value={formData.color}
-                        onChange={(e) =>
-                          setFormData((p) => ({ ...p, color: e.target.value }))
-                        }
-                        className="h-9 w-12 rounded border border-gray-300 cursor-pointer p-0.5"
-                      />
-                      <span className="text-sm text-gray-500 font-mono">
-                        {formData.color}
-                      </span>
-                    </div>
-                  </div>
-
-                  {formError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                      {formError}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit">
-                      {editingEmployee ? tc("save") : t("addEmployee")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button type="submit">
+                {editingEmployee ? tc("save") : t("addEmployee")}
+              </Button>
+            </ModalFooter>
+          </form>
+        </Modal>
 
         {/* Employee List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500">{tc("loading")}</p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full shimmer" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-32 rounded shimmer" />
+                    <div className="h-3 w-20 rounded shimmer" />
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="h-3 w-48 rounded shimmer" />
+                  <div className="h-3 w-36 rounded shimmer" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredEmployees.length === 0 ? (
           search ? (
@@ -466,7 +460,7 @@ export default function MitarbeiterPage() {
             {filteredEmployees.map((employee) => (
               <Card
                 key={employee.id}
-                className={`hover:shadow-md transition-shadow ${!employee.isActive ? "opacity-60" : ""}`}
+                className={`card-elevated ${!employee.isActive ? "opacity-60" : ""}`}
               >
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
@@ -476,7 +470,7 @@ export default function MitarbeiterPage() {
                         color={employee.color || "#10b981"}
                       />
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-semibold text-gray-900">
                           {employee.firstName} {employee.lastName}
                         </p>
                         {employee.position && (
@@ -554,7 +548,7 @@ export default function MitarbeiterPage() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

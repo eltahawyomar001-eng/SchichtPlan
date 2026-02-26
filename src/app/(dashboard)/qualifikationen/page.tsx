@@ -9,13 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  PlusIcon,
-  TrashIcon,
-  EditIcon,
-  XIcon,
-  SearchIcon,
-} from "@/components/icons";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
+import { PlusIcon, TrashIcon, EditIcon, SearchIcon } from "@/components/icons";
 
 interface Skill {
   id: string;
@@ -145,7 +141,7 @@ export default function QualifikationenSeite() {
           </Button>
         }
       />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Search */}
         {skills.length > 0 && (
           <div className="relative max-w-full sm:max-w-md">
@@ -161,74 +157,60 @@ export default function QualifikationenSeite() {
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
 
         {/* Create/Edit Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <div className="flex items-center justify-between p-6 pb-0">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {editId ? t("editSkill") : t("add")}
-                </h2>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
-                >
-                  <XIcon className="h-5 w-5" />
-                </button>
+        <Modal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          title={editId ? t("editSkill") : t("add")}
+          size="md"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("name")} *</Label>
+              <Input
+                required
+                placeholder={t("namePlaceholder")}
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("category")}</Label>
+              <Input
+                placeholder={t("categoryPlaceholder")}
+                value={form.category}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, category: e.target.value }))
+                }
+              />
+            </div>
+
+            {formError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {formError}
               </div>
-              <CardContent className="pt-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t("name")} *</Label>
-                    <Input
-                      required
-                      placeholder={t("namePlaceholder")}
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, name: e.target.value }))
-                      }
-                    />
-                  </div>
+            )}
 
-                  <div className="space-y-2">
-                    <Label>{t("category")}</Label>
-                    <Input
-                      placeholder={t("categoryPlaceholder")}
-                      value={form.category}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, category: e.target.value }))
-                      }
-                    />
-                  </div>
-
-                  {formError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                      {formError}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit">
-                      {editId ? tc("save") : t("create")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button type="submit">{editId ? tc("save") : t("create")}</Button>
+            </ModalFooter>
+          </form>
+        </Modal>
 
         {/* Skill list */}
         {loading ? (
@@ -258,13 +240,10 @@ export default function QualifikationenSeite() {
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((skill) => (
-                    <Card
-                      key={skill.id}
-                      className="hover:shadow-md transition-shadow"
-                    >
+                    <Card key={skill.id} className="card-elevated">
                       <CardContent className="flex items-center justify-between p-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-semibold text-gray-900">
                             {skill.name}
                           </p>
                           <Badge className="mt-1 bg-gray-100 text-gray-600 text-xs">
@@ -296,7 +275,7 @@ export default function QualifikationenSeite() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <ConfirmDialog
         open={!!deleteTarget}

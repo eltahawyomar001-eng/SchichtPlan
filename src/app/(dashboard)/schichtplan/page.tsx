@@ -4,20 +4,23 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  XIcon,
   EditIcon,
   TrashIcon,
   FilterIcon,
   ZapIcon,
+  XIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -390,7 +393,7 @@ export default function SchichtplanPage() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Load error */}
         {loadError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -439,7 +442,7 @@ export default function SchichtplanPage() {
                 <select
                   value={filterLocationId}
                   onChange={(e) => setFilterLocationId(e.target.value)}
-                  className="h-9 w-full sm:w-auto appearance-none rounded-lg border border-gray-300 bg-white pl-9 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="h-9 w-full sm:w-auto appearance-none rounded-xl border border-gray-200 bg-white pl-9 pr-8 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
                 >
                   <option value="">{t("allLocations")}</option>
                   {locations.map((loc) => (
@@ -766,179 +769,163 @@ export default function SchichtplanPage() {
         )}
 
         {/* Add/Edit Shift Modal (management only) */}
-        {canManage && showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>
-                  {editingShift ? t("form.editTitle") : t("form.title")}
-                </CardTitle>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
-                >
-                  <XIcon className="h-5 w-5" />
-                </button>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">{t("form.date")} *</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, date: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
+        <Modal
+          open={!!(canManage && showForm)}
+          onClose={() => setShowForm(false)}
+          title={editingShift ? t("form.editTitle") : t("form.title")}
+          size="md"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">{t("form.date")} *</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, date: e.target.value }))
+                }
+                required
+              />
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="startTime">{t("form.start")} *</Label>
-                      <Input
-                        id="startTime"
-                        type="time"
-                        value={formData.startTime}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            startTime: e.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="endTime">{t("form.end")} *</Label>
-                      <Input
-                        id="endTime"
-                        type="time"
-                        value={formData.endTime}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            endTime: e.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                  </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startTime">{t("form.start")} *</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      startTime: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">{t("form.end")} *</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      endTime: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="employeeId">{t("form.employee")} *</Label>
-                    <select
-                      id="employeeId"
-                      value={formData.employeeId}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          employeeId: e.target.value,
-                        }))
-                      }
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                      required
-                    >
-                      <option value="">{t("form.selectEmployee")}</option>
-                      {employees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.firstName} {emp.lastName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="employeeId">{t("form.employee")} *</Label>
+              <Select
+                id="employeeId"
+                value={formData.employeeId}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    employeeId: e.target.value,
+                  }))
+                }
+                required
+              >
+                <option value="">{t("form.selectEmployee")}</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="locationId">{t("form.location")}</Label>
-                    <select
-                      id="locationId"
-                      value={formData.locationId}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          locationId: e.target.value,
-                        }))
-                      }
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                    >
-                      <option value="">{t("form.noLocation")}</option>
-                      {locations.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {loc.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="locationId">{t("form.location")}</Label>
+              <Select
+                id="locationId"
+                value={formData.locationId}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    locationId: e.target.value,
+                  }))
+                }
+              >
+                <option value="">{t("form.noLocation")}</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">{t("form.notes")}</Label>
-                    <Input
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, notes: e.target.value }))
-                      }
-                      placeholder={t("form.notesPlaceholder")}
-                    />
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">{t("form.notes")}</Label>
+              <Input
+                id="notes"
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, notes: e.target.value }))
+                }
+                placeholder={t("form.notesPlaceholder")}
+              />
+            </div>
 
-                  {/* Repeat weeks (only for new shifts) */}
-                  {!editingShift && (
-                    <div className="space-y-2">
-                      <Label htmlFor="repeatWeeks">
-                        {t("form.repeatWeeks")}
-                      </Label>
-                      <Input
-                        id="repeatWeeks"
-                        type="number"
-                        min="0"
-                        max="52"
-                        value={formData.repeatWeeks}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            repeatWeeks: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                      />
-                      <p className="text-xs text-gray-500">
-                        {t("form.repeatWeeksHint")}
-                      </p>
-                    </div>
-                  )}
+            {/* Repeat weeks (only for new shifts) */}
+            {!editingShift && (
+              <div className="space-y-2">
+                <Label htmlFor="repeatWeeks">{t("form.repeatWeeks")}</Label>
+                <Input
+                  id="repeatWeeks"
+                  type="number"
+                  min="0"
+                  max="52"
+                  value={formData.repeatWeeks}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      repeatWeeks: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                />
+                <p className="text-xs text-gray-500">
+                  {t("form.repeatWeeksHint")}
+                </p>
+              </div>
+            )}
 
-                  {formError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                      <p className="font-semibold mb-1">{t("conflictError")}</p>
-                      {formError.split("\n").map((line, i) => (
-                        <p key={i} className="ml-2">
-                          {line}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+            {formError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                <p className="font-semibold mb-1">{t("conflictError")}</p>
+                {formError.split("\n").map((line, i) => (
+                  <p key={i} className="ml-2">
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
 
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit">
-                      {editingShift ? t("form.update") : t("form.submit")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button type="submit">
+                {editingShift ? t("form.update") : t("form.submit")}
+              </Button>
+            </ModalFooter>
+          </form>
+        </Modal>
+      </PageContent>
 
       {/* Delete Confirmation Dialog (management only) */}
       {canManage && (

@@ -3,17 +3,18 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
   MapPinIcon,
-  XIcon,
   TrashIcon,
   EditIcon,
   SearchIcon,
@@ -133,10 +134,10 @@ export default function StandortePage() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -155,75 +156,76 @@ export default function StandortePage() {
         )}
 
         {/* Add/Edit Location Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>
-                  {editingLocation ? t("form.editTitle") : t("form.title")}
-                </CardTitle>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
-                >
-                  <XIcon className="h-5 w-5" />
-                </button>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t("form.name")} *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, name: e.target.value }))
-                      }
-                      placeholder={t("form.namePlaceholder")}
-                      required
-                    />
-                  </div>
+        <Modal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          title={editingLocation ? t("form.editTitle") : t("form.title")}
+          size="md"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">{t("form.name")} *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, name: e.target.value }))
+                }
+                placeholder={t("form.namePlaceholder")}
+                required
+              />
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="address">{t("form.address")}</Label>
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, address: e.target.value }))
-                      }
-                      placeholder={t("form.addressPlaceholder")}
-                    />
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">{t("form.address")}</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, address: e.target.value }))
+                }
+                placeholder={t("form.addressPlaceholder")}
+              />
+            </div>
 
-                  {formError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                      {formError}
-                    </div>
-                  )}
+            {formError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {formError}
+              </div>
+            )}
 
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit">
-                      {editingLocation ? tc("save") : t("addLocation")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button type="submit">
+                {editingLocation ? tc("save") : t("addLocation")}
+              </Button>
+            </ModalFooter>
+          </form>
+        </Modal>
 
         {/* Locations List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500">{tc("loading")}</p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl shimmer" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-28 rounded shimmer" />
+                    <div className="h-3 w-40 rounded shimmer" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredLocations.length === 0 ? (
           search ? (
@@ -243,18 +245,15 @@ export default function StandortePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredLocations.map((location) => (
-              <Card
-                key={location.id}
-                className="hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-4 sm:p-6">
+              <Card key={location.id} className="card-elevated">
+                <CardContent className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-emerald-50 p-2.5">
+                      <div className="rounded-xl stat-icon-emerald p-2.5">
                         <MapPinIcon className="h-5 w-5 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-semibold text-gray-900">
                           {location.name}
                         </p>
                         {location.address && (
@@ -288,7 +287,7 @@ export default function StandortePage() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

@@ -3,18 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
   EditIcon,
   TrashIcon,
-  XIcon,
   UsersIcon,
   SearchIcon,
 } from "@/components/icons";
@@ -277,7 +278,7 @@ export default function ProjekteSeite() {
           </Button>
         }
       />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Search */}
         {projects.length > 0 && (
           <div className="relative max-w-full sm:max-w-md">
@@ -293,283 +294,255 @@ export default function ProjekteSeite() {
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
 
         {/* Create/Edit Form Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>
-                  {editingProject ? t("editProject") : t("newProject")}
-                </CardTitle>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
+        <Modal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          title={editingProject ? t("editProject") : t("newProject")}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("name")} *</Label>
+              <Input
+                required
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, name: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("description")}</Label>
+              <Input
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("client")}</Label>
+                <Select
+                  value={formData.clientId}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      clientId: e.target.value,
+                    }))
+                  }
                 >
-                  <XIcon className="h-5 w-5" />
-                </button>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t("name")} *</Label>
-                    <Input
-                      required
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, name: e.target.value }))
-                      }
-                    />
-                  </div>
+                  <option value="">— {t("noClient")} —</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              {editingProject && (
+                <div className="space-y-2">
+                  <Label>{t("status")}</Label>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        status: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="AKTIV">{t("active")}</option>
+                    <option value="PAUSIERT">{t("paused")}</option>
+                    <option value="ABGESCHLOSSEN">{t("completed")}</option>
+                    <option value="ARCHIVIERT">{t("archived")}</option>
+                  </Select>
+                </div>
+              )}
+            </div>
 
-                  <div className="space-y-2">
-                    <Label>{t("description")}</Label>
-                    <Input
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          description: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("costRate")}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.costRate}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      costRate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("billRate")}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.billRate}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      billRate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t("client")}</Label>
-                      <Select
-                        value={formData.clientId}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            clientId: e.target.value,
-                          }))
-                        }
-                      >
-                        <option value="">— {t("noClient")} —</option>
-                        {clients.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                    {editingProject && (
-                      <div className="space-y-2">
-                        <Label>{t("status")}</Label>
-                        <Select
-                          value={formData.status}
-                          onChange={(e) =>
-                            setFormData((p) => ({
-                              ...p,
-                              status: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="AKTIV">{t("active")}</option>
-                          <option value="PAUSIERT">{t("paused")}</option>
-                          <option value="ABGESCHLOSSEN">
-                            {t("completed")}
-                          </option>
-                          <option value="ARCHIVIERT">{t("archived")}</option>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
+            <div className="space-y-2">
+              <Label>{t("budgetHours")}</Label>
+              <Input
+                type="number"
+                value={
+                  formData.budgetMinutes
+                    ? String(Math.round(parseInt(formData.budgetMinutes) / 60))
+                    : ""
+                }
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    budgetMinutes: e.target.value
+                      ? String(parseInt(e.target.value) * 60)
+                      : "",
+                  }))
+                }
+                placeholder="z. B. 100"
+              />
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t("costRate")}</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.costRate}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            costRate: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("billRate")}</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.billRate}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            billRate: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("startDate")}</Label>
+                <Input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      startDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("endDate")}</Label>
+                <Input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      endDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label>{t("budgetHours")}</Label>
-                    <Input
-                      type="number"
-                      value={
-                        formData.budgetMinutes
-                          ? String(
-                              Math.round(parseInt(formData.budgetMinutes) / 60),
-                            )
-                          : ""
-                      }
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          budgetMinutes: e.target.value
-                            ? String(parseInt(e.target.value) * 60)
-                            : "",
-                        }))
-                      }
-                      placeholder="z. B. 100"
-                    />
-                  </div>
+            {formError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {formError}
+              </div>
+            )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t("startDate")}</Label>
-                      <Input
-                        type="date"
-                        value={formData.startDate}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            startDate: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("endDate")}</Label>
-                      <Input
-                        type="date"
-                        value={formData.endDate}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            endDate: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  {formError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                      {formError}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit" disabled={saving}>
-                      {saving
-                        ? "..."
-                        : editingProject
-                          ? tc("save")
-                          : t("newProject")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "..." : editingProject ? tc("save") : t("newProject")}
+              </Button>
+            </ModalFooter>
+          </form>
+        </Modal>
 
         {/* Member Management Modal */}
-        {memberProject && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-md mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>
-                  {t("members")} — {memberProject.name}
-                </CardTitle>
-                <button
-                  onClick={() => setMemberProject(null)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
+        <Modal
+          open={!!memberProject}
+          onClose={() => setMemberProject(null)}
+          title={memberProject ? `${t("members")} — ${memberProject.name}` : ""}
+          size="md"
+        >
+          {memberProject && (
+            <div className="space-y-4">
+              {/* Add member */}
+              <div className="flex gap-2">
+                <Select
+                  value={memberEmployeeId}
+                  onChange={(e) => setMemberEmployeeId(e.target.value)}
+                  className="flex-1"
                 >
-                  <XIcon className="h-5 w-5" />
-                </button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Add member */}
-                <div className="flex gap-2">
-                  <Select
-                    value={memberEmployeeId}
-                    onChange={(e) => setMemberEmployeeId(e.target.value)}
-                    className="flex-1"
-                  >
-                    <option value="">{tc("selectPlaceholder")}</option>
-                    {employees
-                      .filter(
-                        (emp) =>
-                          !memberProject.members.some(
-                            (m) => m.employee.id === emp.id,
-                          ),
-                      )
-                      .map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.firstName} {emp.lastName}
-                        </option>
-                      ))}
-                  </Select>
-                  <Button
-                    onClick={addMember}
-                    disabled={!memberEmployeeId}
-                    size="sm"
-                  >
-                    {tc("add")}
-                  </Button>
-                </div>
-
-                {/* Current members */}
-                {memberProject.members.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    {t("noMembers")}
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-gray-100">
-                    {memberProject.members.map((m) => (
-                      <li
-                        key={m.id}
-                        className="flex items-center justify-between py-2"
-                      >
-                        <span className="text-sm text-gray-900">
-                          {m.employee.firstName} {m.employee.lastName}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-gray-400 hover:text-red-600"
-                          onClick={() => removeMember(m.id)}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      </li>
+                  <option value="">{tc("selectPlaceholder")}</option>
+                  {employees
+                    .filter(
+                      (emp) =>
+                        !memberProject.members.some(
+                          (m) => m.employee.id === emp.id,
+                        ),
+                    )
+                    .map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.firstName} {emp.lastName}
+                      </option>
                     ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                </Select>
+                <Button
+                  onClick={addMember}
+                  disabled={!memberEmployeeId}
+                  size="sm"
+                >
+                  {tc("add")}
+                </Button>
+              </div>
+
+              {/* Current members */}
+              {memberProject.members.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  {t("noMembers")}
+                </p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {memberProject.members.map((m) => (
+                    <li
+                      key={m.id}
+                      className="flex items-center justify-between py-2"
+                    >
+                      <span className="text-sm text-gray-900">
+                        {m.employee.firstName} {m.employee.lastName}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-red-600"
+                        onClick={() => removeMember(m.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </Modal>
 
         {/* Project list */}
         {loading ? (
@@ -600,10 +573,7 @@ export default function ProjekteSeite() {
               const budget = formatBudgetProgress(project);
 
               return (
-                <Card
-                  key={project.id}
-                  className="hover:shadow-md transition-shadow"
-                >
+                <Card key={project.id} className="card-elevated">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-semibold text-gray-900 truncate pr-2">
@@ -677,7 +647,7 @@ export default function ProjekteSeite() {
             })}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <ConfirmDialog
         open={!!deleteTarget}

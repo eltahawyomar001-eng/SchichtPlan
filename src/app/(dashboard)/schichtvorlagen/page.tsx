@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PlusIcon, TrashIcon, EditIcon, XIcon } from "@/components/icons";
+import { Modal, ModalFooter } from "@/components/ui/modal";
+import { PageContent } from "@/components/ui/page-content";
+import { PlusIcon, TrashIcon, EditIcon } from "@/components/icons";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 
 interface ShiftTemplate {
@@ -162,121 +164,107 @@ export default function SchichtvorlagenSeite() {
           </Button>
         }
       />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
 
         {/* Create/Edit Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <div className="flex items-center justify-between p-6 pb-0">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {editId ? t("editTemplate") : t("add")}
-                </h2>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
-                >
-                  <XIcon className="h-5 w-5" />
-                </button>
+        <Modal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          title={editId ? t("editTemplate") : t("add")}
+          size="lg"
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("name")} *</Label>
+              <Input
+                required
+                placeholder={t("namePlaceholder")}
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("startTime")} *</Label>
+                <Input
+                  type="time"
+                  required
+                  value={form.startTime}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, startTime: e.target.value }))
+                  }
+                />
               </div>
-              <CardContent className="pt-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t("name")} *</Label>
-                    <Input
-                      required
-                      placeholder={t("namePlaceholder")}
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, name: e.target.value }))
-                      }
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label>{t("endTime")} *</Label>
+                <Input
+                  type="time"
+                  required
+                  value={form.endTime}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, endTime: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t("startTime")} *</Label>
-                      <Input
-                        type="time"
-                        required
-                        value={form.startTime}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, startTime: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("endTime")} *</Label>
-                      <Input
-                        type="time"
-                        required
-                        value={form.endTime}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, endTime: e.target.value }))
-                        }
-                      />
-                    </div>
-                  </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("color")}</Label>
+                <Input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, color: e.target.value }))
+                  }
+                  className="h-10 cursor-pointer"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("location")}</Label>
+                <Select
+                  value={form.locationId}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, locationId: e.target.value }))
+                  }
+                >
+                  <option value="">— {t("allLocations")} —</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t("color")}</Label>
-                      <Input
-                        type="color"
-                        value={form.color}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, color: e.target.value }))
-                        }
-                        className="h-10 cursor-pointer"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t("location")}</Label>
-                      <Select
-                        value={form.locationId}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, locationId: e.target.value }))
-                        }
-                      >
-                        <option value="">— {t("allLocations")} —</option>
-                        {locations.map((loc) => (
-                          <option key={loc.id} value={loc.id}>
-                            {loc.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
+            {formError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {formError}
+              </div>
+            )}
 
-                  {formError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                      {formError}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowForm(false)}
-                    >
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit">
-                      {editId ? tc("save") : t("create")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button type="submit">{editId ? tc("save") : t("create")}</Button>
+            </ModalFooter>
+          </form>
+        </Modal>
 
         {/* Template list */}
         {loading ? (
@@ -296,7 +284,7 @@ export default function SchichtvorlagenSeite() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((tmpl) => (
-              <Card key={tmpl.id} className="hover:shadow-md transition-shadow">
+              <Card key={tmpl.id} className="card-elevated">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -346,7 +334,7 @@ export default function SchichtvorlagenSeite() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <ConfirmDialog
         open={!!deleteTarget}

@@ -90,7 +90,8 @@
     "dataIO": "Import / Export",
     "roles": "Roles",
     "clients": "Clients",
-    "teamChat": "Messages"
+    "teamChat": "Messages",
+    "more": "More"
   },
   "dashboard": {
     "title": "Dashboard",

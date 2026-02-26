@@ -18,14 +18,14 @@ export function Topbar({ title, description, actions }: TopbarProps) {
   const { openSidebar } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-md px-4 sm:px-6 pt-[max(0.625rem,env(safe-area-inset-top))] accent-line">
-      <div className="flex items-center justify-between py-3 sm:py-4 gap-2 sm:gap-3">
+    <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-md px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))] accent-line">
+      <div className="flex items-center justify-between py-2 sm:py-3 gap-2 sm:gap-3">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-          {/* Mobile hamburger */}
+          {/* Hamburger — hidden on mobile (bottom nav handles navigation), visible on tablet-only where no bottom nav */}
           <button
             onClick={openSidebar}
             aria-label="Menü öffnen"
-            className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors lg:hidden flex-shrink-0"
+            className="hidden rounded-xl p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors lg:hidden"
           >
             <MenuIcon className="h-5 w-5" />
           </button>
@@ -42,7 +42,7 @@ export function Topbar({ title, description, actions }: TopbarProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {actions}
           <LanguageSwitcher />
           <NotificationDropdown />
@@ -50,7 +50,7 @@ export function Topbar({ title, description, actions }: TopbarProps) {
             <Avatar
               name={session.user.name}
               size="sm"
-              className="ring-2 ring-gray-100"
+              className="ring-2 ring-gray-100 hidden sm:flex"
             />
           )}
         </div>

@@ -26,6 +26,7 @@ import {
   ArrowLeftIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -157,8 +158,7 @@ export default function NachrichtenPage() {
   // Channel search
   const [channelSearch, setChannelSearch] = useState("");
 
-  // Mobile sidebar
-  const [mobileSidebar, setMobileSidebar] = useState(false);
+  // (mobile sidebar state removed — bottom nav + full-screen view transitions handle mobile navigation)
 
   // Thread view
   const [threadParent, setThreadParent] = useState<Message | null>(null);
@@ -888,7 +888,6 @@ export default function NachrichtenPage() {
     setActiveChannel(ch);
     setMessages([]);
     setShowSettings(false);
-    setMobileSidebar(false);
   }
 
   const filteredMembersForPicker = useMemo(() => {
@@ -972,8 +971,14 @@ export default function NachrichtenPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100dvh-3.5rem)] flex-col sm:h-[calc(100dvh-4rem)]">
-        <Topbar title={t("title")} description={t("description")} />
+      <div className="flex h-dvh flex-col lg:h-[calc(100dvh-3.5rem)]">
+        <div className="hidden lg:block">
+          <Topbar title={t("title")} description={t("description")} />
+        </div>
+        {/* Mobile loading header */}
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
+          <h1 className="text-lg font-bold text-gray-900">{t("title")}</h1>
+        </div>
         <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white">
           <div className="relative">
             <div className="absolute -inset-2 animate-pulse rounded-full bg-emerald-100/40" />
@@ -989,8 +994,10 @@ export default function NachrichtenPage() {
 
   if (planGated) {
     return (
-      <div className="flex h-[calc(100dvh-3.5rem)] flex-col sm:h-[calc(100dvh-4rem)]">
-        <Topbar title={t("title")} description={t("description")} />
+      <div className="flex h-dvh flex-col lg:h-[calc(100dvh-3.5rem)]">
+        <div className="hidden lg:block">
+          <Topbar title={t("title")} description={t("description")} />
+        </div>
         <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white p-6">
           <div className="flex flex-col items-center">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 sm:h-20 sm:w-20">
@@ -1008,158 +1015,6 @@ export default function NachrichtenPage() {
     );
   }
 
-  // ── Channel list sidebar content (shared for desktop + mobile drawer) ──
-
-  const channelListContent = (
-    <>
-      {/* Sidebar header */}
-      <div className="flex-shrink-0 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white px-3.5 py-3 sm:px-4">
-        <div className="mb-2.5 flex items-center justify-between">
-          <h2 className="text-sm font-bold tracking-tight text-gray-800">
-            {t("channels")}
-          </h2>
-          <div className="flex gap-0.5">
-            <button
-              onClick={() => setShowNewDM(true)}
-              className="rounded-lg p-2 text-gray-400 transition-all hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm active:scale-95"
-              title={t("newDM")}
-            >
-              <UserIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => {
-                setShowNewChannel(true);
-                if (workspaceUsers.length === 0) fetchWorkspaceUsers();
-              }}
-              className="rounded-lg p-2 text-gray-400 transition-all hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-sm active:scale-95"
-              title={t("newChannel")}
-            >
-              <PlusIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        {/* Channel search */}
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={channelSearch}
-            onChange={(e) => setChannelSearch(e.target.value)}
-            placeholder={t("searchChannels")}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-xs text-gray-700 shadow-sm placeholder:text-gray-400 transition-all focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-          />
-        </div>
-      </div>
-
-      {/* Channel list */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">
-        {channels.length === 0 ? (
-          <div className="flex flex-col items-center px-4 py-10 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50">
-              <MessageCircleIcon className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-medium text-gray-500">
-              {t("noChannels")}
-            </p>
-            <button
-              onClick={() => setShowNewChannel(true)}
-              className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow active:scale-[0.98]"
-            >
-              {t("createFirst")}
-            </button>
-          </div>
-        ) : (
-          <div className="px-2.5 py-2">
-            {/* Group Channels */}
-            {groupChannels.length > 0 && (
-              <div className="mb-3">
-                <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  {t("channels")}
-                </p>
-                <ul className="space-y-0.5">
-                  {groupChannels.map((ch) => (
-                    <li key={ch.id}>
-                      <button
-                        onClick={() => selectChannel(ch)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-all ${
-                          activeChannel?.id === ch.id
-                            ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
-                            : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                        }`}
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span
-                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                              activeChannel?.id === ch.id
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-gray-100 text-gray-500"
-                            }`}
-                          >
-                            #
-                          </span>
-                          <span className="truncate">{ch.name}</span>
-                        </span>
-                        {ch.unreadCount > 0 && (
-                          <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
-                            {ch.unreadCount}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* DM Channels */}
-            {dmChannels.length > 0 && (
-              <div>
-                <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  {t("directMessages")}
-                </p>
-                <ul className="space-y-0.5">
-                  {dmChannels.map((ch) => {
-                    const partnerName = getDMPartnerName(ch) || "?";
-                    return (
-                      <li key={ch.id}>
-                        <button
-                          onClick={() => selectChannel(ch)}
-                          className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-all ${
-                            activeChannel?.id === ch.id
-                              ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
-                              : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                          }`}
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span
-                              className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-                                activeChannel?.id === ch.id
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600"
-                              }`}
-                            >
-                              {partnerName[0]?.toUpperCase()}
-                            </span>
-                            <span className="truncate">{partnerName}</span>
-                          </span>
-                          {ch.unreadCount > 0 && (
-                            <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
-                              {ch.unreadCount}
-                            </span>
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  );
-
   // ── Settings panel content (shared for desktop side panel + mobile drawer) ──
 
   const settingsPanelContent = activeChannel && (
@@ -1170,7 +1025,7 @@ export default function NachrichtenPage() {
         </h3>
         <button
           onClick={() => setShowSettings(false)}
-          className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+          className="flex-shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 active:scale-95 lg:rounded-lg lg:p-1"
         >
           <XIcon className="h-4 w-4" />
         </button>
@@ -1310,60 +1165,213 @@ export default function NachrichtenPage() {
   // ── Main render ─────────────────────────────────────────────
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col sm:h-[calc(100dvh-4rem)]">
-      <Topbar title={t("title")} description={t("description")} />
+    <div className="flex h-dvh flex-col lg:h-[calc(100dvh-3.5rem)]">
+      {/* Desktop topbar — hidden on mobile where we use custom chat chrome */}
+      <div className="hidden lg:block">
+        <Topbar title={t("title")} description={t("description")} />
+      </div>
 
       <div className="relative flex min-h-0 flex-1">
-        {/* ─── Mobile sidebar overlay ─── */}
-        {mobileSidebar && (
-          <div
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity md:hidden"
-            onClick={() => setMobileSidebar(false)}
-          />
-        )}
-
-        {/* ─── Sidebar ─── */}
+        {/* ─── Channel List (mobile: full screen when no channel selected, hidden when chat active) ─── */}
         <aside
-          className={`
-            ${mobileSidebar ? "translate-x-0" : "-translate-x-full"}
-            fixed inset-y-0 left-0 z-50 flex w-[300px] max-w-[85vw] flex-col bg-white transition-transform duration-300 ease-in-out
-            md:static md:z-auto md:w-64 md:max-w-none md:translate-x-0 md:transition-none
-            lg:w-72
-            border-r border-gray-200 shadow-xl md:shadow-none
-          `}
+          className={cn(
+            "flex flex-col bg-white border-r border-gray-200",
+            // Mobile: full screen channel list, hidden when a channel is selected
+            activeChannel ? "hidden md:flex" : "flex w-full",
+            // Desktop: fixed width sidebar
+            "md:w-64 lg:w-72 md:flex",
+          )}
         >
-          {/* Mobile header with safe-area padding */}
-          <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
-            <div className="flex items-center gap-2">
-              <MessageCircleIcon className="h-5 w-5" />
-              <span className="text-sm font-bold text-gray-900">
-                {t("title")}
-              </span>
+          {/* Mobile channel list header — modern app style */}
+          <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3">
+            <h1 className="text-xl font-bold text-gray-900 md:text-sm">
+              {t("title")}
+            </h1>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setShowNewDM(true)}
+                className="rounded-full p-2 text-gray-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
+                title={t("newDM")}
+              >
+                <UserIcon className="h-5 w-5 md:h-4 md:w-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setShowNewChannel(true);
+                  if (workspaceUsers.length === 0) fetchWorkspaceUsers();
+                }}
+                className="rounded-full p-2 text-gray-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
+                title={t("newChannel")}
+              >
+                <PlusIcon className="h-5 w-5 md:h-4 md:w-4" />
+              </button>
             </div>
-            <button
-              onClick={() => setMobileSidebar(false)}
-              className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
-            >
-              <XIcon className="h-4.5 w-4.5" />
-            </button>
           </div>
-          {channelListContent}
+
+          {/* Channel search */}
+          <div className="flex-shrink-0 px-3.5 py-2.5 md:px-3 md:py-2">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 md:h-3.5 md:w-3.5" />
+              <input
+                type="text"
+                value={channelSearch}
+                onChange={(e) => setChannelSearch(e.target.value)}
+                placeholder={t("searchChannels")}
+                className="w-full rounded-xl border-0 bg-gray-100 py-2.5 pl-10 pr-3 text-sm text-gray-700 placeholder:text-gray-400 transition-all focus:bg-white focus:ring-2 focus:ring-emerald-100 focus:outline-none md:py-2 md:pl-9 md:text-xs md:border md:border-gray-200 md:bg-white md:shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* Channel list — scrollable */}
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+            {channels.length === 0 ? (
+              <div className="flex flex-col items-center px-4 py-10 text-center">
+                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 md:h-12 md:w-12">
+                  <MessageCircleIcon className="h-7 w-7 md:h-6 md:w-6" />
+                </div>
+                <p className="text-sm font-medium text-gray-500">
+                  {t("noChannels")}
+                </p>
+                <button
+                  onClick={() => setShowNewChannel(true)}
+                  className="mt-3 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98]"
+                >
+                  {t("createFirst")}
+                </button>
+              </div>
+            ) : (
+              <div className="px-2.5 py-1.5 md:px-2.5 md:py-2">
+                {/* Group Channels */}
+                {groupChannels.length > 0 && (
+                  <div className="mb-2">
+                    <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      {t("channels")}
+                    </p>
+                    <ul className="space-y-0.5">
+                      {groupChannels.map((ch) => (
+                        <li key={ch.id}>
+                          <button
+                            onClick={() => selectChannel(ch)}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-3 text-left transition-all md:rounded-xl md:py-2.5",
+                              activeChannel?.id === ch.id
+                                ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
+                                : "text-gray-700 hover:bg-gray-50 active:bg-gray-100",
+                            )}
+                          >
+                            <span className="flex min-w-0 items-center gap-3 md:gap-2">
+                              <span
+                                className={cn(
+                                  "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold md:h-6 md:w-6 md:text-xs md:rounded-lg",
+                                  activeChannel?.id === ch.id
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-gray-100 text-gray-500",
+                                )}
+                              >
+                                #
+                              </span>
+                              <div className="min-w-0">
+                                <span className="block truncate text-sm md:text-sm">
+                                  {ch.name}
+                                </span>
+                                {ch.lastMessage && (
+                                  <span className="block truncate text-xs text-gray-400 mt-0.5 md:hidden">
+                                    {ch.lastMessage.senderName}:{" "}
+                                    {ch.lastMessage.content}
+                                  </span>
+                                )}
+                              </div>
+                            </span>
+                            {ch.unreadCount > 0 && (
+                              <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                                {ch.unreadCount}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* DM Channels */}
+                {dmChannels.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      {t("directMessages")}
+                    </p>
+                    <ul className="space-y-0.5">
+                      {dmChannels.map((ch) => {
+                        const partnerName = getDMPartnerName(ch) || "?";
+                        return (
+                          <li key={ch.id}>
+                            <button
+                              onClick={() => selectChannel(ch)}
+                              className={cn(
+                                "flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-3 text-left transition-all md:rounded-xl md:py-2.5",
+                                activeChannel?.id === ch.id
+                                  ? "bg-emerald-50 font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
+                                  : "text-gray-700 hover:bg-gray-50 active:bg-gray-100",
+                              )}
+                            >
+                              <span className="flex min-w-0 items-center gap-3 md:gap-2">
+                                <span
+                                  className={cn(
+                                    "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold md:h-6 md:w-6 md:text-[10px]",
+                                    activeChannel?.id === ch.id
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600",
+                                  )}
+                                >
+                                  {partnerName[0]?.toUpperCase()}
+                                </span>
+                                <div className="min-w-0">
+                                  <span className="block truncate text-sm md:text-sm">
+                                    {partnerName}
+                                  </span>
+                                  {ch.lastMessage && (
+                                    <span className="block truncate text-xs text-gray-400 mt-0.5 md:hidden">
+                                      {ch.lastMessage.content}
+                                    </span>
+                                  )}
+                                </div>
+                              </span>
+                              {ch.unreadCount > 0 && (
+                                <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                                  {ch.unreadCount}
+                                </span>
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </aside>
 
         {/* ─── Main Message Area ─── */}
-        <main className="flex min-w-0 flex-1 flex-col bg-gradient-to-b from-gray-50/50 to-gray-50">
+        <main
+          className={cn(
+            "flex min-w-0 flex-1 flex-col bg-gradient-to-b from-gray-50/50 to-gray-50",
+            // Mobile: full screen when channel active, hidden when no channel
+            activeChannel ? "flex" : "hidden md:flex",
+          )}
+        >
           {activeChannel ? (
             <>
-              {/* Channel header */}
-              <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white/95 px-3 py-2.5 backdrop-blur-sm sm:px-4 sm:py-3">
+              {/* Channel header — mobile: iOS-style nav bar with back; desktop: standard header */}
+              <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white/95 px-3 py-2 backdrop-blur-sm pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-2 sm:px-4 sm:py-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  {/* Mobile back / menu button */}
+                  {/* Mobile back button */}
                   <button
                     onClick={() => {
                       setActiveChannel(null);
-                      setMobileSidebar(true);
                     }}
-                    className="flex-shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 active:bg-gray-200 md:hidden"
+                    className="flex-shrink-0 rounded-full p-2 text-emerald-600 transition-colors hover:bg-gray-100 active:bg-gray-200 md:hidden"
                   >
                     <ArrowLeftIcon className="h-5 w-5" />
                   </button>
@@ -2126,7 +2134,7 @@ export default function NachrichtenPage() {
                   )}
 
                   {/* Compose area */}
-                  <div className="relative flex-shrink-0 border-t border-gray-200 bg-white/95 px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-4 sm:py-3">
+                  <div className="relative flex-shrink-0 border-t border-gray-200 bg-white/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-4 sm:py-2.5">
                     {/* @mention autocomplete popup */}
                     {showMentions && filteredMentionUsers.length > 0 && (
                       <div
@@ -2244,7 +2252,7 @@ export default function NachrichtenPage() {
                             setThreadParent(null);
                             setThreadMessages([]);
                           }}
-                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                          className="rounded-full p-2 text-gray-400 hover:bg-gray-100 active:scale-95 lg:rounded-lg lg:p-1"
                         >
                           <XIcon className="h-4 w-4" />
                         </button>
@@ -2336,7 +2344,7 @@ export default function NachrichtenPage() {
               </div>
             </>
           ) : (
-            /* No channel selected — modern empty state */
+            /* No channel selected — shown only on desktop since mobile shows channel list */
             <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white p-6">
               <div className="flex flex-col items-center">
                 {/* Decorative circle with icon */}
@@ -2353,15 +2361,6 @@ export default function NachrichtenPage() {
                 <p className="mt-1.5 max-w-[280px] text-center text-xs leading-relaxed text-gray-500 sm:max-w-xs sm:text-sm">
                   {t("selectChannelDesc")}
                 </p>
-
-                {/* Action button — visible only on mobile where sidebar is hidden */}
-                <button
-                  onClick={() => setMobileSidebar(true)}
-                  className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-200 transition-all hover:bg-emerald-700 hover:shadow-lg active:scale-[0.97] md:hidden"
-                >
-                  <MenuIcon className="h-4 w-4" />
-                  {t("channels")}
-                </button>
 
                 {/* Subtle decorative dots */}
                 <div className="mt-8 flex items-center gap-1.5">

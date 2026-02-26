@@ -2,6 +2,7 @@
 
 import { useState, createContext, useContext, useCallback } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { InstallPwaPrompt } from "@/components/layout/install-pwa-prompt";
 import { PlanLimitProvider } from "@/components/providers/plan-limit-provider";
 
@@ -37,10 +38,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Sidebar open={sidebarOpen} onClose={closeSidebar} />
           <main
             id="main-content"
-            className="lg:pl-64 min-h-screen pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+            className="lg:pl-64 min-h-screen pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
           >
             {children}
           </main>
+          {/* Mobile bottom tab bar — visible only on mobile */}
+          <MobileBottomNav onMoreTap={openSidebar} />
           <InstallPwaPrompt />
         </div>
       </PlanLimitProvider>

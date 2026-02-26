@@ -151,18 +151,24 @@ body {
 
 /* ── Dashboard-specific utilities ── */
 
-/* Dashboard page background — subtle warm gray with faint dot pattern */
+/* Dashboard page background — flat iOS system bg on mobile, subtle dot pattern on desktop */
 .bg-dashboard {
-  background-color: #f8fafb;
-  background-image: radial-gradient(
-    circle,
-    rgba(5, 150, 105, 0.025) 1px,
-    transparent 1px
-  );
-  background-size: 24px 24px;
+  background-color: #f2f2f7;
 }
 
-/* Elevated card — premium hover-lift with refined shadow */
+@media (min-width: 1024px) {
+  .bg-dashboard {
+    background-color: #f8fafb;
+    background-image: radial-gradient(
+      circle,
+      rgba(5, 150, 105, 0.025) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+}
+
+/* Elevated card — premium hover-lift with refined shadow (hover-capable devices only) */
 .card-elevated {
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.04),
@@ -172,11 +178,20 @@ body {
     transform 0.2s ease;
 }
 
-.card-elevated:hover {
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.06),
-    0 2px 4px rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .card-elevated:hover {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 2px 4px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+  }
+}
+
+/* iOS-style tap feedback for card-elevated on touch devices */
+@media (hover: none) {
+  .card-elevated:active {
+    transform: scale(0.98);
+  }
 }
 
 /* Stat card gradient icon background */

@@ -973,7 +973,11 @@ export default function NachrichtenPage() {
     return (
       <div className="flex h-dvh flex-col lg:h-[calc(100dvh-3.5rem)]">
         <div className="hidden lg:block">
-          <Topbar title={t("title")} description={t("description")} />
+          <Topbar
+            title={t("title")}
+            description={t("description")}
+            hideMobile
+          />
         </div>
         {/* Mobile loading header */}
         <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
@@ -996,7 +1000,11 @@ export default function NachrichtenPage() {
     return (
       <div className="flex h-dvh flex-col lg:h-[calc(100dvh-3.5rem)]">
         <div className="hidden lg:block">
-          <Topbar title={t("title")} description={t("description")} />
+          <Topbar
+            title={t("title")}
+            description={t("description")}
+            hideMobile
+          />
         </div>
         <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white p-6">
           <div className="flex flex-col items-center">
@@ -1168,7 +1176,7 @@ export default function NachrichtenPage() {
     <div className="flex h-dvh flex-col lg:h-[calc(100dvh-3.5rem)]">
       {/* Desktop topbar — hidden on mobile where we use custom chat chrome */}
       <div className="hidden lg:block">
-        <Topbar title={t("title")} description={t("description")} />
+        <Topbar title={t("title")} description={t("description")} hideMobile />
       </div>
 
       <div className="relative flex min-h-0 flex-1">

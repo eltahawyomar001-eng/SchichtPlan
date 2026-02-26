@@ -113,10 +113,21 @@ export default function SchichtplanPage() {
     assigned: number;
     unresolved: number;
     dryRun: boolean;
+    unresolvedShifts?: Array<{
+      shiftDate: string;
+      startTime: string;
+      endTime: string;
+      locationName: string | null;
+      reason: string;
+    }>;
   } | null>(null);
   const [autoScheduleError, setAutoScheduleError] = useState<string | null>(
     null,
   );
+  const [autoScheduleRange, setAutoScheduleRange] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
 
   // DnD sensors
   const sensors = useSensors(
@@ -276,14 +287,32 @@ export default function SchichtplanPage() {
     setAutoScheduleResult(null);
     try {
       let startDate: string, endDate: string;
-      if (viewMode === "month") {
-        startDate = format(startOfMonth(currentWeek), "yyyy-MM-dd");
-        endDate = format(endOfMonth(currentWeek), "yyyy-MM-dd");
+
+      if (autoScheduleRange) {
+        // Use user-selected range
+        startDate = autoScheduleRange.startDate;
+        endDate = autoScheduleRange.endDate;
+      } else if (viewMode === "month") {
+        // For month view, default to current date + 14 days
+        startDate = format(new Date(), "yyyy-MM-dd");
+        const end14 = new Date();
+        end14.setDate(end14.getDate() + 13);
+        endDate = format(end14, "yyyy-MM-dd");
       } else if (viewMode === "day") {
         startDate = endDate = format(currentWeek, "yyyy-MM-dd");
       } else {
         startDate = format(weekStart, "yyyy-MM-dd");
         endDate = format(weekEnd, "yyyy-MM-dd");
+      }
+
+      // Client-side validation: max 14 days
+      const daysDiff =
+        (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (daysDiff > 14) {
+        setAutoScheduleError(t("autoScheduleMaxDays"));
+        setAutoScheduleLoading(false);
+        return;
       }
 
       const res = await fetch("/api/shifts/auto-schedule", {
@@ -303,6 +332,7 @@ export default function SchichtplanPage() {
           assigned: data.assigned,
           unresolved: data.unresolved,
           dryRun: data.dryRun,
+          unresolvedShifts: data.unresolvedShifts,
         });
         if (!dryRun && data.assigned > 0) {
           fetchData(); // Refresh grid
@@ -469,6 +499,24 @@ export default function SchichtplanPage() {
                   setShowAutoSchedule(true);
                   setAutoScheduleResult(null);
                   setAutoScheduleError(null);
+                  // Initialize date range based on current view
+                  if (viewMode === "month") {
+                    const today = format(new Date(), "yyyy-MM-dd");
+                    const end14 = new Date();
+                    end14.setDate(end14.getDate() + 13);
+                    setAutoScheduleRange({
+                      startDate: today,
+                      endDate: format(end14, "yyyy-MM-dd"),
+                    });
+                  } else if (viewMode === "day") {
+                    const d = format(currentWeek, "yyyy-MM-dd");
+                    setAutoScheduleRange({ startDate: d, endDate: d });
+                  } else {
+                    setAutoScheduleRange({
+                      startDate: format(weekStart, "yyyy-MM-dd"),
+                      endDate: format(weekEnd, "yyyy-MM-dd"),
+                    });
+                  }
                 }}
                 className="gap-1.5"
               >
@@ -942,93 +990,120 @@ export default function SchichtplanPage() {
       )}
 
       {/* Auto-schedule modal */}
-      {showAutoSchedule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center gap-2">
-                <ZapIcon className="h-5 w-5 text-amber-500" />
-                <h2 className="font-semibold text-gray-900">
-                  {t("autoScheduleTitle")}
-                </h2>
+      <Modal
+        open={showAutoSchedule}
+        onClose={() => setShowAutoSchedule(false)}
+        title={t("autoScheduleTitle")}
+        size="md"
+      >
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-gray-600">{t("autoScheduleDesc")}</p>
+
+          {/* Date range inputs */}
+          {autoScheduleRange && !autoScheduleResult && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("autoScheduleFrom")}</Label>
+                <Input
+                  type="date"
+                  value={autoScheduleRange.startDate}
+                  onChange={(e) =>
+                    setAutoScheduleRange((r) =>
+                      r ? { ...r, startDate: e.target.value } : r,
+                    )
+                  }
+                />
               </div>
-              <button
-                onClick={() => setShowAutoSchedule(false)}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+              <div>
+                <Label>{t("autoScheduleTo")}</Label>
+                <Input
+                  type="date"
+                  value={autoScheduleRange.endDate}
+                  onChange={(e) =>
+                    setAutoScheduleRange((r) =>
+                      r ? { ...r, endDate: e.target.value } : r,
+                    )
+                  }
+                />
+              </div>
+              <p className="col-span-2 text-xs text-gray-400">
+                {t("autoScheduleMaxDays")}
+              </p>
+            </div>
+          )}
+
+          {autoScheduleError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              {autoScheduleError}
+            </div>
+          )}
+
+          {autoScheduleResult ? (
+            <div
+              className={`rounded-xl border p-4 space-y-2 ${autoScheduleResult.dryRun ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
+            >
+              <p
+                className={`font-medium text-sm ${autoScheduleResult.dryRun ? "text-amber-700" : "text-emerald-700"}`}
               >
-                <XIcon className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600">{t("autoScheduleDesc")}</p>
-
-              {autoScheduleError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                  {autoScheduleError}
-                </div>
-              )}
-
-              {autoScheduleResult ? (
-                <div
-                  className={`rounded-lg border p-4 space-y-2 ${autoScheduleResult.dryRun ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
+                {autoScheduleResult.dryRun
+                  ? t("autoScheduleDryRun")
+                  : t("autoScheduleDone")}
+              </p>
+              <ul className="text-sm space-y-1 text-gray-700">
+                <li>
+                  ✅ {autoScheduleResult.assigned} {t("autoScheduleAssigned")}
+                </li>
+                {autoScheduleResult.unresolved > 0 && (
+                  <li>
+                    ⚠️ {autoScheduleResult.unresolved}{" "}
+                    {t("autoScheduleUnresolved")}
+                  </li>
+                )}
+              </ul>
+              {/* Show unresolved shift details */}
+              {autoScheduleResult.unresolvedShifts &&
+                autoScheduleResult.unresolvedShifts.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                    {autoScheduleResult.unresolvedShifts.map((u, i) => (
+                      <p key={i} className="text-xs text-gray-500">
+                        📅 {u.shiftDate} {u.startTime}–{u.endTime}
+                        {u.locationName ? ` (${u.locationName})` : ""}:{" "}
+                        {u.reason}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              {autoScheduleResult.dryRun && (
+                <Button
+                  size="sm"
+                  onClick={() => handleAutoSchedule(false)}
+                  disabled={autoScheduleLoading}
+                  className="mt-2"
                 >
-                  <p
-                    className={`font-medium text-sm ${autoScheduleResult.dryRun ? "text-amber-700" : "text-emerald-700"}`}
-                  >
-                    {autoScheduleResult.dryRun
-                      ? t("autoScheduleDryRun")
-                      : t("autoScheduleDone")}
-                  </p>
-                  <ul className="text-sm space-y-1 text-gray-700">
-                    <li>
-                      ✅ {autoScheduleResult.assigned}{" "}
-                      {t("autoScheduleAssigned")}
-                    </li>
-                    {autoScheduleResult.unresolved > 0 && (
-                      <li>
-                        ⚠️ {autoScheduleResult.unresolved}{" "}
-                        {t("autoScheduleUnresolved")}
-                      </li>
-                    )}
-                  </ul>
-                  {autoScheduleResult.dryRun && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleAutoSchedule(false)}
-                      disabled={autoScheduleLoading}
-                      className="mt-2"
-                    >
-                      {autoScheduleLoading
-                        ? tc("loading")
-                        : t("autoScheduleApply")}
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAutoSchedule(true)}
-                    disabled={autoScheduleLoading}
-                  >
-                    {autoScheduleLoading
-                      ? tc("loading")
-                      : t("autoSchedulePreview")}
-                  </Button>
-                  <Button
-                    onClick={() => handleAutoSchedule(false)}
-                    disabled={autoScheduleLoading}
-                  >
-                    <ZapIcon className="h-4 w-4 mr-1.5" />
-                    {autoScheduleLoading ? tc("loading") : t("autoScheduleRun")}
-                  </Button>
-                </div>
+                  {autoScheduleLoading ? tc("loading") : t("autoScheduleApply")}
+                </Button>
               )}
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => handleAutoSchedule(true)}
+                disabled={autoScheduleLoading}
+              >
+                {autoScheduleLoading ? tc("loading") : t("autoSchedulePreview")}
+              </Button>
+              <Button
+                onClick={() => handleAutoSchedule(false)}
+                disabled={autoScheduleLoading}
+              >
+                <ZapIcon className="h-4 w-4 mr-1.5" />
+                {autoScheduleLoading ? tc("loading") : t("autoScheduleRun")}
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

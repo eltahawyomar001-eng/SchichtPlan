@@ -868,14 +868,22 @@ model ChatMessage {
   senderName String
   editedAt   DateTime?
   deletedAt  DateTime?
+  pinnedAt   DateTime?
+  pinnedBy   String?
   createdAt  DateTime  @default(now())
   channelId  String
   channel    ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   senderId   String
   sender     User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  parentId   String?
+  parent     ChatMessage?  @relation("ChatThread", fields: [parentId], references: [id], onDelete: SetNull)
+  replies    ChatMessage[] @relation("ChatThread")
   reactions  ChatReaction[]
+  attachments ChatAttachment[]
   @@index([channelId, createdAt(sort: Desc)])
   @@index([senderId])
+  @@index([parentId])
+  @@index([channelId, pinnedAt])
 }
 
 model ChatReaction {
@@ -887,5 +895,17 @@ model ChatReaction {
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model ChatAttachment {
+  id        String   @id @default(cuid())
+  fileName  String
+  fileUrl   String
+  fileType  String   // MIME type
+  fileSize  Int      // bytes
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
   @@index([messageId])
 }

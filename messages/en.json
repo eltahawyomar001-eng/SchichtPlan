@@ -240,7 +240,10 @@
     "autoScheduleDryRun": "Preview (not saved)",
     "autoScheduleDone": "Scheduling complete",
     "autoScheduleAssigned": "shifts assigned",
-    "autoScheduleUnresolved": "shifts without assignment"
+    "autoScheduleUnresolved": "shifts without assignment",
+    "autoScheduleFrom": "From",
+    "autoScheduleTo": "To",
+    "autoScheduleMaxDays": "Maximum 14 days per auto-schedule"
   },
   "timeTracking": {
     "title": "Time Tracking",
@@ -1068,7 +1071,6 @@
     "ctaTitle": "Ready to digitize your time tracking?",
     "ctaSubtitle": "Start for free and discover how easy time tracking can be.",
     "ctaButton": "Get started for free",
-
     "heroHighlight1": "Ready in minutes",
     "heroHighlight1Desc": "Set up in under 5 minutes",
     "heroHighlight2": "Automated",
@@ -1077,7 +1079,6 @@
     "heroHighlight3Desc": "Desktop, tablet & smartphone",
     "heroHighlight4": "DATEV export",
     "heroHighlight4Desc": "One click to payroll",
-
     "featureTabsTitle": "Everything your team needs",
     "featureTabsSubtitle": "One platform for time tracking, shift planning, absences, and reports — clear and intuitive.",
     "featureTab1": "Time Tracking",
@@ -1108,7 +1109,6 @@
     "featureTab4Bullet2": "Industrial minutes conversion",
     "featureTab4Bullet3": "Month-close workflow",
     "featureTab4Bullet4": "Time account per employee",
-
     "featureTabMockup1Title": "Time Tracking · Today",
     "featureTabMockup1Active": "Active",
     "featureTabMockup1Name1": "Anna M.",
@@ -1118,24 +1118,20 @@
     "featureTabMockup1Name3": "Clara S.",
     "featureTabMockup1Time3": "09:00 – running",
     "featureTabMockup1Hours": "24.5 h today",
-
     "featureTabMockup2Title": "Shift Plan · CW 24",
     "featureTabMockup2Early": "Early",
     "featureTabMockup2Late": "Late",
     "featureTabMockup2Night": "Night",
     "featureTabMockup2Covered": "100 % covered",
-
     "featureTabMockup3Title": "Absences · June",
     "featureTabMockup3Vacation": "Vacation",
     "featureTabMockup3Sick": "Sick",
     "featureTabMockup3Approved": "Approved",
     "featureTabMockup3Pending": "Pending",
-
     "featureTabMockup4Title": "Reports · May 2025",
     "featureTabMockup4Total": "Total",
     "featureTabMockup4Overtime": "Overtime",
     "featureTabMockup4Export": "DATEV Export",
-
     "appShowcaseTitle": "Works on every device",
     "appShowcaseSubtitle": "As a Progressive Web App (PWA), Shiftfy is instantly ready on desktop, tablet, and smartphone — no installation needed.",
     "appShowcaseDesktop": "Desktop & Laptop",
@@ -1147,7 +1143,6 @@
     "appShowcaseOffline": "Offline-capable",
     "appShowcaseInstant": "Instantly available",
     "appShowcaseNoInstall": "No installation",
-
     "trustTitle": "Security & Trust",
     "trustSubtitle": "Your data is in good hands — hosted in Germany, GDPR-compliant, and secured with the highest standards.",
     "trustStat1Value": "100 %",
@@ -1162,7 +1157,6 @@
     "trustStat4Value": "256-Bit",
     "trustStat4Label": "Encryption",
     "trustStat4Desc": "SSL/TLS encryption for all data transfers.",
-
     "footerProduct": "Product",
     "footerFeatures": "Features",
     "footerUseCases": "Use Cases",
@@ -2005,6 +1999,30 @@
     "addReaction": "Add reaction",
     "mentionHint": "Type @ to mention someone",
     "planRequired": "Team Chat requires Team plan",
-    "planRequiredDesc": "Upgrade to Team or Business plan to use internal team communication."
+    "planRequiredDesc": "Upgrade to Team or Business plan to use internal team communication.",
+    "searchMessages": "Search messages…",
+    "searchResults": "Search results",
+    "noSearchResults": "No results found",
+    "clearSearch": "Clear search",
+    "pinMessage": "Pin message",
+    "unpinMessage": "Unpin message",
+    "pinnedMessages": "Pinned messages",
+    "noPinnedMessages": "No pinned messages",
+    "pinned": "pinned",
+    "replyInThread": "Reply in thread",
+    "thread": "Thread",
+    "replies": "Replies",
+    "replyCount": "{count, plural, =1 {1 reply} other {# replies}}",
+    "backToChannel": "Back to channel",
+    "typing": "is typing…",
+    "typingMultiple": "{count} are typing…",
+    "seenBy": "Seen by",
+    "attachFile": "Attach file",
+    "attachment": "Attachment",
+    "attachments": "Attachments",
+    "fileTooLarge": "File too large (max 10 MB)",
+    "uploadFailed": "Upload failed",
+    "linkPreview": "Link preview",
+    "downloadFile": "Download file"
   }
 }

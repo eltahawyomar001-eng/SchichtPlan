@@ -240,7 +240,10 @@
     "autoScheduleDryRun": "Vorschau (nicht gespeichert)",
     "autoScheduleDone": "Planung abgeschlossen",
     "autoScheduleAssigned": "Schichten zugewiesen",
-    "autoScheduleUnresolved": "Schichten ohne Zuweisung"
+    "autoScheduleUnresolved": "Schichten ohne Zuweisung",
+    "autoScheduleFrom": "Von",
+    "autoScheduleTo": "Bis",
+    "autoScheduleMaxDays": "Maximal 14 Tage pro Auto-Planung"
   },
   "timeTracking": {
     "title": "Zeiterfassung",
@@ -1068,7 +1071,6 @@
     "ctaTitle": "Bereit, deine Zeiterfassung zu digitalisieren?",
     "ctaSubtitle": "Starte kostenlos und erlebe, wie einfach Arbeitszeiterfassung sein kann.",
     "ctaButton": "Jetzt kostenlos starten",
-
     "heroHighlight1": "Sofort einsatzbereit",
     "heroHighlight1Desc": "In unter 5 Minuten eingerichtet",
     "heroHighlight2": "Automatisiert",
@@ -1077,7 +1079,6 @@
     "heroHighlight3Desc": "Desktop, Tablet & Smartphone",
     "heroHighlight4": "DATEV-Export",
     "heroHighlight4Desc": "Ein Klick zum Lohnbüro",
-
     "featureTabsTitle": "Alles, was dein Team braucht",
     "featureTabsSubtitle": "Eine Plattform für Zeiterfassung, Schichtplanung, Abwesenheiten und Berichte — klar und intuitiv.",
     "featureTab1": "Zeiterfassung",
@@ -1108,7 +1109,6 @@
     "featureTab4Bullet2": "Industrieminuten-Umwandlung",
     "featureTab4Bullet3": "Monatsabschluss-Workflow",
     "featureTab4Bullet4": "Zeitkonto pro Mitarbeiter",
-
     "featureTabMockup1Title": "Zeiterfassung · Heute",
     "featureTabMockup1Active": "Aktiv",
     "featureTabMockup1Name1": "Anna M.",
@@ -1118,24 +1118,20 @@
     "featureTabMockup1Name3": "Clara S.",
     "featureTabMockup1Time3": "09:00 – laufend",
     "featureTabMockup1Hours": "24,5 h heute",
-
     "featureTabMockup2Title": "Schichtplan · KW 24",
     "featureTabMockup2Early": "Früh",
     "featureTabMockup2Late": "Spät",
     "featureTabMockup2Night": "Nacht",
     "featureTabMockup2Covered": "100 % besetzt",
-
     "featureTabMockup3Title": "Abwesenheiten · Juni",
     "featureTabMockup3Vacation": "Urlaub",
     "featureTabMockup3Sick": "Krank",
     "featureTabMockup3Approved": "Genehmigt",
     "featureTabMockup3Pending": "Ausstehend",
-
     "featureTabMockup4Title": "Berichte · Mai 2025",
     "featureTabMockup4Total": "Gesamt",
     "featureTabMockup4Overtime": "Überstunden",
     "featureTabMockup4Export": "DATEV Export",
-
     "appShowcaseTitle": "Funktioniert auf jedem Gerät",
     "appShowcaseSubtitle": "Als Progressive Web App (PWA) ist Shiftfy auf Desktop, Tablet und Smartphone sofort einsatzbereit — ohne Installation.",
     "appShowcaseDesktop": "Desktop & Laptop",
@@ -1147,7 +1143,6 @@
     "appShowcaseOffline": "Offline-fähig",
     "appShowcaseInstant": "Sofort verfügbar",
     "appShowcaseNoInstall": "Keine Installation",
-
     "trustTitle": "Sicherheit & Vertrauen",
     "trustSubtitle": "Deine Daten in besten Händen — gehostet in Deutschland, DSGVO-konform und mit höchsten Sicherheitsstandards.",
     "trustStat1Value": "100 %",
@@ -1162,7 +1157,6 @@
     "trustStat4Value": "256-Bit",
     "trustStat4Label": "Verschlüsselung",
     "trustStat4Desc": "SSL/TLS-Verschlüsselung für alle Datenübertragungen.",
-
     "footerProduct": "Produkt",
     "footerFeatures": "Funktionen",
     "footerUseCases": "Anwendungsfälle",
@@ -2005,6 +1999,30 @@
     "addReaction": "Reaktion hinzufügen",
     "mentionHint": "Tippe @ um jemanden zu erwähnen",
     "planRequired": "Team Chat benötigt Team-Plan",
-    "planRequiredDesc": "Upgraden Sie auf den Team- oder Business-Plan, um die interne Team-Kommunikation zu nutzen."
+    "planRequiredDesc": "Upgraden Sie auf den Team- oder Business-Plan, um die interne Team-Kommunikation zu nutzen.",
+    "searchMessages": "Nachrichten durchsuchen…",
+    "searchResults": "Suchergebnisse",
+    "noSearchResults": "Keine Ergebnisse gefunden",
+    "clearSearch": "Suche löschen",
+    "pinMessage": "Nachricht anheften",
+    "unpinMessage": "Nachricht lösen",
+    "pinnedMessages": "Angeheftete Nachrichten",
+    "noPinnedMessages": "Keine angehefteten Nachrichten",
+    "pinned": "angeheftet",
+    "replyInThread": "Im Thread antworten",
+    "thread": "Thread",
+    "replies": "Antworten",
+    "replyCount": "{count, plural, =1 {1 Antwort} other {# Antworten}}",
+    "backToChannel": "Zurück zum Kanal",
+    "typing": "tippt…",
+    "typingMultiple": "{count} tippen…",
+    "seenBy": "Gesehen von",
+    "attachFile": "Datei anhängen",
+    "attachment": "Anhang",
+    "attachments": "Anhänge",
+    "fileTooLarge": "Datei zu groß (max. 10 MB)",
+    "uploadFailed": "Upload fehlgeschlagen",
+    "linkPreview": "Link-Vorschau",
+    "downloadFile": "Datei herunterladen"
   }
 }

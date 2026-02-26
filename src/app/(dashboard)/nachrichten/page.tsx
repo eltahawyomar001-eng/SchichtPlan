@@ -64,6 +64,14 @@ interface Reaction {
   userId: string;
 }
 
+interface Attachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+}
+
 interface Message {
   id: string;
   content: string;
@@ -71,8 +79,25 @@ interface Message {
   senderId: string;
   editedAt: string | null;
   deletedAt: string | null;
+  pinnedAt: string | null;
+  pinnedBy: string | null;
+  parentId: string | null;
   createdAt: string;
   reactions: Reaction[];
+  attachments?: Attachment[];
+  _count?: { replies: number };
+}
+
+interface ReadReceipt {
+  userId: string;
+  name: string;
+  image: string | null;
+  lastReadAt: string | null;
+}
+
+interface TypingUser {
+  userId: string;
+  name: string;
 }
 
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉", "🔥", "👀"];
@@ -134,6 +159,32 @@ export default function NachrichtenPage() {
 
   // Mobile sidebar
   const [mobileSidebar, setMobileSidebar] = useState(false);
+
+  // Thread view
+  const [threadParent, setThreadParent] = useState<Message | null>(null);
+  const [threadMessages, setThreadMessages] = useState<Message[]>([]);
+  const [threadInput, setThreadInput] = useState("");
+  const [sendingThread, setSendingThread] = useState(false);
+
+  // Message search
+  const [messageSearch, setMessageSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<Message[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Typing indicators
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Read receipts
+  const [readReceipts, setReadReceipts] = useState<ReadReceipt[]>([]);
+
+  // Pinned messages view
+  const [showPinned, setShowPinned] = useState(false);
+  const [pinnedMessages, setPinnedMessages] = useState<Message[]>([]);
+
+  // Notification sounds
+  const lastMessageCountRef = useRef(0);
+  const notifAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -228,6 +279,239 @@ export default function NachrichtenPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // ── Notification sound on new message ───────────────────────
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !notifAudioRef.current) {
+      // Create a subtle notification sound using Web Audio API
+      notifAudioRef.current = new Audio(
+        "data:audio/wav;base64,UklGRl9vT19teleGtIYXZlZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoAAAAAAAAAEAAgADAAQABAADAAIAAQAAAAAAAAAPA/4D/QP8A/sD+gP5A/gD9wP2A/UD9AP0A/UD9gP3A/gD+QP6A/sD/AP9A/4D/wPwBA",
+      );
+      notifAudioRef.current.volume = 0.3;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (
+      messages.length > lastMessageCountRef.current &&
+      lastMessageCountRef.current > 0
+    ) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg && lastMsg.senderId !== user?.id) {
+        notifAudioRef.current?.play().catch(() => {
+          /* user hasn't interacted yet */
+        });
+      }
+    }
+    lastMessageCountRef.current = messages.length;
+  }, [messages, user?.id]);
+
+  // ── Typing indicator ───────────────────────────────────────
+
+  const sendTyping = useCallback(async () => {
+    if (!activeChannel) return;
+    try {
+      await fetch(`/api/chat/channels/${activeChannel.id}/typing`, {
+        method: "POST",
+      });
+    } catch {
+      /* non-critical */
+    }
+  }, [activeChannel]);
+
+  // Poll typing state every 2s
+  useEffect(() => {
+    if (!activeChannel) {
+      setTypingUsers([]);
+      return;
+    }
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/chat/channels/${activeChannel.id}/typing`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setTypingUsers(data.typing || []);
+        }
+      } catch {
+        /* non-critical */
+      }
+    }, 2000);
+    return () => clearInterval(poll);
+  }, [activeChannel]);
+
+  // ── Read receipts ──────────────────────────────────────────
+
+  useEffect(() => {
+    if (!activeChannel) return;
+    const fetchReceipts = async () => {
+      try {
+        const res = await fetch(
+          `/api/chat/channels/${activeChannel.id}/read-receipts`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setReadReceipts(data);
+        }
+      } catch {
+        /* non-critical */
+      }
+    };
+    fetchReceipts();
+    const interval = setInterval(fetchReceipts, 10000);
+    return () => clearInterval(interval);
+  }, [activeChannel]);
+
+  // ── Message search ─────────────────────────────────────────
+
+  const handleMessageSearch = useCallback(
+    async (query: string) => {
+      if (!activeChannel || !query.trim()) {
+        setSearchResults([]);
+        setShowSearchResults(false);
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/chat/channels/${activeChannel.id}/messages?search=${encodeURIComponent(query)}&limit=20`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults((data.messages as Message[]).reverse());
+          setShowSearchResults(true);
+        }
+      } catch {
+        /* non-critical */
+      }
+    },
+    [activeChannel],
+  );
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (messageSearch.trim()) {
+        handleMessageSearch(messageSearch);
+      } else {
+        setShowSearchResults(false);
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [messageSearch, handleMessageSearch]);
+
+  // ── Pinned messages ────────────────────────────────────────
+
+  const fetchPinnedMessages = useCallback(async () => {
+    if (!activeChannel) return;
+    try {
+      const res = await fetch(
+        `/api/chat/channels/${activeChannel.id}/messages?pinned=true&limit=50`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setPinnedMessages((data.messages as Message[]).reverse());
+      }
+    } catch {
+      /* non-critical */
+    }
+  }, [activeChannel]);
+
+  // ── Pin/unpin message ──────────────────────────────────────
+
+  async function handleTogglePin(msgId: string) {
+    if (!activeChannel) return;
+    try {
+      const res = await fetch(
+        `/api/chat/channels/${activeChannel.id}/messages/${msgId}/pin`,
+        { method: "POST" },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId
+              ? { ...m, pinnedAt: data.pinnedAt, pinnedBy: data.pinnedBy }
+              : m,
+          ),
+        );
+        if (showPinned) fetchPinnedMessages();
+      }
+    } catch {
+      setError(tc("errorOccurred"));
+    }
+    setShowMessageMenu(null);
+  }
+
+  // ── Thread view ────────────────────────────────────────────
+
+  const openThread = useCallback(
+    async (parentMsg: Message) => {
+      setThreadParent(parentMsg);
+      setThreadInput("");
+      if (!activeChannel) return;
+      try {
+        const res = await fetch(
+          `/api/chat/channels/${activeChannel.id}/messages?parentId=${parentMsg.id}&limit=100`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setThreadMessages(data.messages as Message[]);
+        }
+      } catch {
+        /* non-critical */
+      }
+    },
+    [activeChannel],
+  );
+
+  async function handleSendThreadReply(e: React.FormEvent) {
+    e.preventDefault();
+    if (!threadInput.trim() || !activeChannel || !threadParent || sendingThread)
+      return;
+    setSendingThread(true);
+    try {
+      const res = await fetch(
+        `/api/chat/channels/${activeChannel.id}/messages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: threadInput.trim(),
+            parentId: threadParent.id,
+          }),
+        },
+      );
+      if (res.ok) {
+        const msg: Message = await res.json();
+        setThreadMessages((prev) => [
+          ...prev,
+          { ...msg, reactions: [], attachments: [] },
+        ]);
+        setThreadInput("");
+        // Update reply count in main messages
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === threadParent.id
+              ? { ...m, _count: { replies: (m._count?.replies || 0) + 1 } }
+              : m,
+          ),
+        );
+      }
+    } catch {
+      setError(tc("errorOccurred"));
+    } finally {
+      setSendingThread(false);
+    }
+  }
+
+  // ── Link preview helper ────────────────────────────────────
+
+  function extractUrls(text: string): string[] {
+    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+    return text.match(urlRegex) || [];
+  }
 
   // ── Fetch channel details (for settings panel) ─────────────
 
@@ -515,6 +799,12 @@ export default function NachrichtenPage() {
 
   function handleMessageInput(value: string) {
     setNewMessage(value);
+
+    // Send typing signal (debounced)
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTyping();
+    }, 500);
 
     const cursorPos = inputRef.current?.selectionStart || value.length;
     const textBeforeCursor = value.slice(0, cursorPos);
@@ -1105,6 +1395,61 @@ export default function NachrichtenPage() {
                   <span className="hidden text-xs text-gray-400 sm:inline">
                     {activeChannel.memberCount || 0} {t("membersCount")}
                   </span>
+                  {/* Message search toggle */}
+                  <div className="relative">
+                    {messageSearch || showSearchResults ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={messageSearch}
+                          onChange={(e) => setMessageSearch(e.target.value)}
+                          placeholder={t("searchMessages")}
+                          className="w-28 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300 sm:w-40"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => {
+                            setMessageSearch("");
+                            setShowSearchResults(false);
+                            setSearchResults([]);
+                          }}
+                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                        >
+                          <XIcon className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowSearchResults(true)}
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100"
+                        title={t("searchMessages")}
+                      >
+                        <SearchIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {/* Pinned messages toggle */}
+                  <button
+                    onClick={() => {
+                      setShowPinned(!showPinned);
+                      if (!showPinned) fetchPinnedMessages();
+                    }}
+                    className={`rounded-lg p-1.5 transition-colors ${showPinned ? "bg-amber-50 text-amber-600" : "text-gray-400 hover:bg-gray-100"}`}
+                    title={t("pinnedMessages")}
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="12" y1="17" x2="12" y2="22" />
+                      <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                    </svg>
+                  </button>
                   <button
                     onClick={() => {
                       setShowSettings(!showSettings);
@@ -1319,6 +1664,50 @@ export default function NachrichtenPage() {
                                         <MoreVerticalIcon className="h-3.5 w-3.5" />
                                       </button>
                                     )}
+                                    {/* Thread reply */}
+                                    <button
+                                      onClick={() => openThread(msg)}
+                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                      title={t("replyInThread")}
+                                    >
+                                      <svg
+                                        className="h-3.5 w-3.5"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <polyline points="9 17 4 12 9 7" />
+                                        <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                                      </svg>
+                                    </button>
+                                    {/* Pin toggle */}
+                                    <button
+                                      onClick={() => handleTogglePin(msg.id)}
+                                      className={`rounded p-1 ${msg.pinnedAt ? "text-amber-500 hover:bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"}`}
+                                      title={
+                                        msg.pinnedAt
+                                          ? t("unpinMessage")
+                                          : t("pinMessage")
+                                      }
+                                    >
+                                      <svg
+                                        className="h-3.5 w-3.5"
+                                        viewBox="0 0 24 24"
+                                        fill={
+                                          msg.pinnedAt ? "currentColor" : "none"
+                                        }
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <line x1="12" y1="17" x2="12" y2="22" />
+                                        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                                      </svg>
+                                    </button>
                                   </div>
                                 )}
 
@@ -1329,6 +1718,44 @@ export default function NachrichtenPage() {
                                       isOwn ? "right-0" : "left-0"
                                     }`}
                                   >
+                                    <button
+                                      onClick={() => handleTogglePin(msg.id)}
+                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                    >
+                                      <svg
+                                        className="h-3 w-3"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <line x1="12" y1="17" x2="12" y2="22" />
+                                        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                                      </svg>
+                                      {msg.pinnedAt
+                                        ? t("unpinMessage")
+                                        : t("pinMessage")}
+                                    </button>
+                                    <button
+                                      onClick={() => openThread(msg)}
+                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                    >
+                                      <svg
+                                        className="h-3 w-3"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <polyline points="9 17 4 12 9 7" />
+                                        <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                                      </svg>
+                                      {t("replyInThread")}
+                                    </button>
                                     <button
                                       onClick={() =>
                                         handleDeleteMessage(msg.id)
@@ -1394,6 +1821,131 @@ export default function NachrichtenPage() {
                                     })}
                                   </div>
                                 )}
+
+                                {/* Pin indicator */}
+                                {msg.pinnedAt && (
+                                  <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-600">
+                                    <svg
+                                      className="h-3 w-3"
+                                      viewBox="0 0 24 24"
+                                      fill="currentColor"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <line x1="12" y1="17" x2="12" y2="22" />
+                                      <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                                    </svg>
+                                    {t("pinned")}
+                                  </div>
+                                )}
+
+                                {/* Attachments */}
+                                {msg.attachments &&
+                                  msg.attachments.length > 0 && (
+                                    <div className="mt-1.5 space-y-1">
+                                      {msg.attachments.map((att) => (
+                                        <a
+                                          key={att.id}
+                                          href={att.fileUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
+                                            isOwn
+                                              ? "border-emerald-500/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30"
+                                              : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                                          }`}
+                                        >
+                                          <svg
+                                            className="h-3.5 w-3.5 flex-shrink-0"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          >
+                                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                          </svg>
+                                          <span className="truncate">
+                                            {att.fileName}
+                                          </span>
+                                          {att.fileSize && (
+                                            <span className="flex-shrink-0 opacity-70">
+                                              (
+                                              {(att.fileSize / 1024).toFixed(0)}
+                                              KB)
+                                            </span>
+                                          )}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                {/* Link previews */}
+                                {extractUrls(msg.content).length > 0 && (
+                                  <div className="mt-1.5 space-y-1">
+                                    {extractUrls(msg.content)
+                                      .slice(0, 2)
+                                      .map((url, i) => (
+                                        <a
+                                          key={i}
+                                          href={url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
+                                            isOwn
+                                              ? "border-emerald-500/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30"
+                                              : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                                          }`}
+                                        >
+                                          <svg
+                                            className="h-3.5 w-3.5 flex-shrink-0"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          >
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                          </svg>
+                                          <span className="truncate">
+                                            {url
+                                              .replace(/^https?:\/\//, "")
+                                              .slice(0, 40)}
+                                          </span>
+                                        </a>
+                                      ))}
+                                  </div>
+                                )}
+
+                                {/* Thread reply count */}
+                                {(msg._count?.replies || 0) > 0 && (
+                                  <button
+                                    onClick={() => openThread(msg)}
+                                    className="mt-1 flex items-center gap-1 text-[11px] font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                                  >
+                                    <svg
+                                      className="h-3 w-3"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="9 17 4 12 9 7" />
+                                      <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                                    </svg>
+                                    {msg._count!.replies}{" "}
+                                    {msg._count!.replies === 1
+                                      ? t("thread")
+                                      : t("replies")}
+                                  </button>
+                                )}
                               </>
                             )}
 
@@ -1409,6 +1961,169 @@ export default function NachrichtenPage() {
                     })}
                     <div ref={messagesEndRef} />
                   </div>
+
+                  {/* Typing indicator */}
+                  {typingUsers.length > 0 && (
+                    <div className="flex-shrink-0 border-t border-gray-100 bg-white/80 px-4 py-1.5">
+                      <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <span className="inline-flex gap-0.5">
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:0ms]" />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:150ms]" />
+                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:300ms]" />
+                        </span>
+                        {typingUsers.length === 1
+                          ? `${typingUsers[0].name} ${t("typing")}`
+                          : `${typingUsers.map((u) => u.name).join(", ")} ${t("typingMultiple")}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Search results overlay */}
+                  {showSearchResults && (
+                    <div className="absolute inset-x-0 top-14 bottom-16 z-30 overflow-y-auto bg-white/98 backdrop-blur-sm">
+                      <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-semibold text-gray-700">
+                            {t("searchResults")}{" "}
+                            {searchResults.length > 0 &&
+                              `(${searchResults.length})`}
+                          </h3>
+                          <button
+                            onClick={() => {
+                              setShowSearchResults(false);
+                              setMessageSearch("");
+                              setSearchResults([]);
+                            }}
+                            className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                          >
+                            <XIcon className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      {messageSearch.trim() === "" ? (
+                        <div className="flex flex-col items-center py-10 text-center">
+                          <SearchIcon className="mb-2 h-8 w-8 text-gray-300" />
+                          <p className="text-sm text-gray-400">
+                            {t("searchMessages")}
+                          </p>
+                        </div>
+                      ) : searchResults.length === 0 ? (
+                        <div className="flex flex-col items-center py-10 text-center">
+                          <p className="text-sm text-gray-400">
+                            {t("noSearchResults")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-100">
+                          {searchResults.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className="cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50"
+                              onClick={() => {
+                                setShowSearchResults(false);
+                                setMessageSearch("");
+                                // Scroll to message
+                                const el = messageRefs.current.get(msg.id);
+                                if (el)
+                                  el.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                  });
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-700">
+                                  {msg.senderName}
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                  {new Date(msg.createdAt).toLocaleDateString(
+                                    "de-DE",
+                                  )}{" "}
+                                  {new Date(msg.createdAt).toLocaleTimeString(
+                                    "de-DE",
+                                    { hour: "2-digit", minute: "2-digit" },
+                                  )}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 line-clamp-2 text-sm text-gray-600">
+                                {msg.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pinned messages overlay */}
+                  {showPinned && (
+                    <div className="absolute inset-x-0 top-14 bottom-16 z-30 overflow-y-auto bg-white/98 backdrop-blur-sm">
+                      <div className="border-b border-gray-200 bg-amber-50 px-4 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <line x1="12" y1="17" x2="12" y2="22" />
+                              <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                            </svg>
+                            {t("pinnedMessages")} ({pinnedMessages.length})
+                          </h3>
+                          <button
+                            onClick={() => setShowPinned(false)}
+                            className="rounded p-1 text-amber-600 hover:bg-amber-100"
+                          >
+                            <XIcon className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      {pinnedMessages.length === 0 ? (
+                        <div className="flex flex-col items-center py-10 text-center">
+                          <p className="text-sm text-gray-400">
+                            {t("noPinnedMessages")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-100">
+                          {pinnedMessages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className="cursor-pointer px-4 py-3 transition-colors hover:bg-amber-50/50"
+                              onClick={() => {
+                                setShowPinned(false);
+                                const el = messageRefs.current.get(msg.id);
+                                if (el)
+                                  el.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                  });
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-700">
+                                  {msg.senderName}
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                  {new Date(msg.createdAt).toLocaleDateString(
+                                    "de-DE",
+                                  )}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 line-clamp-2 text-sm text-gray-600">
+                                {msg.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Compose area */}
                   <div className="relative flex-shrink-0 border-t border-gray-200 bg-white/95 px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-4 sm:py-3">
@@ -1491,6 +2206,129 @@ export default function NachrichtenPage() {
                       `}
                     >
                       {settingsPanelContent}
+                    </aside>
+                  </>
+                )}
+
+                {/* ─── Thread panel ─── */}
+                {threadParent && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                      onClick={() => {
+                        setThreadParent(null);
+                        setThreadMessages([]);
+                      }}
+                    />
+                    <aside className="fixed inset-y-0 right-0 z-50 flex w-[340px] max-w-[90vw] flex-col border-l border-gray-200 bg-white shadow-xl lg:static lg:z-auto lg:w-80 lg:max-w-none lg:shadow-none xl:w-96">
+                      {/* Thread header */}
+                      <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
+                        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                          <svg
+                            className="h-4 w-4 text-emerald-600"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="9 17 4 12 9 7" />
+                            <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                          </svg>
+                          {t("thread")}
+                        </h3>
+                        <button
+                          onClick={() => {
+                            setThreadParent(null);
+                            setThreadMessages([]);
+                          }}
+                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {/* Parent message */}
+                      <div className="flex-shrink-0 border-b border-gray-100 bg-gray-50/50 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
+                            {threadParent.senderName[0]?.toUpperCase()}
+                          </span>
+                          <span className="text-xs font-medium text-gray-700">
+                            {threadParent.senderName}
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            {new Date(
+                              threadParent.createdAt,
+                            ).toLocaleTimeString("de-DE", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 break-words text-sm text-gray-800">
+                          {threadParent.content}
+                        </p>
+                      </div>
+
+                      {/* Thread replies */}
+                      <div className="flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-3">
+                        {threadMessages.length === 0 ? (
+                          <p className="py-8 text-center text-xs text-gray-400">
+                            {t("noMessages")}
+                          </p>
+                        ) : (
+                          threadMessages.map((msg) => (
+                            <div key={msg.id} className="flex gap-2">
+                              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
+                                {msg.senderName[0]?.toUpperCase()}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-medium text-gray-700">
+                                    {msg.senderName}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400">
+                                    {new Date(msg.createdAt).toLocaleTimeString(
+                                      "de-DE",
+                                      { hour: "2-digit", minute: "2-digit" },
+                                    )}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 break-words text-sm text-gray-800">
+                                  {msg.content}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Thread compose */}
+                      <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                        <form
+                          onSubmit={handleSendThreadReply}
+                          className="flex items-center gap-2"
+                        >
+                          <Input
+                            value={threadInput}
+                            onChange={(e) => setThreadInput(e.target.value)}
+                            placeholder={t("replyInThread")}
+                            disabled={sendingThread}
+                            className="min-w-0 flex-1 rounded-xl text-sm"
+                            maxLength={5000}
+                          />
+                          <Button
+                            type="submit"
+                            disabled={!threadInput.trim() || sendingThread}
+                            size="sm"
+                            className="flex-shrink-0 rounded-xl"
+                          >
+                            <SendIcon className="h-4 w-4" />
+                          </Button>
+                        </form>
+                      </div>
                     </aside>
                   </>
                 )}

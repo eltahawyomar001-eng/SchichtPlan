@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { PageContent } from "@/components/ui/page-content";
 import { HandRaisedIcon, CheckCircleIcon, XIcon } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
@@ -183,10 +184,10 @@ export default function VerfuegbarkeitenPage() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {loadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {loadError}
           </div>
         )}
@@ -272,7 +273,7 @@ export default function VerfuegbarkeitenPage() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       {/* ── Availability Form Modal ────────────────────────────── */}
       {showForm && (

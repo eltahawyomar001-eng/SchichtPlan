@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContent } from "@/components/ui/page-content";
 import { DownloadIcon } from "@/components/icons";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 
@@ -123,7 +124,7 @@ export default function DatenSeite() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
+      <PageContent className="max-w-3xl">
         {/* Import Section */}
         <Card>
           <CardHeader>
@@ -138,7 +139,7 @@ export default function DatenSeite() {
                 <select
                   value={importType}
                   onChange={(e) => setImportType(e.target.value)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
                 >
                   <option value="employees">{t("employees")}</option>
                   <option value="shifts">{t("shifts")}</option>
@@ -191,7 +192,7 @@ export default function DatenSeite() {
                 <select
                   value={exportType}
                   onChange={(e) => setExportType(e.target.value)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
                 >
                   <option value="shifts">{t("shifts")}</option>
                   <option value="time-entries">{t("timeEntries")}</option>
@@ -205,7 +206,7 @@ export default function DatenSeite() {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
                 >
                   <option value="xlsx">Excel (.xlsx)</option>
                   <option value="csv">CSV (.csv)</option>
@@ -220,7 +221,7 @@ export default function DatenSeite() {
                   type="date"
                   value={exportStart}
                   onChange={(e) => setExportStart(e.target.value)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
                 />
               </div>
               <div>
@@ -231,7 +232,7 @@ export default function DatenSeite() {
                   type="date"
                   value={exportEnd}
                   onChange={(e) => setExportEnd(e.target.value)}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
                 />
               </div>
               <button
@@ -268,18 +269,18 @@ export default function DatenSeite() {
               <input
                 readOnly
                 value={icalUrl}
-                className="flex-1 min-w-0 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700 truncate"
+                className="flex-1 min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700 truncate"
               />
               <button
                 onClick={copyIcal}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 {icalCopied ? "✓" : t("copy")}
               </button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

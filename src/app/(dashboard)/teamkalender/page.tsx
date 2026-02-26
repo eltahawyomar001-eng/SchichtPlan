@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageContent } from "@/components/ui/page-content";
 import {
   format,
   startOfWeek,
@@ -171,7 +172,7 @@ export default function TeamkalenderSeite() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-4">
+      <PageContent className="space-y-4">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex rounded-lg bg-gray-100 p-1">
@@ -226,7 +227,7 @@ export default function TeamkalenderSeite() {
 
         {/* Error state */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -365,7 +366,7 @@ export default function TeamkalenderSeite() {
             )}
           </div>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

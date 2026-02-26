@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import { PageContent } from "@/components/ui/page-content";
 import {
   ScaleIcon,
   PlusIcon,
@@ -148,10 +149,10 @@ export default function ZeitkontenPage() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Load/action error */}
         {loadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {loadError}
           </div>
         )}
@@ -161,7 +162,7 @@ export default function ZeitkontenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-50 p-2">
+                <div className="rounded-xl stat-icon-emerald p-2.5">
                   <ScaleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
@@ -195,7 +196,7 @@ export default function ZeitkontenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-red-50 p-2">
+                <div className="rounded-xl stat-icon-red p-2.5">
                   <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                 </div>
                 <div className="min-w-0">
@@ -299,7 +300,7 @@ export default function ZeitkontenPage() {
             })}
           </div>
         )}
-      </div>
+      </PageContent>
 
       {/* ── New Time Account Modal ─────────────────────────────── */}
       {showForm && (

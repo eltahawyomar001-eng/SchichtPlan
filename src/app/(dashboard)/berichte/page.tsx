@@ -18,6 +18,7 @@ import {
   Legend,
 } from "recharts";
 import { DownloadIcon } from "@/components/icons";
+import { PageContent } from "@/components/ui/page-content";
 
 interface ReportData {
   period: { start: string; end: string };
@@ -159,10 +160,10 @@ export default function BerichteSeite() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {loadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {loadError}
           </div>
         )}
@@ -174,20 +175,20 @@ export default function BerichteSeite() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
           <label className="text-sm text-gray-600">{t("to")}</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={() => handleExport("xlsx")}
               disabled={exporting || !data}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               Excel
@@ -195,7 +196,7 @@ export default function BerichteSeite() {
             <button
               onClick={() => handleExport("csv")}
               disabled={exporting || !data}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               CSV
@@ -203,7 +204,7 @@ export default function BerichteSeite() {
             <button
               onClick={() => handleExport("pdf")}
               disabled={exporting || !data}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               PDF
@@ -374,7 +375,7 @@ export default function BerichteSeite() {
         ) : (
           <p className="text-sm text-gray-500">{t("noData")}</p>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

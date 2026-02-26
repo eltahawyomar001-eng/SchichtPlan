@@ -35,6 +35,7 @@ import {
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageContent } from "@/components/ui/page-content";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();
@@ -550,7 +551,7 @@ export default function EinstellungenPage() {
                       id="wsBundesland"
                       value={wsBundesland}
                       onChange={(e) => setWsBundesland(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     >
                       <option value="">{t("selectBundesland")}</option>
                       <option value="BW">Baden-Württemberg</option>

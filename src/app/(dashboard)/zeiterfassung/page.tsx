@@ -24,6 +24,7 @@ import {
   CalendarIcon,
 } from "@/components/icons";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageContent } from "@/components/ui/page-content";
 import { ESignatureBadge } from "@/components/e-signature-badge";
 import {
   formatMinutesToHHmm,
@@ -378,10 +379,10 @@ export default function ZeiterfassungPage() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Load/action error */}
         {loadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {loadError}
           </div>
         )}
@@ -391,7 +392,7 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-lg bg-emerald-50 p-2 sm:p-2.5 flex-shrink-0">
+                <div className="rounded-xl stat-icon-emerald p-2.5 sm:p-2.5 flex-shrink-0">
                   <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
@@ -412,7 +413,7 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-lg bg-emerald-50 p-2 sm:p-2.5 flex-shrink-0">
+                <div className="rounded-xl stat-icon-emerald p-2.5 sm:p-2.5 flex-shrink-0">
                   <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
@@ -497,7 +498,7 @@ export default function ZeiterfassungPage() {
                     {tc("status")}
                   </Label>
                   <select
-                    className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -516,7 +517,7 @@ export default function ZeiterfassungPage() {
                       {tc("employee")}
                     </Label>
                     <select
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                       value={filterEmployee}
                       onChange={(e) => setFilterEmployee(e.target.value)}
                     >
@@ -583,7 +584,7 @@ export default function ZeiterfassungPage() {
                         </Label>
                         <select
                           id="employeeId"
-                          className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                          className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                           value={formData.employeeId}
                           onChange={(e) =>
                             setFormData((p) => ({
@@ -691,7 +692,7 @@ export default function ZeiterfassungPage() {
                     <Label htmlFor="locationId">{t("form.location")}</Label>
                     <select
                       id="locationId"
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                       value={formData.locationId}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -714,7 +715,7 @@ export default function ZeiterfassungPage() {
                     <textarea
                       id="remarks"
                       rows={2}
-                      className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                       value={formData.remarks}
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, remarks: e.target.value }))
@@ -875,7 +876,7 @@ export default function ZeiterfassungPage() {
                         </Label>
                         <textarea
                           rows={2}
-                          className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                          className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                           value={actionComment}
                           onChange={(e) => setActionComment(e.target.value)}
                           placeholder={t("commentPlaceholder")}
@@ -1203,7 +1204,7 @@ export default function ZeiterfassungPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

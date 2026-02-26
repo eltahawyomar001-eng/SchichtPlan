@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PageContent } from "@/components/ui/page-content";
 import {
   UsersIcon,
   UserPlusIcon,
@@ -244,7 +245,7 @@ export default function TeamPage() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
 
-      <div className="p-4 sm:p-6 space-y-6 max-w-4xl">
+      <PageContent className="max-w-4xl">
         {/* Back link */}
         <Link
           href="/einstellungen"
@@ -288,7 +289,7 @@ export default function TeamPage() {
                       id="invite-role"
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     >
                       <option value="EMPLOYEE">{t("roleEmployee")}</option>
                       <option value="MANAGER">{t("roleManager")}</option>
@@ -533,7 +534,7 @@ export default function TeamPage() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

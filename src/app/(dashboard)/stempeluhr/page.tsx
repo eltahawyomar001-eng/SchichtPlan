@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageContent } from "@/components/ui/page-content";
 import {
   ClockIcon,
   AlertTriangleIcon,
@@ -267,7 +268,7 @@ export default function StempeluhrSeite() {
     return (
       <div>
         <Topbar title={t("title")} description={t("description")} />
-        <div className="p-4 sm:p-6">
+        <PageContent>
           <div className="mx-auto max-w-md">
             <Card>
               <CardContent className="p-8 text-center">
@@ -279,7 +280,7 @@ export default function StempeluhrSeite() {
               </CardContent>
             </Card>
           </div>
-        </div>
+        </PageContent>
       </div>
     );
   }
@@ -299,7 +300,7 @@ export default function StempeluhrSeite() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6">
+      <PageContent>
         <div className="mx-auto max-w-md space-y-4">
           {/* ── Error banner ── */}
           {error && (
@@ -741,7 +742,7 @@ export default function StempeluhrSeite() {
             </Card>
           </div>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageContent } from "@/components/ui/page-content";
 import {
   CheckCircleIcon,
   ZapIcon,
@@ -338,7 +339,7 @@ function BillingContent() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Success message */}
         {successMsg && (
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-medium text-emerald-700">
@@ -441,7 +442,7 @@ function BillingContent() {
                 <button
                   onClick={handlePortal}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md disabled:opacity-60"
                 >
                   {portalLoading ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
@@ -564,7 +565,7 @@ function BillingContent() {
                   ) : plan.isEnterprise ? (
                     <a
                       href="mailto:info@shiftfy.de"
-                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:shadow-md"
+                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:shadow-md"
                     >
                       <StarIcon className="h-4 w-4" />
                       {t("contactSales")}
@@ -580,7 +581,7 @@ function BillingContent() {
                       className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
                         plan.highlighted
                           ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-200/50 hover:shadow-xl hover:brightness-110"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-md"
+                          : "border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md"
                       }`}
                     >
                       {checkoutLoading === plan.id ? (
@@ -604,7 +605,7 @@ function BillingContent() {
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-50 p-2">
+                <div className="rounded-xl stat-icon-emerald p-2.5">
                   <ShieldCheckIcon className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
@@ -712,7 +713,7 @@ function BillingContent() {
             </p>
           </div>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { PageContent } from "@/components/ui/page-content";
 import {
   ChevronLeftIcon,
   MailIcon,
@@ -239,7 +240,7 @@ export default function EmployeeDetailPage({
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6 max-w-6xl">
+      <PageContent className="max-w-6xl">
         {/* ── Profile card ── */}
         <Card>
           <CardContent className="p-4 sm:p-6">
@@ -520,7 +521,7 @@ export default function EmployeeDetailPage({
         <p className="text-xs text-gray-400 text-center">
           {t("createdAt")}: {fmtDate(emp.createdAt, locale)}
         </p>
-      </div>
+      </PageContent>
     </div>
   );
 }

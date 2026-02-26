@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { PageContent } from "@/components/ui/page-content";
 import { BUNDESLAENDER } from "@/lib/holidays";
 
 interface Holiday {
@@ -65,7 +66,7 @@ export default function FeiertageSeite() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="space-y-1">
@@ -100,7 +101,7 @@ export default function FeiertageSeite() {
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -169,7 +170,7 @@ export default function FeiertageSeite() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </PageContent>
     </div>
   );
 }

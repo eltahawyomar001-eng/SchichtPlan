@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageContent } from "@/components/ui/page-content";
 import { ESignatureBadge } from "@/components/e-signature-badge";
 
 interface MonthCloseRecord {
@@ -118,7 +119,7 @@ export default function MonatsabschlussSeite() {
     <>
       <div>
         <Topbar title={t("title")} description={t("description")} />
-        <div className="p-4 sm:p-6 space-y-6">
+        <PageContent>
           {/* Year selector */}
           <div className="flex items-center gap-3">
             <Label>{t("year")}:</Label>
@@ -137,7 +138,7 @@ export default function MonatsabschlussSeite() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
               {error}
             </div>
           )}
@@ -154,7 +155,7 @@ export default function MonatsabschlussSeite() {
                 const sc = statusConfig[status];
 
                 return (
-                  <Card key={m} className="hover:shadow-md transition-shadow">
+                  <Card key={m} className="card-elevated">
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-gray-900">
@@ -222,7 +223,7 @@ export default function MonatsabschlussSeite() {
               })}
             </div>
           )}
-        </div>
+        </PageContent>
       </div>
 
       <ConfirmDialog

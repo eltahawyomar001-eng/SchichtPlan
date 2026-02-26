@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import { PageContent } from "@/components/ui/page-content";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
@@ -276,10 +277,10 @@ export default function AbwesenheitenPage() {
         }
       />
 
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Load/action error */}
         {loadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {loadError}
           </div>
         )}
@@ -289,7 +290,7 @@ export default function AbwesenheitenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-amber-50 p-2">
+                <div className="rounded-xl stat-icon-amber p-2.5">
                   <CalendarOffIcon className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
                 </div>
                 <div className="min-w-0">
@@ -323,7 +324,7 @@ export default function AbwesenheitenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-50 p-2">
+                <div className="rounded-xl stat-icon-emerald p-2.5">
                   <CalendarOffIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
@@ -498,7 +499,7 @@ export default function AbwesenheitenPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
 
       {/* ── New Absence Request Modal ──────────────────────────── */}
       {showForm && (
@@ -615,7 +616,7 @@ export default function AbwesenheitenPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
-                    className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
+                    className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
                     placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>
@@ -648,7 +649,7 @@ export default function AbwesenheitenPage() {
                       </button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-3 py-4 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors">
+                    <label className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 px-3 py-4 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors">
                       {uploading ? (
                         <span className="text-sm text-gray-500">
                           {t("form.uploading")}

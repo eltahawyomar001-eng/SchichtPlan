@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageContent } from "@/components/ui/page-content";
 import {
   CalendarIcon,
   ClockIcon,
@@ -264,7 +265,7 @@ export default function AutomationenPage() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
 
-      <div className="p-4 sm:p-6 space-y-6 max-w-4xl">
+      <PageContent className="max-w-4xl">
         {/* Back link + status bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <Link
@@ -411,7 +412,7 @@ export default function AutomationenPage() {
             </Card>
           );
         })}
-      </div>
+      </PageContent>
     </div>
   );
 }

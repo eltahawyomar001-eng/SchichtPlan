@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
   BellIcon,
@@ -281,10 +282,10 @@ export default function AutomatisierungSeite() {
           </Button>
         }
       />
-      <div className="p-4 sm:p-6 space-y-6">
+      <PageContent>
         {/* Error */}
         {loadError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {loadError}
           </div>
         )}
@@ -602,7 +603,7 @@ export default function AutomatisierungSeite() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : rules.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/50 p-8 sm:p-12">
+          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-8 sm:p-12">
             <div className="mx-auto max-w-lg text-center space-y-4">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
                 <svg
@@ -742,7 +743,7 @@ export default function AutomatisierungSeite() {
             ))}
           </div>
         )}
-      </div>
+      </PageContent>
 
       <ConfirmDialog
         open={!!deleteTarget}

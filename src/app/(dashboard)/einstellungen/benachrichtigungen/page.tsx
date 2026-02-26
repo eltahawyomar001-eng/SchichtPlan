@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageContent } from "@/components/ui/page-content";
 import { BellIcon, MailIcon, ChevronLeftIcon } from "@/components/icons";
 import Link from "next/link";
 

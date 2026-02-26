@@ -196,15 +196,16 @@ export default function SchichtplanPage() {
         fetch("/api/locations"),
       ]);
 
-      const [shiftsData, employeesData, locationsData] = await Promise.all([
+      const [shiftsJson, employeesJson, locationsJson] = await Promise.all([
         shiftsRes.json(),
         employeesRes.json(),
         locationsRes.json(),
       ]);
 
-      setShifts(shiftsData);
-      setEmployees(employeesData);
-      setLocations(locationsData);
+      // API returns paginated { data, pagination } — extract the data array
+      setShifts(shiftsJson.data ?? shiftsJson);
+      setEmployees(employeesJson.data ?? employeesJson);
+      setLocations(locationsJson.data ?? locationsJson);
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {

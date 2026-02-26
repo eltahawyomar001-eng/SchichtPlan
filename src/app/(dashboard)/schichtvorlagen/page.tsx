@@ -57,9 +57,14 @@ export default function SchichtvorlagenSeite() {
         fetch("/api/shift-templates"),
         fetch("/api/locations"),
       ]);
-      if (tRes.ok) setTemplates(await tRes.json());
-      else setError(tc("errorLoading"));
-      if (lRes.ok) setLocations(await lRes.json());
+      if (tRes.ok) {
+        const d = await tRes.json();
+        setTemplates(d.data ?? d);
+      } else setError(tc("errorLoading"));
+      if (lRes.ok) {
+        const d = await lRes.json();
+        setLocations(d.data ?? d);
+      }
     } catch {
       setError(tc("errorLoading"));
     } finally {

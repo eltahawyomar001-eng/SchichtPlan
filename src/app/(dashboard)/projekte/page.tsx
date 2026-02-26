@@ -93,12 +93,17 @@ export default function ProjekteSeite() {
         fetch("/api/clients"),
         fetch("/api/employees"),
       ]);
-      if (pRes.ok) setProjects(await pRes.json());
-      else setError(tc("errorLoading"));
-      if (cRes.ok) setClients(await cRes.json());
+      if (pRes.ok) {
+        const d = await pRes.json();
+        setProjects(d.data ?? d);
+      } else setError(tc("errorLoading"));
+      if (cRes.ok) {
+        const d = await cRes.json();
+        setClients(d.data ?? d);
+      }
       if (eRes.ok) {
         const d = await eRes.json();
-        setEmployees(Array.isArray(d) ? d : (d.employees ?? []));
+        setEmployees(d.data ?? (Array.isArray(d) ? d : []));
       }
     } catch {
       setError(tc("errorLoading"));
@@ -223,7 +228,8 @@ export default function ProjekteSeite() {
       fetchData();
       const refreshed = await fetch("/api/projects");
       if (refreshed.ok) {
-        const all = await refreshed.json();
+        const json = await refreshed.json();
+        const all = json.data ?? json;
         setProjects(all);
         setMemberProject(
           all.find((p: Project) => p.id === memberProject.id) || null,

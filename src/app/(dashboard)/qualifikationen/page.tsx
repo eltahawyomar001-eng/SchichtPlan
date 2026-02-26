@@ -39,8 +39,10 @@ export default function QualifikationenSeite() {
     setError(null);
     try {
       const res = await fetch("/api/skills");
-      if (res.ok) setSkills(await res.json());
-      else setError(tc("errorLoading"));
+      if (res.ok) {
+        const d = await res.json();
+        setSkills(d.data ?? d);
+      } else setError(tc("errorLoading"));
     } catch {
       setError(tc("errorLoading"));
     } finally {

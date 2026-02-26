@@ -67,7 +67,8 @@ export default function WebhooksSeite() {
     try {
       const res = await fetch("/api/webhooks");
       if (res.ok) {
-        setHooks(await res.json());
+        const d = await res.json();
+        setHooks(d.data ?? d);
       } else {
         const isPlanLimit = await handlePlanLimit(res);
         if (!isPlanLimit) setError(tc("errorLoading"));

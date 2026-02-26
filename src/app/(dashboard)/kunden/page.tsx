@@ -74,7 +74,8 @@ export default function KundenSeite() {
     try {
       const res = await fetch("/api/clients");
       if (res.ok) {
-        setClients(await res.json());
+        const d = await res.json();
+        setClients(d.data ?? d);
       } else {
         setError(tc("errorLoading"));
       }

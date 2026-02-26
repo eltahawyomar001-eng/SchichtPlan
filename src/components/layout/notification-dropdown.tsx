@@ -33,6 +33,7 @@ export function NotificationDropdown() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const locale = useLocale();
   const t = useTranslations("notifications");
 
@@ -84,9 +85,11 @@ export function NotificationDropdown() {
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
+      const target = e.target as Node;
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
+        !dropdownRef.current.contains(target) &&
+        (!portalRef.current || !portalRef.current.contains(target))
       ) {
         setOpen(false);
       }
@@ -283,7 +286,7 @@ export function NotificationDropdown() {
       {open &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="sm:hidden">
+          <div ref={portalRef} className="sm:hidden">
             {/* Backdrop */}
             <div
               className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm"

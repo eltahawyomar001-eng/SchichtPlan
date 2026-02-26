@@ -72,7 +72,10 @@ export default function LohnexportPage() {
   const fetchEmployees = useCallback(async () => {
     try {
       const res = await fetch("/api/employees");
-      if (res.ok) setEmployees(await res.json());
+      if (res.ok) {
+        const d = await res.json();
+        setEmployees(d.data ?? d);
+      }
     } catch {
       // Non-critical — filter dropdown
     }

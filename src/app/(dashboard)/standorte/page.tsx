@@ -49,7 +49,7 @@ export default function StandortePage() {
     try {
       const res = await fetch("/api/locations");
       const data = await res.json();
-      setLocations(data);
+      setLocations(data.data ?? data);
     } catch {
       setError(tc("errorLoading"));
     } finally {

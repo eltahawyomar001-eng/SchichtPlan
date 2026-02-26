@@ -109,7 +109,10 @@ export default function SchichttauschPage() {
       const params = new URLSearchParams();
       if (filterStatus !== "all") params.set("status", filterStatus);
       const res = await fetch(`/api/shift-swaps?${params}`);
-      if (res.ok) setSwaps(await res.json());
+      if (res.ok) {
+        const d = await res.json();
+        setSwaps(d.data ?? d);
+      }
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {
@@ -129,8 +132,14 @@ export default function SchichttauschPage() {
         fetch("/api/employees"),
         fetch(`/api/shifts?start=${start}&end=${end}`),
       ]);
-      if (empRes.ok) setEmployees(await empRes.json());
-      if (shiftRes.ok) setShifts(await shiftRes.json());
+      if (empRes.ok) {
+        const d = await empRes.json();
+        setEmployees(d.data ?? d);
+      }
+      if (shiftRes.ok) {
+        const d = await shiftRes.json();
+        setShifts(d.data ?? d);
+      }
     } catch {
       // Non-critical — supplementary form data
     }

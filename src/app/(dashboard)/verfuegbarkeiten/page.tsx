@@ -92,8 +92,14 @@ export default function VerfuegbarkeitenPage() {
         fetch(`/api/availability?${params}`),
         fetch("/api/employees"),
       ]);
-      if (avRes.ok) setAvailabilities(await avRes.json());
-      if (empRes.ok) setEmployees(await empRes.json());
+      if (avRes.ok) {
+        const d = await avRes.json();
+        setAvailabilities(d.data ?? d);
+      }
+      if (empRes.ok) {
+        const d = await empRes.json();
+        setEmployees(d.data ?? d);
+      }
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {

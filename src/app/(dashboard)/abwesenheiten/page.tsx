@@ -133,7 +133,10 @@ export default function AbwesenheitenPage() {
       const params = new URLSearchParams();
       if (filterStatus !== "all") params.set("status", filterStatus);
       const res = await fetch(`/api/absences?${params}`);
-      if (res.ok) setAbsences(await res.json());
+      if (res.ok) {
+        const d = await res.json();
+        setAbsences(d.data ?? d);
+      }
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {
@@ -144,7 +147,10 @@ export default function AbwesenheitenPage() {
   const fetchEmployees = useCallback(async () => {
     try {
       const res = await fetch("/api/employees");
-      if (res.ok) setEmployees(await res.json());
+      if (res.ok) {
+        const d = await res.json();
+        setEmployees(d.data ?? d);
+      }
     } catch {
       // Non-critical employee list — silently ignore
     }

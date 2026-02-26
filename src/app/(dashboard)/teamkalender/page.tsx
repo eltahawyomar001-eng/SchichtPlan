@@ -135,9 +135,10 @@ export default function TeamkalenderSeite() {
         setError(tc("errorLoading"));
         return;
       }
-      setShifts(await sRes.json());
-      const d = await eRes.json();
-      setEmployees(Array.isArray(d) ? d : (d.employees ?? []));
+      const sJson = await sRes.json();
+      setShifts(sJson.data ?? sJson);
+      const eJson = await eRes.json();
+      setEmployees(eJson.data ?? (Array.isArray(eJson) ? eJson : []));
     } catch {
       setError(tc("errorLoading"));
     } finally {

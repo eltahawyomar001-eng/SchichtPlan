@@ -154,7 +154,7 @@ export default function ZeiterfassungPage() {
 
       const res = await fetch(`/api/time-entries?${params.toString()}`);
       const data = await res.json();
-      setEntries(Array.isArray(data) ? data : []);
+      setEntries(data.data ?? (Array.isArray(data) ? data : []));
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {
@@ -172,8 +172,8 @@ export default function ZeiterfassungPage() {
         empRes.json(),
         locRes.json(),
       ]);
-      setEmployees(Array.isArray(empData) ? empData : []);
-      setLocations(Array.isArray(locData) ? locData : []);
+      setEmployees(empData.data ?? (Array.isArray(empData) ? empData : []));
+      setLocations(locData.data ?? (Array.isArray(locData) ? locData : []));
     } catch {
       // Non-critical master data — silently ignore
     }

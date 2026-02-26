@@ -49,9 +49,14 @@ export default function AbteilungenSeite() {
         fetch("/api/departments"),
         fetch("/api/locations"),
       ]);
-      if (dRes.ok) setDepartments(await dRes.json());
-      else setError(tc("errorLoading"));
-      if (lRes.ok) setLocations(await lRes.json());
+      if (dRes.ok) {
+        const d = await dRes.json();
+        setDepartments(d.data ?? d);
+      } else setError(tc("errorLoading"));
+      if (lRes.ok) {
+        const d = await lRes.json();
+        setLocations(d.data ?? d);
+      }
     } catch {
       setError(tc("errorLoading"));
     } finally {

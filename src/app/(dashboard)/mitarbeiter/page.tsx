@@ -75,7 +75,7 @@ export default function MitarbeiterPage() {
     try {
       const res = await fetch("/api/employees");
       const data = await res.json();
-      setEmployees(data);
+      setEmployees(data.data ?? data);
     } catch {
       setError(tc("errorLoading"));
     } finally {

@@ -136,7 +136,10 @@ export default function AutomatisierungSeite() {
   const fetchRules = useCallback(async () => {
     try {
       const res = await fetch("/api/automation-rules");
-      if (res.ok) setRules(await res.json());
+      if (res.ok) {
+        const d = await res.json();
+        setRules(d.data ?? d);
+      }
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {

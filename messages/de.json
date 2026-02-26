@@ -1840,7 +1840,10 @@
     "month": "Monat",
     "employee": "Mitarbeiter",
     "noEmployees": "Keine Mitarbeiter gefunden.",
-    "loading": "Wird geladen…"
+    "loading": "Wird geladen…",
+    "early": "Früh",
+    "late": "Spät",
+    "night": "Nacht"
   },
   "dataIO": {
     "title": "Import / Export",

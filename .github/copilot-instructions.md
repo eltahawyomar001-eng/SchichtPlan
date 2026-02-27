@@ -95,10 +95,46 @@ npm run test:coverage # with coverage
 
 Conventional Commits enforced by Husky + commitlint: `feat(scope): message`, `fix(scope): message`. Pre-commit runs ESLint + Prettier via lint-staged on staged `.ts/.tsx` files.
 
+## Database Migrations (CRITICAL — use Supabase MCP)
+
+**⚠️ `npx prisma migrate dev` does NOT work** — the Supabase connection pooler (`aws-1-eu-west-1.pooler.supabase.com:6543`) rejects Prisma migrate connections (P1001).
+
+**Always use the Supabase MCP tools instead:**
+
+### Migration Workflow
+
+1. **Edit** `prisma/schema.prisma` with the new/changed models
+2. **List current DB tables** → `mcp_supabase_list_tables` (schemas: `["public"]`)
+3. **Compare** Prisma schema models vs existing tables — identify missing tables, columns, indexes, enums
+4. **Write migration SQL** — CREATE TYPE (enums), CREATE TABLE, ALTER TABLE ADD COLUMN, CREATE INDEX, foreign keys, enable RLS
+5. **Apply** → `mcp_supabase_apply_migration` with a descriptive snake_case name (e.g., `add_autofill_log_and_manager_alert`)
+6. **Verify** → `mcp_supabase_execute_sql` to confirm tables/columns exist
+7. **Regenerate client** → `npx prisma generate`
+
+### Available MCP Tools
+
+| Tool                                     | Purpose                                       |
+| ---------------------------------------- | --------------------------------------------- |
+| `mcp_supabase_list_tables`               | See all existing tables, columns, constraints |
+| `mcp_supabase_apply_migration`           | Apply DDL migrations (CREATE, ALTER, DROP)    |
+| `mcp_supabase_execute_sql`               | Run raw SQL queries (SELECT, verify state)    |
+| `mcp_supabase_list_migrations`           | List all applied migrations                   |
+| `mcp_supabase_generate_typescript_types` | Generate TS types from DB schema              |
+
+### SQL Conventions for Migrations
+
+- IDs: `TEXT NOT NULL DEFAULT gen_random_uuid()::text`
+- Timestamps: `TIMESTAMP(3) WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP`
+- Enums: `CREATE TYPE "EnumName" AS ENUM ('VALUE1', 'VALUE2')`
+- Always add `ENABLE ROW LEVEL SECURITY` on new tables
+- Always add appropriate indexes (workspaceId, foreign keys, query patterns)
+- Foreign key naming: `TableName_columnName_fkey`
+- Index naming: `TableName_columnName_idx`
+
 ## Key Patterns
 
 - **Styling:** `cn()` from `src/lib/utils.ts` (clsx + tailwind-merge). Emerald green palette (`#059669`). All icons are custom TypeScript SVG components in `src/components/icons/`.
 - **Error monitoring:** Sentry (client, server, edge configs at project root).
 - **Path alias:** `@/*` maps to `./src/*`.
-- **Prisma changes:** Run `npx prisma migrate dev` after editing `schema.prisma`, then `npx prisma generate`.
+- **Prisma changes:** Edit `schema.prisma`, then migrate via Supabase MCP (see above), then `npx prisma generate`.
 - **Build command:** `prisma generate && next build` — Prisma client is generated before Next.js build.

@@ -2174,5 +2174,48 @@
     "allEmployees": "All Employees",
     "atRiskOnly": "At Risk Only",
     "export": "Export"
+  },
+  "autoFill": {
+    "title": "Auto Replacement",
+    "assigned": "Shift automatically assigned",
+    "assignedMessage": "You have been assigned the shift on {date} ({startTime}–{endTime}) because {vacatedBy} is unavailable due to approved absence.",
+    "emergencyHint": "⚠️ Short-notice replacement (< 4 days advance notice).",
+    "successTitle": "Automatic replacement found",
+    "successMessage": "{assignedName} was automatically assigned as replacement for the shift on {date} ({startTime}–{endTime}).",
+    "failedTitle": "No replacement found",
+    "failedMessage": "No replacement was found for the shift on {date} ({startTime}–{endTime}). Please assign manually.",
+    "noOneAvailable": "No employee available — all on leave, sick, or already scheduled.",
+    "complianceBlock": "{count} candidate(s) evaluated — all would violate labor law regulations (max 10h/day, 11h rest period, max 48h/week).",
+    "reason": "Reason: {reason}"
+  },
+  "managerAlerts": {
+    "title": "Manager Alerts",
+    "description": "Urgent notifications requiring your attention",
+    "noAlerts": "No open alerts",
+    "urgentNoReplacement": "⚠️ URGENT: No replacement found",
+    "noReplacement": "No replacement found",
+    "acknowledge": "Acknowledge",
+    "acknowledged": "Acknowledged",
+    "unacknowledged": "Unacknowledged",
+    "all": "All",
+    "severity": {
+      "URGENT": "Urgent",
+      "WARNING": "Warning",
+      "INFO": "Information"
+    }
+  },
+  "shiftConfirmation": {
+    "confirm": "Confirm",
+    "requestSwap": "Request Swap",
+    "applyLeave": "Apply for Leave",
+    "confirmed": "Shift Confirmed",
+    "confirmedMessage": "Shift successfully confirmed.",
+    "alreadyConfirmed": "This shift has already been confirmed.",
+    "unconfirmedHint": "New shift — please confirm, swap, or apply for leave."
+  },
+  "swapCompliance": {
+    "concurrentSwapError": "There is already a pending swap request for this shift.",
+    "targetArbzgError": "Swap not possible — labor law violation for the swap partner.",
+    "requesterArbzgError": "Swap not possible — labor law violation for the requester."
   }
 }

@@ -21,6 +21,7 @@ import { prisma } from "@/lib/db";
 import { calcGrossMinutes } from "@/lib/time-utils";
 import { dispatchExternalNotification, sendEmail } from "@/lib/notifications";
 import { log } from "@/lib/logger";
+import { batchAutoFill } from "@/lib/auto-fill";
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTOMATION SETTINGS CHECK
@@ -391,6 +392,19 @@ export async function cascadeAbsenceApproval(params: {
     workspaceId,
     recipientType: "managers",
   });
+
+  // ── Auto-Fill: try to find replacements for each cancelled shift ──
+  const autoFillRequests = conflictingShifts.map((shift) => ({
+    shiftId: shift.id,
+    vacatedByEmployeeId: employeeId,
+    reason: `Genehmigte Abwesenheit von ${employeeName}`,
+    workspaceId,
+  }));
+
+  // Fire-and-forget — don't block the absence approval response
+  batchAutoFill(autoFillRequests).catch((err) =>
+    log.error("[cascade] Auto-fill batch error:", { error: err }),
+  );
 
   return { cancelledShifts: conflictingShifts.length };
 }

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
@@ -50,6 +50,7 @@ import {
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
+import { cn } from "@/lib/utils";
 import {
   DndContext,
   DragOverlay,
@@ -272,6 +273,7 @@ export default function SchichtplanPage() {
     const diff = endMin - startMin;
     if (diff <= 0) return { valid: false, hours: 0, minutes: 0 };
     return { valid: true, hours: Math.floor(diff / 60), minutes: diff % 60 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.startTime, formData.endTime]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -754,76 +756,101 @@ export default function SchichtplanPage() {
               </DroppableDayCell>
             )}
 
-            {/* Week View: Mobile vertical list */}
+            {/* Week View: Mobile — horizontal day strip + selected day cards */}
             {viewMode === "week" && (
               <>
-                <div className="space-y-3 sm:hidden">
-                  {weekDays.map((day) => {
-                    const dayShifts = getShiftsForDay(day);
-                    const today = isToday(day);
-                    return (
-                      <DroppableDayCell
-                        key={day.toISOString()}
-                        id={format(day, "yyyy-MM-dd")}
-                      >
-                        <Card
-                          className={today ? "ring-2 ring-emerald-500" : ""}
+                <div className="sm:hidden space-y-3">
+                  {/* Horizontal day scroll strip */}
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+                    {weekDays.map((day) => {
+                      const today = isToday(day);
+                      const dayShifts = getShiftsForDay(day);
+                      const isSelected =
+                        format(day, "yyyy-MM-dd") ===
+                        format(currentWeek, "yyyy-MM-dd");
+                      return (
+                        <button
+                          key={day.toISOString()}
+                          onClick={() => setCurrentWeek(day)}
+                          className={cn(
+                            "flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px] min-h-[48px] transition-all duration-150 shrink-0",
+                            isSelected
+                              ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
+                              : today
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                : "bg-white text-gray-700 ring-1 ring-gray-100",
+                          )}
                         >
-                          <CardHeader className="pb-2 px-4 pt-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`flex flex-col items-center justify-center rounded-lg px-2.5 py-1 ${
-                                    today
-                                      ? "bg-emerald-600 text-white"
-                                      : "bg-gray-100 text-gray-900"
-                                  }`}
-                                >
-                                  <span className="text-[10px] font-medium uppercase leading-tight">
-                                    {format(day, "EEE", {
-                                      locale: dateFnsLocale,
-                                    })}
-                                  </span>
-                                  <span className="text-lg font-bold leading-tight">
-                                    {format(day, "d")}
-                                  </span>
-                                </div>
-                                <span className="text-sm text-gray-500">
-                                  {dayShifts.length > 0
-                                    ? t("shiftsCount", {
-                                        count: dayShifts.length,
-                                      })
-                                    : t("noShifts")}
-                                </span>
-                              </div>
-                              {canManage && (
-                                <button
-                                  onClick={() => openCreateForm(day)}
-                                  className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                                >
-                                  <PlusIcon className="h-5 w-5" />
-                                </button>
-                              )}
-                            </div>
-                          </CardHeader>
+                          <span className="text-[10px] font-medium uppercase leading-tight">
+                            {format(day, "EEE", { locale: dateFnsLocale })}
+                          </span>
+                          <span className="text-lg font-bold leading-tight">
+                            {format(day, "d")}
+                          </span>
                           {dayShifts.length > 0 && (
-                            <CardContent className="px-4 pb-3 space-y-2">
+                            <span
+                              className={cn(
+                                "text-[9px] font-medium mt-0.5",
+                                isSelected
+                                  ? "text-emerald-100"
+                                  : "text-gray-400",
+                              )}
+                            >
+                              {dayShifts.length}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected day shift cards */}
+                  {(() => {
+                    const selectedDay = currentWeek;
+                    const dayShifts = getShiftsForDay(selectedDay);
+                    return (
+                      <DroppableDayCell id={format(selectedDay, "yyyy-MM-dd")}>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between px-1">
+                            <h3 className="text-sm font-semibold text-gray-700">
+                              {format(selectedDay, "EEEE, d. MMMM", {
+                                locale: dateFnsLocale,
+                              })}
+                            </h3>
+                            {canManage && (
+                              <button
+                                onClick={() => openCreateForm(selectedDay)}
+                                className="rounded-xl p-3 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                              >
+                                <PlusIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                          {dayShifts.length === 0 ? (
+                            <div className="rounded-xl bg-gray-50 py-8 text-center">
+                              <p className="text-sm text-gray-400">
+                                {t("noShifts")}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
                               {dayShifts.map((shift) => (
-                                <DraggableShiftCard
+                                <MobileShiftCard
                                   key={shift.id}
                                   shift={shift}
                                   canManage={canManage}
                                   onEdit={() => openEditForm(shift)}
                                   onDelete={() => setDeleteTarget(shift.id)}
                                   onView={() => setDetailShift(shift)}
+                                  onCancel={() => setCancelTarget(shift.id)}
                                 />
                               ))}
-                            </CardContent>
+                            </div>
                           )}
-                        </Card>
+                        </div>
                       </DroppableDayCell>
                     );
-                  })}
+                  })()}
                 </div>
 
                 {/* Desktop: 7-column grid */}
@@ -925,7 +952,7 @@ export default function SchichtplanPage() {
         )}
 
         {/* Add/Edit Shift Modal (management only) */}
-        <Modal
+        <AdaptiveModal
           open={!!(canManage && showForm)}
           onClose={() => setShowForm(false)}
           title={editingShift ? t("form.editTitle") : t("form.title")}
@@ -1155,7 +1182,7 @@ export default function SchichtplanPage() {
               </div>
             )}
           </form>
-        </Modal>
+        </AdaptiveModal>
       </PageContent>
 
       {/* Delete Confirmation Dialog (management only) */}
@@ -1201,7 +1228,7 @@ export default function SchichtplanPage() {
       )}
 
       {/* Shift Detail Modal */}
-      <Modal
+      <AdaptiveModal
         open={!!detailShift}
         onClose={() => setDetailShift(null)}
         title={t("shiftDetailTitle")}
@@ -1346,10 +1373,10 @@ export default function SchichtplanPage() {
             )}
           </div>
         )}
-      </Modal>
+      </AdaptiveModal>
 
       {/* Auto-schedule modal */}
-      <Modal
+      <AdaptiveModal
         open={showAutoSchedule}
         onClose={() => {
           setShowAutoSchedule(false);
@@ -1867,7 +1894,7 @@ export default function SchichtplanPage() {
             </div>
           )
         )}
-      </Modal>
+      </AdaptiveModal>
     </div>
   );
 }
@@ -1895,7 +1922,7 @@ function DroppableDayCell({
 function DraggableShiftChip({
   shift,
   canManage,
-  onEdit,
+  onEdit: _onEdit,
   onView,
 }: {
   shift: Shift;
@@ -2094,5 +2121,141 @@ function ShiftStatusBadge({ status }: { status: string }) {
     >
       {c.label}
     </span>
+  );
+}
+
+// --- Mobile Shift Card ---
+// Enhanced card with 48px touch targets and inline action buttons for mobile
+function MobileShiftCard({
+  shift,
+  canManage,
+  onEdit,
+  onDelete,
+  onView,
+  onCancel,
+}: {
+  shift: Shift;
+  canManage: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onView: () => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("shiftPlan");
+  const isOpen = !shift.employee;
+  const isCancelled = shift.status === "CANCELLED";
+
+  return (
+    <div
+      onClick={onView}
+      className={cn(
+        "relative rounded-2xl p-4 cursor-pointer transition-all duration-150 active:scale-[0.98]",
+        isCancelled && "opacity-50",
+        isOpen
+          ? "border-2 border-dashed border-amber-300 bg-amber-50/60"
+          : "bg-white shadow-sm ring-1 ring-gray-100",
+      )}
+      style={
+        !isOpen && shift.employee
+          ? {
+              borderLeft: `4px solid ${shift.employee.color || "#10b981"}`,
+            }
+          : undefined
+      }
+    >
+      {/* Main content */}
+      <div className="flex items-center gap-3">
+        {isOpen && (
+          <div className="flex items-center justify-center rounded-full bg-amber-100 p-2.5 shrink-0">
+            <UserPlusIcon className="h-5 w-5 text-amber-600" />
+          </div>
+        )}
+        {!isOpen && shift.employee && (
+          <div
+            className="flex items-center justify-center rounded-full p-2.5 shrink-0"
+            style={{
+              backgroundColor: (shift.employee.color || "#10b981") + "20",
+            }}
+          >
+            <UserIcon
+              className="h-5 w-5"
+              style={{ color: shift.employee.color || "#10b981" }}
+            />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p
+              className={cn(
+                "font-semibold text-[15px]",
+                isCancelled
+                  ? "line-through text-gray-400"
+                  : isOpen
+                    ? "text-amber-700"
+                    : "text-gray-900",
+              )}
+            >
+              {isOpen
+                ? t("openShiftLabel")
+                : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
+            </p>
+            {isCancelled && (
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                {t("statusCancelled")}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-[13px] text-gray-500 mt-0.5">
+            <ClockIcon className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              {shift.startTime} – {shift.endTime}
+            </span>
+            {shift.location && (
+              <>
+                <span className="text-gray-300">·</span>
+                <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{shift.location.name}</span>
+              </>
+            )}
+          </div>
+        </div>
+        <ChevronRightIcon className="h-4 w-4 text-gray-300 shrink-0" />
+      </div>
+
+      {/* Action buttons — visible on mobile, 48px targets */}
+      {canManage && !isCancelled && (
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium text-gray-600 bg-gray-50 active:bg-gray-100 transition-colors min-h-[48px]"
+          >
+            <EditIcon className="h-4 w-4" />
+            {t("form.editTitle")}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel();
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium text-amber-600 bg-amber-50 active:bg-amber-100 transition-colors min-h-[48px]"
+          >
+            <XIcon className="h-4 w-4" />
+            {t("cancelShiftAction")}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="flex items-center justify-center rounded-xl p-2.5 text-red-400 bg-red-50 active:bg-red-100 transition-colors min-w-[48px] min-h-[48px]"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

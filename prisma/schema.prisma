@@ -144,6 +144,8 @@ model Workspace {
   subscription    Subscription?
   staffingRequirements StaffingRequirement[]
   autoScheduleRuns     AutoScheduleRun[]
+  autoFillLogs         AutoFillLog[]
+  managerAlerts        ManagerAlert[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -229,6 +231,8 @@ model Employee {
   vacationBalances VacationBalance[]
   employeeSkills  EmployeeSkill[]
   projectMembers  ProjectMember[]
+  autoFillsVacated   AutoFillLog[] @relation("AutoFillVacated")
+  autoFillsAssigned  AutoFillLog[] @relation("AutoFillAssigned")
   @@unique([email, workspaceId])
 }
 
@@ -326,6 +330,7 @@ model Shift {
   swapsFrom   ShiftSwapRequest[] @relation("SwapFromShift")
   swapsTo     ShiftSwapRequest[] @relation("SwapToShift")
   changeRequests ShiftChangeRequest[]
+  autoFillLogs  AutoFillLog[]
   @@index([workspaceId, date])
   @@index([employeeId, date])
 }
@@ -982,5 +987,78 @@ model AutoScheduleRun {
   @@index([workspaceId])
   @@index([userId])
   @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-FILL & RECOVERY ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+enum AutoFillStatus {
+  PENDING     // Searching for replacement
+  ASSIGNED    // Replacement found and assigned
+  FAILED      // No eligible candidate found
+  DECLINED    // Assigned employee declined
+}
+
+enum AlertSeverity {
+  URGENT
+  WARNING
+  INFO
+}
+
+/// Log of every auto-fill attempt (successful or not).
+/// Provides full audit trail for compliance & labour-law documentation.
+model AutoFillLog {
+  id                    String         @id @default(cuid())
+  status                AutoFillStatus @default(PENDING)
+  /// The shift that needs coverage
+  shiftId               String
+  shift                 Shift          @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  /// Employee whose absence / swap vacated the shift
+  vacatedByEmployeeId   String?
+  vacatedByEmployee     Employee?      @relation("AutoFillVacated", fields: [vacatedByEmployeeId], references: [id], onDelete: SetNull)
+  /// Employee who was auto-assigned as replacement
+  assignedToEmployeeId  String?
+  assignedToEmployee    Employee?      @relation("AutoFillAssigned", fields: [assignedToEmployeeId], references: [id], onDelete: SetNull)
+  /// Human-readable reason ("Absence approved for Max Müller")
+  reason                String
+  /// JSON array of compliance checks performed
+  complianceChecks      Json           @default("[]")
+  /// True when shift is < 4 days away (§ 12 TzBfG notice period)
+  isEmergency           Boolean        @default(false)
+  /// How many eligible candidates were evaluated
+  candidatesEvaluated   Int            @default(0)
+  /// Why no one was available (when status = FAILED)
+  failureReason         String?
+  createdAt             DateTime       @default(now())
+  workspaceId           String
+  workspace             Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+  @@index([shiftId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+/// Urgent alerts surfaced to managers when automated recovery fails
+/// or requires human intervention.
+model ManagerAlert {
+  id             String        @id @default(cuid())
+  type           String        // e.g. "NO_REPLACEMENT", "EMERGENCY_SHIFT", "COMPLIANCE_RISK"
+  title          String
+  message        String
+  severity       AlertSeverity @default(WARNING)
+  acknowledged   Boolean       @default(false)
+  acknowledgedAt DateTime?
+  acknowledgedBy String?       // userId who ack'd
+  /// Optional link to the relevant resource
+  link           String?
+  metadata       Json?         // extra context (shiftId, employeeId, etc.)
+  createdAt      DateTime      @default(now())
+  workspaceId    String
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+  @@index([severity])
+  @@index([acknowledged])
   @@index([createdAt(sort: Desc)])
 }

@@ -4,7 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
-import { createSystemNotification } from "@/lib/automations";
+import {
+  createSystemNotification,
+  checkShiftConflicts,
+} from "@/lib/automations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
@@ -98,6 +101,95 @@ export async function POST(req: Request) {
         { error: "The shift does not belong to the requester" },
         { status: 400 },
       );
+    }
+
+    // ── Check for concurrent pending swap requests on this shift ──
+    const existingSwap = await prisma.shiftSwapRequest.findFirst({
+      where: {
+        shiftId: body.shiftId,
+        status: "ANGEFRAGT",
+      },
+    });
+
+    if (existingSwap) {
+      return NextResponse.json(
+        {
+          error:
+            "Für diese Schicht liegt bereits ein offener Tauschantrag vor.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // ── ArbZG compliance pre-check for target employee ──
+    if (body.targetId && body.targetShiftId) {
+      // Check if taking the requester's shift would violate ArbZG for the target
+      const targetConflicts = await checkShiftConflicts({
+        employeeId: body.targetId,
+        date:
+          shift.date instanceof Date
+            ? shift.date.toISOString().split("T")[0]
+            : new Date(shift.date).toISOString().split("T")[0],
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        workspaceId,
+        excludeShiftId: body.targetShiftId,
+      });
+
+      const blockingConflicts = targetConflicts.filter(
+        (c) =>
+          c.type === "REST_PERIOD" ||
+          c.type === "MAX_DAILY_HOURS" ||
+          c.type === "MAX_WEEKLY_HOURS",
+      );
+
+      if (blockingConflicts.length > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Tausch nicht möglich — ArbZG-Verstoß für den Tauschpartner.",
+            conflicts: blockingConflicts,
+          },
+          { status: 409 },
+        );
+      }
+
+      // Check if taking the target's shift would violate ArbZG for the requester
+      const targetShift = await prisma.shift.findUnique({
+        where: { id: body.targetShiftId },
+      });
+
+      if (targetShift) {
+        const requesterConflicts = await checkShiftConflicts({
+          employeeId: body.requesterId,
+          date:
+            targetShift.date instanceof Date
+              ? targetShift.date.toISOString().split("T")[0]
+              : new Date(targetShift.date).toISOString().split("T")[0],
+          startTime: targetShift.startTime,
+          endTime: targetShift.endTime,
+          workspaceId,
+          excludeShiftId: body.shiftId,
+        });
+
+        const requesterBlocking = requesterConflicts.filter(
+          (c) =>
+            c.type === "REST_PERIOD" ||
+            c.type === "MAX_DAILY_HOURS" ||
+            c.type === "MAX_WEEKLY_HOURS",
+        );
+
+        if (requesterBlocking.length > 0) {
+          return NextResponse.json(
+            {
+              error:
+                "Tausch nicht möglich — ArbZG-Verstoß für den Antragsteller.",
+              conflicts: requesterBlocking,
+            },
+            { status: 409 },
+          );
+        }
+      }
     }
 
     const swap = await prisma.shiftSwapRequest.create({

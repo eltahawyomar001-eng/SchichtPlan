@@ -4,7 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
-import { checkShiftConflicts, executeCustomRules } from "@/lib/automations";
+import {
+  checkShiftConflicts,
+  executeCustomRules,
+  createSystemNotification,
+} from "@/lib/automations";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
 
@@ -92,6 +96,55 @@ export async function PATCH(
         status: derivedStatus as any,
       },
     });
+
+    // ── Notify employee on shift update / reassignment ──
+    const finalEmployeeId = hasEmployeeIdField
+      ? newEmployeeId
+      : currentShift.employeeId;
+
+    if (finalEmployeeId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const emp = await (prisma as any).employee.findUnique({
+        where: { id: finalEmployeeId },
+        select: { email: true, firstName: true, lastName: true },
+      });
+
+      if (emp?.email) {
+        const shiftDate = body.date ? new Date(body.date) : currentShift.date;
+        const shiftDateStr = shiftDate.toLocaleDateString("de-DE", {
+          weekday: "long",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+        const st = body.startTime || currentShift.startTime;
+        const et = body.endTime || currentShift.endTime;
+        const wasReassigned =
+          hasEmployeeIdField &&
+          newEmployeeId &&
+          currentShift.employeeId !== newEmployeeId;
+
+        const notifType = wasReassigned ? "SHIFT_REASSIGNED" : "SHIFT_UPDATED";
+        const notifTitle = wasReassigned
+          ? "Schicht zugewiesen"
+          : "Schicht aktualisiert";
+        const notifMessage = wasReassigned
+          ? `Ihnen wurde eine Schicht am ${shiftDateStr} (${st}–${et}) zugewiesen.`
+          : `Ihre Schicht am ${shiftDateStr} wurde aktualisiert: ${st}–${et}.`;
+
+        createSystemNotification({
+          type: notifType,
+          title: notifTitle,
+          message: notifMessage,
+          link: "/schichtplan",
+          workspaceId: workspaceId!,
+          recipientType: "employee",
+          employeeEmail: emp.email,
+        }).catch((err) =>
+          log.error("[shifts/PATCH] Notification error:", { error: err }),
+        );
+      }
+    }
 
     // ── Automation: Execute custom rules ──
     executeCustomRules("shift.updated", workspaceId!, {

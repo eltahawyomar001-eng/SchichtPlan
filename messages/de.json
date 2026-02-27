@@ -2174,5 +2174,48 @@
     "allEmployees": "Alle Mitarbeiter",
     "atRiskOnly": "Nur Risikofälle",
     "export": "Exportieren"
+  },
+  "autoFill": {
+    "title": "Automatische Vertretung",
+    "assigned": "Schicht automatisch zugewiesen",
+    "assignedMessage": "Ihnen wurde die Schicht am {date} ({startTime}–{endTime}) zugewiesen, da {vacatedBy} aufgrund genehmigter Abwesenheit nicht verfügbar ist.",
+    "emergencyHint": "⚠️ Kurzfristige Vertretung (< 4 Tage Vorlauf).",
+    "successTitle": "Automatische Vertretung gefunden",
+    "successMessage": "{assignedName} wurde automatisch als Vertretung für die Schicht am {date} ({startTime}–{endTime}) eingeteilt.",
+    "failedTitle": "Keine Vertretung gefunden",
+    "failedMessage": "Für die Schicht am {date} ({startTime}–{endTime}) wurde keine Vertretung gefunden. Bitte manuell zuweisen.",
+    "noOneAvailable": "Kein Mitarbeiter verfügbar — alle im Urlaub, krank oder bereits eingeteilt.",
+    "complianceBlock": "{count} Kandidat(en) geprüft — alle verletzten ArbZG-Vorschriften (max. 10h/Tag, 11h Ruhezeit, max. 48h/Woche).",
+    "reason": "Grund: {reason}"
+  },
+  "managerAlerts": {
+    "title": "Manager-Benachrichtigungen",
+    "description": "Dringende Benachrichtigungen, die Ihre Aufmerksamkeit erfordern",
+    "noAlerts": "Keine offenen Benachrichtigungen",
+    "urgentNoReplacement": "⚠️ DRINGEND: Keine Vertretung gefunden",
+    "noReplacement": "Keine Vertretung gefunden",
+    "acknowledge": "Zur Kenntnis nehmen",
+    "acknowledged": "Bestätigt",
+    "unacknowledged": "Unbestätigt",
+    "all": "Alle",
+    "severity": {
+      "URGENT": "Dringend",
+      "WARNING": "Warnung",
+      "INFO": "Information"
+    }
+  },
+  "shiftConfirmation": {
+    "confirm": "Bestätigen",
+    "requestSwap": "Tausch anfragen",
+    "applyLeave": "Abwesenheit beantragen",
+    "confirmed": "Schicht bestätigt",
+    "confirmedMessage": "Schicht erfolgreich bestätigt.",
+    "alreadyConfirmed": "Diese Schicht wurde bereits bestätigt.",
+    "unconfirmedHint": "Neue Schicht — bitte bestätigen, tauschen oder Abwesenheit beantragen."
+  },
+  "swapCompliance": {
+    "concurrentSwapError": "Für diese Schicht liegt bereits ein offener Tauschantrag vor.",
+    "targetArbzgError": "Tausch nicht möglich — ArbZG-Verstoß für den Tauschpartner.",
+    "requesterArbzgError": "Tausch nicht möglich — ArbZG-Verstoß für den Antragsteller."
   }
 }

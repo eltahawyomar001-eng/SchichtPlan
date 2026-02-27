@@ -212,7 +212,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
               key={tab.key}
               href={tab.href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-[2px] py-1 transition-all duration-150",
+                "flex flex-1 flex-col items-center justify-center gap-[2px] py-1.5 min-h-[48px] transition-all duration-150",
                 "active:opacity-60",
                 active ? "text-emerald-600" : "text-gray-400",
               )}
@@ -236,7 +236,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
         <button
           onClick={onMoreTap}
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-[2px] py-1 transition-all duration-150",
+            "flex flex-1 flex-col items-center justify-center gap-[2px] py-1.5 min-h-[48px] transition-all duration-150",
             "active:opacity-60",
             moreActive ? "text-emerald-600" : "text-gray-400",
           )}

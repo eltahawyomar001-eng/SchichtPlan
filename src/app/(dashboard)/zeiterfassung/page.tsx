@@ -4,15 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AdaptiveModal } from "@/components/ui/adaptive-modal";
 import {
   PlusIcon,
-  XIcon,
   ClockIcon,
   CheckCircleIcon,
   SearchIcon,
@@ -497,8 +498,7 @@ export default function ZeiterfassungPage() {
                   <Label className="text-xs text-gray-500 mb-1">
                     {tc("status")}
                   </Label>
-                  <select
-                    className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  <Select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -508,7 +508,7 @@ export default function ZeiterfassungPage() {
                         {t(`statuses.${key}`)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 {isManager && (
@@ -516,8 +516,7 @@ export default function ZeiterfassungPage() {
                     <Label className="text-xs text-gray-500 mb-1">
                       {tc("employee")}
                     </Label>
-                    <select
-                      className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    <Select
                       value={filterEmployee}
                       onChange={(e) => setFilterEmployee(e.target.value)}
                     >
@@ -527,7 +526,7 @@ export default function ZeiterfassungPage() {
                           {emp.firstName} {emp.lastName}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 )}
               </div>
@@ -536,445 +535,433 @@ export default function ZeiterfassungPage() {
         )}
 
         {/* ── Entry Form Modal ── */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>
-                    {editingId ? t("editEntry") : t("newTimeEntry")}
-                  </CardTitle>
-                  <button
-                    onClick={resetForm}
-                    className="rounded-lg p-1 hover:bg-gray-100"
+        <AdaptiveModal
+          open={showForm}
+          onClose={resetForm}
+          title={editingId ? t("editEntry") : t("newTimeEntry")}
+          mobileHeight="full"
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={resetForm}>
+                {tc("cancel")}
+              </Button>
+              <Button
+                type="button"
+                disabled={submitting}
+                onClick={(e) => {
+                  const form = document.getElementById(
+                    "time-entry-form",
+                  ) as HTMLFormElement | null;
+                  if (form) form.requestSubmit();
+                  else {
+                    // fallback
+                    const ev = new Event("submit", {
+                      bubbles: true,
+                      cancelable: true,
+                    });
+                    e.currentTarget.closest("form")?.dispatchEvent(ev);
+                  }
+                }}
+              >
+                {submitting
+                  ? t("form.saving")
+                  : editingId
+                    ? t("form.update")
+                    : tc("save")}
+              </Button>
+            </div>
+          }
+        >
+          <form
+            id="time-entry-form"
+            onSubmit={handleSubmitForm}
+            className="space-y-4"
+          >
+            {formErrors.length > 0 && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                {formErrors.map((err, i) => (
+                  <p key={i} className="text-sm text-red-600">
+                    {err}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="date">{t("form.date")} *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, date: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              {isManager ? (
+                <div>
+                  <Label htmlFor="employeeId">{t("form.employee")} *</Label>
+                  <Select
+                    id="employeeId"
+                    value={formData.employeeId}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        employeeId: e.target.value,
+                      }))
+                    }
+                    required
                   >
-                    <XIcon className="h-5 w-5 text-gray-400" />
-                  </button>
+                    <option value="">{t("form.selectEmployee")}</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.firstName} {emp.lastName}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitForm} className="space-y-4">
-                  {formErrors.length > 0 && (
-                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-                      {formErrors.map((err, i) => (
-                        <p key={i} className="text-sm text-red-600">
-                          {err}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+              ) : (
+                <input type="hidden" value={formData.employeeId} />
+              )}
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="date">{t("form.date")} *</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={formData.date}
-                        onChange={(e) =>
-                          setFormData((p) => ({ ...p, date: e.target.value }))
-                        }
-                        required
-                      />
-                    </div>
-                    {isManager ? (
-                      <div>
-                        <Label htmlFor="employeeId">
-                          {t("form.employee")} *
-                        </Label>
-                        <select
-                          id="employeeId"
-                          className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                          value={formData.employeeId}
-                          onChange={(e) =>
-                            setFormData((p) => ({
-                              ...p,
-                              employeeId: e.target.value,
-                            }))
-                          }
-                          required
-                        >
-                          <option value="">{t("form.selectEmployee")}</option>
-                          {employees.map((emp) => (
-                            <option key={emp.id} value={emp.id}>
-                              {emp.firstName} {emp.lastName}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
-                      <input type="hidden" value={formData.employeeId} />
-                    )}
-                  </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startTime">{t("form.startTime")} *</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      startTime: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="endTime">{t("form.endTime")} *</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      endTime: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="startTime">{t("form.startTime")} *</Label>
-                      <Input
-                        id="startTime"
-                        type="time"
-                        value={formData.startTime}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            startTime: e.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="endTime">{t("form.endTime")} *</Label>
-                      <Input
-                        id="endTime"
-                        type="time"
-                        value={formData.endTime}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            endTime: e.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div>
+                <Label htmlFor="breakStart">{t("form.breakFrom")}</Label>
+                <Input
+                  id="breakStart"
+                  type="time"
+                  value={formData.breakStart}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      breakStart: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="breakEnd">{t("form.breakTo")}</Label>
+                <Input
+                  id="breakEnd"
+                  type="time"
+                  value={formData.breakEnd}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      breakEnd: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="breakMinutes">{t("form.breakMinutes")}</Label>
+                <Input
+                  id="breakMinutes"
+                  type="number"
+                  min="0"
+                  value={formData.breakMinutes}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      breakMinutes: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                />
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <div>
-                      <Label htmlFor="breakStart">{t("form.breakFrom")}</Label>
-                      <Input
-                        id="breakStart"
-                        type="time"
-                        value={formData.breakStart}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            breakStart: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="breakEnd">{t("form.breakTo")}</Label>
-                      <Input
-                        id="breakEnd"
-                        type="time"
-                        value={formData.breakEnd}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            breakEnd: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="breakMinutes">
-                        {t("form.breakMinutes")}
-                      </Label>
-                      <Input
-                        id="breakMinutes"
-                        type="number"
-                        min="0"
-                        value={formData.breakMinutes}
-                        onChange={(e) =>
-                          setFormData((p) => ({
-                            ...p,
-                            breakMinutes: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
+            <div>
+              <Label htmlFor="locationId">{t("form.location")}</Label>
+              <Select
+                id="locationId"
+                value={formData.locationId}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    locationId: e.target.value,
+                  }))
+                }
+              >
+                <option value="">{t("form.noLocation")}</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-                  <div>
-                    <Label htmlFor="locationId">{t("form.location")}</Label>
-                    <select
-                      id="locationId"
-                      className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                      value={formData.locationId}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          locationId: e.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">{t("form.noLocation")}</option>
-                      {locations.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {loc.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="remarks">{t("form.remarks")}</Label>
-                    <textarea
-                      id="remarks"
-                      rows={2}
-                      className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                      value={formData.remarks}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, remarks: e.target.value }))
-                      }
-                      placeholder={t("form.remarksPlaceholder")}
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-2">
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting
-                        ? t("form.saving")
-                        : editingId
-                          ? t("form.update")
-                          : tc("save")}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <div>
+              <Label htmlFor="remarks">{t("form.remarks")}</Label>
+              <textarea
+                id="remarks"
+                rows={2}
+                className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                value={formData.remarks}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, remarks: e.target.value }))
+                }
+                placeholder={t("form.remarksPlaceholder")}
+              />
+            </div>
+          </form>
+        </AdaptiveModal>
 
         {/* ── Entry Detail Modal ── */}
         {selectedEntry && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
-            <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{t("entryDetails")}</CardTitle>
-                  <button
-                    onClick={() => {
-                      setSelectedEntry(null);
-                      setActionComment("");
-                    }}
-                    className="rounded-lg p-1 hover:bg-gray-100"
-                  >
-                    <XIcon className="h-5 w-5 text-gray-400" />
-                  </button>
+          <AdaptiveModal
+            open={!!selectedEntry}
+            onClose={() => {
+              setSelectedEntry(null);
+              setActionComment("");
+            }}
+            title={t("entryDetails")}
+            mobileHeight="full"
+          >
+            <div className="space-y-4">
+              {/* Entry info */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">{t("detail.employee")}</span>
+                  <p className="font-medium">
+                    {selectedEntry.employee.firstName}{" "}
+                    {selectedEntry.employee.lastName}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Entry info */}
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">{t("detail.date")}</span>
+                  <p className="font-medium">
+                    {format(new Date(selectedEntry.date), "dd.MM.yyyy", {
+                      locale: dateFnsLocale,
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">{t("detail.time")}</span>
+                  <p className="font-medium">
+                    {selectedEntry.startTime} – {selectedEntry.endTime}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">{t("detail.net")}</span>
+                  <p className="font-medium">
+                    {formatMinutesToHHmm(selectedEntry.netMinutes)} (
+                    {formatIndustrial(selectedEntry.netMinutes)} h)
+                  </p>
+                </div>
+                {selectedEntry.location && (
                   <div>
                     <span className="text-gray-500">
-                      {t("detail.employee")}
+                      {t("detail.location")}
                     </span>
-                    <p className="font-medium">
-                      {selectedEntry.employee.firstName}{" "}
-                      {selectedEntry.employee.lastName}
-                    </p>
+                    <p className="font-medium">{selectedEntry.location.name}</p>
                   </div>
-                  <div>
-                    <span className="text-gray-500">{t("detail.date")}</span>
-                    <p className="font-medium">
-                      {format(new Date(selectedEntry.date), "dd.MM.yyyy", {
-                        locale: dateFnsLocale,
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">{t("detail.time")}</span>
-                    <p className="font-medium">
-                      {selectedEntry.startTime} – {selectedEntry.endTime}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">{t("detail.net")}</span>
-                    <p className="font-medium">
-                      {formatMinutesToHHmm(selectedEntry.netMinutes)} (
-                      {formatIndustrial(selectedEntry.netMinutes)} h)
-                    </p>
-                  </div>
-                  {selectedEntry.location && (
-                    <div>
-                      <span className="text-gray-500">
-                        {t("detail.location")}
-                      </span>
-                      <p className="font-medium">
-                        {selectedEntry.location.name}
-                      </p>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-gray-500">{t("detail.status")}</span>
-                    <p>
-                      <Badge
-                        className={STATUS_COLORS[selectedEntry.status] ?? ""}
-                      >
-                        {t(`statuses.${selectedEntry.status}`)}
-                      </Badge>
-                    </p>
-                  </div>
-                  {selectedEntry.remarks && (
-                    <div className="col-span-2">
-                      <span className="text-gray-500">
-                        {t("detail.remarks")}
-                      </span>
-                      <p className="font-medium">{selectedEntry.remarks}</p>
-                    </div>
-                  )}
+                )}
+                <div>
+                  <span className="text-gray-500">{t("detail.status")}</span>
+                  <p>
+                    <Badge
+                      className={STATUS_COLORS[selectedEntry.status] ?? ""}
+                    >
+                      {t(`statuses.${selectedEntry.status}`)}
+                    </Badge>
+                  </p>
                 </div>
+                {selectedEntry.remarks && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500">{t("detail.remarks")}</span>
+                    <p className="font-medium">{selectedEntry.remarks}</p>
+                  </div>
+                )}
+              </div>
 
-                {/* E-Signature */}
-                {["GEPRUEFT", "BESTAETIGT", "ZURUECKGEWIESEN"].includes(
-                  selectedEntry.status,
-                ) && (
-                  <ESignatureBadge
-                    entityType="TimeEntry"
-                    entityId={selectedEntry.id}
-                  />
+              {/* E-Signature */}
+              {["GEPRUEFT", "BESTAETIGT", "ZURUECKGEWIESEN"].includes(
+                selectedEntry.status,
+              ) && (
+                <ESignatureBadge
+                  entityType="TimeEntry"
+                  entityId={selectedEntry.id}
+                />
+              )}
+
+              {/* Actions */}
+              <div className="border-t pt-4 space-y-3">
+                {/* Employee actions */}
+                {["ENTWURF", "KORREKTUR"].includes(selectedEntry.status) && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleStatusAction(selectedEntry.id, "submit")
+                      }
+                    >
+                      {t("submit")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        openEditForm(selectedEntry);
+                        setSelectedEntry(null);
+                      }}
+                    >
+                      <EditIcon className="h-4 w-4" />
+                      {tc("edit")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(selectedEntry.id)}
+                    >
+                      {tc("delete")}
+                    </Button>
+                  </div>
                 )}
 
-                {/* Actions */}
-                <div className="border-t pt-4 space-y-3">
-                  {/* Employee actions */}
-                  {["ENTWURF", "KORREKTUR"].includes(selectedEntry.status) && (
+                {/* Manager actions */}
+                {isManager && selectedEntry.status === "EINGEREICHT" && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-gray-500">
+                        {t("commentOptional")}
+                      </Label>
+                      <textarea
+                        rows={2}
+                        className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        value={actionComment}
+                        onChange={(e) => setActionComment(e.target.value)}
+                        placeholder={t("commentPlaceholder")}
+                      />
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
                         onClick={() =>
-                          handleStatusAction(selectedEntry.id, "submit")
+                          handleStatusAction(
+                            selectedEntry.id,
+                            "approve",
+                            actionComment,
+                          )
                         }
                       >
-                        {t("submit")}
+                        <CheckCircleIcon className="h-4 w-4" />
+                        {t("approve")}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          openEditForm(selectedEntry);
-                          setSelectedEntry(null);
-                        }}
+                        onClick={() =>
+                          handleStatusAction(
+                            selectedEntry.id,
+                            "correct",
+                            actionComment,
+                          )
+                        }
                       >
-                        <EditIcon className="h-4 w-4" />
-                        {tc("edit")}
+                        {t("requestCorrection")}
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleDelete(selectedEntry.id)}
+                        onClick={() =>
+                          handleStatusAction(
+                            selectedEntry.id,
+                            "reject",
+                            actionComment,
+                          )
+                        }
                       >
-                        {tc("delete")}
+                        {t("reject")}
                       </Button>
-                    </div>
-                  )}
-
-                  {/* Manager actions */}
-                  {isManager && selectedEntry.status === "EINGEREICHT" && (
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-xs text-gray-500">
-                          {t("commentOptional")}
-                        </Label>
-                        <textarea
-                          rows={2}
-                          className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                          value={actionComment}
-                          onChange={(e) => setActionComment(e.target.value)}
-                          placeholder={t("commentPlaceholder")}
-                        />
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            handleStatusAction(
-                              selectedEntry.id,
-                              "approve",
-                              actionComment,
-                            )
-                          }
-                        >
-                          <CheckCircleIcon className="h-4 w-4" />
-                          {t("approve")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handleStatusAction(
-                              selectedEntry.id,
-                              "correct",
-                              actionComment,
-                            )
-                          }
-                        >
-                          {t("requestCorrection")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() =>
-                            handleStatusAction(
-                              selectedEntry.id,
-                              "reject",
-                              actionComment,
-                            )
-                          }
-                        >
-                          {t("reject")}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {isManager && selectedEntry.status === "GEPRUEFT" && (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        handleStatusAction(selectedEntry.id, "confirm")
-                      }
-                    >
-                      <CheckCircleIcon className="h-4 w-4" />
-                      {t("finalConfirm")}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Audit log */}
-                {selectedEntry.auditLog.length > 0 && (
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      {t("auditLog")}
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedEntry.auditLog.map((log) => (
-                        <div
-                          key={log.id}
-                          className="flex items-start gap-2 text-xs text-gray-500"
-                        >
-                          <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-gray-300 flex-shrink-0" />
-                          <div>
-                            <span className="font-medium text-gray-700">
-                              {log.action}
-                            </span>
-                            {log.comment && (
-                              <span className="ml-1">– {log.comment}</span>
-                            )}
-                            <p className="text-gray-400">
-                              {format(
-                                new Date(log.performedAt),
-                                "dd.MM.yyyy HH:mm",
-                                { locale: dateFnsLocale },
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+
+                {isManager && selectedEntry.status === "GEPRUEFT" && (
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      handleStatusAction(selectedEntry.id, "confirm")
+                    }
+                  >
+                    <CheckCircleIcon className="h-4 w-4" />
+                    {t("finalConfirm")}
+                  </Button>
+                )}
+              </div>
+
+              {/* Audit log */}
+              {selectedEntry.auditLog.length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    {t("auditLog")}
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedEntry.auditLog.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-start gap-2 text-xs text-gray-500"
+                      >
+                        <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            {log.action}
+                          </span>
+                          {log.comment && (
+                            <span className="ml-1">– {log.comment}</span>
+                          )}
+                          <p className="text-gray-400">
+                            {format(
+                              new Date(log.performedAt),
+                              "dd.MM.yyyy HH:mm",
+                              { locale: dateFnsLocale },
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </AdaptiveModal>
         )}
 
         {/* ── Entries Table (desktop) / Cards (mobile) ── */}

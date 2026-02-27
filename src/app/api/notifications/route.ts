@@ -62,9 +62,10 @@ export async function PATCH(req: Request) {
         where: { userId: user.id, read: false },
         data: { read: true },
       });
-    } else if (body.id) {
+    } else if (body.notificationId || body.id) {
+      const notifId = body.notificationId || body.id;
       await prisma.notification.updateMany({
-        where: { id: body.id, userId: user.id },
+        where: { id: notifId, userId: user.id },
         data: { read: true },
       });
     }

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
@@ -306,7 +306,7 @@ export default function ProjekteSeite() {
         )}
 
         {/* Create/Edit Form Modal */}
-        <Modal
+        <AdaptiveModal
           open={showForm}
           onClose={() => setShowForm(false)}
           title={editingProject ? t("editProject") : t("newProject")}
@@ -478,10 +478,10 @@ export default function ProjekteSeite() {
               </Button>
             </ModalFooter>
           </form>
-        </Modal>
+        </AdaptiveModal>
 
         {/* Member Management Modal */}
-        <Modal
+        <AdaptiveModal
           open={!!memberProject}
           onClose={() => setMemberProject(null)}
           title={memberProject ? `${t("members")} — ${memberProject.name}` : ""}
@@ -548,7 +548,7 @@ export default function ProjekteSeite() {
               )}
             </div>
           )}
-        </Modal>
+        </AdaptiveModal>
 
         {/* Project list */}
         {loading ? (

@@ -67,7 +67,7 @@ export function NotificationDropdown() {
       const res = await fetch("/api/notifications");
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications ?? []);
+        setNotifications(data.data ?? []);
         setUnreadCount(data.unreadCount ?? 0);
       }
     } catch (err) {
@@ -260,10 +260,10 @@ export function NotificationDropdown() {
       {/* Bell button */}
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+        className="relative rounded-xl p-2.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:bg-gray-200 transition-colors"
         aria-label={t("title")}
       >
-        <BellIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+        <BellIcon className="h-5 w-5" />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-[10px] sm:text-xs font-bold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}

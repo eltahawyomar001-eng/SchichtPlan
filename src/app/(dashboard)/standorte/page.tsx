@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
@@ -156,7 +156,7 @@ export default function StandortePage() {
         )}
 
         {/* Add/Edit Location Modal */}
-        <Modal
+        <AdaptiveModal
           open={showForm}
           onClose={() => setShowForm(false)}
           title={editingLocation ? t("form.editTitle") : t("form.title")}
@@ -207,7 +207,7 @@ export default function StandortePage() {
               </Button>
             </ModalFooter>
           </form>
-        </Modal>
+        </AdaptiveModal>
 
         {/* Locations List */}
         {loading ? (

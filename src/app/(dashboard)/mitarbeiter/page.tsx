@@ -13,7 +13,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
@@ -228,7 +228,7 @@ export default function MitarbeiterPage() {
         </div>
 
         {/* Add/Edit Employee Modal */}
-        <Modal
+        <AdaptiveModal
           open={showForm}
           onClose={() => setShowForm(false)}
           title={editingEmployee ? t("form.editTitle") : t("form.title")}
@@ -415,7 +415,7 @@ export default function MitarbeiterPage() {
               </Button>
             </ModalFooter>
           </form>
-        </Modal>
+        </AdaptiveModal>
 
         {/* Employee List */}
         {loading ? (

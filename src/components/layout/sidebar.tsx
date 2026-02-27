@@ -271,7 +271,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={onClose}
             aria-label="Menü schließen"
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 lg:hidden"
+            className="rounded-xl p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:bg-gray-200 lg:hidden"
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -298,7 +298,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     <div className="h-px flex-1 bg-gray-100" />
                   </div>
                 )}
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {visibleItems.map((item) => {
                     const isActive =
                       pathname === item.href ||
@@ -310,10 +310,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         onClick={onClose}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 min-w-0",
+                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 min-w-0 active:scale-[0.98]",
                           isActive
                             ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100 sidebar-active-glow"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100",
                         )}
                       >
                         <item.icon
@@ -353,7 +353,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             aria-label={t("logout")}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 active:scale-[0.98] transition-colors"
           >
             <LogOutIcon className="h-[18px] w-[18px]" />
             {t("logout")}

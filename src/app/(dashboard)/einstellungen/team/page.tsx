@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageContent } from "@/components/ui/page-content";
@@ -285,16 +286,15 @@ export default function TeamPage() {
                   </div>
                   <div className="w-full sm:w-40 space-y-1.5">
                     <Label htmlFor="invite-role">{t("roleLabel")}</Label>
-                    <select
+                    <Select
                       id="invite-role"
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     >
                       <option value="EMPLOYEE">{t("roleEmployee")}</option>
                       <option value="MANAGER">{t("roleManager")}</option>
                       <option value="ADMIN">{t("roleAdmin")}</option>
-                    </select>
+                    </Select>
                   </div>
                 </div>
                 <Button type="submit" disabled={inviting}>

@@ -19,6 +19,8 @@ import {
 } from "recharts";
 import { DownloadIcon } from "@/components/icons";
 import { PageContent } from "@/components/ui/page-content";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface ReportData {
   period: { start: string; end: string };
@@ -169,46 +171,55 @@ export default function BerichteSeite() {
         )}
 
         {/* Date range filter + export */}
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm text-gray-600">{t("from")}</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          />
-          <label className="text-sm text-gray-600">{t("to")}</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          />
-          <div className="ml-auto flex items-center gap-2">
-            <button
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <label className="text-sm text-gray-600 flex-shrink-0">
+              {t("from")}
+            </label>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="flex-1 min-w-0"
+            />
+            <label className="text-sm text-gray-600 flex-shrink-0">
+              {t("to")}
+            </label>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="flex-1 min-w-0"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handleExport("xlsx")}
               disabled={exporting || !data}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               Excel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handleExport("csv")}
               disabled={exporting || !data}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               CSV
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handleExport("pdf")}
               disabled={exporting || !data}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               <DownloadIcon className="h-4 w-4" />
               PDF
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -243,55 +254,72 @@ export default function BerichteSeite() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {/* Employee Hours Bar Chart */}
               {data.employeeStats.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
                   <h2 className="mb-4 text-lg font-semibold text-gray-900">
                     {t("employeeHours")}
                   </h2>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={data.employeeStats.slice(0, 10)}
-                      margin={{ top: 5, right: 20, left: 0, bottom: 60 }}
+                  <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                    <div
+                      style={{
+                        minWidth: Math.max(
+                          320,
+                          data.employeeStats.slice(0, 10).length * 60,
+                        ),
+                      }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 11 }}
-                        angle={-35}
-                        textAnchor="end"
-                        height={70}
-                      />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip
-                        formatter={(val) => [`${val}h`, t("totalHours")]}
-                      />
-                      <Bar
-                        dataKey="hours"
-                        fill="#059669"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <BarChart
+                          data={data.employeeStats.slice(0, 10)}
+                          margin={{ top: 5, right: 20, left: 0, bottom: 60 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#f0f0f0"
+                          />
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fontSize: 10 }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={70}
+                            tickFormatter={(name: string) =>
+                              name.length > 12 ? `${name.slice(0, 11)}…` : name
+                            }
+                          />
+                          <YAxis tick={{ fontSize: 11 }} width={40} />
+                          <Tooltip
+                            formatter={(val) => [`${val}h`, t("totalHours")]}
+                          />
+                          <Bar
+                            dataKey="hours"
+                            fill="#059669"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Shift Types Pie Chart */}
               {shiftTypeData.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
                   <h2 className="mb-4 text-lg font-semibold text-gray-900">
                     {t("totalShifts")}
                   </h2>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
                       <Pie
                         data={shiftTypeData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
+                        innerRadius={50}
+                        outerRadius={85}
                         dataKey="value"
                         paddingAngle={3}
                         label={({ name, percent }) =>
-                          `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                          `${(name ?? "").length > 10 ? (name ?? "").slice(0, 9) + "…" : (name ?? "")} ${((percent ?? 0) * 100).toFixed(0)}%`
                         }
                       >
                         {shiftTypeData.map((_, idx) => (
@@ -311,11 +339,11 @@ export default function BerichteSeite() {
 
             {/* Absence Pie Chart */}
             {absenceData.length > 0 && (
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm max-w-md">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm max-w-md">
                 <h2 className="mb-4 text-lg font-semibold text-gray-900">
                   {t("absences")}
                 </h2>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
                     <Pie
                       data={absenceData}

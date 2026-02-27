@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
+import { Select } from "@/components/ui/select";
 import {
   HeartPulseIcon,
   UsersIcon,
@@ -140,15 +141,15 @@ export default function WohlbefindenSeite() {
 
   const periodSelector = (
     <div className="flex items-center gap-2">
-      <select
+      <Select
         value={days}
         onChange={(e) => setDays(Number(e.target.value))}
-        className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+        className="h-9 sm:h-9 text-xs"
       >
         <option value={7}>{t("last7")}</option>
         <option value={14}>{t("last14")}</option>
         <option value={30}>{t("last30")}</option>
-      </select>
+      </Select>
       <button
         onClick={fetchData}
         disabled={loading}

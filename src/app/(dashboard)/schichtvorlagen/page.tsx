@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import { PlusIcon, TrashIcon, EditIcon } from "@/components/icons";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
@@ -178,7 +178,7 @@ export default function SchichtvorlagenSeite() {
         )}
 
         {/* Create/Edit Modal */}
-        <Modal
+        <AdaptiveModal
           open={showForm}
           onClose={() => setShowForm(false)}
           title={editId ? t("editTemplate") : t("add")}
@@ -269,7 +269,7 @@ export default function SchichtvorlagenSeite() {
               <Button type="submit">{editId ? tc("save") : t("create")}</Button>
             </ModalFooter>
           </form>
-        </Modal>
+        </AdaptiveModal>
 
         {/* Template list */}
         {loading ? (

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import {
   PlusIcon,
@@ -191,7 +191,7 @@ export default function WebhooksSeite() {
         )}
 
         {/* Create Form Modal */}
-        <Modal
+        <AdaptiveModal
           open={showForm}
           onClose={() => setShowForm(false)}
           title={t("newWebhook")}
@@ -245,7 +245,7 @@ export default function WebhooksSeite() {
               </Button>
             </ModalFooter>
           </form>
-        </Modal>
+        </AdaptiveModal>
 
         {/* Webhook list */}
         {loading ? (

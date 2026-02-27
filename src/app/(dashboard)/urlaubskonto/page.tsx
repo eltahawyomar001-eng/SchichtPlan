@@ -7,7 +7,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Modal, ModalFooter } from "@/components/ui/modal";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import { EditIcon, PalmtreeIcon, AlertTriangleIcon } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
@@ -345,7 +345,7 @@ export default function UrlaubskontoSeite() {
       </PageContent>
 
       {/* Edit Modal */}
-      <Modal
+      <AdaptiveModal
         open={!!editTarget}
         onClose={() => setEditTarget(null)}
         title={
@@ -420,7 +420,7 @@ export default function UrlaubskontoSeite() {
             </ModalFooter>
           </div>
         )}
-      </Modal>
+      </AdaptiveModal>
     </div>
   );
 }

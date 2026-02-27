@@ -20,6 +20,8 @@ import {
   TrashIcon,
   FilterIcon,
   ZapIcon,
+  UserPlusIcon,
+  AlertCircleIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -70,7 +72,7 @@ interface Shift {
   endTime: string;
   notes: string | null;
   status: string;
-  employee: Employee;
+  employee: Employee | null;
   location: Location | null;
 }
 
@@ -238,7 +240,7 @@ export default function SchichtplanPage() {
       date: shift.date.split("T")[0],
       startTime: shift.startTime,
       endTime: shift.endTime,
-      employeeId: shift.employee.id,
+      employeeId: shift.employee?.id || "",
       locationId: shift.location?.id || "",
       notes: shift.notes || "",
       repeatWeeks: 0,
@@ -830,16 +832,21 @@ export default function SchichtplanPage() {
             <DragOverlay>
               {activeShift && (
                 <div
-                  className="rounded-md p-2 text-xs shadow-lg"
-                  style={{
-                    backgroundColor:
-                      (activeShift.employee.color || "#10b981") + "30",
-                    borderLeft: `3px solid ${activeShift.employee.color || "#10b981"}`,
-                  }}
+                  className={`rounded-md p-2 text-xs shadow-lg ${!activeShift.employee ? "border-2 border-dashed border-amber-400 bg-amber-50" : ""}`}
+                  style={
+                    activeShift.employee
+                      ? {
+                          backgroundColor:
+                            (activeShift.employee.color || "#10b981") + "30",
+                          borderLeft: `3px solid ${activeShift.employee.color || "#10b981"}`,
+                        }
+                      : undefined
+                  }
                 >
                   <p className="font-medium text-gray-900">
-                    {activeShift.employee.firstName}{" "}
-                    {activeShift.employee.lastName}
+                    {activeShift.employee
+                      ? `${activeShift.employee.firstName} ${activeShift.employee.lastName}`
+                      : t("openShiftLabel")}
                   </p>
                   <p className="text-gray-600">
                     {activeShift.startTime} - {activeShift.endTime}
@@ -905,7 +912,7 @@ export default function SchichtplanPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="employeeId">{t("form.employee")} *</Label>
+              <Label htmlFor="employeeId">{t("form.employee")}</Label>
               <Select
                 id="employeeId"
                 value={formData.employeeId}
@@ -915,15 +922,19 @@ export default function SchichtplanPage() {
                     employeeId: e.target.value,
                   }))
                 }
-                required
               >
-                <option value="">{t("form.selectEmployee")}</option>
+                <option value="">— {t("form.openShift")} —</option>
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName}
                   </option>
                 ))}
               </Select>
+              {!formData.employeeId && (
+                <p className="text-xs text-amber-600">
+                  {t("form.openShiftHint")}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1143,207 +1154,259 @@ export default function SchichtplanPage() {
 
           {autoScheduleResult ? (
             <div className="space-y-4">
-              {/* Summary banner */}
-              <div
-                className={`rounded-xl border p-4 space-y-3 ${autoScheduleResult.dryRun ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
-              >
-                <p
-                  className={`font-medium text-sm ${autoScheduleResult.dryRun ? "text-amber-700" : "text-emerald-700"}`}
-                >
-                  {autoScheduleResult.dryRun
-                    ? t("autoScheduleDryRun")
-                    : t("autoScheduleDone")}
-                </p>
-
-                {/* Stat cards row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-emerald-700">
-                      {autoScheduleResult.assigned}
-                    </p>
-                    <p className="text-[11px] text-gray-500">
-                      {t("autoScheduleAssigned")}
-                    </p>
-                  </div>
-                  <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                    <p className="text-lg font-bold text-amber-600">
-                      {autoScheduleResult.unresolved}
-                    </p>
-                    <p className="text-[11px] text-gray-500">
-                      {t("autoScheduleUnresolved")}
-                    </p>
-                  </div>
-                  {autoScheduleResult.fairnessScore != null && (
-                    <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                      <p className="text-lg font-bold text-blue-600">
-                        {Math.round(autoScheduleResult.fairnessScore * 100)}%
+              {/* No open shifts info banner */}
+              {autoScheduleResult.totalOpenShifts === 0 ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <AlertCircleIcon className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <div className="space-y-2">
+                      <p className="font-medium text-sm text-amber-800">
+                        {t("autoScheduleNoOpenShiftsTitle")}
                       </p>
-                      <p className="text-[11px] text-gray-500">
-                        {t("autoScheduleFairness")}
+                      <p className="text-sm text-amber-700">
+                        {t("autoScheduleNoOpenShiftsDesc")}
                       </p>
-                    </div>
-                  )}
-                  {autoScheduleResult.totalCostEstimate != null && (
-                    <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                      <p className="text-lg font-bold text-gray-700">
-                        €{autoScheduleResult.totalCostEstimate.toFixed(0)}
-                      </p>
-                      <p className="text-[11px] text-gray-500">
-                        {t("autoScheduleCost")}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Fairness score bar */}
-                {autoScheduleResult.fairnessScore != null && (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-gray-600">
-                      <span>{t("autoScheduleFairnessLabel")}</span>
-                      <span
-                        className={
-                          autoScheduleResult.fairnessScore >= 0.8
-                            ? "text-emerald-600 font-medium"
-                            : autoScheduleResult.fairnessScore >= 0.6
-                              ? "text-amber-600 font-medium"
-                              : "text-red-600 font-medium"
-                        }
-                      >
-                        {autoScheduleResult.fairnessScore >= 0.8
-                          ? t("autoScheduleFairnessGood")
-                          : autoScheduleResult.fairnessScore >= 0.6
-                            ? t("autoScheduleFairnessOk")
-                            : t("autoScheduleFairnessPoor")}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          autoScheduleResult.fairnessScore >= 0.8
-                            ? "bg-emerald-500"
-                            : autoScheduleResult.fairnessScore >= 0.6
-                              ? "bg-amber-500"
-                              : "bg-red-500"
-                        }`}
-                        style={{
-                          width: `${Math.round(autoScheduleResult.fairnessScore * 100)}%`,
-                        }}
-                      />
+                      <div className="rounded-lg bg-white/70 p-3 space-y-1.5">
+                        <p className="text-xs font-medium text-gray-700">
+                          {t("autoScheduleNoOpenShiftsSteps")}
+                        </p>
+                        <ol className="text-xs text-gray-600 space-y-1 list-decimal list-inside">
+                          <li>{t("autoScheduleNoOpenShiftsStep1")}</li>
+                          <li>{t("autoScheduleNoOpenShiftsStep2")}</li>
+                          <li>{t("autoScheduleNoOpenShiftsStep3")}</li>
+                        </ol>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Employee hours breakdown */}
-              {autoScheduleResult.employeeHours &&
-                Object.keys(autoScheduleResult.employeeHours).length > 0 && (
-                  <div className="border rounded-xl overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setShowEmployeeHours((s) => !s)}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-sm font-medium text-gray-700"
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowAutoSchedule(false);
+                        setAutoScheduleResult(null);
+                      }}
                     >
-                      <span>{t("autoScheduleEmployeeHours")}</span>
-                      <span className="text-gray-400">
-                        {showEmployeeHours ? "▲" : "▼"}
-                      </span>
-                    </button>
-                    {showEmployeeHours && (
-                      <div className="max-h-48 overflow-y-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b bg-gray-50/50 text-left text-xs text-gray-500">
-                              <th className="px-4 py-1.5 font-medium">
-                                {t("autoScheduleEmployee")}
-                              </th>
-                              <th className="px-4 py-1.5 font-medium text-right">
-                                {t("autoScheduleScheduledH")}
-                              </th>
-                              <th className="px-4 py-1.5 font-medium text-right">
-                                {t("autoScheduleContractH")}
-                              </th>
-                              <th className="px-4 py-1.5 font-medium text-right">
-                                {t("autoScheduleUtilization")}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(autoScheduleResult.employeeHours)
-                              .sort(([, a], [, b]) => b.scheduled - a.scheduled)
-                              .map(([id, emp]) => (
-                                <tr key={id} className="border-b last:border-0">
-                                  <td className="px-4 py-1.5 text-gray-800">
-                                    {emp.name}
-                                  </td>
-                                  <td className="px-4 py-1.5 text-right font-mono">
-                                    {emp.scheduled.toFixed(1)}h
-                                  </td>
-                                  <td className="px-4 py-1.5 text-right font-mono text-gray-500">
-                                    {emp.contract.toFixed(1)}h
-                                  </td>
-                                  <td className="px-4 py-1.5 text-right">
-                                    <span
-                                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                                        emp.ratio > 1
-                                          ? "bg-red-100 text-red-700"
-                                          : emp.ratio > 0.85
-                                            ? "bg-amber-100 text-amber-700"
-                                            : "bg-emerald-100 text-emerald-700"
-                                      }`}
-                                    >
-                                      {Math.round(emp.ratio * 100)}%
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
+                      {t("autoScheduleClose")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Summary banner */}
+                  <div
+                    className={`rounded-xl border p-4 space-y-3 ${autoScheduleResult.dryRun ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
+                  >
+                    <p
+                      className={`font-medium text-sm ${autoScheduleResult.dryRun ? "text-amber-700" : "text-emerald-700"}`}
+                    >
+                      {autoScheduleResult.dryRun
+                        ? t("autoScheduleDryRun")
+                        : t("autoScheduleDone")}
+                    </p>
+
+                    {/* Stat cards row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                        <p className="text-lg font-bold text-emerald-700">
+                          {autoScheduleResult.assigned}
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          {t("autoScheduleAssigned")}
+                        </p>
+                      </div>
+                      <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                        <p className="text-lg font-bold text-amber-600">
+                          {autoScheduleResult.unresolved}
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          {t("autoScheduleUnresolved")}
+                        </p>
+                      </div>
+                      {autoScheduleResult.fairnessScore != null && (
+                        <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round(autoScheduleResult.fairnessScore * 100)}
+                            %
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            {t("autoScheduleFairness")}
+                          </p>
+                        </div>
+                      )}
+                      {autoScheduleResult.totalCostEstimate != null && (
+                        <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                          <p className="text-lg font-bold text-gray-700">
+                            €{autoScheduleResult.totalCostEstimate.toFixed(0)}
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            {t("autoScheduleCost")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Fairness score bar */}
+                    {autoScheduleResult.fairnessScore != null && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>{t("autoScheduleFairnessLabel")}</span>
+                          <span
+                            className={
+                              autoScheduleResult.fairnessScore >= 0.8
+                                ? "text-emerald-600 font-medium"
+                                : autoScheduleResult.fairnessScore >= 0.6
+                                  ? "text-amber-600 font-medium"
+                                  : "text-red-600 font-medium"
+                            }
+                          >
+                            {autoScheduleResult.fairnessScore >= 0.8
+                              ? t("autoScheduleFairnessGood")
+                              : autoScheduleResult.fairnessScore >= 0.6
+                                ? t("autoScheduleFairnessOk")
+                                : t("autoScheduleFairnessPoor")}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              autoScheduleResult.fairnessScore >= 0.8
+                                ? "bg-emerald-500"
+                                : autoScheduleResult.fairnessScore >= 0.6
+                                  ? "bg-amber-500"
+                                  : "bg-red-500"
+                            }`}
+                            style={{
+                              width: `${Math.round(autoScheduleResult.fairnessScore * 100)}%`,
+                            }}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
 
-              {/* Unresolved shift details */}
-              {autoScheduleResult.unresolvedShifts &&
-                autoScheduleResult.unresolvedShifts.length > 0 && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
-                    <p className="text-xs font-medium text-amber-700 mb-1.5">
-                      {t("autoScheduleUnresolvedDetails")}
-                    </p>
-                    <div className="max-h-32 overflow-y-auto space-y-1">
-                      {autoScheduleResult.unresolvedShifts.map((u, i) => (
-                        <p key={i} className="text-xs text-gray-600">
-                          📅 {u.shiftDate} {u.startTime}–{u.endTime}
-                          {u.locationName ? ` (${u.locationName})` : ""}:{" "}
-                          <span className="text-amber-700">{u.reason}</span>
+                  {/* Employee hours breakdown */}
+                  {autoScheduleResult.employeeHours &&
+                    Object.keys(autoScheduleResult.employeeHours).length >
+                      0 && (
+                      <div className="border rounded-xl overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setShowEmployeeHours((s) => !s)}
+                          className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-sm font-medium text-gray-700"
+                        >
+                          <span>{t("autoScheduleEmployeeHours")}</span>
+                          <span className="text-gray-400">
+                            {showEmployeeHours ? "▲" : "▼"}
+                          </span>
+                        </button>
+                        {showEmployeeHours && (
+                          <div className="max-h-48 overflow-y-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b bg-gray-50/50 text-left text-xs text-gray-500">
+                                  <th className="px-4 py-1.5 font-medium">
+                                    {t("autoScheduleEmployee")}
+                                  </th>
+                                  <th className="px-4 py-1.5 font-medium text-right">
+                                    {t("autoScheduleScheduledH")}
+                                  </th>
+                                  <th className="px-4 py-1.5 font-medium text-right">
+                                    {t("autoScheduleContractH")}
+                                  </th>
+                                  <th className="px-4 py-1.5 font-medium text-right">
+                                    {t("autoScheduleUtilization")}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(
+                                  autoScheduleResult.employeeHours,
+                                )
+                                  .sort(
+                                    ([, a], [, b]) => b.scheduled - a.scheduled,
+                                  )
+                                  .map(([id, emp]) => (
+                                    <tr
+                                      key={id}
+                                      className="border-b last:border-0"
+                                    >
+                                      <td className="px-4 py-1.5 text-gray-800">
+                                        {emp.name}
+                                      </td>
+                                      <td className="px-4 py-1.5 text-right font-mono">
+                                        {emp.scheduled.toFixed(1)}h
+                                      </td>
+                                      <td className="px-4 py-1.5 text-right font-mono text-gray-500">
+                                        {emp.contract.toFixed(1)}h
+                                      </td>
+                                      <td className="px-4 py-1.5 text-right">
+                                        <span
+                                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                                            emp.ratio > 1
+                                              ? "bg-red-100 text-red-700"
+                                              : emp.ratio > 0.85
+                                                ? "bg-amber-100 text-amber-700"
+                                                : "bg-emerald-100 text-emerald-700"
+                                          }`}
+                                        >
+                                          {Math.round(emp.ratio * 100)}%
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                  {/* Unresolved shift details */}
+                  {autoScheduleResult.unresolvedShifts &&
+                    autoScheduleResult.unresolvedShifts.length > 0 && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                        <p className="text-xs font-medium text-amber-700 mb-1.5">
+                          {t("autoScheduleUnresolvedDetails")}
                         </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                        <div className="max-h-32 overflow-y-auto space-y-1">
+                          {autoScheduleResult.unresolvedShifts.map((u, i) => (
+                            <p key={i} className="text-xs text-gray-600">
+                              📅 {u.shiftDate} {u.startTime}–{u.endTime}
+                              {u.locationName
+                                ? ` (${u.locationName})`
+                                : ""}:{" "}
+                              <span className="text-amber-700">{u.reason}</span>
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-              {/* Action buttons */}
-              {autoScheduleResult.dryRun && (
-                <div className="flex items-center gap-3 pt-1">
-                  <Button
-                    onClick={() => handleAutoSchedule(false)}
-                    disabled={autoScheduleLoading}
-                  >
-                    <ZapIcon className="h-4 w-4 mr-1.5" />
-                    {autoScheduleLoading
-                      ? tc("loading")
-                      : t("autoScheduleApply")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setAutoScheduleResult(null);
-                      setShowEmployeeHours(false);
-                    }}
-                  >
-                    {t("autoScheduleBack")}
-                  </Button>
-                </div>
+                  {/* Action buttons */}
+                  {autoScheduleResult.dryRun && (
+                    <div className="flex items-center gap-3 pt-1">
+                      <Button
+                        onClick={() => handleAutoSchedule(false)}
+                        disabled={autoScheduleLoading}
+                      >
+                        <ZapIcon className="h-4 w-4 mr-1.5" />
+                        {autoScheduleLoading
+                          ? tc("loading")
+                          : t("autoScheduleApply")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAutoScheduleResult(null);
+                          setShowEmployeeHours(false);
+                        }}
+                      >
+                        {t("autoScheduleBack")}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ) : (
@@ -1399,23 +1462,37 @@ function DraggableShiftChip({
   canManage: boolean;
   onEdit: () => void;
 }) {
+  const t = useTranslations("shiftPlan");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: shift.id,
     disabled: !canManage,
   });
+  const isOpen = !shift.employee;
   return (
     <div
       ref={setNodeRef}
       {...(canManage ? { ...listeners, ...attributes } : {})}
       onClick={canManage ? onEdit : undefined}
-      className={`rounded px-1.5 py-0.5 text-[10px] truncate ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""}`}
-      style={{
-        backgroundColor: (shift.employee.color || "#10b981") + "20",
-        borderLeft: `2px solid ${shift.employee.color || "#10b981"}`,
-      }}
+      className={`rounded px-1.5 py-0.5 text-[10px] truncate ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isOpen ? "border border-dashed border-amber-400 bg-amber-50 text-amber-700" : ""}`}
+      style={
+        !isOpen
+          ? {
+              backgroundColor: (shift.employee!.color || "#10b981") + "20",
+              borderLeft: `2px solid ${shift.employee!.color || "#10b981"}`,
+            }
+          : undefined
+      }
     >
-      {shift.employee.firstName.charAt(0)}. {shift.employee.lastName}{" "}
-      {shift.startTime}–{shift.endTime}
+      {isOpen ? (
+        <>
+          ⚠ {t("openShiftLabel")} {shift.startTime}–{shift.endTime}
+        </>
+      ) : (
+        <>
+          {shift.employee!.firstName.charAt(0)}. {shift.employee!.lastName}{" "}
+          {shift.startTime}–{shift.endTime}
+        </>
+      )}
     </div>
   );
 }
@@ -1431,23 +1508,38 @@ function DraggableShiftCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("shiftPlan");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: shift.id,
     disabled: !canManage,
   });
+  const isOpen = !shift.employee;
   return (
     <div
       ref={setNodeRef}
       {...(canManage ? { ...listeners, ...attributes } : {})}
-      className={`group relative flex items-center gap-3 rounded-lg p-3 ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""}`}
-      style={{
-        backgroundColor: (shift.employee.color || "#10b981") + "15",
-        borderLeft: `3px solid ${shift.employee.color || "#10b981"}`,
-      }}
+      className={`group relative flex items-center gap-3 rounded-lg p-3 ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isOpen ? "border-2 border-dashed border-amber-300 bg-amber-50/60" : ""}`}
+      style={
+        !isOpen
+          ? {
+              backgroundColor: (shift.employee!.color || "#10b981") + "15",
+              borderLeft: `3px solid ${shift.employee!.color || "#10b981"}`,
+            }
+          : undefined
+      }
     >
+      {isOpen && (
+        <div className="flex items-center justify-center rounded-full bg-amber-100 p-1.5">
+          <UserPlusIcon className="h-4 w-4 text-amber-600" />
+        </div>
+      )}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm text-gray-900">
-          {shift.employee.firstName} {shift.employee.lastName}
+        <p
+          className={`font-medium text-sm ${isOpen ? "text-amber-700" : "text-gray-900"}`}
+        >
+          {isOpen
+            ? t("openShiftLabel")
+            : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
         </p>
         <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
           <span>
@@ -1460,6 +1552,11 @@ function DraggableShiftCard({
             </>
           )}
         </div>
+        {isOpen && (
+          <p className="text-[11px] text-amber-500 mt-0.5">
+            {t("openShiftCardHint")}
+          </p>
+        )}
       </div>
       {canManage && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

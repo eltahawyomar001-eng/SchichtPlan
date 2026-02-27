@@ -28,18 +28,30 @@ export async function PATCH(
 
     const body = await req.json();
 
-    // If date/time/employee changed, run conflict detection
-    if (body.date || body.startTime || body.endTime || body.employeeId) {
-      // Fetch the current shift to fill in unchanged fields
-      const currentShift = await prisma.shift.findFirst({
-        where: { id, workspaceId },
-      });
-      if (!currentShift) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
+    // Normalise employeeId: treat "" as null (unassign)
+    const hasEmployeeIdField = "employeeId" in body;
+    const newEmployeeId =
+      hasEmployeeIdField && !body.employeeId ? null : body.employeeId;
 
+    // Fetch current shift for conflict check and status logic
+    const currentShift = await prisma.shift.findFirst({
+      where: { id, workspaceId },
+    });
+    if (!currentShift) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Run conflict detection only when the shift will have an employee
+    const resolvedEmployeeId = hasEmployeeIdField
+      ? newEmployeeId
+      : currentShift.employeeId;
+
+    if (
+      resolvedEmployeeId &&
+      (body.date || body.startTime || body.endTime || hasEmployeeIdField)
+    ) {
       const conflicts = await checkShiftConflicts({
-        employeeId: body.employeeId || currentShift.employeeId,
+        employeeId: resolvedEmployeeId,
         date: body.date || currentShift.date.toISOString().split("T")[0],
         startTime: body.startTime || currentShift.startTime,
         endTime: body.endTime || currentShift.endTime,
@@ -55,16 +67,29 @@ export async function PATCH(
       }
     }
 
+    // Auto-derive status when assignment changes:
+    // - Unassigning → OPEN
+    // - Assigning an OPEN shift → SCHEDULED
+    let derivedStatus = body.status as string | undefined;
+    if (hasEmployeeIdField) {
+      if (!newEmployeeId) {
+        derivedStatus = "OPEN";
+      } else if (currentShift.status === "OPEN" && !body.status) {
+        derivedStatus = "SCHEDULED";
+      }
+    }
+
     const shift = await prisma.shift.updateMany({
       where: { id, workspaceId },
       data: {
         date: body.date ? new Date(body.date) : undefined,
         startTime: body.startTime,
         endTime: body.endTime,
-        employeeId: body.employeeId,
+        ...(hasEmployeeIdField ? { employeeId: newEmployeeId } : {}),
         locationId: body.locationId || null,
         notes: body.notes,
-        status: body.status,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        status: derivedStatus as any,
       },
     });
 

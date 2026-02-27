@@ -26,6 +26,10 @@ import {
   CheckCircleIcon,
   ChevronDownIcon,
   SettingsIcon,
+  XIcon,
+  ClockIcon,
+  MapPinIcon,
+  UserIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -101,6 +105,9 @@ export default function SchichtplanPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"week" | "month" | "day">("week");
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
+  const [detailShift, setDetailShift] = useState<Shift | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<string | null>(null);
+  const [unassignTarget, setUnassignTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     startTime: "08:00",
@@ -307,7 +314,44 @@ export default function SchichtplanPage() {
     try {
       await fetch(`/api/shifts/${deleteTarget}`, { method: "DELETE" });
       setDeleteTarget(null);
+      setDetailShift(null);
       fetchData();
+    } catch {
+      setLoadError(tc("errorOccurred"));
+    }
+  };
+
+  const handleCancelShift = async () => {
+    if (!cancelTarget) return;
+    try {
+      const res = await fetch(`/api/shifts/${cancelTarget}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELLED" }),
+      });
+      if (res.ok) {
+        setCancelTarget(null);
+        setDetailShift(null);
+        fetchData();
+      }
+    } catch {
+      setLoadError(tc("errorOccurred"));
+    }
+  };
+
+  const handleUnassignShift = async () => {
+    if (!unassignTarget) return;
+    try {
+      const res = await fetch(`/api/shifts/${unassignTarget}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId: "" }),
+      });
+      if (res.ok) {
+        setUnassignTarget(null);
+        setDetailShift(null);
+        fetchData();
+      }
     } catch {
       setLoadError(tc("errorOccurred"));
     }
@@ -633,6 +677,7 @@ export default function SchichtplanPage() {
                                 shift={shift}
                                 canManage={canManage}
                                 onEdit={() => openEditForm(shift)}
+                                onView={() => setDetailShift(shift)}
                               />
                             ))}
                             {dayShifts.length > 3 && (
@@ -685,6 +730,7 @@ export default function SchichtplanPage() {
                           canManage={canManage}
                           onEdit={() => openEditForm(shift)}
                           onDelete={() => setDeleteTarget(shift.id)}
+                          onView={() => setDetailShift(shift)}
                         />
                       ))
                     )}
@@ -754,6 +800,7 @@ export default function SchichtplanPage() {
                                   canManage={canManage}
                                   onEdit={() => openEditForm(shift)}
                                   onDelete={() => setDeleteTarget(shift.id)}
+                                  onView={() => setDetailShift(shift)}
                                 />
                               ))}
                             </CardContent>
@@ -819,6 +866,7 @@ export default function SchichtplanPage() {
                                     shift={shift}
                                     canManage={canManage}
                                     onEdit={() => openEditForm(shift)}
+                                    onView={() => setDetailShift(shift)}
                                   />
                                 ))
                               )}
@@ -1037,6 +1085,182 @@ export default function SchichtplanPage() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+
+      {/* Cancel Confirmation Dialog */}
+      {canManage && (
+        <ConfirmDialog
+          open={!!cancelTarget}
+          title={t("cancelConfirmTitle")}
+          message={t("cancelConfirmMessage")}
+          confirmLabel={t("cancelShiftAction")}
+          cancelLabel={tc("cancel")}
+          variant="danger"
+          onConfirm={handleCancelShift}
+          onCancel={() => setCancelTarget(null)}
+        />
+      )}
+
+      {/* Unassign Confirmation Dialog */}
+      {canManage && (
+        <ConfirmDialog
+          open={!!unassignTarget}
+          title={t("unassignConfirmTitle")}
+          message={t("unassignConfirmMessage")}
+          confirmLabel={t("unassignAction")}
+          cancelLabel={tc("cancel")}
+          variant="danger"
+          onConfirm={handleUnassignShift}
+          onCancel={() => setUnassignTarget(null)}
+        />
+      )}
+
+      {/* Shift Detail Modal */}
+      <Modal
+        open={!!detailShift}
+        onClose={() => setDetailShift(null)}
+        title={t("shiftDetailTitle")}
+        size="md"
+      >
+        {detailShift && (
+          <div className="space-y-5">
+            {/* Status badge */}
+            <div className="flex items-center gap-2">
+              <ShiftStatusBadge status={detailShift.status} />
+              {detailShift.status === "CANCELLED" && (
+                <span className="text-xs text-gray-400">
+                  {t("shiftCancelledNote")}
+                </span>
+              )}
+            </div>
+
+            {/* Shift details grid */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2">
+                  <ClockIcon className="h-4 w-4 text-gray-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">{t("form.date")}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {new Date(detailShift.date).toLocaleDateString(
+                      locale === "de" ? "de-DE" : "en-US",
+                      {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {detailShift.startTime} – {detailShift.endTime}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2">
+                  <UserIcon className="h-4 w-4 text-gray-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">{t("form.employee")}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {detailShift.employee
+                      ? `${detailShift.employee.firstName} ${detailShift.employee.lastName}`
+                      : t("openShiftLabel")}
+                  </p>
+                </div>
+              </div>
+
+              {detailShift.location && (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2">
+                    <MapPinIcon className="h-4 w-4 text-gray-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">
+                      {t("form.location")}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {detailShift.location.name}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {detailShift.notes && (
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <p className="text-xs text-gray-500 mb-1">
+                    {t("form.notes")}
+                  </p>
+                  <p className="text-sm text-gray-700">{detailShift.notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {canManage && detailShift.status !== "CANCELLED" && (
+              <div className="border-t pt-4 space-y-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  {t("shiftActions")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDetailShift(null);
+                      openEditForm(detailShift);
+                    }}
+                    className="w-full justify-start gap-2"
+                  >
+                    <EditIcon className="h-3.5 w-3.5" />
+                    {t("form.editTitle")}
+                  </Button>
+
+                  {detailShift.employee && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setUnassignTarget(detailShift.id);
+                      }}
+                      className="w-full justify-start gap-2"
+                    >
+                      <UserPlusIcon className="h-3.5 w-3.5" />
+                      {t("unassignAction")}
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setCancelTarget(detailShift.id);
+                    }}
+                    className="w-full justify-start gap-2 text-amber-600 hover:text-amber-700 hover:border-amber-300"
+                  >
+                    <XIcon className="h-3.5 w-3.5" />
+                    {t("cancelShiftAction")}
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setDeleteTarget(detailShift.id);
+                    }}
+                    className="w-full justify-start gap-2"
+                  >
+                    <TrashIcon className="h-3.5 w-3.5" />
+                    {tc("delete")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Auto-schedule modal */}
       <Modal
@@ -1586,10 +1810,12 @@ function DraggableShiftChip({
   shift,
   canManage,
   onEdit,
+  onView,
 }: {
   shift: Shift;
   canManage: boolean;
   onEdit: () => void;
+  onView: () => void;
 }) {
   const t = useTranslations("shiftPlan");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -1597,12 +1823,16 @@ function DraggableShiftChip({
     disabled: !canManage,
   });
   const isOpen = !shift.employee;
+  const isCancelled = shift.status === "CANCELLED";
   return (
     <div
       ref={setNodeRef}
       {...(canManage ? { ...listeners, ...attributes } : {})}
-      onClick={canManage ? onEdit : undefined}
-      className={`rounded px-1.5 py-0.5 text-[10px] truncate ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isOpen ? "border border-dashed border-amber-400 bg-amber-50 text-amber-700" : ""}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onView();
+      }}
+      className={`rounded px-1.5 py-0.5 text-[10px] truncate cursor-pointer ${canManage ? "active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isCancelled ? "opacity-50 line-through" : ""} ${isOpen ? "border border-dashed border-amber-400 bg-amber-50 text-amber-700" : ""}`}
       style={
         !isOpen
           ? {
@@ -1631,11 +1861,13 @@ function DraggableShiftCard({
   canManage,
   onEdit,
   onDelete,
+  onView,
 }: {
   shift: Shift;
   canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onView: () => void;
 }) {
   const t = useTranslations("shiftPlan");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -1643,11 +1875,16 @@ function DraggableShiftCard({
     disabled: !canManage,
   });
   const isOpen = !shift.employee;
+  const isCancelled = shift.status === "CANCELLED";
   return (
     <div
       ref={setNodeRef}
       {...(canManage ? { ...listeners, ...attributes } : {})}
-      className={`group relative flex items-center gap-3 rounded-lg p-3 ${canManage ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isOpen ? "border-2 border-dashed border-amber-300 bg-amber-50/60" : ""}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onView();
+      }}
+      className={`group relative flex items-center gap-3 rounded-lg p-3 cursor-pointer ${canManage ? "active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isCancelled ? "opacity-50" : ""} ${isOpen ? "border-2 border-dashed border-amber-300 bg-amber-50/60" : ""}`}
       style={
         !isOpen
           ? {
@@ -1663,13 +1900,20 @@ function DraggableShiftCard({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p
-          className={`font-medium text-sm ${isOpen ? "text-amber-700" : "text-gray-900"}`}
-        >
-          {isOpen
-            ? t("openShiftLabel")
-            : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p
+            className={`font-medium text-sm ${isCancelled ? "line-through text-gray-400" : isOpen ? "text-amber-700" : "text-gray-900"}`}
+          >
+            {isOpen
+              ? t("openShiftLabel")
+              : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
+          </p>
+          {isCancelled && (
+            <span className="inline-flex items-center rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-medium text-gray-500">
+              {t("statusCancelled")}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
           <span>
             {shift.startTime} – {shift.endTime}
@@ -1681,7 +1925,7 @@ function DraggableShiftCard({
             </>
           )}
         </div>
-        {isOpen && (
+        {isOpen && !isCancelled && (
           <p className="text-[11px] text-amber-500 mt-0.5">
             {t("openShiftCardHint")}
           </p>
@@ -1690,13 +1934,19 @@ function DraggableShiftCard({
       {canManage && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={onEdit}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-emerald-500"
           >
             <EditIcon className="h-4 w-4" />
           </button>
           <button
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded p-1.5 text-gray-400 hover:bg-white/50 hover:text-red-500"
           >
             <TrashIcon className="h-4 w-4" />
@@ -1704,5 +1954,59 @@ function DraggableShiftCard({
         </div>
       )}
     </div>
+  );
+}
+
+// --- Status Badge ---
+function ShiftStatusBadge({ status }: { status: string }) {
+  const t = useTranslations("shiftPlan");
+  const config: Record<string, { bg: string; text: string; label: string }> = {
+    SCHEDULED: {
+      bg: "bg-blue-100",
+      text: "text-blue-700",
+      label: t("statusScheduled"),
+    },
+    CONFIRMED: {
+      bg: "bg-emerald-100",
+      text: "text-emerald-700",
+      label: t("statusConfirmed"),
+    },
+    IN_PROGRESS: {
+      bg: "bg-indigo-100",
+      text: "text-indigo-700",
+      label: t("statusInProgress"),
+    },
+    COMPLETED: {
+      bg: "bg-gray-100",
+      text: "text-gray-700",
+      label: t("statusCompleted"),
+    },
+    CANCELLED: {
+      bg: "bg-red-100",
+      text: "text-red-700",
+      label: t("statusCancelled"),
+    },
+    NO_SHOW: {
+      bg: "bg-orange-100",
+      text: "text-orange-700",
+      label: t("statusNoShow"),
+    },
+    OPEN: {
+      bg: "bg-amber-100",
+      text: "text-amber-700",
+      label: t("statusOpen"),
+    },
+  };
+  const c = config[status] ?? {
+    bg: "bg-gray-100",
+    text: "text-gray-600",
+    label: status,
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${c.bg} ${c.text}`}
+    >
+      {c.label}
+    </span>
   );
 }

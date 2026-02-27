@@ -228,7 +228,12 @@
       "repeatWeeks": "Repeat (weeks)",
       "repeatWeeksHint": "0 = no repeat. Specifies how many weeks the shift is repeated for.",
       "openShift": "Open Shift (unassigned)",
-      "openShiftHint": "Shift will be created without an employee. AI scheduling can auto-assign it later."
+      "openShiftHint": "Shift will be created without an employee. AI scheduling can auto-assign it later.",
+      "timeError": "End must be after start",
+      "duration": "{hours}h {minutes}m",
+      "dateAndTime": "Date & Time",
+      "assignment": "Assignment",
+      "additional": "Additional"
     },
     "viewDay": "Day",
     "viewWeek": "Week",

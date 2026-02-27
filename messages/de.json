@@ -228,7 +228,12 @@
       "repeatWeeks": "Wiederholen (Wochen)",
       "repeatWeeksHint": "0 = keine Wiederholung. Gibt an, über wie viele Wochen die Schicht wiederholt wird.",
       "openShift": "Offene Schicht (unbesetzt)",
-      "openShiftHint": "Schicht wird ohne Zuweisung erstellt. Die KI-Planung kann diese Schicht später automatisch zuweisen."
+      "openShiftHint": "Schicht wird ohne Zuweisung erstellt. Die KI-Planung kann diese Schicht später automatisch zuweisen.",
+      "timeError": "Ende muss nach Beginn liegen",
+      "duration": "{hours}h {minutes}m",
+      "dateAndTime": "Datum & Zeit",
+      "assignment": "Zuweisung",
+      "additional": "Weitere Angaben"
     },
     "viewDay": "Tag",
     "viewWeek": "Woche",

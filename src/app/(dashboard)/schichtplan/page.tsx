@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
@@ -30,6 +30,7 @@ import {
   ClockIcon,
   MapPinIcon,
   UserIcon,
+  CalendarIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -260,8 +261,22 @@ export default function SchichtplanPage() {
     setShowForm(true);
   };
 
+  // Computed: shift duration & time validation
+  const timeValidation = useMemo(() => {
+    const { startTime, endTime } = formData;
+    if (!startTime || !endTime) return { valid: true, hours: 0, minutes: 0 };
+    const [sh, sm] = startTime.split(":").map(Number);
+    const [eh, em] = endTime.split(":").map(Number);
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    const diff = endMin - startMin;
+    if (diff <= 0) return { valid: false, hours: 0, minutes: 0 };
+    return { valid: true, hours: Math.floor(diff / 60), minutes: diff % 60 };
+  }, [formData.startTime, formData.endTime]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!timeValidation.valid) return;
     setFormError(null);
     try {
       const url = editingShift
@@ -915,138 +930,222 @@ export default function SchichtplanPage() {
           onClose={() => setShowForm(false)}
           title={editingShift ? t("form.editTitle") : t("form.title")}
           size="md"
+          footer={
+            <ModalFooter className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+                className="flex-1 sm:flex-none"
+              >
+                {tc("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                form="shift-form"
+                className="flex-1 sm:flex-none"
+                disabled={!timeValidation.valid}
+              >
+                {editingShift ? t("form.update") : t("form.submit")}
+              </Button>
+            </ModalFooter>
+          }
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">{t("form.date")} *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, date: e.target.value }))
-                }
-                required
-              />
-            </div>
+          <form id="shift-form" onSubmit={handleSubmit} className="space-y-5">
+            {/* ── Section: Date & Time ── */}
+            <fieldset className="space-y-3">
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <CalendarIcon className="h-4 w-4 text-emerald-500" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {t("form.dateAndTime")}
+                </span>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startTime">{t("form.start")} *</Label>
+              <div>
+                <Label htmlFor="date">{t("form.date")}</Label>
                 <Input
-                  id="startTime"
-                  type="time"
-                  value={formData.startTime}
+                  id="date"
+                  type="date"
+                  value={formData.date}
                   onChange={(e) =>
-                    setFormData((p) => ({
-                      ...p,
-                      startTime: e.target.value,
-                    }))
+                    setFormData((p) => ({ ...p, date: e.target.value }))
                   }
                   required
+                  className="mt-1.5"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="endTime">{t("form.end")} *</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) =>
-                    setFormData((p) => ({
-                      ...p,
-                      endTime: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="employeeId">{t("form.employee")}</Label>
-              <Select
-                id="employeeId"
-                value={formData.employeeId}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    employeeId: e.target.value,
-                  }))
-                }
-              >
-                <option value="">— {t("form.openShift")} —</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName}
-                  </option>
-                ))}
-              </Select>
-              {!formData.employeeId && (
-                <p className="text-xs text-amber-600">
-                  {t("form.openShiftHint")}
-                </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="startTime">{t("form.start")}</Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        startTime: e.target.value,
+                      }))
+                    }
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endTime">{t("form.end")}</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        endTime: e.target.value,
+                      }))
+                    }
+                    required
+                    className={`mt-1.5 ${!timeValidation.valid ? "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400" : ""}`}
+                  />
+                </div>
+              </div>
+
+              {/* Duration badge or time error */}
+              {formData.startTime && formData.endTime && (
+                <div className="flex items-center gap-2">
+                  {timeValidation.valid ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                      <ClockIcon className="h-3 w-3" />
+                      {t("form.duration", {
+                        hours: timeValidation.hours,
+                        minutes: timeValidation.minutes,
+                      })}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600">
+                      <AlertCircleIcon className="h-3 w-3" />
+                      {t("form.timeError")}
+                    </span>
+                  )}
+                </div>
               )}
-            </div>
+            </fieldset>
 
-            <div className="space-y-2">
-              <Label htmlFor="locationId">{t("form.location")}</Label>
-              <Select
-                id="locationId"
-                value={formData.locationId}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    locationId: e.target.value,
-                  }))
-                }
-              >
-                <option value="">{t("form.noLocation")}</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <hr className="border-gray-100" />
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">{t("form.notes")}</Label>
-              <Input
-                id="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, notes: e.target.value }))
-                }
-                placeholder={t("form.notesPlaceholder")}
-              />
-            </div>
+            {/* ── Section: Assignment ── */}
+            <fieldset className="space-y-3">
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <UserIcon className="h-4 w-4 text-emerald-500" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {t("form.assignment")}
+                </span>
+              </div>
 
-            {/* Repeat weeks (only for new shifts) */}
-            {!editingShift && (
-              <div className="space-y-2">
-                <Label htmlFor="repeatWeeks">{t("form.repeatWeeks")}</Label>
-                <Input
-                  id="repeatWeeks"
-                  type="number"
-                  min="0"
-                  max="52"
-                  value={formData.repeatWeeks}
+              <div>
+                <Label htmlFor="employeeId">{t("form.employee")}</Label>
+                <Select
+                  id="employeeId"
+                  value={formData.employeeId}
                   onChange={(e) =>
                     setFormData((p) => ({
                       ...p,
-                      repeatWeeks: parseInt(e.target.value) || 0,
+                      employeeId: e.target.value,
                     }))
                   }
-                />
-                <p className="text-xs text-gray-500">
-                  {t("form.repeatWeeksHint")}
-                </p>
+                  className="mt-1.5"
+                >
+                  <option value="">— {t("form.openShift")} —</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName}
+                    </option>
+                  ))}
+                </Select>
+                {!formData.employeeId && (
+                  <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 p-2.5">
+                    <SparklesIcon className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      {t("form.openShiftHint")}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+
+              <div>
+                <Label htmlFor="locationId">{t("form.location")}</Label>
+                <Select
+                  id="locationId"
+                  value={formData.locationId}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      locationId: e.target.value,
+                    }))
+                  }
+                  className="mt-1.5"
+                >
+                  <option value="">{t("form.noLocation")}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </fieldset>
+
+            <hr className="border-gray-100" />
+
+            {/* ── Section: Additional ── */}
+            <fieldset className="space-y-3">
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <EditIcon className="h-4 w-4 text-emerald-500" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {t("form.additional")}
+                </span>
+              </div>
+
+              <div>
+                <Label htmlFor="notes">{t("form.notes")}</Label>
+                <Input
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, notes: e.target.value }))
+                  }
+                  placeholder={t("form.notesPlaceholder")}
+                  className="mt-1.5"
+                />
+              </div>
+
+              {/* Repeat weeks (only for new shifts) */}
+              {!editingShift && (
+                <div>
+                  <Label htmlFor="repeatWeeks">{t("form.repeatWeeks")}</Label>
+                  <Input
+                    id="repeatWeeks"
+                    type="number"
+                    min="0"
+                    max="52"
+                    value={formData.repeatWeeks}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        repeatWeeks: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="mt-1.5"
+                  />
+                  <p className="mt-1 text-xs text-gray-400">
+                    {t("form.repeatWeeksHint")}
+                  </p>
+                </div>
+              )}
+            </fieldset>
 
             {formError && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-800">
                 <p className="font-semibold mb-1">{t("conflictError")}</p>
                 {formError.split("\n").map((line, i) => (
                   <p key={i} className="ml-2">
@@ -1055,19 +1154,6 @@ export default function SchichtplanPage() {
                 ))}
               </div>
             )}
-
-            <ModalFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowForm(false)}
-              >
-                {tc("cancel")}
-              </Button>
-              <Button type="submit">
-                {editingShift ? t("form.update") : t("form.submit")}
-              </Button>
-            </ModalFooter>
           </form>
         </Modal>
       </PageContent>

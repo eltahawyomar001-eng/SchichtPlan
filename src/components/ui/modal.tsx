@@ -30,12 +30,7 @@ const sizeMap = {
 /**
  * Unified modal overlay.
  * Provides consistent backdrop blur, rounded corners, entrance animation,
- * and mobile bottom-sheet behavior (items-end on mobile, items-center on sm+).
- *
- * Usage:
- *   <Modal open={isOpen} onClose={() => setOpen(false)} title="Create Employee" size="lg">
- *     <form>…</form>
- *   </Modal>
+ * iOS/Android safe-area support, and mobile bottom-sheet behavior.
  */
 export function Modal({
   open,
@@ -74,20 +69,30 @@ export function Modal({
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingLeft: "env(safe-area-inset-left)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
       <div
         className={cn(
-          "w-full mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 max-h-[90vh] overflow-y-auto",
+          "w-full mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100",
+          "max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col",
+          "animate-slide-up sm:animate-fade-in",
           sizeMap[size],
           className,
         )}
+        style={{
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
       >
-        {/* Header */}
+        {/* Header — sticky */}
         {title && (
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 shrink-0">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-gray-900">
                 {title}
@@ -105,8 +110,15 @@ export function Modal({
           </div>
         )}
 
-        {/* Body */}
-        <div className={title ? "p-5 sm:p-6" : ""}>{children}</div>
+        {/* Body — scrollable */}
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto overscroll-contain",
+            title ? "p-5 sm:p-6" : "",
+          )}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -114,6 +126,7 @@ export function Modal({
 
 /**
  * Standard footer for modal forms — right-aligned cancel + submit buttons.
+ * Sticky at the bottom with safe-area support.
  */
 export function ModalFooter({
   children,

@@ -85,3 +85,4 @@ export { TabletIcon } from "./TabletIcon";
 export { MonitorIcon } from "./MonitorIcon";
 export { HeadsetIcon } from "./HeadsetIcon";
 export { QuoteIcon } from "./QuoteIcon";
+export { SparklesIcon } from "./SparklesIcon";

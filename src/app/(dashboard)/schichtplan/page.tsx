@@ -22,6 +22,10 @@ import {
   ZapIcon,
   UserPlusIcon,
   AlertCircleIcon,
+  SparklesIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  SettingsIcon,
 } from "@/components/icons";
 import {
   startOfWeek,
@@ -1043,56 +1047,443 @@ export default function SchichtplanPage() {
           setShowEmployeeHours(false);
         }}
         title={t("autoScheduleTitle")}
-        size="lg"
+        size="xl"
       >
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-600">{t("autoScheduleDesc")}</p>
+        {/* ── Loading State ── */}
+        {autoScheduleLoading && (
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16 space-y-5">
+            <div className="relative">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+                <SparklesIcon className="h-7 w-7 text-white ai-pulse" />
+              </div>
+              <div
+                className="absolute -inset-2 rounded-2xl border-2 border-emerald-300/40 ai-spin"
+                style={{
+                  borderRightColor: "transparent",
+                  borderBottomColor: "transparent",
+                }}
+              />
+            </div>
+            <div className="text-center space-y-1.5">
+              <p className="text-sm font-semibold text-gray-900">
+                {t("autoScheduleLoadingTitle")}
+              </p>
+              <p className="text-xs text-gray-500">
+                {t("autoScheduleLoadingDesc")}
+              </p>
+            </div>
+            <div className="w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full w-1/2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full ai-progress-bar" />
+            </div>
+          </div>
+        )}
 
-          {/* Date range inputs */}
-          {autoScheduleRange && !autoScheduleResult && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>{t("autoScheduleFrom")}</Label>
-                  <Input
-                    type="date"
-                    value={autoScheduleRange.startDate}
-                    onChange={(e) =>
-                      setAutoScheduleRange((r) =>
-                        r ? { ...r, startDate: e.target.value } : r,
-                      )
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>{t("autoScheduleTo")}</Label>
-                  <Input
-                    type="date"
-                    value={autoScheduleRange.endDate}
-                    onChange={(e) =>
-                      setAutoScheduleRange((r) =>
-                        r ? { ...r, endDate: e.target.value } : r,
-                      )
-                    }
-                  />
-                </div>
-                <p className="col-span-2 text-xs text-gray-400">
-                  {t("autoScheduleMaxDays")}
+        {/* ── Error State ── */}
+        {!autoScheduleLoading && autoScheduleError && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-4 sm:p-5 flex items-start gap-3">
+              <div className="rounded-full bg-red-100 p-2 shrink-0">
+                <AlertCircleIcon className="h-4 w-4 text-red-600" />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <p className="text-sm font-semibold text-red-800">
+                  {t("autoScheduleErrorTitle")}
                 </p>
+                <p className="text-sm text-red-700">{autoScheduleError}</p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setAutoScheduleError(null);
+                  setAutoScheduleResult(null);
+                }}
+              >
+                {t("autoScheduleBack")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Results State ── */}
+        {!autoScheduleLoading && !autoScheduleError && autoScheduleResult ? (
+          <div className="space-y-5">
+            {/* No open shifts — empty state */}
+            {autoScheduleResult.totalOpenShifts === 0 ? (
+              <div className="flex flex-col items-center text-center py-6 sm:py-10 space-y-4">
+                <div className="h-14 w-14 rounded-2xl bg-amber-50 flex items-center justify-center">
+                  <AlertCircleIcon className="h-7 w-7 text-amber-500" />
+                </div>
+                <div className="space-y-1.5 max-w-xs">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {t("autoScheduleNoOpenShiftsTitle")}
+                  </p>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {t("autoScheduleNoOpenShiftsDesc")}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-4 w-full max-w-sm text-left space-y-2.5">
+                  <p className="text-xs font-semibold text-gray-700">
+                    {t("autoScheduleNoOpenShiftsSteps")}
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      t("autoScheduleNoOpenShiftsStep1"),
+                      t("autoScheduleNoOpenShiftsStep2"),
+                      t("autoScheduleNoOpenShiftsStep3"),
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700 shrink-0">
+                          {i + 1}
+                        </span>
+                        <p className="text-xs text-gray-600 leading-relaxed pt-0.5">
+                          {step}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowAutoSchedule(false);
+                    setAutoScheduleResult(null);
+                  }}
+                  className="mt-2"
+                >
+                  {t("autoScheduleClose")}
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Status banner */}
+                <div
+                  className={`rounded-2xl p-4 sm:p-5 ${autoScheduleResult.dryRun ? "bg-gradient-to-br from-amber-50 to-orange-50 ring-1 ring-amber-200/60" : "bg-gradient-to-br from-emerald-50 to-teal-50 ring-1 ring-emerald-200/60"}`}
+                >
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div
+                      className={`rounded-full p-1.5 ${autoScheduleResult.dryRun ? "bg-amber-100" : "bg-emerald-100"}`}
+                    >
+                      {autoScheduleResult.dryRun ? (
+                        <SparklesIcon className="h-4 w-4 text-amber-600" />
+                      ) : (
+                        <CheckCircleIcon className="h-4 w-4 text-emerald-600" />
+                      )}
+                    </div>
+                    <p
+                      className={`text-sm font-semibold ${autoScheduleResult.dryRun ? "text-amber-800" : "text-emerald-800"}`}
+                    >
+                      {autoScheduleResult.dryRun
+                        ? t("autoScheduleDryRun")
+                        : t("autoScheduleDone")}
+                    </p>
+                  </div>
+
+                  {/* Stat cards — 2×2 on mobile, 4-col on tablet+ */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-1 shadow-sm">
+                      <p className="text-xl sm:text-2xl font-bold text-emerald-700 ai-count-up">
+                        {autoScheduleResult.assigned}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {t("autoScheduleAssigned")}
+                      </p>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-2 shadow-sm">
+                      <p className="text-xl sm:text-2xl font-bold text-amber-600 ai-count-up">
+                        {autoScheduleResult.unresolved}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {t("autoScheduleUnresolved")}
+                      </p>
+                    </div>
+                    {autoScheduleResult.fairnessScore != null && (
+                      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-3 shadow-sm">
+                        <p className="text-xl sm:text-2xl font-bold text-blue-600 ai-count-up">
+                          {Math.round(autoScheduleResult.fairnessScore * 100)}%
+                        </p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {t("autoScheduleFairness")}
+                        </p>
+                      </div>
+                    )}
+                    {autoScheduleResult.totalCostEstimate != null && (
+                      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-4 shadow-sm">
+                        <p className="text-xl sm:text-2xl font-bold text-gray-700 ai-count-up">
+                          €{autoScheduleResult.totalCostEstimate.toFixed(0)}
+                        </p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {t("autoScheduleCost")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Fairness score bar */}
+                {autoScheduleResult.fairnessScore != null && (
+                  <div className="space-y-2 px-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-medium text-gray-700">
+                        {t("autoScheduleFairnessLabel")}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          autoScheduleResult.fairnessScore >= 0.8
+                            ? "bg-emerald-100 text-emerald-700"
+                            : autoScheduleResult.fairnessScore >= 0.6
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {autoScheduleResult.fairnessScore >= 0.8
+                          ? t("autoScheduleFairnessGood")
+                          : autoScheduleResult.fairnessScore >= 0.6
+                            ? t("autoScheduleFairnessOk")
+                            : t("autoScheduleFairnessPoor")}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${
+                          autoScheduleResult.fairnessScore >= 0.8
+                            ? "bg-emerald-500"
+                            : autoScheduleResult.fairnessScore >= 0.6
+                              ? "bg-amber-500"
+                              : "bg-red-500"
+                        }`}
+                        style={{
+                          width: `${Math.round(autoScheduleResult.fairnessScore * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Employee hours — collapsible */}
+                {autoScheduleResult.employeeHours &&
+                  Object.keys(autoScheduleResult.employeeHours).length > 0 && (
+                    <div className="rounded-xl border border-gray-100 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowEmployeeHours((s) => !s)}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/80 hover:bg-gray-100/80 text-sm font-medium text-gray-700 transition-colors"
+                      >
+                        <span>{t("autoScheduleEmployeeHours")}</span>
+                        <ChevronDownIcon
+                          className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${showEmployeeHours ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {showEmployeeHours && (
+                        <div className="max-h-52 overflow-y-auto overscroll-contain border-t border-gray-100">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-gray-50/50 text-left text-xs text-gray-500 sticky top-0">
+                                <th className="px-4 py-2 font-medium">
+                                  {t("autoScheduleEmployee")}
+                                </th>
+                                <th className="px-4 py-2 font-medium text-right">
+                                  {t("autoScheduleScheduledH")}
+                                </th>
+                                <th className="px-4 py-2 font-medium text-right hidden sm:table-cell">
+                                  {t("autoScheduleContractH")}
+                                </th>
+                                <th className="px-4 py-2 font-medium text-right">
+                                  {t("autoScheduleUtilization")}
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                              {Object.entries(autoScheduleResult.employeeHours)
+                                .sort(
+                                  ([, a], [, b]) => b.scheduled - a.scheduled,
+                                )
+                                .map(([id, emp]) => (
+                                  <tr
+                                    key={id}
+                                    className="hover:bg-gray-50/50 transition-colors"
+                                  >
+                                    <td className="px-4 py-2 text-gray-800 font-medium">
+                                      {emp.name}
+                                    </td>
+                                    <td className="px-4 py-2 text-right font-mono text-gray-600">
+                                      {emp.scheduled.toFixed(1)}h
+                                    </td>
+                                    <td className="px-4 py-2 text-right font-mono text-gray-400 hidden sm:table-cell">
+                                      {emp.contract.toFixed(1)}h
+                                    </td>
+                                    <td className="px-4 py-2 text-right">
+                                      <span
+                                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                          emp.ratio > 1
+                                            ? "bg-red-100 text-red-700"
+                                            : emp.ratio > 0.85
+                                              ? "bg-amber-100 text-amber-700"
+                                              : "bg-emerald-100 text-emerald-700"
+                                        }`}
+                                      >
+                                        {Math.round(emp.ratio * 100)}%
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                {/* Unresolved shift details */}
+                {autoScheduleResult.unresolvedShifts &&
+                  autoScheduleResult.unresolvedShifts.length > 0 && (
+                    <div className="rounded-xl bg-amber-50/60 ring-1 ring-amber-200/40 p-4 space-y-2">
+                      <p className="text-xs font-semibold text-amber-800">
+                        {t("autoScheduleUnresolvedDetails")}
+                      </p>
+                      <div className="max-h-36 overflow-y-auto overscroll-contain space-y-1.5">
+                        {autoScheduleResult.unresolvedShifts.map((u, i) => (
+                          <div
+                            key={i}
+                            className="flex items-start gap-2 text-xs"
+                          >
+                            <span className="text-amber-400 mt-px shrink-0">
+                              ●
+                            </span>
+                            <span className="text-gray-700">
+                              {u.shiftDate} {u.startTime}–{u.endTime}
+                              {u.locationName ? ` · ${u.locationName}` : ""}
+                            </span>
+                            <span className="text-amber-600 font-medium ml-auto shrink-0">
+                              {u.reason}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Action buttons — sticky feel */}
+                {autoScheduleResult.dryRun && (
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setAutoScheduleResult(null);
+                        setShowEmployeeHours(false);
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      {t("autoScheduleBack")}
+                    </Button>
+                    <Button
+                      onClick={() => handleAutoSchedule(false)}
+                      disabled={autoScheduleLoading}
+                      className="w-full sm:w-auto"
+                    >
+                      <SparklesIcon className="h-4 w-4 mr-1.5" />
+                      {t("autoScheduleApply")}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Done — close button for applied results */}
+                {!autoScheduleResult.dryRun && (
+                  <div className="flex justify-center pt-1">
+                    <Button
+                      onClick={() => {
+                        setShowAutoSchedule(false);
+                        setAutoScheduleResult(null);
+                        setShowEmployeeHours(false);
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      <CheckCircleIcon className="h-4 w-4 mr-1.5" />
+                      {t("autoScheduleClose")}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ) : (
+          /* ── Configure State (initial) ── */
+          !autoScheduleLoading &&
+          !autoScheduleError && (
+            <div className="space-y-5">
+              {/* AI branding header */}
+              <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4 ring-1 ring-emerald-100/60">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-200">
+                  <SparklesIcon className="h-5 w-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {t("autoScheduleTitle")}
+                  </p>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {t("autoScheduleDesc")}
+                  </p>
+                </div>
               </div>
 
-              {/* Optimization weights config */}
-              <div className="border-t pt-3">
+              {/* Date range */}
+              {autoScheduleRange && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    {t("autoScheduleDateRange")}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("autoScheduleFrom")}</Label>
+                      <Input
+                        type="date"
+                        value={autoScheduleRange.startDate}
+                        onChange={(e) =>
+                          setAutoScheduleRange((r) =>
+                            r ? { ...r, startDate: e.target.value } : r,
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("autoScheduleTo")}</Label>
+                      <Input
+                        type="date"
+                        value={autoScheduleRange.endDate}
+                        onChange={(e) =>
+                          setAutoScheduleRange((r) =>
+                            r ? { ...r, endDate: e.target.value } : r,
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-400">
+                    {t("autoScheduleMaxDays")}
+                  </p>
+                </div>
+              )}
+
+              {/* Weights config — collapsible */}
+              <div className="rounded-xl border border-gray-100 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setShowWeightsConfig((s) => !s)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/80 hover:bg-gray-100/80 text-sm font-medium text-gray-700 transition-colors"
                 >
-                  <span>{showWeightsConfig ? "▼" : "▶"}</span>
-                  {t("autoScheduleWeights")}
+                  <span className="flex items-center gap-2">
+                    <SettingsIcon className="h-4 w-4 text-gray-400" />
+                    {t("autoScheduleWeights")}
+                  </span>
+                  <ChevronDownIcon
+                    className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${showWeightsConfig ? "rotate-180" : ""}`}
+                  />
                 </button>
                 {showWeightsConfig && (
-                  <div className="mt-3 space-y-3 bg-gray-50 rounded-xl p-4">
+                  <div className="p-4 space-y-3 border-t border-gray-100">
                     <p className="text-xs text-gray-500">
                       {t("autoScheduleWeightsDesc")}
                     </p>
@@ -1118,7 +1509,7 @@ export default function SchichtplanPage() {
                       ] as const
                     ).map(({ key, label }) => (
                       <div key={key} className="flex items-center gap-3">
-                        <label className="text-sm text-gray-600 w-32 shrink-0">
+                        <label className="text-xs sm:text-sm text-gray-600 w-24 sm:w-28 shrink-0">
                           {label}
                         </label>
                         <input
@@ -1133,9 +1524,9 @@ export default function SchichtplanPage() {
                               [key]: parseInt(e.target.value),
                             }))
                           }
-                          className="flex-1 accent-emerald-600"
+                          className="flex-1 accent-emerald-600 h-1.5"
                         />
-                        <span className="text-sm font-mono text-gray-500 w-8 text-right">
+                        <span className="text-xs font-mono text-gray-500 w-8 text-right tabular-nums">
                           {autoScheduleWeights[key]}
                         </span>
                       </div>
@@ -1143,291 +1534,29 @@ export default function SchichtplanPage() {
                   </div>
                 )}
               </div>
+
+              {/* Action buttons — full-width on mobile for easy tapping */}
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => handleAutoSchedule(true)}
+                  disabled={autoScheduleLoading}
+                  className="w-full sm:w-auto"
+                >
+                  {t("autoSchedulePreview")}
+                </Button>
+                <Button
+                  onClick={() => handleAutoSchedule(false)}
+                  disabled={autoScheduleLoading}
+                  className="w-full sm:w-auto"
+                >
+                  <SparklesIcon className="h-4 w-4 mr-1.5" />
+                  {t("autoScheduleRun")}
+                </Button>
+              </div>
             </div>
-          )}
-
-          {autoScheduleError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-              {autoScheduleError}
-            </div>
-          )}
-
-          {autoScheduleResult ? (
-            <div className="space-y-4">
-              {/* No open shifts info banner */}
-              {autoScheduleResult.totalOpenShifts === 0 ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <AlertCircleIcon className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-                    <div className="space-y-2">
-                      <p className="font-medium text-sm text-amber-800">
-                        {t("autoScheduleNoOpenShiftsTitle")}
-                      </p>
-                      <p className="text-sm text-amber-700">
-                        {t("autoScheduleNoOpenShiftsDesc")}
-                      </p>
-                      <div className="rounded-lg bg-white/70 p-3 space-y-1.5">
-                        <p className="text-xs font-medium text-gray-700">
-                          {t("autoScheduleNoOpenShiftsSteps")}
-                        </p>
-                        <ol className="text-xs text-gray-600 space-y-1 list-decimal list-inside">
-                          <li>{t("autoScheduleNoOpenShiftsStep1")}</li>
-                          <li>{t("autoScheduleNoOpenShiftsStep2")}</li>
-                          <li>{t("autoScheduleNoOpenShiftsStep3")}</li>
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setShowAutoSchedule(false);
-                        setAutoScheduleResult(null);
-                      }}
-                    >
-                      {t("autoScheduleClose")}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Summary banner */}
-                  <div
-                    className={`rounded-xl border p-4 space-y-3 ${autoScheduleResult.dryRun ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
-                  >
-                    <p
-                      className={`font-medium text-sm ${autoScheduleResult.dryRun ? "text-amber-700" : "text-emerald-700"}`}
-                    >
-                      {autoScheduleResult.dryRun
-                        ? t("autoScheduleDryRun")
-                        : t("autoScheduleDone")}
-                    </p>
-
-                    {/* Stat cards row */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                        <p className="text-lg font-bold text-emerald-700">
-                          {autoScheduleResult.assigned}
-                        </p>
-                        <p className="text-[11px] text-gray-500">
-                          {t("autoScheduleAssigned")}
-                        </p>
-                      </div>
-                      <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                        <p className="text-lg font-bold text-amber-600">
-                          {autoScheduleResult.unresolved}
-                        </p>
-                        <p className="text-[11px] text-gray-500">
-                          {t("autoScheduleUnresolved")}
-                        </p>
-                      </div>
-                      {autoScheduleResult.fairnessScore != null && (
-                        <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                          <p className="text-lg font-bold text-blue-600">
-                            {Math.round(autoScheduleResult.fairnessScore * 100)}
-                            %
-                          </p>
-                          <p className="text-[11px] text-gray-500">
-                            {t("autoScheduleFairness")}
-                          </p>
-                        </div>
-                      )}
-                      {autoScheduleResult.totalCostEstimate != null && (
-                        <div className="bg-white/70 rounded-lg p-2.5 text-center">
-                          <p className="text-lg font-bold text-gray-700">
-                            €{autoScheduleResult.totalCostEstimate.toFixed(0)}
-                          </p>
-                          <p className="text-[11px] text-gray-500">
-                            {t("autoScheduleCost")}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Fairness score bar */}
-                    {autoScheduleResult.fairnessScore != null && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-gray-600">
-                          <span>{t("autoScheduleFairnessLabel")}</span>
-                          <span
-                            className={
-                              autoScheduleResult.fairnessScore >= 0.8
-                                ? "text-emerald-600 font-medium"
-                                : autoScheduleResult.fairnessScore >= 0.6
-                                  ? "text-amber-600 font-medium"
-                                  : "text-red-600 font-medium"
-                            }
-                          >
-                            {autoScheduleResult.fairnessScore >= 0.8
-                              ? t("autoScheduleFairnessGood")
-                              : autoScheduleResult.fairnessScore >= 0.6
-                                ? t("autoScheduleFairnessOk")
-                                : t("autoScheduleFairnessPoor")}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              autoScheduleResult.fairnessScore >= 0.8
-                                ? "bg-emerald-500"
-                                : autoScheduleResult.fairnessScore >= 0.6
-                                  ? "bg-amber-500"
-                                  : "bg-red-500"
-                            }`}
-                            style={{
-                              width: `${Math.round(autoScheduleResult.fairnessScore * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Employee hours breakdown */}
-                  {autoScheduleResult.employeeHours &&
-                    Object.keys(autoScheduleResult.employeeHours).length >
-                      0 && (
-                      <div className="border rounded-xl overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => setShowEmployeeHours((s) => !s)}
-                          className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-sm font-medium text-gray-700"
-                        >
-                          <span>{t("autoScheduleEmployeeHours")}</span>
-                          <span className="text-gray-400">
-                            {showEmployeeHours ? "▲" : "▼"}
-                          </span>
-                        </button>
-                        {showEmployeeHours && (
-                          <div className="max-h-48 overflow-y-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b bg-gray-50/50 text-left text-xs text-gray-500">
-                                  <th className="px-4 py-1.5 font-medium">
-                                    {t("autoScheduleEmployee")}
-                                  </th>
-                                  <th className="px-4 py-1.5 font-medium text-right">
-                                    {t("autoScheduleScheduledH")}
-                                  </th>
-                                  <th className="px-4 py-1.5 font-medium text-right">
-                                    {t("autoScheduleContractH")}
-                                  </th>
-                                  <th className="px-4 py-1.5 font-medium text-right">
-                                    {t("autoScheduleUtilization")}
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {Object.entries(
-                                  autoScheduleResult.employeeHours,
-                                )
-                                  .sort(
-                                    ([, a], [, b]) => b.scheduled - a.scheduled,
-                                  )
-                                  .map(([id, emp]) => (
-                                    <tr
-                                      key={id}
-                                      className="border-b last:border-0"
-                                    >
-                                      <td className="px-4 py-1.5 text-gray-800">
-                                        {emp.name}
-                                      </td>
-                                      <td className="px-4 py-1.5 text-right font-mono">
-                                        {emp.scheduled.toFixed(1)}h
-                                      </td>
-                                      <td className="px-4 py-1.5 text-right font-mono text-gray-500">
-                                        {emp.contract.toFixed(1)}h
-                                      </td>
-                                      <td className="px-4 py-1.5 text-right">
-                                        <span
-                                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                                            emp.ratio > 1
-                                              ? "bg-red-100 text-red-700"
-                                              : emp.ratio > 0.85
-                                                ? "bg-amber-100 text-amber-700"
-                                                : "bg-emerald-100 text-emerald-700"
-                                          }`}
-                                        >
-                                          {Math.round(emp.ratio * 100)}%
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                  {/* Unresolved shift details */}
-                  {autoScheduleResult.unresolvedShifts &&
-                    autoScheduleResult.unresolvedShifts.length > 0 && (
-                      <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
-                        <p className="text-xs font-medium text-amber-700 mb-1.5">
-                          {t("autoScheduleUnresolvedDetails")}
-                        </p>
-                        <div className="max-h-32 overflow-y-auto space-y-1">
-                          {autoScheduleResult.unresolvedShifts.map((u, i) => (
-                            <p key={i} className="text-xs text-gray-600">
-                              📅 {u.shiftDate} {u.startTime}–{u.endTime}
-                              {u.locationName
-                                ? ` (${u.locationName})`
-                                : ""}:{" "}
-                              <span className="text-amber-700">{u.reason}</span>
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                  {/* Action buttons */}
-                  {autoScheduleResult.dryRun && (
-                    <div className="flex items-center gap-3 pt-1">
-                      <Button
-                        onClick={() => handleAutoSchedule(false)}
-                        disabled={autoScheduleLoading}
-                      >
-                        <ZapIcon className="h-4 w-4 mr-1.5" />
-                        {autoScheduleLoading
-                          ? tc("loading")
-                          : t("autoScheduleApply")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setAutoScheduleResult(null);
-                          setShowEmployeeHours(false);
-                        }}
-                      >
-                        {t("autoScheduleBack")}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => handleAutoSchedule(true)}
-                disabled={autoScheduleLoading}
-              >
-                {autoScheduleLoading ? tc("loading") : t("autoSchedulePreview")}
-              </Button>
-              <Button
-                onClick={() => handleAutoSchedule(false)}
-                disabled={autoScheduleLoading}
-              >
-                <ZapIcon className="h-4 w-4 mr-1.5" />
-                {autoScheduleLoading ? tc("loading") : t("autoScheduleRun")}
-              </Button>
-            </div>
-          )}
-        </div>
+          )
+        )}
       </Modal>
     </div>
   );

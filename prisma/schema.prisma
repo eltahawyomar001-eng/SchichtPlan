@@ -146,6 +146,8 @@ model Workspace {
   autoScheduleRuns     AutoScheduleRun[]
   autoFillLogs         AutoFillLog[]
   managerAlerts        ManagerAlert[]
+  serviceVisits        ServiceVisit[]
+  serviceReports       ServiceReport[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -233,6 +235,7 @@ model Employee {
   projectMembers  ProjectMember[]
   autoFillsVacated   AutoFillLog[] @relation("AutoFillVacated")
   autoFillsAssigned  AutoFillLog[] @relation("AutoFillAssigned")
+  serviceVisits      ServiceVisit[]
   @@unique([email, workspaceId])
 }
 
@@ -240,6 +243,9 @@ model Location {
   id        String   @id @default(cuid())
   name      String
   address   String?
+  latitude  Float?
+  longitude Float?
+  geofenceRadius Int  @default(200) // metres
   createdAt DateTime @default(now())
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -250,6 +256,7 @@ model Location {
   chatChannels ChatChannel[]
   staffingRequirements StaffingRequirement[]
   autoScheduleRuns     AutoScheduleRun[]
+  serviceVisits ServiceVisit[]
 }
 
 model Department {
@@ -1061,4 +1068,102 @@ model ManagerAlert {
   @@index([severity])
   @@index([acknowledged])
   @@index([createdAt(sort: Desc)])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DIGITALER LEISTUNGSNACHWEIS (Service Visit Proof System)
+// ═══════════════════════════════════════════════════════════════
+
+enum VisitStatus {
+  GEPLANT        // Scheduled, not yet started
+  EINGECHECKT    // Employee checked in at location
+  ABGESCHLOSSEN  // Visit completed with signature
+  STORNIERT      // Cancelled
+}
+
+enum ServiceReportStatus {
+  ENTWURF      // Draft — visits still open
+  ERSTELLT     // Generated — PDF created
+  VERSENDET    // Sent to client
+}
+
+/// A single service visit to a client location (e.g. cleaning Filiale #42).
+/// Captures full audit trail: GPS check-in/out, timestamps, signature.
+model ServiceVisit {
+  id                String      @id @default(cuid())
+  status            VisitStatus @default(GEPLANT)
+  scheduledDate     DateTime    @db.Date
+  /// Check-in data (server-side timestamps, GPS)
+  checkInAt         DateTime?
+  checkInLat        Float?
+  checkInLng        Float?
+  checkInWithinFence Boolean    @default(false)
+  /// Check-out data
+  checkOutAt        DateTime?
+  checkOutLat       Float?
+  checkOutLng       Float?
+  /// Notes from the employee
+  notes             String?     @db.Text
+  /// Signature collected at this visit
+  signature         VisitSignature?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  /// Relations
+  employeeId        String
+  employee          Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  locationId        String
+  location          Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  workspace         Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  reportId          String?
+  report            ServiceReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  @@index([workspaceId, scheduledDate])
+  @@index([employeeId, scheduledDate])
+  @@index([locationId])
+  @@index([status])
+  @@index([reportId])
+}
+
+/// Digital signature captured on-device from the site manager.
+/// Cryptographically paired with GPS + timestamp via signatureHash.
+model VisitSignature {
+  id              String   @id @default(cuid())
+  /// Base64-encoded PNG of the drawn signature
+  signatureData   String   @db.Text
+  /// SHA-256 hash binding: visitId + signerName + lat + lng + timestamp
+  signatureHash   String
+  /// Identity of the person who signed (e.g. Filialleiter name)
+  signerName      String
+  signerRole      String?  // e.g. "Filialleiter", "Objektleiter"
+  /// GPS at moment of signing
+  signedLat       Float?
+  signedLng       Float?
+  signedAt        DateTime @default(now())
+  /// 1:1 relation to the visit
+  visitId         String   @unique
+  visit           ServiceVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  @@index([visitId])
+}
+
+/// Consolidated proof-of-service report (Sammel-PDF).
+/// Groups multiple visits for a client/period into one document.
+model ServiceReport {
+  id              String              @id @default(cuid())
+  title           String
+  status          ServiceReportStatus @default(ENTWURF)
+  periodStart     DateTime            @db.Date
+  periodEnd       DateTime            @db.Date
+  /// URL to the generated PDF (stored in object storage)
+  pdfUrl          String?             @db.Text
+  generatedAt     DateTime?
+  totalVisits     Int                 @default(0)
+  completedVisits Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  workspaceId     String
+  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  visits          ServiceVisit[]
+  @@index([workspaceId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
 }

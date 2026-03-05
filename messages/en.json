@@ -91,6 +91,7 @@
     "roles": "Roles",
     "clients": "Clients",
     "teamChat": "Messages",
+    "serviceProof": "Service Proof",
     "more": "More"
   },
   "dashboard": {
@@ -2217,5 +2218,55 @@
     "concurrentSwapError": "There is already a pending swap request for this shift.",
     "targetArbzgError": "Swap not possible — labor law violation for the swap partner.",
     "requesterArbzgError": "Swap not possible — labor law violation for the requester."
+  },
+  "serviceProof": {
+    "title": "Service Proof",
+    "description": "Digital documentation of your service visits",
+    "createVisit": "Plan Visit",
+    "searchPlaceholder": "Search employee or location…",
+    "allStatuses": "All statuses",
+    "status": {
+      "planned": "Planned",
+      "checkedIn": "Checked In",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "stats": {
+      "total": "Total",
+      "planned": "Planned",
+      "checkedIn": "Active",
+      "completed": "Done"
+    },
+    "empty": {
+      "title": "No visits yet",
+      "description": "Plan the first service visit to start digital documentation."
+    },
+    "outsideFence": "Outside geofence",
+    "checkInAt": "Check-in",
+    "checkOutAt": "Check-out",
+    "signedBy": "Signed by",
+    "actions": {
+      "checkIn": "Check In",
+      "checkOut": "Check Out",
+      "sign": "Signature"
+    },
+    "form": {
+      "date": "Date",
+      "employee": "Employee",
+      "selectEmployee": "Select employee",
+      "location": "Location",
+      "selectLocation": "Select location",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes…"
+    },
+    "signature": {
+      "title": "Capture Signature",
+      "instruction": "Have the client sign on the display on-site.",
+      "signerName": "Signer name",
+      "signerNamePlaceholder": "e.g. Mr. Smith",
+      "signerRole": "Role (optional)",
+      "signerRolePlaceholder": "e.g. Store Manager",
+      "nameRequired": "Please enter the signer's name."
+    }
   }
 }

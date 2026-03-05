@@ -37,6 +37,7 @@ import {
   ShieldCheckIcon,
   MessageCircleIcon,
   HeartPulseIcon,
+  FileCheckIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -65,6 +66,11 @@ const navGroups: NavGroup[] = [
       { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
       { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
       { key: "punchClock", href: "/stempeluhr", icon: TargetIcon },
+      {
+        key: "serviceProof",
+        href: "/leistungsnachweis",
+        icon: FileCheckIcon,
+      },
       {
         key: "teamChat",
         href: "/nachrichten",

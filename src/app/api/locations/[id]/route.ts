@@ -26,12 +26,22 @@ export async function PATCH(
 
     const body = await req.json();
 
+    const data: Record<string, unknown> = {
+      name: body.name,
+      address: body.address || null,
+    };
+
+    // Geo fields for service visit geofencing
+    if (body.latitude !== undefined)
+      data.latitude = body.latitude !== null ? Number(body.latitude) : null;
+    if (body.longitude !== undefined)
+      data.longitude = body.longitude !== null ? Number(body.longitude) : null;
+    if (body.geofenceRadius !== undefined)
+      data.geofenceRadius = Number(body.geofenceRadius);
+
     const location = await prisma.location.updateMany({
       where: { id, workspaceId },
-      data: {
-        name: body.name,
-        address: body.address || null,
-      },
+      data,
     });
 
     return NextResponse.json(location);

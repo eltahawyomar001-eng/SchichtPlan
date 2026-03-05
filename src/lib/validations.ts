@@ -174,6 +174,48 @@ export const createWebhookSchema = z.object({
   events: z.array(z.string().min(1)).min(1, "Mindestens ein Event auswählen"),
 });
 
+// ── Service Visit (Leistungsnachweis) ───────────────────────────
+export const createServiceVisitSchema = z.object({
+  scheduledDate: dateString,
+  employeeId: requiredString,
+  locationId: requiredString,
+  notes: optionalString.pipe(z.string().max(2000).optional()),
+});
+
+export const checkInVisitSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+});
+
+export const checkOutVisitSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  notes: optionalString.pipe(z.string().max(2000).optional()),
+});
+
+export const visitSignatureSchema = z.object({
+  signatureData: requiredString, // Base64 PNG
+  signerName: requiredString.max(200, "Maximal 200 Zeichen"),
+  signerRole: optionalString.pipe(z.string().max(100).optional()),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+});
+
+export const createServiceReportSchema = z.object({
+  title: requiredString.max(300, "Maximal 300 Zeichen"),
+  periodStart: dateString,
+  periodEnd: dateString,
+  locationId: optionalString, // filter visits by location
+});
+
+export const updateLocationGeoSchema = z.object({
+  name: optionalString,
+  address: optionalString,
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  geofenceRadius: z.coerce.number().int().min(50).max(5000).optional(),
+});
+
 /* ═══════════════════════════════════════════════════════════════
    Validation helper — parse & return typed 400 on failure
    ═══════════════════════════════════════════════════════════════ */

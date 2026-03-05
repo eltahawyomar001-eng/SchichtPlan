@@ -91,6 +91,7 @@
     "roles": "Rollen",
     "clients": "Kunden",
     "teamChat": "Nachrichten",
+    "serviceProof": "Leistungsnachweis",
     "more": "Mehr"
   },
   "dashboard": {
@@ -2217,5 +2218,55 @@
     "concurrentSwapError": "Für diese Schicht liegt bereits ein offener Tauschantrag vor.",
     "targetArbzgError": "Tausch nicht möglich — ArbZG-Verstoß für den Tauschpartner.",
     "requesterArbzgError": "Tausch nicht möglich — ArbZG-Verstoß für den Antragsteller."
+  },
+  "serviceProof": {
+    "title": "Leistungsnachweis",
+    "description": "Digitale Dokumentation Ihrer Serviceeinsätze",
+    "createVisit": "Einsatz planen",
+    "searchPlaceholder": "Mitarbeiter oder Standort suchen…",
+    "allStatuses": "Alle Status",
+    "status": {
+      "planned": "Geplant",
+      "checkedIn": "Eingecheckt",
+      "completed": "Abgeschlossen",
+      "cancelled": "Storniert"
+    },
+    "stats": {
+      "total": "Gesamt",
+      "planned": "Geplant",
+      "checkedIn": "Aktiv",
+      "completed": "Erledigt"
+    },
+    "empty": {
+      "title": "Keine Einsätze vorhanden",
+      "description": "Planen Sie den ersten Serviceeinsatz, um die digitale Dokumentation zu starten."
+    },
+    "outsideFence": "Außerhalb Geofence",
+    "checkInAt": "Check-in",
+    "checkOutAt": "Check-out",
+    "signedBy": "Unterschrieben von",
+    "actions": {
+      "checkIn": "Einchecken",
+      "checkOut": "Auschecken",
+      "sign": "Unterschrift"
+    },
+    "form": {
+      "date": "Datum",
+      "employee": "Mitarbeiter",
+      "selectEmployee": "Mitarbeiter wählen",
+      "location": "Standort",
+      "selectLocation": "Standort wählen",
+      "notes": "Notizen",
+      "notesPlaceholder": "Optionale Anmerkungen…"
+    },
+    "signature": {
+      "title": "Unterschrift erfassen",
+      "instruction": "Lassen Sie den Auftraggeber vor Ort auf dem Display unterschreiben.",
+      "signerName": "Name des Unterzeichners",
+      "signerNamePlaceholder": "z.B. Herr Müller",
+      "signerRole": "Funktion (optional)",
+      "signerRolePlaceholder": "z.B. Filialleiter",
+      "nameRequired": "Bitte geben Sie den Namen des Unterzeichners ein."
+    }
   }
 }

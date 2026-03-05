@@ -1,0 +1,648 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { Topbar } from "@/components/layout/topbar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
+import { PageContent } from "@/components/ui/page-content";
+import { SignaturePad } from "@/components/ui/signature-pad";
+import {
+  FileCheckIcon,
+  MapPinIcon,
+  PlusIcon,
+  SearchIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  AlertTriangleIcon,
+} from "@/components/icons";
+import type { SessionUser } from "@/lib/types";
+import type { Role } from "@/lib/authorization";
+
+// ─── Types ─────────────────────────────────────────────────────
+
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+interface VisitSignature {
+  id: string;
+  signerName: string;
+  signerRole: string | null;
+  signedAt: string;
+  signatureHash: string;
+}
+
+interface ServiceVisit {
+  id: string;
+  status: "GEPLANT" | "EINGECHECKT" | "ABGESCHLOSSEN" | "STORNIERT";
+  scheduledDate: string;
+  checkInAt: string | null;
+  checkOutAt: string | null;
+  checkInWithinFence: boolean | null;
+  notes: string | null;
+  employee: Employee;
+  location: Location;
+  signature: VisitSignature | null;
+}
+
+// ─── Status helpers ────────────────────────────────────────────
+
+const statusConfig: Record<
+  ServiceVisit["status"],
+  { label: string; color: string }
+> = {
+  GEPLANT: { label: "Geplant", color: "bg-blue-100 text-blue-700" },
+  EINGECHECKT: {
+    label: "Eingecheckt",
+    color: "bg-amber-100 text-amber-700",
+  },
+  ABGESCHLOSSEN: {
+    label: "Abgeschlossen",
+    color: "bg-emerald-100 text-emerald-700",
+  },
+  STORNIERT: { label: "Storniert", color: "bg-gray-100 text-gray-500" },
+};
+
+// ─── Component ─────────────────────────────────────────────────
+
+export default function LeistungsnachweisSeite() {
+  const { data: session } = useSession();
+  const t = useTranslations("serviceProof");
+  const tc = useTranslations("common");
+  const user = session?.user as SessionUser | undefined;
+  const isManagement = ["OWNER", "ADMIN", "MANAGER"].includes(
+    (user?.role as Role) ?? "",
+  );
+
+  // State
+  const [visits, setVisits] = useState<ServiceVisit[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  // Create form
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    scheduledDate: new Date().toISOString().split("T")[0],
+    employeeId: "",
+    locationId: "",
+    notes: "",
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Signature modal
+  const [signingVisit, setSigningVisit] = useState<ServiceVisit | null>(null);
+  const [signerName, setSignerName] = useState("");
+  const [signerRole, setSignerRole] = useState("");
+  const [sigSaving, setSigSaving] = useState(false);
+
+  // Check-in/out
+  const [acting, setActing] = useState<string | null>(null);
+
+  // ────────── Fetching ──────────
+
+  const fetchVisits = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter) params.set("status", statusFilter);
+      const res = await fetch(`/api/service-visits?${params}`);
+      const data = await res.json();
+      setVisits(data.data ?? []);
+    } catch {
+      setError(tc("errorLoading"));
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, tc]);
+
+  useEffect(() => {
+    fetchVisits();
+  }, [fetchVisits]);
+
+  // Load employees + locations for create form
+  useEffect(() => {
+    if (!isManagement) return;
+    Promise.all([
+      fetch("/api/employees?limit=500").then((r) => r.json()),
+      fetch("/api/locations?limit=500").then((r) => r.json()),
+    ]).then(([empRes, locRes]) => {
+      setEmployees(empRes.data ?? []);
+      setLocations(locRes.data ?? []);
+    });
+  }, [isManagement]);
+
+  // ────────── Actions ──────────
+
+  const handleCreate = async () => {
+    setFormError(null);
+    if (!createForm.employeeId || !createForm.locationId) {
+      setFormError("Mitarbeiter und Standort sind Pflichtfelder");
+      return;
+    }
+    try {
+      const res = await fetch("/api/service-visits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setFormError(err.error || "Fehler");
+        return;
+      }
+      setShowCreate(false);
+      setCreateForm({
+        scheduledDate: new Date().toISOString().split("T")[0],
+        employeeId: "",
+        locationId: "",
+        notes: "",
+      });
+      fetchVisits();
+    } catch {
+      setFormError("Netzwerkfehler");
+    }
+  };
+
+  const handleCheckIn = async (visitId: string) => {
+    setActing(visitId);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        }),
+      );
+      const res = await fetch(`/api/service-visits/${visitId}/check-in`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "Check-in fehlgeschlagen");
+      }
+      fetchVisits();
+    } catch {
+      setError("GPS nicht verfügbar");
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const handleCheckOut = async (visitId: string) => {
+    setActing(visitId);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        }),
+      );
+      const res = await fetch(`/api/service-visits/${visitId}/check-out`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "Check-out fehlgeschlagen");
+      }
+      fetchVisits();
+    } catch {
+      setError("GPS nicht verfügbar");
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const handleSignature = async (dataUrl: string) => {
+    if (!signingVisit) return;
+    setSigSaving(true);
+    try {
+      let lat: number | undefined;
+      let lng: number | undefined;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 5000,
+          }),
+        );
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch {
+        // GPS optional for signature
+      }
+
+      const res = await fetch(
+        `/api/service-visits/${signingVisit.id}/signature`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            signatureData: dataUrl,
+            signerName,
+            signerRole: signerRole || undefined,
+            lat,
+            lng,
+          }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "Unterschrift fehlgeschlagen");
+      }
+      setSigningVisit(null);
+      setSignerName("");
+      setSignerRole("");
+      fetchVisits();
+    } catch {
+      setError("Netzwerkfehler");
+    } finally {
+      setSigSaving(false);
+    }
+  };
+
+  // ────────── Filtering ──────────
+
+  const filtered = visits.filter((v) => {
+    if (search) {
+      const q = search.toLowerCase();
+      const match =
+        v.employee.firstName.toLowerCase().includes(q) ||
+        v.employee.lastName.toLowerCase().includes(q) ||
+        v.location.name.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  // ────────── Stats ──────────
+
+  const stats = {
+    total: visits.length,
+    planned: visits.filter((v) => v.status === "GEPLANT").length,
+    checkedIn: visits.filter((v) => v.status === "EINGECHECKT").length,
+    completed: visits.filter((v) => v.status === "ABGESCHLOSSEN").length,
+  };
+
+  // ────────── Render ──────────
+
+  return (
+    <>
+      <Topbar
+        title={t("title")}
+        description={t("description")}
+        actions={
+          isManagement ? (
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <PlusIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("createVisit")}</span>
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <PageContent>
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+            <button className="ml-2 underline" onClick={() => setError(null)}>
+              {tc("close")}
+            </button>
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xs text-gray-500">{t("stats.total")}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-blue-600">
+                {stats.planned}
+              </p>
+              <p className="text-xs text-gray-500">{t("stats.planned")}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">
+                {stats.checkedIn}
+              </p>
+              <p className="text-xs text-gray-500">{t("stats.checkedIn")}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-emerald-600">
+                {stats.completed}
+              </p>
+              <p className="text-xs text-gray-500">{t("stats.completed")}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              className="pl-10"
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">{t("allStatuses")}</option>
+            <option value="GEPLANT">{t("status.planned")}</option>
+            <option value="EINGECHECKT">{t("status.checkedIn")}</option>
+            <option value="ABGESCHLOSSEN">{t("status.completed")}</option>
+            <option value="STORNIERT">{t("status.cancelled")}</option>
+          </Select>
+        </div>
+
+        {/* Visit list */}
+        {loading ? (
+          <div className="py-12 text-center text-gray-400">{tc("loading")}</div>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={<FileCheckIcon className="h-8 w-8 text-emerald-500" />}
+            title={t("empty.title")}
+            description={t("empty.description")}
+          />
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((visit) => (
+              <VisitCard
+                key={visit.id}
+                visit={visit}
+                acting={acting === visit.id}
+                onCheckIn={() => handleCheckIn(visit.id)}
+                onCheckOut={() => handleCheckOut(visit.id)}
+                onSign={() => setSigningVisit(visit)}
+              />
+            ))}
+          </div>
+        )}
+      </PageContent>
+
+      {/* Create visit modal */}
+      <AdaptiveModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title={t("createVisit")}
+        size="md"
+      >
+        <div className="space-y-4 p-4 sm:p-6">
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          <div>
+            <Label>{t("form.date")}</Label>
+            <Input
+              type="date"
+              value={createForm.scheduledDate}
+              onChange={(e) =>
+                setCreateForm((f) => ({
+                  ...f,
+                  scheduledDate: e.target.value,
+                }))
+              }
+            />
+          </div>
+          <div>
+            <Label>{t("form.employee")}</Label>
+            <Select
+              value={createForm.employeeId}
+              onChange={(e) =>
+                setCreateForm((f) => ({ ...f, employeeId: e.target.value }))
+              }
+            >
+              <option value="">{t("form.selectEmployee")}</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label>{t("form.location")}</Label>
+            <Select
+              value={createForm.locationId}
+              onChange={(e) =>
+                setCreateForm((f) => ({ ...f, locationId: e.target.value }))
+              }
+            >
+              <option value="">{t("form.selectLocation")}</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label>{t("form.notes")}</Label>
+            <Input
+              value={createForm.notes}
+              onChange={(e) =>
+                setCreateForm((f) => ({ ...f, notes: e.target.value }))
+              }
+              placeholder={t("form.notesPlaceholder")}
+            />
+          </div>
+        </div>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setShowCreate(false)}>
+            {tc("cancel")}
+          </Button>
+          <Button onClick={handleCreate}>{tc("create")}</Button>
+        </ModalFooter>
+      </AdaptiveModal>
+
+      {/* Signature modal */}
+      <AdaptiveModal
+        open={!!signingVisit}
+        onClose={() => {
+          setSigningVisit(null);
+          setSignerName("");
+          setSignerRole("");
+        }}
+        title={t("signature.title")}
+        size="md"
+        mobileHeight="full"
+      >
+        <div className="space-y-4 p-4 sm:p-6">
+          <p className="text-sm text-gray-500">{t("signature.instruction")}</p>
+          <div>
+            <Label>{t("signature.signerName")}</Label>
+            <Input
+              value={signerName}
+              onChange={(e) => setSignerName(e.target.value)}
+              placeholder={t("signature.signerNamePlaceholder")}
+            />
+          </div>
+          <div>
+            <Label>{t("signature.signerRole")}</Label>
+            <Input
+              value={signerRole}
+              onChange={(e) => setSignerRole(e.target.value)}
+              placeholder={t("signature.signerRolePlaceholder")}
+            />
+          </div>
+          <SignaturePad
+            onSignature={handleSignature}
+            disabled={sigSaving || !signerName}
+          />
+          {!signerName && (
+            <p className="text-xs text-amber-600">
+              {t("signature.nameRequired")}
+            </p>
+          )}
+        </div>
+      </AdaptiveModal>
+    </>
+  );
+}
+
+// ─── Visit Card sub-component ──────────────────────────────────
+
+interface VisitCardProps {
+  visit: ServiceVisit;
+  acting: boolean;
+  onCheckIn: () => void;
+  onCheckOut: () => void;
+  onSign: () => void;
+}
+
+function VisitCard({
+  visit,
+  acting,
+  onCheckIn,
+  onCheckOut,
+  onSign,
+}: VisitCardProps) {
+  const t = useTranslations("serviceProof");
+  const cfg = statusConfig[visit.status];
+
+  const dateStr = new Date(visit.scheduledDate).toLocaleDateString("de-DE", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const timeStr = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: info */}
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge className={cfg.color}>{cfg.label}</Badge>
+              {visit.checkInWithinFence === false && (
+                <Badge className="bg-red-100 text-red-700">
+                  <AlertTriangleIcon className="mr-1 h-3 w-3" />
+                  {t("outsideFence")}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm font-medium text-gray-900">
+              {visit.employee.firstName} {visit.employee.lastName}
+            </p>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <MapPinIcon className="h-3 w-3" />
+              {visit.location.name}
+              {visit.location.address && ` · ${visit.location.address}`}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <ClockIcon className="h-3 w-3" />
+              {dateStr}
+              {visit.checkInAt &&
+                ` · ${t("checkInAt")} ${timeStr(visit.checkInAt)}`}
+              {visit.checkOutAt &&
+                ` · ${t("checkOutAt")} ${timeStr(visit.checkOutAt)}`}
+            </div>
+            {visit.signature && (
+              <div className="flex items-center gap-1 text-xs text-emerald-600">
+                <CheckCircleIcon className="h-3 w-3" />
+                {t("signedBy")} {visit.signature.signerName}
+              </div>
+            )}
+            {visit.notes && (
+              <p className="text-xs text-gray-400 line-clamp-1">
+                {visit.notes}
+              </p>
+            )}
+          </div>
+
+          {/* Right: actions */}
+          <div className="flex shrink-0 gap-2">
+            {visit.status === "GEPLANT" && (
+              <Button size="sm" onClick={onCheckIn} disabled={acting}>
+                {t("actions.checkIn")}
+              </Button>
+            )}
+            {visit.status === "EINGECHECKT" && !visit.signature && (
+              <Button size="sm" variant="outline" onClick={onSign}>
+                {t("actions.sign")}
+              </Button>
+            )}
+            {visit.status === "EINGECHECKT" && (
+              <Button
+                size="sm"
+                variant={visit.signature ? "default" : "secondary"}
+                onClick={onCheckOut}
+                disabled={acting}
+              >
+                {t("actions.checkOut")}
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

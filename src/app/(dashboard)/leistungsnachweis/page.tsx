@@ -51,7 +51,10 @@ interface VisitSignature {
   id: string;
   signerName: string;
   signerRole: string | null;
+  signatureData: string;
   signedAt: string;
+  signedLat: number | null;
+  signedLng: number | null;
   signatureHash: string;
 }
 

@@ -2316,7 +2316,9 @@
         "outsideGeofence": "Außerhalb des Geofence",
         "checkInNow": "Jetzt einchecken",
         "outsideRadius": "Sie befinden sich außerhalb des 200m-Radius. Bitte nähern Sie sich dem Standort.",
-        "checkInFailed": "Check-in fehlgeschlagen"
+        "checkInFailed": "Check-in fehlgeschlagen",
+        "geofenceLocked": "Check-in gesperrt — Sie befinden sich außerhalb des zulässigen Bereichs",
+        "distanceToObject": "Entfernung zum Objekt: {distance} m"
       },
       "step2": {
         "title": "Aufgaben bestätigen",
@@ -2349,7 +2351,18 @@
         "title": "Einsatz abgeschlossen",
         "description": "Der Leistungsnachweis wurde erfolgreich erstellt und abgezeichnet.",
         "syncPending": "Wird bei Verbindung synchronisiert ({count} ausstehend)",
-        "backToList": "Zurück zur Übersicht"
+        "backToList": "Zurück zur Übersicht",
+        "signatureTitle": "Erfasste Unterschrift",
+        "signatureAlt": "Unterschrift des Verantwortlichen",
+        "auditStamp": "Revisionssicherer Prüfstempel",
+        "serverTime": "Server-Zeitstempel",
+        "gpsCoordinates": "GPS-Koordinaten",
+        "auditLocation": "Standort",
+        "auditEmployee": "Mitarbeiter",
+        "auditDuration": "Einsatzdauer",
+        "downloadPdf": "Leistungsnachweis (PDF) herunterladen",
+        "pdfGenerating": "PDF wird erstellt…",
+        "pdfError": "PDF konnte nicht erstellt werden"
       },
       "offline": {
         "title": "Offline-Modus",

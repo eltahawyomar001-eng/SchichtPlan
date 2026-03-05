@@ -2316,7 +2316,9 @@
         "outsideGeofence": "Outside geofence",
         "checkInNow": "Check in now",
         "outsideRadius": "You are outside the 200m radius. Please move closer to the location.",
-        "checkInFailed": "Check-in failed"
+        "checkInFailed": "Check-in failed",
+        "geofenceLocked": "Check-in locked — you are outside the permitted area",
+        "distanceToObject": "Distance to object: {distance} m"
       },
       "step2": {
         "title": "Confirm Tasks",
@@ -2349,7 +2351,18 @@
         "title": "Visit Completed",
         "description": "The service record has been successfully created and signed.",
         "syncPending": "Will sync when connected ({count} pending)",
-        "backToList": "Back to overview"
+        "backToList": "Back to overview",
+        "signatureTitle": "Captured Signature",
+        "signatureAlt": "On-site manager signature",
+        "auditStamp": "Tamper-Proof Audit Stamp",
+        "serverTime": "Server Timestamp",
+        "gpsCoordinates": "GPS Coordinates",
+        "auditLocation": "Location",
+        "auditEmployee": "Employee",
+        "auditDuration": "Service Duration",
+        "downloadPdf": "Download Proof of Service (PDF)",
+        "pdfGenerating": "Generating PDF…",
+        "pdfError": "Failed to generate PDF"
       },
       "offline": {
         "title": "Offline Mode",

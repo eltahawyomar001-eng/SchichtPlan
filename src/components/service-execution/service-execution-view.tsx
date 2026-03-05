@@ -11,6 +11,7 @@ import {
   AlertTriangleIcon,
   ShieldCheckIcon,
   ChevronLeftIcon,
+  DownloadIcon,
 } from "@/components/icons";
 import { useServiceGps, type GpsStatus } from "@/lib/hooks/use-service-gps";
 import { useOfflineVisits } from "@/lib/hooks/use-offline-visits";
@@ -23,6 +24,7 @@ export interface ServiceVisitExec {
   status: "GEPLANT" | "EINGECHECKT" | "ABGESCHLOSSEN" | "STORNIERT";
   scheduledDate: string;
   checkInAt: string | null;
+  checkOutAt: string | null;
   notes: string | null;
   employee: {
     id: string;
@@ -38,6 +40,12 @@ export interface ServiceVisitExec {
   };
   signature: {
     signerName: string;
+    signerRole: string | null;
+    signatureData: string;
+    signedAt: string;
+    signedLat: number | null;
+    signedLng: number | null;
+    signatureHash: string;
   } | null;
 }
 
@@ -51,6 +59,17 @@ interface ServiceExecutionViewProps {
   visit: ServiceVisitExec;
   onComplete: () => void;
   onBack: () => void;
+}
+
+// ─── Audit data captured at moment of completion ────────────────
+
+interface CompletionAuditData {
+  signatureImage: string; // base64 PNG
+  signerName: string;
+  signerRole: string;
+  signedAt: Date;
+  gpsLat: number | null;
+  gpsLng: number | null;
 }
 
 // ─── Default task IDs (labels come from i18n) ──────────────────
@@ -190,6 +209,24 @@ function StepIndicator({
   );
 }
 
+// ─── GPS Coordinate Formatter (DMS) ─────────────────────────────
+
+function formatDMS(decimal: number, isLat: boolean): string {
+  const absolute = Math.abs(decimal);
+  const degrees = Math.floor(absolute);
+  const minutesDecimal = (absolute - degrees) * 60;
+  const minutes = Math.floor(minutesDecimal);
+  const seconds = ((minutesDecimal - minutes) * 60).toFixed(1);
+  const direction = isLat
+    ? decimal >= 0
+      ? "N"
+      : "S"
+    : decimal >= 0
+      ? "E"
+      : "W";
+  return `${degrees}° ${minutes}′ ${seconds}″ ${direction}`;
+}
+
 // ─── Main Component ─────────────────────────────────────────────
 
 export function ServiceExecutionView({
@@ -220,6 +257,23 @@ export function ServiceExecutionView({
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  // Audit data for completion screen — populated from signature submit or existing visit
+  const [completionData, setCompletionData] =
+    useState<CompletionAuditData | null>(() => {
+      if (visit.status === "ABGESCHLOSSEN" && visit.signature) {
+        return {
+          signatureImage: visit.signature.signatureData,
+          signerName: visit.signature.signerName,
+          signerRole: visit.signature.signerRole ?? "",
+          signedAt: new Date(visit.signature.signedAt),
+          gpsLat: visit.signature.signedLat,
+          gpsLng: visit.signature.signedLng,
+        };
+      }
+      return null;
+    });
 
   // GPS tracking
   const {
@@ -306,6 +360,16 @@ export function ServiceExecutionView({
           // Offline — show as completed optimistically
         }
 
+        // Capture audit data for the completion screen
+        setCompletionData({
+          signatureImage: data.signatureData,
+          signerName: data.signerName,
+          signerRole: data.signerRole,
+          signedAt: new Date(),
+          gpsLat: position?.lat ?? null,
+          gpsLng: position?.lng ?? null,
+        });
+
         setShowSignature(false);
 
         // Now check out
@@ -330,6 +394,27 @@ export function ServiceExecutionView({
     },
     [executeAction, visit.id, position, onComplete],
   );
+
+  const handleDownloadPdf = useCallback(async () => {
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`/api/service-visits/${visit.id}/pdf`);
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Leistungsnachweis_${visit.location.name.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, "_")}_${visit.scheduledDate}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(t("execution.step4.pdfError"));
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [visit.id, visit.location.name, visit.scheduledDate, t]);
 
   // ────────── Render ──────────
 
@@ -474,11 +559,31 @@ export function ServiceExecutionView({
               )}
             </Button>
 
-            {!isWithinGeofence && gpsStatus === "out-of-range" && (
-              <p className="text-center text-xs text-red-500">
-                {t("execution.step1.outsideRadius")}
-              </p>
-            )}
+            {/* Geofence Hard-Lock Warning */}
+            {!isWithinGeofence &&
+              gpsStatus === "out-of-range" &&
+              distanceMetres !== null && (
+                <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100">
+                      <AlertTriangleIcon className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-red-800">
+                        {t("execution.step1.geofenceLocked")}
+                      </p>
+                      <p className="mt-0.5 text-xs text-red-600">
+                        {t("execution.step1.distanceToObject", {
+                          distance: distanceMetres,
+                        })}
+                      </p>
+                      <p className="mt-1 text-xs text-red-500">
+                        {t("execution.step1.outsideRadius")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
         )}
 
@@ -633,29 +738,192 @@ export function ServiceExecutionView({
           </div>
         )}
 
-        {/* ── Step 4: Completed ── */}
+        {/* ── Step 4: Completion — Legal Audit Card ── */}
         {currentStep === 4 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-              <CheckCircleIcon className="h-8 w-8 text-emerald-600" />
+          <div className="space-y-4">
+            {/* Success header */}
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+                <CheckCircleIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#111827]">
+                  {t("execution.step4.title")}
+                </h3>
+                <p className="text-xs text-emerald-700">
+                  {t("execution.step4.description")}
+                </p>
+              </div>
             </div>
-            <h3 className="mt-4 text-lg font-bold text-[#111827]">
-              {t("execution.step4.title")}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {t("execution.step4.description")}
-            </p>
+
+            {completionData && (
+              <>
+                {/* ── Signature Preview ── */}
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    {t("execution.step4.signatureTitle")}
+                  </h4>
+                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={completionData.signatureImage}
+                      alt={t("execution.step4.signatureAlt")}
+                      className="mx-auto h-24 w-auto object-contain"
+                    />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#111827]">
+                        {completionData.signerName}
+                      </p>
+                      {completionData.signerRole && (
+                        <p className="text-xs text-gray-500">
+                          {completionData.signerRole}
+                        </p>
+                      )}
+                    </div>
+                    <ShieldCheckIcon className="h-5 w-5 text-emerald-500" />
+                  </div>
+                </div>
+
+                {/* ── Audit Stamp — Apple-style high-contrast card ── */}
+                <div className="overflow-hidden rounded-2xl border border-[#1d1d1f]/10 bg-[#1d1d1f] shadow-lg">
+                  {/* Header bar */}
+                  <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
+                    <ShieldCheckIcon className="h-4 w-4 text-emerald-400" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/80">
+                      {t("execution.step4.auditStamp")}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 px-4 py-4">
+                    {/* Server Timestamp */}
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                        {t("execution.step4.serverTime")}
+                      </span>
+                      <span className="text-right font-mono text-xs font-semibold text-white">
+                        {completionData.signedAt.toLocaleDateString("de-DE", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}{" "}
+                        {completionData.signedAt.toLocaleTimeString("de-DE", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}
+                      </span>
+                    </div>
+
+                    {/* GPS Coordinates */}
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                        {t("execution.step4.gpsCoordinates")}
+                      </span>
+                      <div className="text-right font-mono text-xs font-semibold text-white">
+                        {completionData.gpsLat !== null &&
+                        completionData.gpsLng !== null ? (
+                          <>
+                            <div>{formatDMS(completionData.gpsLat, true)}</div>
+                            <div>{formatDMS(completionData.gpsLng, false)}</div>
+                          </>
+                        ) : (
+                          <span className="text-white/40">—</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                        {t("execution.step4.auditLocation")}
+                      </span>
+                      <span className="max-w-[60%] text-right text-xs font-semibold text-white">
+                        {visit.location.name}
+                      </span>
+                    </div>
+
+                    {/* Employee */}
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                        {t("execution.step4.auditEmployee")}
+                      </span>
+                      <span className="text-right text-xs font-semibold text-white">
+                        {visit.employee.firstName} {visit.employee.lastName}
+                      </span>
+                    </div>
+
+                    {/* Check-in / Check-out */}
+                    {checkInTime && (
+                      <div className="flex items-start justify-between">
+                        <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                          {t("execution.step4.auditDuration")}
+                        </span>
+                        <span className="text-right font-mono text-xs font-semibold text-white">
+                          {checkInTime.toLocaleTimeString("de-DE", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}{" "}
+                          –{" "}
+                          {new Date().toLocaleTimeString("de-DE", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer hash */}
+                  {visit.signature?.signatureHash && (
+                    <div className="border-t border-white/10 px-4 py-2">
+                      <p className="font-mono text-[10px] text-white/30 break-all">
+                        SHA-256: {visit.signature.signatureHash.slice(0, 16)}…
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Offline sync warning */}
             {!isOnline && pendingCount > 0 && (
-              <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2">
-                <AlertTriangleIcon className="h-4 w-4 text-amber-500" />
+              <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <AlertTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
                 <span className="text-xs text-amber-700">
                   {t("execution.step4.syncPending", { count: pendingCount })}
                 </span>
               </div>
             )}
-            <Button onClick={onBack} variant="outline" className="mt-6">
-              {t("execution.step4.backToList")}
-            </Button>
+
+            {/* Action buttons */}
+            <div className="space-y-3 pt-2">
+              <Button
+                onClick={handleDownloadPdf}
+                disabled={pdfLoading}
+                className="w-full !h-14 text-base font-bold"
+              >
+                {pdfLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    {t("execution.step4.pdfGenerating")}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <DownloadIcon className="h-5 w-5" />
+                    {t("execution.step4.downloadPdf")}
+                  </span>
+                )}
+              </Button>
+              <Button
+                onClick={onBack}
+                variant="outline"
+                className="w-full !h-12"
+              >
+                {t("execution.step4.backToList")}
+              </Button>
+            </div>
           </div>
         )}
       </main>

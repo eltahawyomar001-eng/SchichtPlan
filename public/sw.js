@@ -4,19 +4,19 @@
 const sw = /** @type {ServiceWorkerGlobalScope} */ (self);
 
 // ─── Cache Configuration ────────────────────────────────────
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const STATIC_CACHE = `shiftfy-static-v${CACHE_VERSION}`;
 const RUNTIME_CACHE = `shiftfy-runtime-v${CACHE_VERSION}`;
 const IMAGE_CACHE = `shiftfy-images-v${CACHE_VERSION}`;
 const ALL_CACHES = [STATIC_CACHE, RUNTIME_CACHE, IMAGE_CACHE];
 
-const OFFLINE_URL = "/offline";
+const OFFLINE_URL = "/offline.html";
 
 /** URLs to precache during install */
 const PRECACHE_URLS = [
   "/",
   "/dashboard",
-  "/offline",
+  "/offline.html",
   "/manifest.webmanifest",
   "/icon-192x192.png",
   "/icon-512x512.png",

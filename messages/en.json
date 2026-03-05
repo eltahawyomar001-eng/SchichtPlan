@@ -54,7 +54,10 @@
     "somethingWentWrong": "Something went wrong",
     "unexpectedError": "An unexpected error occurred. Please try again.",
     "pageNotFound": "Page not found",
-    "pageNotFoundDesc": "The requested page does not exist or has been moved."
+    "pageNotFoundDesc": "The requested page does not exist or has been moved.",
+    "create": "Create",
+    "generate": "Generate",
+    "export": "Export"
   },
   "nav": {
     "dashboard": "Dashboard",

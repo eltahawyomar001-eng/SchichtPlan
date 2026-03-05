@@ -7,6 +7,7 @@ import { requirePermission, isEmployee } from "@/lib/authorization";
 import { checkInVisitSchema, validateBody } from "@/lib/validations";
 import { checkGeofence } from "@/lib/geofence";
 import { createAuditLog } from "@/lib/audit";
+import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
 
 // ─── POST  /api/service-visits/[id]/check-in ───────────────────
@@ -34,7 +35,7 @@ export async function POST(
     const parsed = validateBody(checkInVisitSchema, body);
     if (!parsed.success) return parsed.response;
 
-    const { lat, lng } = parsed.data;
+    const { lat, lng, deviceId, clientTimestamp, gpsAccuracy } = parsed.data;
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
@@ -106,6 +107,20 @@ export async function POST(
       userEmail: user.email,
       workspaceId,
       metadata: { action: "check-in", withinFence },
+    });
+
+    // Revisionssicher audit trail entry
+    createVisitAuditEntry(req, {
+      eventType: "CHECK_IN",
+      visitId: id,
+      userId: user.id,
+      workspaceId,
+      gpsLat: lat,
+      gpsLng: lng,
+      gpsAccuracy: gpsAccuracy ?? null,
+      deviceId: deviceId ?? null,
+      clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
+      metadata: { withinFence, employeeId: visit.employeeId },
     });
 
     log.info("[service-visits] Check-in completed", {

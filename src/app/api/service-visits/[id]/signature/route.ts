@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { visitSignatureSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
 import crypto from "crypto";
 
@@ -34,7 +35,16 @@ export async function POST(
     const parsed = validateBody(visitSignatureSchema, body);
     if (!parsed.success) return parsed.response;
 
-    const { signatureData, signerName, signerRole, lat, lng } = parsed.data;
+    const {
+      signatureData,
+      signerName,
+      signerRole,
+      lat,
+      lng,
+      deviceId,
+      clientTimestamp,
+      gpsAccuracy,
+    } = parsed.data;
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
@@ -111,6 +121,27 @@ export async function POST(
       userEmail: user.email,
       workspaceId,
       metadata: { visitId: id, signerName, signatureHash },
+    });
+
+    // Revisionssicher audit trail entry — includes signature data for legal proof
+    createVisitAuditEntry(req, {
+      eventType: "SIGNATURE_CAPTURED",
+      visitId: id,
+      userId: user.id,
+      workspaceId,
+      gpsLat: lat ?? null,
+      gpsLng: lng ?? null,
+      gpsAccuracy: gpsAccuracy ?? null,
+      deviceId: deviceId ?? null,
+      clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
+      signatureData, // base64 PNG stored in audit trail for Revisionssicherheit
+      metadata: {
+        signerName,
+        signerRole: signerRole ?? null,
+        signatureHash,
+        signatureId: signature.id,
+        employeeId: visit.employeeId,
+      },
     });
 
     log.info("[service-visits] Signature captured", {

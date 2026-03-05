@@ -185,12 +185,18 @@ export const createServiceVisitSchema = z.object({
 export const checkInVisitSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
+  deviceId: optionalString,
+  clientTimestamp: optionalString, // ISO-8601 from device clock
+  gpsAccuracy: z.number().positive().optional(),
 });
 
 export const checkOutVisitSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   notes: optionalString.pipe(z.string().max(2000).optional()),
+  deviceId: optionalString,
+  clientTimestamp: optionalString,
+  gpsAccuracy: z.number().positive().optional(),
 });
 
 export const visitSignatureSchema = z.object({
@@ -199,6 +205,9 @@ export const visitSignatureSchema = z.object({
   signerRole: optionalString.pipe(z.string().max(100).optional()),
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
+  deviceId: optionalString,
+  clientTimestamp: optionalString,
+  gpsAccuracy: z.number().positive().optional(),
 });
 
 export const createServiceReportSchema = z.object({

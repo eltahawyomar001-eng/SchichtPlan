@@ -1106,6 +1106,8 @@ model ServiceVisit {
   notes             String?     @db.Text
   /// Signature collected at this visit
   signature         VisitSignature?
+  /// Revisionssicher audit trail
+  visitAuditLogs    ServiceVisitAuditLog[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   /// Relations
@@ -1166,4 +1168,53 @@ model ServiceReport {
   @@index([workspaceId])
   @@index([status])
   @@index([periodStart, periodEnd])
+}
+
+/// Audit event types for service visit lifecycle tracking
+enum VisitAuditEventType {
+  CHECK_IN
+  CHECK_OUT
+  SIGNATURE_CAPTURED
+  VISIT_CREATED
+  VISIT_CANCELLED
+  OFFLINE_SYNC
+}
+
+/// Revisionssicher (tamper-evident) audit log for every service visit event.
+/// Each record bundles: what happened, who did it, where (GPS), when (server clock),
+/// which device, plus a SHA-256 checksum for integrity verification.
+/// This is the financial audit trail for Leistungsnachweis billing.
+model ServiceVisitAuditLog {
+  id              String              @id @default(cuid())
+  eventType       VisitAuditEventType
+  /// Server-authoritative timestamp (NOT device clock)
+  serverTimestamp  DateTime            @default(now())
+  /// Client-reported timestamp (for drift detection)
+  clientTimestamp  DateTime?
+  /// GPS coordinates at time of event
+  gpsLat          Float?
+  gpsLng          Float?
+  gpsAccuracy     Float?              // metres
+  /// Device fingerprint
+  deviceId        String?             // navigator.userAgent hash or generated UUID
+  ipAddress       String?
+  userAgent       String?             @db.Text
+  /// Signature data (only for SIGNATURE_CAPTURED events)
+  signatureData   String?             @db.Text   // base64 PNG
+  /// SHA-256 checksum: eventType|visitId|serverTimestamp|gps|deviceId
+  /// Used to verify record has not been tampered with
+  checksum        String
+  /// Additional event-specific metadata (JSON)
+  metadata        String?             @db.Text
+  /// Whether this record was created from an offline sync
+  offlineSync     Boolean             @default(false)
+  /// Relations
+  visitId         String
+  visit           ServiceVisit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  userId          String?
+  workspaceId     String
+  @@index([visitId, serverTimestamp])
+  @@index([workspaceId, serverTimestamp])
+  @@index([eventType])
+  @@index([offlineSync])
 }

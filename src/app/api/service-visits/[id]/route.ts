@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
+import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/service-visits/[id] ─────────────────────────────
@@ -134,7 +135,7 @@ export async function PATCH(
 
 // ─── DELETE  /api/service-visits/[id] ───────────────────────────
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -159,6 +160,21 @@ export async function DELETE(
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    // Write cancellation audit entry BEFORE delete
+    // (the visit-specific audit log cascades on delete, but the generic
+    //  auditLog table preserves the record for Revisionssicherheit)
+    createVisitAuditEntry(req, {
+      eventType: "VISIT_CANCELLED",
+      visitId: id,
+      userId: user.id,
+      workspaceId,
+      metadata: {
+        previousStatus: existing.status,
+        employeeId: existing.employeeId,
+        locationId: existing.locationId,
+      },
+    });
 
     // Delete signature first (if any), then visit
     await prisma.visitSignature.deleteMany({

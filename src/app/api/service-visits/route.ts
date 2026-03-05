@@ -7,6 +7,7 @@ import { requirePermission, isEmployee } from "@/lib/authorization";
 import { createServiceVisitSchema, validateBody } from "@/lib/validations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { createAuditLog } from "@/lib/audit";
+import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/service-visits ───────────────────────────────────
@@ -151,6 +152,15 @@ export async function POST(req: Request) {
       userId: user.id,
       userEmail: user.email,
       workspaceId,
+    });
+
+    // Revisionssicher audit trail entry
+    createVisitAuditEntry(req, {
+      eventType: "VISIT_CREATED",
+      visitId: visit.id,
+      userId: user.id,
+      workspaceId,
+      metadata: { employeeId, locationId, scheduledDate },
     });
 
     log.info("[service-visits] Visit created", {

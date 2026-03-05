@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { checkOutVisitSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
 
 // ─── POST  /api/service-visits/[id]/check-out ──────────────────
@@ -33,7 +34,8 @@ export async function POST(
     const parsed = validateBody(checkOutVisitSchema, body);
     if (!parsed.success) return parsed.response;
 
-    const { lat, lng, notes } = parsed.data;
+    const { lat, lng, notes, deviceId, clientTimestamp, gpsAccuracy } =
+      parsed.data;
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
@@ -94,6 +96,24 @@ export async function POST(
       userEmail: user.email,
       workspaceId,
       metadata: { action: "check-out", status: updated.status },
+    });
+
+    // Revisionssicher audit trail entry
+    createVisitAuditEntry(req, {
+      eventType: "CHECK_OUT",
+      visitId: id,
+      userId: user.id,
+      workspaceId,
+      gpsLat: lat,
+      gpsLng: lng,
+      gpsAccuracy: gpsAccuracy ?? null,
+      deviceId: deviceId ?? null,
+      clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
+      metadata: {
+        finalStatus: updated.status,
+        hasSignature: !!updated.signature,
+        employeeId: visit.employeeId,
+      },
     });
 
     log.info("[service-visits] Check-out completed", {

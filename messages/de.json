@@ -54,7 +54,10 @@
     "somethingWentWrong": "Etwas ist schiefgelaufen",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "pageNotFound": "Seite nicht gefunden",
-    "pageNotFoundDesc": "Die angeforderte Seite existiert nicht oder wurde verschoben."
+    "pageNotFoundDesc": "Die angeforderte Seite existiert nicht oder wurde verschoben.",
+    "create": "Erstellen",
+    "generate": "Generieren",
+    "export": "Exportieren"
   },
   "nav": {
     "dashboard": "Dashboard",

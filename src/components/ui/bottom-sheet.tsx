@@ -30,11 +30,13 @@ const SWIPE_THRESHOLD = 80;
  *
  * Features:
  * - Swipe-to-dismiss from drag handle (top 48px)
- * - Safe-area-inset-bottom padding
+ * - Safe-area-inset-top / bottom padding
  * - 48px minimum touch targets
  * - Spring-physics cubic-bezier animations
  * - Body scroll lock
  * - Escape key dismissal
+ * - Keyboard-aware: auto-scrolls focused inputs into view
+ * - Dark backdrop with heavy blur (Apple HIG)
  *
  * This component is NOT responsive — it always renders as a bottom sheet.
  * Use `<AdaptiveModal>` for automatic desktop Modal / mobile BottomSheet switching.
@@ -51,6 +53,7 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{
     startY: number;
     currentY: number;
@@ -85,6 +88,32 @@ export function BottomSheet({
       sheetRef.current.style.transform = "";
       sheetRef.current.style.transition = "";
     }
+  }, [open]);
+
+  // Keyboard-aware scrolling — when an input is focused, scroll it into view
+  useEffect(() => {
+    if (!open) return;
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "SELECT" ||
+        target.tagName === "TEXTAREA"
+      ) {
+        // Wait for virtual keyboard to appear, then scroll into view
+        setTimeout(() => {
+          target.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 300);
+      }
+    };
+
+    const container = scrollRef.current;
+    container?.addEventListener("focusin", handleFocusIn);
+    return () => container?.removeEventListener("focusin", handleFocusIn);
   }, [open]);
 
   // Swipe-to-dismiss handlers — only from drag handle area (top 48px)
@@ -142,11 +171,10 @@ export function BottomSheet({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-md animate-fade-in"
       style={{
-        paddingTop: "env(safe-area-inset-top)",
-        paddingLeft: "env(safe-area-inset-left)",
-        paddingRight: "env(safe-area-inset-right)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
       }}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
@@ -155,27 +183,27 @@ export function BottomSheet({
       <div
         ref={sheetRef}
         className={cn(
-          "w-full rounded-t-2xl bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
+          "w-full rounded-t-[20px] bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
           "overflow-hidden flex flex-col",
           "animate-slide-up",
           height === "full" ? "max-h-[92vh]" : "max-h-[85vh]",
           className,
         )}
-        style={{
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Drag handle — always visible, 48px touch zone */}
-        <div className="flex justify-center pt-2.5 pb-1 shrink-0 cursor-grab active:cursor-grabbing min-h-[48px] items-center">
-          <div className="w-9 h-[5px] rounded-full bg-gray-300/80" />
+        {/* Drag handle — always visible, 44px touch zone */}
+        <div className="flex justify-center pt-2 pb-0.5 shrink-0 cursor-grab active:cursor-grabbing min-h-[44px] items-start">
+          <div className="mt-1.5 w-9 h-[5px] rounded-full bg-gray-300/70" />
         </div>
 
-        {/* Header — sticky */}
+        {/* Header — with safe-area-inset-top for notch/Dynamic Island */}
         {title && (
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 shrink-0">
+          <div
+            className="flex items-center justify-between border-b border-gray-100 px-4 pb-3 shrink-0"
+            style={{ paddingTop: "max(0px, env(safe-area-inset-top, 0px))" }}
+          >
             <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold text-gray-900 tracking-tight">
                 {title}
@@ -186,7 +214,7 @@ export function BottomSheet({
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 -mr-1 rounded-xl p-3 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
+              className="flex-shrink-0 -mr-1 rounded-xl p-2.5 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Close"
             >
               <XIcon className="h-5 w-5 text-gray-400" />
@@ -194,22 +222,24 @@ export function BottomSheet({
           </div>
         )}
 
-        {/* Body — scrollable */}
+        {/* Body — scrollable, keyboard-aware */}
         <div
+          ref={scrollRef}
           className={cn(
             "flex-1 overflow-y-auto overscroll-contain",
-            title ? "p-5" : "",
+            title ? "" : "",
           )}
+          style={{ WebkitOverflowScrolling: "touch" }}
         >
           {children}
         </div>
 
-        {/* Footer — sticky, outside scroll area */}
+        {/* Footer — sticky, above Home Indicator */}
         {footer && (
           <div
-            className="shrink-0 border-t border-gray-100 bg-white/80 backdrop-blur-lg px-5 py-4"
+            className="shrink-0 border-t border-gray-100 bg-white/80 backdrop-blur-lg px-4 py-3"
             style={{
-              paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
+              paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
             }}
           >
             {footer}

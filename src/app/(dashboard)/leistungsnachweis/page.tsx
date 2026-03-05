@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
+import { AdaptiveModal } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import {
   FileCheckIcon,
@@ -403,11 +403,34 @@ export default function LeistungsnachweisSeite() {
         onClose={() => setShowCreate(false)}
         title={t("createVisit")}
         size="md"
+        footer={
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowCreate(false)}
+              className="flex-1 !h-14 md:!h-10 md:flex-none"
+            >
+              {tc("cancel")}
+            </Button>
+            <Button
+              onClick={handleCreate}
+              className="flex-1 !h-14 md:!h-10 md:flex-none font-bold"
+            >
+              {tc("create")}
+            </Button>
+          </div>
+        }
       >
-        <div className="space-y-4 p-4 sm:p-6">
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
+        <div className="space-y-5 px-4 py-4">
+          {formError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-600">{formError}</p>
+            </div>
+          )}
           <div>
-            <Label>{t("form.date")}</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              {t("form.date")}
+            </Label>
             <Input
               type="date"
               value={createForm.scheduledDate}
@@ -417,15 +440,19 @@ export default function LeistungsnachweisSeite() {
                   scheduledDate: e.target.value,
                 }))
               }
+              className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
             />
           </div>
           <div>
-            <Label>{t("form.employee")}</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              {t("form.employee")}
+            </Label>
             <Select
               value={createForm.employeeId}
               onChange={(e) =>
                 setCreateForm((f) => ({ ...f, employeeId: e.target.value }))
               }
+              className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
             >
               <option value="">{t("form.selectEmployee")}</option>
               {employees.map((emp) => (
@@ -436,12 +463,15 @@ export default function LeistungsnachweisSeite() {
             </Select>
           </div>
           <div>
-            <Label>{t("form.location")}</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              {t("form.location")}
+            </Label>
             <Select
               value={createForm.locationId}
               onChange={(e) =>
                 setCreateForm((f) => ({ ...f, locationId: e.target.value }))
               }
+              className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
             >
               <option value="">{t("form.selectLocation")}</option>
               {locations.map((loc) => (
@@ -452,22 +482,19 @@ export default function LeistungsnachweisSeite() {
             </Select>
           </div>
           <div>
-            <Label>{t("form.notes")}</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              {t("form.notes")}
+            </Label>
             <Input
               value={createForm.notes}
               onChange={(e) =>
                 setCreateForm((f) => ({ ...f, notes: e.target.value }))
               }
               placeholder={t("form.notesPlaceholder")}
+              className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
             />
           </div>
         </div>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setShowCreate(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button onClick={handleCreate}>{tc("create")}</Button>
-        </ModalFooter>
       </AdaptiveModal>
     </>
   );

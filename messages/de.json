@@ -2253,7 +2253,8 @@
       "checkOut": "Auschecken",
       "sign": "Unterschrift",
       "execute": "Ausführen",
-      "continue": "Fortsetzen"
+      "continue": "Fortsetzen",
+      "viewDetails": "Details"
     },
     "form": {
       "date": "Datum",
@@ -2266,12 +2267,98 @@
     },
     "signature": {
       "title": "Unterschrift erfassen",
+      "subtitle": "Leistungsnachweis abzeichnen",
       "instruction": "Lassen Sie den Auftraggeber vor Ort auf dem Display unterschreiben.",
       "signerName": "Name des Unterzeichners",
       "signerNamePlaceholder": "z.B. Herr Müller",
       "signerRole": "Funktion (optional)",
       "signerRolePlaceholder": "z.B. Filialleiter",
-      "nameRequired": "Bitte geben Sie den Namen des Unterzeichners ein."
+      "nameRequired": "Bitte geben Sie den Namen des Unterzeichners ein.",
+      "signHere": "Hier unterschreiben",
+      "clearSignature": "Unterschrift löschen",
+      "sealAndSubmit": "Versiegeln & Absenden",
+      "submitting": "Wird abgeschlossen…",
+      "saveOffline": "Auf Gerät speichern (Sync später)",
+      "offlineWarning": "Offline — wird bei Verbindung synchronisiert",
+      "selectPosition": "Position auswählen…",
+      "roles": {
+        "objektleiter": "Objektleiter/in",
+        "hausmeister": "Hausmeister/in",
+        "facilityManager": "Facility Manager/in",
+        "empfang": "Empfang",
+        "abteilungsleiter": "Abteilungsleiter/in",
+        "geschaeftsfuehrer": "Geschäftsführer/in",
+        "sonstige": "Sonstige"
+      }
+    },
+    "execution": {
+      "back": "Zurück",
+      "gps": {
+        "verified": "GPS verifiziert",
+        "acquiring": "GPS wird ermittelt…",
+        "outOfRange": "Außerhalb ({distance}m)",
+        "error": "GPS-Fehler",
+        "inactive": "GPS inaktiv",
+        "unavailable": "GPS nicht verfügbar",
+        "positionAcquiring": "GPS-Position wird noch ermittelt…",
+        "permissionDenied": "GPS-Zugriff verweigert. Bitte Berechtigung erteilen.",
+        "positionUnavailable": "GPS-Position nicht verfügbar",
+        "timeout": "GPS-Zeitüberschreitung"
+      },
+      "step1": {
+        "title": "Einchecken",
+        "description": "GPS-Position bestätigen",
+        "cardTitle": "Standort-Verifizierung",
+        "cardDescription": "Bestätigen Sie Ihre Anwesenheit am Einsatzort. Die GPS-Position wird automatisch geprüft.",
+        "distance": "Entfernung",
+        "checkingIn": "Einchecken…",
+        "gpsAcquiring": "GPS wird ermittelt…",
+        "outsideGeofence": "Außerhalb des Geofence",
+        "checkInNow": "Jetzt einchecken",
+        "outsideRadius": "Sie befinden sich außerhalb des 200m-Radius. Bitte nähern Sie sich dem Standort.",
+        "checkInFailed": "Check-in fehlgeschlagen"
+      },
+      "step2": {
+        "title": "Aufgaben bestätigen",
+        "description": "Alle Aufgaben abhaken",
+        "cardTitle": "Aufgaben-Checkliste",
+        "cardDescription": "Bestätigen Sie die erledigten Aufgaben vor Ort.",
+        "checkedInAt": "Eingecheckt um {time}",
+        "toSignature": "Weiter zur Unterschrift",
+        "tasksRemaining": "Noch {count} Aufgaben offen",
+        "tasks": {
+          "arrived": "Am Standort eingetroffen",
+          "contact": "Ansprechpartner kontaktiert",
+          "service": "Dienstleistung erbracht",
+          "documentation": "Dokumentation erstellt"
+        }
+      },
+      "step3": {
+        "title": "Unterschrift & Abschluss",
+        "description": "Leistungsnachweis abzeichnen",
+        "cardTitle": "Leistungsnachweis abschließen",
+        "cardDescription": "Lassen Sie den Leistungsnachweis vom Verantwortlichen vor Ort unterschreiben und den Einsatz abschließen.",
+        "summaryLocation": "Standort",
+        "summaryEmployee": "Mitarbeiter",
+        "summaryTasks": "Aufgaben",
+        "summaryTasksDone": "{done}/{total} erledigt",
+        "summaryCheckedIn": "Eingecheckt",
+        "captureSignature": "Unterschrift erfassen"
+      },
+      "step4": {
+        "title": "Einsatz abgeschlossen",
+        "description": "Der Leistungsnachweis wurde erfolgreich erstellt und abgezeichnet.",
+        "syncPending": "Wird bei Verbindung synchronisiert ({count} ausstehend)",
+        "backToList": "Zurück zur Übersicht"
+      },
+      "offline": {
+        "title": "Offline-Modus",
+        "description": "Aktionen werden auf dem Gerät gespeichert und bei Verbindung synchronisiert.",
+        "pending": "({count} ausstehend)"
+      },
+      "error": {
+        "completionFailed": "Fehler beim Abschluss"
+      }
     }
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,23 +53,25 @@ interface ServiceExecutionViewProps {
   onBack: () => void;
 }
 
-// ─── Default tasks for service visits ───────────────────────────
+// ─── Default task IDs (labels come from i18n) ──────────────────
 
-const DEFAULT_TASKS: Omit<ServiceTask, "completed">[] = [
-  { id: "arrived", label: "Am Standort eingetroffen" },
-  { id: "contact", label: "Ansprechpartner kontaktiert" },
-  { id: "service", label: "Dienstleistung erbracht" },
-  { id: "documentation", label: "Dokumentation erstellt" },
-];
+const DEFAULT_TASK_IDS = [
+  "arrived",
+  "contact",
+  "service",
+  "documentation",
+] as const;
 
 // ─── GPS Status Indicator ───────────────────────────────────────
 
 function GpsIndicator({
   status,
   distance,
+  t,
 }: {
   status: GpsStatus;
   distance: number | null;
+  t: ReturnType<typeof useTranslations<"serviceProof">>;
 }) {
   const isVerified = status === "verified";
   const isAcquiring = status === "acquiring";
@@ -108,11 +111,12 @@ function GpsIndicator({
           status === "error" && "text-red-600",
         )}
       >
-        {isVerified && "GPS verifiziert"}
-        {isAcquiring && "GPS wird ermittelt…"}
-        {isOutOfRange && `Außerhalb (${distance ?? "?"}m)`}
-        {status === "error" && "GPS-Fehler"}
-        {status === "idle" && "GPS inaktiv"}
+        {isVerified && t("execution.gps.verified")}
+        {isAcquiring && t("execution.gps.acquiring")}
+        {isOutOfRange &&
+          t("execution.gps.outOfRange", { distance: distance ?? "?" })}
+        {status === "error" && t("execution.gps.error")}
+        {status === "idle" && t("execution.gps.inactive")}
       </span>
     </div>
   );
@@ -193,6 +197,8 @@ export function ServiceExecutionView({
   onComplete,
   onBack,
 }: ServiceExecutionViewProps) {
+  const t = useTranslations("serviceProof");
+
   // Determine initial step based on visit status
   const getInitialStep = () => {
     if (visit.status === "ABGESCHLOSSEN") return 4; // all done
@@ -202,7 +208,11 @@ export function ServiceExecutionView({
 
   const [currentStep, setCurrentStep] = useState(getInitialStep);
   const [tasks, setTasks] = useState<ServiceTask[]>(
-    DEFAULT_TASKS.map((t) => ({ ...t, completed: false })),
+    DEFAULT_TASK_IDS.map((id) => ({
+      id,
+      label: t(`execution.step2.tasks.${id}`),
+      completed: false,
+    })),
   );
   const [checkInTime, setCheckInTime] = useState<Date | null>(
     visit.checkInAt ? new Date(visit.checkInAt) : null,
@@ -234,7 +244,7 @@ export function ServiceExecutionView({
 
   const handleCheckIn = useCallback(async () => {
     if (!position) {
-      setError("GPS-Position wird noch ermittelt…");
+      setError(t("execution.gps.positionAcquiring"));
       return;
     }
 
@@ -254,7 +264,9 @@ export function ServiceExecutionView({
       setCheckInTime(new Date());
       setCurrentStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Check-in fehlgeschlagen");
+      setError(
+        err instanceof Error ? err.message : t("execution.step1.checkInFailed"),
+      );
     } finally {
       setIsCheckingIn(false);
     }
@@ -309,7 +321,11 @@ export function ServiceExecutionView({
         setCurrentStep(4);
         onComplete();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Fehler beim Abschluss");
+        setError(
+          err instanceof Error
+            ? err.message
+            : t("execution.error.completionFailed"),
+        );
       }
     },
     [executeAction, visit.id, position, onComplete],
@@ -327,7 +343,7 @@ export function ServiceExecutionView({
             <button
               onClick={onBack}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 active:scale-[0.95] transition-transform"
-              aria-label="Zurück"
+              aria-label={t("execution.back")}
             >
               <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
             </button>
@@ -346,7 +362,7 @@ export function ServiceExecutionView({
 
           {/* GPS status + employee */}
           <div className="flex items-center justify-between">
-            <GpsIndicator status={gpsStatus} distance={distanceMetres} />
+            <GpsIndicator status={gpsStatus} distance={distanceMetres} t={t} />
             <span className="text-xs text-gray-500">
               {visit.employee.firstName} {visit.employee.lastName}
             </span>
@@ -370,12 +386,12 @@ export function ServiceExecutionView({
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
             <div>
               <p className="text-sm font-medium text-amber-800">
-                Offline-Modus
+                {t("execution.offline.title")}
               </p>
               <p className="text-xs text-amber-600">
-                Aktionen werden auf dem Gerät gespeichert und bei Verbindung
-                synchronisiert.
-                {pendingCount > 0 && ` (${pendingCount} ausstehend)`}
+                {t("execution.offline.description")}
+                {pendingCount > 0 &&
+                  ` ${t("execution.offline.pending", { count: pendingCount })}`}
               </p>
             </div>
           </div>
@@ -386,20 +402,20 @@ export function ServiceExecutionView({
           <StepIndicator
             step={1}
             currentStep={currentStep}
-            label="Einchecken"
-            description="GPS-Position bestätigen"
+            label={t("execution.step1.title")}
+            description={t("execution.step1.description")}
           />
           <StepIndicator
             step={2}
             currentStep={currentStep}
-            label="Aufgaben bestätigen"
-            description="Alle Aufgaben abhaken"
+            label={t("execution.step2.title")}
+            description={t("execution.step2.description")}
           />
           <StepIndicator
             step={3}
             currentStep={currentStep}
-            label="Unterschrift & Abschluss"
-            description="Leistungsnachweis abzeichnen"
+            label={t("execution.step3.title")}
+            description={t("execution.step3.description")}
           />
         </div>
 
@@ -408,11 +424,10 @@ export function ServiceExecutionView({
           <div className="space-y-4">
             <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-[#111827]">
-                Standort-Verifizierung
+                {t("execution.step1.cardTitle")}
               </h3>
               <p className="mt-1 text-xs text-gray-500">
-                Bestätigen Sie Ihre Anwesenheit am Einsatzort. Die GPS-Position
-                wird automatisch geprüft.
+                {t("execution.step1.cardDescription")}
               </p>
 
               {/* Distance info */}
@@ -420,7 +435,7 @@ export function ServiceExecutionView({
                 <div className="mt-3 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
                   <MapPinIcon className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-600">
-                    Entfernung:{" "}
+                    {t("execution.step1.distance")}:{" "}
                     <span className="font-semibold">{distanceMetres}m</span>
                   </span>
                 </div>
@@ -445,24 +460,23 @@ export function ServiceExecutionView({
               {isCheckingIn ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Einchecken…
+                  {t("execution.step1.checkingIn")}
                 </span>
               ) : gpsStatus === "acquiring" ? (
-                "GPS wird ermittelt…"
+                t("execution.step1.gpsAcquiring")
               ) : !isWithinGeofence && gpsStatus === "out-of-range" ? (
-                "Außerhalb des Geofence"
+                t("execution.step1.outsideGeofence")
               ) : (
                 <span className="flex items-center gap-2">
                   <MapPinIcon className="h-5 w-5" />
-                  Jetzt einchecken
+                  {t("execution.step1.checkInNow")}
                 </span>
               )}
             </Button>
 
             {!isWithinGeofence && gpsStatus === "out-of-range" && (
               <p className="text-center text-xs text-red-500">
-                Sie befinden sich außerhalb des 200m-Radius. Bitte nähern Sie
-                sich dem Standort.
+                {t("execution.step1.outsideRadius")}
               </p>
             )}
           </div>
@@ -473,19 +487,20 @@ export function ServiceExecutionView({
           <div className="space-y-4">
             <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-[#111827]">
-                Aufgaben-Checkliste
+                {t("execution.step2.cardTitle")}
               </h3>
               <p className="mt-1 text-xs text-gray-500">
-                Bestätigen Sie die erledigten Aufgaben vor Ort.
+                {t("execution.step2.cardDescription")}
               </p>
 
               {checkInTime && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600">
                   <CheckCircleIcon className="h-3.5 w-3.5" />
-                  Eingecheckt um{" "}
-                  {checkInTime.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
+                  {t("execution.step2.checkedInAt", {
+                    time: checkInTime.toLocaleTimeString("de-DE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
                   })}
                 </div>
               )}
@@ -536,10 +551,12 @@ export function ServiceExecutionView({
               {allTasksCompleted ? (
                 <span className="flex items-center gap-2">
                   <CheckCircleIcon className="h-5 w-5" />
-                  Weiter zur Unterschrift
+                  {t("execution.step2.toSignature")}
                 </span>
               ) : (
-                `Noch ${tasks.filter((t) => !t.completed).length} Aufgaben offen`
+                t("execution.step2.tasksRemaining", {
+                  count: tasks.filter((task) => !task.completed).length,
+                })
               )}
             </Button>
           </div>
@@ -552,38 +569,47 @@ export function ServiceExecutionView({
               <div className="flex items-center gap-2">
                 <ShieldCheckIcon className="h-5 w-5 text-emerald-600" />
                 <h3 className="text-sm font-semibold text-[#111827]">
-                  Leistungsnachweis abschließen
+                  {t("execution.step3.cardTitle")}
                 </h3>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Lassen Sie den Leistungsnachweis vom Verantwortlichen vor Ort
-                unterschreiben und den Einsatz abschließen.
+                {t("execution.step3.cardDescription")}
               </p>
 
               {/* Summary */}
               <div className="mt-3 space-y-2 rounded-lg bg-gray-50 p-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">Standort</span>
+                  <span className="text-gray-500">
+                    {t("execution.step3.summaryLocation")}
+                  </span>
                   <span className="font-medium text-[#111827]">
                     {visit.location.name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">Mitarbeiter</span>
+                  <span className="text-gray-500">
+                    {t("execution.step3.summaryEmployee")}
+                  </span>
                   <span className="font-medium text-[#111827]">
                     {visit.employee.firstName} {visit.employee.lastName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">Aufgaben</span>
+                  <span className="text-gray-500">
+                    {t("execution.step3.summaryTasks")}
+                  </span>
                   <span className="font-medium text-emerald-700">
-                    {tasks.filter((t) => t.completed).length}/{tasks.length}{" "}
-                    erledigt
+                    {t("execution.step3.summaryTasksDone", {
+                      done: tasks.filter((task) => task.completed).length,
+                      total: tasks.length,
+                    })}
                   </span>
                 </div>
                 {checkInTime && (
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Eingecheckt</span>
+                    <span className="text-gray-500">
+                      {t("execution.step3.summaryCheckedIn")}
+                    </span>
                     <span className="font-medium text-[#111827]">
                       {checkInTime.toLocaleTimeString("de-DE", {
                         hour: "2-digit",
@@ -601,7 +627,7 @@ export function ServiceExecutionView({
             >
               <span className="flex items-center gap-2">
                 <ShieldCheckIcon className="h-5 w-5" />
-                Unterschrift erfassen
+                {t("execution.step3.captureSignature")}
               </span>
             </Button>
           </div>
@@ -614,21 +640,21 @@ export function ServiceExecutionView({
               <CheckCircleIcon className="h-8 w-8 text-emerald-600" />
             </div>
             <h3 className="mt-4 text-lg font-bold text-[#111827]">
-              Einsatz abgeschlossen
+              {t("execution.step4.title")}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Der Leistungsnachweis wurde erfolgreich erstellt und abgezeichnet.
+              {t("execution.step4.description")}
             </p>
             {!isOnline && pendingCount > 0 && (
               <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2">
                 <AlertTriangleIcon className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-amber-700">
-                  Wird bei Verbindung synchronisiert ({pendingCount} ausstehend)
+                  {t("execution.step4.syncPending", { count: pendingCount })}
                 </span>
               </div>
             )}
             <Button onClick={onBack} variant="outline" className="mt-6">
-              Zurück zur Übersicht
+              {t("execution.step4.backToList")}
             </Button>
           </div>
         )}

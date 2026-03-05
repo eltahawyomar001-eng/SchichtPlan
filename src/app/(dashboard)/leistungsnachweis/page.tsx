@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
-import { SignaturePad } from "@/components/ui/signature-pad";
 import {
   FileCheckIcon,
   MapPinIcon,
@@ -23,6 +22,7 @@ import {
   ClockIcon,
   AlertTriangleIcon,
   PlayIcon,
+  EyeIcon,
 } from "@/components/icons";
 import {
   ServiceExecutionView,
@@ -115,12 +115,6 @@ export default function LeistungsnachweisSeite() {
     notes: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
-
-  // Signature modal
-  const [signingVisit, setSigningVisit] = useState<ServiceVisit | null>(null);
-  const [signerName, setSignerName] = useState("");
-  const [signerRole, setSignerRole] = useState("");
-  const [sigSaving, setSigSaving] = useState(false);
 
   // Check-in/out
   const [acting, setActing] = useState<string | null>(null);
@@ -249,53 +243,6 @@ export default function LeistungsnachweisSeite() {
       setError("GPS nicht verfügbar");
     } finally {
       setActing(null);
-    }
-  };
-
-  const handleSignature = async (dataUrl: string) => {
-    if (!signingVisit) return;
-    setSigSaving(true);
-    try {
-      let lat: number | undefined;
-      let lng: number | undefined;
-      try {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            timeout: 5000,
-          }),
-        );
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
-      } catch {
-        // GPS optional for signature
-      }
-
-      const res = await fetch(
-        `/api/service-visits/${signingVisit.id}/signature`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            signatureData: dataUrl,
-            signerName,
-            signerRole: signerRole || undefined,
-            lat,
-            lng,
-          }),
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.error || "Unterschrift fehlgeschlagen");
-      }
-      setSigningVisit(null);
-      setSignerName("");
-      setSignerRole("");
-      fetchVisits();
-    } catch {
-      setError("Netzwerkfehler");
-    } finally {
-      setSigSaving(false);
     }
   };
 
@@ -439,9 +386,7 @@ export default function LeistungsnachweisSeite() {
                 key={visit.id}
                 visit={visit}
                 acting={acting === visit.id}
-                onCheckIn={() => handleCheckIn(visit.id)}
                 onCheckOut={() => handleCheckOut(visit.id)}
-                onSign={() => setSigningVisit(visit)}
                 onExecute={() => setExecutingVisit(visit)}
               />
             ))}
@@ -521,48 +466,6 @@ export default function LeistungsnachweisSeite() {
           <Button onClick={handleCreate}>{tc("create")}</Button>
         </ModalFooter>
       </AdaptiveModal>
-
-      {/* Signature modal */}
-      <AdaptiveModal
-        open={!!signingVisit}
-        onClose={() => {
-          setSigningVisit(null);
-          setSignerName("");
-          setSignerRole("");
-        }}
-        title={t("signature.title")}
-        size="md"
-        mobileHeight="full"
-      >
-        <div className="space-y-4 p-4 sm:p-6">
-          <p className="text-sm text-gray-500">{t("signature.instruction")}</p>
-          <div>
-            <Label>{t("signature.signerName")}</Label>
-            <Input
-              value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
-              placeholder={t("signature.signerNamePlaceholder")}
-            />
-          </div>
-          <div>
-            <Label>{t("signature.signerRole")}</Label>
-            <Input
-              value={signerRole}
-              onChange={(e) => setSignerRole(e.target.value)}
-              placeholder={t("signature.signerRolePlaceholder")}
-            />
-          </div>
-          <SignaturePad
-            onSignature={handleSignature}
-            disabled={sigSaving || !signerName}
-          />
-          {!signerName && (
-            <p className="text-xs text-amber-600">
-              {t("signature.nameRequired")}
-            </p>
-          )}
-        </div>
-      </AdaptiveModal>
     </>
   );
 }
@@ -572,20 +475,11 @@ export default function LeistungsnachweisSeite() {
 interface VisitCardProps {
   visit: ServiceVisit;
   acting: boolean;
-  onCheckIn: () => void;
   onCheckOut: () => void;
-  onSign: () => void;
   onExecute: () => void;
 }
 
-function VisitCard({
-  visit,
-  acting,
-  onCheckIn,
-  onCheckOut,
-  onSign,
-  onExecute,
-}: VisitCardProps) {
+function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
   const t = useTranslations("serviceProof");
   const cfg = statusConfig[visit.status];
 
@@ -649,29 +543,29 @@ function VisitCard({
           </div>
 
           {/* Right: actions */}
-          <div className="flex shrink-0 gap-2">
-            {(visit.status === "GEPLANT" || visit.status === "EINGECHECKT") && (
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {visit.status === "ABGESCHLOSSEN" && (
               <Button size="sm" variant="outline" onClick={onExecute}>
-                <PlayIcon className="h-3.5 w-3.5 mr-1" />
-                {visit.status === "GEPLANT"
-                  ? t("actions.execute")
-                  : t("actions.continue")}
+                <EyeIcon className="h-3.5 w-3.5 mr-1" />
+                {t("actions.viewDetails")}
               </Button>
             )}
             {visit.status === "GEPLANT" && (
-              <Button size="sm" onClick={onCheckIn} disabled={acting}>
-                {t("actions.checkIn")}
+              <Button size="sm" onClick={onExecute}>
+                <PlayIcon className="h-3.5 w-3.5 mr-1" />
+                {t("actions.execute")}
               </Button>
             )}
-            {visit.status === "EINGECHECKT" && !visit.signature && (
-              <Button size="sm" variant="outline" onClick={onSign}>
-                {t("actions.sign")}
+            {visit.status === "EINGECHECKT" && (
+              <Button size="sm" onClick={onExecute}>
+                <PlayIcon className="h-3.5 w-3.5 mr-1" />
+                {t("actions.continue")}
               </Button>
             )}
             {visit.status === "EINGECHECKT" && (
               <Button
                 size="sm"
-                variant={visit.signature ? "default" : "secondary"}
+                variant="outline"
                 onClick={onCheckOut}
                 disabled={acting}
               >

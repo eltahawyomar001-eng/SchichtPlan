@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,18 +24,17 @@ interface SignatureDrawerProps {
   isWithinGeofence: boolean;
 }
 
-// ─── Signer role options ────────────────────────────────────────
+// ─── Signer role keys (labels come from i18n) ───────────────────
 
-const SIGNER_ROLES = [
-  { value: "", label: "Position auswählen…" },
-  { value: "Objektleiter", label: "Objektleiter/in" },
-  { value: "Hausmeister", label: "Hausmeister/in" },
-  { value: "Facility Manager", label: "Facility Manager/in" },
-  { value: "Empfang", label: "Empfang" },
-  { value: "Abteilungsleiter", label: "Abteilungsleiter/in" },
-  { value: "Geschäftsführer", label: "Geschäftsführer/in" },
-  { value: "Sonstige", label: "Sonstige" },
-];
+const SIGNER_ROLE_KEYS = [
+  "objektleiter",
+  "hausmeister",
+  "facilityManager",
+  "empfang",
+  "abteilungsleiter",
+  "geschaeftsfuehrer",
+  "sonstige",
+] as const;
 
 // ─── Velocity-smoothed drawing helpers ──────────────────────────
 
@@ -73,6 +73,7 @@ export function SignatureDrawer({
   isOnline,
   isWithinGeofence,
 }: SignatureDrawerProps) {
+  const t = useTranslations("serviceProof");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasContent, setHasContent] = useState(false);
@@ -314,17 +315,17 @@ export function SignatureDrawer({
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-[#111827] tracking-tight">
-                  Unterschrift erfassen
+                  {t("signature.title")}
                 </h2>
                 <p className="mt-0.5 text-sm text-gray-500">
-                  Leistungsnachweis abzeichnen
+                  {t("signature.subtitle")}
                 </p>
               </div>
               <button
                 onClick={handleClose}
                 disabled={isSubmitting}
                 className="flex-shrink-0 -mr-1 rounded-xl p-3 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
-                aria-label="Schließen"
+                aria-label={t("execution.back")}
               >
                 <XIcon className="h-5 w-5 text-gray-400" />
               </button>
@@ -335,12 +336,12 @@ export function SignatureDrawer({
               {/* Signer name */}
               <div>
                 <Label className="text-[#111827]">
-                  Name des Unterzeichners *
+                  {t("signature.signerName")} *
                 </Label>
                 <Input
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
-                  placeholder="z.B. Max Mustermann"
+                  placeholder={t("signature.signerNamePlaceholder")}
                   className="mt-1.5"
                   autoComplete="name"
                 />
@@ -348,15 +349,18 @@ export function SignatureDrawer({
 
               {/* Signer role */}
               <div>
-                <Label className="text-[#111827]">Position / Rolle</Label>
+                <Label className="text-[#111827]">
+                  {t("signature.signerRole")}
+                </Label>
                 <Select
                   value={signerRole}
                   onChange={(e) => setSignerRole(e.target.value)}
                   className="mt-1.5"
                 >
-                  {SIGNER_ROLES.map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
+                  <option value="">{t("signature.selectPosition")}</option>
+                  {SIGNER_ROLE_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {t(`signature.roles.${key}`)}
                     </option>
                   ))}
                 </Select>
@@ -364,7 +368,9 @@ export function SignatureDrawer({
 
               {/* Signature canvas */}
               <div>
-                <Label className="text-[#111827]">Unterschrift *</Label>
+                <Label className="text-[#111827]">
+                  {t("signature.signHere")} *
+                </Label>
                 <div
                   className={cn(
                     "relative mt-1.5 rounded-xl border-2 border-dashed transition-colors",
@@ -388,7 +394,7 @@ export function SignatureDrawer({
                   {!hasContent && (
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                       <p className="text-sm text-gray-400">
-                        Hier unterschreiben
+                        {t("signature.signHere")}
                       </p>
                     </div>
                   )}
@@ -399,7 +405,7 @@ export function SignatureDrawer({
                     onClick={clearCanvas}
                     className="mt-2 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    Unterschrift löschen
+                    {t("signature.clearSignature")}
                   </button>
                 )}
               </div>
@@ -417,14 +423,14 @@ export function SignatureDrawer({
                 <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2">
                   <AlertTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
                   <span className="text-xs text-amber-700">
-                    Offline — wird bei Verbindung synchronisiert
+                    {t("signature.offlineWarning")}
                   </span>
                 </div>
               )}
 
               {!signerName.trim() && (
                 <p className="text-xs text-amber-600">
-                  Bitte geben Sie den Namen des Unterzeichners ein.
+                  {t("signature.nameRequired")}
                 </p>
               )}
 
@@ -436,17 +442,17 @@ export function SignatureDrawer({
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Wird abgeschlossen…
+                    {t("signature.submitting")}
                   </span>
                 ) : !isOnline ? (
                   <span className="flex items-center gap-2">
                     <AlertTriangleIcon className="h-5 w-5" />
-                    Auf Gerät speichern (Sync später)
+                    {t("signature.saveOffline")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <ShieldCheckIcon className="h-5 w-5" />
-                    Versiegeln & Absenden
+                    {t("signature.sealAndSubmit")}
                   </span>
                 )}
               </Button>

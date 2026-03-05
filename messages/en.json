@@ -2253,7 +2253,8 @@
       "checkOut": "Check Out",
       "sign": "Signature",
       "execute": "Execute",
-      "continue": "Continue"
+      "continue": "Continue",
+      "viewDetails": "Details"
     },
     "form": {
       "date": "Date",
@@ -2266,12 +2267,98 @@
     },
     "signature": {
       "title": "Capture Signature",
+      "subtitle": "Sign service record",
       "instruction": "Have the client sign on the display on-site.",
       "signerName": "Signer name",
       "signerNamePlaceholder": "e.g. Mr. Smith",
       "signerRole": "Role (optional)",
       "signerRolePlaceholder": "e.g. Store Manager",
-      "nameRequired": "Please enter the signer's name."
+      "nameRequired": "Please enter the signer's name.",
+      "signHere": "Sign here",
+      "clearSignature": "Clear signature",
+      "sealAndSubmit": "Seal & Submit",
+      "submitting": "Completing…",
+      "saveOffline": "Save to Device (Sync Later)",
+      "offlineWarning": "Offline — will sync when connected",
+      "selectPosition": "Select position…",
+      "roles": {
+        "objektleiter": "Site Manager",
+        "hausmeister": "Caretaker",
+        "facilityManager": "Facility Manager",
+        "empfang": "Reception",
+        "abteilungsleiter": "Department Head",
+        "geschaeftsfuehrer": "Managing Director",
+        "sonstige": "Other"
+      }
+    },
+    "execution": {
+      "back": "Back",
+      "gps": {
+        "verified": "GPS verified",
+        "acquiring": "Acquiring GPS…",
+        "outOfRange": "Out of range ({distance}m)",
+        "error": "GPS error",
+        "inactive": "GPS inactive",
+        "unavailable": "GPS unavailable",
+        "positionAcquiring": "GPS position still acquiring…",
+        "permissionDenied": "GPS access denied. Please grant permission.",
+        "positionUnavailable": "GPS position unavailable",
+        "timeout": "GPS timeout"
+      },
+      "step1": {
+        "title": "Check In",
+        "description": "Confirm GPS position",
+        "cardTitle": "Location Verification",
+        "cardDescription": "Confirm your presence at the service location. GPS position is verified automatically.",
+        "distance": "Distance",
+        "checkingIn": "Checking in…",
+        "gpsAcquiring": "Acquiring GPS…",
+        "outsideGeofence": "Outside geofence",
+        "checkInNow": "Check in now",
+        "outsideRadius": "You are outside the 200m radius. Please move closer to the location.",
+        "checkInFailed": "Check-in failed"
+      },
+      "step2": {
+        "title": "Confirm Tasks",
+        "description": "Complete all tasks",
+        "cardTitle": "Task Checklist",
+        "cardDescription": "Confirm the completed tasks on-site.",
+        "checkedInAt": "Checked in at {time}",
+        "toSignature": "Continue to Signature",
+        "tasksRemaining": "{count} tasks remaining",
+        "tasks": {
+          "arrived": "Arrived at location",
+          "contact": "Contacted on-site person",
+          "service": "Service completed",
+          "documentation": "Documentation created"
+        }
+      },
+      "step3": {
+        "title": "Signature & Finalize",
+        "description": "Sign service record",
+        "cardTitle": "Complete Service Record",
+        "cardDescription": "Have the service record signed by the on-site manager and finalize the visit.",
+        "summaryLocation": "Location",
+        "summaryEmployee": "Employee",
+        "summaryTasks": "Tasks",
+        "summaryTasksDone": "{done}/{total} completed",
+        "summaryCheckedIn": "Checked in",
+        "captureSignature": "Capture Signature"
+      },
+      "step4": {
+        "title": "Visit Completed",
+        "description": "The service record has been successfully created and signed.",
+        "syncPending": "Will sync when connected ({count} pending)",
+        "backToList": "Back to overview"
+      },
+      "offline": {
+        "title": "Offline Mode",
+        "description": "Actions will be saved on device and synced when connected.",
+        "pending": "({count} pending)"
+      },
+      "error": {
+        "completionFailed": "Failed to complete"
+      }
     }
   }
 }

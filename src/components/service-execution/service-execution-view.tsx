@@ -419,15 +419,18 @@ export function ServiceExecutionView({
   // ────────── Render ──────────
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F9FAFB]">
-      {/* ── Sticky Glassmorphism Header ── */}
-      <header className="sticky top-0 z-40 border-b border-white/20 bg-white/70 backdrop-blur-xl backdrop-saturate-150">
-        <div className="px-4 py-3 safe-area-top">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[#F2F2F7] lg:bg-[#F9FAFB]">
+      {/* ── Sticky Glassmorphism Header — respects notch/Dynamic Island ── */}
+      <header
+        className="shrink-0 border-b border-white/20 bg-white/70 backdrop-blur-xl backdrop-saturate-150"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
+        <div className="px-4 py-3">
           {/* Back button row */}
           <div className="flex items-center gap-3 mb-2">
             <button
               onClick={onBack}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 active:scale-[0.95] transition-transform"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 active:scale-[0.95] transition-transform touch-target"
               aria-label={t("execution.back")}
             >
               <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
@@ -455,11 +458,19 @@ export function ServiceExecutionView({
         </div>
       </header>
 
-      {/* ── Main Content ── */}
-      <main className="flex-1 px-4 py-6">
+      {/* ── Main Content — edge-to-edge scrollable sheet ── */}
+      <main
+        className="flex-1 overflow-y-auto overscroll-contain px-4 py-6"
+        style={{
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+          paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+          paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
+        }}
+      >
         {/* Error banner */}
         {(error || gpsError) && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+          <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-red-200 bg-white p-3">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
             <p className="text-sm text-red-700">{error || gpsError}</p>
           </div>
@@ -467,7 +478,7 @@ export function ServiceExecutionView({
 
         {/* Offline warning */}
         {!isOnline && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-amber-200 bg-white p-3">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
             <div>
               <p className="text-sm font-medium text-amber-800">
@@ -483,7 +494,7 @@ export function ServiceExecutionView({
         )}
 
         {/* Step indicator */}
-        <div className="mb-6">
+        <div className="mb-6 mx-auto w-full max-w-lg">
           <StepIndicator
             step={1}
             currentStep={currentStep}
@@ -506,7 +517,7 @@ export function ServiceExecutionView({
 
         {/* ── Step 1: Check-In ── */}
         {currentStep === 1 && (
-          <div className="space-y-4">
+          <div className="space-y-4 mx-auto w-full max-w-lg">
             <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-[#111827]">
                 {t("execution.step1.cardTitle")}
@@ -589,7 +600,7 @@ export function ServiceExecutionView({
 
         {/* ── Step 2: Task Confirmation ── */}
         {currentStep === 2 && (
-          <div className="space-y-4">
+          <div className="space-y-4 mx-auto w-full max-w-lg">
             <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-[#111827]">
                 {t("execution.step2.cardTitle")}
@@ -669,7 +680,7 @@ export function ServiceExecutionView({
 
         {/* ── Step 3: Signature & Finalize ── */}
         {currentStep === 3 && (
-          <div className="space-y-4">
+          <div className="space-y-4 mx-auto w-full max-w-lg">
             <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <ShieldCheckIcon className="h-5 w-5 text-emerald-600" />
@@ -740,9 +751,9 @@ export function ServiceExecutionView({
 
         {/* ── Step 4: Completion — Legal Audit Card ── */}
         {currentStep === 4 && (
-          <div className="space-y-4">
+          <div className="space-y-4 mx-auto w-full max-w-lg">
             {/* Success header */}
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500">
                 <CheckCircleIcon className="h-5 w-5 text-white" />
               </div>
@@ -763,12 +774,12 @@ export function ServiceExecutionView({
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                     {t("execution.step4.signatureTitle")}
                   </h4>
-                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-3">
+                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={completionData.signatureImage}
                       alt={t("execution.step4.signatureAlt")}
-                      className="mx-auto h-24 w-auto object-contain"
+                      className="mx-auto h-auto w-full max-h-28 object-contain"
                     />
                   </div>
                   <div className="mt-3 flex items-center justify-between">
@@ -787,22 +798,22 @@ export function ServiceExecutionView({
                 </div>
 
                 {/* ── Audit Stamp — Apple-style high-contrast card ── */}
-                <div className="overflow-hidden rounded-2xl border border-[#1d1d1f]/10 bg-[#1d1d1f] shadow-lg">
+                <div className="overflow-hidden rounded-2xl bg-[#1d1d1f] shadow-xl">
                   {/* Header bar */}
-                  <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
+                  <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
                     <ShieldCheckIcon className="h-4 w-4 text-emerald-400" />
                     <span className="text-xs font-bold uppercase tracking-widest text-white/80">
                       {t("execution.step4.auditStamp")}
                     </span>
                   </div>
 
-                  <div className="space-y-3 px-4 py-4">
+                  <div className="space-y-3.5 px-4 py-4">
                     {/* Server Timestamp */}
-                    <div className="flex items-start justify-between">
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
                         {t("execution.step4.serverTime")}
                       </span>
-                      <span className="text-right font-mono text-xs font-semibold text-white">
+                      <span className="text-right font-mono text-xs font-semibold text-white leading-snug">
                         {completionData.signedAt.toLocaleDateString("de-DE", {
                           day: "2-digit",
                           month: "2-digit",
@@ -817,11 +828,11 @@ export function ServiceExecutionView({
                     </div>
 
                     {/* GPS Coordinates */}
-                    <div className="flex items-start justify-between">
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
                         {t("execution.step4.gpsCoordinates")}
                       </span>
-                      <div className="text-right font-mono text-xs font-semibold text-white">
+                      <div className="text-right font-mono text-xs font-semibold text-white leading-snug">
                         {completionData.gpsLat !== null &&
                         completionData.gpsLng !== null ? (
                           <>
@@ -835,32 +846,32 @@ export function ServiceExecutionView({
                     </div>
 
                     {/* Location */}
-                    <div className="flex items-start justify-between">
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
                         {t("execution.step4.auditLocation")}
                       </span>
-                      <span className="max-w-[60%] text-right text-xs font-semibold text-white">
+                      <span className="max-w-[55%] text-right text-xs font-semibold text-white leading-snug">
                         {visit.location.name}
                       </span>
                     </div>
 
                     {/* Employee */}
-                    <div className="flex items-start justify-between">
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
                         {t("execution.step4.auditEmployee")}
                       </span>
-                      <span className="text-right text-xs font-semibold text-white">
+                      <span className="text-right text-xs font-semibold text-white leading-snug">
                         {visit.employee.firstName} {visit.employee.lastName}
                       </span>
                     </div>
 
                     {/* Check-in / Check-out */}
                     {checkInTime && (
-                      <div className="flex items-start justify-between">
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
                           {t("execution.step4.auditDuration")}
                         </span>
-                        <span className="text-right font-mono text-xs font-semibold text-white">
+                        <span className="text-right font-mono text-xs font-semibold text-white leading-snug">
                           {checkInTime.toLocaleTimeString("de-DE", {
                             hour: "2-digit",
                             minute: "2-digit",

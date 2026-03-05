@@ -145,9 +145,9 @@ export function Modal({
       <div
         ref={sheetRef}
         className={cn(
-          "w-full mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100",
+          "w-full mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
           "max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col",
-          "animate-slide-up sm:animate-fade-in",
+          "animate-slide-up sm:animate-spring-scale-in",
           sizeMap[size],
           className,
         )}
@@ -176,7 +176,7 @@ export function Modal({
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 -mr-1 rounded-xl p-2 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+              className="flex-shrink-0 -mr-1 rounded-xl p-2 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Close"
             >
               <XIcon className="h-5 w-5 text-gray-400" />

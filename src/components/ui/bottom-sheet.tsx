@@ -155,7 +155,7 @@ export function BottomSheet({
       <div
         ref={sheetRef}
         className={cn(
-          "w-full rounded-t-2xl bg-white shadow-2xl ring-1 ring-gray-100",
+          "w-full rounded-t-2xl bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
           "overflow-hidden flex flex-col",
           "animate-slide-up",
           height === "full" ? "max-h-[92vh]" : "max-h-[85vh]",
@@ -170,7 +170,7 @@ export function BottomSheet({
       >
         {/* Drag handle — always visible, 48px touch zone */}
         <div className="flex justify-center pt-2.5 pb-1 shrink-0 cursor-grab active:cursor-grabbing min-h-[48px] items-center">
-          <div className="w-9 h-[5px] rounded-full bg-gray-300" />
+          <div className="w-9 h-[5px] rounded-full bg-gray-300/80" />
         </div>
 
         {/* Header — sticky */}

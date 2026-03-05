@@ -50,6 +50,36 @@
       "type": "image/png"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Stempeluhr",
+      "short_name": "Stempeln",
+      "description": "Arbeitszeit ein- oder ausstempeln",
+      "url": "/stempeluhr",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Schichtplan",
+      "short_name": "Schichten",
+      "description": "Schichtplan anzeigen und verwalten",
+      "url": "/schichtplan",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Zeiterfassung",
+      "short_name": "Zeiten",
+      "description": "Arbeitszeiten erfassen und verwalten",
+      "url": "/zeiterfassung",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Abwesenheiten",
+      "short_name": "Urlaub",
+      "description": "Urlaub und Abwesenheiten beantragen",
+      "url": "/abwesenheiten",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
   "screenshots": [
     {
       "src": "/icon-512x512.png",
@@ -70,5 +100,6 @@
   "lang": "de",
   "dir": "ltr",
   "scope": "/",
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "handle_links": "preferred"
 }

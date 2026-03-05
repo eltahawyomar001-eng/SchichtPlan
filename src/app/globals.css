@@ -55,6 +55,65 @@
   --sidebar-hover: #1e293b;
   --sidebar-active: #059669;
   --sidebar-border: #334155;
+
+  /* ── Elevation / Shadow System (Material Design 3 inspired) ── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+  /* ── Fluid Typography Scale (clamp-based) ── */
+  --text-xs: clamp(0.6875rem, 0.65rem + 0.1vw, 0.75rem); /* 11-12px */
+  --text-sm: clamp(0.8125rem, 0.775rem + 0.15vw, 0.875rem); /* 13-14px */
+  --text-base: clamp(0.875rem, 0.825rem + 0.2vw, 1rem); /* 14-16px */
+  --text-lg: clamp(1rem, 0.925rem + 0.3vw, 1.125rem); /* 16-18px */
+  --text-xl: clamp(1.125rem, 1rem + 0.5vw, 1.25rem); /* 18-20px */
+  --text-2xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); /* 20-24px */
+  --text-3xl: clamp(1.5rem, 1.25rem + 1vw, 1.875rem); /* 24-30px */
+  --text-4xl: clamp(1.875rem, 1.5rem + 1.5vw, 2.25rem); /* 30-36px */
+
+  /* ── Spacing Scale ── */
+  --space-xs: clamp(0.25rem, 0.2rem + 0.2vw, 0.375rem);
+  --space-sm: clamp(0.5rem, 0.4rem + 0.4vw, 0.75rem);
+  --space-md: clamp(0.75rem, 0.6rem + 0.6vw, 1rem);
+  --space-lg: clamp(1rem, 0.8rem + 0.8vw, 1.5rem);
+  --space-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+
+  /* ── Radius Scale ── */
+  --radius-sm: 0.5rem; /* 8px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-xl: 1.25rem; /* 20px */
+  --radius-2xl: 1.5rem; /* 24px */
+  --radius-full: 9999px;
+
+  /* ── Spring Timing Functions ── */
+  --ease-spring: cubic-bezier(
+    0.175,
+    0.885,
+    0.32,
+    1.275
+  ); /* Underdamped — bouncy */
+  --ease-spring-soft: cubic-bezier(
+    0.2,
+    0.9,
+    0.3,
+    1
+  ); /* Overdamped — smooth settle */
+  --ease-spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1); /* Quick snap */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1); /* iOS decelerate */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); /* Material standard */
+
+  /* ── Duration Scale ── */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
 }
 
 @theme inline {
@@ -82,8 +141,9 @@
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-border: var(--sidebar-border);
   --font-sans:
-    var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 }
 
 /* ---- Base ---- */
@@ -111,10 +171,32 @@ body {
 
 /* Glass card */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Glass — elevated variant for modals / sheets */
+.glass-elevated {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(40px) saturate(2);
+  -webkit-backdrop-filter: blur(40px) saturate(2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    var(--shadow-xl),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Glass — subtle variant for inline elements */
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Gradient backgrounds */
@@ -170,19 +252,15 @@ body {
 
 /* Elevated card — premium hover-lift with refined shadow (hover-capable devices only) */
 .card-elevated {
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-sm);
   transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    box-shadow var(--duration-normal) var(--ease-in-out),
+    transform var(--duration-normal) var(--ease-in-out);
 }
 
 @media (hover: hover) {
   .card-elevated:hover {
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.06),
-      0 2px 4px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-lg);
     transform: translateY(-1px);
   }
 }
@@ -311,7 +389,7 @@ body {
 
 /* PWA install prompt slide-up */
 .animate-slide-up {
-  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slideUp 0.35s var(--ease-out-expo) both;
 }
 
 @keyframes slideUp {
@@ -323,6 +401,117 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ─── Spring Physics Animations ──────────────────────────── */
+
+/* Spring pop — for buttons, toggles, interactive feedback */
+@keyframes spring-pop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Spring slide up — for modals, sheets, toasts */
+@keyframes spring-slide-up {
+  0% {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Spring scale — for card press/release */
+@keyframes spring-scale-in {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  75% {
+    transform: scale(0.99);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Gentle float — for empty states, onboarding illustrations */
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-spring-pop {
+  animation: spring-pop 0.5s var(--ease-spring) both;
+}
+
+.animate-spring-slide-up {
+  animation: spring-slide-up 0.45s var(--ease-spring-soft) both;
+}
+
+.animate-spring-scale-in {
+  animation: spring-scale-in 0.4s var(--ease-spring) both;
+}
+
+.animate-gentle-float {
+  animation: gentle-float 3s ease-in-out infinite;
+}
+
+/* Staggered spring entrance — apply to children */
+.spring-stagger > * {
+  animation: spring-slide-up 0.4s var(--ease-spring-soft) both;
+}
+.spring-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.spring-stagger > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.spring-stagger > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.spring-stagger > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.spring-stagger > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.spring-stagger > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+.spring-stagger > *:nth-child(n + 7) {
+  animation-delay: 300ms;
 }
 
 /* ─── AI Auto-Schedule Animations ─────────────────────────── */
@@ -514,8 +703,8 @@ body {
 @media (max-width: 1023px) {
   .card-elevated {
     transition:
-      transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      box-shadow 0.2s ease;
+      transform var(--duration-normal) var(--ease-spring-soft),
+      box-shadow var(--duration-normal) var(--ease-in-out);
     will-change: transform;
   }
 
@@ -583,7 +772,7 @@ body {
 
 @media (max-width: 1023px) {
   .ios-animate-in {
-    animation: ios-slide-up 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+    animation: ios-slide-up 0.35s var(--ease-spring-soft) both;
   }
 
   .ios-fade-in {
@@ -591,7 +780,7 @@ body {
   }
 
   .ios-scale-in {
-    animation: ios-scale-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+    animation: ios-scale-in 0.25s var(--ease-spring-soft) both;
   }
 }
 
@@ -602,4 +791,82 @@ body {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ─── Container Query Support ────────────────────────────── */
+
+/* Mark an element as a container for container queries */
+.contain-inline {
+  container-type: inline-size;
+}
+
+.contain-size {
+  container-type: size;
+}
+
+/* ─── Touch Target Utilities ─────────────────────────────── */
+
+/* Ensure minimum 44x44pt touch targets (WCAG 2.5.5 / Apple HIG) */
+.touch-target {
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Extend touch area with ::after pseudo-element (for small visual elements) */
+.touch-target-extended::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ─── Utility Shadows (from design system tokens) ────────── */
+.shadow-elevation-xs {
+  box-shadow: var(--shadow-xs);
+}
+.shadow-elevation-sm {
+  box-shadow: var(--shadow-sm);
+}
+.shadow-elevation-md {
+  box-shadow: var(--shadow-md);
+}
+.shadow-elevation-lg {
+  box-shadow: var(--shadow-lg);
+}
+.shadow-elevation-xl {
+  box-shadow: var(--shadow-xl);
+}
+.shadow-elevation-2xl {
+  box-shadow: var(--shadow-2xl);
+}
+
+/* ─── Fluid Type Utilities ───────────────────────────────── */
+.fluid-xs {
+  font-size: var(--text-xs);
+}
+.fluid-sm {
+  font-size: var(--text-sm);
+}
+.fluid-base {
+  font-size: var(--text-base);
+}
+.fluid-lg {
+  font-size: var(--text-lg);
+}
+.fluid-xl {
+  font-size: var(--text-xl);
+}
+.fluid-2xl {
+  font-size: var(--text-2xl);
+}
+.fluid-3xl {
+  font-size: var(--text-3xl);
+}
+.fluid-4xl {
+  font-size: var(--text-4xl);
 }

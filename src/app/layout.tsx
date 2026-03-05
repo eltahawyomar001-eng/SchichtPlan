@@ -7,7 +7,11 @@ import { getLocale, getMessages } from "next-intl/server";
 import { CookieBanner } from "@/components/cookie-banner";
 import { CombinedJsonLd } from "@/components/seo/JsonLd";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 const SITE_URL = process.env.SITE_URL || "https://www.shiftfy.de";
 
@@ -117,7 +121,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Shiftfy",
   },
   icons: {
@@ -143,7 +147,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={inter.variable}>
       <head>
         {/* Preconnect to critical third-party origins */}
         <link
@@ -154,9 +158,30 @@ export default async function RootLayout({
           rel="dns-prefetch"
           href="https://hhhjirjyfnzzvuefeeme.supabase.co"
         />
+        {/* Apple splash screens — iPhone & iPad */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+        />
         <CombinedJsonLd />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
           <CookieBanner />

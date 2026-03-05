@@ -7,17 +7,34 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import QRCode from "qrcode";
 import { log } from "@/lib/logger";
+import { fetchStaticMapImage } from "@/lib/static-map";
 
 // Suppress unused import warning — autoTable attaches to jsPDF prototype
 void autoTable;
 
+// ── Brand colour palette (RGB tuples) ──
+const EMERALD = [5, 150, 105] as const;
+const DARK = [55, 65, 81] as const;
+const MED = [107, 114, 128] as const;
+const LGREY = [243, 244, 246] as const;
+const BGREY = [209, 213, 219] as const;
+const W = [255, 255, 255] as const;
+
 /**
  * GET /api/service-visits/[id]/pdf
  *
- * Generates a single-visit Leistungsnachweis (proof-of-service) PDF.
- * Includes: visit details, GPS proof, embedded signature image, and
- * SHA-256 integrity hash — legally compliant for German billing.
+ * Generates an audit-ready single-visit Leistungsnachweis PDF.
+ *
+ * Sections:
+ * 1. Two-column header — logo placeholder, "LEISTUNGSNACHWEIS" title, QR code
+ * 2. Company & visit metadata with status badge
+ * 3. Time tracking table + timeline bar + geofence badge
+ * 4. GPS evidence block with coordinates + static map image
+ * 5. Certificate of Acceptance — framed signature with signer details
+ * 6. Digital Integrity Certificate — SHA-256, server timestamp, device ID
+ * 7. Legal disclaimer footer
  */
 export async function GET(
   _req: Request,
@@ -57,6 +74,17 @@ export async function GET(
           },
         },
         signature: true,
+        visitAuditLogs: {
+          orderBy: { serverTimestamp: "asc" },
+          take: 5,
+          select: {
+            eventType: true,
+            serverTimestamp: true,
+            deviceId: true,
+            gpsLat: true,
+            gpsLng: true,
+          },
+        },
       },
     });
 
@@ -77,78 +105,27 @@ export async function GET(
       select: { name: true },
     });
 
-    // ── Generate PDF ──
-    const doc = new jsPDF() as any;
-    const pageWidth = doc.internal.pageSize.getWidth();
+    // ── Pre-fetch async assets in parallel ──
     const now = new Date();
+    const auditId = `LN-${visit.id.slice(-8).toUpperCase()}-${now.getFullYear()}`;
+
+    const [qrDataUrl, mapImage] = await Promise.all([
+      QRCode.toDataURL(
+        JSON.stringify({ auditId, visitId: visit.id, ts: now.toISOString() }),
+        { width: 200, margin: 1, errorCorrectionLevel: "M" },
+      ).catch(() => null),
+      visit.checkInLat && visit.checkInLng
+        ? fetchStaticMapImage(visit.checkInLat, visit.checkInLng, 15, 300, 150)
+        : Promise.resolve(null),
+    ]);
+
+    // ── Computed values ──
     const employeeName = `${visit.employee.firstName} ${visit.employee.lastName}`;
     const visitDate = new Date(visit.scheduledDate).toLocaleDateString(
       "de-DE",
-      {
-        weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      },
+      { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" },
     );
 
-    // ── Header ──
-    doc.setFontSize(18);
-    doc.text("Leistungsnachweis", 14, 22);
-
-    doc.setFontSize(8);
-    doc.setTextColor(130, 130, 130);
-    doc.text("Einzelnachweis – Proof of Service", 14, 28);
-    doc.setTextColor(0, 0, 0);
-
-    // Horizontal line
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.5);
-    doc.line(14, 32, pageWidth - 14, 32);
-
-    // ── Company & Visit Info ──
-    doc.setFontSize(10);
-    let y = 40;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Unternehmen:", 14, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(workspace?.name || "—", 55, y);
-    y += 7;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Standort:", 14, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(visit.location.name, 55, y);
-    y += 7;
-
-    if (visit.location.address) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Adresse:", 14, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(visit.location.address, 55, y);
-      y += 7;
-    }
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Datum:", 14, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(visitDate, 55, y);
-    y += 7;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Mitarbeiter:", 14, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(employeeName, 55, y);
-    y += 7;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Status:", 14, y);
-    doc.setFont("helvetica", "normal");
-    doc.text("Abgeschlossen ✓", 55, y);
-    y += 12;
-
-    // ── Time Tracking Table ──
     const checkIn = visit.checkInAt
       ? new Date(visit.checkInAt).toLocaleTimeString("de-DE", {
           hour: "2-digit",
@@ -164,17 +141,121 @@ export async function GET(
         })
       : "—";
 
-    let duration = "—";
+    let durationMins = 0;
+    let durationLabel = "—";
     if (visit.checkInAt && visit.checkOutAt) {
       const diffMs =
         new Date(visit.checkOutAt).getTime() -
         new Date(visit.checkInAt).getTime();
-      const mins = Math.round(diffMs / 60000);
-      const hours = Math.floor(mins / 60);
-      const remainingMins = mins % 60;
-      duration =
-        hours > 0 ? `${hours}h ${remainingMins}min` : `${remainingMins}min`;
+      durationMins = Math.round(diffMs / 60000);
+      const hours = Math.floor(durationMins / 60);
+      const rem = durationMins % 60;
+      durationLabel = hours > 0 ? `${hours}h ${rem}min` : `${rem}min`;
     }
+
+    // Device ID from audit trail
+    const deviceId =
+      visit.visitAuditLogs?.find((l: any) => l.deviceId)?.deviceId ?? "—";
+
+    // ══════════════════════════════════════════════════════════════
+    //  PDF GENERATION
+    // ══════════════════════════════════════════════════════════════
+    const doc = new jsPDF() as any;
+    const pw = doc.internal.pageSize.getWidth(); // 210 mm
+    const ph = doc.internal.pageSize.getHeight(); // 297 mm
+    const ml = 14;
+    const mr = 14;
+    const cw = pw - ml - mr; // content width
+    void durationMins;
+    void ph;
+
+    // ─── 1. HEADER — Logo + Title (left) · Audit-ID + QR (right) ───
+
+    // Logo placeholder
+    doc.setDrawColor(...BGREY);
+    doc.setFillColor(...LGREY);
+    doc.roundedRect(ml, 10, 30, 12, 1.5, 1.5, "FD");
+    doc.setFontSize(6);
+    doc.setTextColor(...MED);
+    doc.text("FIRMENLOGO", ml + 15, 17.5, { align: "center" });
+
+    // Title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DARK);
+    doc.text("LEISTUNGSNACHWEIS", ml + 34, 16);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MED);
+    doc.text("Einzelnachweis — Proof of Service", ml + 34, 21);
+
+    // Audit ID (right-aligned)
+    const rx = pw - mr;
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...EMERALD);
+    doc.text(auditId, rx, 12, { align: "right" });
+
+    // QR code
+    if (qrDataUrl) {
+      try {
+        doc.addImage(qrDataUrl, "PNG", rx - 22, 14, 22, 22);
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    // Double-line divider
+    doc.setDrawColor(...EMERALD);
+    doc.setLineWidth(0.8);
+    doc.line(ml, 38, pw - mr, 38);
+    doc.setDrawColor(...BGREY);
+    doc.setLineWidth(0.2);
+    doc.line(ml, 38.8, pw - mr, 38.8);
+
+    // ─── 2. METADATA BLOCK ─────────────────────────────────────────
+    let y = 46;
+    const vx = ml + 30; // value column
+
+    const meta = (label: string, value: string) => {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...DARK);
+      doc.text(`${label}:`, ml, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.text(value, vx, y);
+      y += 6;
+    };
+
+    meta("Unternehmen", workspace?.name || "—");
+    meta("Standort", visit.location.name);
+    if (visit.location.address) meta("Adresse", visit.location.address);
+    meta("Datum", visitDate);
+    meta("Mitarbeiter", employeeName);
+
+    // Status pill
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DARK);
+    doc.text("Status:", ml, y);
+    const st = "ABGESCHLOSSEN";
+    const bw = doc.getTextWidth(st) + 6;
+    doc.setFillColor(...EMERALD);
+    doc.roundedRect(vx - 1, y - 3.5, bw, 5, 1.5, 1.5, "F");
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...W);
+    doc.text(st, vx + 2, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+
+    // ─── 3. TIME TRACKING — Table + Timeline Bar ───────────────────
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DARK);
+    doc.text("Zeiterfassung", ml, y);
+    y += 6;
 
     autoTable(doc, {
       startY: y,
@@ -183,36 +264,88 @@ export async function GET(
         [
           checkIn,
           checkOut,
-          duration,
+          durationLabel,
           visit.checkInWithinFence ? "Innerhalb ✓" : "Außerhalb ✗",
         ],
       ],
       theme: "grid",
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [5, 150, 105], textColor: [255, 255, 255] },
-      margin: { left: 14, right: 14 },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3.5,
+        lineColor: [...BGREY] as any,
+        lineWidth: 0.3,
+      },
+      headStyles: {
+        fillColor: [...EMERALD] as any,
+        textColor: [...W] as any,
+        fontStyle: "bold",
+        fontSize: 8,
+      },
+      bodyStyles: { textColor: [...DARK] as any },
+      margin: { left: ml, right: mr },
     });
 
-    y = doc.lastAutoTable?.finalY ?? y + 25;
-    y += 10;
+    y = doc.lastAutoTable?.finalY ?? y + 20;
+    y += 3;
 
-    // ── GPS Proof Section ──
-    doc.setFontSize(11);
+    // Timeline bar
+    if (visit.checkInAt && visit.checkOutAt) {
+      const barW = cw;
+      const barH = 6;
+
+      doc.setFillColor(...EMERALD);
+      doc.roundedRect(ml, y, barW, barH, 2, 2, "F");
+
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...W);
+      doc.text(checkIn, ml + 2, y + 4);
+      doc.text(checkOut, ml + barW - 2, y + 4, { align: "right" });
+      doc.setFontSize(7);
+      doc.text(durationLabel, ml + barW / 2, y + 4, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+      y += barH + 4;
+
+      // Geofence badge
+      const ft = visit.checkInWithinFence
+        ? "● INNERHALB GEOFENCE"
+        : "● AUSSERHALB GEOFENCE";
+      const fc = visit.checkInWithinFence ? EMERALD : ([220, 38, 38] as const);
+      const fw = doc.getTextWidth(ft) + 8;
+      doc.setFillColor(...fc);
+      doc.roundedRect(ml, y, fw, 5, 1.5, 1.5, "F");
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...W);
+      doc.text(ft, ml + 3, y + 3.5);
+      doc.setTextColor(0, 0, 0);
+      y += 10;
+    } else {
+      y += 5;
+    }
+
+    // ─── 4. GPS EVIDENCE BLOCK — Coordinates + Map ─────────────────
+    doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("GPS-Nachweis", 14, y);
-    doc.setFont("helvetica", "normal");
-    y += 7;
+    doc.setTextColor(...DARK);
+    doc.text("GPS-Nachweis", ml, y);
+    y += 6;
 
     const gpsRows: string[][] = [];
-
     if (visit.checkInLat && visit.checkInLng) {
       gpsRows.push([
         "Check-in",
-        `${formatDMS(visit.checkInLat, true)}, ${formatDMS(visit.checkInLng, false)}`,
+        `${formatDMS(visit.checkInLat, true)},  ${formatDMS(visit.checkInLng, false)}`,
         checkIn,
       ]);
     }
-
+    if (visit.checkOutLat && visit.checkOutLng) {
+      gpsRows.push([
+        "Check-out",
+        `${formatDMS(visit.checkOutLat, true)},  ${formatDMS(visit.checkOutLng, false)}`,
+        checkOut,
+      ]);
+    }
     if (visit.signature?.signedLat && visit.signature?.signedLng) {
       const signedTime = new Date(visit.signature.signedAt).toLocaleTimeString(
         "de-DE",
@@ -220,10 +353,15 @@ export async function GET(
       );
       gpsRows.push([
         "Unterschrift",
-        `${formatDMS(visit.signature.signedLat, true)}, ${formatDMS(visit.signature.signedLng, false)}`,
+        `${formatDMS(visit.signature.signedLat, true)},  ${formatDMS(visit.signature.signedLng, false)}`,
         signedTime,
       ]);
     }
+
+    // Two-column: GPS table (left) + static map (right)
+    const gpsW = mapImage ? cw * 0.55 : cw;
+    const mapX = ml + gpsW + 4;
+    const mapW = cw - gpsW - 4;
 
     if (gpsRows.length > 0) {
       autoTable(doc, {
@@ -231,90 +369,239 @@ export async function GET(
         head: [["Ereignis", "Koordinaten", "Uhrzeit"]],
         body: gpsRows,
         theme: "grid",
-        styles: { fontSize: 8, cellPadding: 2.5, font: "courier" },
-        headStyles: { fillColor: [80, 80, 80] },
-        margin: { left: 14, right: 14 },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2.5,
+          font: "courier",
+          lineColor: [...BGREY] as any,
+          lineWidth: 0.3,
+        },
+        headStyles: {
+          fillColor: [...DARK] as any,
+          textColor: [...W] as any,
+          font: "helvetica",
+          fontStyle: "bold",
+          fontSize: 7,
+        },
+        margin: { left: ml, right: mapImage ? pw - ml - gpsW : mr },
       });
-      y = doc.lastAutoTable?.finalY ?? y + 20;
+
+      const tableEndY = doc.lastAutoTable?.finalY ?? y + 20;
+
+      // Static map image beside table
+      if (mapImage) {
+        const mapH = Math.max(tableEndY - y, 25);
+        try {
+          doc.setDrawColor(...BGREY);
+          doc.setLineWidth(0.3);
+          doc.rect(mapX, y, mapW, mapH);
+          doc.addImage(
+            mapImage,
+            "PNG",
+            mapX + 0.5,
+            y + 0.5,
+            mapW - 1,
+            mapH - 1,
+          );
+          // "MAP" label
+          doc.setFillColor(0, 0, 0);
+          doc.rect(mapX, y, 12, 4, "F");
+          doc.setFontSize(5.5);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...W);
+          doc.text("MAP", mapX + 1.5, y + 3);
+          doc.setTextColor(0, 0, 0);
+        } catch {
+          /* non-critical */
+        }
+      }
+
+      y = (doc.lastAutoTable?.finalY ?? y + 20) + 4;
     } else {
       doc.setFontSize(9);
-      doc.setTextColor(130, 130, 130);
-      doc.text("Keine GPS-Daten verfügbar", 14, y);
+      doc.setTextColor(...MED);
+      doc.text("Keine GPS-Daten verfügbar", ml, y);
       doc.setTextColor(0, 0, 0);
-      y += 5;
+      y += 8;
     }
 
-    y += 10;
+    y += 6;
 
-    // ── Signature Section ──
+    // ─── 5. CERTIFICATE OF ACCEPTANCE — Signature box ──────────────
     if (visit.signature) {
-      if (y > 200) {
+      if (y > 190) {
         doc.addPage();
         y = 20;
       }
 
-      doc.setFontSize(11);
+      doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("Unterschrift", 14, y);
+      doc.setTextColor(...DARK);
+      doc.text("Abnahmezertifikat", ml, y);
+      doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      y += 7;
-
-      doc.setFontSize(9);
-      doc.text(`Unterzeichner: ${visit.signature.signerName}`, 14, y);
+      doc.setTextColor(...MED);
+      doc.text("Certificate of Acceptance", ml + 42, y);
       y += 5;
 
+      // Certificate box
+      const cbH = 52;
+      doc.setDrawColor(...EMERALD);
+      doc.setLineWidth(0.6);
+      doc.setFillColor(250, 253, 250);
+      doc.roundedRect(ml, y, cw, cbH, 2, 2, "FD");
+
+      const ci = ml + 4;
+      let cy = y + 6;
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...DARK);
+      doc.text("Unterzeichner:", ci, cy);
+      doc.setFont("helvetica", "normal");
+      doc.text(visit.signature.signerName, ci + 28, cy);
+      cy += 5;
+
       if (visit.signature.signerRole) {
-        doc.text(`Position: ${visit.signature.signerRole}`, 14, y);
-        y += 5;
+        doc.setFont("helvetica", "bold");
+        doc.text("Position:", ci, cy);
+        doc.setFont("helvetica", "normal");
+        doc.text(visit.signature.signerRole, ci + 28, cy);
+        cy += 5;
       }
 
+      doc.setFont("helvetica", "bold");
+      doc.text("Zeitpunkt:", ci, cy);
+      doc.setFont("helvetica", "normal");
       doc.text(
-        `Zeitpunkt: ${new Date(visit.signature.signedAt).toLocaleString("de-DE")}`,
-        14,
-        y,
+        new Date(visit.signature.signedAt).toLocaleString("de-DE"),
+        ci + 28,
+        cy,
       );
-      y += 8;
+      cy += 3;
 
-      // Embed signature image
+      // Signature image frame
+      const siX = ci;
+      const siY = cy + 2;
+      const siW = cw * 0.45;
+      const siH = 26;
+
+      doc.setDrawColor(...BGREY);
+      doc.setFillColor(...W);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(siX, siY, siW, siH, 1, 1, "FD");
+
       if (visit.signature.signatureData) {
         try {
-          const imgData = visit.signature.signatureData;
-          // Draw a box for the signature
-          doc.setDrawColor(200, 200, 200);
-          doc.setLineWidth(0.3);
-          doc.rect(14, y, 80, 30);
-          doc.addImage(imgData, "PNG", 16, y + 2, 76, 26);
-          y += 35;
+          doc.addImage(
+            visit.signature.signatureData,
+            "PNG",
+            siX + 2,
+            siY + 1,
+            siW - 4,
+            siH - 2,
+          );
         } catch {
-          doc.setFontSize(8);
+          doc.setFontSize(7);
           doc.setTextColor(180, 0, 0);
-          doc.text("[Signatur konnte nicht eingebettet werden]", 14, y + 15);
-          doc.setTextColor(0, 0, 0);
-          y += 20;
+          doc.text(
+            "[Signatur konnte nicht eingebettet werden]",
+            siX + 4,
+            siY + siH / 2,
+          );
         }
       }
 
-      // Hash
-      y += 3;
-      doc.setFontSize(7);
-      doc.setTextColor(130, 130, 130);
-      doc.text(`SHA-256: ${visit.signature.signatureHash}`, 14, y);
+      // Label below signature frame
+      doc.setFontSize(6);
+      doc.setTextColor(...MED);
+      doc.text("Handschriftliche Unterschrift", siX, siY + siH + 3);
+
+      // GPS at signing (right half of certificate box)
+      if (visit.signature.signedLat && visit.signature.signedLng) {
+        const gx = siX + siW + 8;
+        let gy = siY + 4;
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...DARK);
+        doc.text("GPS bei Unterschrift:", gx, gy);
+        gy += 4;
+        doc.setFont("courier", "normal");
+        doc.setFontSize(6.5);
+        doc.text(`${visit.signature.signedLat.toFixed(6)}`, gx, gy);
+        gy += 3.5;
+        doc.text(`${visit.signature.signedLng.toFixed(6)}`, gx, gy);
+      }
+
       doc.setTextColor(0, 0, 0);
+      y += cbH + 8;
     }
 
-    // ── Footer ──
-    const footerY = doc.internal.pageSize.getHeight() - 15;
-    doc.setFontSize(7);
-    doc.setTextColor(130, 130, 130);
+    // ─── 6. DIGITAL INTEGRITY CERTIFICATE ──────────────────────────
+    if (y > 230) {
+      doc.addPage();
+      y = 20;
+    }
+
+    const iY = Math.max(y, doc.internal.pageSize.getHeight() - 55);
+    const iH = 28;
+
+    doc.setFillColor(...LGREY);
+    doc.setDrawColor(...BGREY);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(ml, iY, cw, iH, 2, 2, "FD");
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DARK);
+    doc.text("DIGITALES INTEGRITÄTSZERTIFIKAT", ml + 4, iY + 5);
+
+    let iy = iY + 10;
+    const iRow = (label: string, value: string) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.text(`${label}:`, ml + 4, iy);
+      doc.setFont("courier", "normal");
+      doc.text(value, ml + 35, iy);
+      iy += 4;
+    };
+
+    iRow("SHA-256", visit.signature?.signatureHash ?? "Keine Signatur");
+    iRow("Server-Zeitstempel", now.toISOString());
+    iRow("Geräte-ID", deviceId);
+    iRow("Besuch-ID", visit.id);
+
+    // ─── 7. LEGAL FOOTER ───────────────────────────────────────────
+    const fy = iY + iH + 4;
+
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MED);
     doc.text(
-      "Dieses Dokument wurde automatisch generiert und dient als rechtsverbindlicher Leistungsnachweis.",
-      14,
-      footerY,
+      "Dieses Dokument wurde systemseitig erstellt und ist ohne handschriftliche Unterschrift rechtsverbindlich",
+      ml,
+      fy,
     );
+    doc.text("gemäß den vereinbarten Abrechnungsrichtlinien.", ml, fy + 3);
+
+    // Accent line
+    doc.setDrawColor(...EMERALD);
+    doc.setLineWidth(0.4);
+    doc.line(ml, fy + 6, pw - mr, fy + 6);
+
+    // Generation metadata
+    doc.setFontSize(5.5);
     doc.text(
-      `Besuch-ID: ${visit.id}  |  Erstellt: ${now.toISOString()}`,
-      14,
-      footerY + 4,
+      `Audit-ID: ${auditId}  |  Besuch-ID: ${visit.id}  |  Erstellt: ${now.toISOString()}`,
+      ml,
+      fy + 9.5,
+    );
+    doc.setFontSize(6);
+    doc.text(
+      `Seite 1 von ${doc.internal.getNumberOfPages()}`,
+      pw - mr,
+      fy + 9.5,
+      { align: "right" },
     );
     doc.setTextColor(0, 0, 0);
 
@@ -322,8 +609,9 @@ export async function GET(
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
     const filename = `Leistungsnachweis_${visit.location.name.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, "_")}_${new Date(visit.scheduledDate).toISOString().split("T")[0]}.pdf`;
 
-    log.info("[service-visits] Single-visit PDF generated", {
+    log.info("[service-visits] Audit-ready PDF generated", {
       visitId: id,
+      auditId,
       location: visit.location.name,
     });
 

@@ -22,7 +22,12 @@ import {
   CheckCircleIcon,
   ClockIcon,
   AlertTriangleIcon,
+  PlayIcon,
 } from "@/components/icons";
+import {
+  ServiceExecutionView,
+  type ServiceVisitExec,
+} from "@/components/service-execution/service-execution-view";
 import type { SessionUser } from "@/lib/types";
 import type { Role } from "@/lib/authorization";
 
@@ -119,6 +124,11 @@ export default function LeistungsnachweisSeite() {
 
   // Check-in/out
   const [acting, setActing] = useState<string | null>(null);
+
+  // Execution view
+  const [executingVisit, setExecutingVisit] = useState<ServiceVisit | null>(
+    null,
+  );
 
   // ────────── Fetching ──────────
 
@@ -314,6 +324,23 @@ export default function LeistungsnachweisSeite() {
 
   // ────────── Render ──────────
 
+  // Show execution view when a visit is selected for field execution
+  if (executingVisit) {
+    return (
+      <ServiceExecutionView
+        visit={executingVisit as ServiceVisitExec}
+        onComplete={() => {
+          setExecutingVisit(null);
+          fetchVisits();
+        }}
+        onBack={() => {
+          setExecutingVisit(null);
+          fetchVisits();
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <Topbar
@@ -415,6 +442,7 @@ export default function LeistungsnachweisSeite() {
                 onCheckIn={() => handleCheckIn(visit.id)}
                 onCheckOut={() => handleCheckOut(visit.id)}
                 onSign={() => setSigningVisit(visit)}
+                onExecute={() => setExecutingVisit(visit)}
               />
             ))}
           </div>
@@ -547,6 +575,7 @@ interface VisitCardProps {
   onCheckIn: () => void;
   onCheckOut: () => void;
   onSign: () => void;
+  onExecute: () => void;
 }
 
 function VisitCard({
@@ -555,6 +584,7 @@ function VisitCard({
   onCheckIn,
   onCheckOut,
   onSign,
+  onExecute,
 }: VisitCardProps) {
   const t = useTranslations("serviceProof");
   const cfg = statusConfig[visit.status];
@@ -620,6 +650,14 @@ function VisitCard({
 
           {/* Right: actions */}
           <div className="flex shrink-0 gap-2">
+            {(visit.status === "GEPLANT" || visit.status === "EINGECHECKT") && (
+              <Button size="sm" variant="outline" onClick={onExecute}>
+                <PlayIcon className="h-3.5 w-3.5 mr-1" />
+                {visit.status === "GEPLANT"
+                  ? t("actions.execute")
+                  : t("actions.continue")}
+              </Button>
+            )}
             {visit.status === "GEPLANT" && (
               <Button size="sm" onClick={onCheckIn} disabled={acting}>
                 {t("actions.checkIn")}

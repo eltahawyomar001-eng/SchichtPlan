@@ -2251,7 +2251,9 @@
     "actions": {
       "checkIn": "Check In",
       "checkOut": "Check Out",
-      "sign": "Signature"
+      "sign": "Signature",
+      "execute": "Execute",
+      "continue": "Continue"
     },
     "form": {
       "date": "Date",

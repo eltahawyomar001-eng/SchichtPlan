@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { canUseFeature } from "@/lib/subscription";
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
@@ -102,21 +103,24 @@ export async function POST(req: Request) {
             },
           });
 
-      // ── E-Signature: Record signed month lock ──
-      createESignature({
-        action: "month-close.lock",
-        entityType: "MonthClose",
-        entityId: record.id,
-        signer: {
-          id: user.id,
-          name: user.name || user.email,
-          email: user.email,
-          role: user.role,
-        },
-        workspaceId: user.workspaceId,
-        ipAddress: getClientIp(req),
-        userAgent: req.headers.get("user-agent") || undefined,
-      }).catch((err) => log.error("E-signature failed", { error: err }));
+      // ── E-Signature: Record signed month lock (Professional+ only) ──
+      const hasESign = await canUseFeature(user.workspaceId, "eSignatures");
+      if (hasESign) {
+        createESignature({
+          action: "month-close.lock",
+          entityType: "MonthClose",
+          entityId: record.id,
+          signer: {
+            id: user.id,
+            name: user.name || user.email,
+            email: user.email,
+            role: user.role,
+          },
+          workspaceId: user.workspaceId,
+          ipAddress: getClientIp(req),
+          userAgent: req.headers.get("user-agent") || undefined,
+        }).catch((err) => log.error("E-signature failed", { error: err }));
+      }
 
       return NextResponse.json(record);
     }

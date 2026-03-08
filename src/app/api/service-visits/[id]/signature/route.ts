@@ -4,6 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
+import { requirePlanFeature } from "@/lib/subscription";
+import {
+  compressSignature,
+  requireStorageQuota,
+  recordStorageUsage,
+} from "@/lib/subscription-guard";
 import { visitSignatureSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
@@ -31,12 +37,16 @@ export async function POST(
     const forbidden = requirePermission(user, "service-visits", "update");
     if (forbidden) return forbidden;
 
+    // E-Signatures require Professional plan
+    const planGate = await requirePlanFeature(workspaceId, "eSignatures");
+    if (planGate) return planGate;
+
     const body = await req.json();
     const parsed = validateBody(visitSignatureSchema, body);
     if (!parsed.success) return parsed.response;
 
     const {
-      signatureData,
+      signatureData: rawSignatureData,
       signerName,
       signerRole,
       lat,
@@ -45,6 +55,17 @@ export async function POST(
       clientTimestamp,
       gpsAccuracy,
     } = parsed.data;
+
+    // Compress signature: PNG → WebP (quality 0.6) to minimize storage costs
+    const compressed = await compressSignature(rawSignatureData);
+    const signatureData = compressed.data;
+
+    // Check storage quota before saving
+    const storageLimit = await requireStorageQuota(
+      workspaceId,
+      compressed.bytes,
+    );
+    if (storageLimit) return storageLimit;
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
@@ -112,6 +133,9 @@ export async function POST(
           ]
         : []),
     ]);
+
+    // Record storage consumption
+    await recordStorageUsage(workspaceId, compressed.bytes);
 
     createAuditLog({
       action: "CREATE",

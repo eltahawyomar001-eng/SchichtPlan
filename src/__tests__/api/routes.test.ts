@@ -19,6 +19,8 @@ const {
   mockLocationCount,
   mockLocationFindMany,
   mockLocationCreate,
+  mockUsageFindUnique,
+  mockInvitationCount,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockSubscriptionFindUnique: vi.fn(),
@@ -28,6 +30,8 @@ const {
   mockLocationCount: vi.fn(),
   mockLocationFindMany: vi.fn(),
   mockLocationCreate: vi.fn(),
+  mockUsageFindUnique: vi.fn(),
+  mockInvitationCount: vi.fn(),
 }));
 
 vi.mock("next-auth", () => ({
@@ -48,6 +52,15 @@ vi.mock("@/lib/db", () => ({
       count: mockEmployeeCount,
       findMany: mockEmployeeFindMany,
       create: mockEmployeeCreate,
+    },
+    invitation: { count: mockInvitationCount },
+    workspaceUsage: {
+      findUnique: mockUsageFindUnique,
+      create: vi
+        .fn()
+        .mockImplementation((args: { data: Record<string, unknown> }) =>
+          Promise.resolve({ id: "usage-1", ...args.data }),
+        ),
     },
     location: {
       count: mockLocationCount,
@@ -144,7 +157,7 @@ describe("POST /api/employees", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 when employee limit is reached (PLAN_LIMIT)", async () => {
+  it("returns 403 when employee limit is reached (SUBSCRIPTION_LIMIT)", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
 
@@ -155,6 +168,17 @@ describe("POST /api/employees", () => {
       workspaceId: owner.workspaceId,
     });
     mockEmployeeCount.mockResolvedValue(10);
+    mockInvitationCount.mockResolvedValue(0);
+    mockUsageFindUnique.mockResolvedValue({
+      id: "usage-1",
+      workspaceId: owner.workspaceId,
+      userSlotsTotal: 10,
+      pdfsGeneratedThisMonth: 0,
+      pdfsMonthlyLimit: 50,
+      pdfsResetAt: new Date(),
+      storageBytesUsed: BigInt(0),
+      storageBytesLimit: BigInt(524288000),
+    });
 
     const req = new Request("http://localhost/api/employees", {
       method: "POST",
@@ -169,7 +193,9 @@ describe("POST /api/employees", () => {
     expect(res.status).toBe(403);
 
     const body = await res.json();
-    expect(body.error).toBe("PLAN_LIMIT");
+    expect(body.error).toBe("SUBSCRIPTION_LIMIT");
+    expect(body.code).toBe("USER_SLOT_EXCEEDED");
+    expect(body.upgradeRequired).toBe(true);
   });
 });
 

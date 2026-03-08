@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { toIndustrialHours } from "@/lib/time-utils";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
@@ -30,6 +31,10 @@ export async function GET(req: Request) {
     // Check plan feature
     const planGate = await requirePlanFeature(workspaceId, "datevExport");
     if (planGate) return planGate;
+
+    // Check export/PDF monthly quota (DATEV exports count against quota)
+    const pdfLimit = await requirePdfQuota(workspaceId);
+    if (pdfLimit) return pdfLimit;
 
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("start");
@@ -72,6 +77,9 @@ export async function GET(req: Request) {
 
     // Build CSV
     const csv = buildDATEVCsv(entries, format === "datev");
+
+    // Record export against monthly quota
+    await recordPdfGeneration(workspaceId);
 
     return new Response(csv, {
       headers: {

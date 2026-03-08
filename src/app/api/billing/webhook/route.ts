@@ -7,6 +7,7 @@ import {
   updateSubscriptionFromStripe,
   cancelSubscription,
 } from "@/lib/subscription";
+import { syncUsageLimits } from "@/lib/subscription-guard";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { log } from "@/lib/logger";
@@ -121,6 +122,9 @@ export async function POST(req: Request) {
           status: sub.status,
         });
 
+        // Sync usage limits to match the new plan
+        await syncUsageLimits(workspaceId, (plan?.id ?? "basic") as PlanId);
+
         log.info(
           `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
         );
@@ -144,6 +148,18 @@ export async function POST(req: Request) {
           currentPeriodEnd: new Date((updItem?.current_period_end ?? 0) * 1000),
           cancelAtPeriodEnd: sub.cancel_at_period_end,
         });
+
+        // Sync usage limits if the plan changed
+        const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
+        if (updatedPlan) {
+          const dbSub = await prisma.subscription.findFirst({
+            where: { stripeSubscriptionId: sub.id },
+            select: { workspaceId: true },
+          });
+          if (dbSub) {
+            await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
+          }
+        }
 
         log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
         break;

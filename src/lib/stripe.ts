@@ -52,12 +52,14 @@ export interface PlanConfig {
     maxEmployees: number; // Infinity = unlimited
     maxLocations: number;
     storageMb: number; // Infinity = unlimited
+    pdfMonthlyLimit: number; // Infinity = unlimited
     shiftTemplates: boolean;
     absenceManagement: boolean;
     csvPdfExport: boolean;
     datevExport: boolean;
     datevOnlineUpload: boolean;
     autoScheduling: boolean;
+    eSignatures: boolean;
     teamChat: boolean;
     apiWebhooks: boolean;
     customRoles: boolean;
@@ -97,12 +99,14 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       maxEmployees: 10,
       maxLocations: 1,
       storageMb: 500,
+      pdfMonthlyLimit: 50,
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: false,
       datevOnlineUpload: false,
       autoScheduling: false,
+      eSignatures: false,
       teamChat: true,
       apiWebhooks: false,
       customRoles: false,
@@ -128,12 +132,14 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       maxEmployees: 50,
       maxLocations: 5,
       storageMb: 5120, // 5 GB
+      pdfMonthlyLimit: 500,
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: true,
       datevOnlineUpload: true,
       autoScheduling: true,
+      eSignatures: true,
       teamChat: true,
       apiWebhooks: true,
       customRoles: true,
@@ -159,12 +165,14 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       maxEmployees: Infinity,
       maxLocations: Infinity,
       storageMb: Infinity, // 50 GB+ / custom
+      pdfMonthlyLimit: Infinity,
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: true,
       datevOnlineUpload: true,
       autoScheduling: true,
+      eSignatures: true,
       teamChat: true,
       apiWebhooks: true,
       customRoles: true,

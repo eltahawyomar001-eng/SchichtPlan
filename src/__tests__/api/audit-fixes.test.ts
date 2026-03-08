@@ -21,6 +21,8 @@ const {
   mockEmployeeCreate,
   mockEmployeeCount,
   mockEmployeeUpdateMany,
+  mockUsageFindUnique,
+  mockInvitationCount,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockSubscriptionFindUnique: vi.fn(),
@@ -32,6 +34,8 @@ const {
   mockEmployeeCreate: vi.fn(),
   mockEmployeeCount: vi.fn(),
   mockEmployeeUpdateMany: vi.fn(),
+  mockUsageFindUnique: vi.fn(),
+  mockInvitationCount: vi.fn(),
 }));
 
 vi.mock("next-auth", () => ({
@@ -54,6 +58,15 @@ vi.mock("@/lib/db", () => ({
       findMany: vi.fn().mockResolvedValue([]),
       updateMany: mockEmployeeUpdateMany,
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
+    invitation: { count: mockInvitationCount },
+    workspaceUsage: {
+      findUnique: mockUsageFindUnique,
+      create: vi
+        .fn()
+        .mockImplementation((args: { data: Record<string, unknown> }) =>
+          Promise.resolve({ id: "usage-1", ...args.data }),
+        ),
     },
     client: {
       findFirst: mockClientFindFirst,
@@ -219,6 +232,17 @@ describe("POST /api/employees — MiLoG warning", () => {
       workspaceId: owner.workspaceId,
     });
     mockEmployeeCount.mockResolvedValue(1);
+    mockInvitationCount.mockResolvedValue(0);
+    mockUsageFindUnique.mockResolvedValue({
+      id: "usage-1",
+      workspaceId: owner.workspaceId,
+      userSlotsTotal: 100,
+      pdfsGeneratedThisMonth: 0,
+      pdfsMonthlyLimit: 500,
+      pdfsResetAt: new Date(),
+      storageBytesUsed: BigInt(0),
+      storageBytesLimit: BigInt(5368709120),
+    });
 
     const createdEmployee = {
       id: "emp1",
@@ -257,6 +281,17 @@ describe("POST /api/employees — MiLoG warning", () => {
       workspaceId: owner.workspaceId,
     });
     mockEmployeeCount.mockResolvedValue(1);
+    mockInvitationCount.mockResolvedValue(0);
+    mockUsageFindUnique.mockResolvedValue({
+      id: "usage-1",
+      workspaceId: owner.workspaceId,
+      userSlotsTotal: 100,
+      pdfsGeneratedThisMonth: 0,
+      pdfsMonthlyLimit: 500,
+      pdfsResetAt: new Date(),
+      storageBytesUsed: BigInt(0),
+      storageBytesLimit: BigInt(5368709120),
+    });
 
     const createdEmployee = {
       id: "emp2",

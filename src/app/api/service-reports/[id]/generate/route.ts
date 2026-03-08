@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import { createAuditLog } from "@/lib/audit";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -42,6 +43,10 @@ export async function POST(
 
     const forbidden = requirePermission(user, "service-reports", "update");
     if (forbidden) return forbidden;
+
+    // Check PDF monthly quota
+    const pdfLimit = await requirePdfQuota(workspaceId);
+    if (pdfLimit) return pdfLimit;
 
     // ── Fetch report with all linked visits ──
 
@@ -445,6 +450,9 @@ export async function POST(
       pages: doc.getNumberOfPages(),
       sizeBytes: pdfBuffer.length,
     });
+
+    // Record PDF generation against monthly quota
+    await recordPdfGeneration(workspaceId);
 
     // ── Return PDF as download ──
     const filename = `Leistungsnachweis_${report.title.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, "_")}_${periodStart}-${periodEnd}.pdf`;

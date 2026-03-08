@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import ExcelJS from "exceljs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -42,6 +43,12 @@ export async function GET(req: Request) {
     const start = searchParams.get("start");
     const end = searchParams.get("end");
     const projectId = searchParams.get("projectId");
+
+    // PDF-specific quota check
+    if (format === "pdf") {
+      const pdfLimit = await requirePdfQuota(user.workspaceId!);
+      if (pdfLimit) return pdfLimit;
+    }
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Shiftfy";
@@ -185,6 +192,9 @@ export async function GET(req: Request) {
       buffer = Buffer.from(pdfOutput);
       contentType = "application/pdf";
       ext = "pdf";
+
+      // Record PDF generation against monthly quota
+      await recordPdfGeneration(user.workspaceId!);
     } else if (format === "csv") {
       const csvBuffer = await workbook.csv.writeBuffer();
       buffer = Buffer.from(csvBuffer);

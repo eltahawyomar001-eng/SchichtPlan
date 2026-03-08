@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import { randomBytes } from "crypto";
 import type { SessionUser } from "@/lib/types";
 import { createInvitationSchema, validateBody } from "@/lib/validations";
+import { requireUserSlot } from "@/lib/subscription-guard";
 
 /**
  * GET /api/invitations — list all invitations for the current workspace
@@ -55,6 +56,10 @@ export async function POST(req: Request) {
   if (!["OWNER", "ADMIN"].includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  // Check user slot limit (employees + pending invitations)
+  const slotLimit = await requireUserSlot(user.workspaceId);
+  if (slotLimit) return slotLimit;
 
   const body = await req.json();
   const parsed = validateBody(createInvitationSchema, body);

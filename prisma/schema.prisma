@@ -143,6 +143,7 @@ model Workspace {
   eSignatures     ESignature[]
   chatChannels    ChatChannel[]
   subscription    Subscription?
+  usage           WorkspaceUsage?
   staffingRequirements StaffingRequirement[]
   autoScheduleRuns     AutoScheduleRun[]
   autoFillLogs         AutoFillLog[]
@@ -198,6 +199,30 @@ model Subscription {
   workspace            Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+}
+
+/// Tracks metered usage per workspace for subscription guardrails.
+/// Prevents tier-creep by enforcing hard limits on user slots,
+/// PDF generation quotas, and storage consumption.
+model WorkspaceUsage {
+  id                      String   @id @default(cuid())
+  /// Max user slots granted by the current plan (e.g. 10 for Basic)
+  userSlotsTotal          Int      @default(10)
+  /// Number of PDFs generated in the current billing period
+  pdfsGeneratedThisMonth  Int      @default(0)
+  /// Maximum PDFs allowed per billing period (Basic=50, Professional=500, Enterprise=unlimited)
+  pdfsMonthlyLimit        Int      @default(50)
+  /// When the PDF counter was last reset (beginning of billing period)
+  pdfsResetAt             DateTime @default(now())
+  /// Current signature/file storage consumption in bytes
+  storageBytesUsed        BigInt   @default(0)
+  /// Maximum storage allowed in bytes (Basic=500MB, Professional=5GB, Enterprise=unlimited)
+  storageBytesLimit       BigInt   @default(524288000) // 500 MB
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  workspaceId             String   @unique
+  workspace               Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
 }
 
 model Employee {

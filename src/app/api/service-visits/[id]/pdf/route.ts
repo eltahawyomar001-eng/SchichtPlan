@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
+import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
@@ -55,6 +56,10 @@ export async function GET(
 
     const forbidden = requirePermission(user, "service-visits", "read");
     if (forbidden) return forbidden;
+
+    // Check PDF monthly quota
+    const pdfLimit = await requirePdfQuota(workspaceId);
+    if (pdfLimit) return pdfLimit;
 
     const where: Record<string, unknown> = { id, workspaceId };
     if (isEmployee(user) && user.employeeId) {
@@ -614,6 +619,9 @@ export async function GET(
       auditId,
       location: visit.location.name,
     });
+
+    // Record PDF generation against monthly quota
+    await recordPdfGeneration(workspaceId);
 
     return new Response(pdfBuffer, {
       status: 200,

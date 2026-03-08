@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
-import { requireEmployeeSlot } from "@/lib/subscription";
+import { requireUserSlot } from "@/lib/subscription-guard";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
 import { executeCustomRules } from "@/lib/automations";
 import { createAuditLog } from "@/lib/audit";
@@ -73,8 +73,8 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
 
-    // Check plan limit
-    const planLimit = await requireEmployeeSlot(workspaceId);
+    // Check plan limit (includes pending invitations in slot count)
+    const planLimit = await requireUserSlot(workspaceId);
     if (planLimit) return planLimit;
 
     const body = await req.json();

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { log } from "@/lib/logger";
@@ -34,6 +35,10 @@ export async function GET(req: Request) {
     // Plan gate
     const planGate = await requirePlanFeature(workspaceId, "csvPdfExport");
     if (planGate) return planGate;
+
+    // PDF monthly quota check
+    const pdfLimit = await requirePdfQuota(workspaceId);
+    if (pdfLimit) return pdfLimit;
 
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
@@ -231,6 +236,9 @@ export async function GET(req: Request) {
 
     const pdfBuffer = doc.output("arraybuffer") as ArrayBuffer;
     const filename = `Arbeitszeitnachweis_${employeeName.replace(/\s+/g, "_")}_${month}.pdf`;
+
+    // Record PDF generation against monthly quota
+    await recordPdfGeneration(workspaceId);
 
     return new Response(new Uint8Array(pdfBuffer), {
       status: 200,

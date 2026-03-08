@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { isSimulationMode, simulateSubscription } from "@/lib/subscription";
+import { syncUsageLimits } from "@/lib/subscription-guard";
 import type { PlanId } from "@/lib/stripe";
 import { PLANS } from "@/lib/stripe";
 import { log } from "@/lib/logger";
@@ -75,6 +76,9 @@ export async function POST(req: Request) {
       plan: plan as PlanId,
       billingCycle,
     });
+
+    // Sync usage limits to match the simulated plan
+    await syncUsageLimits(user.workspaceId, plan as PlanId);
 
     const planConfig = PLANS[plan as PlanId];
 

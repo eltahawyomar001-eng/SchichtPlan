@@ -8,6 +8,7 @@ import {
   isMonthLocked,
   createSystemNotification,
 } from "@/lib/automations";
+import { canUseFeature } from "@/lib/subscription";
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 
@@ -174,7 +175,8 @@ export async function POST(req: Request, { params }: RouteParams) {
     });
 
     // ── E-Signature: Record signed approval/rejection/confirmation ──
-    if (["approve", "reject", "confirm"].includes(action)) {
+    const hasESign = await canUseFeature(workspaceId!, "eSignatures");
+    if (hasESign && ["approve", "reject", "confirm"].includes(action)) {
       const esigAction =
         action === "approve"
           ? "time-entry.confirm"

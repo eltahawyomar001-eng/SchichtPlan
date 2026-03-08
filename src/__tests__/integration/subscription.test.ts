@@ -42,89 +42,89 @@ describe("subscription", () => {
   // ─── getWorkspacePlan ──────────────────────────────────────
 
   describe("getWorkspacePlan", () => {
-    it("returns STARTER plan when no subscription exists", async () => {
+    it("returns BASIC plan when no subscription exists", async () => {
       mockSubscriptionFindUnique.mockResolvedValue(null);
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("starter");
+      expect(plan.id).toBe("basic");
     });
 
-    it("returns STARTER when subscription is CANCELED", async () => {
+    it("returns BASIC when subscription is CANCELED", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "CANCELED",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("starter");
+      expect(plan.id).toBe("basic");
     });
 
     it("returns correct plan for ACTIVE subscription", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "ACTIVE",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("business");
+      expect(plan.id).toBe("professional");
     });
 
     it("returns correct plan for TRIALING subscription", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "TEAM",
+        plan: "BASIC",
         status: "TRIALING",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("team");
+      expect(plan.id).toBe("basic");
     });
 
-    it("falls back to STARTER for PAST_DUE status", async () => {
+    it("falls back to BASIC for PAST_DUE status", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "PAST_DUE",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("starter");
+      expect(plan.id).toBe("basic");
     });
   });
 
   // ─── canUseFeature ─────────────────────────────────────────
 
   describe("canUseFeature", () => {
-    it("starter cannot use datevExport", async () => {
+    it("basic cannot use datevExport", async () => {
       mockSubscriptionFindUnique.mockResolvedValue(null);
       expect(await canUseFeature("ws-1", "datevExport")).toBe(false);
     });
 
-    it("starter cannot use customRoles", async () => {
+    it("basic cannot use customRoles", async () => {
       mockSubscriptionFindUnique.mockResolvedValue(null);
       expect(await canUseFeature("ws-1", "customRoles")).toBe(false);
     });
 
-    it("business can use datevExport", async () => {
+    it("professional can use datevExport", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "ACTIVE",
       });
       expect(await canUseFeature("ws-1", "datevExport")).toBe(true);
     });
 
-    it("business can use customRoles", async () => {
+    it("professional can use customRoles", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "ACTIVE",
       });
       expect(await canUseFeature("ws-1", "customRoles")).toBe(true);
     });
 
-    it("team can use absenceManagement", async () => {
+    it("basic can use absenceManagement", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "TEAM",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       expect(await canUseFeature("ws-1", "absenceManagement")).toBe(true);
     });
 
-    it("team cannot use apiWebhooks", async () => {
+    it("basic cannot use apiWebhooks", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "TEAM",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       expect(await canUseFeature("ws-1", "apiWebhooks")).toBe(false);
@@ -136,7 +136,7 @@ describe("subscription", () => {
   describe("requirePlanFeature", () => {
     it("returns null when feature is allowed", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "ACTIVE",
       });
       const result = await requirePlanFeature("ws-1", "datevExport");
@@ -144,7 +144,7 @@ describe("subscription", () => {
     });
 
     it("returns 403 with PLAN_LIMIT error when feature is gated", async () => {
-      mockSubscriptionFindUnique.mockResolvedValue(null); // starter
+      mockSubscriptionFindUnique.mockResolvedValue(null); // basic default
       const result = await requirePlanFeature("ws-1", "datevExport");
 
       expect(result).not.toBeNull();
@@ -159,32 +159,32 @@ describe("subscription", () => {
   // ─── canAddEmployee / requireEmployeeSlot ──────────────────
 
   describe("canAddEmployee", () => {
-    it("allows adding when under the limit (starter: 5 max)", async () => {
+    it("allows adding when under the limit (basic: 10 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
-        status: "ACTIVE",
-      });
-      mockEmployeeCount.mockResolvedValue(3);
-
-      expect(await canAddEmployee("ws-1")).toBe(true);
-    });
-
-    it("blocks when at the limit (starter: 5 max)", async () => {
-      mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       mockEmployeeCount.mockResolvedValue(5);
 
+      expect(await canAddEmployee("ws-1")).toBe(true);
+    });
+
+    it("blocks when at the limit (basic: 10 max)", async () => {
+      mockSubscriptionFindUnique.mockResolvedValue({
+        plan: "BASIC",
+        status: "ACTIVE",
+      });
+      mockEmployeeCount.mockResolvedValue(10);
+
       expect(await canAddEmployee("ws-1")).toBe(false);
     });
 
-    it("always allows for plans with Infinity limit", async () => {
+    it("allows for professional plan (50 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "TEAM",
+        plan: "PROFESSIONAL",
         status: "ACTIVE",
       });
-      // Don't even need to mock count — should short-circuit
+      mockEmployeeCount.mockResolvedValue(30);
 
       expect(await canAddEmployee("ws-1")).toBe(true);
     });
@@ -198,7 +198,7 @@ describe("subscription", () => {
   describe("requireEmployeeSlot", () => {
     it("returns null when slots available", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       mockEmployeeCount.mockResolvedValue(2);
@@ -208,10 +208,10 @@ describe("subscription", () => {
 
     it("returns 403 when at limit", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
+        plan: "BASIC",
         status: "ACTIVE",
       });
-      mockEmployeeCount.mockResolvedValue(5);
+      mockEmployeeCount.mockResolvedValue(10);
 
       const result = await requireEmployeeSlot("ws-1");
       expect(result).not.toBeNull();
@@ -220,16 +220,16 @@ describe("subscription", () => {
       const body = await result!.json();
       expect(body.error).toBe("PLAN_LIMIT");
       expect(body.feature).toBe("maxEmployees");
-      expect(body.limit).toBe(5);
+      expect(body.limit).toBe(10);
     });
   });
 
   // ─── canAddLocation / requireLocationSlot ──────────────────
 
   describe("canAddLocation", () => {
-    it("allows adding when under limit (starter: 1 max)", async () => {
+    it("allows adding when under limit (basic: 1 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       mockLocationCount.mockResolvedValue(0);
@@ -237,9 +237,9 @@ describe("subscription", () => {
       expect(await canAddLocation("ws-1")).toBe(true);
     });
 
-    it("blocks when at limit (starter: 1 max)", async () => {
+    it("blocks when at limit (basic: 1 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       mockLocationCount.mockResolvedValue(1);
@@ -247,9 +247,9 @@ describe("subscription", () => {
       expect(await canAddLocation("ws-1")).toBe(false);
     });
 
-    it("allows for business plan (Infinity)", async () => {
+    it("allows for professional plan (5 locations)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "BUSINESS",
+        plan: "PROFESSIONAL",
         status: "ACTIVE",
       });
 
@@ -260,7 +260,7 @@ describe("subscription", () => {
   describe("requireLocationSlot", () => {
     it("returns 403 when at location limit", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
-        plan: "STARTER",
+        plan: "BASIC",
         status: "ACTIVE",
       });
       mockLocationCount.mockResolvedValue(1);
@@ -278,37 +278,27 @@ describe("subscription", () => {
   // ─── Plan Configuration Sanity Checks ─────────────────────
 
   describe("PLANS config", () => {
-    it("starter has the most restrictive limits", () => {
-      const s = PLANS.starter;
-      expect(s.limits.maxEmployees).toBe(5);
-      expect(s.limits.maxLocations).toBe(1);
-      expect(s.limits.datevExport).toBe(false);
-      expect(s.limits.apiWebhooks).toBe(false);
-      expect(s.limits.customRoles).toBe(false);
-      expect(s.limits.analytics).toBe(false);
+    it("basic has restrictive limits", () => {
+      const b = PLANS.basic;
+      expect(b.limits.maxEmployees).toBe(10);
+      expect(b.limits.maxLocations).toBe(1);
+      expect(b.limits.datevExport).toBe(false);
+      expect(b.limits.apiWebhooks).toBe(false);
+      expect(b.limits.customRoles).toBe(false);
+      expect(b.limits.analytics).toBe(false);
     });
 
-    it("team unlocks templates and absence management", () => {
-      const t = PLANS.team;
-      expect(t.limits.maxEmployees).toBe(Infinity);
-      expect(t.limits.shiftTemplates).toBe(true);
-      expect(t.limits.absenceManagement).toBe(true);
-      expect(t.limits.csvPdfExport).toBe(true);
-      // But NOT datev, webhooks, roles
-      expect(t.limits.datevExport).toBe(false);
-      expect(t.limits.apiWebhooks).toBe(false);
-      expect(t.limits.customRoles).toBe(false);
-    });
-
-    it("business unlocks datev, webhooks, roles, analytics", () => {
-      const b = PLANS.business;
-      expect(b.limits.datevExport).toBe(true);
-      expect(b.limits.apiWebhooks).toBe(true);
-      expect(b.limits.customRoles).toBe(true);
-      expect(b.limits.analytics).toBe(true);
+    it("professional unlocks datev, webhooks, roles, analytics", () => {
+      const p = PLANS.professional;
+      expect(p.limits.maxEmployees).toBe(50);
+      expect(p.limits.maxLocations).toBe(5);
+      expect(p.limits.datevExport).toBe(true);
+      expect(p.limits.apiWebhooks).toBe(true);
+      expect(p.limits.customRoles).toBe(true);
+      expect(p.limits.analytics).toBe(true);
       // But NOT SSO/SLA
-      expect(b.limits.ssoSaml).toBe(false);
-      expect(b.limits.dedicatedSla).toBe(false);
+      expect(p.limits.ssoSaml).toBe(false);
+      expect(p.limits.dedicatedSla).toBe(false);
     });
 
     it("enterprise has everything", () => {

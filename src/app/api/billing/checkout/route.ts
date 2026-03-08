@@ -44,8 +44,7 @@ export async function POST(req: Request) {
     if (!planId || !PLANS[planId]) {
       return NextResponse.json(
         {
-          error:
-            "Invalid plan. Must be starter, team, business, or enterprise.",
+          error: "Invalid plan. Must be basic, professional, or enterprise.",
         },
         { status: 400 },
       );

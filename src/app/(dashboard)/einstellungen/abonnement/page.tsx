@@ -40,6 +40,7 @@ interface SubscriptionData {
   limits: {
     maxEmployees: number;
     maxLocations: number;
+    storageMb: number;
     shiftTemplates: boolean;
     absenceManagement: boolean;
     csvPdfExport: boolean;
@@ -55,12 +56,13 @@ interface SubscriptionData {
 interface PlanOption {
   id: string;
   name: string;
-  monthlyPrice: number;
-  annualPrice: number;
+  basePriceMonthly: number;
+  basePriceAnnual: number;
+  perUserMonthly: number;
+  perUserAnnual: number;
   description: string;
   features: string[];
   highlighted: boolean;
-  isFree: boolean;
   isEnterprise: boolean;
 }
 
@@ -131,7 +133,10 @@ function BillingContent() {
   useEffect(() => {
     const storedPlan = localStorage.getItem("shiftfy_selected_plan");
     const storedBilling = localStorage.getItem("shiftfy_selected_billing");
-    if (storedPlan && (storedPlan === "team" || storedPlan === "business")) {
+    if (
+      storedPlan &&
+      (storedPlan === "basic" || storedPlan === "professional")
+    ) {
       localStorage.removeItem("shiftfy_selected_plan");
       localStorage.removeItem("shiftfy_selected_billing");
       // Apply the stored billing cycle
@@ -150,47 +155,40 @@ function BillingContent() {
   // Plan options
   const plans: PlanOption[] = [
     {
-      id: "starter",
-      name: t("planStarter"),
-      monthlyPrice: 0,
-      annualPrice: 0,
-      description: t("planStarterDesc"),
+      id: "basic",
+      name: t("planBasic"),
+      basePriceMonthly: 19,
+      basePriceAnnual: 16,
+      perUserMonthly: 2.5,
+      perUserAnnual: 2.1,
+      description: t("planBasicDesc"),
       features: [
-        t("featureEmployees5"),
+        t("featureEmployees10"),
         t("featureLocation1"),
-        t("featureBasicScheduling"),
-        t("featureTimeClock"),
-      ],
-      highlighted: false,
-      isFree: true,
-      isEnterprise: false,
-    },
-    {
-      id: "team",
-      name: t("planTeam"),
-      monthlyPrice: 29,
-      annualPrice: 24,
-      description: t("planTeamDesc"),
-      features: [
-        t("featureUnlimitedEmployees"),
-        t("featureLocations5"),
+        t("featureStorage500mb"),
         t("featureTemplates"),
         t("featureAbsences"),
         t("featureCsvPdfExport"),
+        t("featureTeamChat"),
         t("feature14DayTrial"),
       ],
-      highlighted: true,
-      isFree: false,
+      highlighted: false,
       isEnterprise: false,
     },
     {
-      id: "business",
-      name: t("planBusiness"),
-      monthlyPrice: 59,
-      annualPrice: 49,
-      description: t("planBusinessDesc"),
+      id: "professional",
+      name: t("planProfessional"),
+      basePriceMonthly: 49,
+      basePriceAnnual: 41,
+      perUserMonthly: 4.5,
+      perUserAnnual: 3.8,
+      description: t("planProfessionalDesc"),
       features: [
-        t("featureUnlimitedAll"),
+        t("featureEmployees50"),
+        t("featureLocations5"),
+        t("featureStorage5gb"),
+        t("featureEverythingBasic"),
+        t("featureAutoScheduling"),
         t("featureDatev"),
         t("featureApi"),
         t("featureCustomRoles"),
@@ -198,30 +196,31 @@ function BillingContent() {
         t("featurePrioritySupport"),
         t("feature14DayTrial"),
       ],
-      highlighted: false,
-      isFree: false,
+      highlighted: true,
       isEnterprise: false,
     },
     {
       id: "enterprise",
       name: t("planEnterprise"),
-      monthlyPrice: 0,
-      annualPrice: 0,
+      basePriceMonthly: 0,
+      basePriceAnnual: 0,
+      perUserMonthly: 0,
+      perUserAnnual: 0,
       description: t("planEnterpriseDesc"),
       features: [
-        t("featureEverythingBusiness"),
+        t("featureUnlimitedAll"),
+        t("featureEverythingPro"),
         t("featureSso"),
         t("featureSla"),
         t("featureCustomIntegrations"),
         t("featureDedicatedManager"),
       ],
       highlighted: false,
-      isFree: false,
       isEnterprise: true,
     },
   ];
 
-  const currentPlan = subscription?.plan?.toLowerCase() ?? "starter";
+  const currentPlan = subscription?.plan?.toLowerCase() ?? "basic";
 
   const handleCheckout = async (planId: string) => {
     if (!user) return;
@@ -395,7 +394,7 @@ function BillingContent() {
                     ? t(
                         `plan${subscription.plan.charAt(0)}${subscription.plan.slice(1).toLowerCase()}`,
                       )
-                    : t("planStarter")}
+                    : t("planBasic")}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 p-4">
@@ -437,7 +436,7 @@ function BillingContent() {
             </div>
 
             {/* Manage Subscription Button */}
-            {currentPlan !== "starter" && (
+            {currentPlan !== "basic" && (
               <div className="mt-6">
                 <button
                   onClick={handlePortal}
@@ -492,11 +491,17 @@ function BillingContent() {
         </div>
 
         {/* ─── Plan Cards ─── */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {plans.map((plan) => {
             const isCurrentPlan = currentPlan === plan.id;
-            const price =
-              billingCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
+            const basePrice =
+              billingCycle === "annual"
+                ? plan.basePriceAnnual
+                : plan.basePriceMonthly;
+            const perUser =
+              billingCycle === "annual"
+                ? plan.perUserAnnual
+                : plan.perUserMonthly;
 
             return (
               <div
@@ -517,23 +522,29 @@ function BillingContent() {
 
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
 
-                <div className="mt-4 flex flex-wrap items-baseline gap-1">
-                  {plan.isFree ? (
-                    <span className="text-3xl font-extrabold text-gray-900">
-                      {t("free")}
-                    </span>
-                  ) : plan.isEnterprise ? (
-                    <span className="text-2xl font-extrabold text-gray-900">
-                      {t("custom")}
-                    </span>
+                <div className="mt-4">
+                  {plan.isEnterprise ? (
+                    <>
+                      <span className="text-2xl font-extrabold text-gray-900">
+                        {t("custom")}
+                      </span>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {t("enterpriseMinPrice")}
+                      </p>
+                    </>
                   ) : (
                     <>
-                      <span className="text-3xl font-extrabold text-gray-900">
-                        {formatPrice(price)}
-                      </span>
-                      <span className="text-sm text-gray-400 break-words">
-                        {t("perUserMonth")}
-                      </span>
+                      <div className="flex flex-wrap items-baseline gap-1">
+                        <span className="text-3xl font-extrabold text-gray-900">
+                          {formatPrice(basePrice)}
+                        </span>
+                        <span className="text-sm text-gray-400 break-words">
+                          /{t("perMonth")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        + {formatPrice(perUser)} {t("perUserMonth")}
+                      </p>
                     </>
                   )}
                 </div>
@@ -570,10 +581,6 @@ function BillingContent() {
                       <StarIcon className="h-4 w-4" />
                       {t("contactSales")}
                     </a>
-                  ) : plan.isFree ? (
-                    <div className="flex items-center justify-center rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-400">
-                      {t("includedFree")}
-                    </div>
                   ) : (
                     <button
                       onClick={() => handleCheckout(plan.id)}
@@ -589,9 +596,7 @@ function BillingContent() {
                       ) : (
                         <ArrowRightIcon className="h-4 w-4" />
                       )}
-                      {currentPlan === "starter"
-                        ? t("upgrade")
-                        : t("switchPlan")}
+                      {t("switchPlan")}
                     </button>
                   )}
                 </div>

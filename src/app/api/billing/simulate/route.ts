@@ -15,7 +15,7 @@ import { log } from "@/lib/logger";
  * STRIPE_SIMULATION_MODE=true. Used for testing/demo purposes.
  * Blocked entirely in production for security.
  *
- * Body: { plan: "starter"|"team"|"business"|"enterprise", billingCycle: "monthly"|"annual" }
+ * Body: { plan: "basic"|"professional"|"enterprise", billingCycle: "monthly"|"annual" }
  */
 export async function POST(req: Request) {
   try {
@@ -52,12 +52,11 @@ export async function POST(req: Request) {
     const { plan, billingCycle = "monthly" } = body;
 
     // Validate plan
-    const validPlans: PlanId[] = ["starter", "team", "business", "enterprise"];
+    const validPlans: PlanId[] = ["basic", "professional", "enterprise"];
     if (!plan || !validPlans.includes(plan)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid plan. Must be starter, team, business, or enterprise.",
+          error: "Invalid plan. Must be basic, professional, or enterprise.",
         },
         { status: 400 },
       );

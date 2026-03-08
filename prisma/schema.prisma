@@ -156,9 +156,8 @@ model Workspace {
 // ═══════════════════════════════════════════════════════════════
 
 enum SubscriptionPlan {
-  STARTER
-  TEAM
-  BUSINESS
+  BASIC
+  PROFESSIONAL
   ENTERPRISE
 }
 
@@ -182,7 +181,7 @@ enum ContractType {
 
 model Subscription {
   id                   String             @id @default(cuid())
-  plan                 SubscriptionPlan   @default(STARTER)
+  plan                 SubscriptionPlan   @default(BASIC)
   status               SubscriptionStatus @default(ACTIVE)
   stripeCustomerId     String?            @unique
   stripeSubscriptionId String?            @unique

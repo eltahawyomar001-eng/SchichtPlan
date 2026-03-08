@@ -25,21 +25,25 @@ export function getStripe(): Stripe {
    Plan definitions — single source of truth
    ═══════════════════════════════════════════════════════════════ */
 
-export type PlanId = "starter" | "team" | "business" | "enterprise";
+export type PlanId = "basic" | "professional" | "enterprise";
 
 export interface PlanConfig {
   id: PlanId;
   /** Matches Prisma SubscriptionPlan enum */
-  prismaKey: "STARTER" | "TEAM" | "BUSINESS" | "ENTERPRISE";
+  prismaKey: "BASIC" | "PROFESSIONAL" | "ENTERPRISE";
   /** Human-readable name */
   name: string;
-  /** Flat monthly workspace price in EUR cents (0 = free/custom) */
-  monthlyPriceCents: number;
-  /** Flat annual workspace price in EUR cents per month (0 = free/custom) */
-  annualPriceCents: number;
+  /** Base monthly workspace price in EUR cents (0 = custom) */
+  basePriceMonthly: number;
+  /** Base annual workspace price in EUR cents per month (0 = custom) */
+  basePriceAnnual: number;
+  /** Per-user monthly addon in EUR cents (0 = custom) */
+  perUserMonthly: number;
+  /** Per-user annual addon in EUR cents per month (0 = custom) */
+  perUserAnnual: number;
   /**
    * Stripe Price IDs — set via env vars.
-   * Null means the plan is free or custom-quoted.
+   * Null means the plan is custom-quoted.
    */
   stripePriceIdMonthly: string | null;
   stripePriceIdAnnual: string | null;
@@ -47,6 +51,7 @@ export interface PlanConfig {
   limits: {
     maxEmployees: number; // Infinity = unlimited
     maxLocations: number;
+    storageMb: number; // Infinity = unlimited
     shiftTemplates: boolean;
     absenceManagement: boolean;
     csvPdfExport: boolean;
@@ -70,54 +75,34 @@ export interface PlanConfig {
  * All plan configurations.
  * Stripe Price IDs come from env so they work across
  * test / live mode without code changes.
+ *
+ * Pricing model:
+ *   Basic:        €19 base + €2.50 / user / month
+ *   Professional: €49 base + €4.50 / user / month
+ *   Enterprise:   Custom (minimum €500 / month)
  */
 export const PLANS: Record<PlanId, PlanConfig> = {
-  starter: {
-    id: "starter",
-    prismaKey: "STARTER",
-    name: "Starter",
-    monthlyPriceCents: 0,
-    annualPriceCents: 0,
-    stripePriceIdMonthly: null,
-    stripePriceIdAnnual: null,
-    trialDays: 0,
-    limits: {
-      maxEmployees: 5,
-      maxLocations: 1,
-      shiftTemplates: false,
-      absenceManagement: false,
-      csvPdfExport: false,
-      datevExport: false,
-      datevOnlineUpload: false,
-      autoScheduling: false,
-      teamChat: false,
-      apiWebhooks: false,
-      customRoles: false,
-      analytics: false,
-      prioritySupport: false,
-      ssoSaml: false,
-      dedicatedSla: false,
-      customIntegrations: false,
-    },
-  },
-  team: {
-    id: "team",
-    prismaKey: "TEAM",
-    name: "Team",
-    monthlyPriceCents: 2900, // €29 flat/workspace
-    annualPriceCents: 2400, // €24 flat/workspace (saves ~17%)
-    stripePriceIdMonthly: process.env.STRIPE_PRICE_TEAM_MONTHLY ?? null,
-    stripePriceIdAnnual: process.env.STRIPE_PRICE_TEAM_ANNUAL ?? null,
+  basic: {
+    id: "basic",
+    prismaKey: "BASIC",
+    name: "Basic",
+    basePriceMonthly: 1900, // €19 base
+    basePriceAnnual: 1600, // €16 base (saves ~16%)
+    perUserMonthly: 250, // €2.50 per user
+    perUserAnnual: 210, // €2.10 per user (saves ~16%)
+    stripePriceIdMonthly: process.env.STRIPE_PRICE_BASIC_MONTHLY ?? null,
+    stripePriceIdAnnual: process.env.STRIPE_PRICE_BASIC_ANNUAL ?? null,
     trialDays: 14,
     limits: {
-      maxEmployees: Infinity,
-      maxLocations: 3,
+      maxEmployees: 10,
+      maxLocations: 1,
+      storageMb: 500,
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
       datevExport: false,
       datevOnlineUpload: false,
-      autoScheduling: true,
+      autoScheduling: false,
       teamChat: true,
       apiWebhooks: false,
       customRoles: false,
@@ -128,18 +113,21 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       customIntegrations: false,
     },
   },
-  business: {
-    id: "business",
-    prismaKey: "BUSINESS",
-    name: "Business",
-    monthlyPriceCents: 5900, // €59 flat/workspace
-    annualPriceCents: 4900, // €49 flat/workspace (saves ~17%)
-    stripePriceIdMonthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? null,
-    stripePriceIdAnnual: process.env.STRIPE_PRICE_BUSINESS_ANNUAL ?? null,
+  professional: {
+    id: "professional",
+    prismaKey: "PROFESSIONAL",
+    name: "Professional",
+    basePriceMonthly: 4900, // €49 base
+    basePriceAnnual: 4100, // €41 base (saves ~16%)
+    perUserMonthly: 450, // €4.50 per user
+    perUserAnnual: 380, // €3.80 per user (saves ~16%)
+    stripePriceIdMonthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY ?? null,
+    stripePriceIdAnnual: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL ?? null,
     trialDays: 14,
     limits: {
-      maxEmployees: Infinity,
-      maxLocations: Infinity,
+      maxEmployees: 50,
+      maxLocations: 5,
+      storageMb: 5120, // 5 GB
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
@@ -160,14 +148,17 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     id: "enterprise",
     prismaKey: "ENTERPRISE",
     name: "Enterprise",
-    monthlyPriceCents: 0, // custom pricing
-    annualPriceCents: 0,
+    basePriceMonthly: 0, // custom pricing (min €500)
+    basePriceAnnual: 0,
+    perUserMonthly: 0,
+    perUserAnnual: 0,
     stripePriceIdMonthly: null,
     stripePriceIdAnnual: null,
     trialDays: 0,
     limits: {
       maxEmployees: Infinity,
       maxLocations: Infinity,
+      storageMb: Infinity, // 50 GB+ / custom
       shiftTemplates: true,
       absenceManagement: true,
       csvPdfExport: true,
@@ -187,12 +178,25 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 };
 
 /** Ordered list for rendering */
-export const PLAN_ORDER: PlanId[] = [
-  "starter",
-  "team",
-  "business",
-  "enterprise",
-];
+export const PLAN_ORDER: PlanId[] = ["basic", "professional", "enterprise"];
+
+/**
+ * Calculate total monthly price for a plan with a given number of users.
+ * Returns cents.
+ */
+export function calculatePlanPrice(
+  planId: PlanId,
+  users: number,
+  billing: "monthly" | "annual",
+): number {
+  const plan = PLANS[planId];
+  if (!plan) return 0;
+  const base =
+    billing === "annual" ? plan.basePriceAnnual : plan.basePriceMonthly;
+  const perUser =
+    billing === "annual" ? plan.perUserAnnual : plan.perUserMonthly;
+  return base + perUser * users;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Helpers

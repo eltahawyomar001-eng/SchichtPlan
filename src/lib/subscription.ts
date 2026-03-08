@@ -19,7 +19,7 @@ export async function ensureSubscription(workspaceId: string) {
   return prisma.subscription.create({
     data: {
       workspaceId,
-      plan: "STARTER",
+      plan: "BASIC",
       status: "ACTIVE",
       seatCount: 1,
     },
@@ -136,7 +136,7 @@ export async function cancelSubscription(stripeSubscriptionId: string) {
   return prisma.subscription.update({
     where: { stripeSubscriptionId },
     data: {
-      plan: "STARTER",
+      plan: "BASIC",
       status: "CANCELED",
       stripePriceId: null,
       stripeSubscriptionId: null,
@@ -150,7 +150,7 @@ export async function cancelSubscription(stripeSubscriptionId: string) {
  */
 export async function canAddEmployee(workspaceId: string): Promise<boolean> {
   const sub = await getSubscription(workspaceId);
-  if (!sub) return true; // No subscription = starter defaults
+  if (!sub) return true; // No subscription = basic defaults
 
   const planId = sub.plan.toLowerCase() as PlanId;
   const plan = PLANS[planId];
@@ -218,20 +218,20 @@ function mapStripeStatus(status: string): PrismaSubscriptionStatus {
 export type FeatureKey = keyof PlanConfig["limits"];
 
 /**
- * Get the plan config for a workspace. Falls back to STARTER.
+ * Get the plan config for a workspace. Falls back to BASIC.
  */
 export async function getWorkspacePlan(
   workspaceId: string,
 ): Promise<PlanConfig> {
   const sub = await getSubscription(workspaceId);
-  if (!sub) return PLANS.starter;
+  if (!sub) return PLANS.basic;
 
   // Only active/trialing subscriptions unlock paid features
   const activeStatuses = ["ACTIVE", "TRIALING"];
-  if (!activeStatuses.includes(sub.status)) return PLANS.starter;
+  if (!activeStatuses.includes(sub.status)) return PLANS.basic;
 
   const planId = sub.plan.toLowerCase() as PlanId;
-  return PLANS[planId] ?? PLANS.starter;
+  return PLANS[planId] ?? PLANS.basic;
 }
 
 /**
@@ -354,34 +354,7 @@ export async function simulateSubscription({
     periodEnd.getMonth() + (billingCycle === "annual" ? 12 : 1),
   );
 
-  // For starter (free), downgrade
-  if (plan === "starter") {
-    return prisma.subscription.upsert({
-      where: { workspaceId },
-      update: {
-        plan: "STARTER",
-        status: "ACTIVE",
-        stripePriceId: null,
-        stripeSubscriptionId: null,
-        stripeCustomerId: null,
-        cancelAtPeriodEnd: false,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        trialStart: null,
-        trialEnd: null,
-      },
-      create: {
-        workspaceId,
-        plan: "STARTER",
-        status: "ACTIVE",
-        seatCount: 1,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-      },
-    });
-  }
-
-  // For paid plans, simulate activation
+  // Simulate activation
   const trialEnd =
     planConfig.trialDays > 0
       ? new Date(now.getTime() + planConfig.trialDays * 24 * 60 * 60 * 1000)

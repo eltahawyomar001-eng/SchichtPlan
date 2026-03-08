@@ -158,29 +158,31 @@ describe("GET /api/shift-templates — plan gate", () => {
     handler = await import("@/app/api/shift-templates/route");
   });
 
-  it("returns 403 when STARTER plan tries to access shift templates", async () => {
+  it("allows BASIC plan to access shift templates", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
 
-    // Starter plan — shiftTemplates not included
+    // Basic plan — shiftTemplates included
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "STARTER",
+      plan: "BASIC",
       status: "ACTIVE",
       workspaceId: owner.workspaceId,
     });
+    mockShiftTemplateFindMany.mockResolvedValue([]);
+    mockShiftTemplateCount.mockResolvedValue(0);
 
     const res = await handler.GET(
       new Request("http://localhost/api/shift-templates"),
     );
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 
-  it("allows TEAM plan to access shift templates", async () => {
+  it("allows PROFESSIONAL plan to access shift templates", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
 
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "TEAM",
+      plan: "PROFESSIONAL",
       status: "ACTIVE",
       workspaceId: owner.workspaceId,
     });
@@ -210,9 +212,9 @@ describe("POST /api/employees — MiLoG warning", () => {
     const owner = buildOwner();
     mockSession.user = owner;
 
-    // TEAM plan — no employee limit issues
+    // PROFESSIONAL plan — no employee limit issues
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "TEAM",
+      plan: "PROFESSIONAL",
       status: "ACTIVE",
       workspaceId: owner.workspaceId,
     });
@@ -250,7 +252,7 @@ describe("POST /api/employees — MiLoG warning", () => {
     mockSession.user = owner;
 
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "TEAM",
+      plan: "PROFESSIONAL",
       status: "ACTIVE",
       workspaceId: owner.workspaceId,
     });

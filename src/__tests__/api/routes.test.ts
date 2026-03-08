@@ -148,13 +148,13 @@ describe("POST /api/employees", () => {
     const owner = buildOwner();
     mockSession.user = owner;
 
-    // Starter plan: 5 max employees
+    // Basic plan: 10 max employees
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "STARTER",
+      plan: "BASIC",
       status: "ACTIVE",
       workspaceId: owner.workspaceId,
     });
-    mockEmployeeCount.mockResolvedValue(5);
+    mockEmployeeCount.mockResolvedValue(10);
 
     const req = new Request("http://localhost/api/employees", {
       method: "POST",
@@ -207,9 +207,9 @@ describe("GET /api/custom-roles", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 for admin on starter plan (feature gated)", async () => {
+  it("returns 403 for admin on basic plan (feature gated)", async () => {
     mockSession.user = buildAdmin();
-    // Starter plan doesn't have customRoles
+    // Basic plan doesn't have customRoles
     mockSubscriptionFindUnique.mockResolvedValue(null);
 
     const req = new Request("http://localhost/api/custom-roles");
@@ -220,10 +220,10 @@ describe("GET /api/custom-roles", () => {
     expect(body.error).toBe("PLAN_LIMIT");
   });
 
-  it("returns built-in roles for admin on business plan", async () => {
+  it("returns built-in roles for admin on professional plan", async () => {
     mockSession.user = buildAdmin();
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "BUSINESS",
+      plan: "PROFESSIONAL",
       status: "ACTIVE",
     });
 
@@ -263,10 +263,10 @@ describe("POST /api/custom-roles", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 Not Implemented for admin on business plan", async () => {
+  it("returns 501 Not Implemented for admin on professional plan", async () => {
     mockSession.user = buildAdmin();
     mockSubscriptionFindUnique.mockResolvedValue({
-      plan: "BUSINESS",
+      plan: "PROFESSIONAL",
       status: "ACTIVE",
     });
 

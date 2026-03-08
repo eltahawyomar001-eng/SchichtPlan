@@ -70,21 +70,14 @@ export function CombinedJsonLd() {
         offers: [
           {
             "@type": "Offer",
-            price: "0",
+            price: "19",
             priceCurrency: "EUR",
-            name: "Starter",
-            description: "Kostenlos für bis zu 5 Mitarbeiter und 1 Standort",
-          },
-          {
-            "@type": "Offer",
-            price: "29",
-            priceCurrency: "EUR",
-            name: "Team",
+            name: "Basic",
             description:
-              "Pauschal pro Workspace/Monat — unbegrenzte Mitarbeiter",
+              "Ab 19 €/Monat + 2,50 € pro Nutzer — bis zu 10 Mitarbeiter, 1 Standort",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: "29",
+              price: "19",
               priceCurrency: "EUR",
               unitText: "Workspace/Monat",
               billingDuration: "P1M",
@@ -92,14 +85,14 @@ export function CombinedJsonLd() {
           },
           {
             "@type": "Offer",
-            price: "59",
+            price: "49",
             priceCurrency: "EUR",
-            name: "Business",
+            name: "Professional",
             description:
-              "Pauschal pro Workspace/Monat — DATEV, API, Analysen, Priority-Support",
+              "Ab 49 €/Monat + 4,50 € pro Nutzer — DATEV, API, Analysen, Priority-Support",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: "59",
+              price: "49",
               priceCurrency: "EUR",
               unitText: "Workspace/Monat",
               billingDuration: "P1M",
@@ -136,7 +129,7 @@ export function CombinedJsonLd() {
             name: "Was kostet Shiftfy?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Shiftfy bietet einen kostenlosen Starter-Plan für bis zu 5 Mitarbeiter. Der Team-Plan kostet pauschal 29 € pro Workspace/Monat (24 € bei jährlicher Zahlung) und der Business-Plan 59 € pro Workspace/Monat (49 € jährlich) — jeweils mit unbegrenzter Mitarbeiterzahl.",
+              text: "Der Basic-Plan kostet 19 €/Monat + 2,50 € pro Nutzer (ab 16 € bei jährlicher Zahlung). Der Professional-Plan kostet 49 €/Monat + 4,50 € pro Nutzer (ab 41 € jährlich). Alle Pläne enthalten eine 14-tägige kostenlose Testphase.",
             },
           },
           {
@@ -168,7 +161,7 @@ export function CombinedJsonLd() {
             name: "Kann ich Shiftfy kostenlos testen?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Ja, der Starter-Plan ist dauerhaft kostenlos und enthält Schichtplanung, Zeiterfassung und bis zu 5 Mitarbeiter. Kein Vertrag, keine Kreditkarte nötig.",
+              text: "Ja, alle Pläne bieten eine 14-tägige kostenlose Testphase. Der Basic-Plan enthält Schichtplanung, Zeiterfassung und bis zu 10 Mitarbeiter. Keine Kreditkarte nötig.",
             },
           },
           {
@@ -176,7 +169,7 @@ export function CombinedJsonLd() {
             name: "Unterstützt Shiftfy automatische Schichtplanung?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Ja, mit dem Business-Plan können Schichten automatisch anhand von Verfügbarkeiten, Qualifikationen und Arbeitszeitregeln erstellt werden.",
+              text: "Ja, mit dem Professional-Plan können Schichten automatisch anhand von Verfügbarkeiten, Qualifikationen und Arbeitszeitregeln erstellt werden.",
             },
           },
         ],

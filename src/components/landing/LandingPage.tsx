@@ -854,27 +854,33 @@ function PricingSection() {
 
   const plans = [
     {
-      name: tp("free"),
-      price: tp("freePrice"),
-      priceNote: tp("freePriceNote"),
-      description: tp("freeDesc"),
+      name: tp("basic"),
+      basePrice: annual ? tp("basicAnnualBase") : tp("basicMonthlyBase"),
+      perUser: annual ? tp("basicPerUserAnnual") : tp("basicPerUserMonthly"),
+      description: tp("basicDesc"),
       features: [
-        tp("featureFree1"),
-        tp("featureFree2"),
-        tp("featureFree3"),
-        tp("featureFree4"),
-        tp("featureFree5"),
-        tp("featureFree6"),
+        tp("featureBasic1"),
+        tp("featureBasic2"),
+        tp("featureBasic3"),
+        tp("featureBasic4"),
+        tp("featureBasic5"),
+        tp("featureBasic6"),
+        tp("featureBasic7"),
       ],
-      cta: tp("getStarted"),
-      href: "/register?plan=starter",
+      cta: tp("startTrial"),
+      href: `/register?plan=basic&billing=${annual ? "annual" : "monthly"}`,
       highlighted: false,
+      isEnterprise: false,
     },
     {
-      name: tp("pro"),
-      price: annual ? tp("proAnnualPrice") : tp("proMonthlyPrice"),
-      priceNote: `${tp("perUserMonth")} · ${annual ? tp("billedAnnually") : tp("billedMonthly")}`,
-      description: tp("proDesc"),
+      name: tp("professional"),
+      basePrice: annual
+        ? tp("professionalAnnualBase")
+        : tp("professionalMonthlyBase"),
+      perUser: annual
+        ? tp("professionalPerUserAnnual")
+        : tp("professionalPerUserMonthly"),
+      description: tp("professionalDesc"),
       features: [
         tp("featurePro1"),
         tp("featurePro2"),
@@ -882,17 +888,20 @@ function PricingSection() {
         tp("featurePro4"),
         tp("featurePro5"),
         tp("featurePro6"),
+        tp("featurePro7"),
+        tp("featurePro8"),
+        tp("featurePro9"),
+        tp("featurePro10"),
       ],
       cta: tp("startTrial"),
-      href: `/register?plan=team&billing=${annual ? "annual" : "monthly"}`,
+      href: `/register?plan=professional&billing=${annual ? "annual" : "monthly"}`,
       highlighted: true,
+      isEnterprise: false,
     },
     {
       name: tp("enterprise"),
-      price: annual
-        ? tp("enterpriseAnnualPrice")
-        : tp("enterpriseMonthlyPrice"),
-      priceNote: `${tp("perUserMonth")} · ${annual ? tp("billedAnnually") : tp("billedMonthly")}`,
+      basePrice: tp("enterprisePrice"),
+      perUser: null,
       description: tp("enterpriseDesc"),
       features: [
         tp("featureEnt1"),
@@ -902,27 +911,12 @@ function PricingSection() {
         tp("featureEnt5"),
         tp("featureEnt6"),
         tp("featureEnt7"),
-      ],
-      cta: tp("startTrial"),
-      href: `/register?plan=business&billing=${annual ? "annual" : "monthly"}`,
-      highlighted: false,
-    },
-    {
-      name: tp("custom"),
-      price: tp("customPrice"),
-      priceNote: tp("customPriceNote"),
-      description: tp("customDesc"),
-      features: [
-        tp("featureCustom1"),
-        tp("featureCustom2"),
-        tp("featureCustom3"),
-        tp("featureCustom4"),
-        tp("featureCustom5"),
-        tp("featureCustom6"),
+        tp("featureEnt8"),
       ],
       cta: tp("contactUs"),
       href: "mailto:info@shiftfy.de",
       highlighted: false,
+      isEnterprise: true,
     },
   ];
 
@@ -963,7 +957,7 @@ function PricingSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -979,12 +973,35 @@ function PricingSection() {
                 </span>
               )}
               <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-gray-900">
-                  {plan.price}
-                </span>
+              <div className="mt-4">
+                {plan.isEnterprise ? (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold text-gray-900">
+                        {plan.basePrice}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {tp("enterprisePriceNote")}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold text-gray-900">
+                        {plan.basePrice}
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        /{tp("perMonth")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {tp("plus")} {plan.perUser} {tp("perUserMonth")} ·{" "}
+                      {annual ? tp("billedAnnually") : tp("billedMonthly")}
+                    </p>
+                  </>
+                )}
               </div>
-              <p className="text-xs text-gray-400 mt-1">{plan.priceNote}</p>
               <p className="mt-3 text-sm text-gray-600">{plan.description}</p>
               <ul className="mt-6 space-y-3 flex-1">
                 {plan.features.map((f) => (

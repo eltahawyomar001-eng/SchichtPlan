@@ -110,7 +110,7 @@ export async function POST(req: Request) {
           stripeCustomerId: customerId,
           stripeSubscriptionId: subscriptionId,
           stripePriceId: priceId ?? "",
-          plan: (plan?.id ?? "team") as PlanId,
+          plan: (plan?.id ?? "basic") as PlanId,
           seatCount: item?.quantity ?? 1,
           currentPeriodStart: new Date(
             (item?.current_period_start ?? 0) * 1000,

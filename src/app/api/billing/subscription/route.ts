@@ -24,7 +24,7 @@ export async function GET() {
     const user = session.user as SessionUser;
     let sub = await getSubscription(user.workspaceId);
 
-    // Auto-create starter subscription if none exists
+    // Auto-create basic subscription if none exists
     if (!sub) {
       sub = await ensureSubscription(user.workspaceId);
     }
@@ -40,7 +40,7 @@ export async function GET() {
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
       trialEnd: sub.trialEnd,
       hasStripeSubscription: !!sub.stripeSubscriptionId,
-      limits: planConfig?.limits ?? PLANS.starter.limits,
+      limits: planConfig?.limits ?? PLANS.basic.limits,
       simulationMode: isSimulationMode(),
     });
   } catch (error) {

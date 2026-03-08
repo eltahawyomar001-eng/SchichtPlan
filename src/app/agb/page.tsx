@@ -117,10 +117,11 @@ export default function AGBPage() {
               § 4 Entgelt, Abrechnung und Zahlung
             </h2>
             <p>
-              Shiftfy wird in verschiedenen Tarifstufen angeboten. Der
-              STARTER-Tarif ist dauerhaft kostenlos. Kostenpflichtige Tarife
-              (TEAM, BUSINESS, ENTERPRISE) werden monatlich im Voraus
-              abgerechnet. Die jeweils aktuellen Preise sind auf der{" "}
+              Shiftfy wird in verschiedenen Tarifstufen angeboten.
+              Kostenpflichtige Tarife (BASIC, PROFESSIONAL, ENTERPRISE) werden
+              monatlich im Voraus abgerechnet. Die Preise setzen sich aus einer
+              Grundgebühr pro Workspace und einem Betrag pro Nutzer zusammen.
+              Die jeweils aktuellen Preise sind auf der{" "}
               <Link
                 href="/pricing"
                 className="text-emerald-600 hover:text-emerald-700 underline"
@@ -148,8 +149,8 @@ export default function AGBPage() {
               <strong>Zahlungsverzug:</strong> Bei fehlgeschlagenem
               Zahlungseinzug unternehmen wir bis zu drei Wiederholungsversuche.
               Schlägt die Zahlung endgültig fehl, wird das Konto auf den
-              kostenfreien STARTER-Tarif herabgestuft. Gesetzliche Verzugszinsen
-              und Mahnkosten bleiben vorbehalten.
+              BASIC-Tarif herabgestuft. Gesetzliche Verzugszinsen und Mahnkosten
+              bleiben vorbehalten.
             </p>
           </section>
 
@@ -225,12 +226,11 @@ export default function AGBPage() {
             <p>
               Kostenpflichtige Abonnements können jederzeit zum Ende des
               laufenden Abrechnungszeitraums gekündigt werden. Nach der
-              Kündigung wird das Konto auf den kostenfreien STARTER-Tarif
-              herabgestuft; alle Daten bleiben bis zur aktiven Kontolöschung
-              erhalten. Sie können Ihr Konto jederzeit vollständig löschen. Mit
-              der Löschung werden alle Ihre Daten unwiderruflich entfernt. Wir
-              behalten uns das Recht vor, Konten bei Verstoß gegen diese AGB
-              fristlos zu sperren.
+              Kündigung wird das Konto auf den BASIC-Tarif herabgestuft; alle
+              Daten bleiben bis zur aktiven Kontolöschung erhalten. Sie können
+              Ihr Konto jederzeit vollständig löschen. Mit der Löschung werden
+              alle Ihre Daten unwiderruflich entfernt. Wir behalten uns das
+              Recht vor, Konten bei Verstoß gegen diese AGB fristlos zu sperren.
             </p>
           </section>
 

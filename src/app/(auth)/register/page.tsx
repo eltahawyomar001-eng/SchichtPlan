@@ -86,7 +86,7 @@ function RegisterForm() {
       }
 
       // Redirect to verification page (check your email)
-      if (selectedPlan && selectedPlan !== "starter") {
+      if (selectedPlan && selectedPlan !== "basic") {
         localStorage.setItem("shiftfy_selected_plan", selectedPlan);
         localStorage.setItem("shiftfy_selected_billing", selectedBilling);
       }

@@ -570,11 +570,11 @@ export default function SchichtplanPage() {
             {/* Location Filter */}
             {locations.length > 0 && (
               <div className="relative flex-1 sm:flex-initial">
-                <FilterIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+                <FilterIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
                 <Select
                   value={filterLocationId}
                   onChange={(e) => setFilterLocationId(e.target.value)}
-                  className="pl-9 h-9 sm:h-9 sm:w-auto"
+                  className="pl-10 h-9 sm:h-9 sm:w-auto"
                 >
                   <option value="">{t("allLocations")}</option>
                   {locations.map((loc) => (

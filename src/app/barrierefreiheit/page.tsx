@@ -160,10 +160,10 @@ export default function BarrierefreiheitPage() {
             <p className="mt-2">
               E-Mail:{" "}
               <a
-                href="mailto:kontakt@shiftfy.de"
+                href="mailto:info@bashabsheh-vergabepartner.de"
                 className="text-emerald-600 hover:text-emerald-700 underline"
               >
-                kontakt@shiftfy.de
+                info@bashabsheh-vergabepartner.de
               </a>
             </p>
             <p className="mt-2">
@@ -181,16 +181,32 @@ export default function BarrierefreiheitPage() {
             <p>
               Sollte eine Anfrage an uns nicht zufriedenstellend beantwortet
               werden, können Sie sich an die zuständige Durchsetzungsstelle
-              wenden. Für Hessen ist die zuständige Überwachungsstelle:
+              wenden. Für Berlin ist die zuständige Überwachungsstelle:
             </p>
             <p className="mt-2">
-              Hessisches Ministerium für Soziales und Integration
+              Landesamt für Arbeitsschutz, Gesundheitsschutz und technische
+              Sicherheit Berlin (LAGetSi)
               <br />
-              Durchsetzungsstelle für digitale Barrierefreiheit
+              Turmstraße 21, Haus N
               <br />
-              Sonnenberger Straße 2/2a
+              10559 Berlin
               <br />
-              65193 Wiesbaden
+              E-Mail:{" "}
+              <a
+                href="mailto:info@lagetsi.berlin.de"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                info@lagetsi.berlin.de
+              </a>
+              <br />
+              <a
+                href="https://www.berlin.de/lagetsi/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                www.berlin.de/lagetsi
+              </a>
             </p>
           </section>
 

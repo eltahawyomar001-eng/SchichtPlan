@@ -93,13 +93,19 @@ export default function DatenschutzPage() {
               Website ist:
             </p>
             <p>
-              Shiftfy
+              Bashabsheh Vergabepartner
               <br />
-              Omar Rageh
+              Inhaber: Mohammad Bashabsheh
               <br />
-              Fulda, Deutschland
+              c/o VirtualOfficeBerlin
               <br />
-              E-Mail: kontakt@shiftfy.de
+              Kolonnenstraße 8
+              <br />
+              10827 Berlin, Deutschland
+              <br />
+              Telefon: +49 176 30365636
+              <br />
+              E-Mail: info@bashabsheh-vergabepartner.de
             </p>
             <p className="mt-2">
               Verantwortliche Stelle ist die natürliche oder juristische Person,
@@ -162,6 +168,22 @@ export default function DatenschutzPage() {
               <li>
                 Mitarbeiterprofile: Name, E-Mail, Telefon, Position, Stundensatz
                 (durch Arbeitgeber/Manager angelegt)
+              </li>
+              <li>
+                GPS-/Standortdaten: Bei Nutzung der Stempeluhr und des
+                Leistungsnachweises werden GPS-Koordinaten beim Check-in,
+                Check-out und bei der Unterschrift erfasst (Art. 6 Abs. 1 lit. b
+                DSGVO — Vertragserfüllung). Die Erfassung dient dem Nachweis der
+                Leistungserbringung und der Geofence-Prüfung.
+              </li>
+              <li>
+                Digitale Unterschriften: Base64-codierte Signaturbilder,
+                kryptographisch mit GPS, Zeitstempel und Besuchs-ID verknüpft
+                (SHA-256-Hash)
+              </li>
+              <li>
+                Geräte-Informationen: User-Agent, Geräte-ID (anonymisiert) — zur
+                Sicherheit und Revisionssicherheit der Audit-Logs
               </li>
             </ul>
             <h3 className="text-base font-medium text-gray-800 mt-4 mb-1">
@@ -266,6 +288,45 @@ export default function DatenschutzPage() {
               </a>
               .
             </p>
+
+            <h3 className="text-base font-medium text-gray-800 mt-3 mb-1">
+              d) Stripe, Inc. — Zahlungsabwicklung
+            </h3>
+            <p>
+              Abwicklung von Abonnement-Zahlungen (Kreditkarte,
+              SEPA-Lastschrift). Stripe verarbeitet Zahlungsdaten direkt;
+              Kartennummern werden nie auf unseren Servern gespeichert. Stripe
+              ist unter dem EU-US Data Privacy Framework zertifiziert.{" "}
+              <a
+                href="https://stripe.com/de/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Datenschutzerklärung von Stripe
+              </a>
+              .
+            </p>
+
+            <h3 className="text-base font-medium text-gray-800 mt-3 mb-1">
+              e) Sentry (Functional Software, Inc.) — Fehlerüberwachung
+            </h3>
+            <p>
+              Erfassung von Anwendungsfehlern zur Qualitätssicherung. Es werden
+              technische Daten (Fehlermeldungen, Browser, Betriebssystem)
+              übermittelt — keine personenbezogenen Inhalte. Sentry-Server
+              befinden sich in der EU (Frankfurt). Die Aktivierung erfolgt nur
+              mit Ihrer Einwilligung über den Cookie-Banner.{" "}
+              <a
+                href="https://sentry.io/privacy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Datenschutzerklärung von Sentry
+              </a>
+              .
+            </p>
           </section>
 
           {/* 7. Cookies */}
@@ -357,21 +418,23 @@ export default function DatenschutzPage() {
             <p className="mt-2">
               Zuständige Aufsichtsbehörde:
               <br />
-              Der Hessische Beauftragte für Datenschutz und Informationsfreiheit
+              Berliner Beauftragte für Datenschutz und Informationsfreiheit
               <br />
-              Postfach 3163, 65021 Wiesbaden
+              Friedrichstr. 219
               <br />
-              Telefon: +49 611 1408-0
+              10969 Berlin
               <br />
-              E-Mail: poststelle@datenschutz.hessen.de
+              Telefon: +49 30 13889-0
+              <br />
+              E-Mail: mailbox@datenschutz-berlin.de
               <br />
               <a
-                href="https://datenschutz.hessen.de"
+                href="https://www.datenschutz-berlin.de"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-emerald-600 hover:text-emerald-700 underline"
               >
-                datenschutz.hessen.de
+                www.datenschutz-berlin.de
               </a>
             </p>
           </section>
@@ -385,7 +448,17 @@ export default function DatenschutzPage() {
               Zur Ausübung Ihrer Rechte oder bei Fragen zum Datenschutz wenden
               Sie sich bitte an:
             </p>
-            <p className="mt-2">E-Mail: kontakt@shiftfy.de</p>
+            <p className="mt-2">
+              Bashabsheh Vergabepartner
+              <br />
+              Mohammad Bashabsheh
+              <br />
+              Kolonnenstraße 8, 10827 Berlin
+              <br />
+              E-Mail: info@bashabsheh-vergabepartner.de
+              <br />
+              Telefon: +49 176 30365636
+            </p>
             <p className="mt-1 text-xs text-gray-500">
               Wir werden Ihr Anliegen schnellstmöglich, spätestens innerhalb
               eines Monats (Art. 12 Abs. 3 DSGVO), bearbeiten.

@@ -4,7 +4,8 @@ import { ShiftfyMark } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Impressum",
-  description: "Impressum und Anbieterkennzeichnung der Shiftfy Software.",
+  description:
+    "Impressum und Anbieterkennzeichnung der Shiftfy Software – Bashabsheh Vergabepartner.",
   alternates: { canonical: "/impressum" },
   robots: { index: true, follow: true },
 };
@@ -64,11 +65,18 @@ export default function ImpressumPage() {
               Angaben gemäß § 5 DDG
             </h2>
             <p>
-              Shiftfy
+              Bashabsheh Vergabepartner
               <br />
-              Omar Rageh
+              Inhaber: Mohammad Bashabsheh
+            </p>
+            <p className="mt-2">
+              c/o VirtualOfficeBerlin
               <br />
-              Fulda, Deutschland
+              Kolonnenstraße 8
+              <br />
+              10827 Berlin
+              <br />
+              Deutschland
             </p>
           </section>
 
@@ -76,7 +84,11 @@ export default function ImpressumPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Kontakt
             </h2>
-            <p>E-Mail: kontakt@shiftfy.de</p>
+            <p>
+              Telefon: +49 176 30365636
+              <br />
+              E-Mail: info@bashabsheh-vergabepartner.de
+            </p>
           </section>
 
           <section>
@@ -94,9 +106,11 @@ export default function ImpressumPage() {
               Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
             </h2>
             <p>
-              Omar Rageh
+              Mohammad Bashabsheh
               <br />
-              Fulda, Deutschland
+              Kolonnenstraße 8
+              <br />
+              10827 Berlin
             </p>
           </section>
 

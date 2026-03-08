@@ -94,13 +94,17 @@ export default function WiderrufPage() {
               <strong>Kontakt für den Widerruf:</strong>
             </p>
             <p>
-              Shiftfy
+              Bashabsheh Vergabepartner
               <br />
-              Omar Rageh
+              Mohammad Bashabsheh
               <br />
-              Fulda, Deutschland
+              c/o VirtualOfficeBerlin
               <br />
-              E-Mail: kontakt@shiftfy.de
+              Kolonnenstraße 8, 10827 Berlin, Deutschland
+              <br />
+              E-Mail: info@bashabsheh-vergabepartner.de
+              <br />
+              Telefon: +49 176 30365636
             </p>
             <p className="mt-2">
               Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die
@@ -168,9 +172,11 @@ export default function WiderrufPage() {
               <p>
                 An:
                 <br />
-                Shiftfy — Omar Rageh
+                Bashabsheh Vergabepartner — Mohammad Bashabsheh
                 <br />
-                E-Mail: kontakt@shiftfy.de
+                Kolonnenstraße 8, 10827 Berlin
+                <br />
+                E-Mail: info@bashabsheh-vergabepartner.de
               </p>
               <p>
                 Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*)

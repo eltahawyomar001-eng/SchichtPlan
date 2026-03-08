@@ -5,7 +5,7 @@ import { ShiftfyMark } from "@/components/icons";
 export const metadata: Metadata = {
   title: "AGB – Allgemeine Geschäftsbedingungen",
   description:
-    "Allgemeine Geschäftsbedingungen der Shiftfy Schichtplanungs-Software.",
+    "Allgemeine Geschäftsbedingungen der Shiftfy Schichtplanungs-Software von Bashabsheh Vergabepartner.",
   alternates: { canonical: "/agb" },
   robots: { index: true, follow: true },
 };
@@ -72,12 +72,13 @@ export default function AGBPage() {
             <p>
               Diese Allgemeinen Geschäftsbedingungen (nachfolgend
               &quot;AGB&quot;) gelten für die Nutzung der webbasierten
-              Schichtplanungssoftware Shiftfy, angeboten von Omar Rageh
-              (nachfolgend &quot;Anbieter&quot;). Mit der Registrierung und
-              Nutzung des Dienstes erkennen Sie diese AGB an. Entgegenstehende
-              oder abweichende Bedingungen des Nutzers werden nicht anerkannt,
-              es sei denn, der Anbieter stimmt ihrer Geltung ausdrücklich
-              schriftlich zu.
+              Schichtplanungssoftware Shiftfy, angeboten von Bashabsheh
+              Vergabepartner, Inhaber: Mohammad Bashabsheh (nachfolgend
+              &quot;Anbieter&quot;). Mit der Registrierung und Nutzung des
+              Dienstes erkennen Sie diese AGB an. Entgegenstehende oder
+              abweichende Bedingungen des Nutzers werden nicht anerkannt, es sei
+              denn, der Anbieter stimmt ihrer Geltung ausdrücklich schriftlich
+              zu.
             </p>
           </section>
 
@@ -186,10 +187,10 @@ export default function AGBPage() {
               Art.&nbsp;28 DSGVO. Ein Auftragsverarbeitungsvertrag (AVV) wird
               auf Anfrage unter{" "}
               <a
-                href="mailto:kontakt@shiftfy.de"
+                href="mailto:info@bashabsheh-vergabepartner.de"
                 className="text-emerald-600 hover:text-emerald-700 underline"
               >
-                kontakt@shiftfy.de
+                info@bashabsheh-vergabepartner.de
               </a>{" "}
               zur Verfügung gestellt.
             </p>
@@ -293,9 +294,9 @@ export default function AGBPage() {
             </h2>
             <p>
               Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand
-              ist, soweit gesetzlich zulässig, der Sitz des Anbieters. Sollten
-              einzelne Bestimmungen dieser AGB unwirksam sein, bleibt die
-              Wirksamkeit der übrigen Bestimmungen unberührt.
+              ist, soweit gesetzlich zulässig, Berlin. Sollten einzelne
+              Bestimmungen dieser AGB unwirksam sein, bleibt die Wirksamkeit der
+              übrigen Bestimmungen unberührt.
             </p>
           </section>
         </div>

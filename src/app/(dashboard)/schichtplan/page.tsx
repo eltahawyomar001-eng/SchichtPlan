@@ -110,6 +110,7 @@ export default function SchichtplanPage() {
   const [detailShift, setDetailShift] = useState<Shift | null>(null);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
   const [unassignTarget, setUnassignTarget] = useState<string | null>(null);
+  const [selectedMonthDay, setSelectedMonthDay] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
     date: "",
     startTime: "08:00",
@@ -642,80 +643,253 @@ export default function SchichtplanPage() {
           >
             {/* Month View */}
             {viewMode === "month" && (
-              <div className="hidden sm:block">
-                <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200">
-                  {/* Day headers */}
-                  {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
-                    <div
-                      key={d}
-                      className="bg-gray-50 p-2 text-center text-xs font-medium text-gray-500"
-                    >
-                      {d}
-                    </div>
-                  ))}
-                  {/* Empty pad cells */}
-                  {Array.from({ length: padStart }).map((_, i) => (
-                    <div
-                      key={`pad-${i}`}
-                      className="bg-white p-2 min-h-[80px]"
-                    />
-                  ))}
-                  {/* Month day cells */}
-                  {monthDays.map((day) => {
-                    const dayShifts = getShiftsForDay(day);
-                    const today = isToday(day);
-                    return (
-                      <DroppableDayCell
-                        key={day.toISOString()}
-                        id={format(day, "yyyy-MM-dd")}
-                      >
+              <>
+                {/* ── Mobile Month View ── */}
+                <div className="sm:hidden space-y-3">
+                  {/* Mini calendar grid */}
+                  <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-3">
+                    {/* Day-of-week headers */}
+                    <div className="grid grid-cols-7 mb-1">
+                      {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
                         <div
-                          className={`bg-white p-1.5 min-h-[80px] ${today ? "ring-2 ring-inset ring-emerald-500" : ""}`}
+                          key={d}
+                          className="text-center text-[10px] font-medium text-gray-400 py-1"
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <span
-                              className={`text-xs font-medium ${today ? "text-emerald-600" : !isSameMonth(day, currentWeek) ? "text-gray-300" : "text-gray-700"}`}
-                            >
+                          {d}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Date cells */}
+                    <div className="grid grid-cols-7 gap-0.5">
+                      {/* Padding cells */}
+                      {Array.from({ length: padStart }).map((_, i) => (
+                        <div key={`pad-${i}`} className="aspect-square" />
+                      ))}
+                      {monthDays.map((day) => {
+                        const dayShifts = getShiftsForDay(day);
+                        const today = isToday(day);
+                        const isSelected =
+                          format(day, "yyyy-MM-dd") ===
+                          format(selectedMonthDay, "yyyy-MM-dd");
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            onClick={() => setSelectedMonthDay(day)}
+                            className={cn(
+                              "aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-medium transition-all duration-150 relative",
+                              isSelected
+                                ? "bg-emerald-600 text-white shadow-sm"
+                                : today
+                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                  : "text-gray-700 hover:bg-gray-50",
+                            )}
+                          >
+                            <span className="text-[13px] leading-none font-semibold">
                               {format(day, "d")}
                             </span>
-                            {canManage && (
-                              <button
-                                onClick={() => openCreateForm(day)}
-                                className="text-gray-300 hover:text-gray-600"
+                            {dayShifts.length > 0 && (
+                              <span
+                                className={cn(
+                                  "absolute bottom-0.5 flex gap-0.5",
+                                )}
                               >
-                                <PlusIcon className="h-3 w-3" />
-                              </button>
+                                {dayShifts.length <= 3 ? (
+                                  dayShifts
+                                    .slice(0, 3)
+                                    .map((s, i) => (
+                                      <span
+                                        key={i}
+                                        className={cn(
+                                          "h-1 w-1 rounded-full",
+                                          isSelected
+                                            ? "bg-emerald-200"
+                                            : "bg-emerald-400",
+                                        )}
+                                      />
+                                    ))
+                                ) : (
+                                  <span
+                                    className={cn(
+                                      "text-[8px] font-medium leading-none",
+                                      isSelected
+                                        ? "text-emerald-200"
+                                        : "text-emerald-500",
+                                    )}
+                                  >
+                                    {dayShifts.length}
+                                  </span>
+                                )}
+                              </span>
                             )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selected day shift cards */}
+                  {(() => {
+                    const dayShifts = getShiftsForDay(selectedMonthDay);
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <h3 className="text-sm font-semibold text-gray-700">
+                            {format(selectedMonthDay, "EEEE, d. MMMM", {
+                              locale: dateFnsLocale,
+                            })}
+                          </h3>
+                          {canManage && (
+                            <button
+                              onClick={() => openCreateForm(selectedMonthDay)}
+                              className="rounded-xl p-3 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                            >
+                              <PlusIcon className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                        {dayShifts.length === 0 ? (
+                          <div className="rounded-xl bg-gray-50 py-8 text-center">
+                            <p className="text-sm text-gray-400">
+                              {t("noShifts")}
+                            </p>
                           </div>
-                          <div className="space-y-0.5">
-                            {dayShifts.slice(0, 3).map((shift) => (
-                              <DraggableShiftChip
+                        ) : (
+                          <div className="space-y-2">
+                            {dayShifts.map((shift) => (
+                              <MobileShiftCard
                                 key={shift.id}
                                 shift={shift}
                                 canManage={canManage}
                                 onEdit={() => openEditForm(shift)}
+                                onDelete={() => setDeleteTarget(shift.id)}
                                 onView={() => setDetailShift(shift)}
+                                onCancel={() => setCancelTarget(shift.id)}
                               />
                             ))}
-                            {dayShifts.length > 3 && (
-                              <p className="text-[10px] text-gray-400 text-center">
-                                +{dayShifts.length - 3}
-                              </p>
-                            )}
                           </div>
-                        </div>
-                      </DroppableDayCell>
+                        )}
+                      </div>
                     );
-                  })}
+                  })()}
                 </div>
-              </div>
+
+                {/* ── Desktop Month View ── */}
+                <div className="hidden sm:block">
+                  <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200">
+                    {/* Day headers */}
+                    {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
+                      <div
+                        key={d}
+                        className="bg-gray-50 p-2 text-center text-xs font-medium text-gray-500"
+                      >
+                        {d}
+                      </div>
+                    ))}
+                    {/* Empty pad cells */}
+                    {Array.from({ length: padStart }).map((_, i) => (
+                      <div
+                        key={`pad-${i}`}
+                        className="bg-white p-2 min-h-[80px]"
+                      />
+                    ))}
+                    {/* Month day cells */}
+                    {monthDays.map((day) => {
+                      const dayShifts = getShiftsForDay(day);
+                      const today = isToday(day);
+                      return (
+                        <DroppableDayCell
+                          key={day.toISOString()}
+                          id={format(day, "yyyy-MM-dd")}
+                        >
+                          <div
+                            className={`bg-white p-1.5 min-h-[80px] ${today ? "ring-2 ring-inset ring-emerald-500" : ""}`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span
+                                className={`text-xs font-medium ${today ? "text-emerald-600" : !isSameMonth(day, currentWeek) ? "text-gray-300" : "text-gray-700"}`}
+                              >
+                                {format(day, "d")}
+                              </span>
+                              {canManage && (
+                                <button
+                                  onClick={() => openCreateForm(day)}
+                                  className="text-gray-300 hover:text-gray-600"
+                                >
+                                  <PlusIcon className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="space-y-0.5">
+                              {dayShifts.slice(0, 3).map((shift) => (
+                                <DraggableShiftChip
+                                  key={shift.id}
+                                  shift={shift}
+                                  canManage={canManage}
+                                  onEdit={() => openEditForm(shift)}
+                                  onView={() => setDetailShift(shift)}
+                                />
+                              ))}
+                              {dayShifts.length > 3 && (
+                                <p className="text-[10px] text-gray-400 text-center">
+                                  +{dayShifts.length - 3}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </DroppableDayCell>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Day View */}
             {viewMode === "day" && (
               <DroppableDayCell id={format(dayDate, "yyyy-MM-dd")}>
+                {/* Mobile day view */}
+                <div className="sm:hidden space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      {format(dayDate, "EEEE, d. MMMM", {
+                        locale: dateFnsLocale,
+                      })}
+                    </h3>
+                    {canManage && (
+                      <button
+                        onClick={() => openCreateForm(dayDate)}
+                        className="rounded-xl p-3 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                      >
+                        <PlusIcon className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                  {getShiftsForDay(dayDate).length === 0 ? (
+                    <div className="rounded-xl bg-gray-50 py-8 text-center">
+                      <p className="text-sm text-gray-400">{t("noShifts")}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {getShiftsForDay(dayDate).map((shift) => (
+                        <MobileShiftCard
+                          key={shift.id}
+                          shift={shift}
+                          canManage={canManage}
+                          onEdit={() => openEditForm(shift)}
+                          onDelete={() => setDeleteTarget(shift.id)}
+                          onView={() => setDetailShift(shift)}
+                          onCancel={() => setCancelTarget(shift.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Desktop day view */}
                 <Card
-                  className={isToday(dayDate) ? "ring-2 ring-emerald-500" : ""}
+                  className={cn(
+                    "hidden sm:block",
+                    isToday(dayDate) && "ring-2 ring-emerald-500",
+                  )}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">

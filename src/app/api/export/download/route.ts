@@ -177,7 +177,7 @@ export async function GET(req: Request) {
           body,
           startY: 28,
           styles: { fontSize: 8 },
-          headStyles: { fillColor: [124, 58, 237] },
+          headStyles: { fillColor: [5, 150, 105] }, // emerald-600
         });
       }
 

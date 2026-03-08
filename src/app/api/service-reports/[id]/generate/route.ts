@@ -279,7 +279,7 @@ export async function POST(
       // ── GPS Proof Section ──
       let currentY = doc.lastAutoTable?.finalY ?? 120;
       const gpsProofVisits = group.visits.filter(
-        (v: any) => v.checkInLat && v.checkInLng,
+        (v: any) => v.checkInLat && v.checkInLng && v.checkInAt,
       );
 
       if (gpsProofVisits.length > 0) {
@@ -298,7 +298,7 @@ export async function POST(
           const date = new Date(visit.scheduledDate).toLocaleDateString(
             "de-DE",
           );
-          const checkInTime = new Date(visit.checkInAt).toLocaleTimeString(
+          const checkInTime = new Date(visit.checkInAt!).toLocaleTimeString(
             "de-DE",
             { hour: "2-digit", minute: "2-digit", second: "2-digit" },
           );
@@ -342,7 +342,7 @@ export async function POST(
             currentY = 18;
           }
 
-          const sig = visit.signature;
+          const sig = visit.signature!;
           const date = new Date(visit.scheduledDate).toLocaleDateString(
             "de-DE",
           );

@@ -463,16 +463,15 @@ export default function DatenschutzPage() {
             </p>
           </section>
 
-          {/* 10. Datenschutzbeauftragter */}
+          {/* 10. Datenschutz-Ansprechpartner */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              10. Datenschutzbeauftragter
+              10. Datenschutz-Ansprechpartner
             </h2>
             <p>
-              Wir haben einen externen Datenschutzbeauftragten bestellt. Bei
-              Fragen zur Verarbeitung Ihrer personenbezogenen Daten oder zur
-              Ausübung Ihrer Betroffenenrechte können Sie sich direkt an unseren
-              Datenschutzbeauftragten wenden:
+              Für Fragen zur Verarbeitung Ihrer personenbezogenen Daten oder zur
+              Ausübung Ihrer Betroffenenrechte steht Ihnen unser freiwilliger
+              Datenschutz-Ansprechpartner zur Verfügung:
             </p>
             <p className="mt-2">
               Mohammad Bashabsheh
@@ -490,6 +489,13 @@ export default function DatenschutzPage() {
               </a>
               <br />
               Telefon: +49 176 30365636
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              Hinweis: Eine formelle Benennung eines Datenschutzbeauftragten
+              gemäß Art.&nbsp;37 DSGVO i.&nbsp;V.&nbsp;m. §&nbsp;38 BDSG
+              erfolgt, sobald die gesetzlichen Voraussetzungen (insbesondere die
+              Beschäftigtenschwelle oder eine Kerntätigkeit in umfangreicher
+              regelmäßiger und systematischer Überwachung) vorliegen.
             </p>
           </section>
 

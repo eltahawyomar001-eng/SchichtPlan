@@ -2069,6 +2069,17 @@ export default function SchichtplanPage() {
           )
         )}
       </AdaptiveModal>
+
+      {/* ── Mobile FAB — Create Shift ── */}
+      {canManage && (
+        <button
+          onClick={() => openCreateForm(currentWeek)}
+          className="fixed z-40 sm:hidden right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] h-14 w-14 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label={t("form.title")}
+        >
+          <PlusIcon className="h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 }

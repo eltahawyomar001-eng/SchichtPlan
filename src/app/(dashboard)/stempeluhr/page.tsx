@@ -300,7 +300,7 @@ export default function StempeluhrSeite() {
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <PageContent>
+      <PageContent className="pb-bottom-action lg:pb-0">
         <div className="mx-auto max-w-md space-y-4">
           {/* ── Error banner ── */}
           {error && (
@@ -444,8 +444,8 @@ export default function StempeluhrSeite() {
                 </div>
               )}
 
-              {/* ── Action buttons ── */}
-              <div className="space-y-2.5">
+              {/* ── Action buttons — hidden on mobile (sticky bar handles it) ── */}
+              <div className="hidden lg:block space-y-2.5">
                 {clockState === "idle" && (
                   <button
                     onClick={() => handleClock("in")}
@@ -733,6 +733,79 @@ export default function StempeluhrSeite() {
           </div>
         )}
       </PageContent>
+
+      {/* ── Mobile Sticky Bottom Action Bar ── */}
+      {!loading && !noProfile && (
+        <div className="fixed inset-x-0 z-40 lg:hidden bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
+          <div className="bg-white/80 backdrop-blur-xl border-t border-gray-100/60 px-4 py-3">
+            {clockState === "idle" && (
+              <button
+                onClick={() => handleClock("in")}
+                disabled={acting}
+                className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 px-6 py-4 text-[17px] font-semibold text-white shadow-lg shadow-emerald-600/25 active:scale-[0.97] transition-transform disabled:opacity-50"
+              >
+                {acting ? (
+                  <>
+                    <Spinner /> {t("processing")}
+                  </>
+                ) : (
+                  <>
+                    <PlayIcon className="h-5 w-5" />
+                    {t("clockIn")}
+                  </>
+                )}
+              </button>
+            )}
+            {clockState === "working" && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleClock("break-start")}
+                  disabled={acting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-4 py-4 text-[15px] font-semibold text-white shadow-lg shadow-amber-500/20 active:scale-[0.97] transition-transform disabled:opacity-50"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <rect x="6" y="4" width="4" height="16" rx="1.5" />
+                    <rect x="14" y="4" width="4" height="16" rx="1.5" />
+                  </svg>
+                  {t("startBreak")}
+                </button>
+                <button
+                  onClick={() => handleClock("out")}
+                  disabled={acting}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
+                >
+                  <LogOutIcon className="h-4 w-4" />
+                  {t("clockOut")}
+                </button>
+              </div>
+            )}
+            {clockState === "break" && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleClock("break-end")}
+                  disabled={acting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-4 text-[15px] font-semibold text-white shadow-lg shadow-emerald-600/25 active:scale-[0.97] transition-transform disabled:opacity-50"
+                >
+                  <PlayIcon className="h-4 w-4" />
+                  {t("endBreak")}
+                </button>
+                <button
+                  onClick={() => handleClock("out")}
+                  disabled={acting}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
+                >
+                  <LogOutIcon className="h-4 w-4" />
+                  {t("clockOut")}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

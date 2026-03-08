@@ -183,10 +183,10 @@ export function BottomSheet({
       <div
         ref={sheetRef}
         className={cn(
-          "w-full rounded-t-[20px] bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
+          "w-full rounded-t-3xl bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
           "overflow-hidden flex flex-col",
           "animate-slide-up",
-          height === "full" ? "max-h-[92vh]" : "max-h-[85vh]",
+          height === "full" ? "max-h-[92vh]" : "max-h-[90vh]",
           className,
         )}
         onTouchStart={handleTouchStart}
@@ -195,7 +195,7 @@ export function BottomSheet({
       >
         {/* Drag handle — always visible, 44px touch zone */}
         <div className="flex justify-center pt-2 pb-0.5 shrink-0 cursor-grab active:cursor-grabbing min-h-[44px] items-start">
-          <div className="mt-1.5 w-9 h-[5px] rounded-full bg-gray-300/70" />
+          <div className="mt-1.5 w-9 h-1 rounded-full bg-gray-300/70" />
         </div>
 
         {/* Header — with safe-area-inset-top for notch/Dynamic Island */}

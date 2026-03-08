@@ -298,9 +298,13 @@ export default function LeistungsnachweisSeite() {
         description={t("description")}
         actions={
           isManagement ? (
-            <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Button
+              size="sm"
+              onClick={() => setShowCreate(true)}
+              className="hidden sm:inline-flex"
+            >
               <PlusIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("createVisit")}</span>
+              <span>{t("createVisit")}</span>
             </Button>
           ) : undefined
         }
@@ -496,6 +500,17 @@ export default function LeistungsnachweisSeite() {
           </div>
         </div>
       </AdaptiveModal>
+
+      {/* ── Mobile FAB — "Plan Visit" ── */}
+      {isManagement && (
+        <button
+          onClick={() => setShowCreate(true)}
+          className="fixed z-40 sm:hidden right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] h-14 w-14 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label={t("createVisit")}
+        >
+          <PlusIcon className="h-6 w-6" />
+        </button>
+      )}
     </>
   );
 }

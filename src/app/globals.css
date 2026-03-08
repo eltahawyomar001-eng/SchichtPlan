@@ -166,9 +166,9 @@ body {
   /* Prevent iOS 100vh bug */
   min-height: -webkit-fill-available;
   min-height: 100dvh;
-  /* Safe area padding for edge-to-edge on notched devices */
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  /* Prevent rubber-banding overscroll — makes it feel like a native app */
+  overscroll-behavior-y: none;
+  /* Safe areas handled by the app shell — don't double-pad the body */
 }
 
 /* ---- Reusable utilities ---- */
@@ -264,7 +264,8 @@ body {
 
 /* Elevated card — premium hover-lift with refined shadow (hover-capable devices only) */
 .card-elevated {
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-2xl);
   transition:
     box-shadow var(--duration-normal) var(--ease-in-out),
     transform var(--duration-normal) var(--ease-in-out);
@@ -280,7 +281,8 @@ body {
 /* iOS-style tap feedback for card-elevated on touch devices */
 @media (hover: none) {
   .card-elevated:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
+    transition: transform var(--duration-fast) var(--ease-spring-snappy);
   }
 }
 
@@ -612,8 +614,8 @@ html {
 html,
 body {
   overflow-x: hidden;
-  /* Prevent elastic overscroll revealing background on iOS */
-  overscroll-behavior-x: none;
+  /* Prevent elastic overscroll — stops rubber-banding, feels like a native app */
+  overscroll-behavior: none;
 }
 
 /* Global word-wrap safety — German words can be very long */
@@ -752,6 +754,11 @@ body {
 @media (max-width: 1023px) {
   .pb-bottom-nav {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Extra bottom padding for pages with sticky action bars above bottom nav */
+  .pb-bottom-action {
+    padding-bottom: calc(9rem + env(safe-area-inset-bottom));
   }
 }
 

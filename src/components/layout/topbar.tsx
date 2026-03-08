@@ -30,17 +30,25 @@ export function Topbar({
       {!hideMobile && (
         <div className="lg:hidden pt-[max(0.75rem,env(safe-area-inset-top))]">
           <div className="px-4 pb-2">
-            {/* Utility row */}
-            <div className="flex items-center justify-end mb-1">
+            {/* Utility row — compact, right-aligned */}
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex-1" />
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                {actions}
                 <LanguageSwitcher />
                 <NotificationDropdown />
               </div>
             </div>
-            <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1] truncate">
-              {title}
-            </h1>
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1] truncate min-w-0 flex-1">
+                {title}
+              </h1>
+              {/* Page-specific actions inline with title */}
+              {actions && (
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {actions}
+                </div>
+              )}
+            </div>
             {description && (
               <p className="text-[15px] text-gray-500 mt-1 line-clamp-2">
                 {description}

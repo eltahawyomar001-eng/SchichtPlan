@@ -190,6 +190,7 @@ export function Modal({
             "flex-1 overflow-y-auto overscroll-contain",
             title ? "p-5 sm:p-6" : "",
           )}
+          style={{ WebkitOverflowScrolling: "touch" }}
         >
           {children}
         </div>

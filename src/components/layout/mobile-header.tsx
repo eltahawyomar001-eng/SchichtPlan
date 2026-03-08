@@ -57,8 +57,8 @@ export function MobileHeader({
               )}
             </div>
           )}
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1]">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1] truncate min-w-0 flex-1">
               {title}
             </h1>
             {actions && !utilities && (

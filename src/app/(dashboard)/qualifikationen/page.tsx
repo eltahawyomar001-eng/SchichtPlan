@@ -243,16 +243,16 @@ export default function QualifikationenSeite() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((skill) => (
                     <Card key={skill.id} className="card-elevated">
-                      <CardContent className="flex items-center justify-between p-4">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">
+                      <CardContent className="flex items-center justify-between gap-2 p-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
                             {skill.name}
                           </p>
                           <Badge className="mt-1 bg-gray-100 text-gray-600 text-xs">
                             {skill._count.employeeSkills} {t("assigned")}
                           </Badge>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"

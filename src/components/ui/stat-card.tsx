@@ -44,7 +44,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 sm:gap-4 rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.02)]",
+        "flex items-center gap-3 sm:gap-4 rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden",
         className,
       )}
     >
@@ -56,8 +56,8 @@ export function StatCard({
       >
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums leading-tight">
+      <div className="min-w-0 flex-1">
+        <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums leading-tight truncate">
           {value}
         </p>
         <p className="text-xs sm:text-sm text-gray-500 leading-snug truncate">

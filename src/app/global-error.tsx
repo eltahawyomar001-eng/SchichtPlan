@@ -40,7 +40,7 @@ export default function GlobalError({
 
   return (
     <html lang={locale}>
-      <body className="flex min-h-screen items-center justify-center bg-gray-50">
+      <body className="flex min-h-[100dvh] items-center justify-center bg-gray-50">
         <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
             <svg

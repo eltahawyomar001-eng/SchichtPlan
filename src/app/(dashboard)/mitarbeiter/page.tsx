@@ -464,17 +464,17 @@ export default function MitarbeiterPage() {
               >
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <Avatar
                         name={`${employee.firstName} ${employee.lastName}`}
                         color={employee.color || "#10b981"}
                       />
-                      <div>
-                        <p className="font-semibold text-gray-900">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">
                           {employee.firstName} {employee.lastName}
                         </p>
                         {employee.position && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 truncate">
                             {employee.position}
                           </p>
                         )}

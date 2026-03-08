@@ -43,8 +43,16 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-sm mx-4 rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 animate-fade-in">
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      style={{
+        paddingTop: "max(1rem, env(safe-area-inset-top, 0px))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
+        paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+        paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
+      }}
+    >
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 animate-fade-in overflow-hidden">
         <div className="flex items-start gap-3 p-6">
           <div
             className={`flex-shrink-0 rounded-xl p-2.5 ${variant === "danger" ? "bg-red-50 ring-1 ring-red-200/50" : "bg-amber-50 ring-1 ring-amber-200/50"}`}

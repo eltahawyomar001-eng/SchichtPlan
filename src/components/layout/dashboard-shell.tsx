@@ -27,7 +27,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarContext.Provider value={{ openSidebar }}>
       <PlanLimitProvider>
-        <div className="min-h-screen bg-dashboard">
+        <div className="min-h-[100dvh] bg-dashboard">
           {/* Skip-to-content link for keyboard/screen-reader users (BFSG/WCAG 2.1) */}
           <a
             href="#main-content"
@@ -38,7 +38,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Sidebar open={sidebarOpen} onClose={closeSidebar} />
           <main
             id="main-content"
-            className="lg:pl-64 min-h-screen pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+            className="lg:pl-64 min-h-[100dvh] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] overflow-x-hidden"
           >
             {children}
           </main>

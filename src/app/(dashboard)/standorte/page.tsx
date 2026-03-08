@@ -248,16 +248,16 @@ export default function StandortePage() {
               <Card key={location.id} className="card-elevated">
                 <CardContent className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-xl stat-icon-emerald p-2.5">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="rounded-xl stat-icon-emerald p-2.5 flex-shrink-0">
                         <MapPinIcon className="h-5 w-5 text-emerald-600" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">
                           {location.name}
                         </p>
                         {location.address && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 truncate">
                             {location.address}
                           </p>
                         )}

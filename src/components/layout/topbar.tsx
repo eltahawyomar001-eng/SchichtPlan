@@ -32,17 +32,19 @@ export function Topbar({
           <div className="px-4 pb-2">
             {/* Utility row */}
             <div className="flex items-center justify-end mb-1">
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 {actions}
                 <LanguageSwitcher />
                 <NotificationDropdown />
               </div>
             </div>
-            <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1]">
+            <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1] truncate">
               {title}
             </h1>
             {description && (
-              <p className="text-[15px] text-gray-500 mt-1">{description}</p>
+              <p className="text-[15px] text-gray-500 mt-1 line-clamp-2">
+                {description}
+              </p>
             )}
           </div>
         </div>

@@ -147,6 +147,12 @@
 }
 
 /* ---- Base ---- */
+html {
+  /* Fix iOS 100vh issue — use dvh where supported, fallback to -webkit-fill-available */
+  height: -webkit-fill-available;
+  height: 100dvh;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -157,6 +163,12 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent iOS 100vh bug */
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
+  /* Safe area padding for edge-to-edge on notched devices */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 
 /* ---- Reusable utilities ---- */
@@ -600,6 +612,14 @@ html {
 html,
 body {
   overflow-x: hidden;
+  /* Prevent elastic overscroll revealing background on iOS */
+  overscroll-behavior-x: none;
+}
+
+/* Global word-wrap safety — German words can be very long */
+* {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* German / long-word text wrapping */
@@ -678,6 +698,8 @@ body {
   select,
   textarea {
     -webkit-tap-highlight-color: transparent;
+    /* Faster taps — remove 300ms delay */
+    touch-action: manipulation;
   }
 
   /* iOS-style font rendering */
@@ -691,6 +713,13 @@ body {
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+  }
+
+  /* Prevent iOS zoom on input focus (requires font-size >= 16px) */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
   }
 
   /* Smoother scrolling for all containers */
@@ -833,7 +862,7 @@ body {
 
 /* ─── Touch Target Utilities ─────────────────────────────── */
 
-/* Ensure minimum 44x44pt touch targets (WCAG 2.5.5 / Apple HIG) */
+/* Ensure minimum 44x44pt touch targets (WCAG 2.5.5 / Apple HIG / Material 48dp) */
 .touch-target {
   position: relative;
   min-width: 44px;
@@ -843,7 +872,18 @@ body {
   justify-content: center;
 }
 
+/* Material Design recommends 48dp, use for key actions */
+@media (pointer: coarse) {
+  .touch-target {
+    min-width: 48px;
+    min-height: 48px;
+  }
+}
+
 /* Extend touch area with ::after pseudo-element (for small visual elements) */
+.touch-target-extended {
+  position: relative;
+}
 .touch-target-extended::after {
   content: "";
   position: absolute;

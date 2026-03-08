@@ -226,8 +226,8 @@ export function BottomSheet({
         <div
           ref={scrollRef}
           className={cn(
-            "flex-1 overflow-y-auto overscroll-contain",
-            title ? "" : "",
+            "flex-1 overflow-y-auto overscroll-contain px-4 py-3",
+            title ? "" : "pt-0",
           )}
           style={{ WebkitOverflowScrolling: "touch" }}
         >

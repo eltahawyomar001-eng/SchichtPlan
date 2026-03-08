@@ -48,7 +48,7 @@ export function EmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center text-center",
-        "rounded-2xl border-2 border-dashed border-gray-200/80 bg-gradient-to-b from-gray-50/60 to-white px-6 py-16 sm:py-20",
+        "rounded-2xl border-2 border-dashed border-gray-200/80 bg-gradient-to-b from-gray-50/60 to-white px-5 py-12 sm:px-6 sm:py-16 md:py-20",
         className,
       )}
     >

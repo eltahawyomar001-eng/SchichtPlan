@@ -10,10 +10,13 @@ interface PageContentProps {
 /**
  * Standard content wrapper for dashboard pages.
  * Provides consistent responsive padding and vertical spacing.
+ * Uses Apple HIG / Material 3 spacing: 16px mobile, 24px tablet, 32px desktop.
  */
 export function PageContent({ children, className }: PageContentProps) {
   return (
-    <div className={cn("p-4 sm:p-6 lg:p-8 space-y-6", className)}>
+    <div
+      className={cn("p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden", className)}
+    >
       {children}
     </div>
   );

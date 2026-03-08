@@ -52,7 +52,7 @@ import { CookieSettingsButton } from "@/components/cookie-banner";
  */
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-[100dvh] bg-white">
       {/* Skip-to-content link (BFSG/WCAG 2.1) */}
       <a
         href="#main-content"

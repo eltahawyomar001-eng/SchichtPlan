@@ -291,19 +291,19 @@ export default function SchichtvorlagenSeite() {
             {templates.map((tmpl) => (
               <Card key={tmpl.id} className="card-elevated">
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div
                         className="h-4 w-4 rounded-full flex-shrink-0"
                         style={{
                           backgroundColor: tmpl.color || "#10b981",
                         }}
                       />
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <h3 className="text-sm font-semibold text-gray-900 truncate">
                         {tmpl.name}
                       </h3>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -329,7 +329,7 @@ export default function SchichtvorlagenSeite() {
                       ⏱ {calcDuration(tmpl.startTime, tmpl.endTime)}
                     </p>
                     {tmpl.location && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 truncate">
                         📍 {tmpl.location.name}
                       </p>
                     )}

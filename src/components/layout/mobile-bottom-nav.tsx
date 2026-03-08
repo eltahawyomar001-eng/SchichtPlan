@@ -203,7 +203,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
       {/* Hairline separator — 0.5px like iOS */}
       <div className="absolute inset-x-0 top-0 h-px bg-black/[0.08]" />
 
-      <div className="relative flex items-stretch justify-around px-1 pb-[max(0.125rem,env(safe-area-inset-bottom))] pt-1">
+      <div className="relative flex items-stretch justify-around px-2 pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5">
         {tabs.map((tab) => {
           const active = isTabActive(tab.href);
           const Icon = active ? tab.filled : tab.outline;
@@ -212,7 +212,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
               key={tab.key}
               href={tab.href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-[2px] py-1.5 min-h-[48px] transition-all duration-150",
+                "flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 min-h-[50px] transition-all duration-150",
                 "active:opacity-60",
                 active ? "text-emerald-600" : "text-gray-400",
               )}
@@ -236,7 +236,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
         <button
           onClick={onMoreTap}
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-[2px] py-1.5 min-h-[48px] transition-all duration-150",
+            "flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 min-h-[50px] transition-all duration-150",
             "active:opacity-60",
             moreActive ? "text-emerald-600" : "text-gray-400",
           )}

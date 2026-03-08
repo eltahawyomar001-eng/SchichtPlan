@@ -217,6 +217,13 @@ export default function DatenschutzPage() {
                 Erfassung).
               </li>
               <li>
+                <strong>GPS-/Standortdaten:</strong> Automatische Anonymisierung
+                (Nullifizierung) nach <strong>90 Tagen</strong>. Betrifft:
+                Zeiterfassungs-GPS, Leistungsnachweis-Check-in/Check-out,
+                Unterschriften-Koordinaten und Audit-Log-GPS. Die Anonymisierung
+                erfolgt wöchentlich automatisch per Cron-Job.
+              </li>
+              <li>
                 <strong>Server-Logs:</strong> Automatische Löschung nach 30
                 Tagen.
               </li>
@@ -242,8 +249,12 @@ export default function DatenschutzPage() {
               a) Vercel Inc. — Hosting
             </h3>
             <p>
-              Server-Standort: EU (Frankfurt am Main). Vercel verarbeitet Daten
-              gemäß der DSGVO und EU-US Data Privacy Framework.{" "}
+              Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main).
+              Datenübermittlung in die USA kann bei Support-/Wartungszugriffen
+              erfolgen. Transfergarantie: EU-US Data Privacy Framework
+              (Angemessenheitsbeschluss der EU-Kommission vom 10.07.2023, Art.
+              45 DSGVO) sowie ergänzend EU-Standardvertragsklauseln (SCCs, Art.
+              46 Abs. 2 lit. c DSGVO).{" "}
               <a
                 href="https://vercel.com/legal/privacy-policy"
                 target="_blank"
@@ -259,7 +270,11 @@ export default function DatenschutzPage() {
               b) Supabase Inc. — Datenbank (PostgreSQL)
             </h3>
             <p>
-              Server-Standort: EU. Supabase verarbeitet Daten gemäß der DSGVO.{" "}
+              Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main,
+              AWS eu-central-1). Alle Datenbankdaten werden ausschließlich in
+              der EU verarbeitet und gespeichert. Administrativer Zugriff aus
+              den USA möglich. Transfergarantie: EU-US Data Privacy Framework
+              sowie EU-Standardvertragsklauseln (SCCs).{" "}
               <a
                 href="https://supabase.com/privacy"
                 target="_blank"
@@ -275,9 +290,12 @@ export default function DatenschutzPage() {
               c) Resend Inc. — E-Mail-Versand
             </h3>
             <p>
-              Versand von System-E-Mails (Schichtbenachrichtigungen,
-              Abwesenheitsgenehmigungen). Sie können E-Mail-Benachrichtigungen
-              jederzeit in Ihren Einstellungen deaktivieren.{" "}
+              Sitz: San Francisco, USA. Versand von System-E-Mails
+              (Schichtbenachrichtigungen, Abwesenheitsgenehmigungen,
+              Verifizierung). E-Mail-Inhalte werden in den USA verarbeitet.
+              Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs.
+              2 lit. c DSGVO). Sie können E-Mail-Benachrichtigungen jederzeit in
+              Ihren Einstellungen deaktivieren.{" "}
               <a
                 href="https://resend.com/legal/privacy-policy"
                 target="_blank"
@@ -293,10 +311,14 @@ export default function DatenschutzPage() {
               d) Stripe, Inc. — Zahlungsabwicklung
             </h3>
             <p>
-              Abwicklung von Abonnement-Zahlungen (Kreditkarte,
-              SEPA-Lastschrift). Stripe verarbeitet Zahlungsdaten direkt;
-              Kartennummern werden nie auf unseren Servern gespeichert. Stripe
-              ist unter dem EU-US Data Privacy Framework zertifiziert.{" "}
+              Sitz: San Francisco, USA. Europäische Verarbeitung über Stripe
+              Payments Europe, Ltd. (Dublin, Irland). Abwicklung von
+              Abonnement-Zahlungen (Kreditkarte, SEPA-Lastschrift).
+              Kartennummern werden nie auf unseren Servern gespeichert.
+              Transfergarantie: EU-US Data Privacy Framework
+              (Angemessenheitsbeschluss, Art. 45 DSGVO) sowie
+              EU-Standardvertragsklauseln (SCCs). Stripe ist PCI DSS Level 1
+              zertifiziert.{" "}
               <a
                 href="https://stripe.com/de/privacy"
                 target="_blank"
@@ -312,11 +334,13 @@ export default function DatenschutzPage() {
               e) Sentry (Functional Software, Inc.) — Fehlerüberwachung
             </h3>
             <p>
+              Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main).
               Erfassung von Anwendungsfehlern zur Qualitätssicherung. Es werden
               technische Daten (Fehlermeldungen, Browser, Betriebssystem)
-              übermittelt — keine personenbezogenen Inhalte. Sentry-Server
-              befinden sich in der EU (Frankfurt). Die Aktivierung erfolgt nur
-              mit Ihrer Einwilligung über den Cookie-Banner.{" "}
+              übermittelt — keine personenbezogenen Inhalte. Transfergarantie:
+              EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln
+              (SCCs). Die Aktivierung erfolgt nur mit Ihrer Einwilligung über
+              den Cookie-Banner (Art. 6 Abs. 1 lit. a DSGVO).{" "}
               <a
                 href="https://sentry.io/privacy/"
                 target="_blank"
@@ -439,10 +463,40 @@ export default function DatenschutzPage() {
             </p>
           </section>
 
-          {/* 10. Kontakt */}
+          {/* 10. Datenschutzbeauftragter */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              10. Kontakt für Datenschutzfragen
+              10. Datenschutzbeauftragter
+            </h2>
+            <p>
+              Wir haben einen externen Datenschutzbeauftragten bestellt. Bei
+              Fragen zur Verarbeitung Ihrer personenbezogenen Daten oder zur
+              Ausübung Ihrer Betroffenenrechte können Sie sich direkt an unseren
+              Datenschutzbeauftragten wenden:
+            </p>
+            <p className="mt-2">
+              Mohammad Bashabsheh
+              <br />
+              Bashabsheh Vergabepartner
+              <br />
+              Kolonnenstraße 8, 10827 Berlin
+              <br />
+              E-Mail:{" "}
+              <a
+                href="mailto:datenschutz@bashabsheh-vergabepartner.de"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                datenschutz@bashabsheh-vergabepartner.de
+              </a>
+              <br />
+              Telefon: +49 176 30365636
+            </p>
+          </section>
+
+          {/* 11. Kontakt */}
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              11. Kontakt für Datenschutzfragen
             </h2>
             <p>
               Zur Ausübung Ihrer Rechte oder bei Fragen zum Datenschutz wenden

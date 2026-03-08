@@ -611,7 +611,9 @@ html {
 }
 
 /* Prevent horizontal overflow on mobile */
-html,
+/* NOTE: overflow-x on <html> breaks viewport scrolling (browser coerces it to
+   overflow:hidden on both axes, making <html> the scroll-container instead of
+   the viewport). Only set it on <body>. */
 body {
   overflow-x: hidden;
   /* Prevent elastic overscroll — stops rubber-banding, feels like a native app */

@@ -118,7 +118,6 @@ function statusVariant(
   return "outline";
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 interface EmployeeDetail {
   id: string;
   firstName: string;
@@ -132,10 +131,41 @@ interface EmployeeDetail {
   isActive: boolean;
   createdAt: string;
   department: { id: string; name: string } | null;
-  shifts: any[];
-  timeEntries: any[];
-  absenceRequests: any[];
-  vacationBalances: any[];
+  shifts: {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    notes: string | null;
+  }[];
+  timeEntries: {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    breakMinutes: number;
+    netMinutes: number;
+    status: string;
+  }[];
+  absenceRequests: {
+    id: string;
+    category: string;
+    startDate: string;
+    endDate: string;
+    totalDays: number;
+    status: string;
+  }[];
+  vacationBalances: {
+    id: string;
+    year: number;
+    entitlement: number;
+    totalEntitlement: number;
+    carryOver: number;
+    used: number;
+    planned: number;
+    remaining: number;
+  }[];
 }
 
 function fmtDate(d: string, locale: string) {
@@ -354,7 +384,7 @@ export default function EmployeeDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {emp.shifts.map((s: any) => (
+                    {emp.shifts.map((s) => (
                       <tr key={s.id} className="hover:bg-gray-50">
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(s.date, locale)}
@@ -402,7 +432,7 @@ export default function EmployeeDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {emp.timeEntries.map((te: any) => (
+                    {emp.timeEntries.map((te) => (
                       <tr key={te.id} className="hover:bg-gray-50">
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(te.date, locale)}
@@ -448,7 +478,7 @@ export default function EmployeeDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {emp.absenceRequests.map((ar: any) => (
+                    {emp.absenceRequests.map((ar) => (
                       <tr key={ar.id} className="hover:bg-gray-50">
                         <td className="px-6 py-2">
                           {absenceCatLabels[ar.category] || ar.category}

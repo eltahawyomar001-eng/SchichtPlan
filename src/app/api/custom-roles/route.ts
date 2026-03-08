@@ -91,7 +91,7 @@ const BUILT_IN_ROLES = [
 ];
 
 /* ── GET /api/custom-roles ── */
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -110,7 +110,7 @@ export async function GET(req: Request) {
 }
 
 /* ── POST /api/custom-roles ── */
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -123,16 +123,17 @@ export async function POST(req: Request) {
   const planDenied = await requirePlanFeature(user.workspaceId, "customRoles");
   if (planDenied) return planDenied;
 
-  // Stub: acknowledge the request but explain that custom role
-  // persistence is not yet implemented (needs DB migration).
-  const body = await req.json();
+  // Not yet implemented — return 501 so the client knows this
+  // feature does not exist yet (not a success status).
   return NextResponse.json(
     {
-      message:
-        "Custom role creation is coming soon. " +
+      error:
+        "Benutzerdefinierte Rollen sind noch nicht verfügbar. " +
+        "Die integrierten Rollen decken die meisten Anwendungsfälle ab.",
+      errorEn:
+        "Custom role creation is not yet available. " +
         "The built-in roles cover most use cases.",
-      received: body,
     },
-    { status: 202 },
+    { status: 501 },
   );
 }

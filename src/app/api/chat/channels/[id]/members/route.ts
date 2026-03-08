@@ -31,8 +31,7 @@ export async function POST(
 
     const { id: channelId } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = await (prisma as any).chatChannel.findFirst({
+    const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
     });
 
@@ -68,8 +67,7 @@ export async function POST(
     const validIds = workspaceUsers.map((u) => u.id);
 
     // Create memberships (skip existing via skipDuplicates)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (prisma as any).chatChannelMember.createMany({
+    const result = await prisma.chatChannelMember.createMany({
       data: validIds.map((userId: string) => ({
         channelId,
         userId,
@@ -120,8 +118,7 @@ export async function DELETE(
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = await (prisma as any).chatChannel.findFirst({
+    const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
     });
 
@@ -135,8 +132,7 @@ export async function DELETE(
       if (mgmtForbidden) return mgmtForbidden;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatChannelMember.delete({
+    await prisma.chatChannelMember.delete({
       where: { channelId_userId: { channelId, userId: targetUserId } },
     });
 

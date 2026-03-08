@@ -27,16 +27,14 @@ export async function POST(
     const { id: channelId, msgId } = await params;
 
     // Verify membership
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const membership = await (prisma as any).chatChannelMember.findUnique({
+    const membership = await prisma.chatChannelMember.findUnique({
       where: { channelId_userId: { channelId, userId: user.id } },
     });
     if (!membership) {
       return NextResponse.json({ error: "Not a member" }, { status: 403 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = await (prisma as any).chatMessage.findUnique({
+    const message = await prisma.chatMessage.findUnique({
       where: { id: msgId },
       select: { id: true, channelId: true, pinnedAt: true },
     });
@@ -47,8 +45,7 @@ export async function POST(
 
     // Toggle pin
     const isPinned = !!message.pinnedAt;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).chatMessage.update({
+    const updated = await prisma.chatMessage.update({
       where: { id: msgId },
       data: {
         pinnedAt: isPinned ? null : new Date(),

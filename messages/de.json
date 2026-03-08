@@ -1373,7 +1373,12 @@
     "testEmailSending": "Wird gesendet…",
     "testEmailSent": "Test-E-Mail gesendet",
     "testEmailFailed": "Test-E-Mail fehlgeschlagen",
-    "fetchError": "Einstellungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+    "fetchError": "Einstellungen konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+    "emailNotConfigured": "E-Mail-Dienst nicht konfiguriert",
+    "emailNotConfiguredDesc": "Der E-Mail-Versand (Resend) ist nicht eingerichtet. E-Mail-Benachrichtigungen sind derzeit nicht möglich. Bitte setzen Sie die Umgebungsvariable RESEND_API_KEY.",
+    "pushNotConfigured": "Push-Benachrichtigungen nicht konfiguriert",
+    "pushNotConfiguredDesc": "Die VAPID-Schlüssel für Push-Benachrichtigungen fehlen. Push-Benachrichtigungen sind derzeit nicht möglich.",
+    "serviceStatus": "Dienststatus"
   },
   "automations": {
     "title": "Automatisierungen",
@@ -2177,7 +2182,9 @@
     "hideDetails": "Details ausblenden",
     "allEmployees": "Alle Mitarbeiter",
     "atRiskOnly": "Nur Risikofälle",
-    "export": "Exportieren"
+    "export": "Exportieren",
+    "disclaimerTitle": "Rechtlicher Hinweis — BetrVG §87",
+    "disclaimerText": "Die hier dargestellten Wohlbefindens-Scores sind statistische Schätzungen auf Basis von Schichtmustern. Sie ersetzen keine arbeitsmedizinische Beurteilung. Gemäß BetrVG §87 Abs. 1 Nr. 6 unterliegt die Einführung technischer Einrichtungen, die das Verhalten oder die Leistung der Arbeitnehmer überwachen können, der Mitbestimmung des Betriebsrats. Stellen Sie sicher, dass der Betriebsrat vor der Nutzung dieser Funktion ordnungsgemäß beteiligt wurde."
   },
   "autoFill": {
     "title": "Automatische Vertretung",

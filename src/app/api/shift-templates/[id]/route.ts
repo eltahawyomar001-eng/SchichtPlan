@@ -23,8 +23,7 @@ export async function PUT(
     const { id } = await params;
     const { name, startTime, endTime, color, locationId } = await req.json();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const template = await (prisma as any).shiftTemplate.update({
+    const template = await prisma.shiftTemplate.update({
       where: { id },
       data: {
         name: name?.trim(),
@@ -61,8 +60,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).shiftTemplate.delete({
+    await prisma.shiftTemplate.delete({
       where: { id },
     });
 

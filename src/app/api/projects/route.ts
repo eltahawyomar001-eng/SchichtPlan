@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -35,7 +34,7 @@ export async function GET(req: Request) {
     const { take, skip } = parsePagination(req);
 
     const [projects, total] = await Promise.all([
-      (prisma as any).project.findMany({
+      prisma.project.findMany({
         where,
         include: {
           client: { select: { id: true, name: true } },
@@ -46,7 +45,7 @@ export async function GET(req: Request) {
         take,
         skip,
       }),
-      (prisma as any).project.count({ where }),
+      prisma.project.count({ where }),
     ]);
 
     return paginatedResponse(projects, total, take, skip);
@@ -88,7 +87,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    const project = await (prisma as any).project.create({
+    const project = await prisma.project.create({
       data: {
         name,
         description: description || null,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -27,7 +26,7 @@ export async function GET(req: Request) {
     const { take, skip } = parsePagination(req);
 
     const [clients, total] = await Promise.all([
-      (prisma as any).client.findMany({
+      prisma.client.findMany({
         where: { workspaceId: user.workspaceId },
         include: {
           projects: { select: { id: true, name: true, status: true } },
@@ -36,7 +35,7 @@ export async function GET(req: Request) {
         take,
         skip,
       }),
-      (prisma as any).client.count({
+      prisma.client.count({
         where: { workspaceId: user.workspaceId },
       }),
     ]);
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    const client = await (prisma as any).client.create({
+    const client = await prisma.client.create({
       data: {
         name,
         email: email || null,

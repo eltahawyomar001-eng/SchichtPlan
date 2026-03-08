@@ -22,8 +22,7 @@ export async function GET(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const employeeSkills = await (prisma as any).employeeSkill.findMany({
+    const employeeSkills = await prisma.employeeSkill.findMany({
       where: { employeeId: id },
       include: { skill: true },
       orderBy: { createdAt: "asc" },
@@ -68,8 +67,7 @@ export async function POST(
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const es = await (prisma as any).employeeSkill.create({
+    const es = await prisma.employeeSkill.create({
       data: {
         employeeId: id,
         skillId,

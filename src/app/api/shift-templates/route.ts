@@ -26,9 +26,9 @@ export async function GET(req: Request) {
 
     const { take, skip } = parsePagination(req);
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
+     
     const [templates, total] = await Promise.all([
-      (prisma as any).shiftTemplate.findMany({
+      prisma.shiftTemplate.findMany({
         where: { workspaceId },
         include: {
           location: {
@@ -39,9 +39,9 @@ export async function GET(req: Request) {
         take,
         skip,
       }),
-      (prisma as any).shiftTemplate.count({ where: { workspaceId } }),
+      prisma.shiftTemplate.count({ where: { workspaceId } }),
     ]);
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+     
 
     return paginatedResponse(templates, total, take, skip);
   } catch (error) {
@@ -84,8 +84,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const template = await (prisma as any).shiftTemplate.create({
+    const template = await prisma.shiftTemplate.create({
       data: {
         name: name.trim(),
         startTime,

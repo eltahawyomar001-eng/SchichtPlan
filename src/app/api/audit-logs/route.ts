@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -48,13 +47,13 @@ export async function GET(req: Request) {
     if (entityId) where.entityId = entityId;
 
     const [logs, total] = await Promise.all([
-      (prisma as any).auditLog.findMany({
+      prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: "desc" },
         take: limit,
         skip: offset,
       }),
-      (prisma as any).auditLog.count({ where }),
+      prisma.auditLog.count({ where }),
     ]);
 
     return NextResponse.json({ logs, total, limit, offset });

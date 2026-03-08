@@ -706,8 +706,7 @@ async function loadStaffingRequirements(
   };
   if (locationId) where.locationId = locationId;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (prisma as any).staffingRequirement.findMany({ where });
+  return prisma.staffingRequirement.findMany({ where });
 }
 
 // ═══════════════════════════════════════════════════════════════

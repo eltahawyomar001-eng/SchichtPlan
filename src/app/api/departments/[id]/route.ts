@@ -23,8 +23,7 @@ export async function PUT(
     const { id } = await params;
     const { name, color, locationId } = await req.json();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const department = await (prisma as any).department.update({
+    const department = await prisma.department.update({
       where: { id },
       data: {
         name: name?.trim(),
@@ -59,8 +58,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).department.delete({
+    await prisma.department.delete({
       where: { id },
     });
 

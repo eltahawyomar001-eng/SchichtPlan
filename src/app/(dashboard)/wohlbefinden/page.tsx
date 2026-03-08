@@ -210,6 +210,23 @@ export default function WohlbefindenSeite() {
         {/* Data loaded */}
         {data && !error && (
           <>
+            {/* ── Legal Disclaimer ── */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                  <AlertTriangleIcon className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-amber-900">
+                    {t("disclaimerTitle")}
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                    {t("disclaimerText")}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* ── Summary Cards ── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               {/* Average Score */}

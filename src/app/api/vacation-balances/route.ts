@@ -50,8 +50,7 @@ export async function GET(req: Request) {
       where.employeeId = employeeIdParam;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const balances = await (prisma as any).vacationBalance.findMany({
+    const balances = await prisma.vacationBalance.findMany({
       where,
       include: {
         employee: {
@@ -120,8 +119,7 @@ export async function POST(req: Request) {
     }
 
     // Fetch employee to get workDaysPerWeek for BUrlG validation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const employee = await (prisma as any).employee.findFirst({
+    const employee = await prisma.employee.findFirst({
       where: { id: employeeId, workspaceId },
       select: { id: true, workDaysPerWeek: true },
     });
@@ -160,8 +158,7 @@ export async function POST(req: Request) {
     const remaining = entitlement + carry;
 
     // Upsert — create or update
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const balance = await (prisma as any).vacationBalance.upsert({
+    const balance = await prisma.vacationBalance.upsert({
       where: {
         employeeId_year: {
           employeeId,
@@ -190,8 +187,7 @@ export async function POST(req: Request) {
     });
 
     // Recalculate remaining after update
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).vacationBalance.update({
+    const updated = await prisma.vacationBalance.update({
       where: { id: balance.id },
       data: {
         remaining: entitlement + carry - balance.used - balance.planned,

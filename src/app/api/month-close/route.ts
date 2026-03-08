@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -32,7 +31,7 @@ export async function GET(req: Request) {
     };
     if (year) where.year = parseInt(year, 10);
 
-    const records = await (prisma as any).monthClose.findMany({
+    const records = await prisma.monthClose.findMany({
       where,
       include: { exportJobs: true },
       orderBy: [{ year: "desc" }, { month: "desc" }],
@@ -74,7 +73,7 @@ export async function POST(req: Request) {
     }
 
     // Upsert the month-close record
-    const existing = await (prisma as any).monthClose.findFirst({
+    const existing = await prisma.monthClose.findFirst({
       where: {
         workspaceId: user.workspaceId,
         year: parseInt(year, 10),
@@ -84,7 +83,7 @@ export async function POST(req: Request) {
 
     if (action === "lock") {
       const record = existing
-        ? await (prisma as any).monthClose.update({
+        ? await prisma.monthClose.update({
             where: { id: existing.id },
             data: {
               status: "LOCKED",
@@ -92,7 +91,7 @@ export async function POST(req: Request) {
               lockedAt: new Date(),
             },
           })
-        : await (prisma as any).monthClose.create({
+        : await prisma.monthClose.create({
             data: {
               year: parseInt(year, 10),
               month: parseInt(month, 10),
@@ -127,7 +126,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Month not found" }, { status: 404 });
       }
 
-      const record = await (prisma as any).monthClose.update({
+      const record = await prisma.monthClose.update({
         where: { id: existing.id },
         data: { status: "OPEN", lockedBy: null, lockedAt: null },
       });
@@ -143,7 +142,7 @@ export async function POST(req: Request) {
         );
       }
 
-      const record = await (prisma as any).monthClose.update({
+      const record = await prisma.monthClose.update({
         where: { id: existing.id },
         data: { status: "EXPORTED", exportedAt: new Date() },
       });

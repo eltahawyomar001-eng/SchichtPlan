@@ -96,24 +96,24 @@ export async function POST(req: Request) {
     //   body: JSON.stringify(datevPayload),
     // });
     //
-    // For now, simulate a successful upload:
+    // DATEV API integration is not yet connected.
+    // The payload is built and validated, but NOT actually uploaded.
     const uploadResult = {
-      status: "UPLOADED",
-      datevReference: `DATEV-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      status: "PENDING_INTEGRATION",
+      datevReference: null,
       recordCount: datevPayload.records.length,
       employeeCount: datevPayload.employeeSummary.length,
       periodStart: start,
       periodEnd: end,
-      uploadedAt: new Date().toISOString(),
+      preparedAt: new Date().toISOString(),
     };
 
-    // Persist an ExportJob record
+    // Persist an ExportJob record — with honest status
     const exportJob = await prisma.exportJob.create({
       data: {
         format: "DATEV_ONLINE",
         fileName: `datev_online_${start}_${end}`,
-        status: "COMPLETED",
-        completedAt: new Date(),
+        status: "PENDING",
         ...(monthCloseId ? { monthCloseId } : {}),
         workspaceId,
       },
@@ -136,22 +136,27 @@ export async function POST(req: Request) {
       },
     });
 
-    log.info("[datev-online] Upload completed", {
+    log.info("[datev-online] Payload prepared (API integration pending)", {
       exportJobId: exportJob.id,
-      reference: uploadResult.datevReference,
       records: uploadResult.recordCount,
     });
 
     return NextResponse.json({
-      success: true,
+      success: false,
+      pending: true,
+      message:
+        "DATEV-Payload wurde erstellt, aber die API-Verbindung zu DATEV Unternehmen Online " +
+        "ist noch nicht konfiguriert. Bitte verwenden Sie den CSV-Export als Alternative.",
+      messageEn:
+        "DATEV payload was prepared but the API connection to DATEV Unternehmen Online " +
+        "is not yet configured. Please use CSV export as an alternative.",
       exportJob: {
         id: exportJob.id,
         format: exportJob.format,
         status: exportJob.status,
-        completedAt: exportJob.completedAt,
       },
       upload: uploadResult,
-      payload: datevPayload, // Return payload for transparency / debugging
+      payload: datevPayload,
     });
   } catch (error) {
     log.error("Error uploading to DATEV:", { error });

@@ -160,8 +160,7 @@ export async function createESignature(
   );
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const record = await (prisma as any).eSignature.create({
+    const record = await prisma.eSignature.create({
       data: {
         action: input.action,
         entityType: input.entityType,
@@ -207,8 +206,7 @@ export async function getSignaturesForEntity(
   entityId: string,
   workspaceId: string,
 ): Promise<ESignatureRecord[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (prisma as any).eSignature.findMany({
+  return prisma.eSignature.findMany({
     where: { entityType, entityId, workspaceId },
     orderBy: { signedAt: "desc" },
   });

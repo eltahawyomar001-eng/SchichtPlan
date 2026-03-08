@@ -33,6 +33,7 @@ model User {
   chatMessages    ChatMessage[]
   chatReactions   ChatReaction[]
   autoScheduleRuns AutoScheduleRun[]
+  icalTokens      ICalToken[]
 }
 
 model Account {
@@ -1217,4 +1218,21 @@ model ServiceVisitAuditLog {
   @@index([workspaceId, serverTimestamp])
   @@index([eventType])
   @@index([offlineSync])
+}
+
+// ── iCal Feed Token ──────────────────────────────────────────────
+/// Per-user token for subscribing to the iCal shift feed from
+/// external calendar apps (Google Calendar, Apple Calendar, etc.)
+/// that cannot use session cookies.
+model ICalToken {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  label       String?  @db.VarChar(100) // e.g. "Google Calendar"
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+  @@index([userId])
+  @@index([token])
 }

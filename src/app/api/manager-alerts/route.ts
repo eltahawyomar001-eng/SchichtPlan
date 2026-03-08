@@ -43,15 +43,13 @@ export async function GET(req: Request) {
     const { take, skip } = parsePagination(req);
 
     const [alerts, total] = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).managerAlert.findMany({
+      prisma.managerAlert.findMany({
         where,
         orderBy: [{ severity: "asc" }, { createdAt: "desc" }],
         take,
         skip,
       }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).managerAlert.count({ where }),
+      prisma.managerAlert.count({ where }),
     ]);
 
     return paginatedResponse(alerts, total, take, skip);

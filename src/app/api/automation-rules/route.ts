@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -27,19 +26,19 @@ export async function GET(req: Request) {
     const { take, skip } = parsePagination(req);
 
     const [rules, total] = await Promise.all([
-      (prisma as any).automationRule.findMany({
+      prisma.automationRule.findMany({
         where: { workspaceId: user.workspaceId },
         orderBy: { createdAt: "desc" },
         take,
         skip,
       }),
-      (prisma as any).automationRule.count({
+      prisma.automationRule.count({
         where: { workspaceId: user.workspaceId },
       }),
     ]);
 
     // Parse JSON strings to objects
-    const parsed = rules.map((r: any) => ({
+    const parsed = rules.map((r) => ({
       ...r,
       conditions: JSON.parse(r.conditions || "[]"),
       actions: JSON.parse(r.actions || "[]"),
@@ -81,7 +80,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const rule = await (prisma as any).automationRule.create({
+    const rule = await prisma.automationRule.create({
       data: {
         name,
         description: description || null,

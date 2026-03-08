@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -37,7 +36,7 @@ export async function POST(_req: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const hook = await (prisma as any).webhookEndpoint.findFirst({
+    const hook = await prisma.webhookEndpoint.findFirst({
       where: { id, workspaceId: user.workspaceId },
     });
 

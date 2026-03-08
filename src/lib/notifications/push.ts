@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import webpush from "web-push";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
@@ -21,6 +20,7 @@ function ensureVapidConfigured() {
 
 /**
  * Send a push notification to all subscribed devices of a user.
+ * Returns an object indicating success or why it was skipped.
  */
 export async function sendPushNotification(params: {
   userId: string;
@@ -28,18 +28,23 @@ export async function sendPushNotification(params: {
   body: string;
   url?: string;
   tag?: string;
-}) {
+}): Promise<{ success: boolean; skipped?: boolean; reason?: string }> {
   if (!ensureVapidConfigured()) {
-    log.info("[push] VAPID keys not configured, skipping push");
-    return;
+    log.warn("[push] VAPID keys not configured — push notifications disabled");
+    return {
+      success: false,
+      skipped: true,
+      reason: "VAPID_NOT_CONFIGURED",
+    };
   }
 
   try {
-    const subscriptions = await (prisma as any).pushSubscription.findMany({
+    const subscriptions = await prisma.pushSubscription.findMany({
       where: { userId: params.userId },
     });
 
-    if (subscriptions.length === 0) return;
+    if (subscriptions.length === 0)
+      return { success: true, skipped: true, reason: "NO_SUBSCRIPTIONS" };
 
     const payload = JSON.stringify({
       title: params.title,
@@ -51,7 +56,7 @@ export async function sendPushNotification(params: {
     });
 
     const results = await Promise.allSettled(
-      subscriptions.map(async (sub: any) => {
+      subscriptions.map(async (sub) => {
         try {
           await webpush.sendNotification(
             {
@@ -60,10 +65,14 @@ export async function sendPushNotification(params: {
             },
             payload,
           );
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Remove expired/invalid subscriptions
-          if (err.statusCode === 404 || err.statusCode === 410) {
-            await (prisma as any).pushSubscription.delete({
+          const statusCode =
+            err && typeof err === "object" && "statusCode" in err
+              ? (err as { statusCode: number }).statusCode
+              : 0;
+          if (statusCode === 404 || statusCode === 410) {
+            await prisma.pushSubscription.delete({
               where: { id: sub.id },
             });
           }
@@ -76,7 +85,9 @@ export async function sendPushNotification(params: {
     log.info(
       `[push] Sent ${sent}/${subscriptions.length} for user ${params.userId}`,
     );
+    return { success: sent > 0 };
   } catch (error) {
     log.error("[push] Error sending push notification:", { error: error });
+    return { success: false, reason: "SEND_ERROR" };
   }
 }

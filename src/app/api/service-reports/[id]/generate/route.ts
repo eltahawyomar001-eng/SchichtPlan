@@ -44,8 +44,8 @@ export async function POST(
     if (forbidden) return forbidden;
 
     // ── Fetch report with all linked visits ──
-     
-    const report = await (prisma as any).serviceReport.findFirst({
+
+    const report = await prisma.serviceReport.findFirst({
       where: { id: reportId, workspaceId },
       include: {
         visits: {
@@ -107,8 +107,8 @@ export async function POST(
     }
 
     // ── Fetch workspace info ──
-     
-    const workspace = await (prisma as any).workspace.findFirst({
+
+    const workspace = await prisma.workspace.findFirst({
       where: { id: workspaceId },
       select: { name: true },
     });
@@ -414,8 +414,8 @@ export async function POST(
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
 
     // ── Update report status ──
-     
-    await (prisma as any).serviceReport.update({
+
+    await prisma.serviceReport.update({
       where: { id: reportId },
       data: {
         status: "ERSTELLT",

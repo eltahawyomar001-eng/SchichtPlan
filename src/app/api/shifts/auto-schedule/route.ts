@@ -79,8 +79,7 @@ export async function POST(req: Request) {
     });
 
     // ── Save run to history ──
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const run = await (prisma as any).autoScheduleRun.create({
+    const run = await prisma.autoScheduleRun.create({
       data: {
         status: dryRun ? "PREVIEW" : "APPLIED",
         startDate: start,
@@ -191,8 +190,7 @@ export async function GET(req: Request) {
     const where: Record<string, any> = { workspaceId };
     if (status) where.status = status;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const runs = await (prisma as any).autoScheduleRun.findMany({
+    const runs = await prisma.autoScheduleRun.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: limit,

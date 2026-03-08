@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -26,14 +25,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const { id } = await params;
     const body = await req.json();
 
-    const existing = await (prisma as any).automationRule.findFirst({
+    const existing = await prisma.automationRule.findFirst({
       where: { id, workspaceId: user.workspaceId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const rule = await (prisma as any).automationRule.update({
+    const rule = await prisma.automationRule.update({
       where: { id },
       data: {
         ...(body.name !== undefined && { name: body.name }),
@@ -76,14 +75,14 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const existing = await (prisma as any).automationRule.findFirst({
+    const existing = await prisma.automationRule.findFirst({
       where: { id, workspaceId: user.workspaceId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await (prisma as any).automationRule.delete({ where: { id } });
+    await prisma.automationRule.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error("Error:", { error: error });

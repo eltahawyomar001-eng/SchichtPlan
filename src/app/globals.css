@@ -166,8 +166,6 @@ body {
   /* Prevent iOS 100vh bug */
   min-height: -webkit-fill-available;
   min-height: 100dvh;
-  /* Prevent rubber-banding overscroll — makes it feel like a native app */
-  overscroll-behavior-y: none;
   /* Safe areas handled by the app shell — don't double-pad the body */
 }
 

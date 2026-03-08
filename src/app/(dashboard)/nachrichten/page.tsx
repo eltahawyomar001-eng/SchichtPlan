@@ -22,8 +22,6 @@ import {
   CheckIcon,
   UserIcon,
   SettingsIcon,
-  MenuIcon,
-  ArrowLeftIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -176,7 +174,7 @@ export default function NachrichtenPage() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Read receipts
-  const [readReceipts, setReadReceipts] = useState<ReadReceipt[]>([]);
+  const [, setReadReceipts] = useState<ReadReceipt[]>([]);
 
   // Pinned messages view
   const [showPinned, setShowPinned] = useState(false);
@@ -187,7 +185,6 @@ export default function NachrichtenPage() {
   const notifAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mentionRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -239,9 +236,9 @@ export default function NachrichtenPage() {
     fetchWorkspaceUsers();
   }, [fetchChannels, fetchWorkspaceUsers]);
 
-  // Poll channels for unread badges every 15s
+  // Poll channels for unread badges every 30s (SSE handles active channel updates)
   useEffect(() => {
-    const interval = setInterval(fetchChannels, 15000);
+    const interval = setInterval(fetchChannels, 30000);
     return () => clearInterval(interval);
   }, [fetchChannels]);
 
@@ -264,15 +261,44 @@ export default function NachrichtenPage() {
   useEffect(() => {
     if (!activeChannel) return;
 
+    // Initial fetch to load existing messages
     fetchMessages(activeChannel.id);
-    pollRef.current = setInterval(() => {
-      fetchMessages(activeChannel.id);
-    }, 5000);
+
+    // Connect to SSE stream for real-time new messages
+    const eventSource = new EventSource(
+      `/api/chat/stream?channelId=${activeChannel.id}`,
+    );
+
+    eventSource.addEventListener("message:new", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.messages && Array.isArray(data.messages)) {
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newMsgs = data.messages.filter(
+              (m: Message) => !existingIds.has(m.id),
+            );
+            return newMsgs.length > 0 ? [...prev, ...newMsgs] : prev;
+          });
+        }
+      } catch {
+        /* parse error */
+      }
+    });
+
+    eventSource.addEventListener("channels:update", () => {
+      // Refresh channel list to update unread badges
+      fetchChannels();
+    });
+
+    eventSource.onerror = () => {
+      // EventSource will auto-reconnect — no manual handling needed
+    };
 
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      eventSource.close();
     };
-  }, [activeChannel, fetchMessages]);
+  }, [activeChannel, fetchMessages, fetchChannels]);
 
   // ── Auto-scroll ─────────────────────────────────────────────
 
@@ -917,7 +943,10 @@ export default function NachrichtenPage() {
     [filteredChannels],
   );
 
-  const settingMembers = channelDetails?.members || [];
+  const settingMembers = useMemo(
+    () => channelDetails?.members || [],
+    [channelDetails?.members],
+  );
   const addableMembersForSettings = useMemo(() => {
     const existingIds = new Set(
       settingMembers.map((m: ChannelMember) => m.userId),

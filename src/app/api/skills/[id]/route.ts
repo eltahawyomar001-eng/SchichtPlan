@@ -22,8 +22,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).skill.delete({
+    await prisma.skill.delete({
       where: { id },
     });
 

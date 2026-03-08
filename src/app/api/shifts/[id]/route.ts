@@ -103,8 +103,7 @@ export async function PATCH(
       : currentShift.employeeId;
 
     if (finalEmployeeId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const emp = await (prisma as any).employee.findUnique({
+      const emp = await prisma.employee.findUnique({
         where: { id: finalEmployeeId },
         select: { email: true, firstName: true, lastName: true },
       });

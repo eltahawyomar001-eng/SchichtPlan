@@ -136,8 +136,7 @@ export async function POST(req: Request) {
     const shiftDate = new Date(date);
 
     // Get workspace Bundesland for holiday check
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ws = await (prisma as any).workspace?.findUnique?.({
+    const ws = await prisma.workspace?.findUnique?.({
       where: { id: workspaceId },
       select: { bundesland: true },
     });

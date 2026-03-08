@@ -44,8 +44,7 @@ export async function GET(req: Request) {
     if (weekday !== null && weekday !== "") where.weekday = parseInt(weekday);
     if (active === "true") where.isActive = true;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requirements = await (prisma as any).staffingRequirement.findMany({
+    const requirements = await prisma.staffingRequirement.findMany({
       where,
       include: {
         location: { select: { id: true, name: true } },
@@ -92,8 +91,7 @@ export async function POST(req: Request) {
 
     const data = parsed.data;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requirement = await (prisma as any).staffingRequirement.create({
+    const requirement = await prisma.staffingRequirement.create({
       data: {
         name: data.name,
         weekday: data.weekday,

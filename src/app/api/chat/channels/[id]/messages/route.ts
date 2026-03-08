@@ -31,8 +31,7 @@ export async function GET(
     const { id: channelId } = await params;
 
     // Verify user is a member of this channel
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const membership = await (prisma as any).chatChannelMember.findUnique({
+    const membership = await prisma.chatChannelMember.findUnique({
       where: { channelId_userId: { channelId, userId: user.id } },
     });
 
@@ -67,8 +66,7 @@ export async function GET(
       where.parentId = null; // Top-level messages only
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messages = await (prisma as any).chatMessage.findMany({
+    const messages = await prisma.chatMessage.findMany({
       where,
       orderBy: { createdAt: parentId ? ("asc" as const) : ("desc" as const) },
       take: limit + 1,
@@ -108,8 +106,7 @@ export async function GET(
     if (hasMore) messages.pop();
 
     // Update lastReadAt
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatChannelMember.update({
+    await prisma.chatChannelMember.update({
       where: { channelId_userId: { channelId, userId: user.id } },
       data: { lastReadAt: new Date() },
     });
@@ -150,8 +147,7 @@ export async function POST(
     const { id: channelId } = await params;
 
     // Verify user is a member
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const membership = await (prisma as any).chatChannelMember.findUnique({
+    const membership = await prisma.chatChannelMember.findUnique({
       where: { channelId_userId: { channelId, userId: user.id } },
     });
 
@@ -173,8 +169,7 @@ export async function POST(
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = await (prisma as any).chatMessage.create({
+    const message = await prisma.chatMessage.create({
       data: {
         content,
         channelId,
@@ -202,8 +197,7 @@ export async function POST(
     });
 
     // Update sender's lastReadAt
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatChannelMember.update({
+    await prisma.chatChannelMember.update({
       where: { channelId_userId: { channelId, userId: user.id } },
       data: { lastReadAt: new Date() },
     });

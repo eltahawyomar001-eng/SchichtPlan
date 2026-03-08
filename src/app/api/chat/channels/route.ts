@@ -26,8 +26,7 @@ export async function GET() {
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const memberships = await (prisma as any).chatChannelMember.findMany({
+    const memberships = await prisma.chatChannelMember.findMany({
       where: { userId: user.id },
       include: {
         channel: {
@@ -130,8 +129,7 @@ export async function POST(req: Request) {
     }
 
     // Create channel + add creator as member
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = await (prisma as any).chatChannel.create({
+    const channel = await prisma.chatChannel.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,

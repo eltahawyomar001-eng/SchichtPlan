@@ -32,8 +32,7 @@ export async function GET(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const requirement = await (prisma as any).staffingRequirement.findFirst({
+    const requirement = await prisma.staffingRequirement.findFirst({
       where: { id, workspaceId },
       include: {
         location: { select: { id: true, name: true } },
@@ -80,8 +79,7 @@ export async function PUT(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = await (prisma as any).staffingRequirement.findFirst({
+    const existing = await prisma.staffingRequirement.findFirst({
       where: { id, workspaceId },
     });
     if (!existing) {
@@ -97,8 +95,7 @@ export async function PUT(
 
     const data = parsed.data;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).staffingRequirement.update({
+    const updated = await prisma.staffingRequirement.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -179,8 +176,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = await (prisma as any).staffingRequirement.findFirst({
+    const existing = await prisma.staffingRequirement.findFirst({
       where: { id, workspaceId },
     });
     if (!existing) {
@@ -190,8 +186,7 @@ export async function DELETE(
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).staffingRequirement.delete({ where: { id } });
+    await prisma.staffingRequirement.delete({ where: { id } });
 
     createAuditLog({
       action: "DELETE",

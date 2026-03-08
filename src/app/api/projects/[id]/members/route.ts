@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -34,14 +33,14 @@ export async function POST(req: Request, { params }: RouteParams) {
     }
 
     // Verify project belongs to workspace
-    const project = await (prisma as any).project.findFirst({
+    const project = await prisma.project.findFirst({
       where: { id, workspaceId: user.workspaceId },
     });
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const member = await (prisma as any).projectMember.create({
+    const member = await prisma.projectMember.create({
       data: {
         employeeId,
         projectId: id,
@@ -50,8 +49,13 @@ export async function POST(req: Request, { params }: RouteParams) {
     });
 
     return NextResponse.json(member, { status: 201 });
-  } catch (error: any) {
-    if (error?.code === "P2002") {
+  } catch (error: unknown) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
       return NextResponse.json(
         { error: "Employee is already a member" },
         { status: 409 },
@@ -84,7 +88,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       );
     }
 
-    await (prisma as any).projectMember.deleteMany({
+    await prisma.projectMember.deleteMany({
       where: { projectId: id, employeeId },
     });
 

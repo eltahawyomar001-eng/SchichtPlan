@@ -11,10 +11,13 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PageContent } from "@/components/ui/page-content";
 import { BellIcon, MailIcon, ChevronLeftIcon } from "@/components/icons";
 import Link from "next/link";
+
+interface ServiceStatus {
+  email: { configured: boolean; hint?: string };
+  push: { configured: boolean; hint?: string };
+}
 
 export default function BenachrichtigungenPage() {
   const t = useTranslations("notificationPrefs");
@@ -25,19 +28,26 @@ export default function BenachrichtigungenPage() {
   >("idle");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
-  const [testStatus, setTestStatus] = useState<
-    "idle" | "sending" | "sent" | "failed"
-  >("idle");
+  const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(
+    null,
+  );
 
   const fetchPrefs = useCallback(async () => {
     try {
       setFetchError(false);
-      const res = await fetch("/api/notification-preferences");
-      if (res.ok) {
-        const data = await res.json();
+      const [prefsRes, statusRes] = await Promise.all([
+        fetch("/api/notification-preferences"),
+        fetch("/api/notifications/status"),
+      ]);
+      if (prefsRes.ok) {
+        const data = await prefsRes.json();
         setEmailEnabled(data.emailEnabled);
       } else {
         setFetchError(true);
+      }
+      if (statusRes.ok) {
+        const status = await statusRes.json();
+        setServiceStatus(status);
       }
     } catch {
       setFetchError(true);
@@ -105,6 +115,47 @@ export default function BenachrichtigungenPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Service configuration warnings */}
+        {serviceStatus &&
+          (!serviceStatus.email.configured ||
+            !serviceStatus.push.configured) && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-amber-800">
+                  {t("serviceStatus")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                {!serviceStatus.email.configured && (
+                  <div className="flex items-start gap-2">
+                    <MailIcon className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">
+                        {t("emailNotConfigured")}
+                      </p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        {t("emailNotConfiguredDesc")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!serviceStatus.push.configured && (
+                  <div className="flex items-start gap-2">
+                    <BellIcon className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">
+                        {t("pushNotConfigured")}
+                      </p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        {t("pushNotConfiguredDesc")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         {/* Back link */}
         <Link
           href="/einstellungen"
@@ -169,8 +220,15 @@ export default function BenachrichtigungenPage() {
               {/* Toggle switch */}
               <button
                 onClick={toggleEmail}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 flex-shrink-0 cursor-pointer ${
-                  emailEnabled ? "bg-emerald-600" : "bg-gray-200"
+                disabled={
+                  serviceStatus !== null && !serviceStatus.email.configured
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 flex-shrink-0 ${
+                  serviceStatus !== null && !serviceStatus.email.configured
+                    ? "bg-gray-200 cursor-not-allowed opacity-50"
+                    : emailEnabled
+                      ? "bg-emerald-600 cursor-pointer"
+                      : "bg-gray-200 cursor-pointer"
                 }`}
                 aria-label="Toggle email notifications"
               >
@@ -180,52 +238,6 @@ export default function BenachrichtigungenPage() {
                   }`}
                 />
               </button>
-            </div>
-
-            {/* Test email button */}
-            <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={testStatus === "sending"}
-                onClick={async () => {
-                  setTestStatus("sending");
-                  try {
-                    const res = await fetch("/api/test-email", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({}),
-                    });
-                    if (res.ok) {
-                      setTestStatus("sent");
-                    } else {
-                      setTestStatus("failed");
-                    }
-                  } catch {
-                    setTestStatus("failed");
-                  }
-                  setTimeout(() => setTestStatus("idle"), 4000);
-                }}
-              >
-                <MailIcon className="h-4 w-4 mr-1.5" />
-                {testStatus === "sending"
-                  ? t("testEmailSending")
-                  : testStatus === "sent"
-                    ? t("testEmailSent")
-                    : testStatus === "failed"
-                      ? t("testEmailFailed")
-                      : t("sendTestEmail")}
-              </Button>
-              {testStatus === "sent" && (
-                <span className="text-xs text-emerald-600">
-                  {t("testEmailSent")}
-                </span>
-              )}
-              {testStatus === "failed" && (
-                <span className="text-xs text-red-600">
-                  {t("testEmailFailed")}
-                </span>
-              )}
             </div>
           </CardContent>
         </Card>

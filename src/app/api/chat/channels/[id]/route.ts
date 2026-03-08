@@ -32,8 +32,7 @@ export async function GET(
 
     const { id: channelId } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = await (prisma as any).chatChannel.findFirst({
+    const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
       include: {
         members: {
@@ -94,8 +93,7 @@ export async function PATCH(
 
     const { id: channelId } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = await (prisma as any).chatChannel.findFirst({
+    const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
     });
 
@@ -120,8 +118,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).chatChannel.update({
+    const updated = await prisma.chatChannel.update({
       where: { id: channelId },
       data: updateData,
     });
@@ -167,8 +164,7 @@ export async function DELETE(
 
     const { id: channelId } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = await (prisma as any).chatChannel.findFirst({
+    const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
     });
 
@@ -183,14 +179,11 @@ export async function DELETE(
     }
 
     // Delete in order: messages → members → channel
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatMessage.deleteMany({ where: { channelId } });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatChannelMember.deleteMany({
+    await prisma.chatMessage.deleteMany({ where: { channelId } });
+    await prisma.chatChannelMember.deleteMany({
       where: { channelId },
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatChannel.delete({ where: { id: channelId } });
+    await prisma.chatChannel.delete({ where: { id: channelId } });
 
     createAuditLog({
       action: "DELETE",

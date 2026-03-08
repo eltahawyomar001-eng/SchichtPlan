@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -34,13 +33,13 @@ export async function GET(req: Request) {
     const { take, skip } = parsePagination(req);
 
     const [hooks, total] = await Promise.all([
-      (prisma as any).webhookEndpoint.findMany({
+      prisma.webhookEndpoint.findMany({
         where: { workspaceId: user.workspaceId },
         orderBy: { createdAt: "desc" },
         take,
         skip,
       }),
-      (prisma as any).webhookEndpoint.count({
+      prisma.webhookEndpoint.count({
         where: { workspaceId: user.workspaceId },
       }),
     ]);
@@ -79,7 +78,7 @@ export async function POST(req: Request) {
 
     const secret = crypto.randomBytes(32).toString("hex");
 
-    const hook = await (prisma as any).webhookEndpoint.create({
+    const hook = await prisma.webhookEndpoint.create({
       data: {
         url,
         secret,

@@ -21,9 +21,9 @@ export async function GET(req: Request) {
 
     const { take, skip } = parsePagination(req);
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
+     
     const [skills, total] = await Promise.all([
-      (prisma as any).skill.findMany({
+      prisma.skill.findMany({
         where: { workspaceId },
         include: {
           _count: { select: { employeeSkills: true } },
@@ -32,9 +32,9 @@ export async function GET(req: Request) {
         take,
         skip,
       }),
-      (prisma as any).skill.count({ where: { workspaceId } }),
+      prisma.skill.count({ where: { workspaceId } }),
     ]);
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+     
 
     return paginatedResponse(skills, total, take, skip);
   } catch (error) {
@@ -71,8 +71,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const skill = await (prisma as any).skill.create({
+    const skill = await prisma.skill.create({
       data: {
         name: name.trim(),
         category: category || null,

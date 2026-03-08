@@ -33,8 +33,7 @@ export async function POST(
     const { id: channelId, msgId } = await params;
 
     // Verify membership
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const membership = await (prisma as any).chatChannelMember.findUnique({
+    const membership = await prisma.chatChannelMember.findUnique({
       where: { channelId_userId: { channelId, userId: user.id } },
     });
 
@@ -46,8 +45,7 @@ export async function POST(
     }
 
     // Verify message exists
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = await (prisma as any).chatMessage.findFirst({
+    const message = await prisma.chatMessage.findFirst({
       where: { id: msgId, channelId, deletedAt: null },
     });
 
@@ -63,8 +61,7 @@ export async function POST(
     }
 
     // Toggle: check if reaction exists
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = await (prisma as any).chatReaction.findUnique({
+    const existing = await prisma.chatReaction.findUnique({
       where: {
         messageId_userId_emoji: {
           messageId: msgId,
@@ -76,15 +73,13 @@ export async function POST(
 
     if (existing) {
       // Remove reaction
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (prisma as any).chatReaction.delete({
+      await prisma.chatReaction.delete({
         where: { id: existing.id },
       });
       return NextResponse.json({ action: "removed", emoji });
     } else {
       // Add reaction
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (prisma as any).chatReaction.create({
+      await prisma.chatReaction.create({
         data: {
           emoji,
           messageId: msgId,

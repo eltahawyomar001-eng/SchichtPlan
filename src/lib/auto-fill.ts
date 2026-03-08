@@ -87,8 +87,7 @@ export async function findAndAssignReplacement(
   });
 
   // 1. Load the shift to get date info for emergency detection
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const shift = await (prisma as any).shift.findFirst({
+  const shift = await prisma.shift.findFirst({
     where: { id: shiftId, workspaceId },
     include: {
       employee: true,
@@ -127,15 +126,13 @@ export async function findAndAssignReplacement(
     "HE";
 
   // 4. Unassign the current employee (set shift to OPEN)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (prisma as any).shift.update({
+  await prisma.shift.update({
     where: { id: shiftId },
     data: { employeeId: null, status: "OPEN" },
   });
 
   // 5. Create initial AutoFillLog (PENDING)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fillLog = await (prisma as any).autoFillLog.create({
+  const fillLog = await prisma.autoFillLog.create({
     data: {
       shiftId,
       vacatedByEmployeeId: vacatedByEmployeeId || null,
@@ -173,8 +170,7 @@ export async function findAndAssignReplacement(
     // 7. Auto-assign the top candidate
     const bestCandidate = backfillResult.candidates[0];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).shift.update({
+    await prisma.shift.update({
       where: { id: shiftId },
       data: {
         employeeId: bestCandidate.employeeId,
@@ -188,8 +184,7 @@ export async function findAndAssignReplacement(
       passed: true,
     }));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).autoFillLog.update({
+    await prisma.autoFillLog.update({
       where: { id: fillLog.id },
       data: {
         status: "ASSIGNED",
@@ -202,8 +197,7 @@ export async function findAndAssignReplacement(
     // 9. Load vacated employee name for the "why" message
     let vacatedByName = "ein Kollege";
     if (vacatedByEmployeeId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const vacatedEmp = await (prisma as any).employee.findUnique({
+      const vacatedEmp = await prisma.employee.findUnique({
         where: { id: vacatedByEmployeeId },
         select: { firstName: true, lastName: true },
       });
@@ -213,8 +207,7 @@ export async function findAndAssignReplacement(
     }
 
     // 10. Get assigned employee's email for notification
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignedEmp = await (prisma as any).employee.findUnique({
+    const assignedEmp = await prisma.employee.findUnique({
       where: { id: bestCandidate.employeeId },
       select: { email: true, firstName: true, lastName: true },
     });
@@ -301,8 +294,7 @@ export async function findAndAssignReplacement(
     });
 
     // Update log to FAILED
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).autoFillLog
+    await prisma.autoFillLog
       .update({
         where: { id: fillLog.id },
         data: {
@@ -375,8 +367,7 @@ async function handleNoOneAvailable(params: {
         `(max. 10h/Tag, 11h Ruhezeit, max. 48h/Woche).`;
 
   // 1. Update AutoFillLog → FAILED
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (prisma as any).autoFillLog.update({
+  await prisma.autoFillLog.update({
     where: { id: fillLogId },
     data: {
       status: "FAILED",
@@ -391,8 +382,7 @@ async function handleNoOneAvailable(params: {
     ? "⚠️ DRINGEND: Keine Vertretung gefunden"
     : "Keine Vertretung gefunden";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (prisma as any).managerAlert.create({
+  await prisma.managerAlert.create({
     data: {
       type: "NO_REPLACEMENT",
       title: alertTitle,

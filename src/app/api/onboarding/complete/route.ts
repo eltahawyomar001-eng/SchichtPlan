@@ -27,8 +27,7 @@ export async function POST() {
     const forbidden = requireAdmin(user);
     if (forbidden) return forbidden;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma.workspace as any).update({
+    await prisma.workspace.update({
       where: { id: user.workspaceId },
       data: { onboardingCompleted: true },
     });

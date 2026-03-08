@@ -27,16 +27,14 @@ export async function GET(
     const { id: channelId } = await params;
 
     // Verify membership
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const membership = await (prisma as any).chatChannelMember.findUnique({
+    const membership = await prisma.chatChannelMember.findUnique({
       where: { channelId_userId: { channelId, userId: user.id } },
     });
     if (!membership) {
       return NextResponse.json({ error: "Not a member" }, { status: 403 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const members = await (prisma as any).chatChannelMember.findMany({
+    const members = await prisma.chatChannelMember.findMany({
       where: { channelId },
       select: {
         userId: true,

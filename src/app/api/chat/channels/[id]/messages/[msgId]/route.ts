@@ -30,8 +30,7 @@ export async function PATCH(
 
     const { id: channelId, msgId } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = await (prisma as any).chatMessage.findFirst({
+    const message = await prisma.chatMessage.findFirst({
       where: { id: msgId, channelId, deletedAt: null },
     });
 
@@ -57,8 +56,7 @@ export async function PATCH(
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).chatMessage.update({
+    const updated = await prisma.chatMessage.update({
       where: { id: msgId },
       data: { content, editedAt: new Date() },
       select: {
@@ -102,8 +100,7 @@ export async function DELETE(
 
     const { id: channelId, msgId } = await params;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = await (prisma as any).chatMessage.findFirst({
+    const message = await prisma.chatMessage.findFirst({
       where: { id: msgId, channelId, deletedAt: null },
     });
 
@@ -120,8 +117,7 @@ export async function DELETE(
     }
 
     // Soft delete — set deletedAt, replace content
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).chatMessage.update({
+    await prisma.chatMessage.update({
       where: { id: msgId },
       data: { deletedAt: new Date() },
     });

@@ -37,8 +37,7 @@ export function createAuditLog(params: AuditLogParams): void {
     metadata,
   } = params;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (prisma as any).auditLog
+  prisma.auditLog
     .create({
       data: {
         action,

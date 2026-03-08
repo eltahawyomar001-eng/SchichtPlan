@@ -263,7 +263,7 @@ describe("POST /api/custom-roles", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 202 stub for admin on business plan", async () => {
+  it("returns 501 Not Implemented for admin on business plan", async () => {
     mockSession.user = buildAdmin();
     mockSubscriptionFindUnique.mockResolvedValue({
       plan: "BUSINESS",
@@ -279,10 +279,9 @@ describe("POST /api/custom-roles", () => {
       body: JSON.stringify({ name: "Custom Role", permissions: ["shifts.*"] }),
     });
     const res = await handler.POST(req);
-    expect(res.status).toBe(202);
+    expect(res.status).toBe(501);
 
     const body = await res.json();
-    expect(body.message).toContain("coming soon");
-    expect(body.received.name).toBe("Custom Role");
+    expect(body.error).toBeDefined();
   });
 });

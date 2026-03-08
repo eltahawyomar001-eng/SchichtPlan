@@ -122,8 +122,7 @@ export function createVisitAuditEntry(
     params.deviceId,
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (prisma as any).serviceVisitAuditLog
+  prisma.serviceVisitAuditLog
     .create({
       data: {
         eventType: params.eventType,

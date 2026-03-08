@@ -1146,8 +1146,7 @@ export async function executeCustomRules(
   try {
     if (!(await isAutomationEnabled(workspaceId, "notifications"))) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rules = await (prisma as any).automationRule.findMany({
+    const rules = await prisma.automationRule.findMany({
       where: { workspaceId, trigger, isActive: true },
     });
 
@@ -1167,8 +1166,7 @@ export async function executeCustomRules(
         }
 
         // Update lastTriggered
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (prisma as any).automationRule.update({
+        await prisma.automationRule.update({
           where: { id: rule.id },
           data: { lastTriggered: new Date() },
         });

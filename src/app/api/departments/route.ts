@@ -21,9 +21,9 @@ export async function GET(req: Request) {
 
     const { take, skip } = parsePagination(req);
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
+     
     const [departments, total] = await Promise.all([
-      (prisma as any).department.findMany({
+      prisma.department.findMany({
         where: { workspaceId },
         include: {
           location: { select: { id: true, name: true } },
@@ -33,9 +33,9 @@ export async function GET(req: Request) {
         take,
         skip,
       }),
-      (prisma as any).department.count({ where: { workspaceId } }),
+      prisma.department.count({ where: { workspaceId } }),
     ]);
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+     
 
     return paginatedResponse(departments, total, take, skip);
   } catch (error) {
@@ -73,8 +73,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const department = await (prisma as any).department.create({
+    const department = await prisma.department.create({
       data: {
         name: name.trim(),
         color: color || null,

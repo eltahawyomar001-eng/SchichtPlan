@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -22,7 +21,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     const user = session.user as SessionUser;
     const { id } = await params;
 
-    const client = await (prisma as any).client.findFirst({
+    const client = await prisma.client.findFirst({
       where: { id, workspaceId: user.workspaceId },
       include: {
         projects: {
@@ -57,14 +56,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const { id } = await params;
     const body = await req.json();
 
-    const existing = await (prisma as any).client.findFirst({
+    const existing = await prisma.client.findFirst({
       where: { id, workspaceId: user.workspaceId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const client = await (prisma as any).client.update({
+    const client = await prisma.client.update({
       where: { id },
       data: {
         name: body.name ?? existing.name,
@@ -99,14 +98,14 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const existing = await (prisma as any).client.findFirst({
+    const existing = await prisma.client.findFirst({
       where: { id, workspaceId: user.workspaceId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await (prisma as any).client.delete({ where: { id } });
+    await prisma.client.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error("Error:", { error: error });

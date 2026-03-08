@@ -37,8 +37,7 @@ export async function POST(
     const { id: channelId } = await params;
 
     // Verify membership
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const membership = await (prisma as any).chatChannelMember.findUnique({
+    const membership = await prisma.chatChannelMember.findUnique({
       where: { channelId_userId: { channelId, userId: user.id } },
     });
     if (!membership) {

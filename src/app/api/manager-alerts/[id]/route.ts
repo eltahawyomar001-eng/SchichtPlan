@@ -36,8 +36,7 @@ export async function PATCH(
     const body = await req.json();
 
     // Verify alert belongs to workspace
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const alert = await (prisma as any).managerAlert.findFirst({
+    const alert = await prisma.managerAlert.findFirst({
       where: { id, workspaceId },
     });
 
@@ -46,8 +45,7 @@ export async function PATCH(
     }
 
     // Update acknowledged status
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).managerAlert.update({
+    const updated = await prisma.managerAlert.update({
       where: { id },
       data: {
         acknowledged:
@@ -105,8 +103,7 @@ export async function DELETE(
     const forbidden = requireManagement(user);
     if (forbidden) return forbidden;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).managerAlert.deleteMany({
+    await prisma.managerAlert.deleteMany({
       where: { id, workspaceId },
     });
 

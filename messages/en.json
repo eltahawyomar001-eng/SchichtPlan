@@ -1373,7 +1373,12 @@
     "testEmailSending": "Sending…",
     "testEmailSent": "Test email sent",
     "testEmailFailed": "Test email failed",
-    "fetchError": "Could not load settings. Please try again later."
+    "fetchError": "Could not load settings. Please try again later.",
+    "emailNotConfigured": "Email service not configured",
+    "emailNotConfiguredDesc": "The email provider (Resend) is not set up. Email notifications are currently unavailable. Please set the RESEND_API_KEY environment variable.",
+    "pushNotConfigured": "Push notifications not configured",
+    "pushNotConfiguredDesc": "The VAPID keys for push notifications are missing. Push notifications are currently unavailable.",
+    "serviceStatus": "Service Status"
   },
   "automations": {
     "title": "Automations",
@@ -2177,7 +2182,9 @@
     "hideDetails": "Hide Details",
     "allEmployees": "All Employees",
     "atRiskOnly": "At Risk Only",
-    "export": "Export"
+    "export": "Export",
+    "disclaimerTitle": "Legal Notice — BetrVG §87",
+    "disclaimerText": "The wellness scores shown here are statistical estimates based on shift patterns. They do not replace an occupational health assessment. Under BetrVG §87(1) No. 6, the introduction of technical systems that can monitor employee behavior or performance is subject to works council co-determination. Ensure the works council has been properly consulted before using this feature."
   },
   "autoFill": {
     "title": "Auto Replacement",

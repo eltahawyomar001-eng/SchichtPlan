@@ -197,8 +197,98 @@ export default function DatenschutzPage() {
             </h2>
             <p>
               Ihre Daten werden so lange gespeichert, wie Ihr Benutzerkonto
-              aktiv ist und zur Bereitstellung des Dienstes benötigt wird.
+              aktiv ist und zur Bereitstellung des Dienstes benötigt wird. Gemäß
+              Art.&nbsp;5 Abs.&nbsp;1 lit.&nbsp;e DSGVO (Speicherbegrenzung)
+              haben wir ein automatisiertes Löschkonzept implementiert, das
+              personenbezogene Daten nach Ablauf der jeweiligen
+              Aufbewahrungsfrist unwiderruflich löscht.
             </p>
+
+            <h3 className="text-base font-medium text-gray-800 mt-4 mb-2">
+              Automatische Datenbereinigung
+            </h3>
+            <p>
+              Die folgende Übersicht zeigt die konkreten Aufbewahrungsfristen je
+              Datentyp. Die automatische Bereinigung erfolgt wöchentlich
+              (sonntags, 04:30 UTC) über einen Cron-Job:
+            </p>
+
+            <div className="overflow-x-auto mt-3">
+              <table className="min-w-full text-sm border border-gray-200 rounded-lg">
+                <thead>
+                  <tr className="bg-emerald-600 text-white">
+                    <th className="text-left px-3 py-2 font-semibold">
+                      Datentyp
+                    </th>
+                    <th className="text-left px-3 py-2 font-semibold">
+                      Aufbewahrung
+                    </th>
+                    <th className="text-left px-3 py-2 font-semibold">
+                      Rechtsgrundlage
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="px-3 py-1.5">Verifizierungs-Token</td>
+                    <td className="px-3 py-1.5">7 Tage</td>
+                    <td className="px-3 py-1.5">Keine gesetzl. Pflicht</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-1.5">Passwort-Reset-Token</td>
+                    <td className="px-3 py-1.5">7 Tage</td>
+                    <td className="px-3 py-1.5">Keine gesetzl. Pflicht</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-1.5">Sessions (abgelaufen)</td>
+                    <td className="px-3 py-1.5">30 Tage</td>
+                    <td className="px-3 py-1.5">Art. 6(1)(b) DSGVO</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-1.5">Einladungen (abgelaufen)</td>
+                    <td className="px-3 py-1.5">30 Tage</td>
+                    <td className="px-3 py-1.5">Keine gesetzl. Pflicht</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-1.5">
+                      Benachrichtigungen, Export-Jobs, AutoFill-Logs,
+                      Manager-Alerts
+                    </td>
+                    <td className="px-3 py-1.5">90 Tage</td>
+                    <td className="px-3 py-1.5">Keine gesetzl. Pflicht</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-1.5">
+                      Auto-Planungsläufe, Push-Abonnements
+                    </td>
+                    <td className="px-3 py-1.5">180 Tage</td>
+                    <td className="px-3 py-1.5">Keine gesetzl. Pflicht</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-1.5">
+                      Audit-Logs, Chat-Nachrichten
+                    </td>
+                    <td className="px-3 py-1.5">365 Tage</td>
+                    <td className="px-3 py-1.5">
+                      Art. 6(1)(f) — berecht. Interesse
+                    </td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-3 py-1.5">
+                      E-Signaturen, Besuchs-Audit-Logs, Arbeitszeitprüfung
+                    </td>
+                    <td className="px-3 py-1.5 font-semibold">10 Jahre</td>
+                    <td className="px-3 py-1.5">
+                      §&nbsp;147 AO, eIDAS-Verordnung
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-base font-medium text-gray-800 mt-4 mb-2">
+              Kontolöschung (Art.&nbsp;17 DSGVO)
+            </h3>
             <ul className="list-disc pl-5 space-y-1 mt-2">
               <li>
                 <strong>Kontodaten:</strong> Bis zur Löschung Ihres Kontos
@@ -206,8 +296,8 @@ export default function DatenschutzPage() {
               </li>
               <li>
                 <strong>Arbeitszeitdaten:</strong> Gemäß gesetzlicher
-                Aufbewahrungspflichten (§ 16 Abs. 2 ArbZG: 2 Jahre nach
-                Erfassung).
+                Aufbewahrungspflichten (§&nbsp;16 Abs.&nbsp;2 ArbZG: 2 Jahre
+                nach Erfassung; §&nbsp;147 AO: 10 Jahre für Lohnbuchhaltung).
               </li>
               <li>
                 <strong>Server-Logs:</strong> Automatische Löschung nach 30
@@ -215,9 +305,11 @@ export default function DatenschutzPage() {
               </li>
             </ul>
             <p className="mt-2">
-              Nach Löschung Ihres Kontos werden alle personenbezogenen Daten
-              innerhalb von 30 Tagen unwiderruflich gelöscht, sofern keine
-              gesetzlichen Aufbewahrungspflichten bestehen.
+              Der Workspace-Inhaber kann über die Einstellungen eine
+              vollständige und unwiderrufliche Löschung aller Workspace-Daten
+              auslösen (kaskadierendes Löschen aller zugehörigen Tabellen).
+              Sofern keine gesetzlichen Aufbewahrungspflichten bestehen, werden
+              alle personenbezogenen Daten sofort gelöscht.
             </p>
           </section>
 
@@ -336,6 +428,40 @@ export default function DatenschutzPage() {
                 Datenschutzerklärung von Sentry
               </a>
               .
+            </p>
+
+            <h3 className="text-base font-medium text-gray-800 mt-3 mb-1">
+              f) Upstash, Inc. — Rate Limiting (Redis)
+            </h3>
+            <p>
+              Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main,
+              AWS eu-central-1). Einsatz für IP-basiertes Rate Limiting zum
+              Schutz der API-Endpunkte. Es werden ausschließlich gehashte
+              IP-Adressen mit kurzlebigen Zählern gespeichert (TTL: 60
+              Sekunden). Keine personenbezogenen Inhalte. Transfergarantie:
+              EU-Standardvertragsklauseln (SCCs, Art. 46 Abs. 2 lit. c DSGVO).
+              Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes
+              Interesse an Sicherheit und Missbrauchsprävention).{" "}
+              <a
+                href="https://upstash.com/trust/privacy.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Datenschutzerklärung von Upstash
+              </a>
+              .
+            </p>
+
+            <h3 className="text-base font-medium text-gray-800 mt-3 mb-1">
+              g) Vercel Blob — Dateispeicher
+            </h3>
+            <p>
+              Teil der Vercel-Plattform (siehe oben). Speicherung von
+              nutzergeneriertem Datei-Upload (z.&nbsp;B. Profilbilder,
+              exportierte Berichte). Es gelten die gleichen Transfergarantien
+              und der Auftragsverarbeitungsvertrag wie unter a) Vercel
+              beschrieben. Die Daten werden auf EU-Servern gespeichert.
             </p>
           </section>
 

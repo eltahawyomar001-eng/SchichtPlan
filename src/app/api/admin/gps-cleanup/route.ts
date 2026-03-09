@@ -39,83 +39,18 @@ interface CleanupResult {
   total: number;
 }
 
-async function cleanupGpsData(retentionDays: number): Promise<CleanupResult> {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - retentionDays);
-
-  // 1. TimeEntry GPS (clockIn/clockOut)
-  const timeEntries = await prisma.timeEntry.updateMany({
-    where: {
-      date: { lt: cutoff },
-      OR: [
-        { clockInLat: { not: null } },
-        { clockInLng: { not: null } },
-        { clockOutLat: { not: null } },
-        { clockOutLng: { not: null } },
-      ],
-    },
-    data: {
-      clockInLat: null,
-      clockInLng: null,
-      clockOutLat: null,
-      clockOutLng: null,
-    },
-  });
-
-  // 2. ServiceVisit GPS (checkIn/checkOut)
-  const serviceVisits = await prisma.serviceVisit.updateMany({
-    where: {
-      scheduledDate: { lt: cutoff },
-      OR: [
-        { checkInLat: { not: null } },
-        { checkInLng: { not: null } },
-        { checkOutLat: { not: null } },
-        { checkOutLng: { not: null } },
-      ],
-    },
-    data: {
-      checkInLat: null,
-      checkInLng: null,
-      checkOutLat: null,
-      checkOutLng: null,
-    },
-  });
-
-  // 3. VisitSignature GPS (signedLat/Lng)
-  const visitSignatures = await prisma.visitSignature.updateMany({
-    where: {
-      signedAt: { lt: cutoff },
-      OR: [{ signedLat: { not: null } }, { signedLng: { not: null } }],
-    },
-    data: {
-      signedLat: null,
-      signedLng: null,
-    },
-  });
-
-  // 4. ServiceVisitAuditLog GPS (gpsLat/Lng)
-  const auditLogs = await prisma.serviceVisitAuditLog.updateMany({
-    where: {
-      serverTimestamp: { lt: cutoff },
-      OR: [{ gpsLat: { not: null } }, { gpsLng: { not: null } }],
-    },
-    data: {
-      gpsLat: null,
-      gpsLng: null,
-      gpsAccuracy: null,
-    },
-  });
-
+async function cleanupGpsData(_retentionDays: number): Promise<CleanupResult> {
+  // GPS collection is disabled — no coordinates are stored, nothing to clean up.
+  // This stub is kept so existing Vercel Cron and admin triggers continue to work
+  // without error. Re-enable the body when GPS collection is reactivated with
+  // proper legal basis (§ 87 BetrVG Betriebsvereinbarung).
+  log.info("[gps-cleanup] GPS_DISABLED — skipping cleanup");
   return {
-    timeEntries: timeEntries.count,
-    serviceVisits: serviceVisits.count,
-    visitSignatures: visitSignatures.count,
-    auditLogs: auditLogs.count,
-    total:
-      timeEntries.count +
-      serviceVisits.count +
-      visitSignatures.count +
-      auditLogs.count,
+    timeEntries: 0,
+    serviceVisits: 0,
+    visitSignatures: 0,
+    auditLogs: 0,
+    total: 0,
   };
 }
 

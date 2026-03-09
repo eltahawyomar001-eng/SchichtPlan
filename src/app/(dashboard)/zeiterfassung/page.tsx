@@ -1028,17 +1028,8 @@ export default function ZeiterfassungPage() {
                           </div>
                         )}
                         {entry.clockInLat != null &&
-                          entry.clockInLng != null && (
-                            <a
-                              href={`https://www.google.com/maps?q=${entry.clockInLat},${entry.clockInLng}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 transition-colors"
-                            >
-                              <MapPinIcon className="h-3 w-3" />
-                              GPS-Einstempelung
-                            </a>
-                          )}
+                          entry.clockInLng != null &&
+                          null}
                       </div>
                     );
                   })}
@@ -1137,18 +1128,8 @@ export default function ZeiterfassungPage() {
                                   </span>
                                 )}
                                 {entry.clockInLat != null &&
-                                  entry.clockInLng != null && (
-                                    <a
-                                      href={`https://www.google.com/maps?q=${entry.clockInLat},${entry.clockInLng}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 transition-colors"
-                                      title={`GPS: ${entry.clockInLat.toFixed(5)}, ${entry.clockInLng.toFixed(5)}`}
-                                    >
-                                      <MapPinIcon className="h-3 w-3" />
-                                      GPS-Einstempelung
-                                    </a>
-                                  )}
+                                  entry.clockInLng != null &&
+                                  null}
                                 {!entry.location &&
                                   entry.clockInLat == null &&
                                   "–"}

@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { checkInVisitSchema, validateBody } from "@/lib/validations";
-import { checkGeofence } from "@/lib/geofence";
 import { createAuditLog } from "@/lib/audit";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
@@ -35,19 +34,10 @@ export async function POST(
     const parsed = validateBody(checkInVisitSchema, body);
     if (!parsed.success) return parsed.response;
 
-    const { lat, lng, deviceId, clientTimestamp, gpsAccuracy } = parsed.data;
+    const { deviceId, clientTimestamp } = parsed.data;
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
-      include: {
-        location: {
-          select: {
-            latitude: true,
-            longitude: true,
-            geofenceRadius: true,
-          },
-        },
-      },
     });
 
     if (!visit) {
@@ -66,31 +56,14 @@ export async function POST(
       );
     }
 
-    // Geofence check
-    let withinFence = true;
-    if (visit.location.latitude && visit.location.longitude) {
-      const geo = checkGeofence(
-        lat,
-        lng,
-        visit.location.latitude,
-        visit.location.longitude,
-        visit.location.geofenceRadius,
-      );
-      withinFence = geo.withinFence;
-      log.info("[service-visits] Geofence check", {
-        visitId: id,
-        withinFence,
-        distanceMetres: Math.round(geo.distanceMetres),
-      });
-    }
+    // Geofence check skipped — GPS collection disabled
+    const withinFence = true;
 
     const updated = await prisma.serviceVisit.update({
       where: { id },
       data: {
         status: "EINGECHECKT",
         checkInAt: new Date(),
-        checkInLat: lat,
-        checkInLng: lng,
         checkInWithinFence: withinFence,
       },
       include: {
@@ -115,9 +88,9 @@ export async function POST(
       visitId: id,
       userId: user.id,
       workspaceId,
-      gpsLat: lat,
-      gpsLng: lng,
-      gpsAccuracy: gpsAccuracy ?? null,
+      gpsLat: null,
+      gpsLng: null,
+      gpsAccuracy: null,
       deviceId: deviceId ?? null,
       clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
       metadata: { withinFence, employeeId: visit.employeeId },

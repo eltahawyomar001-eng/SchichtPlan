@@ -194,19 +194,10 @@ export default function LeistungsnachweisSeite() {
   const handleCheckIn = async (visitId: string) => {
     setActing(visitId);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-        }),
-      );
       const res = await fetch(`/api/service-visits/${visitId}/check-in`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        }),
+        body: JSON.stringify({}),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -214,7 +205,7 @@ export default function LeistungsnachweisSeite() {
       }
       fetchVisits();
     } catch {
-      setError("GPS nicht verfügbar");
+      setError("Netzwerkfehler beim Check-in");
     } finally {
       setActing(null);
     }
@@ -223,19 +214,10 @@ export default function LeistungsnachweisSeite() {
   const handleCheckOut = async (visitId: string) => {
     setActing(visitId);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-        }),
-      );
       const res = await fetch(`/api/service-visits/${visitId}/check-out`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        }),
+        body: JSON.stringify({}),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -243,7 +225,7 @@ export default function LeistungsnachweisSeite() {
       }
       fetchVisits();
     } catch {
-      setError("GPS nicht verfügbar");
+      setError("Netzwerkfehler beim Check-out");
     } finally {
       setActing(null);
     }

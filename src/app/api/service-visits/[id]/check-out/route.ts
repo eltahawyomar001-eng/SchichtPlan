@@ -34,8 +34,7 @@ export async function POST(
     const parsed = validateBody(checkOutVisitSchema, body);
     if (!parsed.success) return parsed.response;
 
-    const { lat, lng, notes, deviceId, clientTimestamp, gpsAccuracy } =
-      parsed.data;
+    const { notes, deviceId, clientTimestamp } = parsed.data;
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
@@ -64,8 +63,6 @@ export async function POST(
 
     const data: Record<string, unknown> = {
       checkOutAt: new Date(),
-      checkOutLat: lat,
-      checkOutLng: lng,
     };
 
     if (newStatus === "ABGESCHLOSSEN") {
@@ -104,9 +101,9 @@ export async function POST(
       visitId: id,
       userId: user.id,
       workspaceId,
-      gpsLat: lat,
-      gpsLng: lng,
-      gpsAccuracy: gpsAccuracy ?? null,
+      gpsLat: null,
+      gpsLng: null,
+      gpsAccuracy: null,
       deviceId: deviceId ?? null,
       clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
       metadata: {

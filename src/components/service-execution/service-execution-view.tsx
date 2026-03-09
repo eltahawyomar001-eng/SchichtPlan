@@ -13,7 +13,6 @@ import {
   ChevronLeftIcon,
   DownloadIcon,
 } from "@/components/icons";
-import { useServiceGps, type GpsStatus } from "@/lib/hooks/use-service-gps";
 import { useOfflineVisits } from "@/lib/hooks/use-offline-visits";
 import { SignatureDrawer } from "./signature-drawer";
 
@@ -68,8 +67,6 @@ interface CompletionAuditData {
   signerName: string;
   signerRole: string;
   signedAt: Date;
-  gpsLat: number | null;
-  gpsLng: number | null;
 }
 
 // ─── Default task IDs (labels come from i18n) ──────────────────
@@ -80,66 +77,6 @@ const DEFAULT_TASK_IDS = [
   "service",
   "documentation",
 ] as const;
-
-// ─── GPS Status Indicator ───────────────────────────────────────
-
-function GpsIndicator({
-  status,
-  distance,
-  t,
-}: {
-  status: GpsStatus;
-  distance: number | null;
-  t: ReturnType<typeof useTranslations<"serviceProof">>;
-}) {
-  const isVerified = status === "verified";
-  const isAcquiring = status === "acquiring";
-  const isOutOfRange = status === "out-of-range";
-
-  return (
-    <div className="flex items-center gap-2">
-      {/* Pulsing / static dot */}
-      <div className="relative flex items-center justify-center">
-        <div
-          className={cn(
-            "h-3 w-3 rounded-full",
-            isVerified && "bg-emerald-500",
-            isAcquiring && "bg-amber-400",
-            isOutOfRange && "bg-red-500",
-            status === "error" && "bg-red-500",
-            status === "idle" && "bg-gray-400",
-          )}
-        />
-        {/* Pulsing ring for verified state */}
-        {isVerified && (
-          <div className="absolute inset-0 h-3 w-3 animate-ping rounded-full bg-emerald-400 opacity-75" />
-        )}
-        {/* Pulsing ring for acquiring */}
-        {isAcquiring && (
-          <div className="absolute inset-0 h-3 w-3 animate-ping rounded-full bg-amber-300 opacity-75" />
-        )}
-      </div>
-
-      {/* Status text */}
-      <span
-        className={cn(
-          "text-xs font-medium",
-          isVerified && "text-emerald-700",
-          isAcquiring && "text-amber-600",
-          isOutOfRange && "text-red-600",
-          status === "error" && "text-red-600",
-        )}
-      >
-        {isVerified && t("execution.gps.verified")}
-        {isAcquiring && t("execution.gps.acquiring")}
-        {isOutOfRange &&
-          t("execution.gps.outOfRange", { distance: distance ?? "?" })}
-        {status === "error" && t("execution.gps.error")}
-        {status === "idle" && t("execution.gps.inactive")}
-      </span>
-    </div>
-  );
-}
 
 // ─── Step Indicator ─────────────────────────────────────────────
 
@@ -209,24 +146,6 @@ function StepIndicator({
   );
 }
 
-// ─── GPS Coordinate Formatter (DMS) ─────────────────────────────
-
-function formatDMS(decimal: number, isLat: boolean): string {
-  const absolute = Math.abs(decimal);
-  const degrees = Math.floor(absolute);
-  const minutesDecimal = (absolute - degrees) * 60;
-  const minutes = Math.floor(minutesDecimal);
-  const seconds = ((minutesDecimal - minutes) * 60).toFixed(1);
-  const direction = isLat
-    ? decimal >= 0
-      ? "N"
-      : "S"
-    : decimal >= 0
-      ? "E"
-      : "W";
-  return `${degrees}° ${minutes}′ ${seconds}″ ${direction}`;
-}
-
 // ─── Main Component ─────────────────────────────────────────────
 
 export function ServiceExecutionView({
@@ -268,25 +187,10 @@ export function ServiceExecutionView({
           signerName: visit.signature.signerName,
           signerRole: visit.signature.signerRole ?? "",
           signedAt: new Date(visit.signature.signedAt),
-          gpsLat: visit.signature.signedLat,
-          gpsLng: visit.signature.signedLng,
         };
       }
       return null;
     });
-
-  // GPS tracking
-  const {
-    position,
-    status: gpsStatus,
-    isWithinGeofence,
-    distanceMetres,
-    errorMessage: gpsError,
-  } = useServiceGps({
-    fenceLat: visit.location.latitude,
-    fenceLng: visit.location.longitude,
-    enabled: currentStep <= 2,
-  });
 
   // Offline support
   const { isOnline, executeAction, pendingCount } = useOfflineVisits();
@@ -297,19 +201,11 @@ export function ServiceExecutionView({
   // ────────── Handlers ──────────
 
   const handleCheckIn = useCallback(async () => {
-    if (!position) {
-      setError(t("execution.gps.positionAcquiring"));
-      return;
-    }
-
     setIsCheckingIn(true);
     setError(null);
 
     try {
-      const result = await executeAction("CHECK_IN", visit.id, {
-        lat: position.lat,
-        lng: position.lng,
-      });
+      const result = await executeAction("CHECK_IN", visit.id, {});
 
       if (result.queued) {
         // Offline — proceed optimistically
@@ -324,7 +220,7 @@ export function ServiceExecutionView({
     } finally {
       setIsCheckingIn(false);
     }
-  }, [position, executeAction, visit.id]);
+  }, [executeAction, visit.id, t]);
 
   const toggleTask = useCallback((taskId: string) => {
     setTasks((prev) =>
@@ -352,8 +248,6 @@ export function ServiceExecutionView({
           signatureData: data.signatureData,
           signerName: data.signerName,
           signerRole: data.signerRole || undefined,
-          lat: position?.lat,
-          lng: position?.lng,
         });
 
         if (result.queued) {
@@ -366,17 +260,12 @@ export function ServiceExecutionView({
           signerName: data.signerName,
           signerRole: data.signerRole,
           signedAt: new Date(),
-          gpsLat: position?.lat ?? null,
-          gpsLng: position?.lng ?? null,
         });
 
         setShowSignature(false);
 
         // Now check out
-        const checkOutResult = await executeAction("CHECK_OUT", visit.id, {
-          lat: position?.lat,
-          lng: position?.lng,
-        });
+        const checkOutResult = await executeAction("CHECK_OUT", visit.id, {});
 
         if (checkOutResult.queued) {
           // Offline
@@ -392,7 +281,7 @@ export function ServiceExecutionView({
         );
       }
     },
-    [executeAction, visit.id, position, onComplete],
+    [executeAction, visit.id, onComplete, t],
   );
 
   const handleDownloadPdf = useCallback(async () => {
@@ -449,8 +338,7 @@ export function ServiceExecutionView({
           </div>
 
           {/* GPS status + employee */}
-          <div className="flex items-center justify-between">
-            <GpsIndicator status={gpsStatus} distance={distanceMetres} t={t} />
+          <div className="flex items-center justify-end">
             <span className="text-xs text-gray-500">
               {visit.employee.firstName} {visit.employee.lastName}
             </span>
@@ -469,10 +357,10 @@ export function ServiceExecutionView({
         }}
       >
         {/* Error banner */}
-        {(error || gpsError) && (
+        {error && (
           <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-red-200 bg-white p-3">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-            <p className="text-sm text-red-700">{error || gpsError}</p>
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
@@ -525,43 +413,18 @@ export function ServiceExecutionView({
               <p className="mt-1 text-xs text-gray-500">
                 {t("execution.step1.cardDescription")}
               </p>
-
-              {/* Distance info */}
-              {distanceMetres !== null && (
-                <div className="mt-3 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
-                  <MapPinIcon className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">
-                    {t("execution.step1.distance")}:{" "}
-                    <span className="font-semibold">{distanceMetres}m</span>
-                  </span>
-                </div>
-              )}
             </div>
 
             <Button
               onClick={handleCheckIn}
-              disabled={
-                isCheckingIn ||
-                gpsStatus === "acquiring" ||
-                gpsStatus === "error" ||
-                (!isWithinGeofence && gpsStatus !== "idle")
-              }
-              className={cn(
-                "w-full !h-14 text-base font-bold",
-                !isWithinGeofence && gpsStatus === "out-of-range"
-                  ? "opacity-50"
-                  : "",
-              )}
+              disabled={isCheckingIn}
+              className="w-full !h-14 text-base font-bold"
             >
               {isCheckingIn ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   {t("execution.step1.checkingIn")}
                 </span>
-              ) : gpsStatus === "acquiring" ? (
-                t("execution.step1.gpsAcquiring")
-              ) : !isWithinGeofence && gpsStatus === "out-of-range" ? (
-                t("execution.step1.outsideGeofence")
               ) : (
                 <span className="flex items-center gap-2">
                   <MapPinIcon className="h-5 w-5" />
@@ -569,32 +432,6 @@ export function ServiceExecutionView({
                 </span>
               )}
             </Button>
-
-            {/* Geofence Hard-Lock Warning */}
-            {!isWithinGeofence &&
-              gpsStatus === "out-of-range" &&
-              distanceMetres !== null && (
-                <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100">
-                      <AlertTriangleIcon className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-red-800">
-                        {t("execution.step1.geofenceLocked")}
-                      </p>
-                      <p className="mt-0.5 text-xs text-red-600">
-                        {t("execution.step1.distanceToObject", {
-                          distance: distanceMetres,
-                        })}
-                      </p>
-                      <p className="mt-1 text-xs text-red-500">
-                        {t("execution.step1.outsideRadius")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
           </div>
         )}
 
@@ -827,24 +664,6 @@ export function ServiceExecutionView({
                       </span>
                     </div>
 
-                    {/* GPS Coordinates */}
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
-                        {t("execution.step4.gpsCoordinates")}
-                      </span>
-                      <div className="text-right font-mono text-xs font-semibold text-white leading-snug">
-                        {completionData.gpsLat !== null &&
-                        completionData.gpsLng !== null ? (
-                          <>
-                            <div>{formatDMS(completionData.gpsLat, true)}</div>
-                            <div>{formatDMS(completionData.gpsLng, false)}</div>
-                          </>
-                        ) : (
-                          <span className="text-white/40">—</span>
-                        )}
-                      </div>
-                    </div>
-
                     {/* Location */}
                     <div className="flex items-start justify-between gap-3">
                       <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-white/50">
@@ -945,7 +764,6 @@ export function ServiceExecutionView({
         onClose={() => setShowSignature(false)}
         onSubmit={handleSignatureSubmit}
         isOnline={isOnline}
-        isWithinGeofence={isWithinGeofence}
       />
     </div>
   );

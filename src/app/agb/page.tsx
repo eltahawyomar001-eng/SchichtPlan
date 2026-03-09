@@ -197,12 +197,12 @@ export default function AGBPage() {
             </p>
             <p className="mt-2">
               <strong>Betriebsverfassungsrecht (BetrVG § 87):</strong> Der
-              Einsatz von Shiftfy zur elektronischen Zeiterfassung, GPS-Ortung
-              und Leistungskontrolle kann der Mitbestimmung des Betriebsrats
-              gemäß § 87 Abs.&nbsp;1 Nr.&nbsp;6 BetrVG unterliegen. Der Nutzer
-              ist als Arbeitgeber allein verantwortlich dafür, vor dem Einsatz
-              von Shiftfy die erforderlichen Betriebsvereinbarungen einzuholen
-              und etwaige Mitbestimmungsrechte des Betriebsrats zu wahren. Der
+              Einsatz von Shiftfy zur elektronischen Zeiterfassung und
+              Leistungskontrolle kann der Mitbestimmung des Betriebsrats gemäß §
+              87 Abs.&nbsp;1 Nr.&nbsp;6 BetrVG unterliegen. Der Nutzer ist als
+              Arbeitgeber allein verantwortlich dafür, vor dem Einsatz von
+              Shiftfy die erforderlichen Betriebsvereinbarungen einzuholen und
+              etwaige Mitbestimmungsrechte des Betriebsrats zu wahren. Der
               Anbieter übernimmt hierfür keine Haftung.
             </p>
           </section>

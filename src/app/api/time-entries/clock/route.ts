@@ -8,9 +8,9 @@ import { log } from "@/lib/logger";
 
 /**
  * POST /api/time-entries/clock
- * Live punch-clock: clock-in, clock-out, break-start, break-end with optional GPS.
+ * Live punch-clock: clock-in, clock-out, break-start, break-end.
  *
- * Body: { action: "in" | "out" | "break-start" | "break-end", lat?: number, lng?: number }
+ * Body: { action: "in" | "out" | "break-start" | "break-end" }
  */
 export async function POST(req: Request) {
   try {
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { action, lat, lng, timezone } = await req.json();
+    const { action, timezone } = await req.json();
     const now = new Date();
     const tz = timezone || "Europe/Berlin";
     const timeStr = now.toLocaleTimeString("de-DE", {
@@ -64,8 +64,6 @@ export async function POST(req: Request) {
           endTime: timeStr,
           isLiveClock: true,
           clockInAt: now,
-          clockInLat: lat ?? null,
-          clockInLng: lng ?? null,
           employeeId,
           workspaceId,
           status: "ENTWURF",
@@ -161,8 +159,6 @@ export async function POST(req: Request) {
         data: {
           endTime: timeStr,
           clockOutAt: now,
-          clockOutLat: lat ?? null,
-          clockOutLng: lng ?? null,
           breakEnd,
           breakMinutes: legalBreak,
           grossMinutes,

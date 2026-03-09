@@ -170,15 +170,8 @@ export default function DatenschutzPage() {
                 (durch Arbeitgeber/Manager angelegt)
               </li>
               <li>
-                GPS-/Standortdaten: Bei Nutzung der Stempeluhr und des
-                Leistungsnachweises werden GPS-Koordinaten beim Check-in,
-                Check-out und bei der Unterschrift erfasst (Art. 6 Abs. 1 lit. b
-                DSGVO — Vertragserfüllung). Die Erfassung dient dem Nachweis der
-                Leistungserbringung und der Geofence-Prüfung.
-              </li>
-              <li>
                 Digitale Unterschriften: Base64-codierte Signaturbilder,
-                kryptographisch mit GPS, Zeitstempel und Besuchs-ID verknüpft
+                kryptographisch mit Zeitstempel und Besuchs-ID verknüpft
                 (SHA-256-Hash)
               </li>
               <li>
@@ -215,13 +208,6 @@ export default function DatenschutzPage() {
                 <strong>Arbeitszeitdaten:</strong> Gemäß gesetzlicher
                 Aufbewahrungspflichten (§ 16 Abs. 2 ArbZG: 2 Jahre nach
                 Erfassung).
-              </li>
-              <li>
-                <strong>GPS-/Standortdaten:</strong> Automatische Anonymisierung
-                (Nullifizierung) nach <strong>90 Tagen</strong>. Betrifft:
-                Zeiterfassungs-GPS, Leistungsnachweis-Check-in/Check-out,
-                Unterschriften-Koordinaten und Audit-Log-GPS. Die Anonymisierung
-                erfolgt wöchentlich automatisch per Cron-Job.
               </li>
               <li>
                 <strong>Server-Logs:</strong> Automatische Löschung nach 30

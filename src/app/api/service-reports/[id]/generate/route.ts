@@ -207,11 +207,7 @@ export async function POST(
       doc.text(`Adresse: ${group.locationAddress}`, 14, 26);
 
       if (group.locationLat && group.locationLng) {
-        doc.text(
-          `GPS: ${group.locationLat.toFixed(6)}, ${group.locationLng.toFixed(6)}`,
-          14,
-          32,
-        );
+        // location coordinates are admin-set office coordinates (not employee GPS)
       }
 
       doc.setDrawColor(5, 150, 105);
@@ -281,53 +277,8 @@ export async function POST(
         },
       });
 
-      // ── GPS Proof Section ──
-      let currentY = doc.lastAutoTable?.finalY ?? 120;
-      const gpsProofVisits = group.visits.filter(
-        (v: any) => v.checkInLat && v.checkInLng && v.checkInAt,
-      );
-
-      if (gpsProofVisits.length > 0) {
-        currentY += 8;
-        if (currentY > 260) {
-          doc.addPage();
-          currentY = 18;
-        }
-
-        doc.setFontSize(10);
-        doc.text("GPS-Nachweis (Check-in Koordinaten)", 14, currentY);
-        currentY += 5;
-
-        const gpsRows: string[][] = [];
-        for (const visit of gpsProofVisits) {
-          const date = new Date(visit.scheduledDate).toLocaleDateString(
-            "de-DE",
-          );
-          const checkInTime = new Date(visit.checkInAt!).toLocaleTimeString(
-            "de-DE",
-            { hour: "2-digit", minute: "2-digit", second: "2-digit" },
-          );
-          gpsRows.push([
-            date,
-            checkInTime,
-            visit.checkInLat?.toFixed(6) ?? "-",
-            visit.checkInLng?.toFixed(6) ?? "-",
-            visit.checkInWithinFence ? "Innerhalb" : "Außerhalb",
-          ]);
-        }
-
-        autoTable(doc, {
-          head: [["Datum", "Uhrzeit", "Breitengrad", "Längengrad", "Geofence"]],
-          body: gpsRows,
-          startY: currentY,
-          styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [80, 80, 80] },
-        });
-
-        currentY = doc.lastAutoTable?.finalY ?? currentY + 20;
-      }
-
       // ── Signature Section ──
+      let currentY = doc.lastAutoTable?.finalY ?? 120;
       const signedVisits = group.visits.filter((v: any) => v.signature);
 
       if (signedVisits.length > 0) {
@@ -389,7 +340,7 @@ export async function POST(
             ? sig.signatureHash.slice(0, 16) + "…"
             : "-";
           doc.text(
-            `Signiert: ${signedAt}  |  GPS: ${sig.signedLat?.toFixed(4) ?? "-"}, ${sig.signedLng?.toFixed(4) ?? "-"}  |  Hash: ${hashPreview}`,
+            `Signiert: ${signedAt}  |  Hash: ${hashPreview}`,
             14,
             currentY,
           );

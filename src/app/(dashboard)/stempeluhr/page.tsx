@@ -77,9 +77,6 @@ export default function StempeluhrSeite() {
   const [elapsed, setElapsed] = useState("");
   const [error, setError] = useState("");
   const [noProfile, setNoProfile] = useState(false);
-  const [gpsStatus, setGpsStatus] = useState<"unknown" | "granted" | "denied">(
-    "unknown",
-  );
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
 
   // ── Team state (management only) ──
@@ -158,16 +155,7 @@ export default function StempeluhrSeite() {
   }, [fetchTeam, isManager]);
 
   // ── Check GPS permission ──
-  useEffect(() => {
-    if ("permissions" in navigator) {
-      navigator.permissions
-        .query({ name: "geolocation" })
-        .then((result) => {
-          setGpsStatus(result.state === "denied" ? "denied" : "granted");
-        })
-        .catch(() => setGpsStatus("unknown"));
-    }
-  }, []);
+  // GPS collection disabled — removed for legal compliance (§87 BetrVG)
 
   // ── Live timer ──
   useEffect(() => {
@@ -201,33 +189,11 @@ export default function StempeluhrSeite() {
     setActing(true);
     setError("");
     try {
-      // Try GPS for clock-in / clock-out
-      let lat: number | undefined;
-      let lng: number | undefined;
-      if (action === "in" || action === "out") {
-        try {
-          const pos = await new Promise<GeolocationPosition>(
-            (resolve, reject) =>
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 5000,
-                enableHighAccuracy: true,
-              }),
-          );
-          lat = pos.coords.latitude;
-          lng = pos.coords.longitude;
-          setGpsStatus("granted");
-        } catch {
-          // GPS not available — continue without
-        }
-      }
-
       const res = await fetch("/api/time-entries/clock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
-          lat,
-          lng,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
@@ -539,11 +505,7 @@ export default function StempeluhrSeite() {
                 )}
               </div>
 
-              {/* GPS indicator */}
-              <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                <MapPinIcon className="h-3.5 w-3.5" />
-                {gpsStatus === "denied" ? t("gpsDenied") : t("gpsNote")}
-              </div>
+              {/* GPS indicator removed — collection disabled */}
             </div>
           </div>
 
@@ -702,18 +664,6 @@ export default function StempeluhrSeite() {
                                 {m.active?.startTime &&
                                   ` · ${t("since")} ${m.active.startTime}`}
                               </span>
-                              {m.active?.clockInLat != null &&
-                                m.active?.clockInLng != null && (
-                                  <a
-                                    href={`https://www.google.com/maps?q=${m.active.clockInLat},${m.active.clockInLng}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-emerald-600 hover:text-emerald-700 transition-colors"
-                                    title={`GPS: ${m.active.clockInLat.toFixed(4)}, ${m.active.clockInLng.toFixed(4)}`}
-                                  >
-                                    <MapPinIcon className="h-3 w-3" />
-                                  </a>
-                                )}
                             </div>
                           </div>
 

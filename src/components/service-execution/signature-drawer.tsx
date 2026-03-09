@@ -21,7 +21,6 @@ interface SignatureDrawerProps {
     signerRole: string;
   }) => Promise<void>;
   isOnline: boolean;
-  isWithinGeofence: boolean;
 }
 
 // ─── Signer role keys (labels come from i18n) ───────────────────
@@ -71,7 +70,6 @@ export function SignatureDrawer({
   onClose,
   onSubmit,
   isOnline,
-  isWithinGeofence,
 }: SignatureDrawerProps) {
   const t = useTranslations("serviceProof");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -272,10 +270,7 @@ export function SignatureDrawer({
     return () => window.removeEventListener("keydown", handler);
   }, [open, isSubmitting]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const canSubmit =
-    hasContent &&
-    signerName.trim().length > 0 &&
-    (isWithinGeofence || !isOnline);
+  const canSubmit = hasContent && signerName.trim().length > 0;
 
   return (
     <AnimatePresence>

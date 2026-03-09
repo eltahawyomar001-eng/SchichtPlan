@@ -107,7 +107,6 @@ export async function GET() {
             startDate: true,
             endDate: true,
             totalDays: true,
-            reason: true,
             status: true,
             createdAt: true,
           },

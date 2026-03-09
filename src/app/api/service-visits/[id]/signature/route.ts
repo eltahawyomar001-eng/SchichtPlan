@@ -49,11 +49,8 @@ export async function POST(
       signatureData: rawSignatureData,
       signerName,
       signerRole,
-      lat,
-      lng,
       deviceId,
       clientTimestamp,
-      gpsAccuracy,
     } = parsed.data;
 
     // Compress signature: PNG → WebP (quality 0.6) to minimize storage costs
@@ -97,13 +94,9 @@ export async function POST(
 
     // Create tamper-proof hash: SHA-256 of visitId + signerName + lat + lng + timestamp
     const signedAt = new Date();
-    const hashInput = [
-      id,
-      signerName,
-      lat ?? "",
-      lng ?? "",
-      signedAt.toISOString(),
-    ].join("|");
+    const hashInput = [id, signerName, "", "", signedAt.toISOString()].join(
+      "|",
+    );
     const signatureHash = crypto
       .createHash("sha256")
       .update(hashInput)
@@ -118,8 +111,8 @@ export async function POST(
           signerName,
           signerRole: signerRole || null,
           signedAt,
-          signedLat: lat ?? null,
-          signedLng: lng ?? null,
+          signedLat: null,
+          signedLng: null,
           visitId: id,
         },
       }),
@@ -153,9 +146,9 @@ export async function POST(
       visitId: id,
       userId: user.id,
       workspaceId,
-      gpsLat: lat ?? null,
-      gpsLng: lng ?? null,
-      gpsAccuracy: gpsAccuracy ?? null,
+      gpsLat: null,
+      gpsLng: null,
+      gpsAccuracy: null,
       deviceId: deviceId ?? null,
       clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
       signatureData, // base64 PNG stored in audit trail for Revisionssicherheit

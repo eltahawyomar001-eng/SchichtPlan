@@ -15,7 +15,6 @@ import {
   MenuIcon,
   XIcon,
   DownloadIcon,
-  MapPinIcon,
   SwapIcon,
   TemplateIcon,
   AwardIcon,
@@ -1045,7 +1044,7 @@ function BenefitsSection() {
       highlight: true,
     },
     {
-      icon: MapPinIcon,
+      icon: CheckCircleIcon,
       title: t("benefit2Title"),
       desc: t("benefit2Desc"),
     },

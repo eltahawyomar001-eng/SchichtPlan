@@ -20,7 +20,6 @@ import {
   SearchIcon,
   CheckCircleIcon,
   ClockIcon,
-  AlertTriangleIcon,
   PlayIcon,
   EyeIcon,
 } from "@/components/icons";
@@ -43,8 +42,6 @@ interface Location {
   id: string;
   name: string;
   address: string | null;
-  latitude: number | null;
-  longitude: number | null;
 }
 
 interface VisitSignature {
@@ -53,8 +50,6 @@ interface VisitSignature {
   signerRole: string | null;
   signatureData: string;
   signedAt: string;
-  signedLat: number | null;
-  signedLng: number | null;
   signatureHash: string;
 }
 
@@ -64,7 +59,6 @@ interface ServiceVisit {
   scheduledDate: string;
   checkInAt: string | null;
   checkOutAt: string | null;
-  checkInWithinFence: boolean | null;
   notes: string | null;
   employee: Employee;
   location: Location;
@@ -533,12 +527,6 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <Badge className={cfg.color}>{cfg.label}</Badge>
-              {visit.checkInWithinFence === false && (
-                <Badge className="bg-red-100 text-red-700">
-                  <AlertTriangleIcon className="mr-1 h-3 w-3" />
-                  {t("outsideFence")}
-                </Badge>
-              )}
             </div>
             <p className="text-sm font-medium text-gray-900">
               {visit.employee.firstName} {visit.employee.lastName}

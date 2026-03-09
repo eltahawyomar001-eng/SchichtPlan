@@ -63,8 +63,6 @@ export async function POST(
                 id: true,
                 name: true,
                 address: true,
-                latitude: true,
-                longitude: true,
               },
             },
             signature: true,
@@ -91,8 +89,6 @@ export async function POST(
       {
         locationName: string;
         locationAddress: string;
-        locationLat: number | null;
-        locationLng: number | null;
         visits: typeof report.visits;
       }
     >();
@@ -103,8 +99,6 @@ export async function POST(
         visitsByLocation.set(locId, {
           locationName: visit.location?.name ?? "Unbekannt",
           locationAddress: visit.location?.address ?? "",
-          locationLat: visit.location?.latitude ?? null,
-          locationLng: visit.location?.longitude ?? null,
           visits: [],
         });
       }
@@ -206,10 +200,6 @@ export async function POST(
       doc.setFontSize(9);
       doc.text(`Adresse: ${group.locationAddress}`, 14, 26);
 
-      if (group.locationLat && group.locationLng) {
-        // location coordinates are admin-set office coordinates (not employee GPS)
-      }
-
       doc.setDrawColor(5, 150, 105);
       doc.setLineWidth(0.3);
       doc.line(14, 35, pageWidth - 14, 35);
@@ -236,7 +226,6 @@ export async function POST(
           : "-";
         const duration = computeDuration(visit.checkInAt, visit.checkOutAt);
         const signed = visit.signature ? "✓" : "-";
-        const fence = visit.checkInWithinFence ? "✓" : "✗";
 
         rows.push([
           date,
@@ -244,7 +233,6 @@ export async function POST(
           checkIn,
           checkOut,
           duration,
-          fence,
           signed,
           status,
         ]);
@@ -258,7 +246,6 @@ export async function POST(
             "Check-in",
             "Check-out",
             "Dauer",
-            "Geofence",
             "Signiert",
             "Status",
           ],
@@ -271,9 +258,8 @@ export async function POST(
           0: { cellWidth: 22 },
           1: { cellWidth: 32 },
           4: { cellWidth: 18 },
-          5: { cellWidth: 18, halign: "center" },
-          6: { cellWidth: 16, halign: "center" },
-          7: { cellWidth: 24 },
+          5: { cellWidth: 16, halign: "center" },
+          6: { cellWidth: 24 },
         },
       });
 

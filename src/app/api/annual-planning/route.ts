@@ -72,7 +72,6 @@ export async function GET(req: Request) {
             halfDayEnd: true,
             totalDays: true,
             status: true,
-            reason: true,
           },
           orderBy: { startDate: "asc" },
         },

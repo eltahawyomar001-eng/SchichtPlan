@@ -438,17 +438,7 @@
       "category": "Category",
       "startDate": "Start date",
       "endDate": "End date",
-      "reason": "Remarks (optional)",
-      "reasonPlaceholder": "Reason or notes…",
-      "submit": "Submit request",
-      "document": "Attach document",
-      "documentHint": "PDF, JPEG, or PNG — max 10 MB",
-      "documentHintKrank": "Certificate of incapacity for work (AU) per §5 EntgFG",
-      "uploading": "Uploading…",
-      "uploadError": "File could not be uploaded. Please try again.",
-      "uploadSuccess": "Document uploaded",
-      "removeDocument": "Remove document",
-      "viewDocument": "View document"
+      "submit": "Submit request"
     }
   },
   "availability": {

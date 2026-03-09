@@ -56,15 +56,11 @@ export async function POST(
       );
     }
 
-    // Geofence check skipped — GPS collection disabled
-    const withinFence = true;
-
     const updated = await prisma.serviceVisit.update({
       where: { id },
       data: {
         status: "EINGECHECKT",
         checkInAt: new Date(),
-        checkInWithinFence: withinFence,
       },
       include: {
         employee: { select: { id: true, firstName: true, lastName: true } },
@@ -79,7 +75,7 @@ export async function POST(
       userId: user.id,
       userEmail: user.email,
       workspaceId,
-      metadata: { action: "check-in", withinFence },
+      metadata: { action: "check-in" },
     });
 
     // Revisionssicher audit trail entry
@@ -88,17 +84,13 @@ export async function POST(
       visitId: id,
       userId: user.id,
       workspaceId,
-      gpsLat: null,
-      gpsLng: null,
-      gpsAccuracy: null,
       deviceId: deviceId ?? null,
       clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
-      metadata: { withinFence, employeeId: visit.employeeId },
+      metadata: { employeeId: visit.employeeId },
     });
 
     log.info("[service-visits] Check-in completed", {
       visitId: id,
-      withinFence,
     });
 
     return NextResponse.json(updated);

@@ -101,9 +101,6 @@ export async function POST(
       visitId: id,
       userId: user.id,
       workspaceId,
-      gpsLat: null,
-      gpsLng: null,
-      gpsAccuracy: null,
       deviceId: deviceId ?? null,
       clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
       metadata: {

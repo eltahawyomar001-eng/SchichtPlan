@@ -17,10 +17,6 @@ interface VisitAuditParams {
   visitId: string;
   userId?: string;
   workspaceId: string;
-  /** GPS at time of event */
-  gpsLat?: number | null;
-  gpsLng?: number | null;
-  gpsAccuracy?: number | null;
   /** Client-side device UUID (localStorage) */
   deviceId?: string | null;
   /** Client-reported timestamp for drift detection */
@@ -34,48 +30,36 @@ interface VisitAuditParams {
 }
 
 interface RequestFingerprint {
-  ipAddress: string | null;
   userAgent: string | null;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────
 
 /**
- * Extracts IP address and user-agent from an incoming Request.
- * Works behind Vercel / Cloudflare / nginx proxies.
+ * Extracts user-agent from an incoming Request for audit logging.
  */
 export function extractFingerprint(req: Request): RequestFingerprint {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const realIp = req.headers.get("x-real-ip");
-  const ipAddress = forwarded
-    ? forwarded.split(",")[0].trim()
-    : (realIp ?? null);
-
   const userAgent = req.headers.get("user-agent") ?? null;
 
-  return { ipAddress, userAgent };
+  return { userAgent };
 }
 
 /**
  * Computes a SHA-256 tamper-evident checksum for a visit audit entry.
  *
- * Input:  eventType|visitId|serverTimestamp|gpsLat|gpsLng|deviceId
+ * Input:  eventType|visitId|serverTimestamp|deviceId
  * Output: hex digest
  */
 function computeChecksum(
   eventType: string,
   visitId: string,
   serverTimestamp: Date,
-  gpsLat?: number | null,
-  gpsLng?: number | null,
   deviceId?: string | null,
 ): string {
   const parts = [
     eventType,
     visitId,
     serverTimestamp.toISOString(),
-    gpsLat?.toString() ?? "",
-    gpsLng?.toString() ?? "",
     deviceId ?? "",
   ].join("|");
 
@@ -98,11 +82,9 @@ function computeChecksum(
  *   visitId: id,
  *   userId: user.id,
  *   workspaceId,
- *   gpsLat: lat,
- *   gpsLng: lng,
  *   deviceId: body.deviceId,
  *   clientTimestamp: body.clientTimestamp ? new Date(body.clientTimestamp) : null,
- *   metadata: { withinFence: true },
+ *   metadata: { employeeId: visit.employeeId },
  * });
  * ```
  */
@@ -111,14 +93,12 @@ export function createVisitAuditEntry(
   params: VisitAuditParams,
 ): void {
   const serverTimestamp = new Date();
-  const { ipAddress, userAgent } = extractFingerprint(req);
+  const { userAgent } = extractFingerprint(req);
 
   const checksum = computeChecksum(
     params.eventType,
     params.visitId,
     serverTimestamp,
-    params.gpsLat,
-    params.gpsLng,
     params.deviceId,
   );
 
@@ -128,11 +108,7 @@ export function createVisitAuditEntry(
         eventType: params.eventType,
         serverTimestamp,
         clientTimestamp: params.clientTimestamp ?? null,
-        gpsLat: params.gpsLat ?? null,
-        gpsLng: params.gpsLng ?? null,
-        gpsAccuracy: params.gpsAccuracy ?? null,
         deviceId: params.deviceId ?? null,
-        ipAddress,
         userAgent,
         signatureData: params.signatureData ?? null,
         checksum,
@@ -167,8 +143,6 @@ export function verifyAuditChecksum(record: {
   eventType: string;
   visitId: string;
   serverTimestamp: Date;
-  gpsLat: number | null;
-  gpsLng: number | null;
   deviceId: string | null;
   checksum: string;
 }): boolean {
@@ -176,8 +150,6 @@ export function verifyAuditChecksum(record: {
     record.eventType,
     record.visitId,
     record.serverTimestamp,
-    record.gpsLat,
-    record.gpsLng,
     record.deviceId,
   );
   return expected === record.checksum;

@@ -10,7 +10,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
 import { log } from "@/lib/logger";
-import { fetchStaticMapImage } from "@/lib/static-map";
 
 // Suppress unused import warning — autoTable attaches to jsPDF prototype
 void autoTable;
@@ -31,11 +30,10 @@ const W = [255, 255, 255] as const;
  * Sections:
  * 1. Two-column header — logo placeholder, "LEISTUNGSNACHWEIS" title, QR code
  * 2. Company & visit metadata with status badge
- * 3. Time tracking table + timeline bar + geofence badge
- * 4. GPS evidence block with coordinates + static map image
- * 5. Certificate of Acceptance — framed signature with signer details
- * 6. Digital Integrity Certificate — SHA-256, server timestamp, device ID
- * 7. Legal disclaimer footer
+ * 3. Time tracking table + timeline bar
+ * 4. Certificate of Acceptance — framed signature with signer details
+ * 5. Digital Integrity Certificate — SHA-256, server timestamp, device ID
+ * 6. Legal disclaimer footer
  */
 export async function GET(
   _req: Request,
@@ -74,8 +72,6 @@ export async function GET(
           select: {
             name: true,
             address: true,
-            latitude: true,
-            longitude: true,
           },
         },
         signature: true,
@@ -86,8 +82,6 @@ export async function GET(
             eventType: true,
             serverTimestamp: true,
             deviceId: true,
-            gpsLat: true,
-            gpsLng: true,
           },
         },
       },
@@ -114,14 +108,11 @@ export async function GET(
     const now = new Date();
     const auditId = `LN-${visit.id.slice(-8).toUpperCase()}-${now.getFullYear()}`;
 
-    const [qrDataUrl, mapImage] = await Promise.all([
+    const [qrDataUrl] = await Promise.all([
       QRCode.toDataURL(
         JSON.stringify({ auditId, visitId: visit.id, ts: now.toISOString() }),
         { width: 200, margin: 1, errorCorrectionLevel: "M" },
       ).catch(() => null),
-      visit.checkInLat && visit.checkInLng
-        ? fetchStaticMapImage(visit.checkInLat, visit.checkInLng, 15, 300, 150)
-        : Promise.resolve(null),
     ]);
 
     // ── Computed values ──
@@ -264,15 +255,8 @@ export async function GET(
 
     autoTable(doc, {
       startY: y,
-      head: [["Check-in", "Check-out", "Dauer", "Geofence"]],
-      body: [
-        [
-          checkIn,
-          checkOut,
-          durationLabel,
-          visit.checkInWithinFence ? "Innerhalb ✓" : "Außerhalb ✗",
-        ],
-      ],
+      head: [["Check-in", "Check-out", "Dauer"]],
+      body: [[checkIn, checkOut, durationLabel]],
       theme: "grid",
       styles: {
         fontSize: 9,
@@ -310,129 +294,13 @@ export async function GET(
       doc.text(durationLabel, ml + barW / 2, y + 4, { align: "center" });
       doc.setTextColor(0, 0, 0);
       y += barH + 4;
-
-      // Geofence badge
-      const ft = visit.checkInWithinFence
-        ? "● INNERHALB GEOFENCE"
-        : "● AUSSERHALB GEOFENCE";
-      const fc = visit.checkInWithinFence ? EMERALD : ([220, 38, 38] as const);
-      const fw = doc.getTextWidth(ft) + 8;
-      doc.setFillColor(...fc);
-      doc.roundedRect(ml, y, fw, 5, 1.5, 1.5, "F");
-      doc.setFontSize(6.5);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...W);
-      doc.text(ft, ml + 3, y + 3.5);
-      doc.setTextColor(0, 0, 0);
-      y += 10;
     } else {
       y += 5;
     }
 
-    // ─── 4. GPS EVIDENCE BLOCK — Coordinates + Map ─────────────────
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...DARK);
-    doc.text("GPS-Nachweis", ml, y);
     y += 6;
 
-    const gpsRows: string[][] = [];
-    if (visit.checkInLat && visit.checkInLng) {
-      gpsRows.push([
-        "Check-in",
-        `${formatDMS(visit.checkInLat, true)},  ${formatDMS(visit.checkInLng, false)}`,
-        checkIn,
-      ]);
-    }
-    if (visit.checkOutLat && visit.checkOutLng) {
-      gpsRows.push([
-        "Check-out",
-        `${formatDMS(visit.checkOutLat, true)},  ${formatDMS(visit.checkOutLng, false)}`,
-        checkOut,
-      ]);
-    }
-    if (visit.signature?.signedLat && visit.signature?.signedLng) {
-      const signedTime = new Date(visit.signature.signedAt).toLocaleTimeString(
-        "de-DE",
-        { hour: "2-digit", minute: "2-digit", second: "2-digit" },
-      );
-      gpsRows.push([
-        "Unterschrift",
-        `${formatDMS(visit.signature.signedLat, true)},  ${formatDMS(visit.signature.signedLng, false)}`,
-        signedTime,
-      ]);
-    }
-
-    // Two-column: GPS table (left) + static map (right)
-    const gpsW = mapImage ? cw * 0.55 : cw;
-    const mapX = ml + gpsW + 4;
-    const mapW = cw - gpsW - 4;
-
-    if (gpsRows.length > 0) {
-      autoTable(doc, {
-        startY: y,
-        head: [["Ereignis", "Koordinaten", "Uhrzeit"]],
-        body: gpsRows,
-        theme: "grid",
-        styles: {
-          fontSize: 7.5,
-          cellPadding: 2.5,
-          font: "courier",
-          lineColor: [...BGREY] as any,
-          lineWidth: 0.3,
-        },
-        headStyles: {
-          fillColor: [...DARK] as any,
-          textColor: [...W] as any,
-          font: "helvetica",
-          fontStyle: "bold",
-          fontSize: 7,
-        },
-        margin: { left: ml, right: mapImage ? pw - ml - gpsW : mr },
-      });
-
-      const tableEndY = doc.lastAutoTable?.finalY ?? y + 20;
-
-      // Static map image beside table
-      if (mapImage) {
-        const mapH = Math.max(tableEndY - y, 25);
-        try {
-          doc.setDrawColor(...BGREY);
-          doc.setLineWidth(0.3);
-          doc.rect(mapX, y, mapW, mapH);
-          doc.addImage(
-            mapImage,
-            "PNG",
-            mapX + 0.5,
-            y + 0.5,
-            mapW - 1,
-            mapH - 1,
-          );
-          // "MAP" label
-          doc.setFillColor(0, 0, 0);
-          doc.rect(mapX, y, 12, 4, "F");
-          doc.setFontSize(5.5);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(...W);
-          doc.text("MAP", mapX + 1.5, y + 3);
-          doc.setTextColor(0, 0, 0);
-        } catch {
-          /* non-critical */
-        }
-      }
-
-      y = (doc.lastAutoTable?.finalY ?? y + 20) + 4;
-    } else {
-      doc.setFontSize(9);
-      doc.setTextColor(...MED);
-      doc.text("Keine GPS-Daten verfügbar", ml, y);
-      doc.setTextColor(0, 0, 0);
-      y += 8;
-    }
-
-    y += 6;
-
-    // ─── 5. CERTIFICATE OF ACCEPTANCE — Signature box ──────────────
+    // ─── 4. CERTIFICATE OF ACCEPTANCE — Signature box ──────────────
     if (visit.signature) {
       if (y > 190) {
         doc.addPage();
@@ -522,27 +390,11 @@ export async function GET(
       doc.setTextColor(...MED);
       doc.text("Handschriftliche Unterschrift", siX, siY + siH + 3);
 
-      // GPS at signing (right half of certificate box)
-      if (visit.signature.signedLat && visit.signature.signedLng) {
-        const gx = siX + siW + 8;
-        let gy = siY + 4;
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...DARK);
-        doc.text("GPS bei Unterschrift:", gx, gy);
-        gy += 4;
-        doc.setFont("courier", "normal");
-        doc.setFontSize(6.5);
-        doc.text(`${visit.signature.signedLat.toFixed(6)}`, gx, gy);
-        gy += 3.5;
-        doc.text(`${visit.signature.signedLng.toFixed(6)}`, gx, gy);
-      }
-
       doc.setTextColor(0, 0, 0);
       y += cbH + 8;
     }
 
-    // ─── 6. DIGITAL INTEGRITY CERTIFICATE ──────────────────────────
+    // ─── 5. DIGITAL INTEGRITY CERTIFICATE ──────────────────────────
     if (y > 230) {
       doc.addPage();
       y = 20;
@@ -576,7 +428,7 @@ export async function GET(
     iRow("Geräte-ID", deviceId);
     iRow("Besuch-ID", visit.id);
 
-    // ─── 7. LEGAL FOOTER ───────────────────────────────────────────
+    // ─── 6. LEGAL FOOTER ───────────────────────────────────────────
     const fy = iY + iH + 4;
 
     doc.setFontSize(6);
@@ -638,22 +490,4 @@ export async function GET(
       { status: 500 },
     );
   }
-}
-
-// ─── DMS Coordinate formatter ───────────────────────────────────
-
-function formatDMS(decimal: number, isLat: boolean): string {
-  const absolute = Math.abs(decimal);
-  const degrees = Math.floor(absolute);
-  const minutesDecimal = (absolute - degrees) * 60;
-  const minutes = Math.floor(minutesDecimal);
-  const seconds = ((minutesDecimal - minutes) * 60).toFixed(1);
-  const direction = isLat
-    ? decimal >= 0
-      ? "N"
-      : "S"
-    : decimal >= 0
-      ? "E"
-      : "W";
-  return `${degrees}°${minutes}′${seconds}″${direction}`;
 }

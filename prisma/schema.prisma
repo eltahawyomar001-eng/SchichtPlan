@@ -268,9 +268,6 @@ model Location {
   id        String   @id @default(cuid())
   name      String
   address   String?
-  latitude  Float?
-  longitude Float?
-  geofenceRadius Int  @default(200) // metres
   createdAt DateTime @default(now())
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -508,8 +505,6 @@ model AbsenceRequest {
   halfDayStart Boolean            @default(false)
   halfDayEnd   Boolean            @default(false)
   totalDays   Float               @default(0)
-  reason      String?             @db.Text
-  documentUrl String?
   status      AbsenceRequestStatus @default(AUSSTEHEND)
   reviewedBy  String?
   reviewedAt  DateTime?
@@ -1113,20 +1108,15 @@ enum ServiceReportStatus {
 }
 
 /// A single service visit to a client location (e.g. cleaning Filiale #42).
-/// Captures full audit trail: GPS check-in/out, timestamps, signature.
+/// Captures full audit trail: timestamps, signature.
 model ServiceVisit {
   id                String      @id @default(cuid())
   status            VisitStatus @default(GEPLANT)
   scheduledDate     DateTime    @db.Date
-  /// Check-in data (server-side timestamps, GPS)
+  /// Check-in timestamp
   checkInAt         DateTime?
-  checkInLat        Float?
-  checkInLng        Float?
-  checkInWithinFence Boolean    @default(false)
-  /// Check-out data
+  /// Check-out timestamp
   checkOutAt        DateTime?
-  checkOutLat       Float?
-  checkOutLng       Float?
   /// Notes from the employee
   notes             String?     @db.Text
   /// Signature collected at this visit
@@ -1152,19 +1142,16 @@ model ServiceVisit {
 }
 
 /// Digital signature captured on-device from the site manager.
-/// Cryptographically paired with GPS + timestamp via signatureHash.
+/// Cryptographically paired with timestamp via signatureHash.
 model VisitSignature {
   id              String   @id @default(cuid())
   /// Base64-encoded PNG of the drawn signature
   signatureData   String   @db.Text
-  /// SHA-256 hash binding: visitId + signerName + lat + lng + timestamp
+  /// SHA-256 hash binding: visitId + signerName + timestamp
   signatureHash   String
   /// Identity of the person who signed (e.g. Filialleiter name)
   signerName      String
   signerRole      String?  // e.g. "Filialleiter", "Objektleiter"
-  /// GPS at moment of signing
-  signedLat       Float?
-  signedLng       Float?
   signedAt        DateTime @default(now())
   /// 1:1 relation to the visit
   visitId         String   @unique
@@ -1206,7 +1193,7 @@ enum VisitAuditEventType {
 }
 
 /// Revisionssicher (tamper-evident) audit log for every service visit event.
-/// Each record bundles: what happened, who did it, where (GPS), when (server clock),
+/// Each record bundles: what happened, who did it, when (server clock),
 /// which device, plus a SHA-256 checksum for integrity verification.
 /// This is the financial audit trail for Leistungsnachweis billing.
 model ServiceVisitAuditLog {
@@ -1216,17 +1203,12 @@ model ServiceVisitAuditLog {
   serverTimestamp  DateTime            @default(now())
   /// Client-reported timestamp (for drift detection)
   clientTimestamp  DateTime?
-  /// GPS coordinates at time of event
-  gpsLat          Float?
-  gpsLng          Float?
-  gpsAccuracy     Float?              // metres
   /// Device fingerprint
   deviceId        String?             // navigator.userAgent hash or generated UUID
-  ipAddress       String?
   userAgent       String?             @db.Text
   /// Signature data (only for SIGNATURE_CAPTURED events)
   signatureData   String?             @db.Text   // base64 PNG
-  /// SHA-256 checksum: eventType|visitId|serverTimestamp|gps|deviceId
+  /// SHA-256 checksum: eventType|visitId|serverTimestamp|deviceId
   /// Used to verify record has not been tampered with
   checksum        String
   /// Additional event-specific metadata (JSON)

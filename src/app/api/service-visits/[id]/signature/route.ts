@@ -92,11 +92,9 @@ export async function POST(
       );
     }
 
-    // Create tamper-proof hash: SHA-256 of visitId + signerName + lat + lng + timestamp
+    // Create tamper-proof hash: SHA-256 of visitId + signerName + timestamp
     const signedAt = new Date();
-    const hashInput = [id, signerName, "", "", signedAt.toISOString()].join(
-      "|",
-    );
+    const hashInput = [id, signerName, signedAt.toISOString()].join("|");
     const signatureHash = crypto
       .createHash("sha256")
       .update(hashInput)
@@ -111,8 +109,6 @@ export async function POST(
           signerName,
           signerRole: signerRole || null,
           signedAt,
-          signedLat: null,
-          signedLng: null,
           visitId: id,
         },
       }),
@@ -146,9 +142,6 @@ export async function POST(
       visitId: id,
       userId: user.id,
       workspaceId,
-      gpsLat: null,
-      gpsLng: null,
-      gpsAccuracy: null,
       deviceId: deviceId ?? null,
       clientTimestamp: clientTimestamp ? new Date(clientTimestamp) : null,
       signatureData, // base64 PNG stored in audit trail for Revisionssicherheit

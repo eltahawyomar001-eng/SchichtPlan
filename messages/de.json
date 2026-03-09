@@ -438,17 +438,7 @@
       "category": "Kategorie",
       "startDate": "Startdatum",
       "endDate": "Enddatum",
-      "reason": "Bemerkung (optional)",
-      "reasonPlaceholder": "Grund oder Hinweise…",
-      "submit": "Antrag einreichen",
-      "document": "Nachweis anhängen",
-      "documentHint": "PDF, JPEG oder PNG — max. 10 MB",
-      "documentHintKrank": "Arbeitsunfähigkeitsbescheinigung (AU) gemäß §5 EntgFG",
-      "uploading": "Wird hochgeladen…",
-      "uploadError": "Datei konnte nicht hochgeladen werden. Bitte erneut versuchen.",
-      "uploadSuccess": "Dokument hochgeladen",
-      "removeDocument": "Dokument entfernen",
-      "viewDocument": "Dokument anzeigen"
+      "submit": "Antrag einreichen"
     }
   },
   "availability": {

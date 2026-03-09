@@ -17,8 +17,8 @@
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/admin/gps-cleanup",
-      "schedule": "0 5 * * 0"
+      "path": "/api/admin/data-retention",
+      "schedule": "30 4 * * 0"
     }
   ]
 }

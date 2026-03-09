@@ -34,16 +34,12 @@ export interface ServiceVisitExec {
     id: string;
     name: string;
     address: string | null;
-    latitude: number | null;
-    longitude: number | null;
   };
   signature: {
     signerName: string;
     signerRole: string | null;
     signatureData: string;
     signedAt: string;
-    signedLat: number | null;
-    signedLng: number | null;
     signatureHash: string;
   } | null;
 }

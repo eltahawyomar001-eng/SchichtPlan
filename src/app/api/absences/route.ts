@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { isEmployee } from "@/lib/authorization";
+import { isEmployee, isManagement } from "@/lib/authorization";
 import {
   tryAutoApproveAbsence,
   createSystemNotification,
@@ -60,7 +60,18 @@ export async function GET(req: Request) {
       prisma.absenceRequest.count({ where }),
     ]);
 
-    return paginatedResponse(absences, total, take, skip);
+    // DSGVO Art. 9: Employees only see their own absences with full detail.
+    // For non-management users, mask the category on records belonging to
+    // other employees (defensive — employees are already scoped above).
+    const sanitised = !isManagement(user)
+      ? absences.map((a) => ({
+          ...a,
+          category: a.employeeId === user.employeeId ? a.category : "ABWESEND",
+          reviewNote: a.employeeId === user.employeeId ? a.reviewNote : null,
+        }))
+      : absences;
+
+    return paginatedResponse(sanitised, total, take, skip);
   } catch (error) {
     log.error("Error fetching absences:", { error: error });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
@@ -162,8 +173,6 @@ export async function POST(req: Request) {
         halfDayStart: body.halfDayStart || false,
         halfDayEnd: body.halfDayEnd || false,
         totalDays,
-        reason: body.reason || null,
-        documentUrl: body.documentUrl || null,
         employeeId: body.employeeId,
         workspaceId,
       },
@@ -210,7 +219,6 @@ export async function POST(req: Request) {
       totalDays,
       halfDayStart: body.halfDayStart || false,
       halfDayEnd: body.halfDayEnd || false,
-      reason: body.reason || "",
       autoApproved,
     });
 

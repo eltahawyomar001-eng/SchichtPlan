@@ -211,9 +211,6 @@ export const createServiceReportSchema = z.object({
 export const updateLocationGeoSchema = z.object({
   name: optionalString,
   address: optionalString,
-  latitude: z.number().min(-90).max(90).optional().nullable(),
-  longitude: z.number().min(-180).max(180).optional().nullable(),
-  geofenceRadius: z.coerce.number().int().min(50).max(5000).optional(),
 });
 
 /* ═══════════════════════════════════════════════════════════════

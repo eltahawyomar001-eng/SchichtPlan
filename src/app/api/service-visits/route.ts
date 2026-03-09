@@ -65,8 +65,6 @@ export async function GET(req: Request) {
               id: true,
               name: true,
               address: true,
-              latitude: true,
-              longitude: true,
             },
           },
           signature: true,

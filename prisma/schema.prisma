@@ -1231,14 +1231,16 @@ model ServiceVisitAuditLog {
 /// external calendar apps (Google Calendar, Apple Calendar, etc.)
 /// that cannot use session cookies.
 model ICalToken {
-  id          String   @id @default(cuid())
-  token       String   @unique
+  id          String    @id @default(cuid())
+  token       String    @unique
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String
-  label       String?  @db.VarChar(100) // e.g. "Google Calendar"
+  label       String?   @db.VarChar(100) // e.g. "Google Calendar"
   lastUsedAt  DateTime?
-  createdAt   DateTime @default(now())
+  rotatedAt   DateTime? // Last time the token was automatically rotated
+  expiresAt   DateTime? // Hard expiry — requests after this date are rejected
+  createdAt   DateTime  @default(now())
   @@index([userId])
   @@index([token])
 }

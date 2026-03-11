@@ -275,6 +275,18 @@ export const config = {
     "/api/shift-change-requests/:path*",
     "/api/automation-rules/:path*",
     "/api/health",
+    // Security audit — previously missing routes (no rate-limit, no headers)
+    "/api/admin/:path*",
+    "/api/docs",
+    "/api/audit-logs/:path*",
+    "/api/service-visits/:path*",
+    "/api/service-reports/:path*",
+    "/api/staffing-requirements/:path*",
+    "/api/manager-alerts/:path*",
+    "/api/e-signatures/:path*",
+    "/api/workspace/:path*",
+    "/api/annual-planning/:path*",
+    "/api/chat/:path*",
     // Onboarding wizard (protected, outside dashboard group)
     "/onboarding",
     "/api/onboarding/:path*",

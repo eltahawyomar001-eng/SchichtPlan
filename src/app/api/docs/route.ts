@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import type { SessionUser } from "@/lib/types";
+import { requireAdmin } from "@/lib/authorization";
 
 /**
  * GET /api/docs
  *
  * Returns the OpenAPI 3.0 specification for the Shiftfy API.
- * Useful for API consumers, integration partners, and developer docs.
+ * Restricted to OWNER/ADMIN to prevent unauthenticated API spec exposure.
  */
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = session.user as SessionUser;
+  const forbidden = requireAdmin(user);
+  if (forbidden) return forbidden;
+
   const spec = {
     openapi: "3.0.3",
     info: {

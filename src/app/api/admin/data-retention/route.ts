@@ -12,6 +12,16 @@ import { log } from "@/lib/logger";
  * DSGVO Löschkonzept — Automated data retention enforcement.
  * Runs via Vercel Cron (weekly, Sundays 04:30 UTC) or manually by OWNER/ADMIN.
  *
+ * ⚠️  DESIGN NOTE (Security Audit 2026-03-11):
+ * This endpoint intentionally operates CROSS-WORKSPACE. Retention is
+ * purely TTL-based (records older than X days are deleted regardless of
+ * workspace). This is correct because:
+ *   1. Expired tokens, sessions, and notifications have no business value.
+ *   2. Legal retention periods (§147 AO, eIDAS) apply globally, not per-tenant.
+ *   3. The POST handler requires OWNER/ADMIN auth (scoped to the caller's
+ *      workspace for authorization, but the cleanup itself is global).
+ *   4. The GET handler requires CRON_SECRET (server-to-server only).
+ *
  * Retention periods (Art. 5(1)(e) DSGVO — Speicherbegrenzung):
  *
  * | Data                     | Retention       | Legal basis                          |

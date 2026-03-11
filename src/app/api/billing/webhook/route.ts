@@ -11,28 +11,54 @@ import { syncUsageLimits } from "@/lib/subscription-guard";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { log } from "@/lib/logger";
+import { Redis } from "@upstash/redis";
 
-/* ── Idempotency guard ──────────────────────────────────────────
+/* ── Idempotency guard (Upstash Redis) ──────────────────────────
  * Prevent processing the same Stripe event twice (e.g. on retries).
- * We use a simple in-memory Map with TTL. For multi-instance
- * deployments, replace with a DB-backed check or Redis.
+ * Uses Upstash Redis with a 5-minute TTL so dedup survives Vercel
+ * cold-starts and works across multiple serverless instances.
+ * Falls back to in-memory Map if Upstash env vars are missing.
  * ─────────────────────────────────────────────────────────────── */
-const PROCESSED_EVENTS = new Map<string, number>();
-const EVENT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const EVENT_TTL_SECONDS = 5 * 60; // 5 minutes
 
-function isEventProcessed(eventId: string): boolean {
-  const ts = PROCESSED_EVENTS.get(eventId);
-  if (ts && Date.now() - ts < EVENT_TTL_MS) return true;
+const hasUpstash =
+  !!process.env.UPSTASH_REDIS_REST_URL &&
+  !!process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const redis = hasUpstash
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
+  : undefined;
+
+// In-memory fallback for dev/staging without Upstash
+const localFallback = new Map<string, number>();
+
+async function isEventProcessed(eventId: string): Promise<boolean> {
+  if (redis) {
+    const exists = await redis.exists(`stripe_event:${eventId}`);
+    return exists === 1;
+  }
+  // Fallback: in-memory
+  const ts = localFallback.get(eventId);
+  if (ts && Date.now() - ts < EVENT_TTL_SECONDS * 1000) return true;
   return false;
 }
 
-function markEventProcessed(eventId: string): void {
-  PROCESSED_EVENTS.set(eventId, Date.now());
-  // Cleanup old entries
-  if (PROCESSED_EVENTS.size > 500) {
+async function markEventProcessed(eventId: string): Promise<void> {
+  if (redis) {
+    await redis.set(`stripe_event:${eventId}`, "1", {
+      ex: EVENT_TTL_SECONDS,
+    });
+    return;
+  }
+  // Fallback: in-memory
+  localFallback.set(eventId, Date.now());
+  if (localFallback.size > 500) {
     const now = Date.now();
-    for (const [id, ts] of PROCESSED_EVENTS) {
-      if (now - ts > EVENT_TTL_MS) PROCESSED_EVENTS.delete(id);
+    for (const [id, ts] of localFallback) {
+      if (now - ts > EVENT_TTL_SECONDS * 1000) localFallback.delete(id);
     }
   }
 }
@@ -75,11 +101,11 @@ export async function POST(req: Request) {
     }
 
     // ── Idempotency: skip already-processed events ──
-    if (isEventProcessed(event.id)) {
+    if (await isEventProcessed(event.id)) {
       log.info(`[Stripe] Skipping duplicate event: ${event.id}`);
       return NextResponse.json({ received: true, duplicate: true });
     }
-    markEventProcessed(event.id);
+    await markEventProcessed(event.id);
 
     switch (event.type) {
       /* ─── Checkout completed → activate subscription ─── */

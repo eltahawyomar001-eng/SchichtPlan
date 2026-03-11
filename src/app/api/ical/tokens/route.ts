@@ -27,6 +27,8 @@ export async function GET() {
       id: true,
       label: true,
       lastUsedAt: true,
+      rotatedAt: true,
+      expiresAt: true,
       createdAt: true,
       // Intentionally not returning the full token for security
       token: true,
@@ -68,12 +70,16 @@ export async function POST(req: Request) {
   // 48 random bytes → 64-char hex token (cryptographically strong)
   const token = randomBytes(48).toString("hex");
 
+  // Hard expiry at 180 days — tokens rotate at 90 days automatically
+  const expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+
   const record = await prisma.iCalToken.create({
     data: {
       token,
       userId: user.id,
       workspaceId: user.workspaceId,
       label,
+      expiresAt,
     },
   });
 

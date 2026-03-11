@@ -86,7 +86,9 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         }),
         ...(body.status !== undefined && { status: body.status }),
         ...(body.clientId !== undefined && {
-          clientId: body.clientId || null,
+          client: body.clientId
+            ? { connect: { id: body.clientId } }
+            : { disconnect: true },
         }),
         ...(body.costRate !== undefined && {
           costRate: body.costRate ?? null,

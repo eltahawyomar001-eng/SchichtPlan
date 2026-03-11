@@ -61,7 +61,10 @@ export async function GET() {
     // 3. Shifts
     const shifts = employeeIds.length
       ? await prisma.shift.findMany({
-          where: { employeeId: { in: employeeIds } },
+          where: {
+            employeeId: { in: employeeIds },
+            workspaceId: workspaceId,
+          },
           select: {
             id: true,
             date: true,
@@ -79,7 +82,10 @@ export async function GET() {
     // 4. Time entries
     const timeEntries = employeeIds.length
       ? await prisma.timeEntry.findMany({
-          where: { employeeId: { in: employeeIds } },
+          where: {
+            employeeId: { in: employeeIds },
+            workspaceId: workspaceId,
+          },
           select: {
             id: true,
             date: true,
@@ -100,7 +106,10 @@ export async function GET() {
     // 5. Absence requests
     const absences = employeeIds.length
       ? await prisma.absenceRequest.findMany({
-          where: { employeeId: { in: employeeIds } },
+          where: {
+            employeeId: { in: employeeIds },
+            workspaceId: workspaceId,
+          },
           select: {
             id: true,
             category: true,

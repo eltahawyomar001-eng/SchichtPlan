@@ -28,7 +28,10 @@ export async function GET() {
     if (planGate) return planGate;
 
     const memberships = await prisma.chatChannelMember.findMany({
-      where: { userId: user.id },
+      where: {
+        userId: user.id,
+        channel: { workspaceId: user.workspaceId },
+      },
       include: {
         channel: {
           include: {
@@ -56,11 +59,7 @@ export async function GET() {
       },
     });
 
-    // Filter to only workspace channels
-
     const channels = memberships
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((m: any) => m.channel.workspaceId === user.workspaceId)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((m: any) => {
         const lastMsg = m.channel.messages[0] ?? null;

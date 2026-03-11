@@ -350,7 +350,9 @@ export const createProjectSchema = z.object({
 });
 
 export const updateProjectSchema = createProjectSchema.partial().extend({
-  status: z.enum(["ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"]).optional(),
+  status: z
+    .enum(["AKTIV", "PAUSIERT", "ABGESCHLOSSEN", "ARCHIVIERT"])
+    .optional(),
 });
 
 // ── Project Member ──────────────────────────────────────────────

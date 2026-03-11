@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { lockMonthTimeEntries } from "@/lib/automations";
 import { log } from "@/lib/logger";
+import { captureRouteError, cronMonitor } from "@/lib/sentry";
 
 /**
  * POST /api/automations/payroll-lock
@@ -36,25 +37,32 @@ export async function POST(req: Request) {
         );
       }
 
-      const workspaces = await prisma.workspace.findMany({
-        select: { id: true },
-      });
+      const monitor = cronMonitor("payroll-lock", "0 4 1 * *");
+      try {
+        const workspaces = await prisma.workspace.findMany({
+          select: { id: true },
+        });
 
-      let totalLocked = 0;
-      for (const ws of workspaces) {
-        const result = await lockMonthTimeEntries(
-          ws.id,
-          defaultYear,
-          defaultMonth,
-        );
-        totalLocked += result.locked;
+        let totalLocked = 0;
+        for (const ws of workspaces) {
+          const result = await lockMonthTimeEntries(
+            ws.id,
+            defaultYear,
+            defaultMonth,
+          );
+          totalLocked += result.locked;
+        }
+
+        monitor.finish("ok");
+        return NextResponse.json({
+          success: true,
+          totalLocked,
+          month: `${defaultYear}-${String(defaultMonth).padStart(2, "0")}`,
+        });
+      } catch (cronError) {
+        monitor.finish("error");
+        throw cronError;
       }
-
-      return NextResponse.json({
-        success: true,
-        totalLocked,
-        month: `${defaultYear}-${String(defaultMonth).padStart(2, "0")}`,
-      });
     }
 
     const session = await getServerSession(authOptions);
@@ -95,6 +103,10 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     log.error("Error locking payroll:", { error: error });
+    captureRouteError(error, {
+      route: "/api/automations/payroll-lock",
+      method: "POST",
+    });
     return NextResponse.json(
       { error: "Error locking payroll" },
       { status: 500 },

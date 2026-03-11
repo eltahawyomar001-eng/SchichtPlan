@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyEmailToken } from "@/lib/verification";
+import { verifyEmailSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -10,14 +11,9 @@ import { log } from "@/lib/logger";
  */
 export async function POST(req: Request) {
   try {
-    const { token, email } = await req.json();
-
-    if (!token || !email) {
-      return NextResponse.json(
-        { error: "Token und E-Mail sind erforderlich." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(verifyEmailSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { token, email } = parsed.data;
 
     const result = await verifyEmailToken(token, email);
 

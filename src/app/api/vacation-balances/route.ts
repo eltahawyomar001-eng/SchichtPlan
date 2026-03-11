@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { createVacationBalanceSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -107,16 +108,9 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "employees", "update");
     if (forbidden) return forbidden;
 
-    const { employeeId, year, totalEntitlement, carryOver } = await req.json();
-
-    if (!employeeId || !year) {
-      return NextResponse.json(
-        {
-          error: "Mitarbeiter und Jahr sind erforderlich.",
-        },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(createVacationBalanceSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { employeeId, year, totalEntitlement, carryOver } = parsed.data;
 
     // Fetch employee to get workDaysPerWeek for BUrlG validation
     const employee = await prisma.employee.findFirst({
@@ -135,8 +129,8 @@ export async function POST(req: Request) {
     const legalMin = calculateMinEntitlement(workDays);
 
     const entitlement =
-      totalEntitlement !== undefined ? parseFloat(totalEntitlement) : legalMin;
-    const carry = carryOver !== undefined ? parseFloat(carryOver) : 0;
+      totalEntitlement !== undefined ? totalEntitlement : legalMin;
+    const carry = carryOver !== undefined ? carryOver : 0;
 
     // BUrlG §3: Entitlement must not be below legal minimum
     if (entitlement < legalMin) {
@@ -162,12 +156,12 @@ export async function POST(req: Request) {
       where: {
         employeeId_year: {
           employeeId,
-          year: parseInt(String(year), 10),
+          year,
         },
       },
       create: {
         employeeId,
-        year: parseInt(String(year), 10),
+        year,
         totalEntitlement: entitlement,
         carryOver: carry,
         used: 0,

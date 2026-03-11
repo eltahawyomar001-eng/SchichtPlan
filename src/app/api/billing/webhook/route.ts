@@ -11,6 +11,7 @@ import { syncUsageLimits } from "@/lib/subscription-guard";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
 import { Redis } from "@upstash/redis";
 
 /* ── Idempotency guard (Upstash Redis) ──────────────────────────
@@ -262,6 +263,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (error) {
     log.error("[Stripe] Webhook error:", { error: error });
+    captureRouteError(error, { route: "/api/billing/webhook", method: "POST" });
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 },

@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { isEmployee, isManagement } from "@/lib/authorization";
 import {
   tryAutoApproveAbsence,
@@ -13,20 +10,16 @@ import { requirePlanFeature } from "@/lib/subscription";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createAbsenceSchema, validateBody } from "@/lib/validations";
+import { captureRouteError } from "@/lib/sentry";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
@@ -75,29 +68,26 @@ export async function GET(req: Request) {
     return paginatedResponse(sanitised, total, take, skip);
   } catch (error) {
     log.error("Error fetching absences:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+    captureRouteError(error, { route: "/api/absences", method: "GET" });
+    return serverError("Error loading");
   }
 }
 
 // ─── POST  /api/absences ────────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // Check plan feature
     const planGate = await requirePlanFeature(workspaceId, "absenceManagement");
     if (planGate) return planGate;
 
-    const body = await req.json();
+    const parsed = validateBody(createAbsenceSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const body = parsed.data;
 
     // EMPLOYEE can only create absences for themselves
     if (isEmployee(user) && user.employeeId) {
@@ -110,21 +100,6 @@ export async function POST(req: Request) {
           { status: 403 },
         );
       }
-    }
-
-    // Validate required fields
-    if (
-      !body.employeeId ||
-      !body.category ||
-      !body.startDate ||
-      !body.endDate
-    ) {
-      return NextResponse.json(
-        {
-          error: "Employee, category, start and end date are required",
-        },
-        { status: 400 },
-      );
     }
 
     const start = new Date(body.startDate);
@@ -147,17 +122,44 @@ export async function POST(req: Request) {
     if (body.halfDayStart) totalDays -= 0.5;
     if (body.halfDayEnd) totalDays -= 0.5;
 
-    // Overlap check
-    const overlapping = await prisma.absenceRequest.findFirst({
-      where: {
-        employeeId: body.employeeId,
-        status: { in: ["AUSSTEHEND", "GENEHMIGT"] },
-        startDate: { lte: end },
-        endDate: { gte: start },
-      },
-    });
+    const absence = await prisma
+      .$transaction(async (tx) => {
+        // Overlap check (inside transaction for atomicity)
+        const overlapping = await tx.absenceRequest.findFirst({
+          where: {
+            employeeId: body.employeeId,
+            status: { in: ["AUSSTEHEND", "GENEHMIGT"] },
+            startDate: { lte: end },
+            endDate: { gte: start },
+          },
+        });
 
-    if (overlapping) {
+        if (overlapping) {
+          throw new Error("OVERLAP");
+        }
+
+        return tx.absenceRequest.create({
+          data: {
+            category: body.category,
+            startDate: start,
+            endDate: end,
+            halfDayStart: body.halfDayStart || false,
+            halfDayEnd: body.halfDayEnd || false,
+            totalDays,
+            employeeId: body.employeeId,
+            workspaceId,
+          },
+          include: { employee: true },
+        });
+      })
+      .catch((err) => {
+        if (err instanceof Error && err.message === "OVERLAP") {
+          return { error: "OVERLAP" as const };
+        }
+        throw err;
+      });
+
+    if ("error" in absence) {
       return NextResponse.json(
         {
           error: "An absence request already exists for this period",
@@ -165,20 +167,6 @@ export async function POST(req: Request) {
         { status: 409 },
       );
     }
-
-    const absence = await prisma.absenceRequest.create({
-      data: {
-        category: body.category,
-        startDate: start,
-        endDate: end,
-        halfDayStart: body.halfDayStart || false,
-        halfDayEnd: body.halfDayEnd || false,
-        totalDays,
-        employeeId: body.employeeId,
-        workspaceId,
-      },
-      include: { employee: true },
-    });
 
     // ── Automation: Try auto-approve (sick leave only) ──
     const autoApproved = await tryAutoApproveAbsence(absence.id);
@@ -246,9 +234,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ...result, autoApproved }, { status: 201 });
   } catch (error) {
     log.error("Error creating absence:", { error: error });
-    return NextResponse.json(
-      { error: "Error creating resource" },
-      { status: 500 },
-    );
+    captureRouteError(error, { route: "/api/absences", method: "POST" });
+    return serverError("Error creating resource");
   }
 }

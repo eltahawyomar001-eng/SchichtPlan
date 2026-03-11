@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import bcrypt from "bcryptjs";
 import type { SessionUser } from "@/lib/types";
 import crypto from "crypto";
+import { twoFactorVerifySchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /* ── helpers ── */
@@ -116,9 +117,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const user = session.user as SessionUser;
-    const body = await req.json();
+    const parsed = validateBody(twoFactorVerifySchema, await req.json());
+    if (!parsed.success) return parsed.response;
     // Accept both "code" and "token" for backwards compatibility
-    const code: string | undefined = body.code || body.token;
+    const code: string | undefined = parsed.data.code || parsed.data.token;
 
     if (!code) {
       return NextResponse.json({ error: "Code required" }, { status: 400 });

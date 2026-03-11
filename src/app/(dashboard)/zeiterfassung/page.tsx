@@ -86,10 +86,6 @@ interface TimeEntry {
   submittedAt: string | null;
   confirmedAt: string | null;
   confirmedBy: string | null;
-  clockInLat: number | null;
-  clockInLng: number | null;
-  clockOutLat: number | null;
-  clockOutLng: number | null;
   isLiveClock: boolean;
   employee: Employee;
   location: Location | null;
@@ -1027,9 +1023,6 @@ export default function ZeiterfassungPage() {
                             {entry.location.name}
                           </div>
                         )}
-                        {entry.clockInLat != null &&
-                          entry.clockInLng != null &&
-                          null}
                       </div>
                     );
                   })}
@@ -1127,12 +1120,7 @@ export default function ZeiterfassungPage() {
                                     {entry.location.name}
                                   </span>
                                 )}
-                                {entry.clockInLat != null &&
-                                  entry.clockInLng != null &&
-                                  null}
-                                {!entry.location &&
-                                  entry.clockInLat == null &&
-                                  "–"}
+                                {!entry.location && "–"}
                               </div>
                             </td>
                             <td className="px-4 py-3">

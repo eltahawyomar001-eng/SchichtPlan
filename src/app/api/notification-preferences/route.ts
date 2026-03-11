@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  updateNotificationPreferencesSchema,
+  validateBody,
+} from "@/lib/validations";
 
 // ─── GET  /api/notification-preferences ─────────────────────────
 export async function GET() {
@@ -48,8 +52,12 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const body = await req.json();
-  const enabled = Boolean(body.emailEnabled);
+  const parsed = validateBody(
+    updateNotificationPreferencesSchema,
+    await req.json(),
+  );
+  if (!parsed.success) return parsed.response;
+  const enabled = parsed.data.emailEnabled;
 
   await prisma.notificationPreference.upsert({
     where: {

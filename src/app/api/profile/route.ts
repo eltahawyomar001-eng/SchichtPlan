@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import type { SessionUser } from "@/lib/types";
+import { updateProfileSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 // ── DELETE /api/profile — Account deletion (Art. 17 DSGVO) ──
@@ -79,7 +80,9 @@ export async function PATCH(req: Request) {
     }
 
     const userId = (session.user as SessionUser).id;
-    const body = await req.json();
+    const parsed = validateBody(updateProfileSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
 
     // Password change
     if (body.currentPassword && body.newPassword) {

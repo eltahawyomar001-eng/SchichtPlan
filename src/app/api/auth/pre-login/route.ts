@@ -6,6 +6,7 @@ import {
   recordFailedAttempt,
   clearFailedAttempts,
 } from "@/lib/login-lockout";
+import { preLoginSchema, validateBody } from "@/lib/validations";
 
 /**
  * POST /api/auth/pre-login
@@ -20,14 +21,9 @@ import {
  */
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "INVALID_CREDENTIALS" },
-        { status: 401 },
-      );
-    }
+    const parsed = validateBody(preLoginSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { email, password } = parsed.data;
 
     // ── Brute-force lockout check ──
     const lockedSeconds = await isLockedOut(email);

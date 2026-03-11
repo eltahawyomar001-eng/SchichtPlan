@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import { assignEmployeeSkillSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -58,14 +59,9 @@ export async function POST(
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const { skillId, expiresAt } = await req.json();
-
-    if (!skillId) {
-      return NextResponse.json(
-        { error: "skillId ist erforderlich." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(assignEmployeeSkillSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { skillId, expiresAt } = parsed.data;
 
     const es = await prisma.employeeSkill.create({
       data: {

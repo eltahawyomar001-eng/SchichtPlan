@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createProjectSchema, validateBody } from "@/lib/validations";
 
 /** GET /api/projects — list all projects for the workspace */
 export async function GET(req: Request) {
@@ -71,7 +72,9 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "projects", "create");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const parsed = validateBody(createProjectSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
     const {
       name,
       description,
@@ -81,20 +84,16 @@ export async function POST(req: Request) {
       budgetMinutes,
       startDate,
       endDate,
-    } = body;
-
-    if (!name) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
+    } = parsed.data;
 
     const project = await prisma.project.create({
       data: {
         name,
         description: description || null,
         clientId: clientId || null,
-        costRate: costRate ? parseFloat(costRate) : null,
-        billRate: billRate ? parseFloat(billRate) : null,
-        budgetMinutes: budgetMinutes ? parseInt(budgetMinutes, 10) : null,
+        costRate: costRate ?? null,
+        billRate: billRate ?? null,
+        budgetMinutes: budgetMinutes ?? null,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
         workspaceId: user.workspaceId,

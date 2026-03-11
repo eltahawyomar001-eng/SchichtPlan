@@ -1,25 +1,19 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { canUseFeature } from "@/lib/subscription";
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
+import { monthCloseSchema, validateBody } from "@/lib/validations";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 /** GET /api/month-close — list month-close records for workspace */
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requirePermission(user, "month-close", "read");
     if (forbidden) return forbidden;
@@ -28,7 +22,7 @@ export async function GET(req: Request) {
     const year = searchParams.get("year");
 
     const where: Record<string, unknown> = {
-      workspaceId: user.workspaceId,
+      workspaceId,
     };
     if (year) where.year = parseInt(year, 10);
 
@@ -40,8 +34,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json(records);
   } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    captureRouteError(error, { route: "/api/month-close", method: "GET" });
+    return serverError("Error loading month-close");
   }
 }
 
@@ -51,60 +45,61 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requirePermission(user, "month-close", "create");
     if (forbidden) return forbidden;
 
-    const { year, month, action } = await req.json();
+    const parsed = validateBody(monthCloseSchema, await req.json());
+    if (!parsed.success) return parsed.response;
 
-    if (!year || !month || !action) {
-      return NextResponse.json(
-        { error: "year, month, and action are required" },
-        { status: 400 },
-      );
-    }
+    const { year, month, action } = parsed.data;
 
     // Upsert the month-close record
     const existing = await prisma.monthClose.findFirst({
       where: {
-        workspaceId: user.workspaceId,
-        year: parseInt(year, 10),
-        month: parseInt(month, 10),
+        workspaceId,
+        year,
+        month,
       },
     });
 
     if (action === "lock") {
-      const record = existing
-        ? await prisma.monthClose.update({
-            where: { id: existing.id },
-            data: {
-              status: "LOCKED",
-              lockedBy: user.id,
-              lockedAt: new Date(),
-            },
-          })
-        : await prisma.monthClose.create({
-            data: {
-              year: parseInt(year, 10),
-              month: parseInt(month, 10),
-              status: "LOCKED",
-              lockedBy: user.id,
-              lockedAt: new Date(),
-              workspaceId: user.workspaceId,
-            },
-          });
+      const record = await prisma.$transaction(async (tx) => {
+        // Check inside transaction to prevent race conditions
+        const found = await tx.monthClose.findFirst({
+          where: {
+            workspaceId,
+            year,
+            month,
+          },
+        });
+
+        return found
+          ? await tx.monthClose.update({
+              where: { id: found.id },
+              data: {
+                status: "LOCKED",
+                lockedBy: user.id,
+                lockedAt: new Date(),
+              },
+            })
+          : await tx.monthClose.create({
+              data: {
+                year,
+                month,
+                status: "LOCKED",
+                lockedBy: user.id,
+                lockedAt: new Date(),
+                workspaceId,
+              },
+            });
+      });
 
       // ── E-Signature: Record signed month lock (Professional+ only) ──
-      const hasESign = await canUseFeature(user.workspaceId, "eSignatures");
+      const hasESign = await canUseFeature(workspaceId, "eSignatures");
       if (hasESign) {
         createESignature({
           action: "month-close.lock",
@@ -116,7 +111,7 @@ export async function POST(req: Request) {
             email: user.email,
             role: user.role,
           },
-          workspaceId: user.workspaceId,
+          workspaceId,
           ipAddress: getClientIp(req),
           userAgent: req.headers.get("user-agent") || undefined,
         }).catch((err) => log.error("E-signature failed", { error: err }));
@@ -156,7 +151,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    captureRouteError(error, { route: "/api/month-close", method: "POST" });
+    return serverError("Error processing month-close");
   }
 }

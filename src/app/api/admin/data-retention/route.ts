@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requireAdmin } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { captureRouteError, cronMonitor } from "@/lib/sentry";
 
 /**
  * POST /api/admin/data-retention
@@ -141,7 +142,7 @@ async function executeRetention(): Promise<RetentionResult[]> {
 }
 
 /** POST — Admin-triggered retention */
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -167,6 +168,10 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     log.error("Data retention error:", { error });
+    captureRouteError(error, {
+      route: "/api/admin/data-retention",
+      method: "POST",
+    });
     return NextResponse.json({ error: "Retention failed" }, { status: 500 });
   }
 }
@@ -184,6 +189,7 @@ export async function GET(req: Request) {
       );
     }
 
+    const monitor = cronMonitor("data-retention", "30 4 * * 0");
     const results = await executeRetention();
     const totalDeleted = results.reduce((sum, r) => sum + r.deleted, 0);
 
@@ -192,6 +198,7 @@ export async function GET(req: Request) {
       { results },
     );
 
+    monitor.finish("ok");
     return NextResponse.json({
       success: true,
       totalDeleted,
@@ -199,6 +206,10 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     log.error("Data retention cron error:", { error });
+    captureRouteError(error, {
+      route: "/api/admin/data-retention",
+      method: "GET",
+    });
     return NextResponse.json({ error: "Retention failed" }, { status: 500 });
   }
 }

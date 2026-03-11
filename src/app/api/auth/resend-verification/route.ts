@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/verification";
+import { resendVerificationSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -11,14 +12,9 @@ import { log } from "@/lib/logger";
  */
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "E-Mail ist erforderlich." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(resendVerificationSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { email } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { email },

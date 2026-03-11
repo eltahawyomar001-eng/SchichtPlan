@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createShiftTemplateSchema, validateBody } from "@/lib/validations";
 
 export async function GET(req: Request) {
   try {
@@ -26,7 +27,6 @@ export async function GET(req: Request) {
 
     const { take, skip } = parsePagination(req);
 
-     
     const [templates, total] = await Promise.all([
       prisma.shiftTemplate.findMany({
         where: { workspaceId },
@@ -41,7 +41,6 @@ export async function GET(req: Request) {
       }),
       prisma.shiftTemplate.count({ where: { workspaceId } }),
     ]);
-     
 
     return paginatedResponse(templates, total, take, skip);
   } catch (error) {
@@ -73,20 +72,14 @@ export async function POST(req: Request) {
     const planGate = await requirePlanFeature(workspaceId, "shiftTemplates");
     if (planGate) return planGate;
 
-    const { name, startTime, endTime, color, locationId } = await req.json();
+    const parsed = validateBody(createShiftTemplateSchema, await req.json());
+    if (!parsed.success) return parsed.response;
 
-    if (!name?.trim() || !startTime || !endTime) {
-      return NextResponse.json(
-        {
-          error: "Name, Start- und Endzeit sind erforderlich.",
-        },
-        { status: 400 },
-      );
-    }
+    const { name, startTime, endTime, color, locationId } = parsed.data;
 
     const template = await prisma.shiftTemplate.create({
       data: {
-        name: name.trim(),
+        name,
         startTime,
         endTime,
         color: color || null,

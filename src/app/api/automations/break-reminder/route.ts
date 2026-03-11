@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendPushNotification } from "@/lib/notifications/push";
 import { log } from "@/lib/logger";
+import { captureRouteError, cronMonitor } from "@/lib/sentry";
 
 /**
  * POST /api/automations/break-reminder
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+
+    const monitor = cronMonitor("break-reminder", "*/15 * * * *");
 
     const now = new Date();
     // 6 hours ago
@@ -125,12 +128,18 @@ export async function POST(req: Request) {
       `[break-reminder] Checked ${overdueEntries.length} overdue entries, notified ${notified}`,
     );
 
+    monitor.finish("ok");
     return NextResponse.json({
       checked: overdueEntries.length,
       notified,
     });
   } catch (error) {
     log.error("[break-reminder] Error:", { error });
+    captureRouteError(error, {
+      route: "/api/automations/break-reminder",
+      method: "POST",
+    });
+    // If monitor was created before the error, finish it as error
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

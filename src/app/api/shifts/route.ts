@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   checkShiftConflicts,
@@ -17,23 +14,18 @@ import {
   calculateSurcharge,
 } from "@/lib/holidays";
 import { createShiftSchema, validateBody } from "@/lib/validations";
-import { createAuditLog } from "@/lib/audit";
+import { createAuditLogTx } from "@/lib/audit";
+import { captureRouteError } from "@/lib/sentry";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("start");
@@ -78,22 +70,16 @@ export async function GET(req: Request) {
     return paginatedResponse(shifts, total, take, skip);
   } catch (error) {
     log.error("Error fetching shifts:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+    captureRouteError(error, { route: "/api/shifts", method: "GET" });
+    return serverError("Error loading");
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // Only OWNER, ADMIN, MANAGER can create shifts
     const forbidden = requirePermission(user, "shifts", "create");
@@ -152,45 +138,60 @@ export async function POST(req: Request) {
       isHoliday: holidayCheck.isHoliday,
     });
 
-    // ── Create the shift ──
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const shift = await (prisma.shift.create as any)({
-      data: {
-        date: new Date(date),
-        startTime,
-        endTime,
-        notes: notes || null,
-        status: employeeId ? "SCHEDULED" : "OPEN",
-        employeeId: employeeId || null,
-        locationId: locationId || null,
-        isNightShift: nightCheck,
-        isHolidayShift: holidayCheck.isHoliday,
-        isSundayShift: sundayCheck,
-        surchargePercent: surcharge,
-        workspaceId,
-      },
-      include: {
-        employee: true,
-        location: true,
-      },
-    });
-
-    // ── Automation: Recurring shifts ──
-    let recurringResult = null;
-    if (repeatWeeks && repeatWeeks > 0) {
-      recurringResult = await createRecurringShifts({
-        baseShift: {
-          date,
+    // ── Create the shift + audit log atomically ──
+    const { shift, recurringResult } = await prisma.$transaction(async (tx) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const createdShift = await (tx.shift.create as any)({
+        data: {
+          date: new Date(date),
           startTime,
           endTime,
-          employeeId: employeeId ?? "",
-          locationId: locationId || null,
           notes: notes || null,
+          status: employeeId ? "SCHEDULED" : "OPEN",
+          employeeId: employeeId || null,
+          locationId: locationId || null,
+          isNightShift: nightCheck,
+          isHolidayShift: holidayCheck.isHoliday,
+          isSundayShift: sundayCheck,
+          surchargePercent: surcharge,
+          workspaceId,
         },
-        repeatWeeks: Math.min(repeatWeeks, 52),
-        workspaceId,
+        include: {
+          employee: true,
+          location: true,
+        },
       });
-    }
+
+      // ── Audit log (atomic) ──
+      await createAuditLogTx(tx, {
+        action: "CREATE",
+        entityType: "shift",
+        entityId: createdShift.id,
+        userId: user.id,
+        userEmail: user.email ?? undefined,
+        workspaceId,
+        changes: { date, startTime, endTime, employeeId, locationId },
+      });
+
+      // ── Automation: Recurring shifts ──
+      let recurResult = null;
+      if (repeatWeeks && repeatWeeks > 0) {
+        recurResult = await createRecurringShifts({
+          baseShift: {
+            date,
+            startTime,
+            endTime,
+            employeeId: employeeId ?? "",
+            locationId: locationId || null,
+            notes: notes || null,
+          },
+          repeatWeeks: Math.min(repeatWeeks, 52),
+          workspaceId,
+        });
+      }
+
+      return { shift: createdShift, recurringResult: recurResult };
+    });
 
     // ── Automation: Notify employee about new shift ──
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -237,17 +238,6 @@ export async function POST(req: Request) {
       (err) => log.error("Custom rule execution error:", { error: err }),
     );
 
-    // ── Audit log ──
-    createAuditLog({
-      action: "CREATE",
-      entityType: "shift",
-      entityId: shift.id,
-      userId: user.id,
-      userEmail: user.email ?? undefined,
-      workspaceId,
-      changes: { date, startTime, endTime, employeeId, locationId },
-    });
-
     // ── Webhook dispatch (fire & forget) ──
     dispatchWebhook(workspaceId, "shift.created", {
       id: shift.id,
@@ -266,9 +256,7 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     log.error("Error creating shift:", { error: error });
-    return NextResponse.json(
-      { error: "Error creating resource" },
-      { status: 500 },
-    );
+    captureRouteError(error, { route: "/api/shifts", method: "POST" });
+    return serverError("Error creating resource");
   }
 }

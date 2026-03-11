@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createSkillSchema, validateBody } from "@/lib/validations";
 
 export async function GET(req: Request) {
   try {
@@ -21,7 +22,6 @@ export async function GET(req: Request) {
 
     const { take, skip } = parsePagination(req);
 
-     
     const [skills, total] = await Promise.all([
       prisma.skill.findMany({
         where: { workspaceId },
@@ -34,7 +34,6 @@ export async function GET(req: Request) {
       }),
       prisma.skill.count({ where: { workspaceId } }),
     ]);
-     
 
     return paginatedResponse(skills, total, take, skip);
   } catch (error) {
@@ -62,18 +61,14 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
 
-    const { name, category } = await req.json();
+    const parsed = validateBody(createSkillSchema, await req.json());
+    if (!parsed.success) return parsed.response;
 
-    if (!name?.trim()) {
-      return NextResponse.json(
-        { error: "Name ist erforderlich." },
-        { status: 400 },
-      );
-    }
+    const { name, category } = parsed.data;
 
     const skill = await prisma.skill.create({
       data: {
-        name: name.trim(),
+        name,
         category: category || null,
         workspaceId,
       },

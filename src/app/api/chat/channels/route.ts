@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+import { createChatChannelSchema, validateBody } from "@/lib/validations";
 
 /**
  * GET /api/chat/channels
@@ -109,9 +110,11 @@ export async function POST(req: Request) {
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const body = await req.json();
+    const parsed = validateBody(createChatChannelSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
     const { name, description, type, memberIds, locationId, departmentId } =
-      body;
+      parsed.data;
 
     if (!name?.trim()) {
       return NextResponse.json(

@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createAutomationRuleSchema, validateBody } from "@/lib/validations";
 
 /** GET /api/automation-rules — list workspace automation rules */
 export async function GET(req: Request) {
@@ -70,8 +71,10 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "automations", "create");
     if (forbidden) return forbidden;
 
-    const { name, description, trigger, conditions, actions } =
-      await req.json();
+    const parsed = validateBody(createAutomationRuleSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const { name, description, trigger, conditions, actions } = parsed.data;
 
     if (!name || !trigger || !actions) {
       return NextResponse.json(

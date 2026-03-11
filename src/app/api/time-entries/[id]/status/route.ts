@@ -12,6 +12,8 @@ import { canUseFeature } from "@/lib/subscription";
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
+import { timeEntryStatusSchema, validateBody } from "@/lib/validations";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -67,9 +69,11 @@ export async function POST(req: Request, { params }: RouteParams) {
       );
     }
 
-    const body = await req.json();
-    const action: string = body.action;
-    const comment: string | undefined = body.comment;
+    const parsed = validateBody(timeEntryStatusSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const action: string = parsed.data.action;
+    const comment: string | undefined = parsed.data.comment;
 
     // State machine
     const transitions: Record<
@@ -159,20 +163,24 @@ export async function POST(req: Request, { params }: RouteParams) {
       updateData.confirmedBy = user.id;
     }
 
-    const updated = await prisma.timeEntry.update({
-      where: { id },
-      data: updateData,
-      include: { employee: true, location: true },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.timeEntry.update({
+        where: { id },
+        data: updateData,
+        include: { employee: true, location: true },
+      });
 
-    // Audit log
-    await prisma.timeEntryAudit.create({
-      data: {
-        action: transition.auditAction,
-        comment: comment || null,
-        performedBy: user.id,
-        timeEntryId: id,
-      },
+      // Audit log (atomic)
+      await tx.timeEntryAudit.create({
+        data: {
+          action: transition.auditAction,
+          comment: comment || null,
+          performedBy: user.id,
+          timeEntryId: id,
+        },
+      });
+
+      return result;
     });
 
     // ── E-Signature: Record signed approval/rejection/confirmation ──
@@ -224,6 +232,10 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json(updated);
   } catch (error) {
     log.error("Error updating time entry status:", { error: error });
+    captureRouteError(error, {
+      route: "/api/time-entries/[id]/status",
+      method: "POST",
+    });
     return NextResponse.json(
       { error: "Error changing status" },
       { status: 500 },

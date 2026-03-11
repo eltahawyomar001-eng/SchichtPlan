@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { updateProjectSchema, validateBody } from "@/lib/validations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -64,7 +65,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const body = await req.json();
+    const parsed = validateBody(updateProjectSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const body = parsed.data;
 
     const existing = await prisma.project.findFirst({
       where: { id, workspaceId: user.workspaceId },
@@ -85,15 +89,13 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           clientId: body.clientId || null,
         }),
         ...(body.costRate !== undefined && {
-          costRate: body.costRate ? parseFloat(body.costRate) : null,
+          costRate: body.costRate ?? null,
         }),
         ...(body.billRate !== undefined && {
-          billRate: body.billRate ? parseFloat(body.billRate) : null,
+          billRate: body.billRate ?? null,
         }),
         ...(body.budgetMinutes !== undefined && {
-          budgetMinutes: body.budgetMinutes
-            ? parseInt(body.budgetMinutes, 10)
-            : null,
+          budgetMinutes: body.budgetMinutes ?? null,
         }),
         ...(body.startDate !== undefined && {
           startDate: body.startDate ? new Date(body.startDate) : null,

@@ -10,6 +10,7 @@ import {
   calcNetMinutes,
 } from "@/lib/time-utils";
 import { log } from "@/lib/logger";
+import { updateTimeEntrySchema, validateBody } from "@/lib/validations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -96,7 +97,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       );
     }
 
-    const body = await req.json();
+    const parsed = validateBody(updateTimeEntrySchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const body = parsed.data;
 
     // Build changes diff for audit
     const changedFields: Record<string, { old: unknown; new: unknown }> = {};
@@ -134,34 +138,38 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     );
     const netMinutes = calcNetMinutes(grossMinutes, breakMins);
 
-    const updated = await prisma.timeEntry.update({
-      where: { id },
-      data: {
-        startTime,
-        endTime,
-        breakStart: body.breakStart ?? existing.breakStart,
-        breakEnd: body.breakEnd ?? existing.breakEnd,
-        breakMinutes: breakMins,
-        grossMinutes,
-        netMinutes,
-        remarks: body.remarks ?? existing.remarks,
-        locationId: body.locationId ?? existing.locationId,
-        date: body.date ? new Date(body.date) : existing.date,
-      },
-      include: { employee: true, location: true },
-    });
-
-    // Audit log
-    if (Object.keys(changedFields).length > 0) {
-      await prisma.timeEntryAudit.create({
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.timeEntry.update({
+        where: { id },
         data: {
-          action: "EDITED",
-          changes: JSON.stringify(changedFields),
-          performedBy: user.id,
-          timeEntryId: id,
+          startTime,
+          endTime,
+          breakStart: body.breakStart ?? existing.breakStart,
+          breakEnd: body.breakEnd ?? existing.breakEnd,
+          breakMinutes: breakMins,
+          grossMinutes,
+          netMinutes,
+          remarks: body.remarks ?? existing.remarks,
+          locationId: body.locationId ?? existing.locationId,
+          date: body.date ? new Date(body.date) : existing.date,
         },
+        include: { employee: true, location: true },
       });
-    }
+
+      // Audit log (atomic)
+      if (Object.keys(changedFields).length > 0) {
+        await tx.timeEntryAudit.create({
+          data: {
+            action: "EDITED",
+            changes: JSON.stringify(changedFields),
+            performedBy: user.id,
+            timeEntryId: id,
+          },
+        });
+      }
+
+      return result;
+    });
 
     return NextResponse.json(updated);
   } catch (error) {

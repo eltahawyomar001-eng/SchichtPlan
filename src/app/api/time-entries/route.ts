@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import {
   validateTimeEntry,
@@ -14,20 +11,15 @@ import { ensureLegalBreak } from "@/lib/automations";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 // ─── GET  /api/time-entries ─────────────────────────────────────
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("start");
@@ -71,23 +63,17 @@ export async function GET(req: Request) {
     return paginatedResponse(entries, total, take, skip);
   } catch (error) {
     log.error("Error fetching time entries:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+    captureRouteError(error, { route: "/api/time-entries", method: "GET" });
+    return serverError("Error loading");
   }
 }
 
 // ─── POST  /api/time-entries ────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const body = await req.json();
 
@@ -144,32 +130,36 @@ export async function POST(req: Request) {
     const breakMins = ensureLegalBreak(grossMinutes, rawBreakMins);
     const netMinutes = calcNetMinutes(grossMinutes, breakMins);
 
-    const entry = await prisma.timeEntry.create({
-      data: {
-        date: new Date(body.date),
-        startTime: body.startTime,
-        endTime: body.endTime,
-        breakStart: body.breakStart || null,
-        breakEnd: body.breakEnd || null,
-        breakMinutes: breakMins,
-        grossMinutes,
-        netMinutes,
-        remarks: body.remarks || null,
-        employeeId: body.employeeId,
-        locationId: body.locationId || null,
-        shiftId: body.shiftId || null,
-        workspaceId,
-      },
-      include: { employee: true, location: true },
-    });
+    const entry = await prisma.$transaction(async (tx) => {
+      const created = await tx.timeEntry.create({
+        data: {
+          date: new Date(body.date),
+          startTime: body.startTime,
+          endTime: body.endTime,
+          breakStart: body.breakStart || null,
+          breakEnd: body.breakEnd || null,
+          breakMinutes: breakMins,
+          grossMinutes,
+          netMinutes,
+          remarks: body.remarks || null,
+          employeeId: body.employeeId,
+          locationId: body.locationId || null,
+          shiftId: body.shiftId || null,
+          workspaceId,
+        },
+        include: { employee: true, location: true },
+      });
 
-    // Create audit log entry
-    await prisma.timeEntryAudit.create({
-      data: {
-        action: "CREATED",
-        performedBy: user.id,
-        timeEntryId: entry.id,
-      },
+      // Create audit log entry (atomic)
+      await tx.timeEntryAudit.create({
+        data: {
+          action: "CREATED",
+          performedBy: user.id,
+          timeEntryId: created.id,
+        },
+      });
+
+      return created;
     });
 
     // ── Webhook dispatch (fire & forget) ──
@@ -188,10 +178,8 @@ export async function POST(req: Request) {
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {
     log.error("Error creating time entry:", { error: error });
-    return NextResponse.json(
-      { error: "Error creating resource" },
-      { status: 500 },
-    );
+    captureRouteError(error, { route: "/api/time-entries", method: "POST" });
+    return serverError("Error creating resource");
   }
 }
 

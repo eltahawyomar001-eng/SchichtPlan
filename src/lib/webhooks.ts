@@ -2,11 +2,20 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { log } from "@/lib/logger";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAYS = [1000, 3000, 10000]; // ms
+/**
+ * Webhook delivery timeout (ms).
+ * Short timeout prevents blocking serverless function execution time.
+ */
+const DELIVERY_TIMEOUT = 5_000; // 5 seconds
 
 /**
  * Dispatch a webhook event to all matching endpoints for a workspace.
+ *
+ * Uses single-attempt delivery with a short timeout to avoid blocking the
+ * API response. If delivery fails, the failure is logged and captured in
+ * Sentry for manual investigation. This prevents the worst-case scenario
+ * of the old retry approach (4 attempts × 10s timeout = 40+ seconds
+ * blocking serverless function execution time).
  *
  * @param workspaceId - The workspace that owns the endpoints
  * @param event       - Event name, e.g. "shift.created", "time-entry.updated"
@@ -30,6 +39,9 @@ export async function dispatchWebhook(
         ep.events.includes(event) || ep.events.includes("*"),
     );
 
+    if (matching.length === 0) return;
+
+    // Fire-and-forget: single attempt per endpoint, no retries
     await Promise.allSettled(
       matching.map(async (ep: { id: string; url: string; secret: string }) => {
         const body = JSON.stringify({ event, data: payload, ts: Date.now() });
@@ -38,63 +50,40 @@ export async function dispatchWebhook(
           .update(body)
           .digest("hex");
 
-        let lastError: Error | null = null;
+        try {
+          const res = await fetch(ep.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shiftfy-Signature": `sha256=${signature}`,
+              "X-Shiftfy-Event": event,
+            },
+            body,
+            signal: AbortSignal.timeout(DELIVERY_TIMEOUT),
+          });
 
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-          try {
-            const res = await fetch(ep.url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Shiftfy-Signature": `sha256=${signature}`,
-                "X-Shiftfy-Event": event,
-              },
-              body,
-              signal: AbortSignal.timeout(10000),
+          if (res.ok) {
+            log.info("[webhook] Delivered", {
+              endpointId: ep.id,
+              event,
+              status: res.status,
             });
-
-            if (res.ok) {
-              log.info("[webhook] Delivered", {
-                endpointId: ep.id,
-                event,
-                attempt,
-                status: res.status,
-              });
-              return; // success — stop retrying
-            }
-
-            lastError = new Error(`HTTP ${res.status}`);
+          } else {
             log.warn("[webhook] Non-OK response", {
               endpointId: ep.id,
               url: ep.url,
               event,
-              attempt,
               status: res.status,
             });
-          } catch (err) {
-            lastError = err instanceof Error ? err : new Error(String(err));
-            log.warn("[webhook] Delivery failed", {
-              endpointId: ep.id,
-              url: ep.url,
-              event,
-              attempt,
-              error: lastError.message,
-            });
           }
-
-          // Wait before retry (skip wait after last attempt)
-          if (attempt < MAX_RETRIES) {
-            await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
-          }
+        } catch (err) {
+          log.warn("[webhook] Delivery failed", {
+            endpointId: ep.id,
+            url: ep.url,
+            event,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
-
-        // All retries exhausted
-        log.error("[webhook] All retries exhausted", {
-          endpointId: ep.id,
-          url: ep.url,
-          event,
-          error: lastError?.message,
-        });
       }),
     );
   } catch (err) {

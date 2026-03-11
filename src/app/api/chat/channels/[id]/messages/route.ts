@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
+import { sanitize } from "@/lib/sanitize";
+import { createChatMessageSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -159,19 +161,17 @@ export async function POST(
     }
 
     const body = await req.json();
-    const content = body.content?.trim();
-    const parentId = body.parentId || null;
+    const parsed = validateBody(createChatMessageSchema, body);
+    if (!parsed.success) return parsed.response;
+    const content = parsed.data.content;
+    const parentId = parsed.data.parentId || null;
 
-    if (!content || content.length > 5000) {
-      return NextResponse.json(
-        { error: "Message must be 1-5000 characters" },
-        { status: 400 },
-      );
-    }
+    // Sanitize content to prevent XSS
+    const sanitizedContent = sanitize(content);
 
     const message = await prisma.chatMessage.create({
       data: {
-        content,
+        content: sanitizedContent,
         channelId,
         senderId: user.id,
         senderName: user.name || user.email,

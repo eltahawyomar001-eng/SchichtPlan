@@ -7,6 +7,7 @@ import { isSimulationMode, simulateSubscription } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
 import type { PlanId } from "@/lib/stripe";
 import { PLANS } from "@/lib/stripe";
+import { billingSimulateSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -49,27 +50,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { plan, billingCycle = "monthly" } = body;
-
-    // Validate plan
-    const validPlans: PlanId[] = ["basic", "professional", "enterprise"];
-    if (!plan || !validPlans.includes(plan)) {
-      return NextResponse.json(
-        {
-          error: "Invalid plan. Must be basic, professional, or enterprise.",
-        },
-        { status: 400 },
-      );
-    }
-
-    // Validate billing cycle
-    if (!["monthly", "annual"].includes(billingCycle)) {
-      return NextResponse.json(
-        { error: "Invalid billingCycle. Must be monthly or annual." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(billingSimulateSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { plan, billingCycle } = parsed.data;
 
     const result = await simulateSubscription({
       workspaceId: user.workspaceId,

@@ -6,6 +6,10 @@ import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import {
+  createShiftChangeRequestSchema,
+  validateBody,
+} from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────
@@ -88,27 +92,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const body = await req.json();
+    const parsed = validateBody(
+      createShiftChangeRequestSchema,
+      await req.json(),
+    );
+    if (!parsed.success) return parsed.response;
     const { shiftId, newDate, newStartTime, newEndTime, newNotes, reason } =
-      body;
-
-    if (!shiftId) {
-      return NextResponse.json(
-        { error: "shiftId is required" },
-        { status: 400 },
-      );
-    }
-
-    // At least one change must be requested
-    if (!newDate && !newStartTime && !newEndTime && newNotes === undefined) {
-      return NextResponse.json(
-        {
-          error:
-            "At least one change (date, start time, end time, or notes) is required",
-        },
-        { status: 400 },
-      );
-    }
+      parsed.data;
 
     // Verify the shift exists and belongs to this workspace
     const shift = await prisma.shift.findFirst({

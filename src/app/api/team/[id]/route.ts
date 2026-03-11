@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import { updateTeamRoleSchema, validateBody } from "@/lib/validations";
 
 /**
  * PATCH /api/team/[id] — update a member's role
@@ -27,7 +28,9 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { role } = await req.json();
+  const parsed = validateBody(updateTeamRoleSchema, await req.json());
+  if (!parsed.success) return parsed.response;
+  const { role } = parsed.data;
 
   // Cannot change own role
   if (id === user.id) {
@@ -37,16 +40,7 @@ export async function PATCH(
     );
   }
 
-  // Cannot assign OWNER role
-  if (role === "OWNER") {
-    return NextResponse.json({ error: "CANNOT_ASSIGN_OWNER" }, { status: 400 });
-  }
-
-  const allowedRoles = ["ADMIN", "MANAGER", "EMPLOYEE"];
-  if (!allowedRoles.includes(role)) {
-    return NextResponse.json({ error: "Invalid role" }, { status: 400 });
-  }
-
+  // Cannot assign OWNER role — already enforced by schema
   // Verify target user is in the same workspace
   const targetUser = await prisma.user.findUnique({
     where: { id },

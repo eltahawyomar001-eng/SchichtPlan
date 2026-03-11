@@ -45,8 +45,8 @@ vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => {
+  const mockPrisma = {
     subscription: { findUnique: mockSubscriptionFindUnique },
     employee: {
       count: mockEmployeeCount,
@@ -67,7 +67,22 @@ vi.mock("@/lib/db", () => ({
       findMany: mockLocationFindMany,
       create: mockLocationCreate,
     },
-  },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({ id: "audit-1" }),
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $transaction: vi.fn((cb: (tx: any) => Promise<any>) => cb(mockPrisma)),
+  };
+  return { prisma: mockPrisma };
+});
+
+vi.mock("@/lib/audit", () => ({
+  createAuditLog: vi.fn(),
+  createAuditLogTx: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/automations", () => ({
+  executeCustomRules: vi.fn(),
 }));
 
 import {

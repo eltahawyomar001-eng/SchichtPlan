@@ -10,6 +10,7 @@ import {
 } from "@/lib/automations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createShiftSwapSchema, validateBody } from "@/lib/validations";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
 export async function GET(req: Request) {
@@ -78,14 +79,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const body = await req.json();
+    const parsed = validateBody(createShiftSwapSchema, await req.json());
+    if (!parsed.success) return parsed.response;
 
-    if (!body.shiftId || !body.requesterId) {
-      return NextResponse.json(
-        { error: "Shift and requester are required" },
-        { status: 400 },
-      );
-    }
+    const body = parsed.data;
 
     // Verify shift belongs to requester
     const shift = await prisma.shift.findUnique({

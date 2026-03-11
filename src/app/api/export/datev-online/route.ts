@@ -7,6 +7,7 @@ import { toIndustrialHours } from "@/lib/time-utils";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { createAuditLog } from "@/lib/audit";
+import { datevExportSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -43,15 +44,9 @@ export async function POST(req: Request) {
     const planGate = await requirePlanFeature(workspaceId, "datevOnlineUpload");
     if (planGate) return planGate;
 
-    const body = await req.json();
-    const { start, end, employeeId, monthCloseId } = body;
-
-    if (!start || !end) {
-      return NextResponse.json(
-        { error: "Start- und Enddatum sind erforderlich" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(datevExportSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { start, end, employeeId, monthCloseId } = parsed.data;
 
     // Fetch confirmed time entries (same logic as CSV export)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

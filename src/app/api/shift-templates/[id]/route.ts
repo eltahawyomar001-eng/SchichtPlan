@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { updateShiftTemplateSchema, validateBody } from "@/lib/validations";
 
 export async function PUT(
   req: Request,
@@ -21,7 +22,10 @@ export async function PUT(
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const { name, startTime, endTime, color, locationId } = await req.json();
+    const parsed = validateBody(updateShiftTemplateSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const { name, startTime, endTime, color, locationId } = parsed.data;
 
     const template = await prisma.shiftTemplate.update({
       where: { id },

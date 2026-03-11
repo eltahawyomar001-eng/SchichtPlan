@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { createAuditLog } from "@/lib/audit";
+import { transferOwnershipSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -31,15 +32,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { targetUserId } = body;
-
-    if (!targetUserId || typeof targetUserId !== "string") {
-      return NextResponse.json(
-        { error: "targetUserId ist erforderlich." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(transferOwnershipSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { targetUserId } = parsed.data;
 
     // Cannot transfer to yourself
     if (targetUserId === user.id) {

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requireManagement } from "@/lib/authorization";
+import { addChatMembersSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -45,15 +46,9 @@ export async function POST(
       if (mgmtForbidden) return mgmtForbidden;
     }
 
-    const body = await req.json();
-    const { userIds } = body;
-
-    if (!Array.isArray(userIds) || userIds.length === 0) {
-      return NextResponse.json(
-        { error: "userIds array required" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(addChatMembersSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { userIds } = parsed.data;
 
     // Verify all users belong to the workspace
     const workspaceUsers = await prisma.user.findMany({

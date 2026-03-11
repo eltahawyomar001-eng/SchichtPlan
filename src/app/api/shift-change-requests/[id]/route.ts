@@ -9,6 +9,10 @@ import {
   createSystemNotification,
 } from "@/lib/automations";
 import { createESignature, getClientIp } from "@/lib/e-signature";
+import {
+  updateShiftChangeRequestSchema,
+  validateBody,
+} from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 interface RouteParams {
@@ -43,16 +47,13 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const body = await req.json();
-    const action: string = body.action; // "approve" | "reject" | "cancel"
-    const reviewNote: string | undefined = body.reviewNote;
-
-    if (!action || !["approve", "reject", "cancel"].includes(action)) {
-      return NextResponse.json(
-        { error: 'Invalid action. Must be "approve", "reject", or "cancel".' },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(
+      updateShiftChangeRequestSchema,
+      await req.json(),
+    );
+    if (!parsed.success) return parsed.response;
+    const action = parsed.data.action;
+    const reviewNote = parsed.data.reviewNote;
 
     // Only pending requests can be acted upon
     if (changeRequest.status !== "AUSSTEHEND") {

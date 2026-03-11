@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createAvailabilitySchema, validateBody } from "@/lib/validations";
 
 // ─── GET  /api/availability ─────────────────────────────────────
 export async function GET(req: Request) {
@@ -62,14 +63,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const body = await req.json();
+    const parsed = validateBody(createAvailabilitySchema, await req.json());
+    if (!parsed.success) return parsed.response;
 
-    if (!body.employeeId || !body.entries || !Array.isArray(body.entries)) {
-      return NextResponse.json(
-        { error: "employeeId and entries array are required" },
-        { status: 400 },
-      );
-    }
+    const body = parsed.data;
 
     // EMPLOYEE can only manage their own availability
     if (isEmployee(user)) {
@@ -99,24 +96,16 @@ export async function POST(req: Request) {
     });
 
     const created = await prisma.availability.createMany({
-      data: body.entries.map(
-        (entry: {
-          weekday: number;
-          startTime?: string;
-          endTime?: string;
-          type: string;
-          notes?: string;
-        }) => ({
-          weekday: entry.weekday,
-          startTime: entry.startTime || null,
-          endTime: entry.endTime || null,
-          type: entry.type,
-          validFrom,
-          notes: entry.notes || null,
-          employeeId: body.employeeId,
-          workspaceId,
-        }),
-      ),
+      data: body.entries.map((entry) => ({
+        weekday: entry.weekday,
+        startTime: entry.startTime || null,
+        endTime: entry.endTime || null,
+        type: entry.type,
+        validFrom,
+        notes: entry.notes || null,
+        employeeId: body.employeeId,
+        workspaceId,
+      })),
     });
 
     return NextResponse.json({ created: created.count }, { status: 201 });

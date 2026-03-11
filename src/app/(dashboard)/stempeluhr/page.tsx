@@ -9,7 +9,6 @@ import { PageContent } from "@/components/ui/page-content";
 import {
   ClockIcon,
   AlertTriangleIcon,
-  MapPinIcon,
   UsersIcon,
   PlayIcon,
   LogOutIcon,
@@ -47,8 +46,6 @@ interface TeamMember {
     startTime: string;
     breakStart: string | null;
     breakEnd: string | null;
-    clockInLat: number | null;
-    clockInLng: number | null;
   } | null;
   completedCount: number;
   totalNetMinutes: number;

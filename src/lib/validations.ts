@@ -213,6 +213,386 @@ export const updateLocationGeoSchema = z.object({
   address: optionalString,
 });
 
+// ── Clock (time-entries/clock) ──────────────────────────────────
+export const clockActionSchema = z.object({
+  action: z.enum(["in", "out", "break-start", "break-end"], {
+    message: "Ungültige Aktion",
+  }),
+  timezone: optionalString.pipe(z.string().max(100).optional()),
+});
+
+// ── Time Entry Status Update ────────────────────────────────────
+export const timeEntryStatusSchema = z.object({
+  action: z.enum(["submit", "approve", "reject", "correct", "confirm"], {
+    message: "Ungültige Aktion",
+  }),
+  comment: optionalString.pipe(z.string().max(2000).optional()),
+});
+
+// ── Update Time Entry (PATCH) ───────────────────────────────────
+export const updateTimeEntrySchema = z.object({
+  startTime: timeString.optional(),
+  endTime: timeString.optional(),
+  breakStart: optionalString,
+  breakEnd: optionalString,
+  breakMinutes: z.coerce.number().int().min(0).max(480).optional(),
+  remarks: optionalString.pipe(z.string().max(2000).optional()),
+  locationId: optionalString.nullable(),
+  date: dateString.optional(),
+});
+
+// ── Absence (POST) ─────────────────────────────────────────────
+export const createAbsenceSchema = z.object({
+  employeeId: requiredString,
+  category: z.enum(
+    [
+      "URLAUB",
+      "KRANK",
+      "UNBEZAHLT",
+      "SONDERURLAUB",
+      "ELTERNZEIT",
+      "FORTBILDUNG",
+      "SONSTIGES",
+    ],
+    { message: "Ungültige Abwesenheitskategorie" },
+  ),
+  startDate: dateString,
+  endDate: dateString,
+  halfDayStart: z.boolean().optional().default(false),
+  halfDayEnd: z.boolean().optional().default(false),
+});
+
+// ── Absence Status Update (PATCH) ──────────────────────────────
+export const updateAbsenceStatusSchema = z.object({
+  status: z.enum(["GENEHMIGT", "ABGELEHNT", "STORNIERT"], {
+    message: "Ungültiger Status",
+  }),
+  reviewNote: optionalString.pipe(z.string().max(2000).optional()),
+});
+
+// ── Month Close ─────────────────────────────────────────────────
+export const monthCloseSchema = z.object({
+  year: z.coerce.number().int().min(2020).max(2100),
+  month: z.coerce.number().int().min(1).max(12),
+  action: z.enum(["lock", "unlock", "export"], {
+    message: 'Ungültige Aktion. Erlaubt: "lock", "unlock", "export"',
+  }),
+});
+
+// ── Shift Swap ──────────────────────────────────────────────────
+export const createShiftSwapSchema = z.object({
+  shiftId: requiredString,
+  requesterId: requiredString,
+  targetId: optionalString.nullable(),
+  targetShiftId: optionalString.nullable(),
+  reason: optionalString.pipe(z.string().max(1000).optional()),
+});
+
+// ── Availability ────────────────────────────────────────────────
+const availabilityEntrySchema = z.object({
+  weekday: z.coerce.number().int().min(0).max(6),
+  startTime: optionalString,
+  endTime: optionalString,
+  type: z.enum(["VERFUEGBAR", "BEVORZUGT", "NICHT_VERFUEGBAR"]).optional(),
+  notes: optionalString.pipe(z.string().max(500).optional()),
+});
+
+export const createAvailabilitySchema = z.object({
+  employeeId: requiredString,
+  entries: z.array(availabilityEntrySchema).min(1, "Mindestens ein Eintrag"),
+  validFrom: optionalString,
+});
+
+// ── Department ──────────────────────────────────────────────────
+export const createDepartmentSchema = z.object({
+  name: requiredString.max(200, "Maximal 200 Zeichen"),
+  color: optionalString.pipe(z.string().max(50).optional()),
+  locationId: optionalString.nullable(),
+});
+
+export const updateDepartmentSchema = createDepartmentSchema.partial();
+
+// ── Skill ───────────────────────────────────────────────────────
+export const createSkillSchema = z.object({
+  name: requiredString.max(200, "Maximal 200 Zeichen"),
+  category: optionalString.pipe(z.string().max(200).optional()),
+});
+
+// ── Shift Template ──────────────────────────────────────────────
+export const createShiftTemplateSchema = z.object({
+  name: requiredString.max(200, "Maximal 200 Zeichen"),
+  startTime: timeString,
+  endTime: timeString,
+  color: optionalString.pipe(z.string().max(50).optional()),
+  locationId: optionalString.nullable(),
+});
+
+export const updateShiftTemplateSchema = createShiftTemplateSchema.partial();
+
+// ── Vacation Balance ────────────────────────────────────────────
+export const createVacationBalanceSchema = z.object({
+  employeeId: requiredString,
+  year: z.coerce.number().int().min(2020).max(2100),
+  totalEntitlement: z.coerce.number().nonnegative().optional(),
+  carryOver: z.coerce.number().nonnegative().optional(),
+});
+
+// ── Project ─────────────────────────────────────────────────────
+export const createProjectSchema = z.object({
+  name: requiredString.max(300, "Maximal 300 Zeichen"),
+  description: optionalString.pipe(z.string().max(2000).optional()),
+  clientId: optionalString.nullable(),
+  costRate: z.coerce.number().nonnegative().optional().nullable(),
+  billRate: z.coerce.number().nonnegative().optional().nullable(),
+  budgetMinutes: z.coerce.number().int().nonnegative().optional().nullable(),
+  startDate: optionalString.nullable(),
+  endDate: optionalString.nullable(),
+});
+
+export const updateProjectSchema = createProjectSchema.partial().extend({
+  status: z.enum(["ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"]).optional(),
+});
+
+// ── Project Member ──────────────────────────────────────────────
+export const addProjectMemberSchema = z.object({
+  employeeId: requiredString,
+  role: z.enum(["MEMBER", "LEAD"]).optional().default("MEMBER"),
+});
+
+export const removeProjectMemberSchema = z.object({
+  employeeId: requiredString,
+});
+
+// ── Client ──────────────────────────────────────────────────────
+export const createClientSchema = z.object({
+  name: requiredString.max(300, "Maximal 300 Zeichen"),
+  email: optionalEmail.nullable(),
+  phone: optionalString.pipe(z.string().max(50).optional()).nullable(),
+  address: optionalString.pipe(z.string().max(500).optional()).nullable(),
+  notes: optionalString.pipe(z.string().max(2000).optional()).nullable(),
+});
+
+export const updateClientSchema = createClientSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+// ── Chat Channel ────────────────────────────────────────────────
+export const createChatChannelSchema = z.object({
+  name: requiredString.max(200, "Maximal 200 Zeichen"),
+  description: optionalString.pipe(z.string().max(1000).optional()),
+  type: z.enum(["GROUP", "DIRECT", "ANNOUNCEMENT"]).optional(),
+  memberIds: z.array(z.string()).optional(),
+  locationId: optionalString.nullable(),
+  departmentId: optionalString.nullable(),
+});
+
+// ── Chat Message ────────────────────────────────────────────────
+export const createChatMessageSchema = z.object({
+  content: requiredString.max(5000, "Maximal 5000 Zeichen"),
+  parentId: optionalString.nullable(),
+});
+
+// ── Chat Members (add) ──────────────────────────────────────────
+export const addChatMembersSchema = z.object({
+  userIds: z.array(z.string().min(1)).min(1, "Mindestens ein Benutzer"),
+});
+
+// ── Push Subscription ───────────────────────────────────────────
+export const createPushSubscriptionSchema = z.object({
+  endpoint: requiredString.url("Ungültige Endpoint-URL"),
+  keys: z.object({
+    p256dh: requiredString,
+    auth: requiredString,
+  }),
+});
+
+export const deletePushSubscriptionSchema = z.object({
+  endpoint: requiredString,
+});
+
+// ── Notification Preferences ────────────────────────────────────
+export const updateNotificationPreferencesSchema = z.object({
+  emailEnabled: z.boolean().optional(),
+});
+
+// ── Profile Update ──────────────────────────────────────────────
+export const updateProfileSchema = z
+  .object({
+    name: optionalString.pipe(z.string().max(100).optional()),
+    currentPassword: optionalString,
+    newPassword: optionalString,
+  })
+  .refine(
+    (data) => {
+      // If either password field is provided, both must be
+      if (data.currentPassword || data.newPassword) {
+        return !!data.currentPassword && !!data.newPassword;
+      }
+      return true;
+    },
+    {
+      message: "Beide Passwortfelder sind erforderlich",
+      path: ["newPassword"],
+    },
+  );
+
+// ── Shift Change Request ────────────────────────────────────────
+export const createShiftChangeRequestSchema = z
+  .object({
+    shiftId: requiredString,
+    newDate: optionalString,
+    newStartTime: optionalString,
+    newEndTime: optionalString,
+    newNotes: optionalString.pipe(z.string().max(1000).optional()),
+    reason: optionalString.pipe(z.string().max(2000).optional()),
+  })
+  .refine(
+    (data) =>
+      data.newDate ||
+      data.newStartTime ||
+      data.newEndTime ||
+      data.newNotes !== undefined,
+    {
+      message:
+        "Mindestens eine Änderung (Datum, Startzeit, Endzeit oder Notiz) ist erforderlich",
+      path: ["shiftId"],
+    },
+  );
+
+export const updateShiftChangeRequestSchema = z.object({
+  action: z.enum(["approve", "reject", "cancel"], {
+    message: 'Ungültige Aktion. Erlaubt: "approve", "reject", "cancel"',
+  }),
+  reviewNote: optionalString.pipe(z.string().max(2000).optional()),
+});
+
+// ── Automation Rule ─────────────────────────────────────────────
+export const createAutomationRuleSchema = z.object({
+  name: requiredString.max(200, "Maximal 200 Zeichen"),
+  description: optionalString.pipe(z.string().max(1000).optional()),
+  trigger: requiredString.max(200, "Maximal 200 Zeichen"),
+  conditions: z.unknown().optional(),
+  actions: z.unknown(),
+});
+
+// ── Team: Update Role ───────────────────────────────────────────
+export const updateTeamRoleSchema = z.object({
+  role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"], {
+    message: "Ungültige Rolle",
+  }),
+});
+
+// ── Team: Transfer Ownership ────────────────────────────────────
+export const transferOwnershipSchema = z.object({
+  targetUserId: requiredString,
+});
+
+// ── Workspace Update ────────────────────────────────────────────
+const VALID_BUNDESLAENDER = [
+  "BW",
+  "BY",
+  "BE",
+  "BB",
+  "HB",
+  "HH",
+  "HE",
+  "MV",
+  "NI",
+  "NW",
+  "RP",
+  "SL",
+  "SN",
+  "ST",
+  "SH",
+  "TH",
+] as const;
+
+export const updateWorkspaceSchema = z
+  .object({
+    name: optionalString.pipe(z.string().max(200).optional()),
+    industry: optionalString.pipe(z.string().max(200).optional()),
+    bundesland: z
+      .enum([...VALID_BUNDESLAENDER, ""])
+      .optional()
+      .nullable(),
+  })
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.industry !== undefined ||
+      data.bundesland !== undefined,
+    { message: "Keine Änderungen angegeben" },
+  );
+
+// ── Billing: Simulate ───────────────────────────────────────────
+export const billingSimulateSchema = z.object({
+  plan: z.enum(["basic", "professional", "enterprise"], {
+    message: "Ungültiger Plan",
+  }),
+  billingCycle: z
+    .enum(["monthly", "annual"], { message: "Ungültiger Abrechnungszyklus" })
+    .optional()
+    .default("monthly"),
+});
+
+// ── Export: DATEV Online ────────────────────────────────────────
+export const datevExportSchema = z.object({
+  start: dateString,
+  end: dateString,
+  employeeId: optionalString,
+  monthCloseId: optionalString,
+});
+
+// ── iCal Token ──────────────────────────────────────────────────
+export const createICalTokenSchema = z.object({
+  label: optionalString.pipe(z.string().max(100).optional()),
+});
+
+// ── Auth: Pre-Login ─────────────────────────────────────────────
+export const preLoginSchema = z.object({
+  email: requiredString,
+  password: requiredString,
+});
+
+// ── Auth: Verify Email ──────────────────────────────────────────
+export const verifyEmailSchema = z.object({
+  token: requiredString,
+  email: email,
+});
+
+// ── Auth: Resend Verification ───────────────────────────────────
+export const resendVerificationSchema = z.object({
+  email: email,
+});
+
+// ── Auth: Two-Factor Code ───────────────────────────────────────
+export const twoFactorVerifySchema = z.object({
+  code: optionalString,
+  token: optionalString,
+});
+
+// ── Admin: Workspace Wipe ───────────────────────────────────────
+export const workspaceWipeSchema = z.object({
+  confirm: requiredString,
+});
+
+// ── Employee Skill Assignment ───────────────────────────────────
+export const assignEmployeeSkillSchema = z.object({
+  skillId: requiredString,
+  expiresAt: optionalString,
+});
+
+// ── Update Shift (PATCH) ────────────────────────────────────────
+export const updateShiftSchema = z.object({
+  date: optionalString,
+  startTime: optionalString,
+  endTime: optionalString,
+  employeeId: optionalString.nullable(),
+  locationId: optionalString.nullable(),
+  notes: optionalString.pipe(z.string().max(1000).optional()),
+  status: z.enum(["SCHEDULED", "OPEN", "COMPLETED", "CANCELLED"]).optional(),
+});
+
 /* ═══════════════════════════════════════════════════════════════
    Validation helper — parse & return typed 400 on failure
    ═══════════════════════════════════════════════════════════════ */

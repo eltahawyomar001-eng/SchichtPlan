@@ -4,6 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
+import {
+  addProjectMemberSchema,
+  removeProjectMemberSchema,
+  validateBody,
+} from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 interface RouteParams {
@@ -23,14 +28,9 @@ export async function POST(req: Request, { params }: RouteParams) {
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const { employeeId, role } = await req.json();
-
-    if (!employeeId) {
-      return NextResponse.json(
-        { error: "employeeId is required" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(addProjectMemberSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { employeeId, role } = parsed.data;
 
     // Verify project belongs to workspace
     const project = await prisma.project.findFirst({
@@ -79,14 +79,9 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const { employeeId } = await req.json();
-
-    if (!employeeId) {
-      return NextResponse.json(
-        { error: "employeeId is required" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(removeProjectMemberSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { employeeId } = parsed.data;
 
     await prisma.projectMember.deleteMany({
       where: { projectId: id, employeeId },

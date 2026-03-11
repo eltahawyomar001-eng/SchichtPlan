@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requireAdmin } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
+import { updateWorkspaceSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { requireAuth, serverError } from "@/lib/api-response";
 
-// German Bundesländer (federal states)
+// German Bundesländer (federal states) — used for reference / future validation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VALID_BUNDESLAENDER = [
   "BW", // Baden-Württemberg
   "BY", // Bayern
@@ -33,16 +33,12 @@ const VALID_BUNDESLAENDER = [
  */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId)
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { workspaceId } = auth;
 
     const workspace = await prisma.workspace.findUnique({
-      where: { id: user.workspaceId },
+      where: { id: workspaceId },
       select: {
         id: true,
         name: true,
@@ -62,10 +58,7 @@ export async function GET() {
     return NextResponse.json(workspace);
   } catch (error) {
     log.error("Error fetching workspace:", { error });
-    return NextResponse.json(
-      { error: "Error loading workspace" },
-      { status: 500 },
-    );
+    return serverError("Error loading workspace");
   }
 }
 
@@ -76,18 +69,16 @@ export async function GET() {
  */
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId)
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const authError = requireAdmin(user);
     if (authError) return authError;
 
-    const body = await req.json();
+    const parsed = validateBody(updateWorkspaceSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
 
@@ -100,15 +91,10 @@ export async function PATCH(req: Request) {
     }
 
     if (typeof body.bundesland === "string") {
-      if (body.bundesland === "" || body.bundesland === null) {
+      if (body.bundesland === "") {
         data.bundesland = null;
-      } else if (VALID_BUNDESLAENDER.includes(body.bundesland)) {
-        data.bundesland = body.bundesland;
       } else {
-        return NextResponse.json(
-          { error: "Ungültiges Bundesland." },
-          { status: 400 },
-        );
+        data.bundesland = body.bundesland;
       }
     }
 
@@ -120,7 +106,7 @@ export async function PATCH(req: Request) {
     }
 
     const updated = await prisma.workspace.update({
-      where: { id: user.workspaceId },
+      where: { id: workspaceId },
       data,
       select: {
         id: true,
@@ -132,7 +118,7 @@ export async function PATCH(req: Request) {
     });
 
     log.info("Workspace updated", {
-      workspaceId: user.workspaceId,
+      workspaceId,
       userId: user.id,
       changes: Object.keys(data),
     });
@@ -140,10 +126,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(updated);
   } catch (error) {
     log.error("Error updating workspace:", { error });
-    return NextResponse.json(
-      { error: "Error updating workspace" },
-      { status: 500 },
-    );
+    return serverError("Error updating workspace");
   }
 }
 
@@ -161,13 +144,9 @@ export async function PATCH(req: Request) {
  */
 export async function DELETE(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId)
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // Only the OWNER can delete the workspace
     if (user.role !== "OWNER") {
@@ -204,7 +183,6 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const workspaceId = user.workspaceId;
     const workspaceName = workspace.name;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -236,9 +214,6 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error("Error deleting workspace:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim Löschen des Arbeitsbereichs." },
-      { status: 500 },
-    );
+    return serverError("Fehler beim Löschen des Arbeitsbereichs.");
   }
 }

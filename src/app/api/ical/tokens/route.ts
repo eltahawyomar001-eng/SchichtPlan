@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { randomBytes } from "crypto";
+import { createICalTokenSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -63,9 +64,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No workspace" }, { status: 400 });
   }
 
-  const body = await req.json().catch(() => ({}));
-  const label =
-    typeof body.label === "string" ? body.label.trim().slice(0, 100) : null;
+  const parsed = validateBody(
+    createICalTokenSchema,
+    await req.json().catch(() => ({})),
+  );
+  if (!parsed.success) return parsed.response;
+  const label = parsed.data.label ?? null;
 
   // 48 random bytes → 64-char hex token (cryptographically strong)
   const token = randomBytes(48).toString("hex");

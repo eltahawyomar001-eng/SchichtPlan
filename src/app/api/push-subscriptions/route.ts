@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import {
+  createPushSubscriptionSchema,
+  deletePushSubscriptionSchema,
+  validateBody,
+} from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 export async function POST(req: Request) {
@@ -13,14 +18,9 @@ export async function POST(req: Request) {
     }
 
     const user = session.user as SessionUser;
-    const { endpoint, keys } = await req.json();
-
-    if (!endpoint || !keys?.p256dh || !keys?.auth) {
-      return NextResponse.json(
-        { error: "Invalid subscription" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(createPushSubscriptionSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { endpoint, keys } = parsed.data;
 
     const sub = await prisma.pushSubscription.upsert({
       where: {
@@ -50,11 +50,9 @@ export async function DELETE(req: Request) {
     }
 
     const user = session.user as SessionUser;
-    const { endpoint } = await req.json();
-
-    if (!endpoint) {
-      return NextResponse.json({ error: "Endpoint required" }, { status: 400 });
-    }
+    const parsed = validateBody(deletePushSubscriptionSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { endpoint } = parsed.data;
 
     await prisma.pushSubscription.deleteMany({
       where: { userId: user.id, endpoint },

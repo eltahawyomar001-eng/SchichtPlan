@@ -2,18 +2,14 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { forgotPasswordSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "E-Mail ist erforderlich." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(forgotPasswordSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const { email } = parsed.data;
 
     // Always return success to prevent email enumeration
     const user = await prisma.user.findUnique({ where: { email } });

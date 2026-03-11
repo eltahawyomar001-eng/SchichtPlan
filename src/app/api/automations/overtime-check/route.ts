@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { checkOvertimeAlerts } from "@/lib/automations";
 import { log } from "@/lib/logger";
+import { captureRouteError, cronMonitor } from "@/lib/sentry";
 
 /**
  * POST /api/automations/overtime-check
@@ -29,17 +30,24 @@ export async function POST(req: Request) {
         );
       }
 
-      const workspaces = await prisma.workspace.findMany({
-        select: { id: true },
-      });
+      const monitor = cronMonitor("overtime-check", "0 3 * * 1");
+      try {
+        const workspaces = await prisma.workspace.findMany({
+          select: { id: true },
+        });
 
-      const allAlerts: string[] = [];
-      for (const ws of workspaces) {
-        const result = await checkOvertimeAlerts(ws.id);
-        allAlerts.push(...result.alerts);
+        const allAlerts: string[] = [];
+        for (const ws of workspaces) {
+          const result = await checkOvertimeAlerts(ws.id);
+          allAlerts.push(...result.alerts);
+        }
+
+        monitor.finish("ok");
+        return NextResponse.json({ success: true, alerts: allAlerts });
+      } catch (cronError) {
+        monitor.finish("error");
+        throw cronError;
       }
-
-      return NextResponse.json({ success: true, alerts: allAlerts });
     }
 
     const session = await getServerSession(authOptions);
@@ -65,6 +73,10 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     log.error("Error checking overtime:", { error: error });
+    captureRouteError(error, {
+      route: "/api/automations/overtime-check",
+      method: "POST",
+    });
     return NextResponse.json(
       { error: "Error checking overtime" },
       { status: 500 },

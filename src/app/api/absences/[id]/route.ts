@@ -12,6 +12,8 @@ import {
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
+import { updateAbsenceStatusSchema, validateBody } from "@/lib/validations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,7 +30,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const user = session.user as SessionUser;
     const { id } = await params;
-    const body = await req.json();
+    const parsed = validateBody(updateAbsenceStatusSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const body = parsed.data;
 
     const existing = await prisma.absenceRequest.findUnique({
       where: { id },
@@ -65,10 +70,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       }
     }
 
-    const updated = await prisma.absenceRequest.update({
-      where: { id },
-      data,
-      include: { employee: true },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.absenceRequest.update({
+        where: { id },
+        data,
+        include: { employee: true },
+      });
+
+      return result;
     });
 
     // ── E-Signature: Record signed approval/rejection ──
@@ -156,6 +165,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     return NextResponse.json(updated);
   } catch (error) {
     log.error("Error updating absence:", { error: error });
+    captureRouteError(error, { route: "/api/absences/[id]", method: "PATCH" });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
@@ -193,6 +203,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error("Error deleting absence:", { error: error });
+    captureRouteError(error, { route: "/api/absences/[id]", method: "DELETE" });
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

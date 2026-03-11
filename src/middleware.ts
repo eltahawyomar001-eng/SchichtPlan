@@ -86,6 +86,20 @@ const apiLimiter = redis
     })
   : undefined;
 
+/** Import/upload endpoint — strict limit (5 req / 60s) */
+const importLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "60 s"),
+      prefix: "ratelimit:import",
+    })
+  : undefined;
+
+/** Maximum JSON request body size (1 MB) */
+const MAX_JSON_BODY_BYTES = 1_048_576; // 1 MB
+/** Maximum file upload body size (10 MB — import route has its own 5 MB check) */
+const MAX_UPLOAD_BODY_BYTES = 10_485_760; // 10 MB
+
 /* ──────────────────────────────────────────────────────────────
  * Middleware
  * ────────────────────────────────────────────────────────────── */
@@ -115,28 +129,34 @@ export default withAuth(
       "unknown";
     const { pathname } = req.nextUrl;
 
-    // Auth endpoints — strict limit (10 req / 60s)
-    if (pathname.startsWith("/api/auth/") || pathname === "/api/auth") {
-      if (authLimiter) {
-        const result = await authLimiter.limit(ip);
-        res.headers.set("X-RateLimit-Limit", "10");
-        res.headers.set("X-RateLimit-Remaining", String(result.remaining));
-        res.headers.set(
-          "X-RateLimit-Reset",
-          String(Math.ceil(result.reset / 1000)),
-        );
-        if (!result.success) {
+    // ── Request body size limits (M4 — prevent oversized payloads) ──
+    const method = req.method;
+    if (
+      (method === "POST" || method === "PUT" || method === "PATCH") &&
+      pathname.startsWith("/api/")
+    ) {
+      const contentLength = req.headers.get("content-length");
+      if (contentLength) {
+        const bytes = parseInt(contentLength, 10);
+        const contentType = req.headers.get("content-type") || "";
+        const isUpload =
+          contentType.includes("multipart/form-data") ||
+          pathname.startsWith("/api/import");
+        const limit = isUpload ? MAX_UPLOAD_BODY_BYTES : MAX_JSON_BODY_BYTES;
+        if (!isNaN(bytes) && bytes > limit) {
           return new NextResponse(
             JSON.stringify({
-              error: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+              error: "Payload too large",
+              code: "PAYLOAD_TOO_LARGE",
+              details: {
+                maxBytes: limit,
+                receivedBytes: bytes,
+              },
             }),
             {
-              status: 429,
+              status: 413,
               headers: {
                 "Content-Type": "application/json",
-                "Retry-After": String(
-                  Math.ceil((result.reset - Date.now()) / 1000),
-                ),
                 ...staticHeaders,
                 "Content-Security-Policy": buildCsp(nonce),
               },
@@ -146,33 +166,117 @@ export default withAuth(
       }
     }
 
-    // API endpoints — moderate limit (60 req / 60s)
-    if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth")) {
-      if (apiLimiter) {
-        const result = await apiLimiter.limit(ip);
-        res.headers.set("X-RateLimit-Limit", "60");
-        res.headers.set("X-RateLimit-Remaining", String(result.remaining));
-        res.headers.set(
-          "X-RateLimit-Reset",
-          String(Math.ceil(result.reset / 1000)),
-        );
-        if (!result.success) {
-          return new NextResponse(
-            JSON.stringify({
-              error: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
-            }),
-            {
-              status: 429,
-              headers: {
-                "Content-Type": "application/json",
-                "Retry-After": String(
-                  Math.ceil((result.reset - Date.now()) / 1000),
-                ),
-                ...staticHeaders,
-                "Content-Security-Policy": buildCsp(nonce),
-              },
-            },
+    // ── Import endpoint — strict rate limit (5 req / 60s) ──
+    if (pathname.startsWith("/api/import")) {
+      if (importLimiter) {
+        try {
+          const result = await importLimiter.limit(ip);
+          res.headers.set("X-RateLimit-Limit", "5");
+          res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+          res.headers.set(
+            "X-RateLimit-Reset",
+            String(Math.ceil(result.reset / 1000)),
           );
+          if (!result.success) {
+            return new NextResponse(
+              JSON.stringify({
+                error:
+                  "Zu viele Import-Anfragen. Bitte versuchen Sie es später erneut.",
+                code: "RATE_LIMITED",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Retry-After": String(
+                    Math.ceil((result.reset - Date.now()) / 1000),
+                  ),
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        } catch {
+          // Redis unavailable — degrade gracefully
+        }
+      }
+    }
+
+    // Auth endpoints — strict limit (10 req / 60s)
+    if (pathname.startsWith("/api/auth/") || pathname === "/api/auth") {
+      if (authLimiter) {
+        try {
+          const result = await authLimiter.limit(ip);
+          res.headers.set("X-RateLimit-Limit", "10");
+          res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+          res.headers.set(
+            "X-RateLimit-Reset",
+            String(Math.ceil(result.reset / 1000)),
+          );
+          if (!result.success) {
+            return new NextResponse(
+              JSON.stringify({
+                error:
+                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Retry-After": String(
+                    Math.ceil((result.reset - Date.now()) / 1000),
+                  ),
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        } catch {
+          // Redis unavailable — degrade gracefully, allow request through.
+          // Rate limiting is a best-effort defense; availability > enforcement.
+        }
+      }
+    }
+
+    // API endpoints — moderate limit (60 req / 60s), excludes auth & import (they have their own limits)
+    if (
+      pathname.startsWith("/api/") &&
+      !pathname.startsWith("/api/auth") &&
+      !pathname.startsWith("/api/import")
+    ) {
+      if (apiLimiter) {
+        try {
+          const result = await apiLimiter.limit(ip);
+          res.headers.set("X-RateLimit-Limit", "60");
+          res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+          res.headers.set(
+            "X-RateLimit-Reset",
+            String(Math.ceil(result.reset / 1000)),
+          );
+          if (!result.success) {
+            return new NextResponse(
+              JSON.stringify({
+                error:
+                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Retry-After": String(
+                    Math.ceil((result.reset - Date.now()) / 1000),
+                  ),
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        } catch {
+          // Redis unavailable — degrade gracefully, allow request through.
+          // Rate limiting is a best-effort defense; availability > enforcement.
         }
       }
     }

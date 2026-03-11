@@ -428,10 +428,6 @@ model TimeEntry {
   submittedAt  DateTime?
   confirmedAt  DateTime?
   confirmedBy  String?
-  clockInLat   Float?
-  clockInLng   Float?
-  clockOutLat  Float?
-  clockOutLng  Float?
   clockInAt    DateTime?
   clockOutAt   DateTime?
   isLiveClock  Boolean         @default(false)
@@ -476,7 +472,7 @@ model Notification {
   createdAt DateTime @default(now())
   userId      String
   workspaceId String
-  @@index([userId, read])
+  @@index([userId, read, createdAt])
   @@index([workspaceId])
 }
 
@@ -831,7 +827,7 @@ model ESignature {
   signedAt      DateTime @default(now())
   workspaceId   String
   workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  @@index([workspaceId])
+  @@index([workspaceId, signedAt])
   @@index([entityType, entityId])
   @@index([signedBy])
 }
@@ -863,7 +859,7 @@ model AuditLog {
   workspaceId String
   workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  @@index([workspaceId])
+  @@index([workspaceId, createdAt])
   @@index([entityType, entityId])
   @@index([createdAt])
 }

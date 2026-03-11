@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { updateClientSchema, validateBody } from "@/lib/validations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -54,7 +55,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const body = await req.json();
+    const parsed = validateBody(updateClientSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const body = parsed.data;
 
     const existing = await prisma.client.findFirst({
       where: { id, workspaceId: user.workspaceId },

@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { createClientSchema, validateBody } from "@/lib/validations";
 
 /** GET /api/clients — list all clients for the workspace */
 export async function GET(req: Request) {
@@ -63,10 +64,10 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "clients", "create");
     if (forbidden) return forbidden;
 
-    const { name, email, phone, address, notes } = await req.json();
-    if (!name) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
+    const parsed = validateBody(createClientSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const { name, email, phone, address, notes } = parsed.data;
 
     const client = await prisma.client.create({
       data: {

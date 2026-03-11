@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { ensureLegalBreak, executeCustomRules } from "@/lib/automations";
 import type { SessionUser } from "@/lib/types";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
+import { clockActionSchema, validateBody } from "@/lib/validations";
 
 /**
  * POST /api/time-entries/clock
@@ -30,7 +32,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const { action, timezone } = await req.json();
+    const parsed = validateBody(clockActionSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
+    const { action, timezone } = parsed.data;
     const now = new Date();
     const tz = timezone || "Europe/Berlin";
     const timeStr = now.toLocaleTimeString("de-DE", {
@@ -47,28 +52,42 @@ export async function POST(req: Request) {
 
     // ── Clock In ──
     if (action === "in") {
-      const open = await prisma.timeEntry.findFirst({
-        where: { employeeId, isLiveClock: true, clockOutAt: null },
-      });
-      if (open) {
-        return NextResponse.json(
-          { error: "ALREADY_CLOCKED_IN", entryId: open.id },
-          { status: 409 },
-        );
-      }
+      // Use a serializable transaction to prevent race conditions
+      // (two simultaneous clock-ins both passing the findFirst check)
+      let entry;
+      try {
+        entry = await prisma.$transaction(async (tx) => {
+          const open = await tx.timeEntry.findFirst({
+            where: { employeeId, isLiveClock: true, clockOutAt: null },
+          });
+          if (open) {
+            throw new Error(`ALREADY_CLOCKED_IN:${open.id}`);
+          }
 
-      const entry = await prisma.timeEntry.create({
-        data: {
-          date: dateOnly,
-          startTime: timeStr,
-          endTime: timeStr,
-          isLiveClock: true,
-          clockInAt: now,
-          employeeId,
-          workspaceId,
-          status: "ENTWURF",
-        },
-      });
+          return tx.timeEntry.create({
+            data: {
+              date: dateOnly,
+              startTime: timeStr,
+              endTime: timeStr,
+              isLiveClock: true,
+              clockInAt: now,
+              employeeId,
+              workspaceId,
+              status: "ENTWURF",
+            },
+          });
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.startsWith("ALREADY_CLOCKED_IN:")) {
+          const entryId = msg.split(":")[1];
+          return NextResponse.json(
+            { error: "ALREADY_CLOCKED_IN", entryId },
+            { status: 409 },
+          );
+        }
+        throw err;
+      }
 
       // Fire custom automation rules
       executeCustomRules("time-entry.created", workspaceId, {
@@ -84,98 +103,147 @@ export async function POST(req: Request) {
 
     // ── Break Start ──
     if (action === "break-start") {
-      const open = await prisma.timeEntry.findFirst({
-        where: { employeeId, isLiveClock: true, clockOutAt: null },
-        orderBy: { clockInAt: "desc" },
-      });
-      if (!open) {
-        return NextResponse.json({ error: "NOT_CLOCKED_IN" }, { status: 404 });
-      }
-      if (open.breakStart && !open.breakEnd) {
+      const entry = await prisma
+        .$transaction(async (tx) => {
+          const open = await tx.timeEntry.findFirst({
+            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            orderBy: { clockInAt: "desc" },
+          });
+          if (!open) {
+            throw new Error("NOT_CLOCKED_IN");
+          }
+          if (open.breakStart && !open.breakEnd) {
+            throw new Error("BREAK_ALREADY_ACTIVE");
+          }
+
+          return tx.timeEntry.update({
+            where: { id: open.id },
+            data: { breakStart: timeStr },
+          });
+        })
+        .catch((err) => {
+          const msg = err instanceof Error ? err.message : "";
+          if (msg === "NOT_CLOCKED_IN") {
+            return { error: "NOT_CLOCKED_IN", status: 404 as const };
+          }
+          if (msg === "BREAK_ALREADY_ACTIVE") {
+            return { error: "BREAK_ALREADY_ACTIVE", status: 409 as const };
+          }
+          throw err;
+        });
+
+      if ("error" in entry) {
         return NextResponse.json(
-          { error: "BREAK_ALREADY_ACTIVE" },
-          { status: 409 },
+          { error: entry.error },
+          { status: entry.status },
         );
       }
-
-      const entry = await prisma.timeEntry.update({
-        where: { id: open.id },
-        data: { breakStart: timeStr },
-      });
       return NextResponse.json(entry);
     }
 
     // ── Break End ──
     if (action === "break-end") {
-      const open = await prisma.timeEntry.findFirst({
-        where: { employeeId, isLiveClock: true, clockOutAt: null },
-        orderBy: { clockInAt: "desc" },
-      });
-      if (!open || !open.breakStart) {
-        return NextResponse.json({ error: "NO_ACTIVE_BREAK" }, { status: 404 });
+      const entry = await prisma
+        .$transaction(async (tx) => {
+          const open = await tx.timeEntry.findFirst({
+            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            orderBy: { clockInAt: "desc" },
+          });
+          if (!open || !open.breakStart) {
+            throw new Error("NO_ACTIVE_BREAK");
+          }
+
+          // Calculate break duration in minutes
+          const bsMin = toMinutes(open.breakStart);
+          const beMin = toMinutes(timeStr);
+          const breakMinutes = Math.max(0, beMin - bsMin);
+
+          return tx.timeEntry.update({
+            where: { id: open.id },
+            data: { breakEnd: timeStr, breakMinutes },
+          });
+        })
+        .catch((err) => {
+          if (err instanceof Error && err.message === "NO_ACTIVE_BREAK") {
+            return { error: "NO_ACTIVE_BREAK", status: 404 as const };
+          }
+          throw err;
+        });
+
+      if ("error" in entry) {
+        return NextResponse.json(
+          { error: entry.error },
+          { status: entry.status },
+        );
       }
-
-      // Calculate break duration in minutes
-      const bsMin = toMinutes(open.breakStart);
-      const beMin = toMinutes(timeStr);
-      const breakMinutes = Math.max(0, beMin - bsMin);
-
-      const entry = await prisma.timeEntry.update({
-        where: { id: open.id },
-        data: { breakEnd: timeStr, breakMinutes },
-      });
       return NextResponse.json(entry);
     }
 
     // ── Clock Out ──
     if (action === "out") {
-      const open = await prisma.timeEntry.findFirst({
-        where: { employeeId, isLiveClock: true, clockOutAt: null },
-        orderBy: { clockInAt: "desc" },
-      });
-      if (!open) {
-        return NextResponse.json({ error: "NOT_CLOCKED_IN" }, { status: 404 });
+      const entry = await prisma
+        .$transaction(async (tx) => {
+          const open = await tx.timeEntry.findFirst({
+            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            orderBy: { clockInAt: "desc" },
+          });
+          if (!open) {
+            throw new Error("NOT_CLOCKED_IN");
+          }
+
+          // If break is still running, auto-end it now
+          let breakMinutes = open.breakMinutes || 0;
+          let breakEnd = open.breakEnd;
+          if (open.breakStart && !open.breakEnd) {
+            const bsMin = toMinutes(open.breakStart);
+            const beMin = toMinutes(timeStr);
+            breakMinutes = Math.max(0, beMin - bsMin);
+            breakEnd = timeStr;
+          }
+
+          const clockIn = open.clockInAt!;
+          const diffMs = now.getTime() - clockIn.getTime();
+          const grossMinutes = Math.round(diffMs / 60000);
+          // ArbZG legal break enforcement
+          const legalBreak = ensureLegalBreak(grossMinutes, breakMinutes);
+          const netMinutes = Math.max(0, grossMinutes - legalBreak);
+
+          return tx.timeEntry.update({
+            where: { id: open.id },
+            data: {
+              endTime: timeStr,
+              clockOutAt: now,
+              breakEnd,
+              breakMinutes: legalBreak,
+              grossMinutes,
+              netMinutes,
+            },
+          });
+        })
+        .catch((err) => {
+          if (err instanceof Error && err.message === "NOT_CLOCKED_IN") {
+            return { error: "NOT_CLOCKED_IN", status: 404 as const };
+          }
+          throw err;
+        });
+
+      if ("error" in entry) {
+        return NextResponse.json(
+          { error: entry.error },
+          { status: entry.status },
+        );
       }
-
-      // If break is still running, auto-end it now
-      let breakMinutes = open.breakMinutes || 0;
-      let breakEnd = open.breakEnd;
-      if (open.breakStart && !open.breakEnd) {
-        const bsMin = toMinutes(open.breakStart);
-        const beMin = toMinutes(timeStr);
-        breakMinutes = Math.max(0, beMin - bsMin);
-        breakEnd = timeStr;
-      }
-
-      const clockIn = open.clockInAt!;
-      const diffMs = now.getTime() - clockIn.getTime();
-      const grossMinutes = Math.round(diffMs / 60000);
-      // ArbZG legal break enforcement
-      const legalBreak = ensureLegalBreak(grossMinutes, breakMinutes);
-      const netMinutes = Math.max(0, grossMinutes - legalBreak);
-
-      const entry = await prisma.timeEntry.update({
-        where: { id: open.id },
-        data: {
-          endTime: timeStr,
-          clockOutAt: now,
-          breakEnd,
-          breakMinutes: legalBreak,
-          grossMinutes,
-          netMinutes,
-        },
-      });
 
       // Fire custom automation rules for clock-out
       executeCustomRules("time-entry.submitted", workspaceId, {
         id: entry.id,
         employeeId,
         date: localDateStr,
-        startTime: open.startTime,
+        startTime: entry.startTime,
         endTime: timeStr,
-        grossMinutes,
-        netMinutes,
-        breakMinutes: legalBreak,
+        grossMinutes: entry.grossMinutes,
+        netMinutes: entry.netMinutes,
+        breakMinutes: entry.breakMinutes,
         action: "clock-out",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
 
@@ -185,6 +253,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "INVALID_ACTION" }, { status: 400 });
   } catch (error) {
     log.error("Clock error:", { error: error });
+    captureRouteError(error, {
+      route: "/api/time-entries/clock",
+      method: "POST",
+    });
     return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
   }
 }
@@ -253,6 +325,10 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     log.error("Clock status error:", { error: error });
+    captureRouteError(error, {
+      route: "/api/time-entries/clock",
+      method: "GET",
+    });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@ import {
 } from "@/lib/subscription";
 import type { PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
+import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
 
 /**
  * POST /api/billing/checkout
@@ -22,6 +23,10 @@ import { log } from "@/lib/logger";
  */
 export async function POST(req: Request) {
   try {
+    // ── Idempotency check (prevents double checkout) ──
+    const cached = await checkIdempotency(req);
+    if (cached) return cached;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -132,7 +137,9 @@ export async function POST(req: Request) {
       ...customerParams,
     });
 
-    return NextResponse.json({ url: checkoutSession.url });
+    const response = NextResponse.json({ url: checkoutSession.url });
+    await cacheIdempotentResponse(req, response);
+    return response;
   } catch (error) {
     log.error("[Stripe] Checkout error:", { error: error });
     return NextResponse.json(

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { generateTimeEntriesFromShifts } from "@/lib/automations";
 import { log } from "@/lib/logger";
+import { captureRouteError, cronMonitor } from "@/lib/sentry";
 
 /**
  * POST /api/automations/generate-time-entries
@@ -31,21 +32,28 @@ export async function POST(req: Request) {
       }
 
       // Cron job: process all workspaces
-      const workspaces = await prisma.workspace.findMany({
-        select: { id: true },
-      });
+      const monitor = cronMonitor("generate-time-entries", "0 2 * * *");
+      try {
+        const workspaces = await prisma.workspace.findMany({
+          select: { id: true },
+        });
 
-      let totalCreated = 0;
-      for (const ws of workspaces) {
-        const result = await generateTimeEntriesFromShifts(ws.id);
-        totalCreated += result.created;
+        let totalCreated = 0;
+        for (const ws of workspaces) {
+          const result = await generateTimeEntriesFromShifts(ws.id);
+          totalCreated += result.created;
+        }
+
+        monitor.finish("ok");
+        return NextResponse.json({
+          success: true,
+          totalCreated,
+          workspacesProcessed: workspaces.length,
+        });
+      } catch (cronError) {
+        monitor.finish("error");
+        throw cronError;
       }
-
-      return NextResponse.json({
-        success: true,
-        totalCreated,
-        workspacesProcessed: workspaces.length,
-      });
     }
 
     // Manual: require session
@@ -72,6 +80,10 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     log.error("Error generating time entries:", { error: error });
+    captureRouteError(error, {
+      route: "/api/automations/generate-time-entries",
+      method: "POST",
+    });
     return NextResponse.json(
       { error: "Error with automatic time tracking" },
       { status: 500 },

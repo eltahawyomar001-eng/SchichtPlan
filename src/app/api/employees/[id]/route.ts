@@ -4,9 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
-import { createAuditLog } from "@/lib/audit";
+import { createAuditLogTx } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
+import { updateEmployeeSchema, validateBody } from "@/lib/validations";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
@@ -45,6 +47,7 @@ export async function GET(
     return NextResponse.json(employee);
   } catch (error) {
     log.error("Error fetching employee:", { error: error });
+    captureRouteError(error, { route: "/api/employees/[id]", method: "GET" });
     return NextResponse.json({ error: "Error loading" }, { status: 500 });
   }
 }
@@ -67,45 +70,50 @@ export async function PATCH(
     const forbidden = requirePermission(user, "employees", "update");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const parsed = validateBody(updateEmployeeSchema, await req.json());
+    if (!parsed.success) return parsed.response;
 
-    const employee = await prisma.employee.updateMany({
-      where: { id, workspaceId },
-      data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        email: body.email || null,
-        phone: body.phone || null,
-        position: body.position || null,
-        hourlyRate: body.hourlyRate ? parseFloat(body.hourlyRate) : null,
-        weeklyHours: body.weeklyHours ? parseFloat(body.weeklyHours) : null,
-        workDaysPerWeek: body.workDaysPerWeek
-          ? parseFloat(body.workDaysPerWeek)
-          : undefined,
-        contractType: body.contractType || undefined,
-        color: body.color,
-        isActive: body.isActive,
-      },
+    const body = parsed.data;
+
+    const employee = await prisma.$transaction(async (tx) => {
+      const updated = await tx.employee.updateMany({
+        where: { id, workspaceId },
+        data: {
+          firstName: body.firstName,
+          lastName: body.lastName,
+          email: body.email || null,
+          phone: body.phone || null,
+          position: body.position || null,
+          hourlyRate: body.hourlyRate ?? null,
+          weeklyHours: body.weeklyHours ?? null,
+          workDaysPerWeek: body.workDaysPerWeek ?? undefined,
+          contractType: body.contractType || undefined,
+          color: body.color,
+          isActive: body.isActive,
+        },
+      });
+
+      // ── Audit log (atomic) ──
+      await createAuditLogTx(tx, {
+        action: "UPDATE",
+        entityType: "employee",
+        entityId: id,
+        userId: user.id,
+        userEmail: user.email ?? undefined,
+        workspaceId: workspaceId!,
+        changes: body,
+      });
+
+      return updated;
     });
 
     const warnings: string[] = [];
-    const parsedRate = body.hourlyRate ? parseFloat(body.hourlyRate) : null;
+    const parsedRate = body.hourlyRate ?? null;
     if (parsedRate != null && parsedRate < MILOG_MIN_WAGE) {
       warnings.push(
         `Stundenlohn (${parsedRate.toFixed(2)} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toFixed(2)} €/h, MiLoG)`,
       );
     }
-
-    // ── Audit log ──
-    createAuditLog({
-      action: "UPDATE",
-      entityType: "employee",
-      entityId: id,
-      userId: user.id,
-      userEmail: user.email ?? undefined,
-      workspaceId: workspaceId!,
-      changes: body,
-    });
 
     // ── Webhook dispatch (fire & forget) ──
     dispatchWebhook(workspaceId!, "employee.updated", { id, ...body }).catch(
@@ -119,6 +127,7 @@ export async function PATCH(
     });
   } catch (error) {
     log.error("Error updating employee:", { error: error });
+    captureRouteError(error, { route: "/api/employees/[id]", method: "PATCH" });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });
   }
 }
@@ -141,23 +150,29 @@ export async function DELETE(
     const forbidden = requirePermission(user, "employees", "delete");
     if (forbidden) return forbidden;
 
-    await prisma.employee.deleteMany({
-      where: { id, workspaceId },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.employee.deleteMany({
+        where: { id, workspaceId },
+      });
 
-    // ── Audit log ──
-    createAuditLog({
-      action: "DELETE",
-      entityType: "employee",
-      entityId: id,
-      userId: user.id,
-      userEmail: user.email ?? undefined,
-      workspaceId: workspaceId!,
+      // ── Audit log (atomic) ──
+      await createAuditLogTx(tx, {
+        action: "DELETE",
+        entityType: "employee",
+        entityId: id,
+        userId: user.id,
+        userEmail: user.email ?? undefined,
+        workspaceId: workspaceId!,
+      });
     });
 
     return NextResponse.json({ message: "Employee deleted" });
   } catch (error) {
     log.error("Error deleting employee:", { error: error });
+    captureRouteError(error, {
+      route: "/api/employees/[id]",
+      method: "DELETE",
+    });
     return NextResponse.json({ error: "Error deleting" }, { status: 500 });
   }
 }

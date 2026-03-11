@@ -52,7 +52,11 @@ const jwtCache = new Map<
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
-  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 /* 7 days */ },
+  session: {
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60 /* 1 day */,
+    updateAge: 12 * 60 * 60 /* refresh token every 12h */,
+  },
   pages: {
     signIn: "/login",
   },

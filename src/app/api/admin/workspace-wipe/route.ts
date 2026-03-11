@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { isOwner } from "@/lib/authorization";
+import { workspaceWipeSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 
 /**
@@ -49,10 +50,12 @@ export async function DELETE(req: Request) {
     }
 
     // Require explicit confirmation
-    const body = await req.json();
+    const parsed = validateBody(workspaceWipeSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+
     const expectedConfirm = `DELETE-${workspaceId}`;
 
-    if (body.confirm !== expectedConfirm) {
+    if (parsed.data.confirm !== expectedConfirm) {
       return NextResponse.json(
         {
           error: "Confirmation required",

@@ -1,7 +1,7 @@
 # DSGVO-Compliance-Bericht — Shiftfy (SchichtPlan)
 
 > **Stand:** 09. März 2026
-> **Verfasser:** Automatisierter Audit via Lead Software Architect & DSB
+> **Verfasser:** Automatisierter Audit via Lead Software Architect & Datenschutz-Ansprechpartner
 > **Commit-Basis:** `main` branch
 
 ---
@@ -304,4 +304,4 @@ Alle GPS-Felder wurden aus der Datenbank entfernt:
 
 ---
 
-_Dieser Bericht wurde automatisiert erstellt und sollte durch den betrieblichen Datenschutzbeauftragten geprüft werden._
+_Dieser Bericht wurde automatisiert erstellt und sollte durch den Datenschutz-Ansprechpartner geprüft werden._

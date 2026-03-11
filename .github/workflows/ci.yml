@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # Shared DB connection for jobs that need it
+  DATABASE_URL: postgresql://shiftfy:shiftfy_ci@localhost:5432/shiftfy_test
+  DIRECT_URL: postgresql://shiftfy:shiftfy_ci@localhost:5432/shiftfy_test
+
 jobs:
   lint-and-typecheck:
     name: Lint & Type Check
@@ -35,6 +40,20 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shiftfy
+          POSTGRES_PASSWORD: shiftfy_ci
+          POSTGRES_DB: shiftfy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shiftfy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -50,6 +69,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
       - name: Run Tests
         run: npx vitest run --reporter=verbose
@@ -69,12 +91,25 @@ jobs:
 
       - name: npm audit (production dependencies)
         run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
 
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, test]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shiftfy
+          POSTGRES_PASSWORD: shiftfy_ci
+          POSTGRES_DB: shiftfy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shiftfy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -90,19 +125,34 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
       - name: Build Next.js
         run: npx next build
         env:
           NEXTAUTH_SECRET: ci-test-secret
           NEXTAUTH_URL: http://localhost:3000
-          DATABASE_URL: postgresql://fake:fake@localhost:5432/fake
 
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shiftfy
+          POSTGRES_PASSWORD: shiftfy_ci
+          POSTGRES_DB: shiftfy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shiftfy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -118,6 +168,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -127,7 +180,6 @@ jobs:
         env:
           NEXTAUTH_SECRET: ci-test-secret
           NEXTAUTH_URL: http://localhost:3000
-          DATABASE_URL: postgresql://fake:fake@localhost:5432/fake
 
       - name: Run E2E tests
         run: npx playwright test

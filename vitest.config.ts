@@ -10,8 +10,14 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "lcov"],
       include: ["src/lib/**", "src/components/**", "src/app/api/**"],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 65,
+        statements: 70,
+      },
     },
   },
   resolve: {

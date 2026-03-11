@@ -1,0 +1,399 @@
+openapi: "3.1.0"
+info:
+  title: Shiftfy API
+  version: "1.0.0"
+  description: |
+    REST API for Shiftfy — German-market SaaS for shift planning,
+    time tracking, and workforce management.
+    
+    All endpoints require JWT authentication via NextAuth session cookie.
+    Every resource is scoped to a Workspace (multi-tenant).
+  contact:
+    name: Shiftfy Support
+    email: info@bashabsheh-vergabepartner.de
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://shiftfy.de/api
+    description: Production
+  - url: https://staging.shiftfy.de/api
+    description: Staging
+  - url: http://localhost:3000/api
+    description: Local Development
+
+tags:
+  - name: Health
+    description: System health and status
+  - name: Employees
+    description: Employee management
+  - name: Shifts
+    description: Shift planning
+  - name: Time Entries
+    description: Time tracking
+  - name: Absences
+    description: Absence/vacation management
+  - name: Auth
+    description: Authentication & 2FA
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns system health status including DB, Redis, and Stripe connectivity.
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: System degraded
+
+  /employees:
+    get:
+      tags: [Employees]
+      summary: List employees
+      description: Returns all employees in the current workspace.
+      operationId: listEmployees
+      security:
+        - session: []
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: departmentId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Employees]
+      summary: Create employee
+      operationId: createEmployee
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployee"
+      responses:
+        "201":
+          description: Employee created
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /shifts:
+    get:
+      tags: [Shifts]
+      summary: List shifts
+      operationId: listShifts
+      security:
+        - session: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+        - name: locationId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Shift list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Shift"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /time-entries:
+    get:
+      tags: [Time Entries]
+      summary: List time entries
+      operationId: listTimeEntries
+      security:
+        - session: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ENTWURF, EINGEREICHT, KORREKTUR, ZURUECKGEWIESEN, GEPRUEFT, BESTAETIGT]
+      responses:
+        "200":
+          description: Time entry list
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /absences:
+    get:
+      tags: [Absences]
+      summary: List absence requests
+      operationId: listAbsences
+      security:
+        - session: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [AUSSTEHEND, GENEHMIGT, ABGELEHNT, STORNIERT]
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Absence request list
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Absences]
+      summary: Create absence request
+      operationId: createAbsence
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAbsence"
+      responses:
+        "201":
+          description: Absence request created
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth JWT session cookie
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Forbidden
+    ValidationError:
+      description: Request body validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+        apiVersion:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: integer
+          description: Uptime in seconds
+        node:
+          type: string
+        memory:
+          type: object
+          properties:
+            rss:
+              type: integer
+            heapUsed:
+              type: integer
+            heapTotal:
+              type: integer
+        checks:
+          type: object
+          properties:
+            database:
+              type: object
+            redis:
+              type: object
+            stripe:
+              type: object
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        position:
+          type: string
+        hourlyRate:
+          type: number
+        weeklyHours:
+          type: number
+        contractType:
+          type: string
+          enum: [VOLLZEIT, TEILZEIT, MINIJOB, MIDIJOB]
+        isActive:
+          type: boolean
+        workspaceId:
+          type: string
+
+    CreateEmployee:
+      type: object
+      required: [firstName, lastName]
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        position:
+          type: string
+        hourlyRate:
+          type: number
+          minimum: 0
+        weeklyHours:
+          type: number
+          minimum: 0
+        contractType:
+          type: string
+          enum: [VOLLZEIT, TEILZEIT, MINIJOB, MIDIJOB]
+
+    Shift:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          pattern: "^\\d{2}:\\d{2}$"
+        endTime:
+          type: string
+          pattern: "^\\d{2}:\\d{2}$"
+        status:
+          type: string
+          enum: [SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, OPEN]
+        employeeId:
+          type: string
+        locationId:
+          type: string
+        workspaceId:
+          type: string
+
+    CreateAbsence:
+      type: object
+      required: [category, startDate, endDate, employeeId]
+      properties:
+        category:
+          type: string
+          enum: [URLAUB, KRANK, ELTERNZEIT, SONDERURLAUB, UNBEZAHLT, FORTBILDUNG, SONSTIGES]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        halfDayStart:
+          type: boolean
+          default: false
+        halfDayEnd:
+          type: boolean
+          default: false
+        employeeId:
+          type: string

@@ -101,6 +101,27 @@ const MAX_JSON_BODY_BYTES = 1_048_576; // 1 MB
 const MAX_UPLOAD_BODY_BYTES = 10_485_760; // 10 MB
 
 /* ──────────────────────────────────────────────────────────────
+ * CORS configuration for API routes
+ *
+ * Allows the production domain and configurable extra origins
+ * (e.g., mobile apps, partner integrations) via CORS_ALLOWED_ORIGINS.
+ * Only applied to /api/* paths. Preflight OPTIONS requests are
+ * answered directly with a 204 (no body).
+ * ────────────────────────────────────────────────────────────── */
+const ALLOWED_ORIGINS = new Set(
+  [
+    process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+    ...(process.env.CORS_ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) ??
+      []),
+  ].filter(Boolean),
+);
+
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.has(origin);
+}
+
+/* ──────────────────────────────────────────────────────────────
  * Middleware
  * ────────────────────────────────────────────────────────────── */
 export default withAuth(
@@ -128,6 +149,32 @@ export default withAuth(
       req.headers.get("x-real-ip") ??
       "unknown";
     const { pathname } = req.nextUrl;
+
+    // ── CORS headers for API routes ──
+    if (pathname.startsWith("/api/")) {
+      const origin = req.headers.get("origin");
+      if (isAllowedOrigin(origin)) {
+        res.headers.set("Access-Control-Allow-Origin", origin!);
+        res.headers.set("Access-Control-Allow-Credentials", "true");
+        res.headers.set(
+          "Access-Control-Allow-Methods",
+          "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        );
+        res.headers.set(
+          "Access-Control-Allow-Headers",
+          "Content-Type, Authorization, X-Request-Id",
+        );
+        res.headers.set("Access-Control-Max-Age", "86400"); // 24 h preflight cache
+      }
+
+      // Handle preflight OPTIONS requests immediately
+      if (req.method === "OPTIONS") {
+        return new NextResponse(null, {
+          status: 204,
+          headers: res.headers,
+        });
+      }
+    }
 
     // ── Request body size limits (M4 — prevent oversized payloads) ──
     const method = req.method;

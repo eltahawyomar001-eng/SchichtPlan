@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -34,6 +36,7 @@ model User {
   chatReactions   ChatReaction[]
   autoScheduleRuns AutoScheduleRun[]
   icalTokens      ICalToken[]
+  notifications   Notification[]
 }
 
 model Account {
@@ -150,6 +153,7 @@ model Workspace {
   managerAlerts        ManagerAlert[]
   serviceVisits        ServiceVisit[]
   serviceReports       ServiceReport[]
+  notifications        Notification[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -471,7 +475,9 @@ model Notification {
   link      String?
   createdAt DateTime @default(now())
   userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([userId, read, createdAt])
   @@index([workspaceId])
 }

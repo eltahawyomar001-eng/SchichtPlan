@@ -1,5 +1,4 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
@@ -7,6 +6,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import * as OTPAuth from "otpauth";
 import { prisma } from "@/lib/db";
+import { decrypt, isEncrypted } from "@/lib/encryption";
+import { cache } from "@/lib/cache";
 import type { SessionUser } from "@/lib/types";
 import {
   isLockedOut,
@@ -36,18 +37,17 @@ async function findMatchingRecoveryCode(
 
 /* ── JWT role-refresh cache ── */
 // Avoid hitting DB on every single request — cache user data for 60s.
-const JWT_REFRESH_TTL_MS = 60_000;
-const jwtCache = new Map<
-  string,
-  {
-    role: string;
-    workspaceId: string | null;
-    workspaceName: string | null;
-    employeeId: string | null;
-    onboardingCompleted: boolean;
-    ts: number;
-  }
->();
+// Uses Redis-backed cache (src/lib/cache.ts) so data survives
+// serverless cold-starts and is shared across instances.
+const JWT_REFRESH_TTL_S = 60; // seconds
+
+interface JwtCacheEntry {
+  role: string;
+  workspaceId: string | null;
+  workspaceName: string | null;
+  employeeId: string | null;
+  onboardingCompleted: boolean;
+}
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -132,7 +132,11 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Try TOTP validation first (window: 2 = ±60 s tolerance)
-          const secret = OTPAuth.Secret.fromHex(user.twoFactorSecret);
+          const rawSecret = user.twoFactorSecret;
+          const hexSecret = isEncrypted(rawSecret)
+            ? decrypt(rawSecret)
+            : rawSecret; // backward-compat with unencrypted secrets
+          const secret = OTPAuth.Secret.fromHex(hexSecret);
           const totp = new OTPAuth.TOTP({
             issuer: "Shiftfy",
             label: user.email,
@@ -145,7 +149,7 @@ export const authOptions: NextAuthOptions = {
 
           if (delta === null) {
             // TOTP failed — try recovery code
-            const recoveryCodes = (user as any).twoFactorRecoveryCodes;
+            const recoveryCodes = user.twoFactorRecoveryCodes;
             if (recoveryCodes) {
               const codes: string[] = JSON.parse(recoveryCodes);
               const hashedMatch = await findMatchingRecoveryCode(
@@ -156,7 +160,7 @@ export const authOptions: NextAuthOptions = {
                 // Remove used recovery code
                 codes.splice(hashedMatch, 1);
 
-                await (prisma.user as any).update({
+                await prisma.user.update({
                   where: { id: user.id },
                   data: {
                     twoFactorRecoveryCodes: JSON.stringify(codes),
@@ -276,9 +280,9 @@ export const authOptions: NextAuthOptions = {
       // with a 60-second TTL cache to avoid a DB query on every
       // single request while still picking up role/workspace changes.
       if (token.sub) {
-        const cached = jwtCache.get(token.sub);
-        const now = Date.now();
-        if (cached && now - cached.ts < JWT_REFRESH_TTL_MS) {
+        const cacheKey = `jwt:${token.sub}`;
+        const cached = await cache.get<JwtCacheEntry>(cacheKey);
+        if (cached) {
           token.role = cached.role;
           token.workspaceId = cached.workspaceId;
           token.workspaceName = cached.workspaceName;
@@ -302,14 +306,17 @@ export const authOptions: NextAuthOptions = {
             token.workspaceName = dbUser.workspace?.name || null;
             token.employeeId = dbUser.employee?.id || null;
             token.onboardingCompleted = ws?.onboardingCompleted ?? false;
-            jwtCache.set(token.sub, {
-              role: dbUser.role,
-              workspaceId: dbUser.workspaceId,
-              workspaceName: dbUser.workspace?.name || null,
-              employeeId: dbUser.employee?.id || null,
-              onboardingCompleted: ws?.onboardingCompleted ?? false,
-              ts: now,
-            });
+            await cache.set(
+              cacheKey,
+              {
+                role: dbUser.role,
+                workspaceId: dbUser.workspaceId,
+                workspaceName: dbUser.workspace?.name || null,
+                employeeId: dbUser.employee?.id || null,
+                onboardingCompleted: ws?.onboardingCompleted ?? false,
+              } satisfies JwtCacheEntry,
+              JWT_REFRESH_TTL_S,
+            );
           }
         }
       }

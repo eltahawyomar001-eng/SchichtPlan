@@ -54,6 +54,28 @@ export async function GET() {
     checks.redis = { status: "not_configured" };
   }
 
+  // ── Stripe ────────────────────────────────────────────────
+  if (process.env.STRIPE_SECRET_KEY) {
+    const stripeStart = Date.now();
+    try {
+      const res = await fetch("https://api.stripe.com/v1/balance", {
+        headers: {
+          Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        },
+      });
+      checks.stripe = {
+        status: res.ok ? "ok" : "error",
+        latencyMs: Date.now() - stripeStart,
+      };
+    } catch {
+      checks.stripe = { status: "error", error: "Stripe unreachable" };
+    }
+  } else if (process.env.STRIPE_SIMULATION_MODE === "true") {
+    checks.stripe = { status: "simulation_mode" };
+  } else {
+    checks.stripe = { status: "not_configured" };
+  }
+
   // ── System info ───────────────────────────────────────────
   const mem = process.memoryUsage();
   const overall = dbOk ? "ok" : "degraded";
@@ -65,6 +87,7 @@ export async function GET() {
       apiVersion: 1,
       timestamp: new Date().toISOString(),
       uptime: Math.floor((Date.now() - startedAt) / 1000),
+      node: process.version,
       memory: {
         rss: Math.round(mem.rss / 1024 / 1024),
         heapUsed: Math.round(mem.heapUsed / 1024 / 1024),

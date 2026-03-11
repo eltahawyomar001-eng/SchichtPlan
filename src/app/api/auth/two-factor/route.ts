@@ -9,6 +9,7 @@ import type { SessionUser } from "@/lib/types";
 import crypto from "crypto";
 import { twoFactorVerifySchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { encrypt, decrypt, isEncrypted } from "@/lib/encryption";
 
 /* ── helpers ── */
 
@@ -17,8 +18,11 @@ function generateSecret(): string {
   return crypto.randomBytes(20).toString("hex");
 }
 
-/** Build a TOTP instance from a hex secret. */
-function buildTOTP(hexSecret: string, email: string): OTPAuth.TOTP {
+/** Build a TOTP instance from a stored secret (may be encrypted or plain hex). */
+function buildTOTP(storedSecret: string, email: string): OTPAuth.TOTP {
+  const hexSecret = isEncrypted(storedSecret)
+    ? decrypt(storedSecret)
+    : storedSecret;
   return new OTPAuth.TOTP({
     issuer: "Shiftfy",
     label: email,
@@ -85,22 +89,27 @@ export async function GET(req: Request) {
         ? dbUser.twoFactorSecret
         : null;
 
-    const secret = existingSecret ?? generateSecret();
+    // Generate a new plaintext hex secret if needed
+    const plainHexSecret = existingSecret
+      ? isEncrypted(existingSecret)
+        ? decrypt(existingSecret)
+        : existingSecret
+      : generateSecret();
 
-    const totp = buildTOTP(secret, user.email);
+    const totp = buildTOTP(plainHexSecret, user.email);
     const otpauthUrl = totp.toString();
     const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
 
-    // Only write to DB if we generated a new secret
+    // Only write to DB if we generated a new secret — always store encrypted
     if (!existingSecret) {
       await prisma.user.update({
         where: { id: user.id },
-        data: { twoFactorSecret: secret },
+        data: { twoFactorSecret: encrypt(plainHexSecret) },
       });
     }
 
     return NextResponse.json({
-      secret,
+      secret: plainHexSecret,
       qrCode: qrDataUrl,
       otpauthUrl,
     });

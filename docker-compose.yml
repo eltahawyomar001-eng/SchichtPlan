@@ -1,0 +1,68 @@
+# ── Docker Compose — Local Development ────────────────────────────
+# Usage:
+#   docker compose up -d          → Start all services
+#   docker compose up -d --build  → Rebuild app image
+#   docker compose down -v        → Stop and remove volumes
+#
+# Default ports:
+#   App:      http://localhost:3000
+#   Postgres: localhost:5432
+#   Redis:    localhost:6379
+
+services:
+  # ── PostgreSQL 16 ──────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shiftfy
+      POSTGRES_PASSWORD: shiftfy_dev
+      POSTGRES_DB: shiftfy
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiftfy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis 7 ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Shiftfy App ────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://shiftfy:shiftfy_dev@db:5432/shiftfy?sslmode=disable
+      DIRECT_URL: postgresql://shiftfy:shiftfy_dev@db:5432/shiftfy?sslmode=disable
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: docker-dev-secret-change-in-production
+      UPSTASH_REDIS_REST_URL: http://redis:6379
+      NODE_ENV: production
+
+volumes:
+  pgdata:
+  redisdata:

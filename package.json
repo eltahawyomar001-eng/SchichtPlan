@@ -23,7 +23,12 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "postinstall": "prisma generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

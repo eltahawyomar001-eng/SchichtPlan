@@ -67,20 +67,18 @@ interface ServiceVisit {
 
 // ─── Status helpers ────────────────────────────────────────────
 
-const statusConfig: Record<
-  ServiceVisit["status"],
-  { label: string; color: string }
-> = {
-  GEPLANT: { label: "Geplant", color: "bg-blue-100 text-blue-700" },
-  EINGECHECKT: {
-    label: "Eingecheckt",
-    color: "bg-amber-100 text-amber-700",
-  },
-  ABGESCHLOSSEN: {
-    label: "Abgeschlossen",
-    color: "bg-emerald-100 text-emerald-700",
-  },
-  STORNIERT: { label: "Storniert", color: "bg-gray-100 text-gray-500" },
+const statusColors: Record<ServiceVisit["status"], string> = {
+  GEPLANT: "bg-blue-100 text-blue-700",
+  EINGECHECKT: "bg-amber-100 text-amber-700",
+  ABGESCHLOSSEN: "bg-emerald-100 text-emerald-700",
+  STORNIERT: "bg-gray-100 text-gray-500",
+};
+
+const statusI18nKey: Record<ServiceVisit["status"], string> = {
+  GEPLANT: "status.planned",
+  EINGECHECKT: "status.checkedIn",
+  ABGESCHLOSSEN: "status.completed",
+  STORNIERT: "status.cancelled",
 };
 
 // ─── Component ─────────────────────────────────────────────────
@@ -158,7 +156,7 @@ export default function LeistungsnachweisSeite() {
   const handleCreate = async () => {
     setFormError(null);
     if (!createForm.employeeId || !createForm.locationId) {
-      setFormError("Mitarbeiter und Standort sind Pflichtfelder");
+      setFormError(t("errors.requiredFields"));
       return;
     }
     try {
@@ -169,7 +167,7 @@ export default function LeistungsnachweisSeite() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setFormError(err.error || "Fehler");
+        setFormError(err.error || t("errors.genericError"));
         return;
       }
       setShowCreate(false);
@@ -181,10 +179,11 @@ export default function LeistungsnachweisSeite() {
       });
       fetchVisits();
     } catch {
-      setFormError("Netzwerkfehler");
+      setFormError(t("errors.networkError"));
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCheckIn = async (visitId: string) => {
     setActing(visitId);
     try {
@@ -195,11 +194,11 @@ export default function LeistungsnachweisSeite() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setError(err.error || "Check-in fehlgeschlagen");
+        setError(err.error || t("errors.checkInFailed"));
       }
       fetchVisits();
     } catch {
-      setError("Netzwerkfehler beim Check-in");
+      setError(t("errors.checkInNetworkError"));
     } finally {
       setActing(null);
     }
@@ -215,11 +214,11 @@ export default function LeistungsnachweisSeite() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setError(err.error || "Check-out fehlgeschlagen");
+        setError(err.error || t("errors.checkOutFailed"));
       }
       fetchVisits();
     } catch {
-      setError("Netzwerkfehler beim Check-out");
+      setError(t("errors.checkOutNetworkError"));
     } finally {
       setActing(null);
     }
@@ -502,7 +501,8 @@ interface VisitCardProps {
 
 function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
   const t = useTranslations("serviceProof");
-  const cfg = statusConfig[visit.status];
+  const statusLabel = t(statusI18nKey[visit.status]);
+  const statusColor = statusColors[visit.status];
 
   const dateStr = new Date(visit.scheduledDate).toLocaleDateString("de-DE", {
     weekday: "short",
@@ -526,7 +526,7 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
           {/* Left: info */}
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <Badge className={cfg.color}>{cfg.label}</Badge>
+              <Badge className={statusColor}>{statusLabel}</Badge>
             </div>
             <p className="text-sm font-medium text-gray-900">
               {visit.employee.firstName} {visit.employee.lastName}

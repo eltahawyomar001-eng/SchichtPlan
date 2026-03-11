@@ -7,7 +7,6 @@ import {
   ArrowRightIcon,
   SmartphoneIcon,
   ShieldCheckIcon,
-  ChevronRightIcon,
 } from "@/components/icons";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 

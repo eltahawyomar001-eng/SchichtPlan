@@ -648,7 +648,39 @@
     "category": "Kategorie",
     "period": "Zeitraum",
     "days": "Tage",
-    "createdAt": "Erstellt am"
+    "createdAt": "Erstellt am",
+    "shiftStatuses": {
+      "SCHEDULED": "Geplant",
+      "CONFIRMED": "Bestätigt",
+      "IN_PROGRESS": "Laufend",
+      "COMPLETED": "Abgeschlossen",
+      "CANCELLED": "Storniert",
+      "NO_SHOW": "Nicht erschienen",
+      "OPEN": "Offen"
+    },
+    "timeStatuses": {
+      "ENTWURF": "Entwurf",
+      "EINGEREICHT": "Eingereicht",
+      "KORREKTUR": "Korrektur",
+      "ZURUECKGEWIESEN": "Zurückgewiesen",
+      "GEPRUEFT": "Geprüft",
+      "BESTAETIGT": "Bestätigt"
+    },
+    "absenceStatuses": {
+      "AUSSTEHEND": "Ausstehend",
+      "GENEHMIGT": "Genehmigt",
+      "ABGELEHNT": "Abgelehnt",
+      "STORNIERT": "Storniert"
+    },
+    "absenceCategories": {
+      "URLAUB": "Urlaub",
+      "KRANK": "Krank",
+      "ELTERNZEIT": "Elternzeit",
+      "SONDERURLAUB": "Sonderurlaub",
+      "UNBEZAHLT": "Unbezahlt",
+      "FORTBILDUNG": "Fortbildung",
+      "SONSTIGES": "Sonstiges"
+    }
   },
   "locationsPage": {
     "title": "Standorte",
@@ -977,7 +1009,27 @@
     "builtInInfo": "Shiftfy enthält vier Standardrollen mit vordefinierten Berechtigungen.",
     "customRolesInfo": "Benutzerdefinierte Rollen mit individuellen Berechtigungen sind geplant und werden in einem zukünftigen Update verfügbar sein.",
     "loadError": "Fehler beim Laden der Rollen",
-    "networkError": "Netzwerkfehler — bitte erneut versuchen"
+    "networkError": "Netzwerkfehler — bitte erneut versuchen",
+    "permissions": {
+      "employees_all": "Mitarbeiter verwalten",
+      "employees_read": "Mitarbeiter einsehen",
+      "shifts_all": "Schichten verwalten",
+      "shifts_read": "Schichten einsehen",
+      "locations_all": "Standorte verwalten",
+      "absences_all": "Abwesenheiten verwalten",
+      "absences_create": "Abwesenheiten einreichen",
+      "absences_approve": "Abwesenheiten genehmigen",
+      "timeEntries_all": "Zeiteinträge verwalten",
+      "timeEntries_create": "Zeiteinträge erfassen",
+      "timeEntries_approve": "Zeiteinträge genehmigen",
+      "settings_all": "Einstellungen verwalten",
+      "settings_read": "Einstellungen einsehen",
+      "billing_all": "Abrechnung verwalten",
+      "team_all": "Team verwalten",
+      "reports_all": "Berichte verwalten",
+      "reports_read": "Berichte einsehen",
+      "availability_manage": "Verfügbarkeiten verwalten"
+    }
   },
   "pricing": {
     "title": "Transparente Preise für jede Teamgröße",
@@ -2253,6 +2305,15 @@
       "execute": "Ausführen",
       "continue": "Fortsetzen",
       "viewDetails": "Details"
+    },
+    "errors": {
+      "requiredFields": "Mitarbeiter und Standort sind Pflichtfelder",
+      "genericError": "Fehler",
+      "networkError": "Netzwerkfehler",
+      "checkInFailed": "Check-in fehlgeschlagen",
+      "checkInNetworkError": "Netzwerkfehler beim Check-in",
+      "checkOutFailed": "Check-out fehlgeschlagen",
+      "checkOutNetworkError": "Netzwerkfehler beim Check-out"
     },
     "form": {
       "date": "Datum",

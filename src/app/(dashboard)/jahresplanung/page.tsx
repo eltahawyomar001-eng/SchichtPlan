@@ -128,13 +128,6 @@ function parseDate(s: string): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function isDateInRange(dateStr: string, start: string, end: string): boolean {
-  const d = parseDate(dateStr);
-  const s = parseDate(start);
-  const e = parseDate(end);
-  return d >= s && d <= e;
-}
-
 function getISOWeek(date: Date): number {
   const d = new Date(date.getTime());
   d.setHours(0, 0, 0, 0);

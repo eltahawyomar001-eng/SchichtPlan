@@ -35,7 +35,6 @@ import {
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { PageContent } from "@/components/ui/page-content";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();

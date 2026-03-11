@@ -648,7 +648,39 @@
     "category": "Category",
     "period": "Period",
     "days": "Days",
-    "createdAt": "Created"
+    "createdAt": "Created",
+    "shiftStatuses": {
+      "SCHEDULED": "Scheduled",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "NO_SHOW": "No Show",
+      "OPEN": "Open"
+    },
+    "timeStatuses": {
+      "ENTWURF": "Draft",
+      "EINGEREICHT": "Submitted",
+      "KORREKTUR": "Correction",
+      "ZURUECKGEWIESEN": "Rejected",
+      "GEPRUEFT": "Reviewed",
+      "BESTAETIGT": "Confirmed"
+    },
+    "absenceStatuses": {
+      "AUSSTEHEND": "Pending",
+      "GENEHMIGT": "Approved",
+      "ABGELEHNT": "Rejected",
+      "STORNIERT": "Cancelled"
+    },
+    "absenceCategories": {
+      "URLAUB": "Vacation",
+      "KRANK": "Sick",
+      "ELTERNZEIT": "Parental Leave",
+      "SONDERURLAUB": "Special Leave",
+      "UNBEZAHLT": "Unpaid",
+      "FORTBILDUNG": "Training",
+      "SONSTIGES": "Other"
+    }
   },
   "locationsPage": {
     "title": "Locations",
@@ -977,7 +1009,27 @@
     "builtInInfo": "Shiftfy includes four built-in roles with predefined permissions.",
     "customRolesInfo": "Custom roles with individual permissions are planned and will be available in a future update.",
     "loadError": "Error loading roles",
-    "networkError": "Network error — please try again"
+    "networkError": "Network error — please try again",
+    "permissions": {
+      "employees_all": "Manage employees",
+      "employees_read": "View employees",
+      "shifts_all": "Manage shifts",
+      "shifts_read": "View shifts",
+      "locations_all": "Manage locations",
+      "absences_all": "Manage absences",
+      "absences_create": "Submit absences",
+      "absences_approve": "Approve absences",
+      "timeEntries_all": "Manage time entries",
+      "timeEntries_create": "Record time entries",
+      "timeEntries_approve": "Approve time entries",
+      "settings_all": "Manage settings",
+      "settings_read": "View settings",
+      "billing_all": "Manage billing",
+      "team_all": "Manage team",
+      "reports_all": "Manage reports",
+      "reports_read": "View reports",
+      "availability_manage": "Manage availability"
+    }
   },
   "pricing": {
     "title": "Transparent pricing for every team size",
@@ -2253,6 +2305,15 @@
       "execute": "Execute",
       "continue": "Continue",
       "viewDetails": "Details"
+    },
+    "errors": {
+      "requiredFields": "Employee and location are required",
+      "genericError": "Error",
+      "networkError": "Network error",
+      "checkInFailed": "Check-in failed",
+      "checkInNetworkError": "Network error during check-in",
+      "checkOutFailed": "Check-out failed",
+      "checkOutNetworkError": "Network error during check-out"
     },
     "form": {
       "date": "Date",

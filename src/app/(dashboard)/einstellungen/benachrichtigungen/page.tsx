@@ -11,6 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageContent } from "@/components/ui/page-content";
 import { BellIcon, MailIcon, ChevronLeftIcon } from "@/components/icons";
 import Link from "next/link";
 
@@ -93,12 +94,12 @@ export default function BenachrichtigungenPage() {
     return (
       <div>
         <Topbar title={t("title")} description={t("description")} />
-        <div className="p-4 sm:p-6 max-w-3xl">
+        <PageContent className="max-w-3xl">
           <div className="animate-pulse space-y-4">
             <div className="h-24 bg-gray-100 rounded-xl" />
             <div className="h-40 bg-gray-100 rounded-xl" />
           </div>
-        </div>
+        </PageContent>
       </div>
     );
   }
@@ -107,7 +108,7 @@ export default function BenachrichtigungenPage() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
 
-      <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
+      <PageContent className="max-w-3xl">
         {fetchError && (
           <Card className="border-red-200 bg-red-50">
             <CardContent className="p-4 text-sm text-red-700">
@@ -250,7 +251,7 @@ export default function BenachrichtigungenPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContent>
     </div>
   );
 }

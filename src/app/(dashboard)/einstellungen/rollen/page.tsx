@@ -19,48 +19,14 @@ interface RoleDefinition {
   descriptionEn?: string;
 }
 
-// Permission label translations
-const PERM_LABELS_DE: Record<string, string> = {
-  "employees.*": "Mitarbeiter verwalten",
-  "employees.read": "Mitarbeiter einsehen",
-  "shifts.*": "Schichten verwalten",
-  "shifts.read": "Schichten einsehen",
-  "locations.*": "Standorte verwalten",
-  "absences.*": "Abwesenheiten verwalten",
-  "absences.create": "Abwesenheiten einreichen",
-  "absences.approve": "Abwesenheiten genehmigen",
-  "time-entries.*": "Zeiteinträge verwalten",
-  "time-entries.create": "Zeiteinträge erfassen",
-  "time-entries.approve": "Zeiteinträge genehmigen",
-  "settings.*": "Einstellungen verwalten",
-  "settings.read": "Einstellungen einsehen",
-  "billing.*": "Abrechnung verwalten",
-  "team.*": "Team verwalten",
-  "reports.*": "Berichte verwalten",
-  "reports.read": "Berichte einsehen",
-  "availability.manage": "Verfügbarkeiten verwalten",
-};
-
-const PERM_LABELS_EN: Record<string, string> = {
-  "employees.*": "Manage employees",
-  "employees.read": "View employees",
-  "shifts.*": "Manage shifts",
-  "shifts.read": "View shifts",
-  "locations.*": "Manage locations",
-  "absences.*": "Manage absences",
-  "absences.create": "Submit absences",
-  "absences.approve": "Approve absences",
-  "time-entries.*": "Manage time entries",
-  "time-entries.create": "Record time entries",
-  "time-entries.approve": "Approve time entries",
-  "settings.*": "Manage settings",
-  "settings.read": "View settings",
-  "billing.*": "Manage billing",
-  "team.*": "Manage team",
-  "reports.*": "Manage reports",
-  "reports.read": "View reports",
-  "availability.manage": "Manage availability",
-};
+// Map permission API keys (e.g. "employees.*") to i18n keys (e.g. "permissions.employees_all")
+function permToI18nKey(perm: string): string {
+  // "time-entries.*" → "timeEntries_all", "employees.read" → "employees_read"
+  return perm
+    .replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+    .replace(/\./g, "_")
+    .replace("*", "all");
+}
 
 export default function RollenPage() {
   const t = useTranslations("roles");
@@ -69,8 +35,6 @@ export default function RollenPage() {
   const [roles, setRoles] = useState<RoleDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const permLabels = locale === "en" ? PERM_LABELS_EN : PERM_LABELS_DE;
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -158,7 +122,9 @@ export default function RollenPage() {
                         className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
                       >
                         <LockIcon className="h-3 w-3" />
-                        {permLabels[perm] || perm}
+                        {t.has(`permissions.${permToI18nKey(perm)}`)
+                          ? t(`permissions.${permToI18nKey(perm)}`)
+                          : perm}
                       </span>
                     ))}
                   </div>

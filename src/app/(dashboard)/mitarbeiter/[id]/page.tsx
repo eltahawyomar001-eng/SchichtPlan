@@ -21,75 +21,6 @@ import {
   EditIcon,
 } from "@/components/icons";
 
-/* ---------- German enum display maps ---------- */
-const SHIFT_STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "Geplant",
-  CONFIRMED: "Bestätigt",
-  IN_PROGRESS: "Laufend",
-  COMPLETED: "Abgeschlossen",
-  CANCELLED: "Storniert",
-  NO_SHOW: "Nicht erschienen",
-  OPEN: "Offen",
-};
-const SHIFT_STATUS_LABELS_EN: Record<string, string> = {
-  SCHEDULED: "Scheduled",
-  CONFIRMED: "Confirmed",
-  IN_PROGRESS: "In Progress",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-  NO_SHOW: "No Show",
-  OPEN: "Open",
-};
-
-const TIME_STATUS_LABELS: Record<string, string> = {
-  ENTWURF: "Entwurf",
-  EINGEREICHT: "Eingereicht",
-  KORREKTUR: "Korrektur",
-  ZURUECKGEWIESEN: "Zurückgewiesen",
-  GEPRUEFT: "Geprüft",
-  BESTAETIGT: "Bestätigt",
-};
-const TIME_STATUS_LABELS_EN: Record<string, string> = {
-  ENTWURF: "Draft",
-  EINGEREICHT: "Submitted",
-  KORREKTUR: "Correction",
-  ZURUECKGEWIESEN: "Rejected",
-  GEPRUEFT: "Reviewed",
-  BESTAETIGT: "Confirmed",
-};
-
-const ABSENCE_STATUS_LABELS: Record<string, string> = {
-  AUSSTEHEND: "Ausstehend",
-  GENEHMIGT: "Genehmigt",
-  ABGELEHNT: "Abgelehnt",
-  STORNIERT: "Storniert",
-};
-const ABSENCE_STATUS_LABELS_EN: Record<string, string> = {
-  AUSSTEHEND: "Pending",
-  GENEHMIGT: "Approved",
-  ABGELEHNT: "Rejected",
-  STORNIERT: "Cancelled",
-};
-
-const ABSENCE_CAT_LABELS: Record<string, string> = {
-  URLAUB: "Urlaub",
-  KRANK: "Krank",
-  ELTERNZEIT: "Elternzeit",
-  SONDERURLAUB: "Sonderurlaub",
-  UNBEZAHLT: "Unbezahlt",
-  FORTBILDUNG: "Fortbildung",
-  SONSTIGES: "Sonstiges",
-};
-const ABSENCE_CAT_LABELS_EN: Record<string, string> = {
-  URLAUB: "Vacation",
-  KRANK: "Sick",
-  ELTERNZEIT: "Parental leave",
-  SONDERURLAUB: "Special leave",
-  UNBEZAHLT: "Unpaid",
-  FORTBILDUNG: "Training",
-  SONSTIGES: "Other",
-};
-
 function statusVariant(
   status: string,
 ): "success" | "warning" | "outline" | "destructive" {
@@ -190,15 +121,6 @@ export default function EmployeeDetailPage({
   const [emp, setEmp] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const shiftLabels =
-    locale === "en" ? SHIFT_STATUS_LABELS_EN : SHIFT_STATUS_LABELS;
-  const timeLabels =
-    locale === "en" ? TIME_STATUS_LABELS_EN : TIME_STATUS_LABELS;
-  const absenceLabels =
-    locale === "en" ? ABSENCE_STATUS_LABELS_EN : ABSENCE_STATUS_LABELS;
-  const absenceCatLabels =
-    locale === "en" ? ABSENCE_CAT_LABELS_EN : ABSENCE_CAT_LABELS;
 
   const fetchEmployee = useCallback(async () => {
     try {
@@ -394,7 +316,9 @@ export default function EmployeeDetailPage({
                         </td>
                         <td className="px-6 py-2">
                           <Badge variant={statusVariant(s.status)}>
-                            {shiftLabels[s.status] || s.status}
+                            {t.has(`shiftStatuses.${s.status}`)
+                              ? t(`shiftStatuses.${s.status}`)
+                              : s.status}
                           </Badge>
                         </td>
                         <td className="px-6 py-2 text-gray-500 truncate max-w-[200px]">
@@ -444,7 +368,9 @@ export default function EmployeeDetailPage({
                         <td className="px-6 py-2">{te.netMinutes}</td>
                         <td className="px-6 py-2">
                           <Badge variant={statusVariant(te.status)}>
-                            {timeLabels[te.status] || te.status}
+                            {t.has(`timeStatuses.${te.status}`)
+                              ? t(`timeStatuses.${te.status}`)
+                              : te.status}
                           </Badge>
                         </td>
                       </tr>
@@ -481,7 +407,9 @@ export default function EmployeeDetailPage({
                     {emp.absenceRequests.map((ar) => (
                       <tr key={ar.id} className="hover:bg-gray-50">
                         <td className="px-6 py-2">
-                          {absenceCatLabels[ar.category] || ar.category}
+                          {t.has(`absenceCategories.${ar.category}`)
+                            ? t(`absenceCategories.${ar.category}`)
+                            : ar.category}
                         </td>
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(ar.startDate, locale)} –{" "}
@@ -490,7 +418,9 @@ export default function EmployeeDetailPage({
                         <td className="px-6 py-2">{ar.totalDays}</td>
                         <td className="px-6 py-2">
                           <Badge variant={statusVariant(ar.status)}>
-                            {absenceLabels[ar.status] || ar.status}
+                            {t.has(`absenceStatuses.${ar.status}`)
+                              ? t(`absenceStatuses.${ar.status}`)
+                              : ar.status}
                           </Badge>
                         </td>
                       </tr>

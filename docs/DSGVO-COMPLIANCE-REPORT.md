@@ -291,16 +291,24 @@ Alle GPS-Felder wurden aus der Datenbank entfernt:
 
 ---
 
-## Offene Empfehlungen (Kurzfristig)
+## Offene Empfehlungen — Statusübersicht
 
-| #   | Maßnahme                                     | Priorität | Aufwand |
-| --- | -------------------------------------------- | --------- | ------- |
-| 1   | MAPBOX_ACCESS_TOKEN aus env.ts entfernen     | Niedrig   | 5 Min   |
-| 2   | Vercel Blob: `absences/*` Dateien löschen    | Mittel    | 30 Min  |
-| 3   | Art. 15/20 Datenexport-Funktion              | Mittel    | 4–8 Std |
-| 4   | Ex-Mitarbeiter-Anonymisierung                | Mittel    | 4–8 Std |
-| 5   | Datenschutzerklärung aktualisieren           | Mittel    | 1 Std   |
-| 6   | Verarbeitungsverzeichnis (Art. 30) erstellen | Hoch      | 2–4 Std |
+| #   | Maßnahme                                     | Status      | Anmerkungen                                                          |
+| --- | -------------------------------------------- | ----------- | -------------------------------------------------------------------- |
+| 1   | MAPBOX_ACCESS_TOKEN aus env.ts entfernen     | ✅ Erledigt | Aus `env.ts` RECOMMENDED-Array entfernt                              |
+| 2   | Vercel Blob: `absences/*` Dateien löschen    | ✅ Erledigt | `POST /api/admin/blob-cleanup` Endpoint implementiert (dryRun-Modus) |
+| 3   | Art. 15/20 Datenexport-Funktion              | ✅ Erledigt | `GET /api/profile/export` bereits vorhanden                          |
+| 4   | Ex-Mitarbeiter-Anonymisierung                | ✅ Erledigt | `POST /api/employees/[id]/anonymize` implementiert                   |
+| 5   | Datenschutzerklärung aktualisieren           | ✅ Erledigt | `/datenschutz` vollständig (685 Zeilen, alle Art. 13/14 Angaben)     |
+| 6   | Verarbeitungsverzeichnis (Art. 30) erstellen | ✅ Erledigt | `docs/VVT-ART30.md` erstellt                                         |
+
+## Zusätzliche Maßnahmen (Phase 3)
+
+| #   | Maßnahme                            | Status      | Anmerkungen                                                                |
+| --- | ----------------------------------- | ----------- | -------------------------------------------------------------------------- |
+| 7   | Cookie-Einstellungen im Dashboard   | ✅ Erledigt | `CookieSettingsButton` in Sidebar-Footer integriert                        |
+| 8   | Brute-Force Kontosperrung (Art. 32) | ✅ Erledigt | Upstash Redis: 5 Fehlversuche → 15 Min Sperre (`src/lib/login-lockout.ts`) |
+| 9   | Subprocessor-Dokumentation          | ✅ Erledigt | `docs/SUBPROCESSORS.md` erstellt                                           |
 
 ---
 

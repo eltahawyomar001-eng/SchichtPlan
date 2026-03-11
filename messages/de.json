@@ -783,6 +783,7 @@
     "email": "E-Mail-Adresse",
     "password": "Passwort",
     "invalidCredentials": "E-Mail oder Passwort ist falsch.",
+    "accountLocked": "Zu viele fehlgeschlagene Anmeldeversuche. Ihr Konto ist für 15 Minuten gesperrt.",
     "signingIn": "Wird angemeldet…",
     "noAccount": "Noch kein Konto?",
     "hasAccount": "Bereits ein Konto?",

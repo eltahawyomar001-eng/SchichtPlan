@@ -97,6 +97,8 @@ function LoginForm() {
         const data = await preRes.json();
         if (data.error === "EMAIL_NOT_VERIFIED") {
           setEmailNotVerified(true);
+        } else if (data.error === "ACCOUNT_LOCKED") {
+          setError(t("accountLocked"));
         } else {
           setError(t("invalidCredentials"));
         }

@@ -783,6 +783,7 @@
     "email": "Email address",
     "password": "Password",
     "invalidCredentials": "Invalid email or password.",
+    "accountLocked": "Too many failed login attempts. Your account is locked for 15 minutes.",
     "signingIn": "Signing in…",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import {
+  isLockedOut,
+  recordFailedAttempt,
+  clearFailedAttempts,
+} from "@/lib/login-lockout";
 
 /**
  * POST /api/auth/pre-login
@@ -9,6 +14,9 @@ import bcrypt from "bcryptjs";
  * without actually signing the user in. This avoids the NextAuth v4
  * limitation where custom error messages from authorize() are
  * swallowed and returned as generic "CredentialsSignin".
+ *
+ * Includes brute-force protection: after 5 failed attempts the
+ * account is locked for 15 minutes (DSGVO Art. 32).
  */
 export async function POST(req: Request) {
   try {
@@ -18,6 +26,20 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "INVALID_CREDENTIALS" },
         { status: 401 },
+      );
+    }
+
+    // ── Brute-force lockout check ──
+    const lockedSeconds = await isLockedOut(email);
+    if (lockedSeconds > 0) {
+      return NextResponse.json(
+        {
+          error: "ACCOUNT_LOCKED",
+          lockedUntil: new Date(
+            Date.now() + lockedSeconds * 1000,
+          ).toISOString(),
+        },
+        { status: 429 },
       );
     }
 
@@ -31,6 +53,7 @@ export async function POST(req: Request) {
     });
 
     if (!user || !user.hashedPassword) {
+      await recordFailedAttempt(email);
       return NextResponse.json(
         { error: "INVALID_CREDENTIALS" },
         { status: 401 },
@@ -39,6 +62,16 @@ export async function POST(req: Request) {
 
     const isValid = await bcrypt.compare(password, user.hashedPassword);
     if (!isValid) {
+      const nowLocked = await recordFailedAttempt(email);
+      if (nowLocked) {
+        return NextResponse.json(
+          {
+            error: "ACCOUNT_LOCKED",
+            lockedUntil: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          },
+          { status: 429 },
+        );
+      }
       return NextResponse.json(
         { error: "INVALID_CREDENTIALS" },
         { status: 401 },
@@ -51,6 +84,9 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+
+    // Successful validation → clear any failed attempt counters
+    await clearFailedAttempts(email);
 
     return NextResponse.json({
       requires2FA: user.twoFactorEnabled === true,

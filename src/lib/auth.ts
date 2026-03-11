@@ -8,6 +8,11 @@ import bcrypt from "bcryptjs";
 import * as OTPAuth from "otpauth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+import {
+  isLockedOut,
+  recordFailedAttempt,
+  clearFailedAttempts,
+} from "@/lib/login-lockout";
 
 /** Workspace shape that includes the onboardingCompleted field.
  *  Used for casting until moduleResolution:bundler fully resolves
@@ -83,6 +88,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        // ── Brute-force lockout check (DSGVO Art. 32) ──
+        const lockedSeconds = await isLockedOut(credentials.email);
+        if (lockedSeconds > 0) return null;
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: {
@@ -91,14 +100,20 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!user || !user.hashedPassword) return null;
+        if (!user || !user.hashedPassword) {
+          await recordFailedAttempt(credentials.email);
+          return null;
+        }
 
         const isValid = await bcrypt.compare(
           credentials.password,
           user.hashedPassword,
         );
 
-        if (!isValid) return null;
+        if (!isValid) {
+          await recordFailedAttempt(credentials.email);
+          return null;
+        }
 
         // Block unverified email accounts
         if (!user.emailVerified) {
@@ -151,6 +166,9 @@ export const authOptions: NextAuthOptions = {
             }
           }
         }
+
+        // Successful auth → clear lockout counters
+        await clearFailedAttempts(credentials.email);
 
         return {
           id: user.id,

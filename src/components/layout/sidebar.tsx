@@ -39,6 +39,7 @@ import {
   HeartPulseIcon,
   FileCheckIcon,
 } from "@/components/icons";
+import { CookieSettingsButton } from "@/components/cookie-banner";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import type { Role } from "@/lib/authorization";
@@ -356,6 +357,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               </div>
             </div>
           )}
+          <div className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400">
+            <CookieSettingsButton />
+          </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             aria-label={t("logout")}

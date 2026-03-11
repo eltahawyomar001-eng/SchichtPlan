@@ -594,10 +594,10 @@ export default function DatenschutzPage() {
               <br />
               E-Mail:{" "}
               <a
-                href="mailto:datenschutz@bashabsheh-vergabepartner.de"
+                href="mailto:info@bashabsheh-vergabepartner.de"
                 className="text-emerald-600 hover:text-emerald-700 underline"
               >
-                datenschutz@bashabsheh-vergabepartner.de
+                info@bashabsheh-vergabepartner.de
               </a>
               <br />
               Telefon: +49 176 30365636

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 
 /** MiLoG minimum wage (€/h) — updated annually */
@@ -105,6 +106,12 @@ export async function PATCH(
       workspaceId: workspaceId!,
       changes: body,
     });
+
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId!, "employee.updated", { id, ...body }).catch(
+      (err) =>
+        log.error("[webhook] employee.updated dispatch error", { error: err }),
+    );
 
     return NextResponse.json({
       ...employee,

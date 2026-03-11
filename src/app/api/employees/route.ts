@@ -8,6 +8,7 @@ import { requireUserSlot } from "@/lib/subscription-guard";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
 import { executeCustomRules } from "@/lib/automations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
@@ -132,6 +133,17 @@ export async function POST(req: Request) {
       workspaceId,
       changes: { firstName, lastName, email, position, hourlyRate },
     });
+
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId, "employee.created", {
+      id: employee.id,
+      firstName,
+      lastName,
+      email: email || null,
+      position: position || null,
+    }).catch((err) =>
+      log.error("[webhook] employee.created dispatch error", { error: err }),
+    );
 
     const warnings: string[] = [];
     if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {

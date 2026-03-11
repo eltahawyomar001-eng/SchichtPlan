@@ -49,7 +49,6 @@ export function CookieBanner() {
   const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [analytics, setAnalytics] = useState(false);
-  const [marketing, setMarketing] = useState(false);
 
   // Sync initial visibility & consent state after mount
   useEffect(() => {
@@ -63,7 +62,6 @@ export function CookieBanner() {
     } else {
       requestAnimationFrame(() => {
         setAnalytics(consent.analytics);
-        setMarketing(consent.marketing);
       });
     }
   }, [hasMounted]);
@@ -74,7 +72,6 @@ export function CookieBanner() {
       const stored = getStoredConsent();
       if (stored) {
         setAnalytics(stored.analytics);
-        setMarketing(stored.marketing);
       }
       setShowSettings(true);
       setVisible(true);
@@ -99,14 +96,13 @@ export function CookieBanner() {
     const consent: CookieConsent = {
       necessary: true,
       analytics,
-      marketing,
       timestamp: new Date().toISOString(),
       version: CONSENT_VERSION,
     };
     saveConsent(consent);
     setVisible(false);
     setShowSettings(false);
-  }, [analytics, marketing]);
+  }, [analytics]);
 
   if (!visible) return null;
 
@@ -183,15 +179,6 @@ export function CookieBanner() {
                 checked={analytics}
                 disabled={false}
                 onChange={setAnalytics}
-              />
-
-              {/* Marketing */}
-              <CookieCategory
-                label={t("marketing")}
-                description={t("marketingDesc")}
-                checked={marketing}
-                disabled={false}
-                onChange={setMarketing}
               />
             </div>
 

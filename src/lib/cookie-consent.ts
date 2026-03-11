@@ -6,7 +6,6 @@
  * Categories:
  *   - necessary:   Always on (session, CSRF, locale). No consent needed (§ 25 Abs. 2 Nr. 2 TDDDG).
  *   - analytics:    Performance & error tracking (Sentry). Requires opt-in.
- *   - marketing:    Third-party advertising (currently unused). Requires opt-in.
  *
  * Consent is stored in:
  *   - localStorage ("cookie-consent") — for client reads
@@ -18,19 +17,17 @@
 export interface CookieConsent {
   necessary: true; // always true, cannot be toggled
   analytics: boolean;
-  marketing: boolean;
   timestamp: string; // ISO date of consent action
   version: number; // bump when categories change — triggers re-consent
 }
 
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2;
 export const CONSENT_KEY = "cookie-consent";
 export const CONSENT_COOKIE_DAYS = 365;
 
 const DEFAULT_CONSENT: CookieConsent = {
   necessary: true,
   analytics: false,
-  marketing: false,
   timestamp: new Date().toISOString(),
   version: CONSENT_VERSION,
 };
@@ -83,7 +80,6 @@ export function acceptAll(): CookieConsent {
   const consent: CookieConsent = {
     necessary: true,
     analytics: true,
-    marketing: true,
     timestamp: new Date().toISOString(),
     version: CONSENT_VERSION,
   };

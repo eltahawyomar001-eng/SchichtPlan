@@ -10,6 +10,7 @@ import {
   executeCustomRules,
 } from "@/lib/automations";
 import { createESignature, getClientIp } from "@/lib/e-signature";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 
 interface RouteParams {
@@ -138,6 +139,18 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         endDate: existing.endDate.toISOString(),
         totalDays: existing.totalDays,
       });
+
+      // ── Webhook dispatch (fire & forget) ──
+      dispatchWebhook(user.workspaceId!, "absence.approved", {
+        id,
+        employeeId: existing.employeeId,
+        category: existing.category,
+        startDate: existing.startDate.toISOString(),
+        endDate: existing.endDate.toISOString(),
+        totalDays: existing.totalDays,
+      }).catch((err) =>
+        log.error("[webhook] absence.approved dispatch error", { error: err }),
+      );
     }
 
     return NextResponse.json(updated);

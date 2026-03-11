@@ -10,6 +10,7 @@ import {
   createSystemNotification,
 } from "@/lib/automations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 
 export async function PATCH(
@@ -166,6 +167,12 @@ export async function PATCH(
       changes: body,
     });
 
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId!, "shift.updated", { id, ...body }).catch(
+      (err) =>
+        log.error("[webhook] shift.updated dispatch error", { error: err }),
+    );
+
     return NextResponse.json(shift);
   } catch (error) {
     log.error("Error updating shift:", { error: error });
@@ -207,6 +214,11 @@ export async function DELETE(
       userEmail: user.email ?? undefined,
       workspaceId: workspaceId!,
     });
+
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId!, "shift.deleted", { id }).catch((err) =>
+      log.error("[webhook] shift.deleted dispatch error", { error: err }),
+    );
 
     return NextResponse.json({ message: "Shift deleted" });
   } catch (error) {

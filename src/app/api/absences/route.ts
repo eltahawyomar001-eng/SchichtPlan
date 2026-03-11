@@ -10,6 +10,7 @@ import {
   executeCustomRules,
 } from "@/lib/automations";
 import { requirePlanFeature } from "@/lib/subscription";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
@@ -229,6 +230,18 @@ export async function POST(req: Request) {
           include: { employee: true },
         })
       : absence;
+
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId, "absence.created", {
+      id: absence.id,
+      employeeId: absence.employeeId,
+      category: body.category,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      autoApproved,
+    }).catch((err) =>
+      log.error("[webhook] absence.created dispatch error", { error: err }),
+    );
 
     return NextResponse.json({ ...result, autoApproved }, { status: 201 });
   } catch (error) {

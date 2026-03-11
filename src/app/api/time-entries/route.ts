@@ -11,6 +11,7 @@ import {
   calcNetMinutes,
 } from "@/lib/time-utils";
 import { ensureLegalBreak } from "@/lib/automations";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
@@ -170,6 +171,19 @@ export async function POST(req: Request) {
         timeEntryId: entry.id,
       },
     });
+
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId, "time-entry.created", {
+      id: entry.id,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      employeeId: body.employeeId,
+      grossMinutes,
+      netMinutes,
+    }).catch((err) =>
+      log.error("[webhook] time-entry.created dispatch error", { error: err }),
+    );
 
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {

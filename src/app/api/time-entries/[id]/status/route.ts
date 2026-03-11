@@ -10,6 +10,7 @@ import {
 } from "@/lib/automations";
 import { canUseFeature } from "@/lib/subscription";
 import { createESignature, getClientIp } from "@/lib/e-signature";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 
 type TimeEntryStatusValue =
@@ -201,6 +202,19 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     // Create notification
     await createNotification(entry, action, user, workspaceId ?? "");
+
+    // ── Webhook dispatch on submit (fire & forget) ──
+    if (action === "submit") {
+      dispatchWebhook(workspaceId!, "time-entry.submitted", {
+        id,
+        employeeId: entry.employeeId,
+        status: transition.to,
+      }).catch((err) =>
+        log.error("[webhook] time-entry.submitted dispatch error", {
+          error: err,
+        }),
+      );
+    }
 
     // ── Automation: Recalculate time account on confirmation ──
     if (action === "confirm") {

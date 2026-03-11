@@ -18,6 +18,7 @@ import {
 } from "@/lib/holidays";
 import { createShiftSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 
@@ -246,6 +247,18 @@ export async function POST(req: Request) {
       workspaceId,
       changes: { date, startTime, endTime, employeeId, locationId },
     });
+
+    // ── Webhook dispatch (fire & forget) ──
+    dispatchWebhook(workspaceId, "shift.created", {
+      id: shift.id,
+      date,
+      startTime,
+      endTime,
+      employeeId,
+      locationId,
+    }).catch((err) =>
+      log.error("[webhook] shift.created dispatch error", { error: err }),
+    );
 
     return NextResponse.json(
       { ...shift, recurring: recurringResult },

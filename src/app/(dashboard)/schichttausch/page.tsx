@@ -412,31 +412,99 @@ export default function SchichttauschPage() {
                         />
                       )}
 
-                      {/* Manager actions */}
-                      {canManage && swap.status === "ANGENOMMEN" && (
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                          <Button
-                            size="sm"
-                            onClick={() => handleAction(swap.id, "GENEHMIGT")}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">
-                              {t("approve")}
-                            </span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAction(swap.id, "ABGELEHNT")}
-                          >
-                            <XIcon className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">
-                              {t("reject")}
-                            </span>
-                          </Button>
-                        </div>
-                      )}
+                      {/* ── Action buttons ── */}
+                      {(() => {
+                        const isRequester =
+                          user?.employeeId === swap.requester.id;
+                        const isTarget = user?.employeeId === swap.target?.id;
+                        const isOpenTarget =
+                          !swap.target && !isRequester && user?.employeeId;
+
+                        // Target employee: Accept button (when ANGEFRAGT)
+                        if (
+                          swap.status === "ANGEFRAGT" &&
+                          (isTarget || isOpenTarget)
+                        ) {
+                          return (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleAction(swap.id, "ANGENOMMEN", {
+                                    targetId: user!.employeeId!,
+                                  })
+                                }
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">
+                                  {t("accept")}
+                                </span>
+                              </Button>
+                            </div>
+                          );
+                        }
+
+                        // Requester: Cancel button (when ANGEFRAGT or ANGENOMMEN)
+                        if (
+                          isRequester &&
+                          ["ANGEFRAGT", "ANGENOMMEN"].includes(swap.status)
+                        ) {
+                          return (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleAction(swap.id, "STORNIERT")
+                                }
+                              >
+                                <XIcon className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">
+                                  {t("cancel")}
+                                </span>
+                              </Button>
+                            </div>
+                          );
+                        }
+
+                        // Manager: Approve/Reject (when ANGEFRAGT or ANGENOMMEN)
+                        if (
+                          canManage &&
+                          ["ANGEFRAGT", "ANGENOMMEN"].includes(swap.status)
+                        ) {
+                          return (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleAction(swap.id, "GENEHMIGT")
+                                }
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">
+                                  {t("approve")}
+                                </span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleAction(swap.id, "ABGELEHNT")
+                                }
+                              >
+                                <XIcon className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">
+                                  {t("reject")}
+                                </span>
+                              </Button>
+                            </div>
+                          );
+                        }
+
+                        return null;
+                      })()}
                     </div>
                   );
                 })}

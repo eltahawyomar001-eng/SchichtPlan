@@ -493,6 +493,8 @@
     },
     "approve": "Approve",
     "reject": "Reject",
+    "accept": "Accept",
+    "cancel": "Cancel",
     "form": {
       "title": "New Swap Request",
       "requester": "Requesting employee",
@@ -1719,7 +1721,19 @@
     "iosStep2": "Select “Add to Home Screen”",
     "iosStep2Desc": "Scroll down in the menu and tap “Add to Home Screen”.",
     "iosStep3": "Tap “Add”",
-    "iosStep3Desc": "Confirm the name and tap “Add” in the top right corner."
+    "iosStep3Desc": "Confirm the name and tap “Add” in the top right corner.",
+    "connectivityOffline": "You are offline",
+    "connectivitySyncing": "Syncing {completed}/{total} changes…",
+    "connectivitySyncingGeneric": "Syncing changes…",
+    "connectivitySynced": "All changes synced",
+    "connectivityPending": "{count} pending",
+    "updateAvailableTitle": "New version available",
+    "updateAvailableDesc": "An updated version is available.",
+    "updateNow": "Update now",
+    "updateDismiss": "Later",
+    "pullToRefresh": "Pull to refresh",
+    "releaseToRefresh": "Release to refresh",
+    "refreshing": "Refreshing…"
   },
   "punchClock": {
     "title": "Punch Clock",

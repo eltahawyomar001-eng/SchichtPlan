@@ -493,6 +493,8 @@
     },
     "approve": "Genehmigen",
     "reject": "Ablehnen",
+    "accept": "Annehmen",
+    "cancel": "Stornieren",
     "form": {
       "title": "Neue Tauschanfrage",
       "requester": "Anfragender Mitarbeiter",
@@ -1719,7 +1721,19 @@
     "iosStep2": "„Zum Home-Bildschirm“ wählen",
     "iosStep2Desc": "Scrollen Sie im Menü nach unten und tippen Sie auf „Zum Home-Bildschirm“.",
     "iosStep3": "„Hinzufügen“ antippen",
-    "iosStep3Desc": "Bestätigen Sie den Namen und tippen Sie oben rechts auf „Hinzufügen“."
+    "iosStep3Desc": "Bestätigen Sie den Namen und tippen Sie oben rechts auf „Hinzufügen“.",
+    "connectivityOffline": "Sie sind offline",
+    "connectivitySyncing": "Synchronisiere {completed}/{total} Änderungen…",
+    "connectivitySyncingGeneric": "Änderungen werden synchronisiert…",
+    "connectivitySynced": "Alle Änderungen synchronisiert",
+    "connectivityPending": "{count} ausstehend",
+    "updateAvailableTitle": "Neue Version verfügbar",
+    "updateAvailableDesc": "Eine aktualisierte Version ist verfügbar.",
+    "updateNow": "Jetzt aktualisieren",
+    "updateDismiss": "Später",
+    "pullToRefresh": "Zum Aktualisieren ziehen",
+    "releaseToRefresh": "Loslassen zum Aktualisieren",
+    "refreshing": "Wird aktualisiert…"
   },
   "punchClock": {
     "title": "Stempeluhr",

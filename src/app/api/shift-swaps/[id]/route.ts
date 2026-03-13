@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { requirePermission } from "@/lib/authorization";
+import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   tryAutoApproveSwap,
   createSystemNotification,
@@ -38,14 +38,40 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const data: Record<string, unknown> = {};
 
-    // Accept (by target employee)
+    // Accept (by target employee only)
     if (body.status === "ANGENOMMEN") {
+      if (existing.status !== "ANGEFRAGT") {
+        return NextResponse.json(
+          { error: "Nur offene Anfragen können angenommen werden." },
+          { status: 400 },
+        );
+      }
+
+      // If swap has a named target, only that employee can accept
+      if (existing.targetId && user.employeeId !== existing.targetId) {
+        return NextResponse.json(
+          {
+            error:
+              "Nur der benannte Tauschpartner kann diese Anfrage annehmen.",
+          },
+          { status: 403 },
+        );
+      }
+
+      // Requester cannot accept their own request
+      if (user.employeeId === existing.requesterId) {
+        return NextResponse.json(
+          { error: "Sie können Ihre eigene Anfrage nicht annehmen." },
+          { status: 400 },
+        );
+      }
+
       data.status = "ANGENOMMEN";
-      data.targetId = body.targetId;
+      data.targetId = body.targetId || user.employeeId;
       if (body.targetShiftId) data.targetShiftId = body.targetShiftId;
     }
 
-    // Approve / Reject (by manager)
+    // Approve / Reject (by manager — allowed from both ANGEFRAGT and ANGENOMMEN)
     if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
       const forbidden = requirePermission(
         user,
@@ -54,14 +80,39 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       );
       if (forbidden) return forbidden;
 
+      if (!["ANGEFRAGT", "ANGENOMMEN"].includes(existing.status)) {
+        return NextResponse.json(
+          {
+            error:
+              "Diese Anfrage kann nicht mehr genehmigt oder abgelehnt werden.",
+          },
+          { status: 400 },
+        );
+      }
+
       data.status = body.status;
       data.reviewedBy = user.id;
       data.reviewedAt = new Date();
       data.reviewNote = body.reviewNote || null;
     }
 
-    // Cancel
+    // Cancel (by requester only, or by management)
     if (body.status === "STORNIERT") {
+      if (existing.status !== "ANGEFRAGT" && existing.status !== "ANGENOMMEN") {
+        return NextResponse.json(
+          { error: "Diese Anfrage kann nicht mehr storniert werden." },
+          { status: 400 },
+        );
+      }
+
+      // Employees can only cancel their own requests
+      if (isEmployee(user) && user.employeeId !== existing.requesterId) {
+        return NextResponse.json(
+          { error: "Nur der Antragsteller kann die Anfrage stornieren." },
+          { status: 403 },
+        );
+      }
+
       data.status = "STORNIERT";
     }
 

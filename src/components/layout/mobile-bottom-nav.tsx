@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { haptics } from "@/lib/haptics";
 
 interface MobileBottomNavProps {
   onMoreTap: () => void;
@@ -211,6 +212,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
             <Link
               key={tab.key}
               href={tab.href}
+              onClick={() => haptics.light()}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 min-h-[50px] transition-all duration-150",
                 "active:opacity-60",
@@ -234,7 +236,10 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
 
         {/* More button */}
         <button
-          onClick={onMoreTap}
+          onClick={() => {
+            haptics.light();
+            onMoreTap();
+          }}
           className={cn(
             "flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 min-h-[50px] transition-all duration-150",
             "active:opacity-60",

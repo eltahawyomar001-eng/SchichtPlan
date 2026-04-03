@@ -1,43 +1,40 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
-import { requireAdmin } from "@/lib/authorization";
+import { prisma } from "@/lib/db";
+import { requireAuth, serverError } from "@/lib/api-response";
+import { log } from "@/lib/logger";
 
 // ─── GET  /api/notifications/status ─────────────────────────────
-// Returns the configuration status of notification channels.
-// Only OWNER/ADMIN can see this (infra details).
+// Returns unread notification count for the authenticated user.
+// Also includes channel config status for OWNER/ADMIN.
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
+
+    const unreadCount = await prisma.notification.count({
+      where: { userId: user.id, read: false },
+    });
+
+    const response: Record<string, unknown> = { unreadCount };
+
+    // Admins also get channel config info
+    if (user.role === "OWNER" || user.role === "ADMIN") {
+      response.email = {
+        configured: !!process.env.RESEND_API_KEY,
+        provider: "resend",
+      };
+      response.push = {
+        configured:
+          !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
+          !!process.env.VAPID_PRIVATE_KEY,
+        provider: "web-push",
+      };
+    }
+
+    return NextResponse.json(response);
+  } catch (error) {
+    log.error("Error fetching notification status:", { error });
+    return serverError("Error loading");
   }
-
-  const user = session.user as SessionUser;
-  const forbidden = requireAdmin(user);
-  if (forbidden) return forbidden;
-
-  const emailConfigured = !!process.env.RESEND_API_KEY;
-  const pushConfigured =
-    !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
-    !!process.env.VAPID_PRIVATE_KEY;
-
-  return NextResponse.json({
-    email: {
-      configured: emailConfigured,
-      provider: "resend",
-      ...(emailConfigured
-        ? {}
-        : { hint: "Set RESEND_API_KEY to enable email notifications" }),
-    },
-    push: {
-      configured: pushConfigured,
-      provider: "web-push",
-      ...(pushConfigured
-        ? {}
-        : {
-            hint: "Set NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to enable push notifications",
-          }),
-    },
-  });
 }

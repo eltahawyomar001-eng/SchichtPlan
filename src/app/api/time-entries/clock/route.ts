@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureLegalBreak, executeCustomRules } from "@/lib/automations";
-import type { SessionUser } from "@/lib/types";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/time-entries/clock
@@ -16,12 +14,9 @@ import { clockActionSchema, validateBody } from "@/lib/validations";
  */
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
     const employeeId = user.employeeId;
     const workspaceId = user.workspaceId;
 
@@ -275,12 +270,9 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const tz = searchParams.get("timezone") || "Europe/Berlin";
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
     const employeeId = user.employeeId;
     if (!employeeId) {
       return NextResponse.json({

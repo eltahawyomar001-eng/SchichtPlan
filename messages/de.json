@@ -95,6 +95,7 @@
     "clients": "Kunden",
     "teamChat": "Nachrichten",
     "serviceProof": "Leistungsnachweis",
+    "tickets": "Tickets",
     "more": "Mehr"
   },
   "dashboard": {
@@ -2426,6 +2427,74 @@
       "error": {
         "completionFailed": "Fehler beim Abschluss"
       }
+    }
+  },
+  "tickets": {
+    "title": "Tickets",
+    "newTicket": "Neues Ticket",
+    "createTicket": "Ticket erstellen",
+    "submitTicket": "Ticket absenden",
+    "submitting": "Wird gesendet...",
+    "cancel": "Abbrechen",
+    "subject": "Betreff",
+    "subjectPlaceholder": "Kurze Beschreibung des Anliegens",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Beschreiben Sie Ihr Anliegen ausführlich...",
+    "category": "Kategorie",
+    "priority": "Priorität",
+    "status": "Status",
+    "assignedTo": "Zugewiesen an",
+    "unassigned": "Nicht zugewiesen",
+    "createdBy": "Erstellt von",
+    "createdAt": "Erstellt am",
+    "resolvedAt": "Gelöst am",
+    "manage": "Verwalten",
+    "backToList": "Zurück zur Übersicht",
+    "notFound": "Ticket nicht gefunden",
+    "searchPlaceholder": "Ticket suchen...",
+    "comment": "Kommentar",
+    "comments": "Kommentare",
+    "commentsTitle": "Kommentare",
+    "noComments": "Noch keine Kommentare",
+    "commentPlaceholder": "Kommentar schreiben...",
+    "sendComment": "Senden",
+    "internalNote": "Interner Hinweis",
+    "createError": "Fehler beim Erstellen des Tickets",
+    "statuses": {
+      "OFFEN": "Offen",
+      "IN_BEARBEITUNG": "In Bearbeitung",
+      "WARTEND": "Wartend",
+      "GELOEST": "Gelöst",
+      "GESCHLOSSEN": "Geschlossen"
+    },
+    "priorities": {
+      "NIEDRIG": "Niedrig",
+      "MITTEL": "Mittel",
+      "HOCH": "Hoch",
+      "DRINGEND": "Dringend"
+    },
+    "categories": {
+      "SCHICHTPLAN": "Schichtplan",
+      "ZEITERFASSUNG": "Zeiterfassung",
+      "LOHNABRECHNUNG": "Lohnabrechnung",
+      "TECHNIK": "Technik",
+      "HR": "Personal",
+      "SONSTIGES": "Sonstiges"
+    },
+    "filters": {
+      "allStatuses": "Alle Status",
+      "allCategories": "Alle Kategorien"
+    },
+    "stats": {
+      "total": "Gesamt",
+      "open": "Offen",
+      "inProgress": "In Bearbeitung",
+      "waiting": "Wartend",
+      "resolved": "Erledigt"
+    },
+    "emptyState": {
+      "title": "Noch keine Tickets",
+      "description": "Erstellen Sie Ihr erstes Ticket, um ein Anliegen zu melden."
     }
   }
 }

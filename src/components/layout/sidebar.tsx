@@ -38,6 +38,7 @@ import {
   MessageCircleIcon,
   HeartPulseIcon,
   FileCheckIcon,
+  TicketIcon,
 } from "@/components/icons";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,11 @@ const navGroups: NavGroup[] = [
         key: "teamChat",
         href: "/nachrichten",
         icon: MessageCircleIcon,
+      },
+      {
+        key: "tickets",
+        href: "/tickets",
+        icon: TicketIcon,
       },
       {
         key: "teamCalendar",

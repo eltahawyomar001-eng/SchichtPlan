@@ -95,6 +95,7 @@
     "clients": "Clients",
     "teamChat": "Messages",
     "serviceProof": "Service Proof",
+    "tickets": "Tickets",
     "more": "More"
   },
   "dashboard": {
@@ -2426,6 +2427,74 @@
       "error": {
         "completionFailed": "Failed to complete"
       }
+    }
+  },
+  "tickets": {
+    "title": "Tickets",
+    "newTicket": "New Ticket",
+    "createTicket": "Create Ticket",
+    "submitTicket": "Submit Ticket",
+    "submitting": "Submitting...",
+    "cancel": "Cancel",
+    "subject": "Subject",
+    "subjectPlaceholder": "Brief description of the issue",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe your issue in detail...",
+    "category": "Category",
+    "priority": "Priority",
+    "status": "Status",
+    "assignedTo": "Assigned to",
+    "unassigned": "Unassigned",
+    "createdBy": "Created by",
+    "createdAt": "Created at",
+    "resolvedAt": "Resolved at",
+    "manage": "Manage",
+    "backToList": "Back to overview",
+    "notFound": "Ticket not found",
+    "searchPlaceholder": "Search tickets...",
+    "comment": "Comment",
+    "comments": "Comments",
+    "commentsTitle": "Comments",
+    "noComments": "No comments yet",
+    "commentPlaceholder": "Write a comment...",
+    "sendComment": "Send",
+    "internalNote": "Internal note",
+    "createError": "Failed to create ticket",
+    "statuses": {
+      "OFFEN": "Open",
+      "IN_BEARBEITUNG": "In Progress",
+      "WARTEND": "Waiting",
+      "GELOEST": "Resolved",
+      "GESCHLOSSEN": "Closed"
+    },
+    "priorities": {
+      "NIEDRIG": "Low",
+      "MITTEL": "Medium",
+      "HOCH": "High",
+      "DRINGEND": "Urgent"
+    },
+    "categories": {
+      "SCHICHTPLAN": "Shift Plan",
+      "ZEITERFASSUNG": "Time Tracking",
+      "LOHNABRECHNUNG": "Payroll",
+      "TECHNIK": "Technical",
+      "HR": "Human Resources",
+      "SONSTIGES": "Other"
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allCategories": "All Categories"
+    },
+    "stats": {
+      "total": "Total",
+      "open": "Open",
+      "inProgress": "In Progress",
+      "waiting": "Waiting",
+      "resolved": "Resolved"
+    },
+    "emptyState": {
+      "title": "No tickets yet",
+      "description": "Create your first ticket to report an issue."
     }
   }
 }

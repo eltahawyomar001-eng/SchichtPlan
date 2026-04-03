@@ -35,6 +35,9 @@ model User {
   autoScheduleRuns AutoScheduleRun[]
   icalTokens      ICalToken[]
   notifications   Notification[]
+  ticketsCreated    Ticket[]       @relation("TicketCreator")
+  ticketsAssigned   Ticket[]       @relation("TicketAssignee")
+  ticketComments    TicketComment[]
 }
 
 model Account {
@@ -152,6 +155,7 @@ model Workspace {
   serviceVisits        ServiceVisit[]
   serviceReports       ServiceReport[]
   notifications        Notification[]
+  tickets              Ticket[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1243,4 +1247,73 @@ model ICalToken {
   createdAt   DateTime  @default(now())
   @@index([userId])
   @@index([token])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TICKETING SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+enum TicketCategory {
+  SCHICHTPLAN
+  ZEITERFASSUNG
+  LOHNABRECHNUNG
+  TECHNIK
+  HR
+  SONSTIGES
+}
+
+enum TicketPriority {
+  NIEDRIG
+  MITTEL
+  HOCH
+  DRINGEND
+}
+
+enum TicketStatus {
+  OFFEN
+  IN_BEARBEITUNG
+  WARTEND
+  GELOEST
+  GESCHLOSSEN
+}
+
+model Ticket {
+  id            String          @id @default(cuid())
+  ticketNumber  String          @unique /// Human-readable e.g. TK-2025-0042
+  subject       String          @db.VarChar(200)
+  description   String          @db.Text
+  category      TicketCategory
+  priority      TicketPriority  @default(MITTEL)
+  status        TicketStatus    @default(OFFEN)
+  createdById   String
+  createdBy     User            @relation("TicketCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  assignedToId  String?
+  assignedTo    User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  comments      TicketComment[]
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([workspaceId, status])
+  @@index([workspaceId, ticketNumber])
+}
+
+model TicketComment {
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  isInternal Boolean  @default(false) /// Only visible to management
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([ticketId])
+  @@index([authorId])
 }

@@ -87,7 +87,8 @@ export type Resource =
   | "webhooks"
   | "month-close"
   | "service-visits"
-  | "service-reports";
+  | "service-reports"
+  | "tickets";
 
 export type Action = "read" | "create" | "update" | "delete" | "approve";
 
@@ -286,6 +287,13 @@ const permissionMatrix: Record<Resource, Record<Action, Role[]>> = {
     read: ["OWNER", "ADMIN", "MANAGER"],
     create: ["OWNER", "ADMIN", "MANAGER"],
     update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  tickets: {
+    read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE filtered to own
+    create: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    update: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE: own tickets only
     delete: ["OWNER", "ADMIN"],
     approve: [],
   },

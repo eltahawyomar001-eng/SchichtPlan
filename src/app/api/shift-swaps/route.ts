@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import {
   createSystemNotification,
@@ -11,20 +8,14 @@ import {
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createShiftSwapSchema, validateBody } from "@/lib/validations";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
@@ -61,23 +52,16 @@ export async function GET(req: Request) {
     return paginatedResponse(swaps, total, take, skip);
   } catch (error) {
     log.error("Error fetching shift swaps:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+    return serverError("Error loading");
   }
 }
 
 // ─── POST  /api/shift-swaps ─────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const parsed = validateBody(createShiftSwapSchema, await req.json());
     if (!parsed.success) return parsed.response;

@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import type { SessionUser } from "@/lib/types";
 import { updateProfileSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 // ── DELETE /api/profile — Account deletion (Art. 17 DSGVO) ──
 export async function DELETE() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as SessionUser).id;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user: authUser } = auth;
+    const userId = authUser.id;
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { workspace: { include: { members: true } } },
@@ -74,12 +70,10 @@ export async function DELETE() {
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as SessionUser).id;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user: authUser } = auth;
+    const userId = authUser.id;
     const parsed = validateBody(updateProfileSchema, await req.json());
     if (!parsed.success) return parsed.response;
     const body = parsed.data;

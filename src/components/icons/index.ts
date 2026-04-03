@@ -87,3 +87,4 @@ export { HeadsetIcon } from "./HeadsetIcon";
 export { QuoteIcon } from "./QuoteIcon";
 export { SparklesIcon } from "./SparklesIcon";
 export { FileCheckIcon } from "./FileCheckIcon";
+export { TicketIcon } from "./TicketIcon";

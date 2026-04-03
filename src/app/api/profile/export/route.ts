@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { log } from "@/lib/logger";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 // ── GET /api/profile/export — Data export (Art. 20 DSGVO Datenübertragbarkeit) ──
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const sessionUser = session.user as SessionUser;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user: sessionUser, workspaceId } = auth;
     const userId = sessionUser.id;
-    const workspaceId = sessionUser.workspaceId;
 
     // 1. User account data
     const user = await prisma.user.findUnique({

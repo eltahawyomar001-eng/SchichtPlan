@@ -30,8 +30,11 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
+import { jwtVerify } from "jose";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 
 /* ── Types ──────────────────────────────────────────────────── */
@@ -100,7 +103,7 @@ export const payloadTooLarge = (message = "Payload too large") =>
 
 /**
  * Authenticate + extract workspaceId in a single call.
- * Eliminates the boilerplate session/workspace check in every route.
+ * Supports BOTH NextAuth sessions (web) and Bearer JWT tokens (mobile).
  *
  * Usage:
  *   const auth = await requireAuth();
@@ -118,18 +121,71 @@ export async function requireAuth(
 > {
   const { requireWorkspace = true } = options;
 
+  // 1) Try NextAuth session first (web browser)
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return { ok: false, response: unauthorized() };
+  if (session?.user) {
+    const user = session.user as SessionUser;
+    if (requireWorkspace && !user.workspaceId) {
+      return { ok: false, response: noWorkspace() };
+    }
+    return { ok: true, user, workspaceId: user.workspaceId as string };
   }
 
-  const user = session.user as SessionUser;
+  // 2) Fall back to Bearer JWT token (mobile app)
+  const headersList = await headers();
+  const authHeader = headersList.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    try {
+      const secret = new TextEncoder().encode(
+        process.env.NEXTAUTH_SECRET || "",
+      );
+      const { payload } = await jwtVerify(token, secret, {
+        algorithms: ["HS256"],
+      });
 
-  if (requireWorkspace && !user.workspaceId) {
-    return { ok: false, response: noWorkspace() };
+      const userId = payload.sub as string;
+      if (!userId) {
+        return { ok: false, response: unauthorized() };
+      }
+
+      // Look up the user + employee link from DB
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          employee: { select: { id: true } },
+          workspace: {
+            select: { id: true, name: true, onboardingCompleted: true },
+          },
+        },
+      });
+
+      if (!dbUser) {
+        return { ok: false, response: unauthorized() };
+      }
+
+      const user: SessionUser = {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name || dbUser.email,
+        role: dbUser.role as SessionUser["role"],
+        workspaceId: dbUser.workspaceId || "",
+        workspaceName: dbUser.workspace?.name || undefined,
+        employeeId: dbUser.employee?.id || undefined,
+        onboardingCompleted: dbUser.workspace?.onboardingCompleted,
+      };
+
+      if (requireWorkspace && !user.workspaceId) {
+        return { ok: false, response: noWorkspace() };
+      }
+
+      return { ok: true, user, workspaceId: user.workspaceId as string };
+    } catch {
+      return { ok: false, response: unauthorized() };
+    }
   }
 
-  return { ok: true, user, workspaceId: user.workspaceId as string };
+  return { ok: false, response: unauthorized() };
 }
 
 /* ── Success helper ─────────────────────────────────────────── */

@@ -1,20 +1,15 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { parsePagination } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 // ─── GET  /api/notifications ────────────────────────────────────
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
     const { take, skip } = parsePagination(req);
 
     const [notifications, total, unreadCount] = await Promise.all([
@@ -42,19 +37,16 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     log.error("Error fetching notifications:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+    return serverError("Error loading");
   }
 }
 
 // ─── PATCH  /api/notifications  (mark as read) ─────────────────
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
     const body = await req.json();
 
     if (body.markAllRead) {
@@ -73,6 +65,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error("Error updating notifications:", { error: error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
+    return serverError("Error updating");
   }
 }

@@ -652,3 +652,78 @@ export function validateBody<T>(
 
   return { success: true, data: result.data };
 }
+
+// ─── Ticket Schemas ───────────────────────────────────────────
+
+export const TICKET_CATEGORIES = [
+  "SCHICHTPLAN",
+  "ZEITERFASSUNG",
+  "LOHNABRECHNUNG",
+  "TECHNIK",
+  "HR",
+  "SONSTIGES",
+] as const;
+
+export const TICKET_PRIORITIES = [
+  "NIEDRIG",
+  "MITTEL",
+  "HOCH",
+  "DRINGEND",
+] as const;
+
+export const TICKET_STATUSES = [
+  "OFFEN",
+  "IN_BEARBEITUNG",
+  "WARTEND",
+  "GELOEST",
+  "GESCHLOSSEN",
+] as const;
+
+export const createTicketSchema = z.object({
+  subject: trimmedString
+    .min(3, "Betreff muss mindestens 3 Zeichen lang sein")
+    .max(200, "Betreff darf maximal 200 Zeichen lang sein"),
+  description: trimmedString.min(
+    10,
+    "Beschreibung muss mindestens 10 Zeichen lang sein",
+  ),
+  category: z.enum(TICKET_CATEGORIES, {
+    message: "Ungültige Kategorie",
+  }),
+  priority: z
+    .enum(TICKET_PRIORITIES, {
+      message: "Ungültige Priorität",
+    })
+    .optional(),
+});
+
+export const updateTicketSchema = z.object({
+  subject: trimmedString
+    .min(3, "Betreff muss mindestens 3 Zeichen lang sein")
+    .max(200, "Betreff darf maximal 200 Zeichen lang sein")
+    .optional(),
+  description: trimmedString
+    .min(10, "Beschreibung muss mindestens 10 Zeichen lang sein")
+    .optional(),
+  category: z
+    .enum(TICKET_CATEGORIES, {
+      message: "Ungültige Kategorie",
+    })
+    .optional(),
+  priority: z
+    .enum(TICKET_PRIORITIES, {
+      message: "Ungültige Priorität",
+    })
+    .optional(),
+  status: z
+    .enum(TICKET_STATUSES, {
+      message: "Ungültiger Status",
+    })
+    .optional(),
+  assignedToId: z.string().cuid().nullable().optional(),
+});
+
+export const createTicketCommentSchema = z.object({
+  content: trimmedString.min(1, "Kommentar darf nicht leer sein"),
+  isInternal: z.boolean().optional(),
+});

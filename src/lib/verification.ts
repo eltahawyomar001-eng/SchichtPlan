@@ -31,7 +31,9 @@ export async function sendVerificationEmail(
     },
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://www.shiftfy.de";
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://www.shiftfy.de")
+    .trim()
+    .replace(/\/+$/, "");
   const verifyUrl = `${baseUrl}/verifizierung?token=${token}&email=${encodeURIComponent(email)}`;
 
   const isDE = locale === "de";

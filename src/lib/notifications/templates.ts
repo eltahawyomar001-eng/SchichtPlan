@@ -1,4 +1,50 @@
 /**
+ * Context-aware CTA button label based on email type.
+ */
+function getCtaLabel(type: string, locale: string): string {
+  const labels: Record<string, { de: string; en: string }> = {
+    "email-verification": {
+      de: "E-Mail-Adresse bestätigen",
+      en: "Verify email address",
+    },
+    "password-reset": {
+      de: "Passwort zurücksetzen",
+      en: "Reset password",
+    },
+    invitation: {
+      de: "Einladung annehmen",
+      en: "Accept invitation",
+    },
+  };
+  const entry = labels[type];
+  if (entry) return locale === "de" ? entry.de : entry.en;
+  return locale === "de" ? "Im Dashboard ansehen" : "View in dashboard";
+}
+
+/**
+ * Build a plain-text fallback for email clients that don't render HTML.
+ */
+export function buildPlainText(params: {
+  title: string;
+  message: string;
+  link?: string | null;
+  locale?: string;
+}): string {
+  const { title, message, link, locale = "de" } = params;
+  const lines = [title, "", message];
+  if (link) {
+    lines.push("", link);
+  }
+  lines.push(
+    "",
+    locale === "de"
+      ? "Sie erhalten diese E-Mail, weil Sie Benachrichtigungen in Shiftfy aktiviert haben."
+      : "You are receiving this email because you have notifications enabled in Shiftfy.",
+  );
+  return lines.join("\n");
+}
+
+/**
  * Build branded HTML email for a notification.
  *
  * The template is intentionally simple + inline-styled for
@@ -11,10 +57,10 @@ export function buildEmailHtml(params: {
   link?: string | null;
   locale?: string;
 }) {
-  const { title, message, link, locale = "de" } = params;
+  const { type, title, message, link, locale = "de" } = params;
 
-  const ctaLabel =
-    locale === "de" ? "Im Dashboard ansehen" : "View in dashboard";
+  // Use context-aware CTA label
+  const ctaLabel = getCtaLabel(type, locale);
   const footerText =
     locale === "de"
       ? "Sie erhalten diese E-Mail, weil Sie Benachrichtigungen in Shiftfy aktiviert haben."
@@ -29,11 +75,25 @@ export function buildEmailHtml(params: {
 
   const ctaBlock = ctaHref
     ? `<tr>
-         <td style="padding:24px 32px 0;">
-           <a href="${ctaHref}"
-              style="display:inline-block;padding:12px 24px;background:#047857;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">
-              ${ctaLabel}
-           </a>
+         <td style="padding:24px 32px 0;" align="left">
+           <!--[if mso]>
+           <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaHref}" style="height:44px;v-text-anchor:middle;width:260px;" arcsize="18%" strokecolor="#047857" fillcolor="#047857">
+             <w:anchorlock/>
+             <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:bold;">${ctaLabel}</center>
+           </v:roundrect>
+           <![endif]-->
+           <!--[if !mso]><!-->
+           <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+             <tr>
+               <td style="background:#047857;border-radius:8px;padding:12px 24px;" align="center">
+                 <a href="${ctaHref}" target="_blank"
+                    style="color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:inline-block;">
+                    ${ctaLabel}
+                 </a>
+               </td>
+             </tr>
+           </table>
+           <!--<![endif]-->
          </td>
        </tr>`
     : "";

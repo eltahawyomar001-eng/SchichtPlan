@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { buildEmailHtml } from "./templates";
+import { buildEmailHtml, buildPlainText } from "./templates";
 import { log } from "@/lib/logger";
 
 let resend: Resend | null = null;
@@ -40,12 +40,14 @@ export async function sendEmail(params: {
       `[notifications/email] Sending to=${to}, from=${FROM_ADDRESS}, subject="${title}"`,
     );
     const html = buildEmailHtml({ type, title, message, link, locale });
+    const text = buildPlainText({ title, message, link, locale });
 
     const result = await client.emails.send({
       from: FROM_ADDRESS,
       to,
       subject: title,
       html,
+      text,
     });
 
     if (result.error) {

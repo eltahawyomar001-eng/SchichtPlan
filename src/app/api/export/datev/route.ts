@@ -185,7 +185,8 @@ function buildDATEVCsv(
   datevFormat: boolean,
 ): string {
   const BOM = "\uFEFF"; // UTF-8 BOM for Excel
-  const sep = datevFormat ? ";" : ",";
+  // Always use semicolon — German Excel expects ";" as list separator
+  const sep = ";";
 
   const headers = [
     "Personalnummer",

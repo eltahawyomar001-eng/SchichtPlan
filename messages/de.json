@@ -1856,7 +1856,10 @@
     "lockConfirmTitle": "Monat sperren?",
     "lockConfirmMessage": "Der Monat wird gesperrt. Zeiteinträge können danach nicht mehr bearbeitet werden. Fortfahren?",
     "exportConfirmTitle": "Monat exportieren?",
-    "exportConfirmMessage": "Der Monat wird als DATEV-Export markiert. Diese Aktion kann nicht rückgängig gemacht werden. Fortfahren?"
+    "exportConfirmMessage": "Der Monat wird als DATEV-Export markiert. Diese Aktion kann nicht rückgängig gemacht werden. Fortfahren?",
+    "reopen": "Korrektur",
+    "reopenConfirmTitle": "Exportierten Monat erneut öffnen?",
+    "reopenConfirmMessage": "Der Monat wird wieder für Korrekturen freigegeben. Zeiteinträge können anschließend bearbeitet werden. Denken Sie daran, den Monat nach den Änderungen erneut zu sperren und zu exportieren."
   },
   "automationRules": {
     "title": "Automatisierungsregeln",
@@ -1993,7 +1996,15 @@
       "datevExport": "DATEV-Export",
       "apiWebhooks": "API und Webhooks",
       "customRoles": "Benutzerdefinierte Rollen",
-      "analytics": "Erweiterte Analysen"
+      "analytics": "Erweiterte Analysen",
+      "autoScheduling": "KI-Automatische Planung",
+      "eSignatures": "E-Signaturen",
+      "teamChat": "Team-Chat",
+      "prioritySupport": "Prioritäts-Support",
+      "ssoSaml": "SSO/SAML",
+      "dedicatedSla": "Dediziertes SLA",
+      "customIntegrations": "Individuelle Integrationen",
+      "datevOnlineUpload": "DATEV-Online-Upload"
     },
     "upgradeHintEmployee": "Diese Funktion erfordert einen höheren Plan. Bitte bitten Sie Ihren Administrator oder den Kontoinhaber, ein Upgrade durchzuführen.",
     "dismissEmployee": "OK, Verstanden",

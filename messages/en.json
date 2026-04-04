@@ -1856,7 +1856,10 @@
     "lockConfirmTitle": "Lock month?",
     "lockConfirmMessage": "The month will be locked. Time entries can no longer be edited afterwards. Continue?",
     "exportConfirmTitle": "Export month?",
-    "exportConfirmMessage": "The month will be marked as DATEV exported. This action cannot be undone. Continue?"
+    "exportConfirmMessage": "The month will be marked as DATEV exported. This action cannot be undone. Continue?",
+    "reopen": "Correction",
+    "reopenConfirmTitle": "Reopen exported month?",
+    "reopenConfirmMessage": "The month will be reopened for corrections. Time entries can then be edited again. Remember to lock and export the month again after making changes."
   },
   "automationRules": {
     "title": "Automation Rules",
@@ -1993,7 +1996,15 @@
       "datevExport": "DATEV export",
       "apiWebhooks": "API and webhooks",
       "customRoles": "custom roles",
-      "analytics": "advanced analytics"
+      "analytics": "advanced analytics",
+      "autoScheduling": "AI auto-scheduling",
+      "eSignatures": "e-signatures",
+      "teamChat": "team chat",
+      "prioritySupport": "priority support",
+      "ssoSaml": "SSO/SAML",
+      "dedicatedSla": "dedicated SLA",
+      "customIntegrations": "custom integrations",
+      "datevOnlineUpload": "DATEV online upload"
     },
     "upgradeHintEmployee": "This feature requires a higher plan. Please ask your administrator or account owner to upgrade.",
     "dismissEmployee": "OK, Got It",

@@ -65,6 +65,12 @@ export default function MonatsabschlussSeite() {
       setConfirmAction({ month: monthNum, action });
       return;
     }
+    // Reopening an exported month also requires confirmation
+    const record = records.find((r) => r.month === monthNum);
+    if (action === "unlock" && record?.status === "EXPORTED") {
+      setConfirmAction({ month: monthNum, action });
+      return;
+    }
     await executeAction(monthNum, action);
   }
 
@@ -209,13 +215,26 @@ export default function MonatsabschlussSeite() {
                           </>
                         )}
                         {status === "EXPORTED" && (
-                          <p className="text-xs text-gray-400">
-                            {record?.exportedAt
-                              ? new Date(record.exportedAt).toLocaleDateString(
-                                  locale === "en" ? "en-GB" : "de-DE",
-                                )
-                              : "—"}
-                          </p>
+                          <div className="flex flex-col gap-2">
+                            <p className="text-xs text-gray-400">
+                              {record?.exportedAt
+                                ? new Date(
+                                    record.exportedAt,
+                                  ).toLocaleDateString(
+                                    locale === "en" ? "en-GB" : "de-DE",
+                                  )
+                                : "—"}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => handleAction(m, "unlock")}
+                              disabled={acting === `${m}-unlock`}
+                            >
+                              {t("reopen")}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -232,18 +251,26 @@ export default function MonatsabschlussSeite() {
         title={
           confirmAction?.action === "lock"
             ? t("lockConfirmTitle")
-            : t("exportConfirmTitle")
+            : confirmAction?.action === "unlock"
+              ? t("reopenConfirmTitle")
+              : t("exportConfirmTitle")
         }
         message={
           confirmAction?.action === "lock"
             ? t("lockConfirmMessage")
-            : t("exportConfirmMessage")
+            : confirmAction?.action === "unlock"
+              ? t("reopenConfirmMessage")
+              : t("exportConfirmMessage")
         }
         confirmLabel={
-          confirmAction?.action === "lock" ? t("lock") : t("export")
+          confirmAction?.action === "lock"
+            ? t("lock")
+            : confirmAction?.action === "unlock"
+              ? t("reopen")
+              : t("export")
         }
         cancelLabel={tc("cancel")}
-        variant="danger"
+        variant={confirmAction?.action === "unlock" ? "warning" : "danger"}
         onConfirm={async () => {
           if (confirmAction) {
             const { month, action } = confirmAction;

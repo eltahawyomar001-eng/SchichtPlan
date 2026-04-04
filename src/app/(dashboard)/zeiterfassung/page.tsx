@@ -493,7 +493,7 @@ export default function ZeiterfassungPage() {
 
         {showFilters && (
           <Card>
-            <CardContent className="pt-4 pb-4">
+            <CardContent className="py-4 sm:py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-gray-500 mb-1">
@@ -967,7 +967,7 @@ export default function ZeiterfassungPage() {
 
         {/* ── Entries Table (desktop) / Cards (mobile) ── */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-0 sm:p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-gray-500">{tc("loading")}</p>

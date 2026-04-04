@@ -279,7 +279,7 @@ export default function SchichtvorlagenSeite() {
           </div>
         ) : templates.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
               <p className="text-lg font-medium text-gray-900">{t("empty")}</p>
               <Button className="mt-4" onClick={openCreate}>
                 <PlusIcon className="h-4 w-4" />
@@ -291,7 +291,7 @@ export default function SchichtvorlagenSeite() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((tmpl) => (
               <Card key={tmpl.id} className="card-elevated">
-                <CardContent className="p-5">
+                <CardContent className="p-5 sm:p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div

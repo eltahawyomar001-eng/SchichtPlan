@@ -619,7 +619,7 @@ function MonthDetail({
 
   return (
     <Card className="border-gray-200">
-      <CardContent className="p-0">
+      <CardContent className="p-0 sm:p-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-3 sm:px-4 py-3">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
@@ -871,7 +871,7 @@ function SummaryTable({
 
   return (
     <Card className="border-gray-200">
-      <CardContent className="p-0">
+      <CardContent className="p-0 sm:p-0">
         <div className="border-b border-gray-200 px-3 sm:px-4 py-3">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             {t("yearSummary")} {year}

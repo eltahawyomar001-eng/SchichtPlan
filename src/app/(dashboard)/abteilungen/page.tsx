@@ -246,7 +246,7 @@ export default function AbteilungenSeite() {
           </div>
         ) : filtered.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
               <p className="text-lg font-medium text-gray-900">
                 {search ? tc("noResults") : t("empty")}
               </p>
@@ -262,7 +262,7 @@ export default function AbteilungenSeite() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((dept) => (
               <Card key={dept.id} className="card-elevated">
-                <CardContent className="p-5">
+                <CardContent className="p-5 sm:p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div

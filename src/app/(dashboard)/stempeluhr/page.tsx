@@ -235,7 +235,7 @@ export default function StempeluhrSeite() {
         <PageContent>
           <div className="mx-auto max-w-md">
             <Card>
-              <CardContent className="p-8 text-center">
+              <CardContent className="p-8 sm:p-8 text-center">
                 <AlertTriangleIcon className="mx-auto mb-4 h-12 w-12 text-amber-500" />
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">
                   {t("noProfileTitle")}

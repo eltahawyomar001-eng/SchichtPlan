@@ -317,7 +317,7 @@ export default function TeamkalenderSeite() {
                     {emp.firstName} {emp.lastName}
                   </span>
                 </div>
-                <CardContent className="p-0">
+                <CardContent className="p-0 sm:p-0">
                   <div className="grid grid-cols-7 text-center text-xs text-gray-500 border-b border-gray-100">
                     {DAY_HEADERS.map((dh) => (
                       <div key={dh} className="py-1">

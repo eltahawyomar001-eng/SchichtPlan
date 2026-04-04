@@ -157,7 +157,7 @@ export default function MonatsabschlussSeite() {
 
                 return (
                   <Card key={m} className="card-elevated">
-                    <CardContent className="p-5">
+                    <CardContent className="p-5 sm:p-5">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-gray-900">
                           {t(monthKeys[m - 1])}

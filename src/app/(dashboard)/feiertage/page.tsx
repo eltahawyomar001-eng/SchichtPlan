@@ -120,7 +120,7 @@ export default function FeiertageSeite() {
                 {t("holidaysCount")})
               </p>
             </div>
-            <CardContent className="p-0">
+            <CardContent className="p-0 sm:p-0">
               <ul className="divide-y divide-gray-100">
                 {data.holidays.map((holiday, idx) => {
                   const d = new Date(holiday.date + "T00:00:00");
@@ -166,7 +166,7 @@ export default function FeiertageSeite() {
           </Card>
         ) : (
           <Card>
-            <CardContent className="flex items-center justify-center py-12">
+            <CardContent className="flex items-center justify-center py-12 sm:py-12">
               <p className="text-sm text-gray-500">{t("noData")}</p>
             </CardContent>
           </Card>

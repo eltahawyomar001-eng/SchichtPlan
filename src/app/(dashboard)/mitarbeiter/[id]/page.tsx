@@ -156,7 +156,7 @@ export default function EmployeeDetailPage({
         <Topbar title={t("title")} />
         <div className="p-6">
           <Card>
-            <CardContent className="py-12 text-center text-sm text-gray-500">
+            <CardContent className="py-12 sm:py-12 text-center text-sm text-gray-500">
               {error || t("notFound")}
             </CardContent>
           </Card>
@@ -248,7 +248,7 @@ export default function EmployeeDetailPage({
         {/* ── Stats row ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <CalendarIcon className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
               <p className="text-2xl font-bold text-gray-900">
                 {emp.shifts.length}
@@ -257,7 +257,7 @@ export default function EmployeeDetailPage({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <ClockIcon className="h-5 w-5 mx-auto text-blue-600 mb-1" />
               <p className="text-2xl font-bold text-gray-900">
                 {emp.timeEntries.length}
@@ -266,7 +266,7 @@ export default function EmployeeDetailPage({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <CalendarOffIcon className="h-5 w-5 mx-auto text-amber-600 mb-1" />
               <p className="text-2xl font-bold text-gray-900">
                 {emp.absenceRequests.length}
@@ -275,7 +275,7 @@ export default function EmployeeDetailPage({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <PalmtreeIcon className="h-5 w-5 mx-auto text-teal-600 mb-1" />
               <p className="text-2xl font-bold text-gray-900">
                 {currentBalance ? currentBalance.remaining : "–"}

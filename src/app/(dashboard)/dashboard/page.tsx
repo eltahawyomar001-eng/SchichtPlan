@@ -82,7 +82,7 @@ export default async function DashboardPage() {
         <Topbar title={t("title")} description="" />
         <div className="flex items-center justify-center py-20">
           <Card className="mx-4 max-w-md">
-            <CardContent className="p-8 text-center">
+            <CardContent className="p-8 sm:p-8 text-center">
               <RocketIcon className="mx-auto mb-4 h-12 w-12 text-emerald-500" />
               <CardTitle className="mb-2">{to("welcome")}</CardTitle>
               <p className="text-sm text-gray-500 mb-6">{to("setupDesc")}</p>

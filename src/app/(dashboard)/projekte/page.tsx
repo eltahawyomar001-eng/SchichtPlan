@@ -558,7 +558,7 @@ export default function ProjekteSeite() {
           </div>
         ) : filteredProjects.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
               <p className="text-lg font-medium text-gray-900">
                 {search ? tc("noResults") : t("noProjects")}
               </p>
@@ -581,7 +581,7 @@ export default function ProjekteSeite() {
 
               return (
                 <Card key={project.id} className="card-elevated">
-                  <CardContent className="p-5">
+                  <CardContent className="p-5 sm:p-5">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-semibold text-gray-900 truncate pr-2">
                         {project.name}

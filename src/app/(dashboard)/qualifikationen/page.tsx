@@ -222,7 +222,7 @@ export default function QualifikationenSeite() {
           </div>
         ) : filtered.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
               <p className="text-lg font-medium text-gray-900">
                 {search ? tc("noResults") : t("empty")}
               </p>
@@ -244,7 +244,7 @@ export default function QualifikationenSeite() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((skill) => (
                     <Card key={skill.id} className="card-elevated">
-                      <CardContent className="flex items-center justify-between gap-2 p-4">
+                      <CardContent className="flex items-center justify-between gap-2 p-4 sm:p-4">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {skill.name}

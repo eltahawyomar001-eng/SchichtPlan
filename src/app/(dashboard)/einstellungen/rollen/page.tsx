@@ -74,7 +74,7 @@ export default function RollenPage() {
 
         {error && (
           <Card>
-            <CardContent className="py-10 text-center text-sm text-gray-500">
+            <CardContent className="py-10 sm:py-10 text-center text-sm text-gray-500">
               {error}
             </CardContent>
           </Card>

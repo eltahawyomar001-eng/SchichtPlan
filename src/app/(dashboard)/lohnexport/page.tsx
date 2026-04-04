@@ -622,7 +622,7 @@ export default function LohnexportPage() {
         {/* ─── Initial help ────────────────────────────────── */}
         {!previewLoaded && (
           <Card>
-            <CardContent className="py-10 text-center">
+            <CardContent className="py-10 sm:py-10 text-center">
               <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
               <p className="text-sm text-gray-500">{t("helpText")}</p>
               <p className="text-xs text-gray-400 mt-2 max-w-md mx-auto">

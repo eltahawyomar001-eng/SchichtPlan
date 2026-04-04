@@ -299,13 +299,13 @@ export default function LeistungsnachweisSeite() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               <p className="text-xs text-gray-500">{t("stats.total")}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <p className="text-2xl font-bold text-blue-600">
                 {stats.planned}
               </p>
@@ -313,7 +313,7 @@ export default function LeistungsnachweisSeite() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <p className="text-2xl font-bold text-amber-600">
                 {stats.checkedIn}
               </p>
@@ -321,7 +321,7 @@ export default function LeistungsnachweisSeite() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 sm:p-4 text-center">
               <p className="text-2xl font-bold text-emerald-600">
                 {stats.completed}
               </p>
@@ -522,7 +522,7 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
 
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent className="p-4 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Left: info */}
           <div className="min-w-0 flex-1 space-y-1">

@@ -111,7 +111,7 @@ export default function BenachrichtigungenPage() {
       <PageContent className="max-w-3xl">
         {fetchError && (
           <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-4 text-sm text-red-700">
+            <CardContent className="p-4 sm:p-4 text-sm text-red-700">
               {t("fetchError")}
             </CardContent>
           </Card>
@@ -245,7 +245,7 @@ export default function BenachrichtigungenPage() {
 
         {/* Info card */}
         <Card className="border-emerald-100">
-          <CardContent className="p-4">
+          <CardContent className="p-4 sm:p-4">
             <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-4">
               <p className="text-xs text-emerald-700">{t("emailInfo")}</p>
             </div>

@@ -348,7 +348,7 @@ export default function TicketDetailPage() {
           <div className="space-y-4">
             {/* Meta info */}
             <Card>
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-4 sm:p-4 space-y-3">
                 <DetailRow
                   label={t("createdBy")}
                   value={ticket.createdBy.name ?? ticket.createdBy.email}

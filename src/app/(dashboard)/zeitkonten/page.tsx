@@ -221,7 +221,7 @@ export default function ZeitkontenPage() {
           <p className="text-sm text-gray-500">{tc("loading")}</p>
         ) : accounts.length === 0 ? (
           <Card>
-            <CardContent className="py-10 text-center">
+            <CardContent className="py-10 sm:py-10 text-center">
               <ScaleIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
               <p className="text-sm text-gray-500">{t("noAccounts")}</p>
               <p className="text-xs text-gray-400 mt-1">

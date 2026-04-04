@@ -255,7 +255,7 @@ export default function WebhooksSeite() {
           </div>
         ) : hooks.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
+            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
               <p className="text-lg font-medium text-gray-900">
                 {t("noWebhooks")}
               </p>
@@ -269,7 +269,7 @@ export default function WebhooksSeite() {
           <div className="space-y-3">
             {hooks.map((hook) => (
               <Card key={hook.id} className="card-elevated">
-                <CardContent className="p-4">
+                <CardContent className="p-4 sm:p-4">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-mono text-sm text-gray-900 truncate">

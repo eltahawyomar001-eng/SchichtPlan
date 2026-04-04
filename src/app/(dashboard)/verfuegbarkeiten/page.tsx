@@ -221,7 +221,7 @@ export default function VerfuegbarkeitenPage() {
           <p className="text-sm text-gray-500">{tc("loading")}</p>
         ) : Object.keys(grouped).length === 0 ? (
           <Card>
-            <CardContent className="py-10 text-center">
+            <CardContent className="py-10 sm:py-10 text-center">
               <HandRaisedIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
               <p className="text-sm text-gray-500">{t("noEntries")}</p>
             </CardContent>

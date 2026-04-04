@@ -354,8 +354,13 @@ export default function ZeiterfassungPage() {
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2">
             {isManager && (
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <DownloadIcon className="h-4 w-4" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                className="justify-center text-center"
+              >
+                <DownloadIcon className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">{t("export")}</span>
               </Button>
             )}

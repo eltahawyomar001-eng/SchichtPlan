@@ -101,11 +101,12 @@ export default function MitarbeiterPage() {
       const data = await res.json();
       setEmployees(data.data ?? data);
     } catch {
-      setError(tc("errorLoading"));
+      setError("Fehler beim Laden");
     } finally {
       setLoading(false);
     }
-  }, [tc]);
+     
+  }, []);
 
   useEffect(() => {
     fetchEmployees();

@@ -617,7 +617,10 @@
       "contractTeilzeit": "Part-time",
       "contractMinijob": "Mini-job",
       "contractMidijob": "Midi-job",
-      "color": "Color"
+      "color": "Color",
+      "discardTitle": "Discard changes?",
+      "discardMessage": "Are you sure you want to discard your changes? All unsaved data will be lost.",
+      "discardConfirm": "Discard"
     }
   },
   "employeeDetail": {

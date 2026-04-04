@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
@@ -66,12 +66,36 @@ export default function MitarbeiterPage() {
     contractType: "VOLLZEIT",
     color: "#10b981",
   });
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const initialFormDataRef = useRef(formData);
 
-  useEffect(() => {
-    fetchEmployees();
+  /** Check whether the form has been modified compared to its initial state */
+  const isFormDirty = useCallback(() => {
+    const initial = initialFormDataRef.current;
+    return Object.keys(initial).some(
+      (key) =>
+        formData[key as keyof typeof formData] !==
+        initial[key as keyof typeof initial],
+    );
+  }, [formData]);
+
+  /** preventClose callback — shows discard confirm when form is dirty */
+  const handlePreventClose = useCallback(() => {
+    if (isFormDirty()) {
+      setShowDiscardConfirm(true);
+      return true; // prevent close
+    }
+    return false; // allow close
+  }, [isFormDirty]);
+
+  /** Discard changes and close the form */
+  const handleDiscardAndClose = useCallback(() => {
+    setShowDiscardConfirm(false);
+    setShowForm(false);
+    setEditingEmployee(null);
   }, []);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       const res = await fetch("/api/employees");
       const data = await res.json();
@@ -81,11 +105,15 @@ export default function MitarbeiterPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tc]);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   const openCreateForm = () => {
     setEditingEmployee(null);
-    setFormData({
+    const initial = {
       firstName: "",
       lastName: "",
       email: "",
@@ -96,14 +124,16 @@ export default function MitarbeiterPage() {
       workDaysPerWeek: "5",
       contractType: "VOLLZEIT",
       color: "#10b981",
-    });
+    };
+    setFormData(initial);
+    initialFormDataRef.current = initial;
     setFormError(null);
     setShowForm(true);
   };
 
   const openEditForm = (emp: Employee) => {
     setEditingEmployee(emp);
-    setFormData({
+    const initial = {
       firstName: emp.firstName,
       lastName: emp.lastName,
       email: emp.email || "",
@@ -114,7 +144,9 @@ export default function MitarbeiterPage() {
       workDaysPerWeek: emp.workDaysPerWeek?.toString() || "5",
       contractType: emp.contractType || "VOLLZEIT",
       color: emp.color || "#10b981",
-    });
+    };
+    setFormData(initial);
+    initialFormDataRef.current = initial;
     setFormError(null);
     setShowForm(true);
   };
@@ -156,7 +188,21 @@ export default function MitarbeiterPage() {
         if (isPlanLimit) return;
 
         const data = await res.json();
-        setFormError(data.error || t("saveError"));
+        // Show field-level validation details if available
+        if (
+          data.details &&
+          Array.isArray(data.details) &&
+          data.details.length > 0
+        ) {
+          const fieldErrors = data.details
+            .map((d: { field?: string; message?: string }) =>
+              d.field ? `${d.field}: ${d.message}` : d.message,
+            )
+            .join(", ");
+          setFormError(fieldErrors);
+        } else {
+          setFormError(data.error || t("saveError"));
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -233,6 +279,7 @@ export default function MitarbeiterPage() {
           onClose={() => setShowForm(false)}
           title={editingEmployee ? t("form.editTitle") : t("form.title")}
           size="lg"
+          preventClose={handlePreventClose}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -406,7 +453,14 @@ export default function MitarbeiterPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  if (isFormDirty()) {
+                    setShowDiscardConfirm(true);
+                  } else {
+                    setShowForm(false);
+                    setEditingEmployee(null);
+                  }
+                }}
               >
                 {tc("cancel")}
               </Button>
@@ -560,6 +614,18 @@ export default function MitarbeiterPage() {
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Discard Changes Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        title={t("form.discardTitle")}
+        message={t("form.discardMessage")}
+        confirmLabel={t("form.discardConfirm")}
+        cancelLabel={tc("cancel")}
+        variant="warning"
+        onConfirm={handleDiscardAndClose}
+        onCancel={() => setShowDiscardConfirm(false)}
       />
     </div>
   );

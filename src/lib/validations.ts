@@ -38,7 +38,7 @@ export const createEmployeeSchema = z.object({
   position: optionalString.pipe(z.string().max(100).optional()),
   hourlyRate: positiveNumber,
   weeklyHours: positiveNumber,
-  workDaysPerWeek: z
+  workDaysPerWeek: z.coerce
     .number()
     .min(1, "Min. 1 Tag/Woche")
     .max(7, "Max. 7 Tage/Woche")

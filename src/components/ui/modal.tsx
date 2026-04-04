@@ -17,6 +17,12 @@ interface ModalProps {
   /** Optional footer content — rendered sticky outside scroll area */
   footer?: React.ReactNode;
   className?: string;
+  /**
+   * Called before closing via backdrop click, Escape key, X button, or swipe.
+   * Return `true` to prevent the close (e.g. to show a confirm dialog).
+   * If not provided or returns `false`, the modal closes normally.
+   */
+  preventClose?: () => boolean;
 }
 
 const sizeMap = {
@@ -46,6 +52,7 @@ export function Modal({
   description,
   footer,
   className,
+  preventClose,
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -55,15 +62,21 @@ export function Modal({
     isDragging: boolean;
   }>({ startY: 0, currentY: 0, isDragging: false });
 
+  /** Guarded close — respects preventClose callback */
+  const guardedClose = useCallback(() => {
+    if (preventClose?.()) return;
+    onClose();
+  }, [onClose, preventClose]);
+
   // Escape key handler
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") guardedClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [open, guardedClose]);
 
   // Lock body scroll
   useEffect(() => {
@@ -113,7 +126,14 @@ export function Modal({
 
     if (sheetRef.current) {
       if (deltaY > SWIPE_THRESHOLD) {
-        // Dismiss — animate out
+        // Dismiss — animate out (check preventClose first)
+        if (preventClose?.()) {
+          // Snap back — preventClose blocked the dismiss
+          sheetRef.current.style.transition =
+            "transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)";
+          sheetRef.current.style.transform = "translateY(0)";
+          return;
+        }
         sheetRef.current.style.transition =
           "transform 0.25s cubic-bezier(0.4, 0, 1, 1)";
         sheetRef.current.style.transform = "translateY(100%)";
@@ -125,7 +145,7 @@ export function Modal({
         sheetRef.current.style.transform = "translateY(0)";
       }
     }
-  }, [onClose]);
+  }, [onClose, preventClose]);
 
   if (!open) return null;
 
@@ -139,7 +159,7 @@ export function Modal({
         paddingRight: "env(safe-area-inset-right)",
       }}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
+        if (e.target === overlayRef.current) guardedClose();
       }}
     >
       <div
@@ -175,7 +195,7 @@ export function Modal({
               )}
             </div>
             <button
-              onClick={onClose}
+              onClick={guardedClose}
               className="flex-shrink-0 -mr-1 rounded-xl p-2 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Close"
             >

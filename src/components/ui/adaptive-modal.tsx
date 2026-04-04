@@ -23,6 +23,11 @@ interface AdaptiveModalProps {
    * Default: "auto"
    */
   mobileHeight?: "auto" | "full";
+  /**
+   * Called before closing via backdrop click, Escape, X button, or swipe.
+   * Return `true` to prevent the close (e.g. to show a confirm dialog).
+   */
+  preventClose?: () => boolean;
 }
 
 /**
@@ -51,6 +56,7 @@ export function AdaptiveModal({
   footer,
   className,
   mobileHeight = "auto",
+  preventClose,
 }: AdaptiveModalProps) {
   const isMobile = useIsMobile();
 
@@ -64,6 +70,7 @@ export function AdaptiveModal({
         footer={footer}
         className={className}
         height={mobileHeight}
+        preventClose={preventClose}
       >
         {children}
       </BottomSheet>
@@ -79,6 +86,7 @@ export function AdaptiveModal({
       description={description}
       footer={footer}
       className={className}
+      preventClose={preventClose}
     >
       {children}
     </Modal>

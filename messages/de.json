@@ -617,7 +617,10 @@
       "contractTeilzeit": "Teilzeit",
       "contractMinijob": "Minijob",
       "contractMidijob": "Midijob",
-      "color": "Farbe"
+      "color": "Farbe",
+      "discardTitle": "Änderungen verwerfen?",
+      "discardMessage": "Möchten Sie die eingegebenen Daten wirklich verwerfen? Alle nicht gespeicherten Änderungen gehen verloren.",
+      "discardConfirm": "Verwerfen"
     }
   },
   "employeeDetail": {

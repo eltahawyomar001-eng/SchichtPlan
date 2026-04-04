@@ -129,7 +129,8 @@ export default function AbwesenheitenPage() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus]);
 
   const fetchEmployees = useCallback(async () => {
     try {

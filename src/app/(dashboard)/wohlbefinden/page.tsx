@@ -124,7 +124,8 @@ export default function WohlbefindenSeite() {
     } finally {
       setLoading(false);
     }
-  }, [days, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days]);
 
   useEffect(() => {
     fetchData();

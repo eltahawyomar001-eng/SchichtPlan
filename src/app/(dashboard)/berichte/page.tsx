@@ -92,7 +92,8 @@ export default function BerichteSeite() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchReport();

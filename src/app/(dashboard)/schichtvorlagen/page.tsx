@@ -70,7 +70,8 @@ export default function SchichtvorlagenSeite() {
     } finally {
       setLoading(false);
     }
-  }, [tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchData();

@@ -49,7 +49,8 @@ export default function MonatsabschlussSeite() {
     } finally {
       setLoading(false);
     }
-  }, [year, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year]);
 
   useEffect(() => {
     fetchRecords();

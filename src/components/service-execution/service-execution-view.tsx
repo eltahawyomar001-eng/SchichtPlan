@@ -216,7 +216,8 @@ export function ServiceExecutionView({
     } finally {
       setIsCheckingIn(false);
     }
-  }, [executeAction, visit.id, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [executeAction, visit.id]);
 
   const toggleTask = useCallback((taskId: string) => {
     setTasks((prev) =>
@@ -299,7 +300,8 @@ export function ServiceExecutionView({
     } finally {
       setPdfLoading(false);
     }
-  }, [visit.id, visit.location.name, visit.scheduledDate, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visit.id, visit.location.name, visit.scheduledDate]);
 
   // ────────── Render ──────────
 

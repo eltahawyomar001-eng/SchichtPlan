@@ -118,7 +118,8 @@ export default function SchichttauschPage() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus]);
 
   const fetchMeta = useCallback(async () => {
     try {

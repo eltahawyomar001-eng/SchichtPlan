@@ -227,7 +227,8 @@ export default function SchichtplanPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentWeek, viewMode, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWeek, viewMode]);
 
   useEffect(() => {
     fetchData();

@@ -78,7 +78,8 @@ export default function WebhooksSeite() {
     } finally {
       setLoading(false);
     }
-  }, [tc, handlePlanLimit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handlePlanLimit]);
 
   useEffect(() => {
     fetchHooks();

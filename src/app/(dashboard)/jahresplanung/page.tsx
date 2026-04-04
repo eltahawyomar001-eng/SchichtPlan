@@ -173,7 +173,8 @@ export default function JahresplanungSeite() {
     } finally {
       setLoading(false);
     }
-  }, [year, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year]);
 
   useEffect(() => {
     fetchData();

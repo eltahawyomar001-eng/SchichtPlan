@@ -52,7 +52,8 @@ function VerifizierungContent() {
         setErrorMsg(t("networkError"));
       }
     })();
-  }, [token, email, router, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, email, router]);
 
   // Resend verification email
   const handleResend = async () => {

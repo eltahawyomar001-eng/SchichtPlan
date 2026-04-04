@@ -54,7 +54,8 @@ export default function RollenPage() {
     } finally {
       setLoading(false);
     }
-  }, [handlePlanLimit, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handlePlanLimit]);
 
   useEffect(() => {
     fetchRoles();

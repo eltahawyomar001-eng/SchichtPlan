@@ -133,7 +133,8 @@ export default function LeistungsnachweisSeite() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchVisits();

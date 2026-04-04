@@ -64,7 +64,8 @@ export default function UrlaubskontoSeite() {
     } finally {
       setLoading(false);
     }
-  }, [year, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year]);
 
   useEffect(() => {
     fetchBalances();

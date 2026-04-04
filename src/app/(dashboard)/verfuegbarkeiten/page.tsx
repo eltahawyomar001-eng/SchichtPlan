@@ -105,7 +105,8 @@ export default function VerfuegbarkeitenPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedEmployee, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEmployee]);
 
   useEffect(() => {
     fetchData();

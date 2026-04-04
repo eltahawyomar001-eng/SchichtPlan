@@ -48,7 +48,8 @@ export default function QualifikationenSeite() {
     } finally {
       setLoading(false);
     }
-  }, [tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchSkills();

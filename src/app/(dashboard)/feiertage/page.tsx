@@ -54,7 +54,8 @@ export default function FeiertageSeite() {
     } finally {
       setLoading(false);
     }
-  }, [year, bundesland, tc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, bundesland]);
 
   useEffect(() => {
     fetchHolidays();

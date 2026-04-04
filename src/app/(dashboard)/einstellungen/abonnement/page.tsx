@@ -109,7 +109,8 @@ function BillingContent() {
       setSuccessMsg(t("simPortalMsg"));
       window.history.replaceState({}, "", "/einstellungen/abonnement");
     }
-  }, [searchParams, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const fetchSubscription = useCallback(async () => {
     try {

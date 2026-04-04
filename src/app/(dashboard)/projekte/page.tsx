@@ -294,7 +294,7 @@ export default function ProjekteSeite() {
               placeholder={tc("search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="ps-10"
             />
           </div>
         )}

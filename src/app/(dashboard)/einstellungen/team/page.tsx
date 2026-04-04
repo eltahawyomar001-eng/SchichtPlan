@@ -280,7 +280,7 @@ export default function TeamPage() {
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                         required
-                        className="pl-10"
+                        className="ps-10"
                       />
                     </div>
                   </div>

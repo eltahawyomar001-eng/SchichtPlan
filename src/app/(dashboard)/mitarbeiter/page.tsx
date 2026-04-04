@@ -105,7 +105,6 @@ export default function MitarbeiterPage() {
     } finally {
       setLoading(false);
     }
-     
   }, []);
 
   useEffect(() => {
@@ -270,7 +269,7 @@ export default function MitarbeiterPage() {
             placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="ps-10"
           />
         </div>
 

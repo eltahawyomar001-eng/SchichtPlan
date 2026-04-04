@@ -247,7 +247,7 @@ export default function KundenSeite() {
               placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="ps-10"
             />
           </div>
 

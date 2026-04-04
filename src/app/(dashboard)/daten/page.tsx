@@ -139,7 +139,7 @@ export default function DatenSeite() {
                 <select
                   value={importType}
                   onChange={(e) => setImportType(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="employees">{t("employees")}</option>
                   <option value="shifts">{t("shifts")}</option>
@@ -192,7 +192,7 @@ export default function DatenSeite() {
                 <select
                   value={exportType}
                   onChange={(e) => setExportType(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="shifts">{t("shifts")}</option>
                   <option value="time-entries">{t("timeEntries")}</option>
@@ -206,7 +206,7 @@ export default function DatenSeite() {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="xlsx">Excel (.xlsx)</option>
                   <option value="csv">CSV (.csv)</option>
@@ -221,7 +221,7 @@ export default function DatenSeite() {
                   type="date"
                   value={exportStart}
                   onChange={(e) => setExportStart(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
                 />
               </div>
               <div>
@@ -232,7 +232,7 @@ export default function DatenSeite() {
                   type="date"
                   value={exportEnd}
                   onChange={(e) => setExportEnd(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
                 />
               </div>
               <button

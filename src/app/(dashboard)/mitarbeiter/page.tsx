@@ -25,11 +25,17 @@ import {
   UsersIcon,
   EditIcon,
   AwardIcon,
+  MapPinIcon,
 } from "@/components/icons";
 
 interface EmployeeSkill {
   id: string;
   skill: { id: string; name: string };
+}
+
+interface LocationItem {
+  id: string;
+  name: string;
 }
 
 interface Employee {
@@ -46,6 +52,8 @@ interface Employee {
   color: string | null;
   isActive: boolean;
   employeeSkills?: EmployeeSkill[];
+  locationId?: string | null;
+  location?: LocationItem | null;
 }
 
 export default function MitarbeiterPage() {
@@ -54,6 +62,7 @@ export default function MitarbeiterPage() {
   const router = useRouter();
   const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [locations, setLocations] = useState<LocationItem[]>([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -72,6 +81,7 @@ export default function MitarbeiterPage() {
     workDaysPerWeek: "5",
     contractType: "VOLLZEIT",
     color: "#10b981",
+    locationId: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -114,9 +124,22 @@ export default function MitarbeiterPage() {
     }
   }, []);
 
+  const fetchLocations = useCallback(async () => {
+    try {
+      const res = await fetch("/api/locations");
+      if (res.ok) {
+        const data = await res.json();
+        setLocations(data.data ?? data);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
   useEffect(() => {
     fetchEmployees();
-  }, [fetchEmployees]);
+    fetchLocations();
+  }, [fetchEmployees, fetchLocations]);
 
   const openCreateForm = () => {
     setEditingEmployee(null);
@@ -131,6 +154,7 @@ export default function MitarbeiterPage() {
       workDaysPerWeek: "5",
       contractType: "VOLLZEIT",
       color: "#10b981",
+      locationId: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -151,6 +175,7 @@ export default function MitarbeiterPage() {
       workDaysPerWeek: emp.workDaysPerWeek?.toString() || "5",
       contractType: emp.contractType || "VOLLZEIT",
       color: emp.color || "#10b981",
+      locationId: emp.locationId || "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -187,6 +212,7 @@ export default function MitarbeiterPage() {
           workDaysPerWeek: "5",
           contractType: "VOLLZEIT",
           color: "#10b981",
+          locationId: "",
         });
         fetchEmployees();
       } else {
@@ -432,6 +458,30 @@ export default function MitarbeiterPage() {
               </div>
             </div>
 
+            {/* Location */}
+            {locations.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="locationId">{t("form.location")}</Label>
+                <Select
+                  id="locationId"
+                  value={formData.locationId}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      locationId: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">{t("form.noLocation")}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="color">{t("form.color")}</Label>
               <div className="flex items-center gap-3">
@@ -567,6 +617,14 @@ export default function MitarbeiterPage() {
                       <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
                         <PhoneIcon className="h-4 w-4 flex-shrink-0" />
                         {employee.phone}
+                      </div>
+                    )}
+                    {employee.location && (
+                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+                        <MapPinIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                        <span className="truncate">
+                          {employee.location.name}
+                        </span>
                       </div>
                     )}
                     {employee.hourlyRate && (

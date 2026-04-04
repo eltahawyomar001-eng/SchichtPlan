@@ -267,7 +267,10 @@ model Employee {
   autoFillsVacated   AutoFillLog[] @relation("AutoFillVacated")
   autoFillsAssigned  AutoFillLog[] @relation("AutoFillAssigned")
   serviceVisits      ServiceVisit[]
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   @@unique([email, workspaceId])
+  @@index([locationId])
 }
 
 model Location {
@@ -285,6 +288,7 @@ model Location {
   staffingRequirements StaffingRequirement[]
   autoScheduleRuns     AutoScheduleRun[]
   serviceVisits ServiceVisit[]
+  employees   Employee[]
 }
 
 model Department {

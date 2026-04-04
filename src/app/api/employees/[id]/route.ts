@@ -34,6 +34,7 @@ export async function GET(
         absenceRequests: { orderBy: { startDate: "desc" }, take: 20 },
         vacationBalances: { orderBy: { year: "desc" }, take: 3 },
         department: { select: { id: true, name: true } },
+        location: { select: { id: true, name: true } },
       },
     });
 
@@ -90,6 +91,8 @@ export async function PATCH(
           contractType: body.contractType || undefined,
           color: body.color,
           isActive: body.isActive,
+          locationId:
+            body.locationId !== undefined ? body.locationId || null : undefined,
         },
       });
 

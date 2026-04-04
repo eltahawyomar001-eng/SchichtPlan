@@ -618,6 +618,8 @@
       "contractMinijob": "Minijob",
       "contractMidijob": "Midijob",
       "color": "Farbe",
+      "location": "Standort",
+      "noLocation": "Kein Standort",
       "discardTitle": "Änderungen verwerfen?",
       "discardMessage": "Möchten Sie die eingegebenen Daten wirklich verwerfen? Alle nicht gespeicherten Änderungen gehen verloren.",
       "discardConfirm": "Verwerfen"

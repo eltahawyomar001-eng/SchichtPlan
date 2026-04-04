@@ -42,6 +42,7 @@ export async function GET(req: Request) {
             include: { skill: { select: { id: true, name: true } } },
             orderBy: { createdAt: "asc" },
           },
+          location: { select: { id: true, name: true } },
         },
         orderBy: { lastName: "asc" },
         take,
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
       workDaysPerWeek,
       contractType,
       color,
+      locationId,
     } = parsed.data;
 
     const employee = await prisma.$transaction(async (tx) => {
@@ -109,6 +111,7 @@ export async function POST(req: Request) {
             `#${Math.floor(Math.random() * 16777215)
               .toString(16)
               .padStart(6, "0")}`,
+          locationId: locationId || null,
           workspaceId,
         },
       });

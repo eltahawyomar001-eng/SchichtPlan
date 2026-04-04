@@ -11,13 +11,25 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
-import { PlusIcon, TrashIcon, EditIcon, SearchIcon } from "@/components/icons";
+import {
+  PlusIcon,
+  TrashIcon,
+  EditIcon,
+  SearchIcon,
+  UsersIcon,
+} from "@/components/icons";
 
 interface Skill {
   id: string;
   name: string;
   category: string | null;
   _count: { employeeSkills: number };
+}
+
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
 }
 
 const INITIAL_FORM = { name: "", category: "" };
@@ -34,6 +46,8 @@ export default function QualifikationenSeite() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
 
   const fetchSkills = useCallback(async () => {
     setError(null);
@@ -55,10 +69,27 @@ export default function QualifikationenSeite() {
     fetchSkills();
   }, [fetchSkills]);
 
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const res = await fetch("/api/employees");
+      if (res.ok) {
+        const d = await res.json();
+        setEmployees(d.data ?? d);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
+
   function openCreate() {
     setEditId(null);
     setForm(INITIAL_FORM);
     setFormError(null);
+    setSelectedEmployees([]);
     setShowForm(true);
   }
 
@@ -66,7 +97,22 @@ export default function QualifikationenSeite() {
     setEditId(skill.id);
     setForm({ name: skill.name, category: skill.category || "" });
     setFormError(null);
+    // Fetch current assignments for this skill
+    setSelectedEmployees([]);
+    fetchSkillAssignments(skill.id);
     setShowForm(true);
+  }
+
+  async function fetchSkillAssignments(skillId: string) {
+    try {
+      const res = await fetch(`/api/skills/${skillId}/assignments`);
+      if (res.ok) {
+        const employeeIds: string[] = await res.json();
+        setSelectedEmployees(employeeIds);
+      }
+    } catch {
+      // Non-critical — start with empty selection
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,9 +127,22 @@ export default function QualifikationenSeite() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
+        const skill = await res.json();
+        const skillId = editId || skill.id;
+
+        // Sync skill assignments to selected employees
+        if (skillId) {
+          await fetch(`/api/skills/${skillId}/assignments`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ employeeIds: selectedEmployees }),
+          });
+        }
+
         setShowForm(false);
         setEditId(null);
         setForm(INITIAL_FORM);
+        setSelectedEmployees([]);
         fetchSkills();
       } else {
         const data = await res.json();
@@ -195,6 +254,45 @@ export default function QualifikationenSeite() {
                 }
               />
             </div>
+
+            {/* Employee assignment */}
+            {employees.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <UsersIcon className="h-3.5 w-3.5" />
+                  {t("assignTo")}
+                </Label>
+                <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
+                  {employees.map((emp) => (
+                    <label
+                      key={emp.id}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.includes(emp.id)}
+                        onChange={(ev) => {
+                          setSelectedEmployees((prev) =>
+                            ev.target.checked
+                              ? [...prev, emp.id]
+                              : prev.filter((id) => id !== emp.id),
+                          );
+                        }}
+                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-gray-900">
+                        {emp.firstName} {emp.lastName}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {selectedEmployees.length > 0 && (
+                  <p className="text-xs text-gray-500">
+                    {selectedEmployees.length} {t("selected")}
+                  </p>
+                )}
+              </div>
+            )}
 
             {formError && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">

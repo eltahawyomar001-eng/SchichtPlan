@@ -1655,7 +1655,10 @@
     "general": "Allgemein",
     "editSkill": "Qualifikation bearbeiten",
     "deleteConfirmTitle": "Qualifikation löschen",
-    "deleteConfirmMessage": "Soll diese Qualifikation wirklich gelöscht werden?"
+    "deleteConfirmMessage": "Soll diese Qualifikation wirklich gelöscht werden?",
+    "assignTo": "Mitarbeiter zuweisen",
+    "selected": "ausgewählt",
+    "save": "Speichern"
   },
   "shiftTemplates": {
     "title": "Schichtvorlagen",
@@ -1756,6 +1759,7 @@
     "breakDuration": "Pause",
     "noProfileTitle": "Kein Mitarbeiterprofil",
     "noProfileDesc": "Ihr Konto ist nicht mit einem Mitarbeiterprofil verknüpft. Bitten Sie Ihren Administrator, Sie als Mitarbeiter anzulegen.",
+    "goToEmployees": "Mitarbeiter verwalten",
     "errorAlreadyClockedIn": "Sie sind bereits eingestempelt.",
     "errorNotClockedIn": "Sie sind nicht eingestempelt.",
     "errorBreakActive": "Die Pause läuft bereits.",

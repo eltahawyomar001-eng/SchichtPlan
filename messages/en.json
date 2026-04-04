@@ -1655,7 +1655,10 @@
     "general": "General",
     "editSkill": "Edit Skill",
     "deleteConfirmTitle": "Delete Skill",
-    "deleteConfirmMessage": "Are you sure you want to delete this skill?"
+    "deleteConfirmMessage": "Are you sure you want to delete this skill?",
+    "assignTo": "Assign to employees",
+    "selected": "selected",
+    "save": "Save"
   },
   "shiftTemplates": {
     "title": "Shift Templates",
@@ -1756,6 +1759,7 @@
     "breakDuration": "Break",
     "noProfileTitle": "No employee profile",
     "noProfileDesc": "Your account is not linked to an employee profile. Please ask your administrator to add you as an employee.",
+    "goToEmployees": "Manage employees",
     "errorAlreadyClockedIn": "You are already clocked in.",
     "errorNotClockedIn": "You are not clocked in.",
     "errorBreakActive": "Break is already active.",

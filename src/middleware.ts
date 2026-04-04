@@ -35,7 +35,10 @@ function buildCsp(nonce: string): string {
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "require-trusted-types-for 'script'",
+    // NOTE: "require-trusted-types-for 'script'" removed — React/Next.js
+    // runtime uses innerHTML internally (hydration, error boundaries) and
+    // does not ship Trusted Types policies, causing Chrome to block rendering.
+    // Nonce-based script-src already provides strong XSS protection.
   ].join("; ");
 }
 

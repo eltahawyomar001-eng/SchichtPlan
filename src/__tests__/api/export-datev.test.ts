@@ -11,6 +11,7 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
   },
   mockPrisma: {
     timeEntry: { findMany: vi.fn() },
+    employee: { findUnique: vi.fn() },
   },
 }));
 
@@ -83,6 +84,7 @@ describe("GET /api/export/datev", () => {
         breakMinutes: 30,
         grossMinutes: 480,
         netMinutes: 450,
+        status: "BESTAETIGT",
         employee: {
           id: "e1",
           firstName: "Max",
@@ -99,6 +101,45 @@ describe("GET /api/export/datev", () => {
     const res = await handler.GET(req);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/csv");
+    const disposition = res.headers.get("content-disposition") || "";
+    expect(disposition).toContain("lohnexport-Alle-");
+
+    const csv = await res.text();
+    expect(csv).toContain("Mustermann");
+    expect(csv).toContain("Max");
+    expect(csv).toContain("Status");
+  });
+
+  it("includes employee name in filename when employeeId is provided", async () => {
+    const owner = buildOwner();
+    mockSession.user = owner;
+    mockPrisma.timeEntry.findMany.mockResolvedValue([
+      {
+        id: "te1",
+        date: new Date("2025-01-15"),
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 30,
+        grossMinutes: 480,
+        netMinutes: 450,
+        status: "BESTAETIGT",
+        employee: {
+          id: "e1",
+          firstName: "Max",
+          lastName: "Mustermann",
+          position: "Dev",
+        },
+        location: { name: "Berlin" },
+      },
+    ]);
+
+    const req = new Request(
+      "http://localhost/api/export/datev?start=2025-01-01&end=2025-01-31&employeeId=e1",
+    );
+    const res = await handler.GET(req);
+    expect(res.status).toBe(200);
+    const disposition = res.headers.get("content-disposition") || "";
+    expect(disposition).toContain("Mustermann-Max");
   });
 
   it("returns JSON when format=json", async () => {

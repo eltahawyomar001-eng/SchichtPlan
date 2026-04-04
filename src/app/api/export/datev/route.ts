@@ -51,7 +51,6 @@ export async function GET(req: Request) {
 
     const where: Record<string, unknown> = {
       workspaceId,
-      status: "BESTAETIGT", // Only confirmed entries
       date: {
         gte: new Date(startDate),
         lte: new Date(endDate),
@@ -69,6 +68,26 @@ export async function GET(req: Request) {
       orderBy: [{ employee: { lastName: "asc" } }, { date: "asc" }],
     });
 
+    // Build filename with employee name if a specific employee was selected
+    let employeeName = "Alle";
+    if (employeeId && entries.length > 0) {
+      const emp = entries[0].employee;
+      employeeName = `${emp.lastName}-${emp.firstName}`;
+    } else if (employeeId) {
+      // No entries found but employee was selected — look up their name
+      const emp = await prisma.employee.findUnique({
+        where: { id: employeeId },
+        select: { firstName: true, lastName: true },
+      });
+      if (emp) employeeName = `${emp.lastName}-${emp.firstName}`;
+    }
+    // Sanitize for filename (remove special chars)
+    const safeEmployeeName = employeeName.replace(
+      /[^a-zA-Z0-9äöüÄÖÜß\-]/g,
+      "_",
+    );
+    const filename = `lohnexport-${safeEmployeeName}-${startDate}-${endDate}`;
+
     if (format === "json") {
       // Return raw JSON for preview
       const summary = aggregateByEmployee(entries);
@@ -84,7 +103,7 @@ export async function GET(req: Request) {
     return new Response(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="lohnexport_${startDate}_${endDate}.csv"`,
+        "Content-Disposition": `attachment; filename="${filename}.csv"`,
       },
     });
   } catch (error) {
@@ -103,6 +122,7 @@ interface TimeEntryWithRelations {
   breakMinutes: number;
   grossMinutes: number;
   netMinutes: number;
+  status: string;
   employee: {
     id: string;
     firstName: string;
@@ -178,6 +198,7 @@ function buildDATEVCsv(
     "Brutto (Std)",
     "Netto (Std)",
     "Standort",
+    "Status",
   ];
 
   const rows = entries.map((e) => [
@@ -195,6 +216,7 @@ function buildDATEVCsv(
       .toFixed(2)
       .replace(".", datevFormat ? "," : "."),
     e.location?.name || "",
+    e.status,
   ]);
 
   const csvLines = [

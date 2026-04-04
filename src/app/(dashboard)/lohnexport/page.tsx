@@ -133,7 +133,22 @@ export default function LohnexportPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `lohnexport-${startDate}-${endDate}.${exportFormat === "datev" ? "csv" : exportFormat}`;
+
+        // Build filename with employee name when selected
+        const empName = selectedEmployee
+          ? (() => {
+              const emp = employees.find((e) => e.id === selectedEmployee);
+              return emp
+                ? `${emp.lastName}-${emp.firstName}`.replace(
+                    /[^a-zA-Z0-9äöüÄÖÜß\-]/g,
+                    "_",
+                  )
+                : "Mitarbeiter";
+            })()
+          : "Alle";
+        const ext = exportFormat === "datev" ? "csv" : exportFormat;
+        a.download = `lohnexport-${empName}-${startDate}-${endDate}.${ext}`;
+
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

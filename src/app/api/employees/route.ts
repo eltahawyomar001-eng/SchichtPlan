@@ -37,6 +37,12 @@ export async function GET(req: Request) {
     const [employees, total] = await Promise.all([
       prisma.employee.findMany({
         where,
+        include: {
+          employeeSkills: {
+            include: { skill: { select: { id: true, name: true } } },
+            orderBy: { createdAt: "asc" },
+          },
+        },
         orderBy: { lastName: "asc" },
         take,
         skip,

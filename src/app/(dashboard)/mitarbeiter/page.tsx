@@ -24,7 +24,13 @@ import {
   BriefcaseIcon,
   UsersIcon,
   EditIcon,
+  AwardIcon,
 } from "@/components/icons";
+
+interface EmployeeSkill {
+  id: string;
+  skill: { id: string; name: string };
+}
 
 interface Employee {
   id: string;
@@ -39,6 +45,7 @@ interface Employee {
   contractType: string;
   color: string | null;
   isActive: boolean;
+  employeeSkills?: EmployeeSkill[];
 }
 
 export default function MitarbeiterPage() {
@@ -570,6 +577,20 @@ export default function MitarbeiterPage() {
                           ` · ${employee.weeklyHours}${tc("hrsPerWeek")}`}
                       </div>
                     )}
+                    {employee.employeeSkills &&
+                      employee.employeeSkills.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <AwardIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                          {employee.employeeSkills.map((es) => (
+                            <Badge
+                              key={es.id}
+                              className="bg-emerald-50 text-emerald-700 text-xs border-emerald-200"
+                            >
+                              {es.skill.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                   </div>
 
                   <div className="mt-4 flex justify-end gap-2">

@@ -72,7 +72,6 @@ export { CalendarUsersIcon } from "./CalendarUsersIcon";
 export { CalendarRangeIcon } from "./CalendarRangeIcon";
 export { UtensilsCrossedIcon } from "./UtensilsCrossedIcon";
 export { ShoppingCartIcon } from "./ShoppingCartIcon";
-export { HeartPulseIcon } from "./HeartPulseIcon";
 export { WrenchIcon } from "./WrenchIcon";
 export { TruckIcon } from "./TruckIcon";
 export { BeakerIcon } from "./BeakerIcon";

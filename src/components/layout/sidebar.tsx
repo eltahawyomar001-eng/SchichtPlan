@@ -36,7 +36,6 @@ import {
   CreditCardIcon,
   ShieldCheckIcon,
   MessageCircleIcon,
-  HeartPulseIcon,
   FileCheckIcon,
   TicketIcon,
 } from "@/components/icons";
@@ -165,12 +164,6 @@ const navGroups: NavGroup[] = [
         key: "reports",
         href: "/berichte",
         icon: BarChartIcon,
-        roles: ["OWNER", "ADMIN", "MANAGER"],
-      },
-      {
-        key: "wellness",
-        href: "/wohlbefinden",
-        icon: HeartPulseIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
       {

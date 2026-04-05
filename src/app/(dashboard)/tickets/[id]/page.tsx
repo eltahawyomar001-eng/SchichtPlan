@@ -343,7 +343,7 @@ export default function TicketDetailPage() {
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder={t("commentPlaceholder")}
                     rows={3}
-                    className="w-full rounded-lg border border-gray-200 p-3 text-sm focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
+                    className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
                   />
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">

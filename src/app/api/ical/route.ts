@@ -124,6 +124,13 @@ export async function GET(req: Request) {
 
     const { employeeId, workspaceId, rotatedFeedUrl } = authedUser;
 
+    // Fetch workspace name for calendar branding
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { name: true },
+    });
+    const companyName = workspace?.name || "Schichtplan";
+
     const { searchParams } = new URL(req.url);
     const start = searchParams.get("start");
     const end = searchParams.get("end");
@@ -141,7 +148,7 @@ export async function GET(req: Request) {
     });
 
     const cal = ical({
-      name: "Shiftfy",
+      name: companyName,
       method: ICalCalendarMethod.PUBLISH,
     });
 
@@ -166,9 +173,14 @@ export async function GET(req: Request) {
       });
     }
 
+    const safeCalName = companyName
+      .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
     const headers: Record<string, string> = {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": "attachment; filename=shiftfy-schichtplan.ics",
+      "Content-Disposition": `attachment; filename=${safeCalName}-schichtplan.ics`,
     };
 
     // Inform the client about the rotated token URL

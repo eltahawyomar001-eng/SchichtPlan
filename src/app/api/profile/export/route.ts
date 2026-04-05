@@ -172,11 +172,21 @@ export async function GET() {
       notificationPreferences,
     };
 
+    // Fetch workspace name for the export filename
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { name: true },
+    });
+    const safeName = (workspace?.name || "datenexport")
+      .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
     return new NextResponse(JSON.stringify(exportData, null, 2), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="shiftfy-datenexport-${new Date().toISOString().slice(0, 10)}.json"`,
+        "Content-Disposition": `attachment; filename="${safeName}-datenexport-${new Date().toISOString().slice(0, 10)}.json"`,
       },
     });
   } catch (error) {

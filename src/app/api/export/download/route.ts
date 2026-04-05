@@ -50,8 +50,15 @@ export async function GET(req: Request) {
       if (pdfLimit) return pdfLimit;
     }
 
+    // Fetch workspace name for export branding
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: user.workspaceId! },
+      select: { name: true },
+    });
+    const companyName = workspace?.name || "Export";
+
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "Shiftfy";
+    workbook.creator = companyName;
 
     if (type === "employees") {
       const employees = await prisma.employee.findMany({
@@ -187,7 +194,7 @@ export async function GET(req: Request) {
         });
 
         doc.setFontSize(14);
-        doc.text(`Shiftfy – ${type}`, 14, 15);
+        doc.text(`${companyName} – ${type}`, 14, 15);
         doc.setFontSize(8);
         doc.text(
           `Erstellt am ${new Date().toLocaleDateString("de-DE")}`,
@@ -224,7 +231,11 @@ export async function GET(req: Request) {
       ext = "xlsx";
     }
 
-    const filename = `${type}_${new Date().toISOString().split("T")[0]}.${ext}`;
+    const safeName = companyName
+      .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+    const filename = `${safeName}_${type}_${new Date().toISOString().split("T")[0]}.${ext}`;
 
     return new Response(new Uint8Array(buffer), {
       status: 200,

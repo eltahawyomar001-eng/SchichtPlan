@@ -2269,9 +2269,10 @@ function DraggableShiftChip({
         "rounded px-1.5 py-0.5 text-[10px] truncate cursor-pointer",
         canManage && "active:cursor-grabbing",
         isDragging && "opacity-40",
-        isCancelled && "opacity-50 line-through",
+        isCancelled && "opacity-50 line-through text-gray-400",
         isOpen &&
           "border border-dashed border-amber-400 bg-amber-50 text-amber-700",
+        !isOpen && !isCancelled && "text-gray-800",
         showHolidayWarning && "ring-1 ring-red-300",
       )}
       style={

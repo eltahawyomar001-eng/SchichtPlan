@@ -1,11 +1,14 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useState, useRef, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
-import { MenuIcon } from "@/components/icons";
+import { MenuIcon, LogOutIcon, SettingsIcon } from "@/components/icons";
 import { useSidebar } from "@/components/layout/dashboard-shell";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { NotificationDropdown } from "@/components/layout/notification-dropdown";
+import { useRouter } from "next/navigation";
 
 interface TopbarProps {
   title: string;
@@ -23,6 +26,25 @@ export function Topbar({
 }: TopbarProps) {
   const { data: session } = useSession();
   const { openSidebar } = useSidebar();
+  const t = useTranslations("sidebar");
+  const router = useRouter();
+
+  // Profile dropdown
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [profileOpen]);
 
   return (
     <>
@@ -90,11 +112,49 @@ export function Topbar({
             <LanguageSwitcher />
             <NotificationDropdown />
             {session?.user?.name && (
-              <Avatar
-                name={session.user.name}
-                size="sm"
-                className="ring-2 ring-gray-100"
-              />
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setProfileOpen((o) => !o)}
+                  className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  <Avatar
+                    name={session.user.name}
+                    size="sm"
+                    className="ring-2 ring-gray-100 cursor-pointer hover:ring-emerald-200 transition-all"
+                  />
+                </button>
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg py-1 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {session.user.name}
+                      </p>
+                      {session.user.email && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {session.user.email}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        router.push("/einstellungen");
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <SettingsIcon className="h-4 w-4 text-gray-400" />
+                      {t("settings")}
+                    </button>
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/login" })}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOutIcon className="h-4 w-4" />
+                      {t("logout")}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

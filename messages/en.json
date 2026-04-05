@@ -1416,7 +1416,11 @@
       "timeEntryCorrected": "Correction requested",
       "timeEntryConfirmed": "Time entry confirmed",
       "overtimeAlert": "Overtime alert",
-      "breakReminder": "Break reminder"
+      "breakReminder": "Break reminder",
+      "ticketAssigned": "Ticket assigned",
+      "ticketStatusChanged": "Ticket status changed",
+      "ticketComment": "New ticket comment",
+      "ticketCreated": "New ticket created"
     }
   },
   "notificationPrefs": {

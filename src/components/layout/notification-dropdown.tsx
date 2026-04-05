@@ -13,6 +13,8 @@ import {
   ClockIcon,
   PencilIcon,
   AlertCircleIcon,
+  TicketIcon,
+  MessageCircleIcon,
 } from "@/components/icons";
 import { useLocale, useTranslations } from "next-intl";
 import type { SVGProps, ComponentType } from "react";
@@ -56,6 +58,10 @@ export function NotificationDropdown() {
     TIME_ENTRY_CONFIRMED: t("types.timeEntryConfirmed"),
     OVERTIME_ALERT: t("types.overtimeAlert"),
     BREAK_REMINDER: t("types.breakReminder"),
+    TICKET_ASSIGNED: t("types.ticketAssigned"),
+    TICKET_STATUS_CHANGED: t("types.ticketStatusChanged"),
+    TICKET_COMMENT: t("types.ticketComment"),
+    TICKET_CREATED: t("types.ticketCreated"),
   };
 
   function getTranslatedTitle(n: Notification) {
@@ -178,6 +184,10 @@ export function NotificationDropdown() {
     TIME_ENTRY_CONFIRMED: { icon: CircleCheckIcon, color: "text-emerald-600" },
     OVERTIME_ALERT: { icon: AlertCircleIcon, color: "text-red-600" },
     BREAK_REMINDER: { icon: AlertTriangleIcon, color: "text-orange-500" },
+    TICKET_ASSIGNED: { icon: TicketIcon, color: "text-emerald-500" },
+    TICKET_STATUS_CHANGED: { icon: TicketIcon, color: "text-blue-500" },
+    TICKET_COMMENT: { icon: MessageCircleIcon, color: "text-emerald-500" },
+    TICKET_CREATED: { icon: TicketIcon, color: "text-amber-500" },
   };
 
   function getNotificationIcon(type: string) {

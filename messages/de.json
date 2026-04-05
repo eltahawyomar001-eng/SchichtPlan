@@ -1416,7 +1416,11 @@
       "timeEntryCorrected": "Korrektur angefordert",
       "timeEntryConfirmed": "Zeiteintrag bestätigt",
       "overtimeAlert": "Überstundenwarnung",
-      "breakReminder": "Pausenerinnerung"
+      "breakReminder": "Pausenerinnerung",
+      "ticketAssigned": "Ticket zugewiesen",
+      "ticketStatusChanged": "Ticket-Status geändert",
+      "ticketComment": "Neuer Ticket-Kommentar",
+      "ticketCreated": "Neues Ticket erstellt"
     }
   },
   "notificationPrefs": {

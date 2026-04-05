@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import { dispatchExternalNotification } from "@/lib/notifications";
 
 // ─── Helpers ────────────────────────────────────────────────────
 
@@ -21,6 +22,15 @@ async function createNotificationSafe(data: {
 }): Promise<void> {
   try {
     await prisma.notification.create({ data });
+
+    // Also dispatch email + push notification
+    await dispatchExternalNotification({
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      link: data.link ?? null,
+    });
   } catch (error) {
     log.error("Failed to create ticket notification", {
       userId: data.userId,
@@ -180,6 +190,19 @@ export function notifyNewTicket(opts: {
           link: `/tickets/${opts.ticketId}`,
         })),
       });
+
+      // Dispatch email + push for each manager
+      await Promise.allSettled(
+        managers.map((m) =>
+          dispatchExternalNotification({
+            userId: m.id,
+            type: "TICKET_CREATED",
+            title: `Neues Ticket: ${opts.ticketNumber}`,
+            message: `${opts.creatorName} hat ein neues Ticket erstellt: „${opts.subject}"`,
+            link: `/tickets/${opts.ticketId}`,
+          }),
+        ),
+      );
     } catch (error) {
       log.error("Failed to notify managers of new ticket", {
         ticketId: opts.ticketId,

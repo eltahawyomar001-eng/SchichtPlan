@@ -184,7 +184,7 @@ export default function VerfuegbarkeitenPage() {
               setShowForm(true);
             }}
           >
-            <HandRaisedIcon className="h-4 w-4 mr-2" />
+            <HandRaisedIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("addAvailability")}</span>
             <span className="sm:hidden">{tc("new")}</span>
           </Button>
@@ -379,7 +379,7 @@ export default function VerfuegbarkeitenPage() {
                     {tc("cancel")}
                   </Button>
                   <Button type="submit">
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
+                    <CheckCircleIcon className="h-4 w-4" />
                     {tc("save")}
                   </Button>
                 </div>

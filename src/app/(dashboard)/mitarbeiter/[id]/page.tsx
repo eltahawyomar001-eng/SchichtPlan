@@ -218,17 +218,17 @@ export default function EmployeeDetailPage({
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
                   {emp.email && (
                     <span className="inline-flex items-center gap-1.5">
-                      <MailIcon className="h-4 w-4" /> {emp.email}
+                      <MailIcon className="h-4 w-4 shrink-0" /> {emp.email}
                     </span>
                   )}
                   {emp.phone && (
                     <span className="inline-flex items-center gap-1.5">
-                      <PhoneIcon className="h-4 w-4" /> {emp.phone}
+                      <PhoneIcon className="h-4 w-4 shrink-0" /> {emp.phone}
                     </span>
                   )}
                   {emp.hourlyRate != null && (
                     <span className="inline-flex items-center gap-1.5">
-                      <BriefcaseIcon className="h-4 w-4" />
+                      <BriefcaseIcon className="h-4 w-4 shrink-0" />
                       {emp.hourlyRate.toFixed(2)} €/h
                       {emp.weeklyHours != null &&
                         ` · ${emp.weeklyHours}${tc("hrsPerWeek")}`}

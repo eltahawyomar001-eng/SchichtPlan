@@ -1112,7 +1112,7 @@ export default function NachrichtenPage() {
           {showAddMembers && (
             <div className="mb-3">
               <div className="relative">
-                <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={addMemberSearch}
@@ -1250,7 +1250,7 @@ export default function NachrichtenPage() {
           {/* Channel search — iOS style */}
           <div className="flex-shrink-0 px-3.5 py-2 md:px-3 md:py-2">
             <div className="relative">
-              <SearchIcon className="absolute left-2.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-[#8e8e93] md:h-3.5 md:w-3.5" />
+              <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-[#8e8e93] md:h-3.5 md:w-3.5" />
               <input
                 type="text"
                 value={channelSearch}
@@ -2504,7 +2504,7 @@ export default function NachrichtenPage() {
 
                 {/* Search input */}
                 <div className="relative">
-                  <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={memberSearch}
@@ -2599,7 +2599,7 @@ export default function NachrichtenPage() {
 
             <div className="flex-1 overflow-hidden p-3 sm:p-4">
               <div className="relative mb-3">
-                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={memberSearch}

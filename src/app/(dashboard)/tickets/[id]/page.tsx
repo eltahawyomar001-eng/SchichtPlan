@@ -364,7 +364,7 @@ export default function TicketDetailPage() {
                       disabled={!commentText.trim() || submitting}
                       size="sm"
                     >
-                      <SendIcon className="mr-1.5 h-3.5 w-3.5" />
+                      <SendIcon className="h-3.5 w-3.5" />
                       {t("sendComment")}
                     </Button>
                   </div>

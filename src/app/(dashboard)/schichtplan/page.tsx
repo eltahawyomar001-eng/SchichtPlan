@@ -1348,7 +1348,7 @@ export default function SchichtplanPage() {
                 <div className="flex items-center gap-2">
                   {timeValidation.valid ? (
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                      <ClockIcon className="h-3 w-3" />
+                      <ClockIcon className="h-3 w-3 shrink-0" />
                       {t("form.duration", {
                         hours: timeValidation.hours,
                         minutes: timeValidation.minutes,
@@ -1356,7 +1356,7 @@ export default function SchichtplanPage() {
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600">
-                      <AlertCircleIcon className="h-3 w-3" />
+                      <AlertCircleIcon className="h-3 w-3 shrink-0" />
                       {t("form.timeError")}
                     </span>
                   )}
@@ -2027,7 +2027,7 @@ export default function SchichtplanPage() {
                       disabled={autoScheduleLoading}
                       className="w-full sm:w-auto"
                     >
-                      <SparklesIcon className="h-4 w-4 mr-1.5" />
+                      <SparklesIcon className="h-4 w-4" />
                       {t("autoScheduleApply")}
                     </Button>
                   </div>
@@ -2044,7 +2044,7 @@ export default function SchichtplanPage() {
                       }}
                       className="w-full sm:w-auto"
                     >
-                      <CheckCircleIcon className="h-4 w-4 mr-1.5" />
+                      <CheckCircleIcon className="h-4 w-4" />
                       {t("autoScheduleClose")}
                     </Button>
                   </div>
@@ -2193,7 +2193,7 @@ export default function SchichtplanPage() {
                   disabled={autoScheduleLoading}
                   className="w-full sm:w-auto"
                 >
-                  <SparklesIcon className="h-4 w-4 mr-1.5" />
+                  <SparklesIcon className="h-4 w-4" />
                   {t("autoScheduleRun")}
                 </Button>
               </div>

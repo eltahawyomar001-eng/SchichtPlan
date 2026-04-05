@@ -451,7 +451,7 @@ export default function LohnexportPage() {
                 {loading ? tc("loading") : tc("preview")}
               </Button>
               <Button onClick={handleDownload} disabled={loading}>
-                <DownloadIcon className="h-4 w-4 mr-2" />
+                <DownloadIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("downloadCsv")}</span>
                 <span className="sm:hidden">{tc("download")}</span>
               </Button>

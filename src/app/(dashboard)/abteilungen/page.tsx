@@ -162,12 +162,12 @@ export default function AbteilungenSeite() {
         {/* Search */}
         {departments.length > 0 && (
           <div className="relative max-w-full sm:max-w-md">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
             <Input
               placeholder={tc("search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="ps-10"
+              className="ps-11 sm:ps-10"
             />
           </div>
         )}

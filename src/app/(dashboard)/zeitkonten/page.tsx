@@ -146,7 +146,7 @@ export default function ZeitkontenPage() {
         description={t("description")}
         actions={
           <Button onClick={() => setShowForm(true)}>
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("createAccount")}</span>
             <span className="sm:hidden">{tc("new")}</span>
           </Button>
@@ -408,7 +408,7 @@ export default function ZeitkontenPage() {
                     {tc("cancel")}
                   </Button>
                   <Button type="submit">
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
+                    <CheckCircleIcon className="h-4 w-4" />
                     {t("form.submit")}
                   </Button>
                 </div>

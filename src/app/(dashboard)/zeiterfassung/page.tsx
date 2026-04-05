@@ -470,10 +470,10 @@ export default function ZeiterfassungPage() {
         {/* ── Filters ── */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
             <Input
               placeholder={t("searchPlaceholder")}
-              className="ps-10"
+              className="ps-11 sm:ps-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1024,7 +1024,7 @@ export default function ZeiterfassungPage() {
                         </div>
                         {entry.location && (
                           <div className="flex items-center gap-1 text-xs text-gray-400">
-                            <MapPinIcon className="h-3 w-3" />
+                            <MapPinIcon className="h-3 w-3 shrink-0" />
                             {entry.location.name}
                           </div>
                         )}
@@ -1121,7 +1121,7 @@ export default function ZeiterfassungPage() {
                               <div className="space-y-1">
                                 {entry.location && (
                                   <span className="flex items-center gap-1">
-                                    <MapPinIcon className="h-3 w-3" />
+                                    <MapPinIcon className="h-3 w-3 shrink-0" />
                                     {entry.location.name}
                                   </span>
                                 )}

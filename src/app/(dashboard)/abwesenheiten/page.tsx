@@ -228,7 +228,7 @@ export default function AbwesenheitenPage() {
         description={t("description")}
         actions={
           <Button onClick={openForm}>
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("newRequest")}</span>
             <span className="sm:hidden">{tc("new")}</span>
           </Button>
@@ -414,7 +414,7 @@ export default function AbwesenheitenPage() {
                               }
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
-                              <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
+                              <CheckCircleIcon className="h-4 w-4" />
                               <span className="hidden sm:inline">
                                 {t("approve")}
                               </span>
@@ -426,7 +426,7 @@ export default function AbwesenheitenPage() {
                                 handleStatusChange(absence.id, "ABGELEHNT")
                               }
                             >
-                              <XIcon className="h-4 w-4 sm:mr-1" />
+                              <XIcon className="h-4 w-4" />
                               <span className="hidden sm:inline">
                                 {t("reject")}
                               </span>

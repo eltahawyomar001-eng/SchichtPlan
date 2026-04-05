@@ -333,9 +333,9 @@ export default function LeistungsnachweisSeite() {
         {/* Filters */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
             <Input
-              className="ps-10"
+              className="ps-11 sm:ps-10"
               placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -533,12 +533,12 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
               {visit.employee.firstName} {visit.employee.lastName}
             </p>
             <div className="flex items-center gap-1 text-xs text-gray-500">
-              <MapPinIcon className="h-3 w-3" />
+              <MapPinIcon className="h-3 w-3 shrink-0" />
               {visit.location.name}
               {visit.location.address && ` · ${visit.location.address}`}
             </div>
             <div className="flex items-center gap-1 text-xs text-gray-500">
-              <ClockIcon className="h-3 w-3" />
+              <ClockIcon className="h-3 w-3 shrink-0" />
               {dateStr}
               {visit.checkInAt &&
                 ` · ${t("checkInAt")} ${timeStr(visit.checkInAt)}`}
@@ -547,7 +547,7 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
             </div>
             {visit.signature && (
               <div className="flex items-center gap-1 text-xs text-emerald-600">
-                <CheckCircleIcon className="h-3 w-3" />
+                <CheckCircleIcon className="h-3 w-3 shrink-0" />
                 {t("signedBy")} {visit.signature.signerName}
               </div>
             )}
@@ -562,19 +562,19 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
           <div className="flex shrink-0 flex-wrap gap-2">
             {visit.status === "ABGESCHLOSSEN" && (
               <Button size="sm" variant="outline" onClick={onExecute}>
-                <EyeIcon className="h-3.5 w-3.5 mr-1" />
+                <EyeIcon className="h-3.5 w-3.5" />
                 {t("actions.viewDetails")}
               </Button>
             )}
             {visit.status === "GEPLANT" && (
               <Button size="sm" onClick={onExecute}>
-                <PlayIcon className="h-3.5 w-3.5 mr-1" />
+                <PlayIcon className="h-3.5 w-3.5" />
                 {t("actions.execute")}
               </Button>
             )}
             {visit.status === "EINGECHECKT" && (
               <Button size="sm" onClick={onExecute}>
-                <PlayIcon className="h-3.5 w-3.5 mr-1" />
+                <PlayIcon className="h-3.5 w-3.5" />
                 {t("actions.continue")}
               </Button>
             )}

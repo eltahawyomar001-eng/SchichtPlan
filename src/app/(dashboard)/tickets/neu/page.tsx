@@ -173,7 +173,7 @@ export default function NewTicketPage() {
                     submitting || subject.length < 3 || description.length < 10
                   }
                 >
-                  <SendIcon className="mr-1.5 h-4 w-4" />
+                  <SendIcon className="h-4 w-4" />
                   {submitting ? t("submitting") : t("submitTicket")}
                 </Button>
               </div>

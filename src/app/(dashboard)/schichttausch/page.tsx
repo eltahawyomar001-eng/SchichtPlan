@@ -231,7 +231,7 @@ export default function SchichttauschPage() {
         description={t("description")}
         actions={
           <Button onClick={() => setShowForm(true)}>
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("newRequest")}</span>
             <span className="sm:hidden">{tc("new")}</span>
           </Button>
@@ -437,7 +437,7 @@ export default function SchichttauschPage() {
                                 }
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
                               >
-                                <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
+                                <CheckCircleIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">
                                   {t("accept")}
                                 </span>
@@ -460,7 +460,7 @@ export default function SchichttauschPage() {
                                   handleAction(swap.id, "STORNIERT")
                                 }
                               >
-                                <XIcon className="h-4 w-4 sm:mr-1" />
+                                <XIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">
                                   {t("cancel")}
                                 </span>
@@ -483,7 +483,7 @@ export default function SchichttauschPage() {
                                 }
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
-                                <CheckCircleIcon className="h-4 w-4 sm:mr-1" />
+                                <CheckCircleIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">
                                   {t("approve")}
                                 </span>
@@ -495,7 +495,7 @@ export default function SchichttauschPage() {
                                   handleAction(swap.id, "ABGELEHNT")
                                 }
                               >
-                                <XIcon className="h-4 w-4 sm:mr-1" />
+                                <XIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">
                                   {t("reject")}
                                 </span>
@@ -613,7 +613,7 @@ export default function SchichttauschPage() {
                     {tc("cancel")}
                   </Button>
                   <Button type="submit">
-                    <SwapIcon className="h-4 w-4 mr-2" />
+                    <SwapIcon className="h-4 w-4" />
                     {t("form.submit")}
                   </Button>
                 </div>

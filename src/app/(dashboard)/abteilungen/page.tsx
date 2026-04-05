@@ -11,7 +11,14 @@ import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
-import { PlusIcon, TrashIcon, EditIcon, SearchIcon } from "@/components/icons";
+import {
+  PlusIcon,
+  TrashIcon,
+  EditIcon,
+  SearchIcon,
+  MapPinIcon,
+  UsersIcon,
+} from "@/components/icons";
 
 interface Department {
   id: string;
@@ -262,7 +269,7 @@ export default function AbteilungenSeite() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((dept) => (
               <Card key={dept.id} className="card-elevated">
-                <CardContent className="p-5 sm:p-5">
+                <CardContent className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div
@@ -293,15 +300,19 @@ export default function AbteilungenSeite() {
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-3 space-y-1">
+                  <div className="mt-3 space-y-1.5">
                     {dept.location && (
-                      <p className="text-xs text-gray-500 truncate">
-                        📍 {dept.location.name}
-                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500 truncate">
+                        <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                        <span className="truncate">{dept.location.name}</span>
+                      </div>
                     )}
-                    <p className="text-xs text-gray-500">
-                      👥 {dept._count.employees} {t("employees")}
-                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <UsersIcon className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                      <span>
+                        {dept._count.employees} {t("employees")}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

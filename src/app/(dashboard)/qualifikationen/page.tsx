@@ -17,6 +17,7 @@ import {
   EditIcon,
   SearchIcon,
   UsersIcon,
+  ChevronDownIcon,
 } from "@/components/icons";
 
 interface Skill {
@@ -48,6 +49,7 @@ export default function QualifikationenSeite() {
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
 
   const fetchSkills = useCallback(async () => {
     setError(null);
@@ -90,6 +92,7 @@ export default function QualifikationenSeite() {
     setForm(INITIAL_FORM);
     setFormError(null);
     setSelectedEmployees([]);
+    setEmployeeDropdownOpen(false);
     setShowForm(true);
   }
 
@@ -99,6 +102,7 @@ export default function QualifikationenSeite() {
     setFormError(null);
     // Fetch current assignments for this skill
     setSelectedEmployees([]);
+    setEmployeeDropdownOpen(false);
     fetchSkillAssignments(skill.id);
     setShowForm(true);
   }
@@ -255,41 +259,87 @@ export default function QualifikationenSeite() {
               />
             </div>
 
-            {/* Employee assignment */}
+            {/* Employee assignment — dropdown multi-select */}
             {employees.length > 0 && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
                   <UsersIcon className="h-3.5 w-3.5" />
                   {t("assignTo")}
                 </Label>
-                <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
-                  {employees.map((emp) => (
-                    <label
-                      key={emp.id}
-                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setEmployeeDropdownOpen((o) => !o)}
+                    className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-left hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  >
+                    <span
+                      className={
+                        selectedEmployees.length > 0
+                          ? "text-gray-900"
+                          : "text-gray-400"
+                      }
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedEmployees.includes(emp.id)}
-                        onChange={(ev) => {
-                          setSelectedEmployees((prev) =>
-                            ev.target.checked
-                              ? [...prev, emp.id]
-                              : prev.filter((id) => id !== emp.id),
-                          );
-                        }}
-                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                      />
-                      <span className="text-gray-900">
-                        {emp.firstName} {emp.lastName}
-                      </span>
-                    </label>
-                  ))}
+                      {selectedEmployees.length > 0
+                        ? `${selectedEmployees.length} ${t("selected")}`
+                        : t("selectEmployees")}
+                    </span>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-gray-400 transition-transform ${employeeDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {employeeDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-48 overflow-y-auto">
+                      {employees.map((emp) => (
+                        <label
+                          key={emp.id}
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedEmployees.includes(emp.id)}
+                            onChange={(ev) => {
+                              setSelectedEmployees((prev) =>
+                                ev.target.checked
+                                  ? [...prev, emp.id]
+                                  : prev.filter((id) => id !== emp.id),
+                              );
+                            }}
+                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="text-gray-900">
+                            {emp.firstName} {emp.lastName}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {selectedEmployees.length > 0 && (
-                  <p className="text-xs text-gray-500">
-                    {selectedEmployees.length} {t("selected")}
-                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedEmployees.map((empId) => {
+                      const emp = employees.find((e) => e.id === empId);
+                      if (!emp) return null;
+                      return (
+                        <Badge
+                          key={empId}
+                          className="bg-emerald-50 text-emerald-700 text-xs border-emerald-200 gap-1"
+                        >
+                          {emp.firstName} {emp.lastName}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedEmployees((prev) =>
+                                prev.filter((id) => id !== empId),
+                              )
+                            }
+                            className="ml-0.5 hover:text-red-600"
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )}

@@ -1660,6 +1660,7 @@
     "deleteConfirmMessage": "Are you sure you want to delete this skill?",
     "assignTo": "Assign to employees",
     "selected": "selected",
+    "selectEmployees": "Select employees…",
     "save": "Save"
   },
   "shiftTemplates": {

@@ -1660,6 +1660,7 @@
     "deleteConfirmMessage": "Soll diese Qualifikation wirklich gelöscht werden?",
     "assignTo": "Mitarbeiter zuweisen",
     "selected": "ausgewählt",
+    "selectEmployees": "Mitarbeiter auswählen…",
     "save": "Speichern"
   },
   "shiftTemplates": {

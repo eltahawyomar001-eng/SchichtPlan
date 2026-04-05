@@ -459,28 +459,26 @@ export default function MitarbeiterPage() {
             </div>
 
             {/* Location */}
-            {locations.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="locationId">{t("form.location")}</Label>
-                <Select
-                  id="locationId"
-                  value={formData.locationId}
-                  onChange={(e) =>
-                    setFormData((p) => ({
-                      ...p,
-                      locationId: e.target.value,
-                    }))
-                  }
-                >
-                  <option value="">{t("form.noLocation")}</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="locationId">{t("form.location")}</Label>
+              <Select
+                id="locationId"
+                value={formData.locationId}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    locationId: e.target.value,
+                  }))
+                }
+              >
+                <option value="">{t("form.noLocation")}</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="color">{t("form.color")}</Label>

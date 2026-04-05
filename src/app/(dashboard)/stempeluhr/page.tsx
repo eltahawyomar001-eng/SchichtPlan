@@ -230,7 +230,6 @@ export default function StempeluhrSeite() {
 
   // ── No-profile state ──
   if (noProfile) {
-    const canManage = ["OWNER", "ADMIN", "MANAGER"].includes(user?.role ?? "");
     return (
       <div>
         <Topbar title={t("title")} description={t("description")} />
@@ -245,15 +244,13 @@ export default function StempeluhrSeite() {
                 <p className="text-sm text-gray-500 mb-4">
                   {t("noProfileDesc")}
                 </p>
-                {canManage && (
-                  <Link
-                    href="/mitarbeiter"
-                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-                  >
-                    <UsersIcon className="h-4 w-4" />
-                    {t("goToEmployees")}
-                  </Link>
-                )}
+                <Link
+                  href="/mitarbeiter"
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+                >
+                  <UsersIcon className="h-4 w-4" />
+                  {t("goToEmployees")}
+                </Link>
               </CardContent>
             </Card>
           </div>

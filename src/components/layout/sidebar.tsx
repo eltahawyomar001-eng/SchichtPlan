@@ -15,7 +15,6 @@ import {
   ClockIcon,
   XIcon,
   CalendarOffIcon,
-  HandRaisedIcon,
   SwapIcon,
   ScaleIcon,
   FileExportIcon,
@@ -64,7 +63,6 @@ const navGroups: NavGroup[] = [
       { key: "shiftPlan", href: "/schichtplan", icon: CalendarIcon },
       { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
       { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
-      { key: "availability", href: "/verfuegbarkeiten", icon: HandRaisedIcon },
       { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },
       { key: "punchClock", href: "/stempeluhr", icon: TargetIcon },
       {

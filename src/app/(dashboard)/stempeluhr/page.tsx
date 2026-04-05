@@ -244,13 +244,50 @@ export default function StempeluhrSeite() {
                 <p className="text-sm text-gray-500 mb-4">
                   {t("noProfileDesc")}
                 </p>
-                <Link
-                  href="/mitarbeiter"
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
-                >
-                  <UsersIcon className="h-4 w-4" />
-                  {t("goToEmployees")}
-                </Link>
+                <div className="flex flex-col items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      setActing(true);
+                      setError("");
+                      try {
+                        const res = await fetch(
+                          "/api/time-entries/clock/create-profile",
+                          { method: "POST" },
+                        );
+                        if (res.ok) {
+                          // Profile created — reload the page so the session
+                          // picks up the new employeeId
+                          window.location.reload();
+                        } else {
+                          const data = await res.json();
+                          setError(data.error || t("errorGeneric"));
+                        }
+                      } catch {
+                        setError(t("errorNetwork"));
+                      } finally {
+                        setActing(false);
+                      }
+                    }}
+                    disabled={acting}
+                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {acting ? <Spinner /> : <ClockIcon className="h-4 w-4" />}
+                    {t("createProfile")}
+                  </button>
+                  <Link
+                    href="/mitarbeiter"
+                    className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <UsersIcon className="h-4 w-4" />
+                    {t("goToEmployees")}
+                  </Link>
+                </div>
+                {error && (
+                  <div className="mt-4 flex items-center gap-2 rounded-[14px] bg-red-50 px-4 py-3 text-[15px] font-medium text-red-700">
+                    <AlertTriangleIcon className="h-5 w-5 shrink-0" />
+                    {error}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

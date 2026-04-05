@@ -49,6 +49,13 @@ export default function EinstellungenPage() {
     text: string;
   } | null>(null);
 
+  // Keep profileName in sync when session loads or updates
+  useEffect(() => {
+    if (session?.user?.name && !editingProfile) {
+      setProfileName(session.user.name);
+    }
+  }, [session?.user?.name, editingProfile]);
+
   // Password change
   const [showPwForm, setShowPwForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");

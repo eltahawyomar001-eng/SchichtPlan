@@ -42,6 +42,7 @@ async function findMatchingRecoveryCode(
 const JWT_REFRESH_TTL_S = 60; // seconds
 
 interface JwtCacheEntry {
+  name: string | null;
   role: string;
   workspaceId: string | null;
   workspaceName: string | null;
@@ -221,7 +222,19 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session: updateData }) {
+      // Client-side session update (e.g. profile name change)
+      if (trigger === "update" && updateData) {
+        if (updateData.name !== undefined) {
+          token.name = updateData.name;
+        }
+        // Bust the JWT cache so stale data doesn't overwrite
+        if (token.sub) {
+          await cache.del(`jwt:${token.sub}`);
+        }
+        return token;
+      }
+
       // Initial sign-in via credentials — seed the token
       if (user) {
         const authUser = user as SessionUser;
@@ -283,6 +296,7 @@ export const authOptions: NextAuthOptions = {
         const cacheKey = `jwt:${token.sub}`;
         const cached = await cache.get<JwtCacheEntry>(cacheKey);
         if (cached) {
+          token.name = cached.name;
           token.role = cached.role;
           token.workspaceId = cached.workspaceId;
           token.workspaceName = cached.workspaceName;
@@ -292,6 +306,7 @@ export const authOptions: NextAuthOptions = {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
             select: {
+              name: true,
               role: true,
               workspaceId: true,
               workspace: true,
@@ -301,6 +316,7 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             const ws =
               dbUser.workspace as unknown as WorkspaceWithOnboarding | null;
+            token.name = dbUser.name;
             token.role = dbUser.role;
             token.workspaceId = dbUser.workspaceId;
             token.workspaceName = dbUser.workspace?.name || null;
@@ -309,6 +325,7 @@ export const authOptions: NextAuthOptions = {
             await cache.set(
               cacheKey,
               {
+                name: dbUser.name,
                 role: dbUser.role,
                 workspaceId: dbUser.workspaceId,
                 workspaceName: dbUser.workspace?.name || null,
@@ -327,6 +344,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         const sessionUser = session.user as SessionUser;
         sessionUser.id = token.sub as string;
+        sessionUser.name = (token.name as string) || "";
         sessionUser.role = token.role as string;
         sessionUser.workspaceId = token.workspaceId as string;
         sessionUser.workspaceName = (token.workspaceName as string) || null;

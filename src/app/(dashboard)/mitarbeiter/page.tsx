@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ export default function MitarbeiterPage() {
   const t = useTranslations("employeesPage");
   const tc = useTranslations("common");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
@@ -141,6 +142,10 @@ export default function MitarbeiterPage() {
     fetchLocations();
   }, [fetchEmployees, fetchLocations]);
 
+  // Auto-open edit form when navigated from detail page with ?edit=<id>
+  // (placed after openEditForm so it can reference it)
+  const editParamHandled = useRef(false);
+
   const openCreateForm = () => {
     setEditingEmployee(null);
     const initial = {
@@ -182,6 +187,22 @@ export default function MitarbeiterPage() {
     setFormError(null);
     setShowForm(true);
   };
+
+  // Effect: auto-open edit form when navigated with ?edit=<id>
+  useEffect(() => {
+    if (editParamHandled.current || loading || employees.length === 0) return;
+    const editId = searchParams.get("edit");
+    if (editId) {
+      const emp = employees.find((e) => e.id === editId);
+      if (emp) {
+        openEditForm(emp);
+        editParamHandled.current = true;
+        // Clean up the URL without navigation
+        router.replace("/mitarbeiter", { scroll: false });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employees, loading, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

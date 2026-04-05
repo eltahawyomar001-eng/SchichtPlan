@@ -324,7 +324,10 @@
     "statusCompleted": "Abgeschlossen",
     "statusCancelled": "Storniert",
     "statusNoShow": "Nicht erschienen",
-    "statusOpen": "Offen"
+    "statusOpen": "Offen",
+    "holidayBadge": "Feiertag",
+    "holidayWarning": "⚠ Feiertag: {name}",
+    "holidayShiftWarning": "Schicht an einem Feiertag ({name})"
   },
   "timeTracking": {
     "title": "Zeiterfassung",

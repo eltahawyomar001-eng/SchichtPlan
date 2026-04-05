@@ -324,7 +324,10 @@
     "statusCompleted": "Completed",
     "statusCancelled": "Cancelled",
     "statusNoShow": "No Show",
-    "statusOpen": "Open"
+    "statusOpen": "Open",
+    "holidayBadge": "Holiday",
+    "holidayWarning": "⚠ Holiday: {name}",
+    "holidayShiftWarning": "Shift on a public holiday ({name})"
   },
   "timeTracking": {
     "title": "Time Tracking",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
+import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
   ZapIcon,
   UserPlusIcon,
   AlertCircleIcon,
+  AlertTriangleIcon,
   SparklesIcon,
   CheckCircleIcon,
   ChevronDownIcon,
@@ -50,6 +52,7 @@ import {
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
+import { getGermanHolidays, type HolidayDefinition } from "@/lib/holidays";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -92,6 +95,7 @@ export default function SchichtplanPage() {
   const locale = useLocale();
   const dateFnsLocale = locale === "de" ? de : enUS;
   const { data: session } = useSession();
+  const { handlePlanLimit } = usePlanLimit();
   const user = session?.user as SessionUser | undefined;
   const canManage = user ? isManagement(user) : false;
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -104,6 +108,7 @@ export default function SchichtplanPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [filterLocationId, setFilterLocationId] = useState("");
+  const [bundesland, setBundesland] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"week" | "month" | "day">("week");
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
@@ -190,6 +195,41 @@ export default function SchichtplanPage() {
   // Day view: single day
   const dayDate = currentWeek;
 
+  // Holiday map: date string -> holiday name (for the workspace Bundesland)
+  const holidayMap = useMemo(() => {
+    if (!bundesland) return new Map<string, string>();
+    // Compute holidays for the visible years (current view may span two years)
+    const years = new Set<number>();
+    if (viewMode === "month") {
+      years.add(monthStart.getFullYear());
+      years.add(monthEnd.getFullYear());
+    } else if (viewMode === "day") {
+      years.add(dayDate.getFullYear());
+    } else {
+      years.add(weekStart.getFullYear());
+      years.add(weekEnd.getFullYear());
+    }
+    const map = new Map<string, string>();
+    for (const yr of years) {
+      for (const h of getGermanHolidays(yr)) {
+        if (h.isNational || h.bundeslaender.includes(bundesland)) {
+          map.set(h.date, h.name);
+        }
+      }
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundesland, viewMode, currentWeek]);
+
+  /** Return the holiday name for a given date, or undefined if not a holiday */
+  const getHolidayName = useCallback(
+    (date: Date): string | undefined => {
+      const key = format(date, "yyyy-MM-dd");
+      return holidayMap.get(key);
+    },
+    [holidayMap],
+  );
+
   const fetchData = useCallback(async () => {
     try {
       let fetchStart: Date, fetchEnd: Date;
@@ -206,22 +246,29 @@ export default function SchichtplanPage() {
       const startStr = format(fetchStart, "yyyy-MM-dd");
       const endStr = format(fetchEnd, "yyyy-MM-dd");
 
-      const [shiftsRes, employeesRes, locationsRes] = await Promise.all([
-        fetch(`/api/shifts?start=${startStr}&end=${endStr}`),
-        fetch("/api/employees"),
-        fetch("/api/locations"),
-      ]);
+      const [shiftsRes, employeesRes, locationsRes, workspaceRes] =
+        await Promise.all([
+          fetch(`/api/shifts?start=${startStr}&end=${endStr}`),
+          fetch("/api/employees"),
+          fetch("/api/locations"),
+          fetch("/api/workspace"),
+        ]);
 
-      const [shiftsJson, employeesJson, locationsJson] = await Promise.all([
-        shiftsRes.json(),
-        employeesRes.json(),
-        locationsRes.json(),
-      ]);
+      const [shiftsJson, employeesJson, locationsJson, workspaceJson] =
+        await Promise.all([
+          shiftsRes.json(),
+          employeesRes.json(),
+          locationsRes.json(),
+          workspaceRes.ok ? workspaceRes.json() : null,
+        ]);
 
       // API returns paginated { data, pagination } — extract the data array
       setShifts(shiftsJson.data ?? shiftsJson);
       setEmployees(employeesJson.data ?? employeesJson);
       setLocations(locationsJson.data ?? locationsJson);
+      if (workspaceJson?.bundesland) {
+        setBundesland(workspaceJson.bundesland);
+      }
     } catch {
       setLoadError(tc("errorLoading"));
     } finally {
@@ -421,6 +468,10 @@ export default function SchichtplanPage() {
           weights: autoScheduleWeights,
         }),
       });
+
+      // Intercept plan-limit errors with upgrade modal
+      const isPlanLimit = await handlePlanLimit(res);
+      if (isPlanLimit) return;
 
       const data = await res.json();
       if (res.ok) {
@@ -731,14 +782,25 @@ export default function SchichtplanPage() {
                   {/* Selected day shift cards */}
                   {(() => {
                     const dayShifts = getShiftsForDay(selectedMonthDay);
+                    const dayHoliday = getHolidayName(selectedMonthDay);
                     return (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between px-1">
-                          <h3 className="text-sm font-semibold text-gray-700">
-                            {format(selectedMonthDay, "EEEE, d. MMMM", {
-                              locale: dateFnsLocale,
-                            })}
-                          </h3>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-700">
+                              {format(selectedMonthDay, "EEEE, d. MMMM", {
+                                locale: dateFnsLocale,
+                              })}
+                            </h3>
+                            {dayHoliday && (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <AlertTriangleIcon className="h-3 w-3 text-red-500" />
+                                <span className="text-xs font-medium text-red-600">
+                                  {dayHoliday}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                           {canManage && (
                             <button
                               onClick={() => openCreateForm(selectedMonthDay)}
@@ -765,6 +827,7 @@ export default function SchichtplanPage() {
                                 onDelete={() => setDeleteTarget(shift.id)}
                                 onView={() => setDetailShift(shift)}
                                 onCancel={() => setCancelTarget(shift.id)}
+                                holidayName={dayHoliday}
                               />
                             ))}
                           </div>
@@ -797,13 +860,18 @@ export default function SchichtplanPage() {
                     {monthDays.map((day) => {
                       const dayShifts = getShiftsForDay(day);
                       const today = isToday(day);
+                      const dayHoliday = getHolidayName(day);
                       return (
                         <DroppableDayCell
                           key={day.toISOString()}
                           id={format(day, "yyyy-MM-dd")}
                         >
                           <div
-                            className={`bg-white p-1.5 min-h-[80px] ${today ? "ring-2 ring-inset ring-emerald-500" : ""}`}
+                            className={cn(
+                              "bg-white p-1.5 min-h-[80px]",
+                              today && "ring-2 ring-inset ring-emerald-500",
+                              dayHoliday && "bg-red-50/40",
+                            )}
                           >
                             <div className="flex items-center justify-between mb-1">
                               <span
@@ -820,6 +888,14 @@ export default function SchichtplanPage() {
                                 </button>
                               )}
                             </div>
+                            {dayHoliday && (
+                              <div className="flex items-center gap-0.5 mb-0.5 rounded bg-red-100/80 px-1 py-px">
+                                <AlertTriangleIcon className="h-2.5 w-2.5 text-red-500 shrink-0" />
+                                <span className="text-[8px] font-medium text-red-700 truncate">
+                                  {dayHoliday}
+                                </span>
+                              </div>
+                            )}
                             <div className="space-y-0.5">
                               {dayShifts.slice(0, 3).map((shift) => (
                                 <DraggableShiftChip
@@ -828,6 +904,7 @@ export default function SchichtplanPage() {
                                   canManage={canManage}
                                   onEdit={() => openEditForm(shift)}
                                   onView={() => setDetailShift(shift)}
+                                  holidayName={dayHoliday}
                                 />
                               ))}
                               {dayShifts.length > 3 && (
@@ -846,90 +923,119 @@ export default function SchichtplanPage() {
             )}
 
             {/* Day View */}
-            {viewMode === "day" && (
-              <DroppableDayCell id={format(dayDate, "yyyy-MM-dd")}>
-                {/* Mobile day view */}
-                <div className="sm:hidden space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <h3 className="text-sm font-semibold text-gray-700">
-                      {format(dayDate, "EEEE, d. MMMM", {
-                        locale: dateFnsLocale,
-                      })}
-                    </h3>
-                    {canManage && (
-                      <button
-                        onClick={() => openCreateForm(dayDate)}
-                        className="rounded-xl p-3 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
-                      >
-                        <PlusIcon className="h-5 w-5" />
-                      </button>
-                    )}
-                  </div>
-                  {getShiftsForDay(dayDate).length === 0 ? (
-                    <div className="rounded-xl bg-gray-50 py-8 text-center">
-                      <p className="text-sm text-gray-400">{t("noShifts")}</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {getShiftsForDay(dayDate).map((shift) => (
-                        <MobileShiftCard
-                          key={shift.id}
-                          shift={shift}
-                          canManage={canManage}
-                          onEdit={() => openEditForm(shift)}
-                          onDelete={() => setDeleteTarget(shift.id)}
-                          onView={() => setDetailShift(shift)}
-                          onCancel={() => setCancelTarget(shift.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {/* Desktop day view */}
-                <Card
-                  className={cn(
-                    "hidden sm:block",
-                    isToday(dayDate) && "ring-2 ring-emerald-500",
-                  )}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {format(dayDate, "EEEE, d. MMMM", {
-                          locale: dateFnsLocale,
-                        })}
-                      </CardTitle>
-                      {canManage && (
-                        <button
-                          onClick={() => openCreateForm(dayDate)}
-                          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        >
-                          <PlusIcon className="h-5 w-5" />
-                        </button>
+            {viewMode === "day" &&
+              (() => {
+                const dayHoliday = getHolidayName(dayDate);
+                return (
+                  <DroppableDayCell id={format(dayDate, "yyyy-MM-dd")}>
+                    {/* Mobile day view */}
+                    <div className="sm:hidden space-y-2">
+                      <div className="flex items-center justify-between px-1">
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-700">
+                            {format(dayDate, "EEEE, d. MMMM", {
+                              locale: dateFnsLocale,
+                            })}
+                          </h3>
+                          {dayHoliday && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <AlertTriangleIcon className="h-3 w-3 text-red-500" />
+                              <span className="text-xs font-medium text-red-600">
+                                {dayHoliday}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {canManage && (
+                          <button
+                            onClick={() => openCreateForm(dayDate)}
+                            className="rounded-xl p-3 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                          >
+                            <PlusIcon className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                      {getShiftsForDay(dayDate).length === 0 ? (
+                        <div className="rounded-xl bg-gray-50 py-8 text-center">
+                          <p className="text-sm text-gray-400">
+                            {t("noShifts")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {getShiftsForDay(dayDate).map((shift) => (
+                            <MobileShiftCard
+                              key={shift.id}
+                              shift={shift}
+                              canManage={canManage}
+                              onEdit={() => openEditForm(shift)}
+                              onDelete={() => setDeleteTarget(shift.id)}
+                              onView={() => setDetailShift(shift)}
+                              onCancel={() => setCancelTarget(shift.id)}
+                              holidayName={dayHoliday}
+                            />
+                          ))}
+                        </div>
                       )}
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {getShiftsForDay(dayDate).length === 0 ? (
-                      <p className="text-sm text-gray-400 py-4 text-center">
-                        {t("noShifts")}
-                      </p>
-                    ) : (
-                      getShiftsForDay(dayDate).map((shift) => (
-                        <DraggableShiftCard
-                          key={shift.id}
-                          shift={shift}
-                          canManage={canManage}
-                          onEdit={() => openEditForm(shift)}
-                          onDelete={() => setDeleteTarget(shift.id)}
-                          onView={() => setDetailShift(shift)}
-                        />
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-              </DroppableDayCell>
-            )}
+                    {/* Desktop day view */}
+                    <Card
+                      className={cn(
+                        "hidden sm:block",
+                        isToday(dayDate) && "ring-2 ring-emerald-500",
+                        dayHoliday && "bg-red-50/40",
+                      )}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-lg">
+                              {format(dayDate, "EEEE, d. MMMM", {
+                                locale: dateFnsLocale,
+                              })}
+                            </CardTitle>
+                            {dayHoliday && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <AlertTriangleIcon className="h-3.5 w-3.5 text-red-500" />
+                                <span className="text-sm font-medium text-red-600">
+                                  {dayHoliday}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {canManage && (
+                            <button
+                              onClick={() => openCreateForm(dayDate)}
+                              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            >
+                              <PlusIcon className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {getShiftsForDay(dayDate).length === 0 ? (
+                          <p className="text-sm text-gray-400 py-4 text-center">
+                            {t("noShifts")}
+                          </p>
+                        ) : (
+                          getShiftsForDay(dayDate).map((shift) => (
+                            <DraggableShiftCard
+                              key={shift.id}
+                              shift={shift}
+                              canManage={canManage}
+                              onEdit={() => openEditForm(shift)}
+                              onDelete={() => setDeleteTarget(shift.id)}
+                              onView={() => setDetailShift(shift)}
+                              holidayName={dayHoliday}
+                            />
+                          ))
+                        )}
+                      </CardContent>
+                    </Card>
+                  </DroppableDayCell>
+                );
+              })()}
 
             {/* Week View: Mobile — horizontal day strip + selected day cards */}
             {viewMode === "week" && (
@@ -983,15 +1089,26 @@ export default function SchichtplanPage() {
                   {(() => {
                     const selectedDay = currentWeek;
                     const dayShifts = getShiftsForDay(selectedDay);
+                    const dayHoliday = getHolidayName(selectedDay);
                     return (
                       <DroppableDayCell id={format(selectedDay, "yyyy-MM-dd")}>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between px-1">
-                            <h3 className="text-sm font-semibold text-gray-700">
-                              {format(selectedDay, "EEEE, d. MMMM", {
-                                locale: dateFnsLocale,
-                              })}
-                            </h3>
+                            <div>
+                              <h3 className="text-sm font-semibold text-gray-700">
+                                {format(selectedDay, "EEEE, d. MMMM", {
+                                  locale: dateFnsLocale,
+                                })}
+                              </h3>
+                              {dayHoliday && (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <AlertTriangleIcon className="h-3 w-3 text-red-500" />
+                                  <span className="text-xs font-medium text-red-600">
+                                    {dayHoliday}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                             {canManage && (
                               <button
                                 onClick={() => openCreateForm(selectedDay)}
@@ -1018,6 +1135,7 @@ export default function SchichtplanPage() {
                                   onDelete={() => setDeleteTarget(shift.id)}
                                   onView={() => setDetailShift(shift)}
                                   onCancel={() => setCancelTarget(shift.id)}
+                                  holidayName={dayHoliday}
                                 />
                               ))}
                             </div>
@@ -1034,6 +1152,7 @@ export default function SchichtplanPage() {
                     {weekDays.map((day) => {
                       const dayShifts = getShiftsForDay(day);
                       const today = isToday(day);
+                      const holidayName = getHolidayName(day);
 
                       return (
                         <DroppableDayCell
@@ -1041,7 +1160,10 @@ export default function SchichtplanPage() {
                           id={format(day, "yyyy-MM-dd")}
                         >
                           <Card
-                            className={today ? "ring-2 ring-emerald-500" : ""}
+                            className={cn(
+                              today && "ring-2 ring-emerald-500",
+                              holidayName && "bg-red-50/40",
+                            )}
                           >
                             <CardHeader className="pb-2 px-3 pt-3">
                               <div className="flex items-center justify-between">
@@ -1070,6 +1192,14 @@ export default function SchichtplanPage() {
                                   </button>
                                 )}
                               </div>
+                              {holidayName && (
+                                <div className="flex items-center gap-1 mt-1 rounded-md bg-red-100/80 px-1.5 py-0.5">
+                                  <AlertTriangleIcon className="h-3 w-3 text-red-500 shrink-0" />
+                                  <span className="text-[10px] font-medium text-red-700 truncate">
+                                    {holidayName}
+                                  </span>
+                                </div>
+                              )}
                             </CardHeader>
                             <CardContent className="px-3 pb-3 space-y-2">
                               {dayShifts.length === 0 ? (
@@ -1084,6 +1214,7 @@ export default function SchichtplanPage() {
                                     canManage={canManage}
                                     onEdit={() => openEditForm(shift)}
                                     onView={() => setDetailShift(shift)}
+                                    holidayName={holidayName}
                                   />
                                 ))
                               )}
@@ -2110,11 +2241,13 @@ function DraggableShiftChip({
   canManage,
   onEdit: _onEdit,
   onView,
+  holidayName,
 }: {
   shift: Shift;
   canManage: boolean;
   onEdit: () => void;
   onView: () => void;
+  holidayName?: string;
 }) {
   const t = useTranslations("shiftPlan");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -2123,6 +2256,7 @@ function DraggableShiftChip({
   });
   const isOpen = !shift.employee;
   const isCancelled = shift.status === "CANCELLED";
+  const showHolidayWarning = !!holidayName && shift.employee && !isCancelled;
   return (
     <div
       ref={setNodeRef}
@@ -2131,7 +2265,15 @@ function DraggableShiftChip({
         e.stopPropagation();
         onView();
       }}
-      className={`rounded px-1.5 py-0.5 text-[10px] truncate cursor-pointer ${canManage ? "active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isCancelled ? "opacity-50 line-through" : ""} ${isOpen ? "border border-dashed border-amber-400 bg-amber-50 text-amber-700" : ""}`}
+      className={cn(
+        "rounded px-1.5 py-0.5 text-[10px] truncate cursor-pointer",
+        canManage && "active:cursor-grabbing",
+        isDragging && "opacity-40",
+        isCancelled && "opacity-50 line-through",
+        isOpen &&
+          "border border-dashed border-amber-400 bg-amber-50 text-amber-700",
+        showHolidayWarning && "ring-1 ring-red-300",
+      )}
       style={
         !isOpen
           ? {
@@ -2140,7 +2282,15 @@ function DraggableShiftChip({
             }
           : undefined
       }
+      title={
+        showHolidayWarning
+          ? t("holidayShiftWarning", { name: holidayName })
+          : undefined
+      }
     >
+      {showHolidayWarning && (
+        <AlertTriangleIcon className="inline h-2.5 w-2.5 text-red-500 mr-0.5" />
+      )}
       {isOpen ? (
         <>
           ⚠ {t("openShiftLabel")} {shift.startTime}–{shift.endTime}
@@ -2161,12 +2311,14 @@ function DraggableShiftCard({
   onEdit,
   onDelete,
   onView,
+  holidayName,
 }: {
   shift: Shift;
   canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onView: () => void;
+  holidayName?: string;
 }) {
   const t = useTranslations("shiftPlan");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -2175,6 +2327,7 @@ function DraggableShiftCard({
   });
   const isOpen = !shift.employee;
   const isCancelled = shift.status === "CANCELLED";
+  const showHolidayWarning = !!holidayName && shift.employee && !isCancelled;
   return (
     <div
       ref={setNodeRef}
@@ -2183,7 +2336,14 @@ function DraggableShiftCard({
         e.stopPropagation();
         onView();
       }}
-      className={`group relative flex items-center gap-3 rounded-lg p-3 cursor-pointer ${canManage ? "active:cursor-grabbing" : ""} ${isDragging ? "opacity-40" : ""} ${isCancelled ? "opacity-50" : ""} ${isOpen ? "border-2 border-dashed border-amber-300 bg-amber-50/60" : ""}`}
+      className={cn(
+        "group relative flex items-center gap-3 rounded-lg p-3 cursor-pointer",
+        canManage && "active:cursor-grabbing",
+        isDragging && "opacity-40",
+        isCancelled && "opacity-50",
+        isOpen && "border-2 border-dashed border-amber-300 bg-amber-50/60",
+        showHolidayWarning && "ring-1 ring-red-300",
+      )}
       style={
         !isOpen
           ? {
@@ -2228,6 +2388,14 @@ function DraggableShiftCard({
           <p className="text-[11px] text-amber-500 mt-0.5">
             {t("openShiftCardHint")}
           </p>
+        )}
+        {showHolidayWarning && (
+          <div className="flex items-center gap-1 mt-1 rounded bg-red-50 px-1.5 py-0.5">
+            <AlertTriangleIcon className="h-3 w-3 text-red-500 shrink-0" />
+            <span className="text-[11px] font-medium text-red-600">
+              {t("holidayWarning", { name: holidayName })}
+            </span>
+          </div>
         )}
       </div>
       {canManage && (
@@ -2319,6 +2487,7 @@ function MobileShiftCard({
   onDelete,
   onView,
   onCancel,
+  holidayName,
 }: {
   shift: Shift;
   canManage: boolean;
@@ -2326,10 +2495,12 @@ function MobileShiftCard({
   onDelete: () => void;
   onView: () => void;
   onCancel: () => void;
+  holidayName?: string;
 }) {
   const t = useTranslations("shiftPlan");
   const isOpen = !shift.employee;
   const isCancelled = shift.status === "CANCELLED";
+  const showHolidayWarning = !!holidayName && shift.employee && !isCancelled;
 
   return (
     <div
@@ -2340,6 +2511,7 @@ function MobileShiftCard({
         isOpen
           ? "border-2 border-dashed border-amber-300 bg-amber-50/60"
           : "bg-white shadow-sm ring-1 ring-gray-100",
+        showHolidayWarning && "ring-2 ring-red-300",
       )}
       style={
         !isOpen && shift.employee
@@ -2407,6 +2579,16 @@ function MobileShiftCard({
         </div>
         <ChevronRightIcon className="h-4 w-4 text-gray-300 shrink-0" />
       </div>
+
+      {/* Holiday warning banner */}
+      {showHolidayWarning && (
+        <div className="flex items-center gap-2 mt-2 rounded-xl bg-red-50 px-3 py-2">
+          <AlertTriangleIcon className="h-4 w-4 text-red-500 shrink-0" />
+          <span className="text-[13px] font-medium text-red-700">
+            {t("holidayWarning", { name: holidayName })}
+          </span>
+        </div>
+      )}
 
       {/* Action buttons — visible on mobile, 48px targets */}
       {canManage && !isCancelled && (

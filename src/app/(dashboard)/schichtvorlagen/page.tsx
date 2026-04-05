@@ -36,6 +36,16 @@ const INITIAL_FORM = {
   locationId: "",
 };
 
+/** Generate time options in 15-minute intervals (00:00 – 23:45) */
+const TIME_OPTIONS: string[] = [];
+for (let h = 0; h < 24; h++) {
+  for (const m of [0, 15, 30, 45]) {
+    TIME_OPTIONS.push(
+      `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+    );
+  }
+}
+
 export default function SchichtvorlagenSeite() {
   const t = useTranslations("shiftTemplates");
   const tc = useTranslations("common");
@@ -201,25 +211,35 @@ export default function SchichtvorlagenSeite() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t("startTime")} *</Label>
-                <Input
-                  type="time"
+                <Select
                   required
                   value={form.startTime}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, startTime: e.target.value }))
                   }
-                />
+                >
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>{t("endTime")} *</Label>
-                <Input
-                  type="time"
+                <Select
                   required
                   value={form.endTime}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, endTime: e.target.value }))
                   }
-                />
+                >
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </Select>
               </div>
             </div>
 

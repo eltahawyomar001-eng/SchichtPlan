@@ -124,6 +124,13 @@
     "myPendingRequests": "Meine offenen Anträge",
     "myShiftsToday": "Meine Schichten heute",
     "upcomingShifts": "Nächste Schichten",
+    "favorites": "Meine Favoriten",
+    "favEdit": "Bearbeiten",
+    "favDone": "Fertig",
+    "favRemove": "Entfernen",
+    "favEmpty": "Pinne deine Lieblingsfunktionen an, um schnell darauf zuzugreifen.",
+    "favAdd": "Favoriten hinzufügen",
+    "favAvailable": "Verfügbare Funktionen (max. 8)",
     "shiftStatuses": {
       "SCHEDULED": "Geplant",
       "CONFIRMED": "Bestätigt",

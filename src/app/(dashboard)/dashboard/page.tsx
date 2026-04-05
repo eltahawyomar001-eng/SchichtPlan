@@ -9,7 +9,6 @@ import {
   CalendarIcon,
   MapPinIcon,
   ClockIcon,
-  PlusIcon,
   CheckCircleIcon,
   ArrowRightIcon,
   CalendarOffIcon,
@@ -25,6 +24,7 @@ import {
   DashboardSkeleton,
   EmployeeDashboardSkeleton,
 } from "./_components/dashboard-skeleton";
+import { FavoritesSection } from "./_components/favorites-section";
 
 export const revalidate = 0; // Always fresh data, but allows bfcache (no cache-control: no-store)
 
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
       <Suspense fallback={<DashboardSkeleton />}>
-        <ManagerDashboardContent workspaceId={workspaceId} />
+        <ManagerDashboardContent workspaceId={workspaceId} userId={user.id} />
       </Suspense>
     </div>
   );
@@ -389,8 +389,10 @@ async function EmployeeDashboardContent({
  * ══════════════════════════════════════════════════════════════ */
 async function ManagerDashboardContent({
   workspaceId,
+  userId,
 }: {
   workspaceId: string;
+  userId: string;
 }) {
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
@@ -405,6 +407,7 @@ async function ManagerDashboardContent({
     pendingAbsences,
     pendingSwaps,
     pendingTimeEntries,
+    currentUser,
   ] = await Promise.all([
     prisma.employee.count({ where: { workspaceId, isActive: true } }),
     prisma.shift.count({ where: { workspaceId } }),
@@ -426,7 +429,15 @@ async function ManagerDashboardContent({
     prisma.timeEntry.count({
       where: { workspaceId, status: "EINGEREICHT" },
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { dashboardFavorites: true },
+    }),
   ]);
+
+  const favorites: string[] = currentUser?.dashboardFavorites
+    ? JSON.parse(currentUser.dashboardFavorites)
+    : [];
 
   const stats = [
     {
@@ -638,51 +649,10 @@ async function ManagerDashboardContent({
         ))}
       </div>
 
-      {/* Quick Actions + Pending Items row */}
+      {/* Favorites + Pending Items row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t("quickActions")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-              <Link
-                href="/mitarbeiter"
-                className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:bg-emerald-50/30"
-              >
-                <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-                  <PlusIcon className="h-4 w-4 text-emerald-600" />
-                </div>
-                <span className="text-[15px] font-semibold text-gray-700 group-hover:text-emerald-700 break-words text-left sm:text-sm">
-                  {t("addEmployee")}
-                </span>
-              </Link>
-              <Link
-                href="/standorte"
-                className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-blue-200 sm:hover:bg-blue-50/30"
-              >
-                <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-2 group-hover:from-blue-100 group-hover:to-blue-200 transition-colors">
-                  <PlusIcon className="h-4 w-4 text-blue-600" />
-                </div>
-                <span className="text-[15px] font-semibold text-gray-700 group-hover:text-blue-700 break-words text-left sm:text-sm">
-                  {t("addLocation")}
-                </span>
-              </Link>
-              <Link
-                href="/schichtplan"
-                className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group min-w-0 card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-purple-200 sm:hover:bg-purple-50/30"
-              >
-                <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 p-2 group-hover:from-purple-100 group-hover:to-purple-200 transition-colors">
-                  <CalendarIcon className="h-4 w-4 text-purple-600" />
-                </div>
-                <span className="text-[15px] font-semibold text-gray-700 group-hover:text-purple-700 break-words text-left sm:text-sm">
-                  {t("createShift")}
-                </span>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Pinned Favorites */}
+        <FavoritesSection initialFavorites={favorites} />
 
         {/* Pending Items */}
         <Card>

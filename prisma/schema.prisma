@@ -19,6 +19,7 @@ model User {
   twoFactorEnabled       Boolean  @default(false)
   twoFactorSecret        String?
   twoFactorRecoveryCodes String?
+  dashboardFavorites     String    @default("[]") @db.Text
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   workspaceId    String?

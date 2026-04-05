@@ -1,0 +1,466 @@
+"use client";
+
+import { useState, useCallback, useTransition } from "react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import {
+  CalendarIcon,
+  ClockIcon,
+  CalendarOffIcon,
+  SwapIcon,
+  TargetIcon,
+  FileCheckIcon,
+  MessageCircleIcon,
+  TicketIcon,
+  CalendarUsersIcon,
+  CalendarRangeIcon,
+  UsersIcon,
+  LayersIcon,
+  AwardIcon,
+  MapPinIcon,
+  TemplateIcon,
+  FolderIcon,
+  PalmtreeIcon,
+  ScaleIcon,
+  BarChartIcon,
+  FileExportIcon,
+  ArchiveIcon,
+  DatabaseIcon,
+  FlagIcon,
+  ZapIcon,
+  LinkIcon,
+  SettingsIcon,
+  CreditCardIcon,
+  ShieldCheckIcon,
+  StarIcon,
+  PlusIcon,
+  XIcon,
+  CheckCircleIcon,
+} from "@/components/icons";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+/* ── Page registry: key → icon + href + color ── */
+interface PageInfo {
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  color: string;
+  bg: string;
+  hoverBorder: string;
+  hoverBg: string;
+}
+
+const PAGE_REGISTRY: Record<string, PageInfo> = {
+  shiftPlan: {
+    icon: CalendarIcon,
+    href: "/schichtplan",
+    color: "text-emerald-600",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+    hoverBorder: "hover:border-emerald-200",
+    hoverBg: "hover:bg-emerald-50/30",
+  },
+  timeTracking: {
+    icon: ClockIcon,
+    href: "/zeiterfassung",
+    color: "text-blue-600",
+    bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+    hoverBorder: "hover:border-blue-200",
+    hoverBg: "hover:bg-blue-50/30",
+  },
+  absences: {
+    icon: CalendarOffIcon,
+    href: "/abwesenheiten",
+    color: "text-orange-600",
+    bg: "bg-gradient-to-br from-orange-50 to-orange-100",
+    hoverBorder: "hover:border-orange-200",
+    hoverBg: "hover:bg-orange-50/30",
+  },
+  shiftSwap: {
+    icon: SwapIcon,
+    href: "/schichttausch",
+    color: "text-emerald-600",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+    hoverBorder: "hover:border-emerald-200",
+    hoverBg: "hover:bg-emerald-50/30",
+  },
+  punchClock: {
+    icon: TargetIcon,
+    href: "/stempeluhr",
+    color: "text-rose-600",
+    bg: "bg-gradient-to-br from-rose-50 to-rose-100",
+    hoverBorder: "hover:border-rose-200",
+    hoverBg: "hover:bg-rose-50/30",
+  },
+  serviceProof: {
+    icon: FileCheckIcon,
+    href: "/leistungsnachweis",
+    color: "text-teal-600",
+    bg: "bg-gradient-to-br from-teal-50 to-teal-100",
+    hoverBorder: "hover:border-teal-200",
+    hoverBg: "hover:bg-teal-50/30",
+  },
+  teamChat: {
+    icon: MessageCircleIcon,
+    href: "/nachrichten",
+    color: "text-violet-600",
+    bg: "bg-gradient-to-br from-violet-50 to-violet-100",
+    hoverBorder: "hover:border-violet-200",
+    hoverBg: "hover:bg-violet-50/30",
+  },
+  tickets: {
+    icon: TicketIcon,
+    href: "/tickets",
+    color: "text-amber-600",
+    bg: "bg-gradient-to-br from-amber-50 to-amber-100",
+    hoverBorder: "hover:border-amber-200",
+    hoverBg: "hover:bg-amber-50/30",
+  },
+  teamCalendar: {
+    icon: CalendarUsersIcon,
+    href: "/teamkalender",
+    color: "text-indigo-600",
+    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100",
+    hoverBorder: "hover:border-indigo-200",
+    hoverBg: "hover:bg-indigo-50/30",
+  },
+  annualPlanning: {
+    icon: CalendarRangeIcon,
+    href: "/jahresplanung",
+    color: "text-cyan-600",
+    bg: "bg-gradient-to-br from-cyan-50 to-cyan-100",
+    hoverBorder: "hover:border-cyan-200",
+    hoverBg: "hover:bg-cyan-50/30",
+  },
+  employees: {
+    icon: UsersIcon,
+    href: "/mitarbeiter",
+    color: "text-emerald-600",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+    hoverBorder: "hover:border-emerald-200",
+    hoverBg: "hover:bg-emerald-50/30",
+  },
+  departments: {
+    icon: LayersIcon,
+    href: "/abteilungen",
+    color: "text-purple-600",
+    bg: "bg-gradient-to-br from-purple-50 to-purple-100",
+    hoverBorder: "hover:border-purple-200",
+    hoverBg: "hover:bg-purple-50/30",
+  },
+  skills: {
+    icon: AwardIcon,
+    href: "/qualifikationen",
+    color: "text-yellow-600",
+    bg: "bg-gradient-to-br from-yellow-50 to-yellow-100",
+    hoverBorder: "hover:border-yellow-200",
+    hoverBg: "hover:bg-yellow-50/30",
+  },
+  locations: {
+    icon: MapPinIcon,
+    href: "/standorte",
+    color: "text-blue-600",
+    bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+    hoverBorder: "hover:border-blue-200",
+    hoverBg: "hover:bg-blue-50/30",
+  },
+  shiftTemplates: {
+    icon: TemplateIcon,
+    href: "/schichtvorlagen",
+    color: "text-slate-600",
+    bg: "bg-gradient-to-br from-slate-50 to-slate-100",
+    hoverBorder: "hover:border-slate-200",
+    hoverBg: "hover:bg-slate-50/30",
+  },
+  projects: {
+    icon: FolderIcon,
+    href: "/projekte",
+    color: "text-amber-600",
+    bg: "bg-gradient-to-br from-amber-50 to-amber-100",
+    hoverBorder: "hover:border-amber-200",
+    hoverBg: "hover:bg-amber-50/30",
+  },
+  clients: {
+    icon: UsersIcon,
+    href: "/kunden",
+    color: "text-sky-600",
+    bg: "bg-gradient-to-br from-sky-50 to-sky-100",
+    hoverBorder: "hover:border-sky-200",
+    hoverBg: "hover:bg-sky-50/30",
+  },
+  vacationBalance: {
+    icon: PalmtreeIcon,
+    href: "/urlaubskonto",
+    color: "text-green-600",
+    bg: "bg-gradient-to-br from-green-50 to-green-100",
+    hoverBorder: "hover:border-green-200",
+    hoverBg: "hover:bg-green-50/30",
+  },
+  timeAccounts: {
+    icon: ScaleIcon,
+    href: "/zeitkonten",
+    color: "text-indigo-600",
+    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100",
+    hoverBorder: "hover:border-indigo-200",
+    hoverBg: "hover:bg-indigo-50/30",
+  },
+  reports: {
+    icon: BarChartIcon,
+    href: "/berichte",
+    color: "text-fuchsia-600",
+    bg: "bg-gradient-to-br from-fuchsia-50 to-fuchsia-100",
+    hoverBorder: "hover:border-fuchsia-200",
+    hoverBg: "hover:bg-fuchsia-50/30",
+  },
+  payrollExport: {
+    icon: FileExportIcon,
+    href: "/lohnexport",
+    color: "text-emerald-600",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+    hoverBorder: "hover:border-emerald-200",
+    hoverBg: "hover:bg-emerald-50/30",
+  },
+  monthClose: {
+    icon: ArchiveIcon,
+    href: "/monatsabschluss",
+    color: "text-gray-600",
+    bg: "bg-gradient-to-br from-gray-50 to-gray-100",
+    hoverBorder: "hover:border-gray-300",
+    hoverBg: "hover:bg-gray-50/30",
+  },
+  dataIO: {
+    icon: DatabaseIcon,
+    href: "/daten",
+    color: "text-cyan-600",
+    bg: "bg-gradient-to-br from-cyan-50 to-cyan-100",
+    hoverBorder: "hover:border-cyan-200",
+    hoverBg: "hover:bg-cyan-50/30",
+  },
+  holidays: {
+    icon: FlagIcon,
+    href: "/feiertage",
+    color: "text-red-600",
+    bg: "bg-gradient-to-br from-red-50 to-red-100",
+    hoverBorder: "hover:border-red-200",
+    hoverBg: "hover:bg-red-50/30",
+  },
+  automationRules: {
+    icon: ZapIcon,
+    href: "/automatisierung",
+    color: "text-yellow-600",
+    bg: "bg-gradient-to-br from-yellow-50 to-yellow-100",
+    hoverBorder: "hover:border-yellow-200",
+    hoverBg: "hover:bg-yellow-50/30",
+  },
+  webhooks: {
+    icon: LinkIcon,
+    href: "/webhooks",
+    color: "text-slate-600",
+    bg: "bg-gradient-to-br from-slate-50 to-slate-100",
+    hoverBorder: "hover:border-slate-200",
+    hoverBg: "hover:bg-slate-50/30",
+  },
+  settings: {
+    icon: SettingsIcon,
+    href: "/einstellungen",
+    color: "text-gray-600",
+    bg: "bg-gradient-to-br from-gray-50 to-gray-100",
+    hoverBorder: "hover:border-gray-300",
+    hoverBg: "hover:bg-gray-50/30",
+  },
+  billing: {
+    icon: CreditCardIcon,
+    href: "/einstellungen/abonnement",
+    color: "text-emerald-600",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+    hoverBorder: "hover:border-emerald-200",
+    hoverBg: "hover:bg-emerald-50/30",
+  },
+  roles: {
+    icon: ShieldCheckIcon,
+    href: "/einstellungen/rollen",
+    color: "text-violet-600",
+    bg: "bg-gradient-to-br from-violet-50 to-violet-100",
+    hoverBorder: "hover:border-violet-200",
+    hoverBg: "hover:bg-violet-50/30",
+  },
+};
+
+const ALL_PAGE_KEYS = Object.keys(PAGE_REGISTRY);
+
+interface FavoritesSectionProps {
+  initialFavorites: string[];
+}
+
+export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
+  const t = useTranslations("dashboard");
+  const tn = useTranslations("nav");
+  const [favorites, setFavorites] = useState<string[]>(initialFavorites);
+  const [editing, setEditing] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const saveFavorites = useCallback((newFavorites: string[]) => {
+    setFavorites(newFavorites);
+    startTransition(async () => {
+      await fetch("/api/dashboard/favorites", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ favorites: newFavorites }),
+      });
+    });
+  }, []);
+
+  const toggleFavorite = useCallback(
+    (key: string) => {
+      const next = favorites.includes(key)
+        ? favorites.filter((k) => k !== key)
+        : [...favorites, key];
+      saveFavorites(next);
+    },
+    [favorites, saveFavorites],
+  );
+
+  const removeFavorite = useCallback(
+    (key: string) => {
+      saveFavorites(favorites.filter((k) => k !== key));
+    },
+    [favorites, saveFavorites],
+  );
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <StarIcon className="h-4 w-4 text-amber-500" />
+          {t("favorites")}
+        </CardTitle>
+        <button
+          onClick={() => setEditing(!editing)}
+          className={cn(
+            "text-xs font-medium px-3 py-1.5 rounded-lg transition-colors",
+            editing
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              : "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
+          )}
+        >
+          {editing ? t("favDone") : t("favEdit")}
+        </button>
+      </CardHeader>
+      <CardContent>
+        {/* Pinned Favorites */}
+        {favorites.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            {favorites.map((key) => {
+              const page = PAGE_REGISTRY[key];
+              if (!page) return null;
+              const Icon = page.icon;
+              return (
+                <div key={key} className="relative group">
+                  <Link
+                    href={page.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl bg-white p-3 sm:p-3.5 border border-gray-100 transition-all duration-200",
+                      "shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)]",
+                      "hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)]",
+                      page.hoverBorder,
+                      page.hoverBg,
+                      "min-w-0",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex-shrink-0 rounded-xl p-2 transition-colors",
+                        page.bg,
+                      )}
+                    >
+                      <Icon className={cn("h-4 w-4", page.color)} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700 truncate min-w-0">
+                      {tn(key)}
+                    </span>
+                  </Link>
+                  {editing && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        removeFavorite(key);
+                      }}
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors z-10"
+                      aria-label={t("favRemove")}
+                    >
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {favorites.length === 0 && !editing && (
+          <div className="text-center py-6">
+            <StarIcon className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+            <p className="text-sm text-gray-500 mb-3">{t("favEmpty")}</p>
+            <button
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t("favAdd")}
+            </button>
+          </div>
+        )}
+
+        {/* Editing: all available pages */}
+        {editing && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs font-medium text-gray-500 mb-3">
+              {t("favAvailable")}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {ALL_PAGE_KEYS.map((key) => {
+                const page = PAGE_REGISTRY[key];
+                const pinned = favorites.includes(key);
+                const Icon = page.icon;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleFavorite(key)}
+                    disabled={isPending}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl p-2.5 sm:p-3 border transition-all duration-200 text-left min-w-0",
+                      pinned
+                        ? "border-emerald-200 bg-emerald-50/50"
+                        : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex-shrink-0 rounded-lg p-1.5",
+                        pinned ? "bg-emerald-100" : page.bg,
+                      )}
+                    >
+                      {pinned ? (
+                        <CheckCircleIcon className="h-4 w-4 text-emerald-600" />
+                      ) : (
+                        <Icon className={cn("h-4 w-4", page.color)} />
+                      )}
+                    </div>
+                    <span
+                      className={cn(
+                        "text-xs sm:text-sm font-medium truncate min-w-0",
+                        pinned ? "text-emerald-700" : "text-gray-600",
+                      )}
+                    >
+                      {tn(key)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

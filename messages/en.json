@@ -124,6 +124,13 @@
     "myPendingRequests": "My Pending Requests",
     "myShiftsToday": "My Shifts Today",
     "upcomingShifts": "Upcoming Shifts",
+    "favorites": "My Favorites",
+    "favEdit": "Edit",
+    "favDone": "Done",
+    "favRemove": "Remove",
+    "favEmpty": "Pin your favorite features for quick access.",
+    "favAdd": "Add favorites",
+    "favAvailable": "Available features (max. 8)",
     "shiftStatuses": {
       "SCHEDULED": "Scheduled",
       "CONFIRMED": "Confirmed",

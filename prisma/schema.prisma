@@ -1276,34 +1276,53 @@ enum TicketPriority {
 enum TicketStatus {
   OFFEN
   IN_BEARBEITUNG
-  WARTEND
-  GELOEST
+  GESCHLOSSEN
+}
+
+enum TicketType {
+  INTERN
+  EXTERN
+}
+
+enum TicketEventType {
+  ERSTELLT
+  ANGESEHEN
+  STATUS_GEAENDERT
+  ZUGEWIESEN
+  KOMMENTAR
   GESCHLOSSEN
 }
 
 model Ticket {
-  id            String          @id @default(cuid())
-  ticketNumber  String          @unique /// Human-readable e.g. TK-2025-0042
-  subject       String          @db.VarChar(200)
-  description   String          @db.Text
-  category      TicketCategory
-  priority      TicketPriority  @default(MITTEL)
-  status        TicketStatus    @default(OFFEN)
-  createdById   String
-  createdBy     User            @relation("TicketCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  assignedToId  String?
-  assignedTo    User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
-  workspaceId   String
-  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  resolvedAt    DateTime?
-  closedAt      DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  comments      TicketComment[]
+  id                    String          @id @default(cuid())
+  ticketNumber          String          @unique /// Human-readable e.g. TK-2025-0042
+  ticketType            TicketType      @default(INTERN)
+  subject               String          @db.VarChar(200)
+  description           String          @db.Text
+  category              TicketCategory
+  priority              TicketPriority  @default(MITTEL)
+  status                TicketStatus    @default(OFFEN)
+  location              String?         @db.VarChar(200) /// Free-text location (NOT GPS)
+  externalSubmitterName String?         @db.VarChar(200)
+  externalToken         String?         @unique /// UUID token for external access link
+  createdById           String?         /// Null for external tickets
+  createdBy             User?           @relation("TicketCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  assignedToId          String?
+  assignedTo            User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  workspaceId           String
+  workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  firstViewedAt         DateTime?       /// When a processor first opened the ticket
+  firstViewedById       String?         /// Who first viewed the ticket
+  closedAt              DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  comments              TicketComment[]
+  events                TicketEvent[]
   @@index([workspaceId])
   @@index([createdById])
   @@index([assignedToId])
   @@index([status])
+  @@index([externalToken])
   @@index([workspaceId, status])
   @@index([workspaceId, ticketNumber])
 }
@@ -1314,10 +1333,26 @@ model TicketComment {
   isInternal Boolean  @default(false) /// Only visible to management
   ticketId   String
   ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   String?  /// Null for external commenters
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorName String?  @db.VarChar(200) /// Display name for external comments
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   @@index([ticketId])
   @@index([authorId])
+}
+
+model TicketEvent {
+  id          String          @id @default(cuid())
+  ticketId    String
+  ticket      Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  eventType   TicketEventType
+  actorId     String?         /// Null for system or external events
+  actorName   String?         @db.VarChar(200) /// Display name
+  oldValue    String?         @db.VarChar(500)
+  newValue    String?         @db.VarChar(500)
+  metadata    String?         @db.Text /// JSON for extra context
+  createdAt   DateTime        @default(now())
+  @@index([ticketId])
+  @@index([ticketId, createdAt])
 }

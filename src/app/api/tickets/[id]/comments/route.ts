@@ -14,6 +14,7 @@ import {
   notFound,
   forbidden,
 } from "@/lib/api-response";
+import { logCommentAdded, logStatusChanged } from "@/lib/ticket-events";
 
 // ─── POST  /api/tickets/[id]/comments ──────────────────────────
 export async function POST(
@@ -42,8 +43,12 @@ export async function POST(
 
     if (!ticket) return notFound("Ticket nicht gefunden");
 
-    // EMPLOYEE can only comment on their own tickets
-    if (isEmployee(user) && ticket.createdById !== user.id) {
+    // EMPLOYEE can only comment on their own tickets or tickets assigned to them
+    if (
+      isEmployee(user) &&
+      ticket.createdById !== user.id &&
+      ticket.assignedToId !== user.id
+    ) {
       return forbidden("Kein Zugriff auf dieses Ticket");
     }
 
@@ -56,11 +61,14 @@ export async function POST(
         isInternal,
         ticketId: id,
         authorId: user.id,
+        authorName: user.name ?? "Unbekannt",
       },
       include: {
         author: { select: { id: true, name: true, email: true } },
       },
     });
+
+    const actor = { id: user.id, name: user.name ?? "System" };
 
     // Auto-update ticket status if currently OFFEN and management replies
     if (ticket.status === "OFFEN" && isManagement(user)) {
@@ -68,22 +76,23 @@ export async function POST(
         where: { id },
         data: { status: "IN_BEARBEITUNG" },
       });
+      logStatusChanged(ticket.id, actor, "OFFEN", "IN_BEARBEITUNG");
     }
 
-    // Auto-reopen if ticket was resolved/closed and creator adds a comment
-    if (
-      ["GELOEST", "GESCHLOSSEN"].includes(ticket.status) &&
-      ticket.createdById === user.id
-    ) {
+    // Auto-reopen if ticket was closed and creator adds a comment
+    if (ticket.status === "GESCHLOSSEN" && ticket.createdById === user.id) {
       await prisma.ticket.update({
         where: { id },
         data: {
           status: "OFFEN",
-          resolvedAt: null,
           closedAt: null,
         },
       });
+      logStatusChanged(ticket.id, actor, "GESCHLOSSEN", "OFFEN");
     }
+
+    // Audit trail
+    logCommentAdded(ticket.id, actor, { isInternal });
 
     log.info("Ticket comment added", {
       ticketId: id,

@@ -675,19 +675,54 @@ export const TICKET_PRIORITIES = [
 export const TICKET_STATUSES = [
   "OFFEN",
   "IN_BEARBEITUNG",
-  "WARTEND",
-  "GELOEST",
   "GESCHLOSSEN",
 ] as const;
 
+/**
+ * Zero-tolerance: Reject submissions containing sensitive medical/health
+ * data or GPS coordinates. This runs on subject + description fields.
+ */
+const SENSITIVE_DATA_PATTERNS = [
+  // Health / medical data
+  /krankmeldung|krankschreibung|attest|arzt(?:besuch|brief)|diagnose|medikament|gesundheit(?:sdaten)?|krankheit|befund|arbeitsunfähigkeit/i,
+  // GPS / location tracking coordinates
+  /\b\d{1,3}\.\d{4,},?\s*-?\d{1,3}\.\d{4,}\b/, // lat,lng pattern
+  /\bgps[:\-_]?\s*\d/i,
+  /\bcoordinat/i,
+  /\bgeolocation/i,
+];
+
+function rejectSensitiveData(value: string, ctx: z.RefinementCtx): void {
+  for (const pattern of SENSITIVE_DATA_PATTERNS) {
+    if (pattern.test(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Sensible Gesundheits- oder Standortdaten dürfen nicht übermittelt werden. Bitte entfernen Sie diese Angaben.",
+      });
+      return;
+    }
+  }
+}
+
+const ticketSubject = trimmedString
+  .min(3, "Betreff muss mindestens 3 Zeichen lang sein")
+  .max(200, "Betreff darf maximal 200 Zeichen lang sein")
+  .superRefine(rejectSensitiveData);
+
+const ticketDescription = trimmedString
+  .min(10, "Beschreibung muss mindestens 10 Zeichen lang sein")
+  .max(5000, "Beschreibung darf maximal 5000 Zeichen lang sein")
+  .superRefine(rejectSensitiveData);
+
+const ticketLocation = trimmedString
+  .max(200, "Standort darf maximal 200 Zeichen lang sein")
+  .optional()
+  .or(z.literal(""));
+
 export const createTicketSchema = z.object({
-  subject: trimmedString
-    .min(3, "Betreff muss mindestens 3 Zeichen lang sein")
-    .max(200, "Betreff darf maximal 200 Zeichen lang sein"),
-  description: trimmedString.min(
-    10,
-    "Beschreibung muss mindestens 10 Zeichen lang sein",
-  ),
+  subject: ticketSubject,
+  description: ticketDescription,
   category: z.enum(TICKET_CATEGORIES, {
     message: "Ungültige Kategorie",
   }),
@@ -696,16 +731,12 @@ export const createTicketSchema = z.object({
       message: "Ungültige Priorität",
     })
     .optional(),
+  location: ticketLocation,
 });
 
 export const updateTicketSchema = z.object({
-  subject: trimmedString
-    .min(3, "Betreff muss mindestens 3 Zeichen lang sein")
-    .max(200, "Betreff darf maximal 200 Zeichen lang sein")
-    .optional(),
-  description: trimmedString
-    .min(10, "Beschreibung muss mindestens 10 Zeichen lang sein")
-    .optional(),
+  subject: ticketSubject.optional(),
+  description: ticketDescription.optional(),
   category: z
     .enum(TICKET_CATEGORIES, {
       message: "Ungültige Kategorie",
@@ -722,9 +753,26 @@ export const updateTicketSchema = z.object({
     })
     .optional(),
   assignedToId: z.string().cuid().nullable().optional(),
+  location: ticketLocation,
+});
+
+/** Schema for the public external ticket form (no login required). */
+export const createExternalTicketSchema = z.object({
+  name: trimmedString
+    .min(2, "Name muss mindestens 2 Zeichen lang sein")
+    .max(200, "Name darf maximal 200 Zeichen lang sein"),
+  subject: ticketSubject,
+  description: ticketDescription,
+  location: ticketLocation,
+  category: z.enum(TICKET_CATEGORIES, {
+    message: "Ungültige Kategorie",
+  }),
 });
 
 export const createTicketCommentSchema = z.object({
-  content: trimmedString.min(1, "Kommentar darf nicht leer sein"),
+  content: trimmedString
+    .min(1, "Kommentar darf nicht leer sein")
+    .max(5000, "Kommentar darf maximal 5000 Zeichen lang sein")
+    .superRefine(rejectSensitiveData),
   isInternal: z.boolean().optional(),
 });

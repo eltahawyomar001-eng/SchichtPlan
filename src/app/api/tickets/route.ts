@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import {
-  isEmployee,
-  isManagement,
-  requirePermission,
-} from "@/lib/authorization";
+import { isEmployee, requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createTicketSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { logTicketCreated } from "@/lib/ticket-events";
 
 // ─── GET  /api/tickets ──────────────────────────────────────────
 export async function GET(req: Request) {
@@ -26,6 +23,7 @@ export async function GET(req: Request) {
     const category = searchParams.get("category");
     const priority = searchParams.get("priority");
     const assignedToId = searchParams.get("assignedToId");
+    const ticketType = searchParams.get("ticketType");
     const search = searchParams.get("search");
 
     const where: Record<string, unknown> = { workspaceId };
@@ -34,18 +32,28 @@ export async function GET(req: Request) {
     if (category) where.category = category;
     if (priority) where.priority = priority;
     if (assignedToId) where.assignedToId = assignedToId;
+    if (ticketType) where.ticketType = ticketType;
 
-    // EMPLOYEE can only see their own tickets
+    // EMPLOYEE can see their own tickets + tickets assigned to them
     if (isEmployee(user)) {
-      where.createdById = user.id;
+      where.OR = [{ createdById: user.id }, { assignedToId: user.id }];
     }
 
     // Text search on subject and ticketNumber
     if (search) {
-      where.OR = [
+      const searchConditions = [
         { subject: { contains: search, mode: "insensitive" } },
         { ticketNumber: { contains: search, mode: "insensitive" } },
       ];
+
+      // Combine with existing OR (employee filter) using AND
+      if (where.OR) {
+        const employeeFilter = where.OR;
+        delete where.OR;
+        where.AND = [{ OR: employeeFilter }, { OR: searchConditions }];
+      } else {
+        where.OR = searchConditions;
+      }
     }
 
     const { take, skip } = parsePagination(req);
@@ -107,7 +115,6 @@ export async function POST(req: Request) {
 
     const ticketNumber = `TK-${year}-${String(nextNumber).padStart(4, "0")}`;
 
-    // Auto-assign to management if not an employee creating
     const ticket = await prisma.ticket.create({
       data: {
         ticketNumber,
@@ -115,6 +122,8 @@ export async function POST(req: Request) {
         description: body.description,
         category: body.category,
         priority: body.priority ?? "MITTEL",
+        ticketType: "INTERN",
+        location: body.location || null,
         createdById: user.id,
         workspaceId,
       },
@@ -123,6 +132,16 @@ export async function POST(req: Request) {
         assignedTo: { select: { id: true, name: true, email: true } },
       },
     });
+
+    // Fire-and-forget: audit trail
+    logTicketCreated(
+      ticket.id,
+      { id: user.id, name: user.name ?? "System" },
+      {
+        ticketNumber: ticket.ticketNumber,
+        ticketType: "INTERN",
+      },
+    );
 
     log.info("Ticket created", {
       ticketId: ticket.id,

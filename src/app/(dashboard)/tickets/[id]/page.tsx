@@ -9,15 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageContent } from "@/components/ui/page-content";
-import {
-  ArrowLeftIcon,
-  SendIcon,
-  UserIcon,
-  ClockIcon,
-} from "@/components/icons";
+import { ArrowLeftIcon, SendIcon, ClockIcon } from "@/components/icons";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -35,21 +29,34 @@ interface Comment {
   id: string;
   content: string;
   isInternal: boolean;
-  author: TicketUser;
+  authorName: string | null;
+  author: TicketUser | null;
+  createdAt: string;
+}
+
+interface TicketEvent {
+  id: string;
+  eventType: string;
+  actorName: string;
+  oldValue: string | null;
+  newValue: string | null;
   createdAt: string;
 }
 
 interface Ticket {
   id: string;
   ticketNumber: string;
+  ticketType: string;
   subject: string;
   description: string;
   category: string;
   priority: string;
   status: string;
-  createdBy: TicketUser;
+  location: string | null;
+  externalSubmitterName: string | null;
+  createdBy: TicketUser | null;
   assignedTo: TicketUser | null;
-  resolvedAt: string | null;
+  firstViewedAt: string | null;
   closedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -71,8 +78,6 @@ const STATUS_VARIANTS: Record<
 > = {
   OFFEN: "warning",
   IN_BEARBEITUNG: "default",
-  WARTEND: "outline",
-  GELOEST: "success",
   GESCHLOSSEN: "outline",
 };
 
@@ -97,6 +102,7 @@ export default function TicketDetailPage() {
   const canManage = user ? isManagement(user) : false;
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [events, setEvents] = useState<TicketEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [isInternal, setIsInternal] = useState(false);
@@ -116,6 +122,18 @@ export default function TicketDetailPage() {
     }
   }, [id]);
 
+  const fetchEvents = useCallback(async () => {
+    if (!canManage) return;
+    try {
+      const res = await fetch(`/api/tickets/${id}/events`);
+      if (res.ok) {
+        setEvents(await res.json());
+      }
+    } catch {
+      // silent
+    }
+  }, [id, canManage]);
+
   const fetchUsers = useCallback(async () => {
     if (!canManage) return;
     try {
@@ -131,8 +149,9 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     fetchTicket();
+    fetchEvents();
     fetchUsers();
-  }, [fetchTicket, fetchUsers]);
+  }, [fetchTicket, fetchEvents, fetchUsers]);
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
@@ -150,6 +169,7 @@ export default function TicketDetailPage() {
         setCommentText("");
         setIsInternal(false);
         fetchTicket();
+        fetchEvents();
       }
     } catch {
       // silent
@@ -167,6 +187,7 @@ export default function TicketDetailPage() {
       });
       if (res.ok) {
         fetchTicket();
+        fetchEvents();
       }
     } catch {
       // silent
@@ -283,12 +304,20 @@ export default function TicketDetailPage() {
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-semibold text-emerald-700">
-                        {(comment.author.name ?? comment.author.email)
+                        {(
+                          comment.authorName ??
+                          comment.author?.name ??
+                          comment.author?.email ??
+                          "?"
+                        )
                           .charAt(0)
                           .toUpperCase()}
                       </div>
                       <span className="text-sm font-medium text-gray-900">
-                        {comment.author.name ?? comment.author.email}
+                        {comment.authorName ??
+                          comment.author?.name ??
+                          comment.author?.email ??
+                          t("unknownAuthor")}
                       </span>
                       {comment.isInternal && (
                         <Badge variant="warning">{t("internalNote")}</Badge>
@@ -349,10 +378,19 @@ export default function TicketDetailPage() {
             {/* Meta info */}
             <Card>
               <CardContent className="p-4 sm:p-4 space-y-3">
-                <DetailRow
-                  label={t("createdBy")}
-                  value={ticket.createdBy.name ?? ticket.createdBy.email}
-                />
+                {ticket.ticketType === "EXTERN" &&
+                  ticket.externalSubmitterName && (
+                    <DetailRow
+                      label={t("externalSubmitter")}
+                      value={ticket.externalSubmitterName}
+                    />
+                  )}
+                {ticket.createdBy && (
+                  <DetailRow
+                    label={t("createdBy")}
+                    value={ticket.createdBy.name ?? ticket.createdBy.email}
+                  />
+                )}
                 <DetailRow
                   label={t("createdAt")}
                   value={format(
@@ -367,11 +405,30 @@ export default function TicketDetailPage() {
                     value={ticket.assignedTo.name ?? ticket.assignedTo.email}
                   />
                 )}
-                {ticket.resolvedAt && (
+                {ticket.location && (
+                  <DetailRow label={t("location")} value={ticket.location} />
+                )}
+                {ticket.ticketType === "EXTERN" && (
                   <DetailRow
-                    label={t("resolvedAt")}
+                    label={t("ticketType")}
+                    value={t("ticketTypes.EXTERN")}
+                  />
+                )}
+                {ticket.firstViewedAt && (
+                  <DetailRow
+                    label={t("firstViewedAt")}
                     value={format(
-                      new Date(ticket.resolvedAt),
+                      new Date(ticket.firstViewedAt),
+                      "dd.MM.yyyy HH:mm",
+                      { locale: de },
+                    )}
+                  />
+                )}
+                {ticket.closedAt && (
+                  <DetailRow
+                    label={t("closedAt")}
+                    value={format(
+                      new Date(ticket.closedAt),
                       "dd.MM.yyyy HH:mm",
                       { locale: de },
                     )}
@@ -399,8 +456,6 @@ export default function TicketDetailPage() {
                       <option value="IN_BEARBEITUNG">
                         {t("statuses.IN_BEARBEITUNG")}
                       </option>
-                      <option value="WARTEND">{t("statuses.WARTEND")}</option>
-                      <option value="GELOEST">{t("statuses.GELOEST")}</option>
                       <option value="GESCHLOSSEN">
                         {t("statuses.GESCHLOSSEN")}
                       </option>
@@ -444,6 +499,46 @@ export default function TicketDetailPage() {
                         ))}
                     </Select>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Audit Trail (Management only) */}
+            {canManage && events.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("auditTrail")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+                  {events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-start gap-2 text-xs"
+                    >
+                      <ClockIcon className="h-3.5 w-3.5 mt-0.5 text-gray-400 flex-shrink-0" />
+                      <div>
+                        <span className="font-medium text-gray-700">
+                          {event.actorName}
+                        </span>{" "}
+                        <span className="text-gray-500">
+                          {t(`eventTypes.${event.eventType}`)}
+                        </span>
+                        {event.oldValue && event.newValue && (
+                          <span className="text-gray-400">
+                            {" "}
+                            ({event.oldValue} → {event.newValue})
+                          </span>
+                        )}
+                        <p className="text-gray-400">
+                          {format(
+                            new Date(event.createdAt),
+                            "dd.MM.yyyy HH:mm",
+                            { locale: de },
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             )}

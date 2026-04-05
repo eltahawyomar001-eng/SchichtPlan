@@ -354,6 +354,8 @@ export default withAuth(
           pathname === "/passwort-zuruecksetzen"
         )
           return true;
+        // External ticket endpoints are public
+        if (pathname.startsWith("/api/tickets/external")) return true;
         // Everything else requires auth
         return !!token;
       },
@@ -439,6 +441,9 @@ export const config = {
     "/api/workspace/:path*",
     "/api/annual-planning/:path*",
     "/api/chat/:path*",
+    "/api/tickets/:path*",
+    // Ticket management pages (protected dashboard)
+    "/tickets/:path*",
     // Onboarding wizard (protected, outside dashboard group)
     "/onboarding",
     "/api/onboarding/:path*",

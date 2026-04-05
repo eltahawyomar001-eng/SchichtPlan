@@ -22,6 +22,7 @@ export default function NewTicketPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("SONSTIGES");
   const [priority, setPriority] = useState("MITTEL");
+  const [location, setLocation] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +35,13 @@ export default function NewTicketPage() {
       const res = await fetch("/api/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, description, category, priority }),
+        body: JSON.stringify({
+          subject,
+          description,
+          category,
+          priority,
+          location: location || undefined,
+        }),
       });
 
       if (res.ok) {
@@ -125,6 +132,17 @@ export default function NewTicketPage() {
                     <option value="DRINGEND">{t("priorities.DRINGEND")}</option>
                   </Select>
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="location">{t("location")}</Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder={t("locationPlaceholder")}
+                  maxLength={200}
+                />
               </div>
 
               <div>

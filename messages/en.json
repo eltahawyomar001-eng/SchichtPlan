@@ -2422,7 +2422,13 @@
     "unassigned": "Unassigned",
     "createdBy": "Created by",
     "createdAt": "Created at",
-    "resolvedAt": "Resolved at",
+    "closedAt": "Closed at",
+    "firstViewedAt": "First viewed",
+    "location": "Location",
+    "locationPlaceholder": "e.g. Berlin-Mitte branch",
+    "ticketType": "Ticket Type",
+    "externalSubmitter": "External Submitter",
+    "unknownAuthor": "Unknown",
     "manage": "Manage",
     "backToList": "Back to overview",
     "notFound": "Ticket not found",
@@ -2435,11 +2441,10 @@
     "sendComment": "Send",
     "internalNote": "Internal note",
     "createError": "Failed to create ticket",
+    "auditTrail": "Activity",
     "statuses": {
       "OFFEN": "Open",
       "IN_BEARBEITUNG": "In Progress",
-      "WARTEND": "Waiting",
-      "GELOEST": "Resolved",
       "GESCHLOSSEN": "Closed"
     },
     "priorities": {
@@ -2456,6 +2461,18 @@
       "HR": "Human Resources",
       "SONSTIGES": "Other"
     },
+    "ticketTypes": {
+      "INTERN": "Internal",
+      "EXTERN": "External"
+    },
+    "eventTypes": {
+      "ERSTELLT": "created the ticket",
+      "ANGESEHEN": "viewed the ticket",
+      "STATUS_GEAENDERT": "changed the status",
+      "ZUGEWIESEN": "assigned the ticket",
+      "KOMMENTAR": "added a comment",
+      "GESCHLOSSEN": "closed the ticket"
+    },
     "filters": {
       "allStatuses": "All Statuses",
       "allCategories": "All Categories"
@@ -2464,8 +2481,7 @@
       "total": "Total",
       "open": "Open",
       "inProgress": "In Progress",
-      "waiting": "Waiting",
-      "resolved": "Resolved"
+      "closed": "Closed"
     },
     "emptyState": {
       "title": "No tickets yet",

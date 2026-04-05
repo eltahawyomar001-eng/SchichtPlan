@@ -12,12 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { PageContent } from "@/components/ui/page-content";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  TicketIcon,
-  PlusIcon,
-  SearchIcon,
-  FilterIcon,
-} from "@/components/icons";
+import { TicketIcon, PlusIcon, SearchIcon } from "@/components/icons";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -34,12 +29,14 @@ interface TicketUser {
 interface Ticket {
   id: string;
   ticketNumber: string;
+  ticketType: string;
   subject: string;
   description: string;
   category: string;
   priority: string;
   status: string;
-  createdBy: TicketUser;
+  externalSubmitterName: string | null;
+  createdBy: TicketUser | null;
   assignedTo: TicketUser | null;
   createdAt: string;
   updatedAt: string;
@@ -61,8 +58,6 @@ const STATUS_VARIANTS: Record<
 > = {
   OFFEN: "warning",
   IN_BEARBEITUNG: "default",
-  WARTEND: "outline",
-  GELOEST: "success",
   GESCHLOSSEN: "outline",
 };
 
@@ -135,7 +130,7 @@ export default function TicketsPage() {
       <PageContent>
         {/* ── Stats Cards ────────────────────────────────── */}
         {stats && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard
               label={t("stats.total")}
               value={stats.total}
@@ -152,16 +147,8 @@ export default function TicketsPage() {
               color="emerald"
             />
             <StatCard
-              label={t("stats.waiting")}
-              value={stats.byStatus.WARTEND ?? 0}
-              color="blue"
-            />
-            <StatCard
-              label={t("stats.resolved")}
-              value={
-                (stats.byStatus.GELOEST ?? 0) +
-                (stats.byStatus.GESCHLOSSEN ?? 0)
-              }
+              label={t("stats.closed")}
+              value={stats.byStatus.GESCHLOSSEN ?? 0}
               color="green"
             />
           </div>
@@ -189,8 +176,6 @@ export default function TicketsPage() {
               <option value="IN_BEARBEITUNG">
                 {t("statuses.IN_BEARBEITUNG")}
               </option>
-              <option value="WARTEND">{t("statuses.WARTEND")}</option>
-              <option value="GELOEST">{t("statuses.GELOEST")}</option>
               <option value="GESCHLOSSEN">{t("statuses.GESCHLOSSEN")}</option>
             </Select>
             <Select
@@ -265,6 +250,11 @@ export default function TicketsPage() {
                         >
                           {t(`priorities.${ticket.priority}`)}
                         </Badge>
+                        {ticket.ticketType === "EXTERN" && (
+                          <Badge variant="outline">
+                            {t("ticketTypes.EXTERN")}
+                          </Badge>
+                        )}
                       </div>
                       <h3 className="font-medium text-gray-900 truncate">
                         {ticket.subject}
@@ -273,7 +263,12 @@ export default function TicketsPage() {
                         <span>{t(`categories.${ticket.category}`)}</span>
                         <span>·</span>
                         <span>
-                          {ticket.createdBy.name ?? ticket.createdBy.email}
+                          {ticket.ticketType === "EXTERN"
+                            ? (ticket.externalSubmitterName ??
+                              t("externalSubmitter"))
+                            : (ticket.createdBy?.name ??
+                              ticket.createdBy?.email ??
+                              "–")}
                         </span>
                         <span>·</span>
                         <span>

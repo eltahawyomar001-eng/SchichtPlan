@@ -17,59 +17,43 @@ export async function GET() {
 
     const baseWhere: Record<string, unknown> = { workspaceId };
 
-    // EMPLOYEE can only see stats for their own tickets
+    // EMPLOYEE can see stats for their own + assigned tickets
     if (isEmployee(user)) {
-      baseWhere.createdById = user.id;
+      baseWhere.OR = [{ createdById: user.id }, { assignedToId: user.id }];
     }
 
-    const [
-      total,
-      open,
-      inProgress,
-      waiting,
-      resolved,
-      closed,
-      byCategory,
-      byPriority,
-    ] = await Promise.all([
-      prisma.ticket.count({ where: baseWhere }),
-      prisma.ticket.count({
-        where: { ...baseWhere, status: "OFFEN" },
-      }),
-      prisma.ticket.count({
-        where: { ...baseWhere, status: "IN_BEARBEITUNG" },
-      }),
-      prisma.ticket.count({
-        where: { ...baseWhere, status: "WARTEND" },
-      }),
-      prisma.ticket.count({
-        where: { ...baseWhere, status: "GELOEST" },
-      }),
-      prisma.ticket.count({
-        where: { ...baseWhere, status: "GESCHLOSSEN" },
-      }),
-      prisma.ticket.groupBy({
-        by: ["category"],
-        where: baseWhere,
-        _count: { _all: true },
-      }),
-      prisma.ticket.groupBy({
-        by: ["priority"],
-        where: {
-          ...baseWhere,
-          status: { notIn: ["GELOEST", "GESCHLOSSEN"] },
-        },
-        _count: { _all: true },
-      }),
-    ]);
+    const [total, open, inProgress, closed, byCategory, byPriority] =
+      await Promise.all([
+        prisma.ticket.count({ where: baseWhere }),
+        prisma.ticket.count({
+          where: { ...baseWhere, status: "OFFEN" },
+        }),
+        prisma.ticket.count({
+          where: { ...baseWhere, status: "IN_BEARBEITUNG" },
+        }),
+        prisma.ticket.count({
+          where: { ...baseWhere, status: "GESCHLOSSEN" },
+        }),
+        prisma.ticket.groupBy({
+          by: ["category"],
+          where: baseWhere,
+          _count: { _all: true },
+        }),
+        prisma.ticket.groupBy({
+          by: ["priority"],
+          where: {
+            ...baseWhere,
+            status: { not: "GESCHLOSSEN" },
+          },
+          _count: { _all: true },
+        }),
+      ]);
 
     return NextResponse.json({
       total,
       byStatus: {
         OFFEN: open,
         IN_BEARBEITUNG: inProgress,
-        WARTEND: waiting,
-        GELOEST: resolved,
         GESCHLOSSEN: closed,
       },
       byCategory: Object.fromEntries(

@@ -2433,6 +2433,7 @@
     "firstViewedAt": "Erstmals angesehen",
     "location": "Standort",
     "locationPlaceholder": "z.B. Filiale Berlin-Mitte",
+    "noLocation": "— Kein Standort —",
     "ticketType": "Ticket-Typ",
     "externalSubmitter": "Externer Einreicher",
     "unknownAuthor": "Unbekannt",

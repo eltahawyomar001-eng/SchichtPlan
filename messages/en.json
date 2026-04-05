@@ -2433,6 +2433,7 @@
     "firstViewedAt": "First viewed",
     "location": "Location",
     "locationPlaceholder": "e.g. Berlin-Mitte branch",
+    "noLocation": "— No location —",
     "ticketType": "Ticket Type",
     "externalSubmitter": "External Submitter",
     "unknownAuthor": "Unknown",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 
 const CATEGORIES = [
@@ -17,6 +17,11 @@ interface SubmitResult {
   token: string;
 }
 
+interface LocationItem {
+  id: string;
+  name: string;
+}
+
 export default function ExternalTicketFormPage() {
   const params = useParams<{ slug: string }>();
 
@@ -24,10 +29,26 @@ export default function ExternalTicketFormPage() {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [locations, setLocations] = useState<LocationItem[]>([]);
   const [category, setCategory] = useState("SONSTIGES");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/tickets/external/locations?workspace=${encodeURIComponent(params.slug)}`,
+        );
+        if (res.ok) {
+          setLocations(await res.json());
+        }
+      } catch {
+        // silent
+      }
+    })();
+  }, [params.slug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -200,15 +221,19 @@ export default function ExternalTicketFormPage() {
               >
                 Standort <span className="text-gray-400">(optional)</span>
               </label>
-              <input
+              <select
                 id="location"
-                type="text"
-                maxLength={200}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                placeholder="z.B. Filiale Berlin-Mitte"
-              />
+                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option value="">— Kein Standort —</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.name}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Description */}

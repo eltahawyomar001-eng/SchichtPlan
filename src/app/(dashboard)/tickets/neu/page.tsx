@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
@@ -11,6 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
 import { ArrowLeftIcon, SendIcon } from "@/components/icons";
+
+// ─── Types ──────────────────────────────────────────────────────
+
+interface LocationItem {
+  id: string;
+  name: string;
+}
 
 // ─── Component ──────────────────────────────────────────────────
 
@@ -23,8 +30,23 @@ export default function NewTicketPage() {
   const [category, setCategory] = useState("SONSTIGES");
   const [priority, setPriority] = useState("MITTEL");
   const [location, setLocation] = useState("");
+  const [locations, setLocations] = useState<LocationItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/locations?take=200");
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data.data ?? data);
+        }
+      } catch {
+        // silent — dropdown will just be empty
+      }
+    })();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,13 +158,18 @@ export default function NewTicketPage() {
 
               <div>
                 <Label htmlFor="location">{t("location")}</Label>
-                <Input
+                <Select
                   id="location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder={t("locationPlaceholder")}
-                  maxLength={200}
-                />
+                >
+                  <option value="">{t("noLocation")}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.name}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
 
               <div>

@@ -2438,6 +2438,8 @@
     "externalSubmitter": "External Submitter",
     "unknownAuthor": "Unknown",
     "manage": "Manage",
+    "updateStatus": "Update Status",
+    "assigneeStatusHint": "As the assigned handler, you can change the status of this ticket.",
     "backToList": "Back to overview",
     "notFound": "Ticket not found",
     "searchPlaceholder": "Search tickets...",
@@ -2483,7 +2485,8 @@
     },
     "filters": {
       "allStatuses": "All Statuses",
-      "allCategories": "All Categories"
+      "allCategories": "All Categories",
+      "assignedToMe": "Assigned to me"
     },
     "stats": {
       "total": "Total",

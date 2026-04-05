@@ -20,6 +20,10 @@ import {
   logTicketViewed,
   logTicketClosed,
 } from "@/lib/ticket-events";
+import {
+  notifyTicketAssigned,
+  notifyStatusChanged,
+} from "@/lib/ticket-notifications";
 
 // ─── GET  /api/tickets/[id] ────────────────────────────────────
 export async function GET(
@@ -115,34 +119,57 @@ export async function PATCH(
 
     if (!existing) return notFound("Ticket nicht gefunden");
 
-    // EMPLOYEE can only update their own tickets (subject/description only)
+    // ── RBAC for EMPLOYEE role ──────────────────────────────────
     if (isEmployee(user)) {
-      if (
-        existing.createdById !== user.id &&
-        existing.assignedToId !== user.id
-      ) {
+      const isCreator = existing.createdById === user.id;
+      const isAssignee = existing.assignedToId === user.id;
+
+      if (!isCreator && !isAssignee) {
         return forbidden("Kein Zugriff auf dieses Ticket");
       }
-      // Employees cannot change status, priority, or assignment
-      if (body.status || body.priority || body.assignedToId !== undefined) {
-        return forbidden(
-          "Nur Vorgesetzte können Status, Priorität oder Zuweisung ändern",
-        );
+
+      // Assignees (even employees) can change STATUS only
+      if (isAssignee) {
+        if (body.priority || body.assignedToId !== undefined) {
+          return forbidden(
+            "Nur Vorgesetzte können Priorität oder Zuweisung ändern",
+          );
+        }
+      } else {
+        // Pure creators (not assignee) cannot change status/priority/assignment
+        if (body.status || body.priority || body.assignedToId !== undefined) {
+          return forbidden(
+            "Nur Vorgesetzte oder der Bearbeiter können Status ändern",
+          );
+        }
       }
     }
 
     const data: Record<string, unknown> = { ...body };
     const actor = { id: user.id, name: user.name ?? "System" };
 
+    // ── Auto-transition: OFFEN → IN_BEARBEITUNG on assignment ──
+    if (
+      body.assignedToId &&
+      body.assignedToId !== existing.assignedToId &&
+      existing.status === "OFFEN" &&
+      !body.status
+    ) {
+      data.status = "IN_BEARBEITUNG";
+    }
+
     // Set closedAt timestamp when closing
-    if (body.status === "GESCHLOSSEN" && existing.status !== "GESCHLOSSEN") {
+    const effectiveStatus = (data.status as string) ?? existing.status;
+    if (
+      effectiveStatus === "GESCHLOSSEN" &&
+      existing.status !== "GESCHLOSSEN"
+    ) {
       data.closedAt = new Date();
     }
 
     // Re-open: clear closedAt
     if (
-      body.status &&
-      ["OFFEN", "IN_BEARBEITUNG"].includes(body.status) &&
+      effectiveStatus !== "GESCHLOSSEN" &&
       existing.status === "GESCHLOSSEN"
     ) {
       data.closedAt = null;
@@ -167,15 +194,28 @@ export async function PATCH(
       },
     });
 
-    // Audit trail: status change
-    if (body.status && body.status !== existing.status) {
-      logStatusChanged(ticket.id, actor, existing.status, body.status);
-      if (body.status === "GESCHLOSSEN") {
+    // ── Audit trail + Notifications: status change ──────────────
+    const finalStatus = (data.status as string) ?? null;
+    if (finalStatus && finalStatus !== existing.status) {
+      logStatusChanged(ticket.id, actor, existing.status, finalStatus);
+      if (finalStatus === "GESCHLOSSEN") {
         logTicketClosed(ticket.id, actor);
       }
+
+      notifyStatusChanged({
+        actorId: user.id,
+        workspaceId,
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        actorName: user.name ?? "System",
+        newStatus: finalStatus,
+        creatorId: existing.createdById,
+        assigneeId: ticket.assignedToId,
+      });
     }
 
-    // Audit trail: assignment change
+    // ── Audit trail + Notifications: assignment change ──────────
     if (
       body.assignedToId !== undefined &&
       body.assignedToId !== existing.assignedToId
@@ -186,6 +226,18 @@ export async function PATCH(
         existing.assignedTo?.name ?? existing.assignedToId,
         ticket.assignedTo?.name ?? body.assignedToId,
       );
+
+      // Notify the new assignee
+      if (body.assignedToId) {
+        notifyTicketAssigned({
+          assigneeId: body.assignedToId,
+          workspaceId,
+          ticketId: ticket.id,
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          assignedByName: user.name ?? "System",
+        });
+      }
     }
 
     log.info("Ticket updated", {

@@ -7,6 +7,7 @@ import { createTicketSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { logTicketCreated } from "@/lib/ticket-events";
+import { notifyNewTicket } from "@/lib/ticket-notifications";
 
 // ─── GET  /api/tickets ──────────────────────────────────────────
 export async function GET(req: Request) {
@@ -148,6 +149,16 @@ export async function POST(req: Request) {
       ticketNumber: ticket.ticketNumber,
       userId: user.id,
       workspaceId,
+    });
+
+    // Notify all managers/admins about the new ticket
+    notifyNewTicket({
+      creatorId: user.id,
+      workspaceId,
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      subject: ticket.subject,
+      creatorName: user.name ?? "Mitarbeiter",
     });
 
     return NextResponse.json(ticket, { status: 201 });

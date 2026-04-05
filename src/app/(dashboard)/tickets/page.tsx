@@ -86,6 +86,7 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [filterAssignedToMe, setFilterAssignedToMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchTickets = useCallback(async () => {
@@ -93,6 +94,7 @@ export default function TicketsPage() {
       const params = new URLSearchParams();
       if (filterStatus !== "all") params.set("status", filterStatus);
       if (filterCategory !== "all") params.set("category", filterCategory);
+      if (filterAssignedToMe && user?.id) params.set("assignedToId", user.id);
       if (searchQuery) params.set("search", searchQuery);
 
       const res = await fetch(`/api/tickets?${params}`);
@@ -105,7 +107,7 @@ export default function TicketsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterCategory, searchQuery]);
+  }, [filterStatus, filterCategory, filterAssignedToMe, user?.id, searchQuery]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -194,6 +196,14 @@ export default function TicketsPage() {
               <option value="HR">{t("categories.HR")}</option>
               <option value="SONSTIGES">{t("categories.SONSTIGES")}</option>
             </Select>
+            <Button
+              variant={filterAssignedToMe ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterAssignedToMe((v) => !v)}
+              className="whitespace-nowrap"
+            >
+              {t("filters.assignedToMe")}
+            </Button>
           </div>
           <Button onClick={() => router.push("/tickets/neu")}>
             <PlusIcon className="h-4 w-4" />

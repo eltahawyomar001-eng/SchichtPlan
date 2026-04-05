@@ -109,6 +109,9 @@ export default function TicketDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [users, setUsers] = useState<WorkspaceUser[]>([]);
 
+  // Derived: is the current user the assignee of this ticket?
+  const isAssignee = !!(user && ticket && ticket.assignedTo?.id === user.id);
+
   const fetchTicket = useCallback(async () => {
     try {
       const res = await fetch(`/api/tickets/${id}`);
@@ -123,7 +126,7 @@ export default function TicketDetailPage() {
   }, [id]);
 
   const fetchEvents = useCallback(async () => {
-    if (!canManage) return;
+    if (!canManage && !isAssignee) return;
     try {
       const res = await fetch(`/api/tickets/${id}/events`);
       if (res.ok) {
@@ -132,7 +135,7 @@ export default function TicketDetailPage() {
     } catch {
       // silent
     }
-  }, [id, canManage]);
+  }, [id, canManage, isAssignee]);
 
   const fetchUsers = useCallback(async () => {
     if (!canManage) return;
@@ -503,8 +506,39 @@ export default function TicketDetailPage() {
               </Card>
             )}
 
-            {/* Audit Trail (Management only) */}
-            {canManage && events.length > 0 && (
+            {/* Assignee Status Controls (employees assigned to this ticket) */}
+            {!canManage && isAssignee && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("updateStatus")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label className="text-xs">{t("status")}</Label>
+                    <Select
+                      value={ticket.status}
+                      onChange={(e) =>
+                        handleUpdateTicket({ status: e.target.value })
+                      }
+                    >
+                      <option value="OFFEN">{t("statuses.OFFEN")}</option>
+                      <option value="IN_BEARBEITUNG">
+                        {t("statuses.IN_BEARBEITUNG")}
+                      </option>
+                      <option value="GESCHLOSSEN">
+                        {t("statuses.GESCHLOSSEN")}
+                      </option>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {t("assigneeStatusHint")}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Audit Trail (Management + Assignee) */}
+            {(canManage || isAssignee) && events.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">{t("auditTrail")}</CardTitle>

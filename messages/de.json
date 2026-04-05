@@ -2438,6 +2438,8 @@
     "externalSubmitter": "Externer Einreicher",
     "unknownAuthor": "Unbekannt",
     "manage": "Verwalten",
+    "updateStatus": "Status aktualisieren",
+    "assigneeStatusHint": "Als zugewiesener Bearbeiter können Sie den Status dieses Tickets ändern.",
     "backToList": "Zurück zur Übersicht",
     "notFound": "Ticket nicht gefunden",
     "searchPlaceholder": "Ticket suchen...",
@@ -2483,7 +2485,8 @@
     },
     "filters": {
       "allStatuses": "Alle Status",
-      "allCategories": "Alle Kategorien"
+      "allCategories": "Alle Kategorien",
+      "assignedToMe": "Mir zugewiesen"
     },
     "stats": {
       "total": "Gesamt",

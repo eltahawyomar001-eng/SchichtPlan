@@ -237,7 +237,7 @@ export default function JahresplanungSeite() {
 
       <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Controls bar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex flex-col items-center gap-2 sm:gap-3">
           {/* Year selector */}
           <div className="flex items-center gap-1">
             <button
@@ -267,48 +267,50 @@ export default function JahresplanungSeite() {
             </button>
           </div>
 
-          {/* Department filter */}
-          {departments.length > 0 && (
-            <Select
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-40 sm:w-48"
-            >
-              <option value="">{t("allDepartments")}</option>
-              {departments.map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-          )}
+          {/* Department filter + View tabs row */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full">
+            {departments.length > 0 && (
+              <Select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                className="w-40 sm:w-48"
+              >
+                <option value="">{t("allDepartments")}</option>
+                {departments.map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            )}
 
-          {/* View tabs — full width on mobile, auto on sm+ */}
-          <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1">
-            <button
-              onClick={() => setActiveTab("calendar")}
-              className={cn(
-                "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
-                activeTab === "calendar"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700",
-              )}
-            >
-              <span className="hidden sm:inline">{t("calendarView")}</span>
-              <span className="sm:hidden">{t("calendarViewShort")}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("summary")}
-              className={cn(
-                "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
-                activeTab === "summary"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700",
-              )}
-            >
-              <span className="hidden sm:inline">{t("summaryView")}</span>
-              <span className="sm:hidden">{t("summaryViewShort")}</span>
-            </button>
+            {/* View tabs — full width on mobile, auto on sm+ */}
+            <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+              <button
+                onClick={() => setActiveTab("calendar")}
+                className={cn(
+                  "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
+                  activeTab === "calendar"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700",
+                )}
+              >
+                <span className="hidden sm:inline">{t("calendarView")}</span>
+                <span className="sm:hidden">{t("calendarViewShort")}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("summary")}
+                className={cn(
+                  "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
+                  activeTab === "summary"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700",
+                )}
+              >
+                <span className="hidden sm:inline">{t("summaryView")}</span>
+                <span className="sm:hidden">{t("summaryViewShort")}</span>
+              </button>
+            </div>
           </div>
         </div>
 

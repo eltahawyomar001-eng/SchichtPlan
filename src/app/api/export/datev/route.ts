@@ -68,6 +68,18 @@ export async function GET(req: Request) {
       orderBy: [{ employee: { lastName: "asc" } }, { date: "asc" }],
     });
 
+    // Check which months are closed (LOCKED or EXPORTED) to show "Abgeschlossen"
+    const monthCloseRecords = await prisma.monthClose.findMany({
+      where: {
+        workspaceId,
+        status: { in: ["LOCKED", "EXPORTED"] },
+      },
+      select: { year: true, month: true },
+    });
+    const closedMonths = new Set(
+      monthCloseRecords.map((mc) => `${mc.year}-${mc.month}`),
+    );
+
     // Build filename with employee name if a specific employee was selected
     let employeeName = "Alle";
     if (employeeId && entries.length > 0) {
@@ -95,7 +107,7 @@ export async function GET(req: Request) {
     }
 
     // Build CSV
-    const csv = buildDATEVCsv(entries, format === "datev");
+    const csv = buildDATEVCsv(entries, format === "datev", closedMonths);
 
     // Record export against monthly quota
     await recordPdfGeneration(workspaceId);
@@ -183,6 +195,7 @@ function aggregateByEmployee(entries: TimeEntryWithRelations[]) {
 function buildDATEVCsv(
   entries: TimeEntryWithRelations[],
   datevFormat: boolean,
+  closedMonths: Set<string>,
 ): string {
   const BOM = "\uFEFF"; // UTF-8 BOM for Excel
   // Always use semicolon — German Excel expects ";" as list separator
@@ -202,23 +215,29 @@ function buildDATEVCsv(
     "Status",
   ];
 
-  const rows = entries.map((e) => [
-    e.employee.id.slice(-6), // Short personnel number
-    e.employee.lastName,
-    e.employee.firstName,
-    formatDateDE(e.date),
-    e.startTime,
-    e.endTime,
-    String(e.breakMinutes),
-    toIndustrialHours(e.grossMinutes)
-      .toFixed(2)
-      .replace(".", datevFormat ? "," : "."),
-    toIndustrialHours(e.netMinutes)
-      .toFixed(2)
-      .replace(".", datevFormat ? "," : "."),
-    e.location?.name || "",
-    e.status,
-  ]);
+  const rows = entries.map((e) => {
+    const entryDate = new Date(e.date);
+    const monthKey = `${entryDate.getFullYear()}-${entryDate.getMonth() + 1}`;
+    const isClosed = closedMonths.has(monthKey);
+
+    return [
+      e.employee.id.slice(-6), // Short personnel number
+      e.employee.lastName,
+      e.employee.firstName,
+      formatDateDE(e.date),
+      e.startTime,
+      e.endTime,
+      String(e.breakMinutes),
+      toIndustrialHours(e.grossMinutes)
+        .toFixed(2)
+        .replace(".", datevFormat ? "," : "."),
+      toIndustrialHours(e.netMinutes)
+        .toFixed(2)
+        .replace(".", datevFormat ? "," : "."),
+      e.location?.name || "",
+      isClosed ? "Abgeschlossen" : e.status,
+    ];
+  });
 
   const csvLines = [
     headers.join(sep),

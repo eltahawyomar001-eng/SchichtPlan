@@ -85,6 +85,18 @@ export async function GET(req: Request) {
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       });
 
+      // Check which months are closed to show "Abgeschlossen" in Status
+      const monthCloseRecords = await prisma.monthClose.findMany({
+        where: {
+          workspaceId: user.workspaceId,
+          status: { in: ["LOCKED", "EXPORTED"] },
+        },
+        select: { year: true, month: true },
+      });
+      const closedMonths = new Set(
+        monthCloseRecords.map((mc) => `${mc.year}-${mc.month}`),
+      );
+
       const ws = workbook.addWorksheet("Zeiteinträge");
       ws.columns = [
         { header: "Datum", key: "date", width: 15 },
@@ -96,7 +108,11 @@ export async function GET(req: Request) {
         { header: "Status", key: "status", width: 15 },
         { header: "Bemerkung", key: "remarks", width: 30 },
       ];
-      entries.forEach((e) =>
+      entries.forEach((e) => {
+        const entryDate = new Date(e.date);
+        const monthKey = `${entryDate.getFullYear()}-${entryDate.getMonth() + 1}`;
+        const isClosed = closedMonths.has(monthKey);
+
         ws.addRow({
           date: e.date.toISOString().split("T")[0],
           employee: `${e.employee.firstName} ${e.employee.lastName}`,
@@ -104,10 +120,10 @@ export async function GET(req: Request) {
           endTime: e.endTime,
           breakMinutes: e.breakMinutes,
           netMinutes: e.netMinutes,
-          status: e.status,
+          status: isClosed ? "Abgeschlossen" : e.status,
           remarks: e.remarks,
-        }),
-      );
+        });
+      });
     } else {
       // shifts
       const where: Record<string, unknown> = {

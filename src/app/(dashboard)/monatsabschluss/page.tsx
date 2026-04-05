@@ -60,14 +60,8 @@ export default function MonatsabschlussSeite() {
     monthNum: number,
     action: "lock" | "unlock" | "export",
   ) {
-    // Destructive/irreversible actions require confirmation
-    if (action === "lock" || action === "export") {
-      setConfirmAction({ month: monthNum, action });
-      return;
-    }
-    // Reopening an exported month also requires confirmation
-    const record = records.find((r) => r.month === monthNum);
-    if (action === "unlock" && record?.status === "EXPORTED") {
+    // Both closing and reopening require confirmation
+    if (action === "lock" || action === "unlock") {
       setConfirmAction({ month: monthNum, action });
       return;
     }
@@ -116,8 +110,11 @@ export default function MonatsabschlussSeite() {
 
   const statusConfig: Record<string, { color: string; label: string }> = {
     OPEN: { color: "bg-gray-100 text-gray-700", label: t("open") },
-    LOCKED: { color: "bg-yellow-100 text-yellow-800", label: t("locked") },
-    EXPORTED: { color: "bg-green-100 text-green-800", label: t("exported") },
+    LOCKED: { color: "bg-emerald-100 text-emerald-800", label: t("locked") },
+    EXPORTED: {
+      color: "bg-emerald-100 text-emerald-800",
+      label: t("exported"),
+    },
   };
 
   const currentYear = now.getFullYear();
@@ -193,38 +190,16 @@ export default function MonatsabschlussSeite() {
                             {t("lock")}
                           </Button>
                         )}
-                        {status === "LOCKED" && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleAction(m, "unlock")}
-                              disabled={acting === `${m}-unlock`}
-                            >
-                              {t("unlock")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleAction(m, "export")}
-                              disabled={acting === `${m}-export`}
-                            >
-                              {t("export")}
-                            </Button>
-                          </>
-                        )}
-                        {status === "EXPORTED" && (
-                          <div className="flex flex-col gap-2">
-                            <p className="text-xs text-gray-400">
-                              {record?.exportedAt
-                                ? new Date(
-                                    record.exportedAt,
-                                  ).toLocaleDateString(
-                                    locale === "en" ? "en-GB" : "de-DE",
-                                  )
-                                : "—"}
-                            </p>
+                        {(status === "LOCKED" || status === "EXPORTED") && (
+                          <div className="flex flex-col gap-2 w-full">
+                            {record?.lockedAt && (
+                              <p className="text-xs text-gray-400">
+                                {t("closedAt")}:{" "}
+                                {new Date(record.lockedAt).toLocaleDateString(
+                                  locale === "en" ? "en-GB" : "de-DE",
+                                )}
+                              </p>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
@@ -251,23 +226,15 @@ export default function MonatsabschlussSeite() {
         title={
           confirmAction?.action === "lock"
             ? t("lockConfirmTitle")
-            : confirmAction?.action === "unlock"
-              ? t("reopenConfirmTitle")
-              : t("exportConfirmTitle")
+            : t("reopenConfirmTitle")
         }
         message={
           confirmAction?.action === "lock"
             ? t("lockConfirmMessage")
-            : confirmAction?.action === "unlock"
-              ? t("reopenConfirmMessage")
-              : t("exportConfirmMessage")
+            : t("reopenConfirmMessage")
         }
         confirmLabel={
-          confirmAction?.action === "lock"
-            ? t("lock")
-            : confirmAction?.action === "unlock"
-              ? t("reopen")
-              : t("export")
+          confirmAction?.action === "lock" ? t("lock") : t("reopen")
         }
         cancelLabel={tc("cancel")}
         variant={confirmAction?.action === "unlock" ? "warning" : "danger"}

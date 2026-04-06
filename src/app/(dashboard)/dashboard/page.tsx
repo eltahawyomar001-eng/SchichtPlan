@@ -14,7 +14,6 @@ import {
   CalendarOffIcon,
   SwapIcon,
   RocketIcon,
-  HandRaisedIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
@@ -111,6 +110,7 @@ export default async function DashboardPage() {
           <EmployeeDashboardContent
             workspaceId={workspaceId}
             employeeId={user?.employeeId ?? undefined}
+            userId={user.id}
           />
         </Suspense>
       </div>
@@ -133,105 +133,75 @@ export default async function DashboardPage() {
 async function EmployeeDashboardContent({
   workspaceId,
   employeeId,
+  userId,
 }: {
   workspaceId: string;
   employeeId?: string;
+  userId: string;
 }) {
   const t = await getTranslations("dashboard");
   const locale = await getLocale();
   const statusLabel = getStatusLabel(t);
   const { todayStart, todayEnd } = getTodayBounds();
 
-  const [myTodayShifts, myUpcomingShifts, myPendingAbsences, myPendingSwaps] =
-    await Promise.all([
-      employeeId
-        ? prisma.shift.findMany({
-            where: {
-              workspaceId,
-              employeeId,
-              date: { gte: todayStart, lt: todayEnd },
-            },
-            include: { employee: true, location: true },
-            orderBy: { startTime: "asc" },
-          })
-        : Promise.resolve([]),
-      employeeId
-        ? prisma.shift.findMany({
-            where: {
-              workspaceId,
-              employeeId,
-              date: { gt: todayEnd },
-            },
-            include: { employee: true, location: true },
-            orderBy: [{ date: "asc" }, { startTime: "asc" }],
-            take: 5,
-          })
-        : Promise.resolve([]),
-      employeeId
-        ? prisma.absenceRequest.count({
-            where: { workspaceId, employeeId, status: "AUSSTEHEND" },
-          })
-        : Promise.resolve(0),
-      employeeId
-        ? prisma.shiftSwapRequest.count({
-            where: {
-              workspaceId,
-              requesterId: employeeId,
-              status: "ANGEFRAGT",
-            },
-          })
-        : Promise.resolve(0),
-    ]);
+  const [
+    myTodayShifts,
+    myUpcomingShifts,
+    myPendingAbsences,
+    myPendingSwaps,
+    currentUser,
+  ] = await Promise.all([
+    employeeId
+      ? prisma.shift.findMany({
+          where: {
+            workspaceId,
+            employeeId,
+            date: { gte: todayStart, lt: todayEnd },
+          },
+          include: { employee: true, location: true },
+          orderBy: { startTime: "asc" },
+        })
+      : Promise.resolve([]),
+    employeeId
+      ? prisma.shift.findMany({
+          where: {
+            workspaceId,
+            employeeId,
+            date: { gt: todayEnd },
+          },
+          include: { employee: true, location: true },
+          orderBy: [{ date: "asc" }, { startTime: "asc" }],
+          take: 5,
+        })
+      : Promise.resolve([]),
+    employeeId
+      ? prisma.absenceRequest.count({
+          where: { workspaceId, employeeId, status: "AUSSTEHEND" },
+        })
+      : Promise.resolve(0),
+    employeeId
+      ? prisma.shiftSwapRequest.count({
+          where: {
+            workspaceId,
+            requesterId: employeeId,
+            status: "ANGEFRAGT",
+          },
+        })
+      : Promise.resolve(0),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { dashboardFavorites: true },
+    }),
+  ]);
+
+  const favorites: string[] = currentUser?.dashboardFavorites
+    ? JSON.parse(currentUser.dashboardFavorites)
+    : [];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* Employee Quick Links */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <Link
-          href="/schichtplan"
-          className="flex items-center gap-3 rounded-2xl bg-white p-3.5 sm:p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md overflow-hidden min-w-0"
-        >
-          <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 flex-shrink-0 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-            <CalendarIcon className="h-5 w-5 text-emerald-600" />
-          </div>
-          <span className="text-[14px] sm:text-sm font-semibold text-gray-700 group-hover:text-emerald-700 truncate min-w-0">
-            {t("myShifts")}
-          </span>
-        </Link>
-        <Link
-          href="/abwesenheiten"
-          className="flex items-center gap-3 rounded-2xl bg-white p-3.5 sm:p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-orange-200 sm:hover:shadow-md overflow-hidden min-w-0"
-        >
-          <div className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-2.5 flex-shrink-0 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
-            <CalendarOffIcon className="h-5 w-5 text-orange-600" />
-          </div>
-          <span className="text-[14px] sm:text-sm font-semibold text-gray-700 group-hover:text-orange-700 truncate min-w-0">
-            {t("requestAbsence")}
-          </span>
-        </Link>
-        <Link
-          href="/verfuegbarkeiten"
-          className="flex items-center gap-3 rounded-2xl bg-white p-3.5 sm:p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md overflow-hidden min-w-0"
-        >
-          <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 flex-shrink-0 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-            <HandRaisedIcon className="h-5 w-5 text-emerald-600" />
-          </div>
-          <span className="text-[14px] sm:text-sm font-semibold text-gray-700 group-hover:text-emerald-700 truncate min-w-0">
-            {t("myAvailability")}
-          </span>
-        </Link>
-        <Link
-          href="/schichttausch"
-          className="flex items-center gap-3 rounded-2xl bg-white p-3.5 sm:p-4 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1)] transition-all duration-200 group card-elevated sm:border sm:border-gray-100 sm:shadow-none sm:hover:border-emerald-200 sm:hover:shadow-md overflow-hidden min-w-0"
-        >
-          <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 flex-shrink-0 group-hover:from-emerald-100 group-hover:to-emerald-200 transition-colors">
-            <SwapIcon className="h-5 w-5 text-emerald-600" />
-          </div>
-          <span className="text-[14px] sm:text-sm font-semibold text-gray-700 group-hover:text-emerald-700 truncate min-w-0">
-            {t("shiftSwap")}
-          </span>
-        </Link>
-      </div>
+      {/* Employee Favorites */}
+      <FavoritesSection initialFavorites={favorites} />
 
       {/* My Pending Requests */}
       {(myPendingAbsences > 0 || myPendingSwaps > 0) && (

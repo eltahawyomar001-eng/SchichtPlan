@@ -1112,13 +1112,13 @@ export default function NachrichtenPage() {
           {showAddMembers && (
             <div className="mb-3">
               <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                 <input
                   type="text"
                   value={addMemberSearch}
                   onChange={(e) => setAddMemberSearch(e.target.value)}
                   placeholder={t("searchMembers")}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
                   autoFocus
                 />
               </div>
@@ -1245,7 +1245,7 @@ export default function NachrichtenPage() {
             </div>
           </div>
           {/* iOS hairline separator */}
-          <div className="h-px bg-black/[0.08] md:bg-gray-100" />
+          <div className="h-px bg-black/[0.08] dark:bg-white/[0.08] md:bg-gray-100 md:dark:bg-zinc-700" />
 
           {/* Channel search — iOS style */}
           <div className="flex-shrink-0 px-3.5 py-2 md:px-3 md:py-2">
@@ -1256,7 +1256,7 @@ export default function NachrichtenPage() {
                 value={channelSearch}
                 onChange={(e) => setChannelSearch(e.target.value)}
                 placeholder={t("searchChannels")}
-                className="w-full rounded-[10px] border-0 bg-[#767680]/[0.12] py-[7px] pl-8 pr-3 text-[15px] text-gray-900 placeholder:text-[#8e8e93] transition-all focus:bg-[#767680]/[0.18] focus:ring-0 focus:outline-none md:py-2 md:pl-9 md:text-xs md:rounded-xl md:border md:border-gray-200 md:bg-white md:shadow-sm md:placeholder:text-gray-400 md:focus:ring-2 md:focus:ring-emerald-100 md:focus:bg-white"
+                className="w-full rounded-[10px] border-0 bg-[#767680]/[0.12] py-[7px] pl-8 pr-3 text-[15px] text-gray-900 dark:text-zinc-100 placeholder:text-[#8e8e93] transition-all focus:bg-[#767680]/[0.18] focus:ring-0 focus:outline-none md:py-2 md:pl-9 md:text-xs md:rounded-xl md:border md:border-gray-200 md:dark:border-zinc-700 md:bg-white md:dark:bg-zinc-800 md:shadow-sm md:dark:shadow-none md:placeholder:text-gray-400 md:dark:placeholder:text-zinc-500 md:focus:ring-2 md:focus:ring-emerald-100 md:dark:focus:ring-emerald-900 md:focus:bg-white md:dark:focus:bg-zinc-800"
               />
             </div>
           </div>
@@ -1461,7 +1461,7 @@ export default function NachrichtenPage() {
                           value={messageSearch}
                           onChange={(e) => setMessageSearch(e.target.value)}
                           placeholder={t("searchMessages")}
-                          className="w-28 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300 sm:w-40"
+                          className="w-28 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 px-2 py-1 text-xs text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700 sm:w-40"
                           autoFocus
                         />
                         <button
@@ -2504,13 +2504,13 @@ export default function NachrichtenPage() {
 
                 {/* Search input */}
                 <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                   <input
                     type="text"
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     placeholder={t("searchMembers")}
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                    className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
                   />
                 </div>
 
@@ -2599,13 +2599,13 @@ export default function NachrichtenPage() {
 
             <div className="flex-1 overflow-hidden p-3 sm:p-4">
               <div className="relative mb-3">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                 <input
                   type="text"
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
                   placeholder={t("searchMembers")}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
                   autoFocus
                 />
               </div>

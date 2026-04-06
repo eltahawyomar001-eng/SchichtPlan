@@ -278,7 +278,7 @@ const permissionMatrix: Record<Resource, Record<Action, Role[]>> = {
   },
   "service-visits": {
     read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE filtered to own
-    create: ["OWNER", "ADMIN", "MANAGER"],
+    create: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE: own visits only
     update: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE: check-in/out own
     delete: ["OWNER", "ADMIN", "MANAGER"],
     approve: [],

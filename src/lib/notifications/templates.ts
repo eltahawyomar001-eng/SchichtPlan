@@ -74,6 +74,10 @@ function getCtaLabel(type: string, locale: string): string {
       de: "Zeiterfassung öffnen",
       en: "Open time tracking",
     },
+    VISIT_SIGNED: {
+      de: "Leistungsnachweis ansehen",
+      en: "View service proof",
+    },
   };
   const entry = labels[type];
   if (entry) return locale === "de" ? entry.de : entry.en;

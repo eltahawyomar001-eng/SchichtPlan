@@ -15,6 +15,7 @@ import {
   AlertCircleIcon,
   TicketIcon,
   MessageCircleIcon,
+  FileCheckIcon,
 } from "@/components/icons";
 import { useLocale, useTranslations } from "next-intl";
 import type { SVGProps, ComponentType } from "react";
@@ -62,6 +63,7 @@ export function NotificationDropdown() {
     TICKET_STATUS_CHANGED: t("types.ticketStatusChanged"),
     TICKET_COMMENT: t("types.ticketComment"),
     TICKET_CREATED: t("types.ticketCreated"),
+    VISIT_SIGNED: t("types.visitSigned"),
   };
 
   function getTranslatedTitle(n: Notification) {
@@ -188,6 +190,7 @@ export function NotificationDropdown() {
     TICKET_STATUS_CHANGED: { icon: TicketIcon, color: "text-blue-500" },
     TICKET_COMMENT: { icon: MessageCircleIcon, color: "text-emerald-500" },
     TICKET_CREATED: { icon: TicketIcon, color: "text-amber-500" },
+    VISIT_SIGNED: { icon: FileCheckIcon, color: "text-emerald-600" },
   };
 
   function getNotificationIcon(type: string) {

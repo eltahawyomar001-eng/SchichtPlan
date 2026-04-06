@@ -1430,7 +1430,8 @@
       "ticketAssigned": "Ticket zugewiesen",
       "ticketStatusChanged": "Ticket-Status geändert",
       "ticketComment": "Neuer Ticket-Kommentar",
-      "ticketCreated": "Neues Ticket erstellt"
+      "ticketCreated": "Neues Ticket erstellt",
+      "visitSigned": "Leistungsnachweis unterschrieben"
     }
   },
   "notificationPrefs": {
@@ -2287,6 +2288,7 @@
     "title": "Leistungsnachweis",
     "description": "Digitale Dokumentation Ihrer Serviceeinsätze",
     "createVisit": "Einsatz planen",
+    "createVisitEmployee": "Einsatz erstellen",
     "searchPlaceholder": "Mitarbeiter oder Standort suchen…",
     "allStatuses": "Alle Status",
     "status": {
@@ -2319,6 +2321,7 @@
     },
     "errors": {
       "requiredFields": "Mitarbeiter und Standort sind Pflichtfelder",
+      "locationRequired": "Bitte wählen Sie einen Standort aus",
       "genericError": "Fehler",
       "networkError": "Netzwerkfehler",
       "checkInFailed": "Check-in fehlgeschlagen",
@@ -2333,7 +2336,8 @@
       "location": "Standort",
       "selectLocation": "Standort wählen",
       "notes": "Notizen",
-      "notesPlaceholder": "Optionale Anmerkungen…"
+      "notesPlaceholder": "Optionale Anmerkungen…",
+      "selfAssigned": "Dieser Leistungsnachweis wird Ihnen automatisch zugeordnet."
     },
     "signature": {
       "title": "Unterschrift erfassen",

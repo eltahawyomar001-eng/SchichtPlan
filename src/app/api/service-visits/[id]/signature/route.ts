@@ -13,6 +13,7 @@ import {
 import { visitSignatureSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
+import { createSystemNotification } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import crypto from "crypto";
 
@@ -66,7 +67,11 @@ export async function POST(
 
     const visit = await prisma.serviceVisit.findFirst({
       where: { id, workspaceId },
-      include: { signature: true },
+      include: {
+        signature: true,
+        employee: { select: { id: true, firstName: true, lastName: true } },
+        location: { select: { id: true, name: true } },
+      },
     });
 
     if (!visit) {
@@ -159,6 +164,20 @@ export async function POST(
       signatureId: signature.id,
       signerName,
     });
+
+    // ── Notify managers about the completed signature ──
+    const empName = `${visit.employee.firstName} ${visit.employee.lastName}`;
+    const locName = visit.location.name;
+    createSystemNotification({
+      type: "VISIT_SIGNED",
+      title: "Leistungsnachweis unterschrieben",
+      message: `Der Leistungsnachweis für ${empName} am Standort ${locName} wurde von ${signerName} unterschrieben.`,
+      link: "/leistungsnachweis",
+      workspaceId,
+      recipientType: "managers",
+    }).catch((err) =>
+      log.error("[service-visits] Notification dispatch error", { error: err }),
+    );
 
     return NextResponse.json(signature, { status: 201 });
   } catch (error) {

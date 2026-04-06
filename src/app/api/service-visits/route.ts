@@ -104,12 +104,29 @@ export async function POST(req: Request) {
     const parsed = validateBody(createServiceVisitSchema, body);
     if (!parsed.success) return parsed.response;
 
-    const { scheduledDate, employeeId, locationId, notes } = parsed.data;
+    const {
+      scheduledDate,
+      employeeId: rawEmployeeId,
+      locationId,
+      notes,
+    } = parsed.data;
+
+    // EMPLOYEE can only create visits for themselves
+    let effectiveEmployeeId = rawEmployeeId;
+    if (isEmployee(user)) {
+      if (!user.employeeId) {
+        return NextResponse.json(
+          { error: "Kein Mitarbeiterprofil verknüpft" },
+          { status: 400 },
+        );
+      }
+      effectiveEmployeeId = user.employeeId;
+    }
 
     // Verify employee and location belong to workspace
     const [employee, location] = await Promise.all([
       prisma.employee.findFirst({
-        where: { id: employeeId, workspaceId },
+        where: { id: effectiveEmployeeId, workspaceId },
       }),
       prisma.location.findFirst({
         where: { id: locationId, workspaceId },
@@ -133,7 +150,7 @@ export async function POST(req: Request) {
       data: {
         scheduledDate: new Date(scheduledDate),
         notes: notes || null,
-        employeeId,
+        employeeId: effectiveEmployeeId,
         locationId,
         workspaceId,
       },
@@ -158,13 +175,13 @@ export async function POST(req: Request) {
       visitId: visit.id,
       userId: user.id,
       workspaceId,
-      metadata: { employeeId, locationId, scheduledDate },
+      metadata: { employeeId: effectiveEmployeeId, locationId, scheduledDate },
     });
 
     log.info("[service-visits] Visit created", {
       visitId: visit.id,
       locationId,
-      employeeId,
+      employeeId: effectiveEmployeeId,
     });
 
     return NextResponse.json(visit, { status: 201 });

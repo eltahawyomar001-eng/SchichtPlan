@@ -142,13 +142,18 @@ export default function LeistungsnachweisSeite() {
 
   // Load employees + locations for create form
   useEffect(() => {
-    if (!isManagement) return;
-    Promise.all([
-      fetch("/api/employees?limit=500").then((r) => r.json()),
-      fetch("/api/locations?limit=500").then((r) => r.json()),
-    ]).then(([empRes, locRes]) => {
-      setEmployees(empRes.data ?? []);
-      setLocations(locRes.data ?? []);
+    // Managers see all employees; employees only need locations
+    const fetches: Promise<Response>[] = [fetch("/api/locations?limit=500")];
+    if (isManagement) {
+      fetches.unshift(fetch("/api/employees?limit=500"));
+    }
+    Promise.all(fetches.map((f) => f.then((r) => r.json()))).then((results) => {
+      if (isManagement) {
+        setEmployees(results[0].data ?? []);
+        setLocations(results[1].data ?? []);
+      } else {
+        setLocations(results[0].data ?? []);
+      }
     });
   }, [isManagement]);
 
@@ -156,15 +161,28 @@ export default function LeistungsnachweisSeite() {
 
   const handleCreate = async () => {
     setFormError(null);
-    if (!createForm.employeeId || !createForm.locationId) {
+    // For employees, the backend enforces their own employeeId —
+    // we send a placeholder that will be overridden server-side
+    const effectiveEmployeeId = isManagement
+      ? createForm.employeeId
+      : user?.employeeId || "self";
+    if (isManagement && !effectiveEmployeeId) {
       setFormError(t("errors.requiredFields"));
       return;
     }
+    if (!createForm.locationId) {
+      setFormError(t("errors.locationRequired"));
+      return;
+    }
     try {
+      const payload = {
+        ...createForm,
+        employeeId: effectiveEmployeeId,
+      };
       const res = await fetch("/api/service-visits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createForm),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -273,16 +291,16 @@ export default function LeistungsnachweisSeite() {
         title={t("title")}
         description={t("description")}
         actions={
-          isManagement ? (
-            <Button
-              size="sm"
-              onClick={() => setShowCreate(true)}
-              className="hidden sm:inline-flex"
-            >
-              <PlusIcon className="h-4 w-4" />
-              <span>{t("createVisit")}</span>
-            </Button>
-          ) : undefined
+          <Button
+            size="sm"
+            onClick={() => setShowCreate(true)}
+            className="hidden sm:inline-flex"
+          >
+            <PlusIcon className="h-4 w-4" />
+            <span>
+              {isManagement ? t("createVisit") : t("createVisitEmployee")}
+            </span>
+          </Button>
         }
       />
 
@@ -381,7 +399,7 @@ export default function LeistungsnachweisSeite() {
       <AdaptiveModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        title={t("createVisit")}
+        title={isManagement ? t("createVisit") : t("createVisitEmployee")}
         size="md"
         footer={
           <div className="flex gap-3">
@@ -423,25 +441,33 @@ export default function LeistungsnachweisSeite() {
               className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
             />
           </div>
-          <div>
-            <Label className="text-sm font-medium text-gray-700">
-              {t("form.employee")}
-            </Label>
-            <Select
-              value={createForm.employeeId}
-              onChange={(e) =>
-                setCreateForm((f) => ({ ...f, employeeId: e.target.value }))
-              }
-              className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
-            >
-              <option value="">{t("form.selectEmployee")}</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.firstName} {emp.lastName}
-                </option>
-              ))}
-            </Select>
-          </div>
+          {isManagement ? (
+            <div>
+              <Label className="text-sm font-medium text-gray-700">
+                {t("form.employee")}
+              </Label>
+              <Select
+                value={createForm.employeeId}
+                onChange={(e) =>
+                  setCreateForm((f) => ({ ...f, employeeId: e.target.value }))
+                }
+                className="mt-1.5 !h-14 !text-base !px-4 md:!h-10 md:!text-sm md:!px-3.5"
+              >
+                <option value="">{t("form.selectEmployee")}</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-sm text-emerald-700">
+                {t("form.selfAssigned")}
+              </p>
+            </div>
+          )}
           <div>
             <Label className="text-sm font-medium text-gray-700">
               {t("form.location")}
@@ -477,16 +503,14 @@ export default function LeistungsnachweisSeite() {
         </div>
       </AdaptiveModal>
 
-      {/* ── Mobile FAB — "Plan Visit" ── */}
-      {isManagement && (
-        <button
-          onClick={() => setShowCreate(true)}
-          className="fixed z-40 sm:hidden right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] h-14 w-14 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center active:scale-95 transition-transform"
-          aria-label={t("createVisit")}
-        >
-          <PlusIcon className="h-6 w-6" />
-        </button>
-      )}
+      {/* ── Mobile FAB — "Create Visit" ── */}
+      <button
+        onClick={() => setShowCreate(true)}
+        className="fixed z-40 sm:hidden right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] h-14 w-14 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center active:scale-95 transition-transform"
+        aria-label={isManagement ? t("createVisit") : t("createVisitEmployee")}
+      >
+        <PlusIcon className="h-6 w-6" />
+      </button>
     </>
   );
 }

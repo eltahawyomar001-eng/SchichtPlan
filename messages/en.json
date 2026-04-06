@@ -1430,7 +1430,8 @@
       "ticketAssigned": "Ticket assigned",
       "ticketStatusChanged": "Ticket status changed",
       "ticketComment": "New ticket comment",
-      "ticketCreated": "New ticket created"
+      "ticketCreated": "New ticket created",
+      "visitSigned": "Service proof signed"
     }
   },
   "notificationPrefs": {
@@ -2287,6 +2288,7 @@
     "title": "Service Proof",
     "description": "Digital documentation of your service visits",
     "createVisit": "Plan Visit",
+    "createVisitEmployee": "Create Visit",
     "searchPlaceholder": "Search employee or location…",
     "allStatuses": "All statuses",
     "status": {
@@ -2319,6 +2321,7 @@
     },
     "errors": {
       "requiredFields": "Employee and location are required",
+      "locationRequired": "Please select a location",
       "genericError": "Error",
       "networkError": "Network error",
       "checkInFailed": "Check-in failed",
@@ -2333,7 +2336,8 @@
       "location": "Location",
       "selectLocation": "Select location",
       "notes": "Notes",
-      "notesPlaceholder": "Optional notes…"
+      "notesPlaceholder": "Optional notes…",
+      "selfAssigned": "This service proof will be automatically assigned to you."
     },
     "signature": {
       "title": "Capture Signature",

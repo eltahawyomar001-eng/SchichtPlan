@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -296,17 +296,54 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
   const tn = useTranslations("nav");
   const [favorites, setFavorites] = useState<string[]>(initialFavorites);
   const [editing, setEditing] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
+  const saveControllerRef = useRef<AbortController | null>(null);
+
+  /* Re-fetch favorites from API on mount to avoid stale server props */
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/dashboard/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json?.data && Array.isArray(json.data)) {
+          setFavorites(json.data);
+        }
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const saveFavorites = useCallback((newFavorites: string[]) => {
     setFavorites(newFavorites);
-    startTransition(async () => {
-      await fetch("/api/dashboard/favorites", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ favorites: newFavorites }),
+
+    // Cancel any in-flight save to avoid race conditions
+    if (saveControllerRef.current) {
+      saveControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    saveControllerRef.current = controller;
+
+    setIsSaving(true);
+    // Fire-and-forget — do NOT use startTransition (it cancels on unmount)
+    fetch("/api/dashboard/favorites", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favorites: newFavorites }),
+      signal: controller.signal,
+      keepalive: true, // ensures request completes even if page navigates away
+    })
+      .catch(() => {
+        /* aborted or network error — state is optimistic */
+      })
+      .finally(() => {
+        if (saveControllerRef.current === controller) {
+          setIsSaving(false);
+        }
       });
-    });
   }, []);
 
   const toggleFavorite = useCallback(
@@ -426,7 +463,7 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                   <button
                     key={key}
                     onClick={() => toggleFavorite(key)}
-                    disabled={isPending}
+                    disabled={isSaving}
                     className={cn(
                       "flex items-center gap-2.5 rounded-xl p-2.5 sm:p-3 border transition-all duration-200 text-left min-w-0",
                       pinned

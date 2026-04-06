@@ -106,6 +106,14 @@ export default function SchichttauschPage() {
     reason: "",
   });
 
+  // Sync requesterId once the session loads (useSession is async)
+  useEffect(() => {
+    if (lockedRequesterId && !formData.requesterId) {
+      setFormData((prev) => ({ ...prev, requesterId: lockedRequesterId }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockedRequesterId]);
+
   // ── Fetch ───────────────────────────────────────────────────
 
   const fetchSwaps = useCallback(async () => {

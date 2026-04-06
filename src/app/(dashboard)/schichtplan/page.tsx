@@ -586,8 +586,8 @@ export default function SchichtplanPage() {
         )}
 
         {/* Navigation + View Toggle + Location Filter */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <Button variant="outline" size="icon" onClick={navigateBack}>
               <ChevronLeftIcon className="h-4 w-4" />
             </Button>
@@ -598,9 +598,9 @@ export default function SchichtplanPage() {
               <ChevronRightIcon className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
             {/* View mode toggle */}
-            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5">
+            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 flex-shrink-0">
               {(["day", "week", "month"] as const).map((mode) => (
                 <button
                   key={mode}
@@ -621,12 +621,12 @@ export default function SchichtplanPage() {
             </div>
             {/* Location Filter */}
             {locations.length > 0 && (
-              <div className="relative flex-1 sm:flex-initial">
+              <div className="relative flex-shrink-0">
                 <FilterIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
                 <Select
                   value={filterLocationId}
                   onChange={(e) => setFilterLocationId(e.target.value)}
-                  className="pl-10 h-9 sm:h-9 sm:w-auto"
+                  className="pl-10 h-9 min-w-[160px]"
                 >
                   <option value="">{t("allLocations")}</option>
                   {locations.map((loc) => (
@@ -640,6 +640,7 @@ export default function SchichtplanPage() {
             <Button
               variant="outline"
               size="sm"
+              className="flex-shrink-0"
               onClick={() => setCurrentWeek(new Date())}
             >
               {tc("today")}

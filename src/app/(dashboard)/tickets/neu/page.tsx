@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
@@ -12,8 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
 import { ArrowLeftIcon, SendIcon } from "@/components/icons";
-import { isManagement } from "@/lib/authorization";
-import type { SessionUser } from "@/lib/types";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -27,15 +24,6 @@ interface LocationItem {
 export default function NewTicketPage() {
   const t = useTranslations("tickets");
   const router = useRouter();
-  const { data: session } = useSession();
-  const user = session?.user as SessionUser | undefined;
-
-  // Only employees can create tickets — redirect management away
-  useEffect(() => {
-    if (user && isManagement(user)) {
-      router.replace("/tickets");
-    }
-  }, [user, router]);
 
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");

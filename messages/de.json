@@ -634,6 +634,12 @@
       "discardTitle": "Änderungen verwerfen?",
       "discardMessage": "Möchten Sie die eingegebenen Daten wirklich verwerfen? Alle nicht gespeicherten Änderungen gehen verloren.",
       "discardConfirm": "Verwerfen"
+    },
+    "liveStatus": {
+      "workingSince": "Arbeitet seit {time}",
+      "onBreak": "In Pause",
+      "breakDone": "Pause beendet",
+      "offline": "Nicht eingestempelt"
     }
   },
   "employeeDetail": {

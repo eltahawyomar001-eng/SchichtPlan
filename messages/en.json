@@ -634,6 +634,12 @@
       "discardTitle": "Discard changes?",
       "discardMessage": "Are you sure you want to discard your changes? All unsaved data will be lost.",
       "discardConfirm": "Discard"
+    },
+    "liveStatus": {
+      "workingSince": "Working since {time}",
+      "onBreak": "On break",
+      "breakDone": "Break done",
+      "offline": "Not clocked in"
     }
   },
   "employeeDetail": {

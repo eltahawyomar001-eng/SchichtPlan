@@ -26,6 +26,7 @@ import {
   EditIcon,
   AwardIcon,
   MapPinIcon,
+  ClockIcon,
 } from "@/components/icons";
 
 interface EmployeeSkill {
@@ -36,6 +37,19 @@ interface EmployeeSkill {
 interface LocationItem {
   id: string;
   name: string;
+}
+
+/** Live clock-in status for a single employee (from /api/time-entries/clock/team) */
+interface TeamMemberStatus {
+  employee: { id: string };
+  status: "working" | "break" | "offline";
+  active: {
+    id: string;
+    clockInAt: string;
+    startTime: string;
+    breakStart: string | null;
+    breakEnd: string | null;
+  } | null;
 }
 
 interface Employee {
@@ -64,6 +78,9 @@ export default function MitarbeiterPage() {
   const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [teamStatusMap, setTeamStatusMap] = useState<
+    Record<string, TeamMemberStatus>
+  >({});
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -137,10 +154,28 @@ export default function MitarbeiterPage() {
     }
   }, []);
 
+  /** Fetch live clock-in status for all employees */
+  const fetchTeamStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/time-entries/clock/team");
+      if (res.ok) {
+        const data = await res.json();
+        const map: Record<string, TeamMemberStatus> = {};
+        for (const member of data.team ?? []) {
+          map[member.employee.id] = member;
+        }
+        setTeamStatusMap(map);
+      }
+    } catch {
+      // Non-critical — live status is a nice-to-have
+    }
+  }, []);
+
   useEffect(() => {
     fetchEmployees();
     fetchLocations();
-  }, [fetchEmployees, fetchLocations]);
+    fetchTeamStatus();
+  }, [fetchEmployees, fetchLocations, fetchTeamStatus]);
 
   // Auto-open edit form when navigated from detail page with ?edit=<id>
   // (placed after openEditForm so it can reference it)
@@ -624,6 +659,60 @@ export default function MitarbeiterPage() {
                       </Badge>
                     </button>
                   </div>
+
+                  {/* ── Live clock-in status ── */}
+                  {employee.isActive &&
+                    (() => {
+                      const ts = teamStatusMap[employee.id];
+                      if (!ts || ts.status === "offline") return null;
+
+                      const clockInTime = ts.active?.clockInAt
+                        ? new Date(ts.active.clockInAt).toLocaleTimeString(
+                            "de-DE",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )
+                        : (ts.active?.startTime ?? "");
+
+                      if (ts.status === "working") {
+                        return (
+                          <div className="mt-2 flex items-center gap-2 rounded-md bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                            <span className="relative flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                            </span>
+                            <ClockIcon className="h-3.5 w-3.5" />
+                            {t("liveStatus.workingSince", {
+                              time: clockInTime,
+                            })}
+                            {ts.active?.breakEnd && (
+                              <span className="ml-1 text-gray-500 dark:text-gray-400">
+                                · {t("liveStatus.breakDone")}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if (ts.status === "break") {
+                        return (
+                          <div className="mt-2 flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                            <span className="relative flex h-2 w-2">
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                            </span>
+                            <ClockIcon className="h-3.5 w-3.5" />
+                            {t("liveStatus.workingSince", {
+                              time: clockInTime,
+                            })}{" "}
+                            · {t("liveStatus.onBreak")}
+                          </div>
+                        );
+                      }
+
+                      return null;
+                    })()}
 
                   <div className="mt-4 space-y-2">
                     {employee.email && (

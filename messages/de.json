@@ -95,7 +95,9 @@
     "teamChat": "Nachrichten",
     "serviceProof": "Leistungsnachweis",
     "tickets": "Tickets",
-    "more": "Mehr"
+    "more": "Mehr",
+    "darkMode": "Dunkelmodus",
+    "lightMode": "Hellmodus"
   },
   "dashboard": {
     "title": "Dashboard",

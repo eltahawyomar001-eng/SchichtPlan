@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode (Tailwind 4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* ── Brand palette — emerald green ── */
   --brand-50: #ecfdf5;
@@ -116,39 +119,53 @@
   --duration-slower: 500ms;
 }
 
-/* ── Dark Mode ── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --surface: #171717;
-    --muted: #1c1c1c;
-    --muted-foreground: #a1a1aa;
-    --border: #27272a;
-    --ring: #059669;
+/* ── Dark Mode (class-based toggle) ── */
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --surface: #171717;
+  --muted: #1c1c1c;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --ring: #059669;
 
-    --success-light: #064e3b;
-    --warning-light: #78350f;
-    --destructive-light: #7f1d1d;
-    --info-light: #064e3b;
+  --success-light: #064e3b;
+  --warning-light: #78350f;
+  --destructive-light: #7f1d1d;
+  --info-light: #064e3b;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md:
-      0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
-    --shadow-lg:
-      0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
-    --shadow-xl:
-      0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
-    --sidebar-bg: #0a0a0a;
-    --sidebar-text: #e4e4e7;
-    --sidebar-text-muted: #71717a;
-    --sidebar-hover: #171717;
-    --sidebar-active: #059669;
-    --sidebar-border: #27272a;
-  }
+  --sidebar-bg: #0a0a0a;
+  --sidebar-text: #e4e4e7;
+  --sidebar-text-muted: #71717a;
+  --sidebar-hover: #171717;
+  --sidebar-active: #059669;
+  --sidebar-border: #27272a;
+}
+
+/* ── Dark Mode overrides for hardcoded Tailwind colors ── */
+.dark .bg-dashboard {
+  background-color: #0a0a0a;
+  background-image: none;
+}
+.dark .glass,
+.dark .glass-elevated,
+.dark .glass-subtle {
+  background: rgba(23, 23, 23, 0.8);
+  border-color: rgba(63, 63, 70, 0.5);
+}
+/* White surfaces → dark */
+:is(.dark) :is(header, .bg-white\/70) {
+  background: rgba(10, 10, 10, 0.7) !important;
 }
 
 @theme inline {

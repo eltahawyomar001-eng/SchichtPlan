@@ -4,10 +4,17 @@ import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
-import { MenuIcon, LogOutIcon, SettingsIcon } from "@/components/icons";
+import {
+  MenuIcon,
+  LogOutIcon,
+  SettingsIcon,
+  MoonIcon,
+  SunIcon,
+} from "@/components/icons";
 import { useSidebar } from "@/components/layout/dashboard-shell";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { NotificationDropdown } from "@/components/layout/notification-dropdown";
+import { useTheme } from "@/components/providers/theme-provider";
 import { useRouter } from "next/navigation";
 
 interface TopbarProps {
@@ -26,8 +33,9 @@ export function Topbar({
 }: TopbarProps) {
   const { data: session } = useSession();
   const { openSidebar } = useSidebar();
-  const t = useTranslations("sidebar");
+  const t = useTranslations("nav");
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
 
   // Profile dropdown
   const [profileOpen, setProfileOpen] = useState(false);
@@ -124,13 +132,13 @@ export function Topbar({
                   />
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg py-1 z-50">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-zinc-800">
+                      <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
                         {session.user.name}
                       </p>
                       {session.user.email && (
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
                           {session.user.email}
                         </p>
                       )}
@@ -140,14 +148,25 @@ export function Topbar({
                         setProfileOpen(false);
                         router.push("/einstellungen");
                       }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
                     >
-                      <SettingsIcon className="h-4 w-4 text-gray-400" />
+                      <SettingsIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
                       {t("settings")}
                     </button>
                     <button
+                      onClick={toggleTheme}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      {theme === "dark" ? (
+                        <SunIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+                      ) : (
+                        <MoonIcon className="h-4 w-4 text-gray-400" />
+                      )}
+                      {theme === "dark" ? t("lightMode") : t("darkMode")}
+                    </button>
+                    <button
                       onClick={() => signOut({ callbackUrl: "/login" })}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                     >
                       <LogOutIcon className="h-4 w-4" />
                       {t("logout")}

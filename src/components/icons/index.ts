@@ -87,3 +87,5 @@ export { QuoteIcon } from "./QuoteIcon";
 export { SparklesIcon } from "./SparklesIcon";
 export { FileCheckIcon } from "./FileCheckIcon";
 export { TicketIcon } from "./TicketIcon";
+export { MoonIcon } from "./MoonIcon";
+export { SunIcon } from "./SunIcon";

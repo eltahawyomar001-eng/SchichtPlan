@@ -95,7 +95,9 @@
     "teamChat": "Messages",
     "serviceProof": "Service Proof",
     "tickets": "Tickets",
-    "more": "More"
+    "more": "More",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
   },
   "dashboard": {
     "title": "Dashboard",

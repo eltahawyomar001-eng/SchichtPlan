@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
@@ -11,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
 import { ArrowLeftIcon, SendIcon } from "@/components/icons";
+import { isManagement } from "@/lib/authorization";
+import type { SessionUser } from "@/lib/types";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -24,6 +27,15 @@ interface LocationItem {
 export default function NewTicketPage() {
   const t = useTranslations("tickets");
   const router = useRouter();
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+
+  // Only employees can create tickets — redirect management away
+  useEffect(() => {
+    if (user && isManagement(user)) {
+      router.replace("/tickets");
+    }
+  }, [user, router]);
 
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -184,7 +196,21 @@ export default function NewTicketPage() {
                   rows={6}
                   className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
                 />
+                {description.length > 0 && description.length < 10 && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    {t("descriptionMinHint", {
+                      remaining: 10 - description.length,
+                    })}
+                  </p>
+                )}
               </div>
+
+              {/* Subject hint */}
+              {subject.length > 0 && subject.length < 3 && (
+                <p className="text-xs text-amber-600">
+                  {t("subjectMinHint", { remaining: 3 - subject.length })}
+                </p>
+              )}
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button

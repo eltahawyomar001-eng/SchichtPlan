@@ -165,9 +165,12 @@ describe("GET /api/tickets", () => {
     const req = new Request("http://localhost:3000/api/tickets");
     await handler.GET(req);
 
-    // The where clause should include createdById
+    // The where clause should scope to own + assigned tickets via OR
     const whereArg = mockTicketFindMany.mock.calls[0][0].where;
-    expect(whereArg.createdById).toBe("emp-user-1");
+    expect(whereArg.OR).toEqual([
+      { createdById: "emp-user-1" },
+      { assignedToId: "emp-user-1" },
+    ]);
   });
 });
 
@@ -195,7 +198,7 @@ describe("POST /api/tickets", () => {
   });
 
   it("returns 400 for invalid input", async () => {
-    mockSession.user = buildOwner();
+    mockSession.user = buildEmployee();
     const req = new Request("http://localhost:3000/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -205,9 +208,25 @@ describe("POST /api/tickets", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 403 for non-employee roles", async () => {
+    mockSession.user = buildOwner();
+    const req = new Request("http://localhost:3000/api/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: "Build failing",
+        description: "The build is failing on main branch since yesterday",
+        category: "TECHNIK",
+        priority: "HOCH",
+      }),
+    });
+    const res = await handler.POST(req);
+    expect(res.status).toBe(403);
+  });
+
   it("creates ticket with valid input", async () => {
-    const owner = buildOwner();
-    mockSession.user = owner;
+    const employee = buildEmployee();
+    mockSession.user = employee;
     mockTicketFindFirst.mockResolvedValue(null); // no previous tickets
     mockTicketCreate.mockResolvedValue({
       id: "t-new",
@@ -217,8 +236,12 @@ describe("POST /api/tickets", () => {
       category: "TECHNIK",
       priority: "HOCH",
       status: "OFFEN",
-      createdById: owner.id,
-      createdBy: { id: owner.id, name: owner.name, email: owner.email },
+      createdById: employee.id,
+      createdBy: {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+      },
       assignedTo: null,
     });
 
@@ -243,7 +266,7 @@ describe("POST /api/tickets", () => {
 
   it("generates sequential ticket numbers", async () => {
     const year = new Date().getFullYear();
-    mockSession.user = buildOwner();
+    mockSession.user = buildEmployee();
     mockTicketFindFirst.mockResolvedValue({
       ticketNumber: `TK-${year}-0003`,
     });
@@ -357,7 +380,7 @@ describe("PATCH /api/tickets/[id]", () => {
     const req = new Request("http://localhost:3000/api/tickets/t1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "GELOEST" }),
+      body: JSON.stringify({ status: "GESCHLOSSEN" }),
     });
     const res = await handler.PATCH(req, {
       params: Promise.resolve({ id: "t1" }),
@@ -386,7 +409,7 @@ describe("PATCH /api/tickets/[id]", () => {
     expect(res.status).toBe(403);
   });
 
-  it("sets resolvedAt when status changes to GELOEST", async () => {
+  it("sets closedAt when status changes to GESCHLOSSEN", async () => {
     const admin = buildAdmin();
     mockSession.user = admin;
     mockTicketFindFirst.mockResolvedValue({
@@ -410,14 +433,14 @@ describe("PATCH /api/tickets/[id]", () => {
     const req = new Request("http://localhost:3000/api/tickets/t1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "GELOEST" }),
+      body: JSON.stringify({ status: "GESCHLOSSEN" }),
     });
     await handler.PATCH(req, {
       params: Promise.resolve({ id: "t1" }),
     });
 
     const updateData = mockTicketUpdate.mock.calls[0][0].data;
-    expect(updateData.resolvedAt).toBeInstanceOf(Date);
+    expect(updateData.closedAt).toBeInstanceOf(Date);
   });
 });
 

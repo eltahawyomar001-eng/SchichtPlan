@@ -2498,9 +2498,12 @@
       "inProgress": "In Bearbeitung",
       "closed": "Geschlossen"
     },
+    "descriptionMinHint": "Noch {remaining} Zeichen erforderlich (mind. 10)",
+    "subjectMinHint": "Noch {remaining} Zeichen erforderlich (mind. 3)",
     "emptyState": {
       "title": "Noch keine Tickets",
-      "description": "Erstellen Sie Ihr erstes Ticket, um ein Anliegen zu melden."
+      "description": "Erstellen Sie Ihr erstes Ticket, um ein Anliegen zu melden.",
+      "managerDescription": "Noch keine Tickets von Mitarbeitern eingegangen."
     }
   }
 }

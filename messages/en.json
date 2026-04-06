@@ -2498,9 +2498,12 @@
       "inProgress": "In Progress",
       "closed": "Closed"
     },
+    "descriptionMinHint": "{remaining} more characters required (min. 10)",
+    "subjectMinHint": "{remaining} more characters required (min. 3)",
     "emptyState": {
       "title": "No tickets yet",
-      "description": "Create your first ticket to report an issue."
+      "description": "Create your first ticket to report an issue.",
+      "managerDescription": "No tickets from employees yet."
     }
   }
 }

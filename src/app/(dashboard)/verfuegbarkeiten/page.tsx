@@ -184,9 +184,11 @@ export default function VerfuegbarkeitenPage() {
               setShowForm(true);
             }}
           >
-            <HandRaisedIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("addAvailability")}</span>
-            <span className="sm:hidden">{tc("new")}</span>
+            <HandRaisedIcon className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline leading-none">
+              {t("addAvailability")}
+            </span>
+            <span className="sm:hidden leading-none">{tc("new")}</span>
           </Button>
         }
       />

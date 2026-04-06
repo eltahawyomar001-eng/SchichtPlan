@@ -211,11 +211,11 @@ export default function StandortePage() {
 
         {/* Locations List */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6"
+                className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl shimmer" />
@@ -243,7 +243,7 @@ export default function StandortePage() {
             />
           )
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredLocations.map((location) => (
               <Card key={location.id} className="card-elevated">
                 <CardContent className="p-5 sm:p-6">
@@ -253,11 +253,11 @@ export default function StandortePage() {
                         <MapPinIcon className="h-5 w-5 text-emerald-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">
+                        <p className="font-semibold text-gray-900 dark:text-zinc-100 truncate">
                           {location.name}
                         </p>
                         {location.address && (
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-sm text-gray-500 dark:text-zinc-400 truncate">
                             {location.address}
                           </p>
                         )}
@@ -267,7 +267,7 @@ export default function StandortePage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                         onClick={() => openEditForm(location)}
                       >
                         <EditIcon className="h-4 w-4" />
@@ -275,7 +275,7 @@ export default function StandortePage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-red-600"
+                        className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
                         onClick={() => setDeleteTarget(location.id)}
                       >
                         <TrashIcon className="h-4 w-4" />

@@ -571,7 +571,7 @@ export default function ProjekteSeite() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => {
               const sc = statusConfig[project.status] || {
                 color: "bg-gray-100 text-gray-800",
@@ -583,7 +583,7 @@ export default function ProjekteSeite() {
                 <Card key={project.id} className="card-elevated">
                   <CardContent className="p-5 sm:p-5">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-gray-900 truncate pr-2">
+                      <h3 className="font-semibold text-gray-900 dark:text-zinc-100 truncate pr-2">
                         {project.name}
                       </h3>
                       <div className="flex items-center gap-1 flex-shrink-0">
@@ -592,18 +592,18 @@ export default function ProjekteSeite() {
                     </div>
 
                     {project.description && (
-                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                      <p className="text-sm text-gray-500 dark:text-zinc-400 mb-2 line-clamp-2">
                         {project.description}
                       </p>
                     )}
 
                     {project.client && (
-                      <p className="text-sm text-gray-500 mb-2">
+                      <p className="text-sm text-gray-500 dark:text-zinc-400 mb-2">
                         {t("client")}: {project.client.name}
                       </p>
                     )}
 
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-zinc-400 mb-3">
                       <span>
                         {t("members")}: {project.members.length}
                       </span>
@@ -611,11 +611,11 @@ export default function ProjekteSeite() {
 
                     {budget.label && (
                       <div className="mb-3">
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-zinc-400 mb-1">
                           <span>{t("budget")}</span>
                           <span>{budget.label}</span>
                         </div>
-                        <div className="h-2 rounded-full bg-gray-100">
+                        <div className="h-2 rounded-full bg-gray-100 dark:bg-zinc-800">
                           <div
                             className={`h-2 rounded-full ${budget.percent > 90 ? "bg-red-500" : "bg-emerald-500"}`}
                             style={{ width: `${budget.percent}%` }}
@@ -624,7 +624,7 @@ export default function ProjekteSeite() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
+                    <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-zinc-800">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -642,7 +642,7 @@ export default function ProjekteSeite() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-red-600"
+                        className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
                         onClick={() => setDeleteTarget(project.id)}
                       >
                         <TrashIcon className="h-4 w-4" />

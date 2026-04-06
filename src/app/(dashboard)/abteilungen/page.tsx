@@ -266,7 +266,7 @@ export default function AbteilungenSeite() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((dept) => (
               <Card key={dept.id} className="card-elevated">
                 <CardContent className="p-5 sm:p-6">
@@ -278,7 +278,7 @@ export default function AbteilungenSeite() {
                           backgroundColor: dept.color || "#10b981",
                         }}
                       />
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
                         {dept.name}
                       </h3>
                     </div>
@@ -293,7 +293,7 @@ export default function AbteilungenSeite() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-red-600"
+                        className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
                         onClick={() => setDeleteTarget(dept.id)}
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -302,13 +302,13 @@ export default function AbteilungenSeite() {
                   </div>
                   <div className="mt-3 space-y-1.5">
                     {dept.location && (
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 truncate">
-                        <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400 truncate">
+                        <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0 text-gray-400 dark:text-zinc-500" />
                         <span className="truncate">{dept.location.name}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <UsersIcon className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-zinc-400">
+                      <UsersIcon className="h-3.5 w-3.5 flex-shrink-0 text-gray-400 dark:text-zinc-500" />
                       <span>
                         {dept._count.employees} {t("employees")}
                       </span>

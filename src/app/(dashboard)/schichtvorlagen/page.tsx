@@ -308,7 +308,7 @@ export default function SchichtvorlagenSeite() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((tmpl) => (
               <Card key={tmpl.id} className="card-elevated">
                 <CardContent className="p-5 sm:p-5">
@@ -320,7 +320,7 @@ export default function SchichtvorlagenSeite() {
                           backgroundColor: tmpl.color || "#10b981",
                         }}
                       />
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
                         {tmpl.name}
                       </h3>
                     </div>
@@ -335,7 +335,7 @@ export default function SchichtvorlagenSeite() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-red-600"
+                        className="text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
                         onClick={() => setDeleteTarget(tmpl.id)}
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -343,14 +343,14 @@ export default function SchichtvorlagenSeite() {
                     </div>
                   </div>
                   <div className="mt-3 space-y-1">
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
                       {tmpl.startTime} – {tmpl.endTime}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-zinc-400">
                       ⏱ {calcDuration(tmpl.startTime, tmpl.endTime)}
                     </p>
                     {tmpl.location && (
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
                         📍 {tmpl.location.name}
                       </p>
                     )}

@@ -632,11 +632,11 @@ export default function MitarbeiterPage() {
 
         {/* Employee List */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6"
+                className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full shimmer" />
@@ -669,7 +669,7 @@ export default function MitarbeiterPage() {
             />
           )
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredEmployees.map((employee) => (
               <Card
                 key={employee.id}
@@ -683,11 +683,11 @@ export default function MitarbeiterPage() {
                         color={employee.color || "#10b981"}
                       />
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">
+                        <p className="font-semibold text-gray-900 dark:text-zinc-100 truncate">
                           {employee.firstName} {employee.lastName}
                         </p>
                         {employee.position && (
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-sm text-gray-500 dark:text-zinc-400 truncate">
                             {employee.position}
                           </p>
                         )}
@@ -764,35 +764,35 @@ export default function MitarbeiterPage() {
 
                   <div className="mt-4 space-y-2">
                     {employee.email && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
                         <MailIcon className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{employee.email}</span>
                       </div>
                     )}
                     {employee.phone && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
                         <PhoneIcon className="h-4 w-4 flex-shrink-0" />
                         {employee.phone}
                       </div>
                     )}
                     {employee.location && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
-                        <MapPinIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
+                        <MapPinIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
                         <span className="truncate">
                           {employee.location.name}
                         </span>
                       </div>
                     )}
                     {employee.department && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
-                        <BuildingIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
+                        <BuildingIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
                         <span className="truncate">
                           {employee.department.name}
                         </span>
                       </div>
                     )}
                     {employee.hourlyRate && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
                         <BriefcaseIcon className="h-4 w-4" />
                         {employee.hourlyRate.toFixed(2)} €/h
                         {employee.weeklyHours &&
@@ -802,11 +802,11 @@ export default function MitarbeiterPage() {
                     {employee.employeeSkills &&
                       employee.employeeSkills.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                          <AwardIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                          <AwardIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                           {employee.employeeSkills.map((es) => (
                             <Badge
                               key={es.id}
-                              className="bg-emerald-50 text-emerald-700 text-xs border-emerald-200"
+                              className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs border-emerald-200 dark:border-emerald-800"
                             >
                               {es.skill.name}
                             </Badge>
@@ -834,7 +834,7 @@ export default function MitarbeiterPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30"
                       onClick={() => setDeleteTarget(employee.id)}
                     >
                       {tc("delete")}

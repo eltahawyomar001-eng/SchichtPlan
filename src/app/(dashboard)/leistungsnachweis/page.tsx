@@ -306,7 +306,7 @@ export default function LeistungsnachweisSeite() {
 
       <PageContent>
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-xl border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
             {error}
             <button className="ml-2 underline" onClick={() => setError(null)}>
               {tc("close")}
@@ -318,32 +318,42 @@ export default function LeistungsnachweisSeite() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-xs text-gray-500">{t("stats.total")}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
+                {stats.total}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                {t("stats.total")}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {stats.planned}
               </p>
-              <p className="text-xs text-gray-500">{t("stats.planned")}</p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                {t("stats.planned")}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {stats.checkedIn}
               </p>
-              <p className="text-xs text-gray-500">{t("stats.checkedIn")}</p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                {t("stats.checkedIn")}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
-              <p className="text-2xl font-bold text-emerald-600">
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {stats.completed}
               </p>
-              <p className="text-xs text-gray-500">{t("stats.completed")}</p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                {t("stats.completed")}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -373,7 +383,9 @@ export default function LeistungsnachweisSeite() {
 
         {/* Visit list */}
         {loading ? (
-          <div className="py-12 text-center text-gray-400">{tc("loading")}</div>
+          <div className="py-12 text-center text-gray-400 dark:text-zinc-500">
+            {tc("loading")}
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<FileCheckIcon className="h-8 w-8 text-emerald-500" />}
@@ -421,12 +433,14 @@ export default function LeistungsnachweisSeite() {
       >
         <div className="space-y-5 px-4 py-4">
           {formError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3">
-              <p className="text-sm text-red-600">{formError}</p>
+            <div className="rounded-xl border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/30 p-3">
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {formError}
+              </p>
             </div>
           )}
           <div>
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 dark:text-zinc-300">
               {t("form.date")}
             </Label>
             <Input
@@ -443,7 +457,7 @@ export default function LeistungsnachweisSeite() {
           </div>
           {isManagement ? (
             <div>
-              <Label className="text-sm font-medium text-gray-700">
+              <Label className="text-sm font-medium text-gray-700 dark:text-zinc-300">
                 {t("form.employee")}
               </Label>
               <Select
@@ -462,14 +476,14 @@ export default function LeistungsnachweisSeite() {
               </Select>
             </div>
           ) : (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-sm text-emerald-700">
+            <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/30 p-3">
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
                 {t("form.selfAssigned")}
               </p>
             </div>
           )}
           <div>
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 dark:text-zinc-300">
               {t("form.location")}
             </Label>
             <Select
@@ -488,7 +502,7 @@ export default function LeistungsnachweisSeite() {
             </Select>
           </div>
           <div>
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 dark:text-zinc-300">
               {t("form.notes")}
             </Label>
             <Input
@@ -553,15 +567,15 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
             <div className="flex items-center gap-2">
               <Badge className={statusColor}>{statusLabel}</Badge>
             </div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
               {visit.employee.firstName} {visit.employee.lastName}
             </p>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-zinc-400">
               <MapPinIcon className="h-3 w-3 shrink-0" />
               {visit.location.name}
               {visit.location.address && ` · ${visit.location.address}`}
             </div>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-zinc-400">
               <ClockIcon className="h-3 w-3 shrink-0" />
               {dateStr}
               {visit.checkInAt &&
@@ -570,13 +584,13 @@ function VisitCard({ visit, acting, onCheckOut, onExecute }: VisitCardProps) {
                 ` · ${t("checkOutAt")} ${timeStr(visit.checkOutAt)}`}
             </div>
             {visit.signature && (
-              <div className="flex items-center gap-1 text-xs text-emerald-600">
+              <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                 <CheckCircleIcon className="h-3 w-3 shrink-0" />
                 {t("signedBy")} {visit.signature.signerName}
               </div>
             )}
             {visit.notes && (
-              <p className="text-xs text-gray-400 line-clamp-1">
+              <p className="text-xs text-gray-400 dark:text-zinc-500 line-clamp-1">
                 {visit.notes}
               </p>
             )}

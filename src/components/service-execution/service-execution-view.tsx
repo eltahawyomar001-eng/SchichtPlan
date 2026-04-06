@@ -99,8 +99,10 @@ function StepIndicator({
             "flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all duration-300",
             isCompleted && "bg-emerald-500 text-white",
             isActive &&
-              "bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500",
-            !isCompleted && !isActive && "bg-gray-100 text-gray-400",
+              "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500",
+            !isCompleted &&
+              !isActive &&
+              "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500",
           )}
         >
           {isCompleted ? <CheckIcon className="h-4 w-4" /> : step}
@@ -109,7 +111,7 @@ function StepIndicator({
           <div
             className={cn(
               "mt-1 w-0.5 flex-1 min-h-[24px] transition-colors duration-300",
-              isCompleted ? "bg-emerald-500" : "bg-gray-200",
+              isCompleted ? "bg-emerald-500" : "bg-gray-200 dark:bg-zinc-700",
             )}
           />
         )}
@@ -121,10 +123,10 @@ function StepIndicator({
           className={cn(
             "text-sm font-semibold leading-tight",
             isActive
-              ? "text-[#111827]"
+              ? "text-gray-900 dark:text-zinc-100"
               : isCompleted
-                ? "text-emerald-700"
-                : "text-gray-400",
+                ? "text-emerald-700 dark:text-emerald-400"
+                : "text-gray-400 dark:text-zinc-500",
           )}
         >
           {label}
@@ -132,7 +134,9 @@ function StepIndicator({
         <p
           className={cn(
             "mt-0.5 text-xs",
-            isActive ? "text-gray-500" : "text-gray-400",
+            isActive
+              ? "text-gray-500 dark:text-zinc-400"
+              : "text-gray-400 dark:text-zinc-500",
           )}
         >
           {description}
@@ -306,10 +310,10 @@ export function ServiceExecutionView({
   // ────────── Render ──────────
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-[#F2F2F7] lg:bg-[#F9FAFB]">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[#F2F2F7] dark:bg-zinc-950 lg:bg-[#F9FAFB] lg:dark:bg-zinc-950">
       {/* ── Sticky Glassmorphism Header — respects notch/Dynamic Island ── */}
       <header
-        className="shrink-0 border-b border-white/20 bg-white/70 backdrop-blur-xl backdrop-saturate-150"
+        className="shrink-0 border-b border-white/20 dark:border-zinc-700/50 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl backdrop-saturate-150"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <div className="px-4 py-3">
@@ -317,17 +321,17 @@ export function ServiceExecutionView({
           <div className="flex items-center gap-3 mb-2">
             <button
               onClick={onBack}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 active:scale-[0.95] transition-transform touch-target"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 dark:bg-zinc-800/80 active:scale-[0.95] transition-transform touch-target"
               aria-label={t("execution.back")}
             >
-              <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+              <ChevronLeftIcon className="h-5 w-5 text-gray-600 dark:text-zinc-300" />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-base font-bold text-[#111827]">
+              <h1 className="truncate text-base font-bold text-gray-900 dark:text-zinc-100">
                 {visit.location.name}
               </h1>
               {visit.location.address && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
+                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-zinc-400">
                   <MapPinIcon className="h-3 w-3 shrink-0" />
                   <span className="truncate">{visit.location.address}</span>
                 </div>
@@ -337,7 +341,7 @@ export function ServiceExecutionView({
 
           {/* GPS status + employee */}
           <div className="flex items-center justify-end">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-zinc-400">
               {visit.employee.firstName} {visit.employee.lastName}
             </span>
           </div>
@@ -356,21 +360,21 @@ export function ServiceExecutionView({
       >
         {/* Error banner */}
         {error && (
-          <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-red-200 bg-white p-3">
+          <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-red-200 dark:border-red-800/50 bg-white dark:bg-red-950/30 p-3">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
           </div>
         )}
 
         {/* Offline warning */}
         {!isOnline && (
-          <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-amber-200 bg-white p-3">
+          <div className="mb-4 mx-auto w-full max-w-lg flex items-start gap-2 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-amber-950/30 p-3">
             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
             <div>
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                 {t("execution.offline.title")}
               </p>
-              <p className="text-xs text-amber-600">
+              <p className="text-xs text-amber-600 dark:text-amber-400">
                 {t("execution.offline.description")}
                 {pendingCount > 0 &&
                   ` ${t("execution.offline.pending", { count: pendingCount })}`}
@@ -404,11 +408,11 @@ export function ServiceExecutionView({
         {/* ── Step 1: Check-In ── */}
         {currentStep === 1 && (
           <div className="space-y-4 mx-auto w-full max-w-lg">
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-[#111827]">
+            <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                 {t("execution.step1.cardTitle")}
               </h3>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
                 {t("execution.step1.cardDescription")}
               </p>
             </div>
@@ -436,11 +440,11 @@ export function ServiceExecutionView({
         {/* ── Step 2: Task Confirmation ── */}
         {currentStep === 2 && (
           <div className="space-y-4 mx-auto w-full max-w-lg">
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-[#111827]">
+            <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                 {t("execution.step2.cardTitle")}
               </h3>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
                 {t("execution.step2.cardDescription")}
               </p>
 
@@ -464,8 +468,8 @@ export function ServiceExecutionView({
                     className={cn(
                       "flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-all active:scale-[0.98]",
                       task.completed
-                        ? "bg-emerald-50"
-                        : "bg-gray-50 hover:bg-gray-100",
+                        ? "bg-emerald-50 dark:bg-emerald-950/30"
+                        : "bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700",
                     )}
                     style={{ margin: "4px 0" }}
                   >
@@ -474,7 +478,7 @@ export function ServiceExecutionView({
                         "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-all",
                         task.completed
                           ? "border-emerald-500 bg-emerald-500"
-                          : "border-gray-300 bg-white",
+                          : "border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800",
                       )}
                     >
                       {task.completed && (
@@ -484,7 +488,9 @@ export function ServiceExecutionView({
                     <span
                       className={cn(
                         "text-sm font-medium",
-                        task.completed ? "text-emerald-700" : "text-[#111827]",
+                        task.completed
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-gray-900 dark:text-zinc-100",
                       )}
                     >
                       {task.label}
@@ -516,40 +522,40 @@ export function ServiceExecutionView({
         {/* ── Step 3: Signature & Finalize ── */}
         {currentStep === 3 && (
           <div className="space-y-4 mx-auto w-full max-w-lg">
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <ShieldCheckIcon className="h-5 w-5 text-emerald-600" />
-                <h3 className="text-sm font-semibold text-[#111827]">
+                <ShieldCheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                   {t("execution.step3.cardTitle")}
                 </h3>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
                 {t("execution.step3.cardDescription")}
               </p>
 
               {/* Summary */}
-              <div className="mt-3 space-y-2 rounded-lg bg-gray-50 p-3">
+              <div className="mt-3 space-y-2 rounded-lg bg-gray-50 dark:bg-zinc-800 p-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">
+                  <span className="text-gray-500 dark:text-zinc-400">
                     {t("execution.step3.summaryLocation")}
                   </span>
-                  <span className="font-medium text-[#111827]">
+                  <span className="font-medium text-gray-900 dark:text-zinc-100">
                     {visit.location.name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">
+                  <span className="text-gray-500 dark:text-zinc-400">
                     {t("execution.step3.summaryEmployee")}
                   </span>
-                  <span className="font-medium text-[#111827]">
+                  <span className="font-medium text-gray-900 dark:text-zinc-100">
                     {visit.employee.firstName} {visit.employee.lastName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">
+                  <span className="text-gray-500 dark:text-zinc-400">
                     {t("execution.step3.summaryTasks")}
                   </span>
-                  <span className="font-medium text-emerald-700">
+                  <span className="font-medium text-emerald-700 dark:text-emerald-400">
                     {t("execution.step3.summaryTasksDone", {
                       done: tasks.filter((task) => task.completed).length,
                       total: tasks.length,
@@ -558,10 +564,10 @@ export function ServiceExecutionView({
                 </div>
                 {checkInTime && (
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">
+                    <span className="text-gray-500 dark:text-zinc-400">
                       {t("execution.step3.summaryCheckedIn")}
                     </span>
-                    <span className="font-medium text-[#111827]">
+                    <span className="font-medium text-gray-900 dark:text-zinc-100">
                       {checkInTime.toLocaleTimeString("de-DE", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -588,15 +594,15 @@ export function ServiceExecutionView({
         {currentStep === 4 && (
           <div className="space-y-4 mx-auto w-full max-w-lg">
             {/* Success header */}
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-zinc-900 p-4 shadow-sm">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500">
                 <CheckCircleIcon className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#111827]">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">
                   {t("execution.step4.title")}
                 </h3>
-                <p className="text-xs text-emerald-700">
+                <p className="text-xs text-emerald-700 dark:text-emerald-400">
                   {t("execution.step4.description")}
                 </p>
               </div>
@@ -605,11 +611,11 @@ export function ServiceExecutionView({
             {completionData && (
               <>
                 {/* ── Signature Preview ── */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                     {t("execution.step4.signatureTitle")}
                   </h4>
-                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-3">
+                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800/50 p-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={completionData.signatureImage}
@@ -619,11 +625,11 @@ export function ServiceExecutionView({
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-[#111827]">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                         {completionData.signerName}
                       </p>
                       {completionData.signerRole && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-zinc-400">
                           {completionData.signerRole}
                         </p>
                       )}
@@ -717,9 +723,9 @@ export function ServiceExecutionView({
 
             {/* Offline sync warning */}
             {!isOnline && pendingCount > 0 && (
-              <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <div className="flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
                 <AlertTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
-                <span className="text-xs text-amber-700">
+                <span className="text-xs text-amber-700 dark:text-amber-400">
                   {t("execution.step4.syncPending", { count: pendingCount })}
                 </span>
               </div>

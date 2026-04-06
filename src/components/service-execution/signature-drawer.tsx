@@ -297,32 +297,32 @@ export function SignatureDrawer({
               stiffness: 300,
               mass: 0.8,
             }}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col rounded-t-2xl bg-white shadow-2xl ring-1 ring-gray-900/[0.04]"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col rounded-t-2xl bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-gray-900/[0.04] dark:ring-white/[0.06]"
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-2.5 pb-1 shrink-0 min-h-[48px] items-center">
-              <div className="w-9 h-[5px] rounded-full bg-gray-300/80" />
+              <div className="w-9 h-[5px] rounded-full bg-gray-300/80 dark:bg-zinc-600" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 shrink-0">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-3 shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-[#111827] tracking-tight">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
                   {t("signature.title")}
                 </h2>
-                <p className="mt-0.5 text-sm text-gray-500">
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-zinc-400">
                   {t("signature.subtitle")}
                 </p>
               </div>
               <button
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="flex-shrink-0 -mr-1 rounded-xl p-3 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
+                className="flex-shrink-0 -mr-1 rounded-xl p-3 hover:bg-gray-100 dark:hover:bg-zinc-800 active:bg-gray-200 dark:active:bg-zinc-700 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
                 aria-label={t("execution.back")}
               >
-                <XIcon className="h-5 w-5 text-gray-400" />
+                <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500" />
               </button>
             </div>
 
@@ -330,7 +330,7 @@ export function SignatureDrawer({
             <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
               {/* Signer name */}
               <div>
-                <Label className="text-[#111827]">
+                <Label className="text-gray-900 dark:text-zinc-100">
                   {t("signature.signerName")} *
                 </Label>
                 <Input
@@ -344,7 +344,7 @@ export function SignatureDrawer({
 
               {/* Signer role */}
               <div>
-                <Label className="text-[#111827]">
+                <Label className="text-gray-900 dark:text-zinc-100">
                   {t("signature.signerRole")}
                 </Label>
                 <Select
@@ -363,15 +363,15 @@ export function SignatureDrawer({
 
               {/* Signature canvas */}
               <div>
-                <Label className="text-[#111827]">
+                <Label className="text-gray-900 dark:text-zinc-100">
                   {t("signature.signHere")} *
                 </Label>
                 <div
                   className={cn(
                     "relative mt-1.5 rounded-xl border-2 border-dashed transition-colors",
                     hasContent
-                      ? "border-emerald-400 bg-white"
-                      : "border-gray-300 bg-white hover:border-emerald-400",
+                      ? "border-emerald-400 bg-white dark:bg-zinc-800"
+                      : "border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:border-emerald-400",
                   )}
                 >
                   <canvas
@@ -388,7 +388,7 @@ export function SignatureDrawer({
                   />
                   {!hasContent && (
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-gray-400 dark:text-zinc-500">
                         {t("signature.signHere")}
                       </p>
                     </div>
@@ -398,7 +398,7 @@ export function SignatureDrawer({
                   <button
                     type="button"
                     onClick={clearCanvas}
-                    className="mt-2 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                    className="mt-2 text-xs font-medium text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-colors"
                   >
                     {t("signature.clearSignature")}
                   </button>
@@ -408,23 +408,23 @@ export function SignatureDrawer({
 
             {/* Sticky footer */}
             <div
-              className="shrink-0 border-t border-gray-100 bg-white/80 backdrop-blur-lg px-5 py-4 space-y-3"
+              className="shrink-0 border-t border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg px-5 py-4 space-y-3"
               style={{
                 paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
               }}
             >
               {/* Offline warning in footer */}
               {!isOnline && (
-                <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2">
+                <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
                   <AlertTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
-                  <span className="text-xs text-amber-700">
+                  <span className="text-xs text-amber-700 dark:text-amber-400">
                     {t("signature.offlineWarning")}
                   </span>
                 </div>
               )}
 
               {!signerName.trim() && (
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-amber-600 dark:text-amber-400">
                   {t("signature.nameRequired")}
                 </p>
               )}

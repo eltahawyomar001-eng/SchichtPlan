@@ -55,7 +55,7 @@ function HeaderSkeleton() {
 /** Stat card skeleton — used on dashboard */
 function StatCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3">
+    <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
       <ShimmerBlock className="h-4 w-24" />
       <ShimmerBlock className="h-8 w-16" />
       <ShimmerBlock className="h-3 w-32" />
@@ -126,7 +126,7 @@ export function TimeEntriesSkeleton() {
       {Array.from({ length: 6 }, (_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4"
+          className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4"
         >
           <ShimmerBlock className="h-10 w-10 rounded-full" />
           <div className="flex-1 space-y-2">
@@ -151,7 +151,7 @@ export function EmployeeListSkeleton() {
       {Array.from({ length: 8 }, (_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4"
+          className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4"
         >
           <ShimmerBlock className="h-12 w-12 rounded-full" />
           <div className="flex-1 space-y-2">

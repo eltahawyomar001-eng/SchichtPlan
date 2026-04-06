@@ -208,26 +208,8 @@ describe("POST /api/tickets", () => {
     expect(res.status).toBe(400);
   });
 
-  it("allows all roles to create tickets", async () => {
-    const owner = buildOwner();
-    mockSession.user = owner;
-    mockTicketFindFirst.mockResolvedValue(null); // no previous tickets
-    mockTicketCreate.mockResolvedValue({
-      id: "ticket-1",
-      ticketNumber: "TK-2025-0001",
-      subject: "Build failing",
-      description: "The build is failing on main branch since yesterday",
-      category: "TECHNIK",
-      priority: "HOCH",
-      status: "OFFEN",
-      ticketType: "INTERN",
-      createdById: owner.id,
-      workspaceId: owner.workspaceId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: { id: owner.id, name: owner.name, email: owner.email },
-      assignedTo: null,
-    });
+  it("returns 403 for non-employee roles", async () => {
+    mockSession.user = buildOwner();
     const req = new Request("http://localhost:3000/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -239,7 +221,7 @@ describe("POST /api/tickets", () => {
       }),
     });
     const res = await handler.POST(req);
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(403);
   });
 
   it("creates ticket with valid input", async () => {

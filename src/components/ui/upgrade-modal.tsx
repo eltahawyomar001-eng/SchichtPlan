@@ -75,15 +75,17 @@ export function UpgradeModal({
         paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
       }}
     >
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 animate-fade-in overflow-hidden">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-gray-100 dark:ring-zinc-800 animate-fade-in overflow-hidden">
         {/* Header */}
         <div className="flex items-start gap-3 p-6">
-          <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2.5 ring-1 ring-emerald-200/30">
+          <div className="flex-shrink-0 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 p-2.5 ring-1 ring-emerald-200/30 dark:ring-emerald-800/30">
             <RocketIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-gray-900">{t("title")}</h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+              {t("title")}
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">
               {planLimitError.limit
                 ? t("limitReached", {
                     feature: featureLabel,
@@ -91,21 +93,21 @@ export function UpgradeModal({
                   })
                 : t("featureGated", { feature: featureLabel })}
             </p>
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-3 text-sm text-gray-500 dark:text-zinc-500">
               {canUpgrade ? t("upgradeHint") : t("upgradeHintEmployee")}
             </p>
           </div>
           <button
             ref={closeRef}
             onClick={onClose}
-            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 transition-colors"
+            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <XIcon className="h-4 w-4 text-gray-400" />
+            <XIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
           </button>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex justify-end gap-3 border-t border-gray-100 dark:border-zinc-800 px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>
             {canUpgrade ? t("dismiss") : t("dismissEmployee")}
           </Button>

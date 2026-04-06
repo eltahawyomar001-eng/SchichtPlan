@@ -256,8 +256,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         role="navigation"
         aria-label="Hauptnavigation"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white transition-transform duration-300 ease-in-out",
-          "border-r border-gray-100 shadow-[1px_0_8px_rgba(0,0,0,0.04)]",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white dark:bg-zinc-900 transition-transform duration-300 ease-in-out",
+          "border-r border-gray-100 dark:border-zinc-800 shadow-[1px_0_8px_rgba(0,0,0,0.04)]",
           "lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
@@ -268,14 +268,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm">
               <ShiftfyMark className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">
+            <span className="text-lg font-bold text-gray-900 dark:text-zinc-100">
               Shift<span className="text-gradient">fy</span>
             </span>
           </div>
           <button
             onClick={onClose}
             aria-label="Menü schließen"
-            className="rounded-xl p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:bg-gray-200 lg:hidden"
+            className="rounded-xl p-2.5 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 active:bg-gray-200 dark:active:bg-zinc-700 lg:hidden"
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -296,10 +296,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <div key={groupIdx} className={groupIdx > 0 ? "mt-5" : ""}>
                 {group.labelKey && (
                   <div className="mb-2 flex items-center gap-2 px-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                       {t(group.labelKey)}
                     </p>
-                    <div className="h-px flex-1 bg-gray-100" />
+                    <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
                   </div>
                 )}
                 <div className="space-y-1">
@@ -316,14 +316,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         className={cn(
                           "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 min-w-0 active:scale-[0.98]",
                           isActive
-                            ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100 sidebar-active-glow"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100",
+                            ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-emerald-100 dark:shadow-emerald-900/30 sidebar-active-glow"
+                            : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-200 active:bg-gray-100 dark:active:bg-zinc-700",
                         )}
                       >
                         <item.icon
                           className={cn(
                             "h-[18px] w-[18px] flex-shrink-0 transition-colors",
-                            isActive ? "text-emerald-600" : "text-gray-400",
+                            isActive
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-gray-400 dark:text-zinc-500",
                           )}
                         />
                         <span className="truncate">{t(item.key)}</span>
@@ -337,7 +339,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer — user info + logout */}
-        <div className="border-t border-gray-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex-shrink-0 space-y-1.5">
+        <div className="border-t border-gray-100 dark:border-zinc-800 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex-shrink-0 space-y-1.5">
           {/* User info row */}
           {userName && (
             <div className="flex items-center gap-3 rounded-xl px-3 py-2">
@@ -345,11 +347,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-gray-900 dark:text-zinc-100">
                   {userName}
                 </p>
                 {userEmail && (
-                  <p className="truncate text-xs text-gray-400">{userEmail}</p>
+                  <p className="truncate text-xs text-gray-400 dark:text-zinc-500">
+                    {userEmail}
+                  </p>
                 )}
               </div>
             </div>
@@ -360,7 +364,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             aria-label={t("logout")}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 active:scale-[0.98] transition-colors"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 active:bg-red-100 dark:active:bg-red-900/30 active:scale-[0.98] transition-colors"
           >
             <LogOutIcon className="h-[18px] w-[18px]" />
             {t("logout")}

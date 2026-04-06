@@ -202,7 +202,7 @@ export function BottomSheet({
       <div
         ref={sheetRef}
         className={cn(
-          "w-full rounded-t-3xl bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
+          "w-full rounded-t-3xl bg-white dark:bg-zinc-900 shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04] dark:ring-zinc-700/50",
           "overflow-hidden flex flex-col",
           "animate-slide-up",
           height === "full" ? "max-h-[92vh]" : "max-h-[90vh]",
@@ -214,29 +214,31 @@ export function BottomSheet({
       >
         {/* Drag handle — always visible, 44px touch zone */}
         <div className="flex justify-center pt-2 pb-0.5 shrink-0 cursor-grab active:cursor-grabbing min-h-[44px] items-start">
-          <div className="mt-1.5 w-9 h-1 rounded-full bg-gray-300/70" />
+          <div className="mt-1.5 w-9 h-1 rounded-full bg-gray-300/70 dark:bg-zinc-600" />
         </div>
 
         {/* Header — with safe-area-inset-top for notch/Dynamic Island */}
         {title && (
           <div
-            className="flex items-center justify-between border-b border-gray-100 px-4 pb-3 shrink-0"
+            className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-4 pb-3 shrink-0"
             style={{ paddingTop: "max(0px, env(safe-area-inset-top, 0px))" }}
           >
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
                 {title}
               </h2>
               {description && (
-                <p className="mt-0.5 text-sm text-gray-500">{description}</p>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-zinc-400">
+                  {description}
+                </p>
               )}
             </div>
             <button
               onClick={guardedClose}
-              className="flex-shrink-0 -mr-1 rounded-xl p-2.5 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="flex-shrink-0 -mr-1 rounded-xl p-2.5 hover:bg-gray-100 dark:hover:bg-zinc-800 active:bg-gray-200 dark:active:bg-zinc-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Close"
             >
-              <XIcon className="h-5 w-5 text-gray-400" />
+              <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500" />
             </button>
           </div>
         )}
@@ -256,7 +258,7 @@ export function BottomSheet({
         {/* Footer — sticky, above Home Indicator */}
         {footer && (
           <div
-            className="shrink-0 border-t border-gray-100 bg-white/80 backdrop-blur-lg px-4 py-3"
+            className="shrink-0 border-t border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg px-4 py-3"
             style={{
               paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
             }}

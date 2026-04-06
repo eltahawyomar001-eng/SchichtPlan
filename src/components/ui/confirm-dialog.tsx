@@ -52,29 +52,31 @@ export function ConfirmDialog({
         paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
       }}
     >
-      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 animate-fade-in overflow-hidden">
+      <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-gray-100 dark:ring-zinc-800 animate-fade-in overflow-hidden">
         <div className="flex items-start gap-3 p-6">
           <div
-            className={`flex-shrink-0 rounded-xl p-2.5 ${variant === "danger" ? "bg-red-50 ring-1 ring-red-200/50" : "bg-amber-50 ring-1 ring-amber-200/50"}`}
+            className={`flex-shrink-0 rounded-xl p-2.5 ${variant === "danger" ? "bg-red-50 ring-1 ring-red-200/50 dark:bg-red-950 dark:ring-red-800/50" : "bg-amber-50 ring-1 ring-amber-200/50 dark:bg-amber-950 dark:ring-amber-800/50"}`}
           >
             <AlertTriangleIcon
-              className={`h-5 w-5 ${variant === "danger" ? "text-red-600" : "text-amber-600"}`}
+              className={`h-5 w-5 ${variant === "danger" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}
             />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-gray-900">{title}</h3>
-            <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
+            <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">
+              {title}
+            </h3>
+            <p className="mt-1.5 text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
               {message}
             </p>
           </div>
           <button
             onClick={onCancel}
-            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 transition-colors"
+            className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <XIcon className="h-4 w-4 text-gray-400" />
+            <XIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
           </button>
         </div>
-        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+        <div className="flex justify-end gap-3 border-t border-gray-100 dark:border-zinc-800 px-6 py-4">
           <Button
             ref={cancelRef}
             variant="outline"

@@ -165,7 +165,7 @@ export function Modal({
       <div
         ref={sheetRef}
         className={cn(
-          "w-full mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl bg-white shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04]",
+          "w-full mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl bg-white dark:bg-zinc-900 shadow-[var(--shadow-2xl)] ring-1 ring-gray-900/[0.04] dark:ring-zinc-700/50",
           "max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col",
           "animate-slide-up sm:animate-spring-scale-in",
           sizeMap[size],
@@ -180,26 +180,28 @@ export function Modal({
       >
         {/* Drag handle — mobile only */}
         <div className="flex sm:hidden justify-center pt-2.5 pb-0.5 shrink-0 cursor-grab active:cursor-grabbing">
-          <div className="w-9 h-[5px] rounded-full bg-gray-300" />
+          <div className="w-9 h-[5px] rounded-full bg-gray-300 dark:bg-zinc-600" />
         </div>
 
         {/* Header — sticky */}
         {title && (
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 sm:px-6 sm:py-4 shrink-0">
+          <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-3.5 sm:px-6 sm:py-4 shrink-0">
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg sm:text-lg font-bold text-gray-900 tracking-tight">
+              <h2 className="text-lg sm:text-lg font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
                 {title}
               </h2>
               {description && (
-                <p className="mt-0.5 text-sm text-gray-500">{description}</p>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-zinc-400">
+                  {description}
+                </p>
               )}
             </div>
             <button
               onClick={guardedClose}
-              className="flex-shrink-0 -mr-1 rounded-xl p-2 hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="flex-shrink-0 -mr-1 rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 active:bg-gray-200 dark:active:bg-zinc-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Close"
             >
-              <XIcon className="h-5 w-5 text-gray-400" />
+              <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500" />
             </button>
           </div>
         )}
@@ -218,7 +220,7 @@ export function Modal({
         {/* Footer — sticky, outside scroll area */}
         {footer && (
           <div
-            className="shrink-0 border-t border-gray-100 bg-white/80 backdrop-blur-lg px-5 py-4 sm:px-6"
+            className="shrink-0 border-t border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg px-5 py-4 sm:px-6"
             style={{
               paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
             }}

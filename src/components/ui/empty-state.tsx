@@ -48,21 +48,23 @@ export function EmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center text-center",
-        "rounded-2xl border-2 border-dashed border-gray-200/80 bg-gradient-to-b from-gray-50/60 to-white px-5 py-12 sm:px-6 sm:py-16 md:py-20",
+        "rounded-2xl border-2 border-dashed border-gray-200/80 dark:border-zinc-700/80 bg-gradient-to-b from-gray-50/60 to-white dark:from-zinc-800/60 dark:to-zinc-900 px-5 py-12 sm:px-6 sm:py-16 md:py-20",
         className,
       )}
     >
       {/* Icon */}
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 shadow-sm ring-1 ring-emerald-200/30">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 shadow-sm ring-1 ring-emerald-200/30 dark:ring-emerald-800/30">
         {icon}
       </div>
 
       {/* Heading */}
-      <h3 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h3>
+      <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-zinc-100">
+        {title}
+      </h3>
 
       {/* Description */}
       {description && (
-        <p className="mt-2 max-w-sm text-sm text-gray-500 leading-relaxed">
+        <p className="mt-2 max-w-sm text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
           {description}
         </p>
       )}
@@ -73,7 +75,7 @@ export function EmptyState({
           {tips.map((tip, i) => (
             <li
               key={i}
-              className="flex items-start gap-2.5 text-sm text-gray-500"
+              className="flex items-start gap-2.5 text-sm text-gray-500 dark:text-zinc-400"
             >
               <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
               {tip}
@@ -90,7 +92,7 @@ export function EmptyState({
               <button
                 key={i}
                 onClick={action.onClick}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:shadow transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-zinc-300 shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 hover:shadow transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
                 {action.label}
               </button>

@@ -202,6 +202,45 @@ export async function POST(
       data: { lastReadAt: new Date() },
     });
 
+    // Fire-and-forget: notify all other channel members via bell
+    void (async () => {
+      try {
+        const [channel, members] = await Promise.all([
+          prisma.chatChannel.findUnique({
+            where: { id: channelId },
+            select: { name: true, workspaceId: true },
+          }),
+          prisma.chatChannelMember.findMany({
+            where: { channelId, userId: { not: user.id } },
+            select: { userId: true },
+          }),
+        ]);
+
+        if (!channel || members.length === 0) return;
+
+        const preview =
+          sanitizedContent.length > 80
+            ? sanitizedContent.slice(0, 80) + "…"
+            : sanitizedContent;
+
+        await prisma.notification.createMany({
+          data: members.map((m) => ({
+            userId: m.userId,
+            workspaceId: channel.workspaceId,
+            type: "CHAT_MESSAGE",
+            title: `Neue Nachricht in ${channel.name}`,
+            message: `${user.name || user.email}: ${preview}`,
+            link: `/nachrichten?channel=${channelId}`,
+          })),
+        });
+      } catch (err) {
+        log.error("Failed to notify channel members", {
+          channelId,
+          error: err,
+        });
+      }
+    })();
+
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
     log.error("Error sending message:", { error });

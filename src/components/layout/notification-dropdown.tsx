@@ -204,7 +204,7 @@ export function NotificationDropdown() {
     return (
       <>
         {notifications.length === 0 ? (
-          <div className="py-8 text-center text-sm text-gray-400">
+          <div className="py-8 text-center text-sm text-gray-400 dark:text-zinc-500">
             {t("empty")}
           </div>
         ) : (
@@ -212,8 +212,8 @@ export function NotificationDropdown() {
             <button
               key={n.id}
               onClick={() => handleNotificationClick(n)}
-              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                !n.read ? "bg-emerald-50/50" : ""
+              className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors ${
+                !n.read ? "bg-emerald-50/50 dark:bg-emerald-950/30" : ""
               }`}
             >
               <div className="flex gap-2.5">
@@ -224,7 +224,9 @@ export function NotificationDropdown() {
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-sm font-medium truncate ${
-                        !n.read ? "text-gray-900" : "text-gray-600"
+                        !n.read
+                          ? "text-gray-900 dark:text-zinc-100"
+                          : "text-gray-600 dark:text-zinc-400"
                       }`}
                     >
                       {getTranslatedTitle(n)}
@@ -233,10 +235,10 @@ export function NotificationDropdown() {
                       <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5 line-clamp-2">
                     {n.message}
                   </p>
-                  <p className="text-[11px] text-gray-400 mt-1">
+                  <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
                     {formatTime(n.createdAt)}
                   </p>
                 </div>
@@ -250,8 +252,10 @@ export function NotificationDropdown() {
 
   function NotificationHeader() {
     return (
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-        <h3 className="font-semibold text-gray-900 text-sm">{t("title")}</h3>
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-4 py-3">
+        <h3 className="font-semibold text-gray-900 dark:text-zinc-100 text-sm">
+          {t("title")}
+        </h3>
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
@@ -270,7 +274,7 @@ export function NotificationDropdown() {
       {/* Bell button */}
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-xl p-2.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:bg-gray-200 transition-colors"
+        className="relative rounded-xl p-2.5 sm:p-2 text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 active:bg-gray-200 dark:active:bg-zinc-700 transition-colors"
         aria-label={t("title")}
       >
         <BellIcon className="h-5 w-5" />
@@ -283,9 +287,9 @@ export function NotificationDropdown() {
 
       {/* Desktop dropdown — absolute, inside relative container, no portal needed */}
       {open && (
-        <div className="hidden sm:block absolute right-0 top-full mt-2 w-96 rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden z-50">
+        <div className="hidden sm:block absolute right-0 top-full mt-2 w-96 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden z-50">
           <NotificationHeader />
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50 dark:divide-zinc-800">
             <NotificationList />
           </div>
         </div>
@@ -303,14 +307,14 @@ export function NotificationDropdown() {
               onClick={() => setOpen(false)}
             />
             {/* Sheet */}
-            <div className="fixed inset-x-0 bottom-0 z-[9999] rounded-t-2xl bg-white shadow-2xl overflow-hidden">
+            <div className="fixed inset-x-0 bottom-0 z-[9999] rounded-t-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
               {/* Drag handle */}
               <div className="flex justify-center pt-2.5 pb-1">
-                <div className="h-1 w-10 rounded-full bg-gray-300" />
+                <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-zinc-600" />
               </div>
               <NotificationHeader />
               <div
-                className="overflow-y-auto divide-y divide-gray-50"
+                className="overflow-y-auto divide-y divide-gray-50 dark:divide-zinc-800"
                 style={{
                   maxHeight: "60svh",
                   paddingBottom: "env(safe-area-inset-bottom)",

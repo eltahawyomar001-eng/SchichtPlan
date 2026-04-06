@@ -205,10 +205,12 @@ export default function TicketsPage() {
               {t("filters.assignedToMe")}
             </Button>
           </div>
-          <Button onClick={() => router.push("/tickets/neu")}>
-            <PlusIcon className="h-4 w-4" />
-            {t("createTicket")}
-          </Button>
+          {!canManage && (
+            <Button onClick={() => router.push("/tickets/neu")}>
+              <PlusIcon className="h-4 w-4" />
+              {t("createTicket")}
+            </Button>
+          )}
         </div>
 
         {/* ── Ticket List ────────────────────────────────── */}
@@ -230,12 +232,16 @@ export default function TicketsPage() {
                 ? t("emptyState.managerDescription")
                 : t("emptyState.description")
             }
-            actions={[
-              {
-                label: t("createTicket"),
-                onClick: () => router.push("/tickets/neu"),
-              },
-            ]}
+            actions={
+              canManage
+                ? []
+                : [
+                    {
+                      label: t("createTicket"),
+                      onClick: () => router.push("/tickets/neu"),
+                    },
+                  ]
+            }
           />
         ) : (
           <div className="space-y-2">

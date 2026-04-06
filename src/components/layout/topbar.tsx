@@ -69,7 +69,7 @@ export function Topbar({
               </div>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <h1 className="text-[34px] font-bold tracking-tight text-gray-900 leading-[1.1] truncate min-w-0 flex-1">
+              <h1 className="text-[34px] font-bold tracking-tight text-gray-900 dark:text-zinc-100 leading-[1.1] truncate min-w-0 flex-1">
                 {title}
               </h1>
               {/* Page-specific actions inline with title */}
@@ -80,7 +80,7 @@ export function Topbar({
               )}
             </div>
             {description && (
-              <p className="text-[15px] text-gray-500 mt-1 line-clamp-2">
+              <p className="text-[15px] text-gray-500 dark:text-zinc-400 mt-1 line-clamp-2">
                 {description}
               </p>
             )}
@@ -89,26 +89,26 @@ export function Topbar({
       )}
 
       {/* ── Classic desktop bar — lg+ only ── */}
-      <header className="sticky top-0 z-30 hidden lg:block bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] [-webkit-backdrop-filter:saturate(180%)_blur(20px)] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+      <header className="sticky top-0 z-30 hidden lg:block bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-[1.8] [-webkit-backdrop-filter:saturate(180%)_blur(20px)] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
         {/* Hairline bottom border — 0.5px like iOS */}
-        <div className="absolute inset-x-0 bottom-0 h-px bg-black/[0.06]" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-black/[0.06] dark:bg-white/[0.08]" />
 
         <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={openSidebar}
               aria-label="Menü öffnen"
-              className="hidden rounded-xl p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors lg:hidden"
+              className="hidden rounded-xl p-2 text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors lg:hidden"
             >
               <MenuIcon className="h-5 w-5" />
             </button>
 
             <div className="min-w-0">
-              <h1 className="text-xl font-semibold text-gray-900 truncate">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-zinc-100 truncate">
                 {title}
               </h1>
               {description && (
-                <p className="text-sm text-gray-500 truncate mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-zinc-400 truncate mt-0.5">
                   {description}
                 </p>
               )}
@@ -128,7 +128,7 @@ export function Topbar({
                   <Avatar
                     name={session.user.name}
                     size="sm"
-                    className="ring-2 ring-gray-100 cursor-pointer hover:ring-emerald-200 transition-all"
+                    className="ring-2 ring-gray-100 dark:ring-zinc-700 cursor-pointer hover:ring-emerald-200 dark:hover:ring-emerald-800 transition-all"
                   />
                 </button>
                 {profileOpen && (

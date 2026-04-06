@@ -26,6 +26,7 @@ import {
   EditIcon,
   AwardIcon,
   MapPinIcon,
+  BuildingIcon,
   ClockIcon,
 } from "@/components/icons";
 
@@ -52,6 +53,11 @@ interface TeamMemberStatus {
   } | null;
 }
 
+interface DepartmentItem {
+  id: string;
+  name: string;
+}
+
 interface Employee {
   id: string;
   firstName: string;
@@ -68,6 +74,8 @@ interface Employee {
   employeeSkills?: EmployeeSkill[];
   locationId?: string | null;
   location?: LocationItem | null;
+  departmentId?: string | null;
+  department?: DepartmentItem | null;
 }
 
 export default function MitarbeiterPage() {
@@ -78,6 +86,7 @@ export default function MitarbeiterPage() {
   const { handlePlanLimit } = usePlanLimit();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [departments, setDepartments] = useState<DepartmentItem[]>([]);
   const [teamStatusMap, setTeamStatusMap] = useState<
     Record<string, TeamMemberStatus>
   >({});
@@ -100,6 +109,7 @@ export default function MitarbeiterPage() {
     contractType: "VOLLZEIT",
     color: "#10b981",
     locationId: "",
+    departmentId: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -154,6 +164,18 @@ export default function MitarbeiterPage() {
     }
   }, []);
 
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const res = await fetch("/api/departments");
+      if (res.ok) {
+        const data = await res.json();
+        setDepartments(data.data ?? data);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
   /** Fetch live clock-in status for all employees */
   const fetchTeamStatus = useCallback(async () => {
     try {
@@ -174,8 +196,9 @@ export default function MitarbeiterPage() {
   useEffect(() => {
     fetchEmployees();
     fetchLocations();
+    fetchDepartments();
     fetchTeamStatus();
-  }, [fetchEmployees, fetchLocations, fetchTeamStatus]);
+  }, [fetchEmployees, fetchLocations, fetchDepartments, fetchTeamStatus]);
 
   // Auto-open edit form when navigated from detail page with ?edit=<id>
   // (placed after openEditForm so it can reference it)
@@ -195,6 +218,7 @@ export default function MitarbeiterPage() {
       contractType: "VOLLZEIT",
       color: "#10b981",
       locationId: "",
+      departmentId: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -216,6 +240,7 @@ export default function MitarbeiterPage() {
       contractType: emp.contractType || "VOLLZEIT",
       color: emp.color || "#10b981",
       locationId: emp.locationId || "",
+      departmentId: emp.departmentId || "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -269,6 +294,7 @@ export default function MitarbeiterPage() {
           contractType: "VOLLZEIT",
           color: "#10b981",
           locationId: "",
+          departmentId: "",
         });
         fetchEmployees();
       } else {
@@ -536,6 +562,28 @@ export default function MitarbeiterPage() {
               </Select>
             </div>
 
+            {/* Objekt */}
+            <div className="space-y-2">
+              <Label htmlFor="departmentId">{t("form.object")}</Label>
+              <Select
+                id="departmentId"
+                value={formData.departmentId}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    departmentId: e.target.value,
+                  }))
+                }
+              >
+                <option value="">{t("form.noObject")}</option>
+                {departments.map((dep) => (
+                  <option key={dep.id} value={dep.id}>
+                    {dep.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="color">{t("form.color")}</Label>
               <div className="flex items-center gap-3">
@@ -732,6 +780,14 @@ export default function MitarbeiterPage() {
                         <MapPinIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
                         <span className="truncate">
                           {employee.location.name}
+                        </span>
+                      </div>
+                    )}
+                    {employee.department && (
+                      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+                        <BuildingIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                        <span className="truncate">
+                          {employee.department.name}
                         </span>
                       </div>
                     )}

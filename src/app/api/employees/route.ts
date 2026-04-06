@@ -43,6 +43,7 @@ export async function GET(req: Request) {
             orderBy: { createdAt: "asc" },
           },
           location: { select: { id: true, name: true } },
+          department: { select: { id: true, name: true } },
         },
         orderBy: { lastName: "asc" },
         take,
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
       contractType,
       color,
       locationId,
+      departmentId,
     } = parsed.data;
 
     const employee = await prisma.$transaction(async (tx) => {
@@ -112,6 +114,7 @@ export async function POST(req: Request) {
               .toString(16)
               .padStart(6, "0")}`,
           locationId: locationId || null,
+          departmentId: departmentId || null,
           workspaceId,
         },
       });

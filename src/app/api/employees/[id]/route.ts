@@ -93,6 +93,10 @@ export async function PATCH(
           isActive: body.isActive,
           locationId:
             body.locationId !== undefined ? body.locationId || null : undefined,
+          departmentId:
+            body.departmentId !== undefined
+              ? body.departmentId || null
+              : undefined,
         },
       });
 

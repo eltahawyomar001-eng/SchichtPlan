@@ -46,6 +46,7 @@ export const createEmployeeSchema = z.object({
   contractType: contractTypeEnum,
   color: optionalString,
   locationId: z.string().optional().nullable(),
+  departmentId: z.string().optional().nullable(),
 });
 
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({

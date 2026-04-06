@@ -402,6 +402,7 @@ describe("PATCH /api/absences/[id]", () => {
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-1",
+      status: "AUSSTEHEND",
       startDate: new Date("2025-03-10"),
       endDate: new Date("2025-03-14"),
       totalDays: 5,
@@ -431,6 +432,7 @@ describe("PATCH /api/absences/[id]", () => {
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-1",
+      status: "AUSSTEHEND",
     });
     mockAbsenceUpdate.mockResolvedValue({
       id: "abs-1",

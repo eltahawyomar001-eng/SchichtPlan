@@ -52,6 +52,31 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         if (forbidden) return forbidden;
       }
 
+      // ── Idempotency: reject duplicate status transitions ──
+      // If the absence is already in the requested status, return it as-is
+      // to prevent duplicate signatures, notifications, and emails.
+      if (existing.status === body.status) {
+        const current = await prisma.absenceRequest.findUnique({
+          where: { id },
+          include: { employee: true },
+        });
+        return NextResponse.json(current);
+      }
+
+      // ── Guard: only AUSSTEHEND can be approved/rejected ──
+      if (
+        (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") &&
+        existing.status !== "AUSSTEHEND"
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Nur ausstehende Anträge können genehmigt oder abgelehnt werden.",
+          },
+          { status: 409 },
+        );
+      }
+
       // Cancel (STORNIERT) — employee can cancel own, management can cancel any
       if (body.status === "STORNIERT" && isEmployee(user)) {
         const linkedEmployee = await prisma.employee.findFirst({

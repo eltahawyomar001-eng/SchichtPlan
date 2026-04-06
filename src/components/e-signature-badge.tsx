@@ -77,7 +77,14 @@ export function ESignatureBadge({
   // Don't render anything if loading or no signatures
   if (loading || signatures.length === 0) return null;
 
-  const allValid = signatures.every((s) => s.isValid);
+  // Deduplicate: show only the latest (most recent) signature per action
+  // This handles the case where duplicate signatures were created by rapid clicks
+  const latestSignature = [...signatures].sort(
+    (a, b) => new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime(),
+  )[0];
+  const deduped = [latestSignature];
+
+  const allValid = deduped.every((s) => s.isValid);
 
   // ── Compact mode: just a small inline badge ───────────────
   if (compact) {
@@ -137,7 +144,7 @@ export function ESignatureBadge({
 
       {expanded && (
         <div className="mt-2 space-y-2">
-          {signatures.map((sig) => (
+          {deduped.map((sig) => (
             <div
               key={sig.id}
               className="rounded-lg border border-gray-100 bg-gray-50/50 p-3 text-xs space-y-1.5"

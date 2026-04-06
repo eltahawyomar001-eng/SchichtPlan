@@ -112,6 +112,9 @@ export default function AbwesenheitenPage() {
   }, [canManage, user]);
 
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>(
+    {},
+  );
 
   // ── Fetch data ──────────────────────────────────────────────
 
@@ -182,12 +185,18 @@ export default function AbwesenheitenPage() {
   }
 
   async function handleStatusChange(id: string, status: string) {
+    if (actionLoading[id]) return; // prevent double-click
+    setActionLoading((prev) => ({ ...prev, [id]: true }));
     try {
-      await fetch(`/api/absences/${id}`, {
+      const res = await fetch(`/api/absences/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, reviewNote: reviewNotes[id] || null }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setLoadError(data.error || tc("errorOccurred"));
+      }
       setReviewNotes((prev) => {
         const next = { ...prev };
         delete next[id];
@@ -196,6 +205,8 @@ export default function AbwesenheitenPage() {
       fetchAbsences();
     } catch {
       setLoadError(tc("errorOccurred"));
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [id]: false }));
     }
   }
 
@@ -409,6 +420,7 @@ export default function AbwesenheitenPage() {
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
+                              disabled={!!actionLoading[absence.id]}
                               onClick={() =>
                                 handleStatusChange(absence.id, "GENEHMIGT")
                               }
@@ -422,6 +434,7 @@ export default function AbwesenheitenPage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              disabled={!!actionLoading[absence.id]}
                               onClick={() =>
                                 handleStatusChange(absence.id, "ABGELEHNT")
                               }

@@ -365,7 +365,7 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-base flex items-center gap-2">
           <StarIcon className="h-4 w-4 text-amber-500" />
           {t("favorites")}
@@ -383,9 +383,9 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
         </button>
       </CardHeader>
       <CardContent>
-        {/* Pinned Favorites */}
+        {/* Pinned Favorites — full-width large tiles */}
         {favorites.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {favorites.map((key) => {
               const page = PAGE_REGISTRY[key];
               if (!page) return null;
@@ -395,23 +395,24 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                   <Link
                     href={page.href}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl bg-white p-3 sm:p-3.5 border border-gray-100 transition-all duration-200",
+                      "flex flex-col items-center justify-center gap-3 rounded-2xl bg-white p-5 sm:p-6 border border-gray-100 transition-all duration-200",
                       "shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)]",
-                      "hover:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.1)]",
+                      "hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12)]",
+                      "hover:-translate-y-0.5",
                       page.hoverBorder,
                       page.hoverBg,
-                      "min-w-0",
+                      "min-h-[100px] sm:min-h-[110px]",
                     )}
                   >
                     <div
                       className={cn(
-                        "flex-shrink-0 rounded-xl p-2 transition-colors",
+                        "rounded-2xl p-3 transition-colors",
                         page.bg,
                       )}
                     >
-                      <Icon className={cn("h-4 w-4", page.color)} />
+                      <Icon className={cn("h-6 w-6", page.color)} />
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 truncate min-w-0">
+                    <span className="text-sm font-semibold text-gray-700 text-center leading-tight">
                       {tn(key)}
                     </span>
                   </Link>
@@ -421,10 +422,10 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                         e.preventDefault();
                         removeFavorite(key);
                       }}
-                      className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors z-10"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10"
                       aria-label={t("favRemove")}
                     >
-                      <XIcon className="h-3 w-3" />
+                      <XIcon className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
@@ -435,9 +436,9 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
 
         {/* Empty state */}
         {favorites.length === 0 && !editing && (
-          <div className="text-center py-6">
-            <StarIcon className="mx-auto h-8 w-8 text-gray-300 mb-2" />
-            <p className="text-sm text-gray-500 mb-3">{t("favEmpty")}</p>
+          <div className="text-center py-8">
+            <StarIcon className="mx-auto h-10 w-10 text-gray-300 mb-3" />
+            <p className="text-sm text-gray-500 mb-4">{t("favEmpty")}</p>
             <button
               onClick={() => setEditing(true)}
               className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700"
@@ -450,11 +451,11 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
 
         {/* Editing: all available pages */}
         {editing && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-5 pt-5 border-t border-gray-100">
             <p className="text-xs font-medium text-gray-500 mb-3">
               {t("favAvailable")}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
               {ALL_PAGE_KEYS.map((key) => {
                 const page = PAGE_REGISTRY[key];
                 const pinned = favorites.includes(key);
@@ -465,27 +466,27 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                     onClick={() => toggleFavorite(key)}
                     disabled={isSaving}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-xl p-2.5 sm:p-3 border transition-all duration-200 text-left min-w-0",
+                      "flex flex-col items-center justify-center gap-2 rounded-xl p-3 sm:p-4 border transition-all duration-200 min-h-[80px]",
                       pinned
-                        ? "border-emerald-200 bg-emerald-50/50"
+                        ? "border-emerald-300 bg-emerald-50/60 shadow-sm"
                         : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50",
                     )}
                   >
                     <div
                       className={cn(
-                        "flex-shrink-0 rounded-lg p-1.5",
+                        "rounded-xl p-2",
                         pinned ? "bg-emerald-100" : page.bg,
                       )}
                     >
                       {pinned ? (
-                        <CheckCircleIcon className="h-4 w-4 text-emerald-600" />
+                        <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
                       ) : (
-                        <Icon className={cn("h-4 w-4", page.color)} />
+                        <Icon className={cn("h-5 w-5", page.color)} />
                       )}
                     </div>
                     <span
                       className={cn(
-                        "text-xs sm:text-sm font-medium truncate min-w-0",
+                        "text-xs font-medium text-center leading-tight",
                         pinned ? "text-emerald-700" : "text-gray-600",
                       )}
                     >

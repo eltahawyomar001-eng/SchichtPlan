@@ -13,12 +13,14 @@ const {
   mockSwapFindMany,
   mockSwapCount,
   mockSwapCreate,
+  mockSwapFindFirst,
   mockShiftFindUnique,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockSwapFindMany: vi.fn(),
   mockSwapCount: vi.fn(),
   mockSwapCreate: vi.fn(),
+  mockSwapFindFirst: vi.fn(),
   mockShiftFindUnique: vi.fn(),
 }));
 
@@ -35,6 +37,7 @@ vi.mock("@/lib/db", () => ({
       findMany: mockSwapFindMany,
       count: mockSwapCount,
       create: mockSwapCreate,
+      findFirst: mockSwapFindFirst,
     },
     shift: {
       findUnique: mockShiftFindUnique,
@@ -144,5 +147,98 @@ describe("POST /api/shift-swaps", () => {
       }),
     );
     expect(res.status).toBe(400);
+  });
+
+  it("EMPLOYEE cannot create swap for another employee (403)", async () => {
+    mockSession.user = buildEmployee({ employeeId: "emp-1" });
+    const res = await handler.POST(
+      new Request("http://localhost/api/shift-swaps", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          shiftId: "s1",
+          requesterId: "emp-OTHER",
+        }),
+      }),
+    );
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toContain("nur für sich selbst");
+  });
+
+  it("EMPLOYEE can create swap for themselves", async () => {
+    const emp = buildEmployee({ employeeId: "emp-1" });
+    mockSession.user = emp;
+    mockShiftFindUnique.mockResolvedValue({
+      id: "s1",
+      workspaceId: emp.workspaceId,
+      employeeId: "emp-1",
+      date: new Date("2025-07-01"),
+      startTime: "08:00",
+      endTime: "16:00",
+    });
+    mockSwapFindFirst.mockResolvedValue(null);
+    mockSwapCreate.mockResolvedValue({
+      id: "sw1",
+      requesterId: "emp-1",
+      requester: { firstName: "Max", lastName: "Test" },
+      target: null,
+      shift: {
+        date: new Date("2025-07-01"),
+        startTime: "08:00",
+        endTime: "16:00",
+        location: null,
+      },
+    });
+
+    const res = await handler.POST(
+      new Request("http://localhost/api/shift-swaps", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          shiftId: "s1",
+          requesterId: "emp-1",
+        }),
+      }),
+    );
+    expect(res.status).toBe(201);
+  });
+
+  it("ADMIN can create swap on behalf of any employee", async () => {
+    const admin = buildAdmin();
+    mockSession.user = admin;
+    mockShiftFindUnique.mockResolvedValue({
+      id: "s1",
+      workspaceId: admin.workspaceId,
+      employeeId: "emp-5",
+      date: new Date("2025-07-01"),
+      startTime: "08:00",
+      endTime: "16:00",
+    });
+    mockSwapFindFirst.mockResolvedValue(null);
+    mockSwapCreate.mockResolvedValue({
+      id: "sw2",
+      requesterId: "emp-5",
+      requester: { firstName: "Anna", lastName: "Admin" },
+      target: null,
+      shift: {
+        date: new Date("2025-07-01"),
+        startTime: "08:00",
+        endTime: "16:00",
+        location: null,
+      },
+    });
+
+    const res = await handler.POST(
+      new Request("http://localhost/api/shift-swaps", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          shiftId: "s1",
+          requesterId: "emp-5",
+        }),
+      }),
+    );
+    expect(res.status).toBe(201);
   });
 });

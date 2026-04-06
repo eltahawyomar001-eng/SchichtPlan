@@ -94,8 +94,12 @@ export default function SchichttauschPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
 
+  // Employees are locked to their own ID; managers can pick any employee
+  const lockedRequesterId =
+    !canManage && user?.employeeId ? user.employeeId : "";
+
   const [formData, setFormData] = useState({
-    requesterId: "",
+    requesterId: lockedRequesterId,
     shiftId: "",
     targetId: "",
     targetShiftId: "",
@@ -170,7 +174,7 @@ export default function SchichttauschPage() {
       if (res.ok) {
         setShowForm(false);
         setFormData({
-          requesterId: "",
+          requesterId: lockedRequesterId,
           shiftId: "",
           targetId: "",
           targetShiftId: "",
@@ -534,24 +538,32 @@ export default function SchichttauschPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>{t("form.requester")}</Label>
-                  <Select
-                    value={formData.requesterId}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        requesterId: e.target.value,
-                        shiftId: "",
-                      })
-                    }
-                    required
-                  >
-                    <option value="">{tc("selectPlaceholder")}</option>
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.firstName} {emp.lastName}
-                      </option>
-                    ))}
-                  </Select>
+                  {canManage ? (
+                    <Select
+                      value={formData.requesterId}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          requesterId: e.target.value,
+                          shiftId: "",
+                        })
+                      }
+                      required
+                    >
+                      <option value="">{tc("selectPlaceholder")}</option>
+                      {employees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.firstName} {emp.lastName}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <div className="flex w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                      {employees.find((e) => e.id === formData.requesterId)
+                        ? `${employees.find((e) => e.id === formData.requesterId)!.firstName} ${employees.find((e) => e.id === formData.requesterId)!.lastName}`
+                        : user?.name || "—"}
+                    </div>
+                  )}
                 </div>
 
                 <div>

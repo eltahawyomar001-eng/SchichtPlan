@@ -68,6 +68,24 @@ export async function POST(req: Request) {
 
     const body = parsed.data;
 
+    // ── Employees can only create swap requests for themselves ──
+    if (isEmployee(user)) {
+      if (!user.employeeId) {
+        return NextResponse.json(
+          { error: "Kein Mitarbeiterprofil zugeordnet." },
+          { status: 403 },
+        );
+      }
+      if (body.requesterId !== user.employeeId) {
+        return NextResponse.json(
+          {
+            error: "Sie können Tauschanfragen nur für sich selbst erstellen.",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
     // Verify shift belongs to requester
     const shift = await prisma.shift.findUnique({
       where: { id: body.shiftId },

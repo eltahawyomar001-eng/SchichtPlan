@@ -9,6 +9,27 @@ import type { SyncResult } from "@/lib/offline/sync-engine";
 
 type ConnectivityState = "online" | "offline" | "syncing" | "synced";
 
+/* ── Helpers ── */
+
+/**
+ * Actually verify connectivity by hitting our health endpoint.
+ * `navigator.onLine` is unreliable — it only checks for a local
+ * network interface, not real internet connectivity. This pings
+ * the server with a cache-busted HEAD request to confirm.
+ */
+async function checkRealConnectivity(): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/health?_cb=${Date.now()}`, {
+      method: "HEAD",
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /* ── Component ── */
 
 /**
@@ -22,20 +43,22 @@ type ConnectivityState = "online" | "offline" | "syncing" | "synced";
  * - **syncing**: Amber banner — "Syncing {n} changes…"
  * - **synced**: Green banner — "All changes synced" (auto-dismiss 3s)
  * - **online**: Hidden
+ *
+ * NOTE: We do NOT trust navigator.onLine alone — it is notoriously
+ * unreliable on macOS, VPNs, and captive portals. Every offline
+ * signal is verified with a real server ping before showing the banner.
  */
 export function ConnectivityBanner() {
   const t = useTranslations("pwa");
-  const [state, setState] = useState<ConnectivityState>(() =>
-    typeof navigator !== "undefined" && !navigator.onLine
-      ? "offline"
-      : "online",
-  );
+  // Always start as "online" — we verify asynchronously if needed
+  const [state, setState] = useState<ConnectivityState>("online");
   const [pendingCount, setPendingCount] = useState(0);
   const [syncProgress, setSyncProgress] = useState<{
     completed: number;
     total: number;
   } | null>(null);
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verifyingRef = useRef(false);
 
   /** Clear any running dismiss timer */
   const clearDismissTimer = useCallback(() => {
@@ -54,10 +77,28 @@ export function ConnectivityBanner() {
     }, 3_000);
   }, [clearDismissTimer]);
 
+  /**
+   * Verify connectivity before going offline.
+   * Prevents false positives from navigator.onLine.
+   */
+  const verifyAndSetOffline = useCallback(async () => {
+    if (verifyingRef.current) return;
+    verifyingRef.current = true;
+    try {
+      const isReachable = await checkRealConnectivity();
+      if (!isReachable) {
+        clearDismissTimer();
+        setState("offline");
+      }
+    } finally {
+      verifyingRef.current = false;
+    }
+  }, [clearDismissTimer]);
+
   useEffect(() => {
     const goOffline = () => {
-      clearDismissTimer();
-      setState("offline");
+      // Don't blindly trust the browser event — verify first
+      verifyAndSetOffline();
     };
 
     const goOnline = () => {
@@ -68,6 +109,11 @@ export function ConnectivityBanner() {
 
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", goOnline);
+
+    // On mount: if navigator.onLine is false, verify before showing banner
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      verifyAndSetOffline();
+    }
 
     // Sync engine events
     const onMutationQueued = (e: Event) => {

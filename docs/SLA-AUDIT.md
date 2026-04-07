@@ -486,7 +486,7 @@ Based on the industry benchmark and Shiftfy's current architecture, here are the
 ## 5. Credit Request Process
 
 - Customer must request credits within 30 days of the incident
-- Request via email to support@shiftfy.de
+- Request via email to info@bashabsheh-vergabepartner.de
 - Credits applied to next billing cycle (not refundable as cash)
 
 ## 6. Data Protection

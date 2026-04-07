@@ -11,20 +11,26 @@ import {
 } from "@/lib/time-utils";
 import { log } from "@/lib/logger";
 import { updateTimeEntrySchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 // ─── GET  /api/time-entries/:id ─────────────────────────────────
-export async function GET(_req: Request, { params }: RouteParams) {
-  try {
+export const GET = withRoute(
+  "/api/time-entries/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const workspaceId = (session.user as SessionUser).workspaceId;
 
     const entry = await prisma.timeEntry.findFirst({
@@ -51,21 +57,21 @@ export async function GET(_req: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(entry);
-  } catch (error) {
-    log.error("Error fetching time entry:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── PATCH  /api/time-entries/:id ───────────────────────────────
-export async function PATCH(req: Request, { params }: RouteParams) {
-  try {
+export const PATCH = withRoute(
+  "/api/time-entries/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -171,22 +177,37 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       return result;
     });
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "TimeEntry",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId: workspaceId!,
+      changes: changedFields,
+    });
+
+    dispatchWebhook(workspaceId!, "time_entry.updated", {
+      id,
+      ...changedFields,
+    }).catch(() => {});
+
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating time entry:", { error: error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── DELETE  /api/time-entries/:id ──────────────────────────────
-export async function DELETE(_req: Request, { params }: RouteParams) {
-  try {
+export const DELETE = withRoute(
+  "/api/time-entries/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const workspaceId = (session.user as SessionUser).workspaceId;
     const currentUser = session.user as SessionUser;
 
@@ -215,10 +236,22 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
       );
     }
 
-    await prisma.timeEntry.delete({ where: { id } });
+    await prisma.timeEntry.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    createAuditLog({
+      action: "DELETE",
+      entityType: "TimeEntry",
+      entityId: id,
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      workspaceId: workspaceId!,
+    });
+
+    dispatchWebhook(workspaceId!, "time_entry.deleted", { id }).catch(() => {});
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error deleting time entry:", { error: error });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { toIndustrialHours } from "@/lib/time-utils";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { createAuditLog } from "@/lib/audit";
 import { datevExportSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/export/datev-online
@@ -23,15 +22,13 @@ import { log } from "@/lib/logger";
  * This is a real backend operation (DB queries, plan gating, audit log)
  * — NOT static UI.
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/export/datev-online",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -153,14 +150,9 @@ export async function POST(req: Request) {
       upload: uploadResult,
       payload: datevPayload,
     });
-  } catch (error) {
-    log.error("Error uploading to DATEV:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim DATEV-Upload" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);
 
 // ─── Build DATEV Unternehmen Online Payload ─────────────────────
 

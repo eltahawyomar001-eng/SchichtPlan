@@ -18,6 +18,7 @@ import {
   UsersIcon,
   ClockIcon,
 } from "@/components/icons";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function RegisterForm() {
   const router = useRouter();
@@ -109,13 +110,18 @@ function RegisterForm() {
   return (
     <div className="flex min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       {/* ── Left: Form ── */}
-      <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24">
+      <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24 bg-white dark:bg-gray-950">
         <div className="mx-auto w-full max-w-[460px]">
           {/* Logo + headline */}
-          <Link href="/" className="mb-8 inline-flex items-center gap-3">
-            <ShiftfyMark className="h-10 w-10" />
-            <span className="text-xl font-bold text-gray-900">Shiftfy</span>
-          </Link>
+          <div className="mb-8 flex items-center justify-between">
+            <Link href="/" className="inline-flex items-center gap-3">
+              <ShiftfyMark className="h-10 w-10" />
+              <span className="text-xl font-bold text-gray-900 dark:text-white">
+                Shiftfy
+              </span>
+            </Link>
+            <ThemeToggle />
+          </div>
 
           <div className="mb-6">
             <Link
@@ -414,10 +420,12 @@ function RegisterForm() {
           {/* Divider */}
           <div className="relative mt-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-3 text-gray-400">{t("or")}</span>
+              <span className="bg-white dark:bg-gray-950 px-3 text-gray-400">
+                {t("or")}
+              </span>
             </div>
           </div>
 
@@ -425,7 +433,7 @@ function RegisterForm() {
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md active:scale-[0.98]"
+            className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md active:scale-[0.98]"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
               <path

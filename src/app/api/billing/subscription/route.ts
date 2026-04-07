@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
 import {
   getSubscription,
   ensureSubscription,
@@ -9,19 +6,21 @@ import {
 } from "@/lib/subscription";
 import { PLANS, type PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/billing/subscription
  * Returns the current workspace subscription status and plan limits.
  */
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute(
+  "/api/billing/subscription",
+  "GET",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     let sub = await getSubscription(user.workspaceId);
 
     // Auto-create basic subscription if none exists
@@ -43,11 +42,5 @@ export async function GET() {
       limits: planConfig?.limits ?? PLANS.basic.limits,
       simulationMode: isSimulationMode(),
     });
-  } catch (error) {
-    log.error("[Billing] Subscription fetch error:", { error: error });
-    return NextResponse.json(
-      { error: "Failed to fetch subscription" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

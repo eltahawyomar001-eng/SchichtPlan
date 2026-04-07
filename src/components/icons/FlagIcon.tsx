@@ -15,7 +15,7 @@ export function FlagIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
-        stroke="url(#flag-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -25,24 +25,11 @@ export function FlagIcon(props: SVGProps<SVGSVGElement>) {
         x2="4"
         y1="22"
         y2="15"
-        stroke="url(#flag-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="flag-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

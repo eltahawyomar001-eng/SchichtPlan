@@ -14,31 +14,18 @@ export function CheckCircleIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
-        stroke="url(#checkcircle-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M22 4L12 14.01l-3-3"
-        stroke="url(#checkcircle-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="checkcircle-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

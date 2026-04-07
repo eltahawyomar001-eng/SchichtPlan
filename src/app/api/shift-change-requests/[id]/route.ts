@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   checkShiftConflicts,
@@ -14,6 +11,10 @@ import {
   validateBody,
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -24,17 +25,16 @@ interface RouteParams {
 //   - approve:  Manager approves and applies the requested changes to the shift
 //   - reject:   Manager rejects with an optional note
 //   - cancel:   Employee cancels their own pending request
-export async function PATCH(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PATCH = withRoute(
+  "/api/shift-change-requests/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    const { id } = await params;
-    const workspaceId = user.workspaceId;
-
+    const { id } = params;
     const changeRequest = await prisma.shiftChangeRequest.findFirst({
       where: { id, workspaceId: workspaceId ?? undefined },
       include: {
@@ -87,6 +87,20 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         where: { id },
         data: { status: "STORNIERT" },
       });
+
+      createAuditLog({
+        action: "UPDATE",
+        entityType: "ShiftChangeRequest",
+        entityId: id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId: workspaceId!,
+        changes: { action: "cancel", status: "STORNIERT" },
+      });
+
+      dispatchWebhook(workspaceId!, "shift_change.cancelled", { id }).catch(
+        () => {},
+      );
 
       return NextResponse.json(updated);
     }
@@ -143,6 +157,20 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           log.error("Failed to send rejection notification");
         }
       }
+
+      createAuditLog({
+        action: "REJECT",
+        entityType: "ShiftChangeRequest",
+        entityId: id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId: workspaceId!,
+        changes: { action: "reject", reviewNote },
+      });
+
+      dispatchWebhook(workspaceId!, "shift_change.rejected", { id }).catch(
+        () => {},
+      );
 
       return NextResponse.json(updated);
     }
@@ -246,6 +274,20 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         }
       }
 
+      createAuditLog({
+        action: "APPROVE",
+        entityType: "ShiftChangeRequest",
+        entityId: id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId: workspaceId!,
+        changes: { action: "approve" },
+      });
+
+      dispatchWebhook(workspaceId!, "shift_change.approved", { id }).catch(
+        () => {},
+      );
+
       return NextResponse.json({
         request: updatedRequest,
         shift: updatedShift,
@@ -253,11 +295,5 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-  } catch (error) {
-    log.error("Error processing shift change request:", { error: error });
-    return NextResponse.json(
-      { error: "Error processing request" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

@@ -22,6 +22,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 
 import { buildOwner } from "../helpers/factories";
@@ -36,7 +40,7 @@ describe("GET /api/notification-preferences", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
@@ -46,7 +50,7 @@ describe("GET /api/notification-preferences", () => {
       notificationPreferences: [],
     });
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.emailEnabled).toBe(true);
@@ -58,7 +62,7 @@ describe("GET /api/notification-preferences", () => {
       notificationPreferences: [{ enabled: false }],
     });
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.emailEnabled).toBe(false);

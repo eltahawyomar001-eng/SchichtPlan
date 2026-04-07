@@ -6,21 +6,23 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { checkInVisitSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 // ─── POST  /api/service-visits/[id]/check-in ───────────────────
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const POST = withRoute(
+  "/api/service-visits/[id]/check-in",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -78,6 +80,10 @@ export async function POST(
       metadata: { action: "check-in" },
     });
 
+    dispatchWebhook(workspaceId, "service_visit.checked_in", { id }).catch(
+      () => {},
+    );
+
     // Revisionssicher audit trail entry
     createVisitAuditEntry(req, {
       eventType: "CHECK_IN",
@@ -94,8 +100,6 @@ export async function POST(
     });
 
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error during check-in:", { error });
-    return NextResponse.json({ error: "Error check-in" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

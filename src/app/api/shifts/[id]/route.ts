@@ -14,18 +14,19 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateShiftSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/shifts/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -183,24 +184,20 @@ export async function PATCH(
     );
 
     return NextResponse.json(shift);
-  } catch (error) {
-    log.error("Error updating shift:", { error: error });
-    captureRouteError(error, { route: "/api/shifts/[id]", method: "PATCH" });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "/api/shifts/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -209,8 +206,9 @@ export async function DELETE(
     if (forbidden) return forbidden;
 
     await prisma.$transaction(async (tx) => {
-      await tx.shift.deleteMany({
+      await tx.shift.updateMany({
         where: { id, workspaceId },
+        data: { deletedAt: new Date() },
       });
 
       // ── Audit log (atomic) ──
@@ -221,6 +219,7 @@ export async function DELETE(
         userId: user.id,
         userEmail: user.email ?? undefined,
         workspaceId: workspaceId!,
+        metadata: { softDelete: true },
       });
     });
 
@@ -233,9 +232,5 @@ export async function DELETE(
     );
 
     return NextResponse.json({ message: "Shift deleted" });
-  } catch (error) {
-    log.error("Error deleting shift:", { error: error });
-    captureRouteError(error, { route: "/api/shifts/[id]", method: "DELETE" });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

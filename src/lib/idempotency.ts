@@ -50,6 +50,38 @@ async function getRedis() {
   return redis;
 }
 
+/* ── In-memory LRU fallback when Redis is unavailable ──────── */
+
+interface MemoryEntry {
+  data: CachedResponse;
+  expiresAt: number;
+}
+
+const LRU_MAX_SIZE = 500;
+const memoryCache = new Map<string, MemoryEntry>();
+
+function memoryGet(key: string): CachedResponse | null {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+  // Move to end (LRU refresh)
+  memoryCache.delete(key);
+  memoryCache.set(key, entry);
+  return entry.data;
+}
+
+function memorySet(key: string, data: CachedResponse, ttlMs: number): void {
+  // Evict oldest entries if at capacity
+  if (memoryCache.size >= LRU_MAX_SIZE) {
+    const oldest = memoryCache.keys().next().value;
+    if (oldest) memoryCache.delete(oldest);
+  }
+  memoryCache.set(key, { data, expiresAt: Date.now() + ttlMs });
+}
+
 /* ── Constants ──────────────────────────────────────────────── */
 
 const IDEMPOTENCY_PREFIX = "idempotency:";
@@ -108,11 +140,29 @@ export async function checkIdempotency(
 
   try {
     const client = await getRedis();
-    if (!client) return null; // Redis unavailable — skip idempotency
-
     const ip = getRequestIp(req);
-    const redisKey = buildRedisKey(key, ip);
-    const raw = await client.get(redisKey);
+    const cacheKey = buildRedisKey(key, ip);
+
+    if (!client) {
+      // Redis unavailable — use in-memory LRU fallback
+      const memoryCached = memoryGet(cacheKey);
+      if (!memoryCached) return null;
+
+      log.info("Idempotent request — returning cached response (memory)", {
+        idempotencyKey: key,
+        status: memoryCached.status,
+      });
+
+      return new NextResponse(memoryCached.body, {
+        status: memoryCached.status,
+        headers: {
+          "Content-Type": memoryCached.contentType,
+          "Idempotency-Replayed": "true",
+        },
+      });
+    }
+
+    const raw = await client.get(cacheKey);
 
     if (!raw) return null; // First time seeing this key
 
@@ -154,10 +204,9 @@ export async function cacheIdempotentResponse(
 
   try {
     const client = await getRedis();
-    if (!client) return;
 
     const ip = getRequestIp(req);
-    const redisKey = buildRedisKey(key, ip);
+    const cacheKey = buildRedisKey(key, ip);
 
     // Clone the response to read the body without consuming it
     const cloned = response.clone();
@@ -169,9 +218,18 @@ export async function cacheIdempotentResponse(
       contentType: response.headers.get("Content-Type") || "application/json",
     };
 
-    await client.set(redisKey, JSON.stringify(cached), {
+    if (!client) {
+      // Redis unavailable — cache in memory only
+      memorySet(cacheKey, cached, IDEMPOTENCY_TTL_SECONDS * 1000);
+      return;
+    }
+
+    await client.set(cacheKey, JSON.stringify(cached), {
       ex: IDEMPOTENCY_TTL_SECONDS,
     });
+
+    // Also cache in memory for faster subsequent hits
+    memorySet(cacheKey, cached, IDEMPOTENCY_TTL_SECONDS * 1000);
   } catch (error) {
     // Non-critical — log but don't fail the response
     log.warn("Failed to cache idempotent response", {

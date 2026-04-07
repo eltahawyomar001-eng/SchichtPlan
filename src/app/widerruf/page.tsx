@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShiftfyMark } from "@/components/icons";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 export const metadata: Metadata = {
   title: "Widerrufsbelehrung",
@@ -11,40 +12,41 @@ export const metadata: Metadata = {
 
 export default function WiderrufPage() {
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="h-7 w-7" />
-            <span className="font-bold text-base text-gray-900">
+            <span className="font-bold text-base text-gray-900 dark:text-white">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Startseite
             </Link>
             <Link
               href="/pricing"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Preise
             </Link>
             <Link
               href="/blog"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Blog
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Login
             </Link>
+            <ThemeToggle />
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
@@ -168,7 +170,7 @@ export default function WiderrufPage() {
               (Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte
               dieses Formular aus und senden Sie es zurück.)
             </p>
-            <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-3">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-3">
               <p>
                 An:
                 <br />
@@ -254,6 +256,9 @@ export default function WiderrufPage() {
               className="hover:text-gray-600 transition-colors"
             >
               Barrierefreiheit
+            </Link>
+            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+              SLA
             </Link>
           </div>
         </div>

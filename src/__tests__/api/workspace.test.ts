@@ -22,6 +22,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     workspace: {
@@ -64,7 +68,7 @@ describe("GET /api/workspace", () => {
 
   it("returns 401 when not authenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
@@ -77,7 +81,7 @@ describe("GET /api/workspace", () => {
       bundesland: "HE",
     });
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.name).toBe("Test Company");
@@ -87,7 +91,7 @@ describe("GET /api/workspace", () => {
     mockSession.user = buildAdmin();
     mockWorkspaceFindUnique.mockResolvedValue(null);
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(404);
   });
 });

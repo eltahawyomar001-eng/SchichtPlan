@@ -27,6 +27,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     chatChannelMember: {
@@ -61,7 +65,7 @@ describe("GET /api/chat/channels", () => {
 
   it("returns 401 when not authenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
@@ -76,7 +80,7 @@ describe("GET /api/chat/channels", () => {
       ),
     );
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(403);
   });
 
@@ -98,7 +102,7 @@ describe("GET /api/chat/channels", () => {
       },
     ]);
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveLength(1);
@@ -110,7 +114,7 @@ describe("GET /api/chat/channels", () => {
     mockRequirePlanFeature.mockResolvedValue(null);
     mockMemberFindMany.mockResolvedValue([]);
 
-    await handler.GET();
+    await handler.GET(new Request("http://localhost"));
     const call = mockMemberFindMany.mock.calls[0][0];
     // M2 fix: verify workspaceId is in the DB query, not JS filter
     expect(call.where.channel.workspaceId).toBe(admin.workspaceId);

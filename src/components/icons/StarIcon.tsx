@@ -15,24 +15,11 @@ export function StarIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-        stroke="url(#star-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="star-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

@@ -1,36 +1,32 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import {
   updateStaffingRequirementSchema,
   validateBody,
 } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/staffing-requirements/[id]
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const GET = withRoute(
+  "/api/staffing-requirements/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
     const requirement = await prisma.staffingRequirement.findFirst({
       where: { id, workspaceId },
@@ -49,27 +45,20 @@ export async function GET(
     }
 
     return NextResponse.json(requirement);
-  } catch (error) {
-    log.error("Error fetching staffing requirement:", { error });
-    return NextResponse.json({ error: "Fehler beim Laden" }, { status: 500 });
-  }
-}
+  },
+);
 
 /**
  * PUT /api/staffing-requirements/[id]
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const PUT = withRoute(
+  "/api/staffing-requirements/[id]",
+  "PUT",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -77,7 +66,7 @@ export async function PUT(
     const forbidden = requirePermission(user, "shifts", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
 
     const existing = await prisma.staffingRequirement.findFirst({
       where: { id, workspaceId },
@@ -142,31 +131,25 @@ export async function PUT(
       changes: data,
     });
 
-    return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating staffing requirement:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren" },
-      { status: 500 },
+    dispatchWebhook(workspaceId, "staffing_requirement.updated", { id }).catch(
+      () => {},
     );
-  }
-}
+
+    return NextResponse.json(updated);
+  },
+);
 
 /**
  * DELETE /api/staffing-requirements/[id]
  */
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const DELETE = withRoute(
+  "/api/staffing-requirements/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -174,7 +157,7 @@ export async function DELETE(
     const forbidden = requirePermission(user, "shifts", "delete");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
 
     const existing = await prisma.staffingRequirement.findFirst({
       where: { id, workspaceId },
@@ -197,9 +180,10 @@ export async function DELETE(
       workspaceId,
     });
 
+    dispatchWebhook(workspaceId, "staffing_requirement.deleted", { id }).catch(
+      () => {},
+    );
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error deleting staffing requirement:", { error });
-    return NextResponse.json({ error: "Fehler beim Löschen" }, { status: 500 });
-  }
-}
+  },
+);

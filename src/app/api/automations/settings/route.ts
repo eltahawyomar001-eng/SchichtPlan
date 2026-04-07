@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import {
+  updateAutomationSettingsSchema,
+  validateBody,
+} from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * All known automation keys and their default enabled state.
@@ -25,17 +29,13 @@ export const AUTOMATION_DEFAULTS: Record<string, boolean> = {
 };
 
 /** GET — Fetch all automation settings for the workspace */
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const GET = withRoute(
+  "/api/automations/settings",
+  "GET",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // Only owners/admins can view automation settings
     if (!["OWNER", "ADMIN"].includes(user.role)) {
@@ -55,38 +55,26 @@ export async function GET() {
     }
 
     return NextResponse.json({ settings: merged });
-  } catch (error) {
-    log.error("Error fetching automation settings:", { error: error });
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
 /** PUT — Update one or more automation toggles */
-export async function PUT(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const PUT = withRoute(
+  "/api/automations/settings",
+  "PUT",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     if (!["OWNER", "ADMIN"].includes(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
-    const updates: Record<string, boolean> = body.settings;
-
-    if (!updates || typeof updates !== "object") {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
+    const parsed = validateBody(updateAutomationSettingsSchema, body);
+    if (!parsed.success) return parsed.response;
+    const updates = parsed.data.settings;
 
     // Validate keys
     const validKeys = Object.keys(AUTOMATION_DEFAULTS);
@@ -112,6 +100,15 @@ export async function PUT(req: Request) {
       });
     }
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "AutomationSettings",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: updates,
+    });
+
     // Return updated full state
     const settings = await prisma.automationSetting.findMany({
       where: { workspaceId: user.workspaceId },
@@ -125,11 +122,5 @@ export async function PUT(req: Request) {
     }
 
     return NextResponse.json({ settings: merged });
-  } catch (error) {
-    log.error("Error updating automation settings:", { error: error });
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

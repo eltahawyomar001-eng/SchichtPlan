@@ -1,36 +1,31 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requireManagement } from "@/lib/authorization";
 import { addChatMembersSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/chat/channels/[id]/members
  * Add members to a channel. Creator or management only.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/chat/channels/[id]/members",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
@@ -70,39 +65,43 @@ export async function POST(
       skipDuplicates: true,
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "ChatChannelMember",
+      entityId: channelId,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { addedUserIds: validIds },
+    });
+
+    dispatchWebhook(workspaceId, "chat_member.added", {
+      channelId,
+      addedUserIds: validIds,
+    }).catch(() => {});
+
     return NextResponse.json({ added: result.count });
-  } catch (error) {
-    log.error("Error adding members:", { error });
-    return NextResponse.json(
-      { error: "Error adding members" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);
 
 /**
  * DELETE /api/chat/channels/[id]/members
  * Remove a member from a channel. Creator, management, or self.
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const DELETE = withRoute(
+  "/api/chat/channels/[id]/members",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get("userId");
 
@@ -131,12 +130,21 @@ export async function DELETE(
       where: { channelId_userId: { channelId, userId: targetUserId } },
     });
 
+    createAuditLog({
+      action: "DELETE",
+      entityType: "ChatChannelMember",
+      entityId: channelId,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { removedUserId: targetUserId },
+    });
+
+    dispatchWebhook(workspaceId, "chat_member.removed", {
+      channelId,
+      removedUserId: targetUserId,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error removing member:", { error });
-    return NextResponse.json(
-      { error: "Error removing member" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

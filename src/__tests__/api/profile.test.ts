@@ -23,6 +23,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => {
   const tx = {
     user: {
@@ -47,6 +51,7 @@ vi.mock("@/lib/db", () => {
   };
 });
 vi.mock("@/lib/sentry", () => ({ captureRouteError: vi.fn() }));
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -69,7 +74,7 @@ describe("DELETE /api/profile", () => {
 
   it("returns 401 when not authenticated", async () => {
     mockSession.user = null;
-    const res = await handler.DELETE();
+    const res = await handler.DELETE(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
@@ -77,7 +82,7 @@ describe("DELETE /api/profile", () => {
     mockSession.user = buildAdmin();
     mockUserFindUnique.mockResolvedValue(null);
 
-    const res = await handler.DELETE();
+    const res = await handler.DELETE(new Request("http://localhost"));
     expect(res.status).toBe(404);
   });
 
@@ -91,7 +96,7 @@ describe("DELETE /api/profile", () => {
     });
     mockUserDelete.mockResolvedValue({ id: "user-1" });
 
-    const res = await handler.DELETE();
+    const res = await handler.DELETE(new Request("http://localhost"));
     expect(res.status).toBe(200);
   });
 
@@ -106,7 +111,7 @@ describe("DELETE /api/profile", () => {
       },
     });
 
-    const res = await handler.DELETE();
+    const res = await handler.DELETE(new Request("http://localhost"));
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error).toBe("OWNER_TRANSFER_REQUIRED");

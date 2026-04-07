@@ -12,27 +12,8 @@ export function PlayIcon(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="url(#play-gradient)"
-        strokeWidth="2"
-      />
-      <path d="M10 8l6 4-6 4V8z" fill="url(#play-gradient)" />
-      <defs>
-        <linearGradient
-          id="play-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+      <path d="M10 8l6 4-6 4V8z" fill="currentColor" />{" "}
     </svg>
   );
 }

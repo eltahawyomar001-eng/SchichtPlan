@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe } from "@/lib/stripe";
 import { getSubscription, isSimulationMode } from "@/lib/subscription";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/billing/portal
@@ -14,14 +14,14 @@ import { log } from "@/lib/logger";
  *
  * In simulation mode, redirects to the billing page with a sim flag.
  */
-export async function POST() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/billing/portal",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
@@ -48,12 +48,15 @@ export async function POST() {
       return_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement`,
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "BillingPortalSession",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+    });
+
     return NextResponse.json({ url: portalSession.url });
-  } catch (error) {
-    log.error("[Stripe] Portal error:", { error: error });
-    return NextResponse.json(
-      { error: "Portal session failed" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

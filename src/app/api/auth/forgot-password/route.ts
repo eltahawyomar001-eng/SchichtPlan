@@ -4,9 +4,12 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { forgotPasswordSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/auth/forgot-password",
+  "POST",
+  async (req) => {
     const parsed = validateBody(forgotPasswordSchema, await req.json());
     if (!parsed.success) return parsed.response;
     const { email } = parsed.data;
@@ -46,11 +49,5 @@ export async function POST(req: Request) {
       message:
         "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen gesendet.",
     });
-  } catch (error) {
-    log.error("Forgot password error:", { error: error });
-    return NextResponse.json(
-      { error: "Ein Fehler ist aufgetreten." },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

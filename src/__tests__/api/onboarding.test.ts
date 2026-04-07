@@ -21,7 +21,12 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -38,13 +43,13 @@ describe("POST /api/onboarding/complete", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for EMPLOYEE (requires admin)", async () => {
     mockSession.user = buildEmployee();
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(403);
   });
 
@@ -53,7 +58,7 @@ describe("POST /api/onboarding/complete", () => {
     mockSession.user = owner;
     mockPrisma.workspace.update.mockResolvedValue({});
 
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

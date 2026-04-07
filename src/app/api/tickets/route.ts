@@ -8,83 +8,82 @@ import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { logTicketCreated } from "@/lib/ticket-events";
 import { notifyNewTicket } from "@/lib/ticket-notifications";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/tickets ──────────────────────────────────────────
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export const GET = withRoute("/api/tickets", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const forbidden = requirePermission(user, "tickets", "read");
-    if (forbidden) return forbidden;
+  const forbidden = requirePermission(user, "tickets", "read");
+  if (forbidden) return forbidden;
 
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-    const category = searchParams.get("category");
-    const priority = searchParams.get("priority");
-    const assignedToId = searchParams.get("assignedToId");
-    const ticketType = searchParams.get("ticketType");
-    const search = searchParams.get("search");
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+  const category = searchParams.get("category");
+  const priority = searchParams.get("priority");
+  const assignedToId = searchParams.get("assignedToId");
+  const ticketType = searchParams.get("ticketType");
+  const search = searchParams.get("search");
 
-    const where: Record<string, unknown> = { workspaceId };
+  const where: Record<string, unknown> = { workspaceId };
 
-    if (status) where.status = status;
-    if (category) where.category = category;
-    if (priority) where.priority = priority;
-    if (assignedToId) where.assignedToId = assignedToId;
-    if (ticketType) where.ticketType = ticketType;
+  if (status) where.status = status;
+  if (category) where.category = category;
+  if (priority) where.priority = priority;
+  if (assignedToId) where.assignedToId = assignedToId;
+  if (ticketType) where.ticketType = ticketType;
 
-    // EMPLOYEE can see their own tickets + tickets assigned to them
-    if (isEmployee(user)) {
-      where.OR = [{ createdById: user.id }, { assignedToId: user.id }];
-    }
-
-    // Text search on subject and ticketNumber
-    if (search) {
-      const searchConditions = [
-        { subject: { contains: search, mode: "insensitive" } },
-        { ticketNumber: { contains: search, mode: "insensitive" } },
-      ];
-
-      // Combine with existing OR (employee filter) using AND
-      if (where.OR) {
-        const employeeFilter = where.OR;
-        delete where.OR;
-        where.AND = [{ OR: employeeFilter }, { OR: searchConditions }];
-      } else {
-        where.OR = searchConditions;
-      }
-    }
-
-    const { take, skip } = parsePagination(req);
-
-    const [tickets, total] = await Promise.all([
-      prisma.ticket.findMany({
-        where,
-        include: {
-          createdBy: { select: { id: true, name: true, email: true } },
-          assignedTo: { select: { id: true, name: true, email: true } },
-          _count: { select: { comments: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take,
-        skip,
-      }),
-      prisma.ticket.count({ where }),
-    ]);
-
-    return paginatedResponse(tickets, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching tickets:", { error });
-    captureRouteError(error, { route: "/api/tickets", method: "GET" });
-    return serverError("Fehler beim Laden der Tickets");
+  // EMPLOYEE can see their own tickets + tickets assigned to them
+  if (isEmployee(user)) {
+    where.OR = [{ createdById: user.id }, { assignedToId: user.id }];
   }
-}
+
+  // Text search on subject and ticketNumber
+  if (search) {
+    const searchConditions = [
+      { subject: { contains: search, mode: "insensitive" } },
+      { ticketNumber: { contains: search, mode: "insensitive" } },
+    ];
+
+    // Combine with existing OR (employee filter) using AND
+    if (where.OR) {
+      const employeeFilter = where.OR;
+      delete where.OR;
+      where.AND = [{ OR: employeeFilter }, { OR: searchConditions }];
+    } else {
+      where.OR = searchConditions;
+    }
+  }
+
+  const { take, skip } = parsePagination(req);
+
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      where,
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
+        _count: { select: { comments: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+      skip,
+    }),
+    prisma.ticket.count({ where }),
+  ]);
+
+  return paginatedResponse(tickets, total, take, skip);
+});
 
 // ─── POST  /api/tickets ─────────────────────────────────────────
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/tickets",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -144,6 +143,26 @@ export async function POST(req: Request) {
       },
     );
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "Ticket",
+      entityId: ticket.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: {
+        ticketNumber: ticket.ticketNumber,
+        subject: body.subject,
+        category: body.category,
+      },
+    });
+
+    dispatchWebhook(workspaceId, "ticket.created", {
+      id: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      subject: body.subject,
+    }).catch(() => {});
+
     log.info("Ticket created", {
       ticketId: ticket.id,
       ticketNumber: ticket.ticketNumber,
@@ -162,9 +181,6 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(ticket, { status: 201 });
-  } catch (error) {
-    log.error("Error creating ticket:", { error });
-    captureRouteError(error, { route: "/api/tickets", method: "POST" });
-    return serverError("Fehler beim Erstellen des Tickets");
-  }
-}
+  },
+  { idempotent: true },
+);

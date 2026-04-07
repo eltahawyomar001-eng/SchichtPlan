@@ -1,73 +1,59 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createProjectSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /** GET /api/projects — list all projects for the workspace */
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute("/api/projects", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+  const forbidden = requirePermission(user, "projects", "read");
+  if (forbidden) return forbidden;
 
-    const forbidden = requirePermission(user, "projects", "read");
-    if (forbidden) return forbidden;
+  const { searchParams } = new URL(req.url);
+  const clientId = searchParams.get("clientId");
+  const status = searchParams.get("status");
 
-    const { searchParams } = new URL(req.url);
-    const clientId = searchParams.get("clientId");
-    const status = searchParams.get("status");
+  const where: Record<string, unknown> = { workspaceId: user.workspaceId };
+  if (clientId) where.clientId = clientId;
+  if (status) where.status = status;
 
-    const where: Record<string, unknown> = { workspaceId: user.workspaceId };
-    if (clientId) where.clientId = clientId;
-    if (status) where.status = status;
+  const { take, skip } = parsePagination(req);
 
-    const { take, skip } = parsePagination(req);
+  const [projects, total] = await Promise.all([
+    prisma.project.findMany({
+      where,
+      include: {
+        client: { select: { id: true, name: true } },
+        members: { include: { employee: true } },
+        _count: { select: { timeEntries: true } },
+      },
+      orderBy: { name: "asc" },
+      take,
+      skip,
+    }),
+    prisma.project.count({ where }),
+  ]);
 
-    const [projects, total] = await Promise.all([
-      prisma.project.findMany({
-        where,
-        include: {
-          client: { select: { id: true, name: true } },
-          members: { include: { employee: true } },
-          _count: { select: { timeEntries: true } },
-        },
-        orderBy: { name: "asc" },
-        take,
-        skip,
-      }),
-      prisma.project.count({ where }),
-    ]);
-
-    return paginatedResponse(projects, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching projects:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  return paginatedResponse(projects, total, take, skip);
+});
 
 /** POST /api/projects — create a new project */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/projects",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requirePermission(user, "projects", "create");
     if (forbidden) return forbidden;
@@ -100,9 +86,22 @@ export async function POST(req: Request) {
       },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "Project",
+      entityId: project.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { name, clientId },
+    });
+
+    dispatchWebhook(workspaceId, "project.created", {
+      id: project.id,
+      name,
+    }).catch(() => {});
+
     return NextResponse.json(project, { status: 201 });
-  } catch (error) {
-    log.error("Error creating project:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

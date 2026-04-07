@@ -14,31 +14,18 @@ export function ShieldCheckIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-        stroke="url(#shield-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M9 12l2 2 4-4"
-        stroke="url(#shield-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="shield-gradient"
-          x1="4"
-          y1="2"
-          x2="20"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

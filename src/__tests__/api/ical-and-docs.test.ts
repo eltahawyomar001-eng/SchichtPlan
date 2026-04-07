@@ -24,7 +24,12 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -42,7 +47,7 @@ describe("GET /api/ical/tokens", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
@@ -62,7 +67,7 @@ describe("GET /api/ical/tokens", () => {
       },
     ]);
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
@@ -121,19 +126,19 @@ describe("GET /api/docs", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for EMPLOYEE (requires admin)", async () => {
     mockSession.user = buildEmployee();
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(403);
   });
 
   it("returns OpenAPI spec for admin", async () => {
     mockSession.user = buildOwner();
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.openapi).toBe("3.0.3");

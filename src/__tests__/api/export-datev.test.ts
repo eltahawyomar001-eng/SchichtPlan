@@ -12,6 +12,7 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
     timeEntry: { findMany: vi.fn() },
     employee: { findUnique: vi.fn() },
+    monthClose: { findMany: vi.fn().mockResolvedValue([]) },
   },
 }));
 
@@ -22,6 +23,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/subscription", () => ({
   requirePlanFeature: vi.fn(() => null),

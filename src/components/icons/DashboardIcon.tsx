@@ -18,7 +18,7 @@ export function DashboardIcon(props: SVGProps<SVGSVGElement>) {
         width="8"
         height="8"
         rx="2"
-        stroke="url(#dash-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <rect
@@ -27,7 +27,7 @@ export function DashboardIcon(props: SVGProps<SVGSVGElement>) {
         width="8"
         height="8"
         rx="2"
-        stroke="url(#dash-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <rect
@@ -36,7 +36,7 @@ export function DashboardIcon(props: SVGProps<SVGSVGElement>) {
         width="8"
         height="8"
         rx="2"
-        stroke="url(#dash-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <rect
@@ -45,22 +45,9 @@ export function DashboardIcon(props: SVGProps<SVGSVGElement>) {
         width="8"
         height="8"
         rx="2"
-        stroke="url(#dash-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
-      />
-      <defs>
-        <linearGradient
-          id="dash-gradient"
-          x1="3"
-          y1="3"
-          x2="21"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

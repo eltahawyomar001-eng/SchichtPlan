@@ -144,6 +144,11 @@ export async function requireAuth(
         algorithms: ["HS256"],
       });
 
+      // Reject tokens older than 1 hour
+      if (payload.iat && Date.now() / 1000 - payload.iat > 3600) {
+        return { ok: false, response: unauthorized() };
+      }
+
       const userId = payload.sub as string;
       if (!userId) {
         return { ok: false, response: unauthorized() };

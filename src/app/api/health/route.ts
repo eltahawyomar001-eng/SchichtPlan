@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 const startedAt = Date.now();
 
@@ -10,7 +11,7 @@ const startedAt = Date.now();
  * Comprehensive health check for uptime monitors and load balancers.
  * Returns 200 if the server is running and the database is reachable.
  */
-export async function GET() {
+export const GET = withRoute("/api/health", "GET", async (req) => {
   const start = Date.now();
   const checks: Record<string, unknown> = {};
 
@@ -97,4 +98,4 @@ export async function GET() {
     },
     { status: overall === "ok" ? 200 : 503 },
   );
-}
+});

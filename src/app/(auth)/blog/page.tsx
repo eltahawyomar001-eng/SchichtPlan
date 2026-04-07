@@ -9,6 +9,7 @@ import {
   UsersIcon,
   ClockIcon,
 } from "@/components/icons";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 export const metadata: Metadata = {
   title: "Blog – Tipps zu Zeiterfassung, Schichtplanung & Arbeitsrecht",
@@ -128,35 +129,36 @@ export default async function BlogPage() {
   const rest = posts.slice(1);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="w-7 h-7" />
-            <span className="font-bold text-base text-gray-900">
+            <span className="font-bold text-base text-gray-900 dark:text-white">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {t("backToHome")}
             </Link>
             <Link
               href="/pricing"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {tc("pricing")}
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {tc("login")}
             </Link>
+            <ThemeToggle />
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
@@ -169,7 +171,7 @@ export default async function BlogPage() {
 
       {/* Hero */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 dark:from-emerald-950/40 dark:via-gray-950 dark:to-emerald-950/20" />
         <div className="relative max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-10 sm:pt-16 sm:pb-14">
           <div className="flex items-center gap-2 mb-4">
             <div className="h-1 w-8 rounded-full bg-brand-gradient" />
@@ -189,7 +191,7 @@ export default async function BlogPage() {
       <main className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-16 sm:pb-24">
         {/* Featured Article */}
         <Link href={`/blog/${featured.slug}`} className="group block -mt-2">
-          <article className="relative rounded-2xl border border-gray-200/80 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 transition-all duration-300">
+          <article className="relative rounded-2xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 dark:hover:border-emerald-700/60 transition-all duration-300">
             <div className="grid md:grid-cols-5">
               <div
                 className={`md:col-span-2 bg-gradient-to-br ${CATEGORY_STYLES[featured.category]?.iconBg ?? "from-emerald-500 to-emerald-600"} flex items-center justify-center p-10 sm:p-14`}
@@ -248,8 +250,8 @@ export default async function BlogPage() {
                 href={`/blog/${post.slug}`}
                 className="group block"
               >
-                <article className="h-full rounded-2xl border border-gray-200/80 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 transition-all duration-300 flex flex-col">
-                  <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:from-emerald-50 group-hover:to-emerald-100/50 transition-colors duration-300">
+                <article className="h-full rounded-2xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 dark:hover:border-emerald-700/60 transition-all duration-300 flex flex-col">
+                  <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 flex items-center justify-center group-hover:from-emerald-50 group-hover:to-emerald-100/50 dark:group-hover:from-emerald-950/50 dark:group-hover:to-emerald-900/30 transition-colors duration-300">
                     <div
                       className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${catStyle?.iconBg ?? "from-gray-500 to-gray-600"} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}
                     >
@@ -272,7 +274,7 @@ export default async function BlogPage() {
                     <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3 flex-1">
                       {post.excerpt}
                     </p>
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
                       <span className="text-xs text-gray-400">
                         {post.readTime} {t("readTime")}
                       </span>
@@ -302,9 +304,9 @@ export default async function BlogPage() {
       </main>
 
       {/* Footer CTA */}
-      <section className="border-t border-gray-200/60 bg-white">
+      <section className="border-t border-gray-200/60 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {t("ctaTitle")}
           </h2>
           <p className="mt-3 text-gray-600 max-w-lg mx-auto">
@@ -327,11 +329,13 @@ export default async function BlogPage() {
         </div>
       </section>
 
-      <footer className="border-t border-gray-100 py-10">
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
-            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-white">
+              Shiftfy
+            </span>
           </div>
           <p className="text-sm text-gray-400 text-center">
             © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
@@ -363,6 +367,9 @@ export default async function BlogPage() {
               className="hover:text-gray-600 transition-colors"
             >
               {tf("accessibility")}
+            </Link>
+            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+              SLA
             </Link>
           </div>
         </div>

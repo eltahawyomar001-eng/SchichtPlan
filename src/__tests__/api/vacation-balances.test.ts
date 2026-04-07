@@ -8,13 +8,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SessionUser } from "@/lib/types";
 
-const { mockSession, mockBalanceFindMany, mockBalanceUpsert } = vi.hoisted(
-  () => ({
-    mockSession: { user: null as SessionUser | null },
-    mockBalanceFindMany: vi.fn(),
-    mockBalanceUpsert: vi.fn(),
-  }),
-);
+const {
+  mockSession,
+  mockBalanceFindMany,
+  mockBalanceUpsert,
+  mockBalanceCount,
+} = vi.hoisted(() => ({
+  mockSession: { user: null as SessionUser | null },
+  mockBalanceFindMany: vi.fn(),
+  mockBalanceUpsert: vi.fn(),
+  mockBalanceCount: vi.fn().mockResolvedValue(0),
+}));
 
 vi.mock("next-auth", () => ({
   default: vi.fn(),
@@ -23,11 +27,16 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     vacationBalance: {
       findMany: mockBalanceFindMany,
       upsert: mockBalanceUpsert,
+      count: mockBalanceCount,
     },
   },
 }));
@@ -64,15 +73,16 @@ describe("GET /api/vacation-balances", () => {
         employee: { workDaysPerWeek: 5 },
       },
     ]);
+    mockBalanceCount.mockResolvedValue(1);
 
     const res = await handler.GET(
       new Request("http://localhost/api/vacation-balances"),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(1);
+    expect(body.data).toHaveLength(1);
     // Should include legal minimum
-    expect(body[0].legalMinimum).toBe(20);
+    expect(body.data[0].legalMinimum).toBe(20);
   });
 
   it("EMPLOYEE only sees own balance", async () => {

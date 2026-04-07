@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={4 * 60}>
       <QueryProvider>
         <ThemeProvider>
           <ServiceWorkerProvider />

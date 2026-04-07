@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import {
   addProjectMemberSchema,
@@ -10,24 +7,28 @@ import {
   validateBody,
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { createAuditLog } from "@/lib/audit";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 /** POST /api/projects/[id]/members — add a member */
-export async function POST(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/projects/[id]/members",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "reports", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
     const parsed = validateBody(addProjectMemberSchema, await req.json());
     if (!parsed.success) return parsed.response;
     const { employeeId, role } = parsed.data;
@@ -48,37 +49,35 @@ export async function POST(req: Request, { params }: RouteParams) {
       },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "ProjectMember",
+      entityId: member.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { employeeId, projectId: id, role: role || "MEMBER" },
+    });
+
     return NextResponse.json(member, { status: 201 });
-  } catch (error: unknown) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      error.code === "P2002"
-    ) {
-      return NextResponse.json(
-        { error: "Employee is already a member" },
-        { status: 409 },
-      );
-    }
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);
 
 /** DELETE /api/projects/[id]/members — remove a member */
-export async function DELETE(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withRoute(
+  "/api/projects/[id]/members",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "reports", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
     const parsed = validateBody(removeProjectMemberSchema, await req.json());
     if (!parsed.success) return parsed.response;
     const { employeeId } = parsed.data;
@@ -87,9 +86,15 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       where: { projectId: id, employeeId },
     });
 
+    createAuditLog({
+      action: "DELETE",
+      entityType: "ProjectMember",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { employeeId, projectId: id },
+    });
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

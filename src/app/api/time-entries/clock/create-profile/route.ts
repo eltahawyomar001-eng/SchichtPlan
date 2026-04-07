@@ -9,6 +9,9 @@ import { requireManagement } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { cache } from "@/lib/cache";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/time-entries/clock/create-profile
@@ -18,8 +21,10 @@ import { cache } from "@/lib/cache";
  *
  * Only allowed when the user does NOT already have a linked employee profile.
  */
-export async function POST() {
-  try {
+export const POST = withRoute(
+  "/api/time-entries/clock/create-profile",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -66,13 +71,21 @@ export async function POST() {
       employeeId: employee.id,
     });
 
-    return apiSuccess({ employeeId: employee.id }, 201);
-  } catch (error) {
-    log.error("Create clock profile error:", { error });
-    captureRouteError(error, {
-      route: "/api/time-entries/clock/create-profile",
-      method: "POST",
+    createAuditLog({
+      action: "CREATE",
+      entityType: "Employee",
+      entityId: employee.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { source: "clock-create-profile" },
     });
-    return serverError();
-  }
-}
+
+    dispatchWebhook(workspaceId, "clock_profile.created", {
+      employeeId: employee.id,
+    }).catch(() => {});
+
+    return apiSuccess({ employeeId: employee.id }, 201);
+  },
+  { idempotent: true },
+);

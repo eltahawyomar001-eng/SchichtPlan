@@ -5,18 +5,22 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { updateLocationSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/locations/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -25,10 +29,12 @@ export async function PATCH(
     if (forbidden) return forbidden;
 
     const body = await req.json();
+    const parsed = validateBody(updateLocationSchema, body);
+    if (!parsed.success) return parsed.response;
 
     const data: Record<string, unknown> = {
-      name: body.name,
-      address: body.address || null,
+      name: parsed.data.name,
+      address: parsed.data.address || null,
     };
 
     const location = await prisma.location.updateMany({
@@ -36,24 +42,37 @@ export async function PATCH(
       data,
     });
 
-    return NextResponse.json(location);
-  } catch (error) {
-    log.error("Error updating location:", { error: error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Location",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId: workspaceId!,
+      changes: { name: parsed.data.name, address: parsed.data.address },
+    });
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+    dispatchWebhook(workspaceId!, "location.updated", {
+      id,
+      name: parsed.data.name,
+      address: parsed.data.address,
+    }).catch(() => {});
+
+    return NextResponse.json(location);
+  },
+);
+
+export const DELETE = withRoute(
+  "/api/locations/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -65,9 +84,17 @@ export async function DELETE(
       where: { id, workspaceId },
     });
 
+    createAuditLog({
+      action: "DELETE",
+      entityType: "Location",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId: workspaceId!,
+    });
+
+    dispatchWebhook(workspaceId!, "location.deleted", { id }).catch(() => {});
+
     return NextResponse.json({ message: "Location deleted" });
-  } catch (error) {
-    log.error("Error deleting location:", { error: error });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

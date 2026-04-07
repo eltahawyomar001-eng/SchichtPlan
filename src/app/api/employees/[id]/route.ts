@@ -9,21 +9,22 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateEmployeeSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/employees/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const workspaceId = (session.user as SessionUser).workspaceId;
 
     const employee = await prisma.employee.findFirst({
@@ -46,24 +47,20 @@ export async function GET(
     }
 
     return NextResponse.json(employee);
-  } catch (error) {
-    log.error("Error fetching employee:", { error: error });
-    captureRouteError(error, { route: "/api/employees/[id]", method: "GET" });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/employees/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -132,24 +129,20 @@ export async function PATCH(
       ...employee,
       ...(warnings.length ? { warnings } : {}),
     });
-  } catch (error) {
-    log.error("Error updating employee:", { error: error });
-    captureRouteError(error, { route: "/api/employees/[id]", method: "PATCH" });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "/api/employees/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -158,8 +151,9 @@ export async function DELETE(
     if (forbidden) return forbidden;
 
     await prisma.$transaction(async (tx) => {
-      await tx.employee.deleteMany({
+      await tx.employee.updateMany({
         where: { id, workspaceId },
+        data: { deletedAt: new Date() },
       });
 
       // ── Audit log (atomic) ──
@@ -170,16 +164,10 @@ export async function DELETE(
         userId: user.id,
         userEmail: user.email ?? undefined,
         workspaceId: workspaceId!,
+        metadata: { softDelete: true },
       });
     });
 
     return NextResponse.json({ message: "Employee deleted" });
-  } catch (error) {
-    log.error("Error deleting employee:", { error: error });
-    captureRouteError(error, {
-      route: "/api/employees/[id]",
-      method: "DELETE",
-    });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

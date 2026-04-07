@@ -8,64 +8,55 @@ import { createAuditLogTx } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
-import { captureRouteError } from "@/lib/sentry";
-import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
 
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { workspaceId } = auth;
+export const GET = withRoute("/api/employees", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { workspaceId } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search");
-    const { take, skip } = parsePagination(req);
+  const { searchParams } = new URL(req.url);
+  const search = searchParams.get("search");
+  const { take, skip } = parsePagination(req);
 
-    const where: Record<string, unknown> = { workspaceId };
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    const [employees, total] = await Promise.all([
-      prisma.employee.findMany({
-        where,
-        include: {
-          employeeSkills: {
-            include: { skill: { select: { id: true, name: true } } },
-            orderBy: { createdAt: "asc" },
-          },
-          location: { select: { id: true, name: true } },
-          department: { select: { id: true, name: true } },
-        },
-        orderBy: { lastName: "asc" },
-        take,
-        skip,
-      }),
-      prisma.employee.count({ where }),
-    ]);
-
-    return paginatedResponse(employees, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching employees:", { error: error });
-    captureRouteError(error, { route: "/api/employees", method: "GET" });
-    return serverError("Error loading");
+  const where: Record<string, unknown> = { workspaceId };
+  if (search) {
+    where.OR = [
+      { firstName: { contains: search, mode: "insensitive" } },
+      { lastName: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
   }
-}
 
-export async function POST(req: Request) {
-  try {
-    // ── Idempotency check (prevents duplicate employee creation) ──
-    const cached = await checkIdempotency(req);
-    if (cached) return cached;
+  const [employees, total] = await Promise.all([
+    prisma.employee.findMany({
+      where,
+      include: {
+        employeeSkills: {
+          include: { skill: { select: { id: true, name: true } } },
+          orderBy: { createdAt: "asc" },
+        },
+        location: { select: { id: true, name: true } },
+        department: { select: { id: true, name: true } },
+      },
+      orderBy: { lastName: "asc" },
+      take,
+      skip,
+    }),
+    prisma.employee.count({ where }),
+  ]);
 
+  return paginatedResponse(employees, total, take, skip);
+});
+
+export const POST = withRoute(
+  "/api/employees",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -164,11 +155,7 @@ export async function POST(req: Request) {
       { ...employee, ...(warnings.length ? { warnings } : {}) },
       { status: 201 },
     );
-    await cacheIdempotentResponse(req, response);
     return response;
-  } catch (error) {
-    log.error("Error creating employee:", { error: error });
-    captureRouteError(error, { route: "/api/employees", method: "POST" });
-    return serverError("Error creating resource");
-  }
-}
+  },
+  { idempotent: true },
+);

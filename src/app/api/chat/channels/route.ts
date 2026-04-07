@@ -1,110 +1,95 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { createChatChannelSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/chat/channels
  * List all chat channels the current user is a member of.
  */
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute("/api/chat/channels", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+  const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
+  if (planGate) return planGate;
 
-    const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
-    if (planGate) return planGate;
-
-    const memberships = await prisma.chatChannelMember.findMany({
-      where: {
-        userId: user.id,
-        channel: { workspaceId: user.workspaceId },
-      },
-      include: {
-        channel: {
-          include: {
-            _count: { select: { members: true, messages: true } },
-            members: {
-              include: {
-                user: {
-                  select: { id: true, name: true, email: true },
-                },
+  const memberships = await prisma.chatChannelMember.findMany({
+    where: {
+      userId: user.id,
+      channel: { workspaceId: user.workspaceId },
+    },
+    include: {
+      channel: {
+        include: {
+          _count: { select: { members: true, messages: true } },
+          members: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true },
               },
             },
-            messages: {
-              take: 1,
-              orderBy: { createdAt: "desc" as const },
-              select: {
-                id: true,
-                content: true,
-                senderName: true,
-                createdAt: true,
-                deletedAt: true,
-              },
+          },
+          messages: {
+            take: 1,
+            orderBy: { createdAt: "desc" as const },
+            select: {
+              id: true,
+              content: true,
+              senderName: true,
+              createdAt: true,
+              deletedAt: true,
             },
           },
         },
       },
+    },
+  });
+
+  const channels = memberships
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((m: any) => {
+      const lastMsg = m.channel.messages[0] ?? null;
+      const lastMsgContent = lastMsg?.deletedAt
+        ? "[Nachricht gelöscht]"
+        : lastMsg?.content;
+      return {
+        ...m.channel,
+        lastReadAt: m.lastReadAt,
+        lastMessage: lastMsg ? { ...lastMsg, content: lastMsgContent } : null,
+        memberCount: m.channel._count.members,
+        messageCount: m.channel._count.messages,
+        unreadCount:
+          m.lastReadAt && lastMsg
+            ? new Date(lastMsg.createdAt) > new Date(m.lastReadAt)
+              ? 1
+              : 0
+            : m.channel._count.messages > 0
+              ? 1
+              : 0,
+      };
     });
 
-    const channels = memberships
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((m: any) => {
-        const lastMsg = m.channel.messages[0] ?? null;
-        const lastMsgContent = lastMsg?.deletedAt
-          ? "[Nachricht gelöscht]"
-          : lastMsg?.content;
-        return {
-          ...m.channel,
-          lastReadAt: m.lastReadAt,
-          lastMessage: lastMsg ? { ...lastMsg, content: lastMsgContent } : null,
-          memberCount: m.channel._count.members,
-          messageCount: m.channel._count.messages,
-          unreadCount:
-            m.lastReadAt && lastMsg
-              ? new Date(lastMsg.createdAt) > new Date(m.lastReadAt)
-                ? 1
-                : 0
-              : m.channel._count.messages > 0
-                ? 1
-                : 0,
-        };
-      });
-
-    return NextResponse.json(channels);
-  } catch (error) {
-    log.error("Error fetching chat channels:", { error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  return NextResponse.json(channels);
+});
 
 /**
  * POST /api/chat/channels
  * Create a new chat channel.
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/chat/channels",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
@@ -166,11 +151,14 @@ export async function POST(req: Request) {
       workspaceId: user.workspaceId,
     });
 
+    dispatchWebhook(user.workspaceId, "chat_channel.created", {
+      id: channel.id,
+      name,
+    }).catch(() => {});
+
     log.info(`[chat] Channel "${name}" created by ${user.email}`);
 
     return NextResponse.json(channel, { status: 201 });
-  } catch (error) {
-    log.error("Error creating chat channel:", { error });
-    return NextResponse.json({ error: "Error creating" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

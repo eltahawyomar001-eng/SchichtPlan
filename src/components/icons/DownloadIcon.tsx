@@ -17,23 +17,10 @@ export function DownloadIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-        stroke="url(#download-gradient)"
+        stroke="currentColor"
       />
-      <polyline points="7 10 12 15 17 10" stroke="url(#download-gradient)" />
-      <line x1="12" y1="15" x2="12" y2="3" stroke="url(#download-gradient)" />
-      <defs>
-        <linearGradient
-          id="download-gradient"
-          x1="3"
-          y1="3"
-          x2="21"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      <polyline points="7 10 12 15 17 10" stroke="currentColor" />
+      <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" />{" "}
     </svg>
   );
 }

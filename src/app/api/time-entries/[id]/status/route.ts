@@ -14,6 +14,8 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { timeEntryStatusSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -38,14 +40,17 @@ interface RouteParams {
  *                          ↓
  *                    ZURUECKGEWIESEN
  */
-export async function POST(req: Request, { params }: RouteParams) {
-  try {
+export const POST = withRoute(
+  "/api/time-entries/[id]/status",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -211,6 +216,21 @@ export async function POST(req: Request, { params }: RouteParams) {
     // Create notification
     await createNotification(entry, action, user, workspaceId ?? "");
 
+    createAuditLog({
+      action:
+        action === "approve" || action === "confirm"
+          ? "APPROVE"
+          : action === "reject"
+            ? "REJECT"
+            : "UPDATE",
+      entityType: "TimeEntry",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId: workspaceId!,
+      changes: { action, from: entry.status, to: transition.to },
+    });
+
     // ── Webhook dispatch on submit (fire & forget) ──
     if (action === "submit") {
       dispatchWebhook(workspaceId!, "time-entry.submitted", {
@@ -230,18 +250,9 @@ export async function POST(req: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating time entry status:", { error: error });
-    captureRouteError(error, {
-      route: "/api/time-entries/[id]/status",
-      method: "POST",
-    });
-    return NextResponse.json(
-      { error: "Error changing status" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);
 
 // ─── Notification helper ────────────────────────────────────────
 

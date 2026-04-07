@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requireAdmin } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/admin/data-retention
@@ -49,6 +50,8 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
 interface RetentionResult {
   table: string;
   deleted: number;
+  skipped?: boolean;
+  reason?: string;
 }
 
 /** Cutoff date helper */
@@ -56,83 +59,211 @@ function daysAgo(days: number): Date {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
-async function executeRetention(): Promise<RetentionResult[]> {
+/** Safety threshold — abort deletion if >50% of table rows would be deleted */
+const SAFETY_THRESHOLD = 0.5;
+/** Alert threshold — log Sentry warning if >1000 rows deleted in one table */
+const ALERT_THRESHOLD = 1000;
+
+/**
+ * Safely delete rows from a table with pre-delete count validation.
+ * Aborts if deletion count exceeds SAFETY_THRESHOLD of total rows.
+ */
+async function safeDelete(
+  table: string,
+  deleteWhere: Record<string, unknown>,
+  countFn: (where?: Record<string, unknown>) => Promise<number>,
+  deleteFn: (args: {
+    where: Record<string, unknown>;
+  }) => Promise<{ count: number }>,
+  dryRun: boolean,
+): Promise<RetentionResult> {
+  const deleteCount = await countFn(deleteWhere);
+
+  if (deleteCount === 0) {
+    return { table, deleted: 0 };
+  }
+
+  const totalCount = await countFn();
+
+  if (totalCount > 0 && deleteCount > totalCount * SAFETY_THRESHOLD) {
+    const msg = `Data retention: refusing to delete ${deleteCount}/${totalCount} (>${SAFETY_THRESHOLD * 100}%) of ${table}`;
+    log.error(msg, { table, deleteCount, totalCount });
+    captureRouteError(new Error(msg), {
+      route: "/api/admin/data-retention",
+      method: "POST",
+    });
+    return {
+      table,
+      deleted: 0,
+      skipped: true,
+      reason: `Safety threshold exceeded (${deleteCount}/${totalCount})`,
+    };
+  }
+
+  if (dryRun) {
+    log.info(
+      `[data-retention] Dry run: would delete ${deleteCount} from ${table}`,
+      { table, deleteCount },
+    );
+    return { table, deleted: deleteCount, skipped: true, reason: "dry-run" };
+  }
+
+  const result = await deleteFn({ where: deleteWhere });
+
+  if (result.count > ALERT_THRESHOLD) {
+    log.warn(
+      `[data-retention] High volume deletion: ${result.count} rows from ${table}`,
+      { table, count: result.count },
+    );
+    captureRouteError(
+      new Error(
+        `Data retention: high volume deletion (${result.count} rows) from ${table}`,
+      ),
+      { route: "/api/admin/data-retention", method: "POST" },
+    );
+  }
+
+  log.info(`[data-retention] Deleted ${result.count} from ${table}`, {
+    table,
+    count: result.count,
+  });
+  return { table, deleted: result.count };
+}
+
+async function executeRetention(dryRun = false): Promise<RetentionResult[]> {
   const results: RetentionResult[] = [];
 
   // 1. VerificationToken — 7 days
-  const vt = await prisma.verificationToken.deleteMany({
-    where: { expires: { lt: daysAgo(7) } },
-  });
-  results.push({ table: "VerificationToken", deleted: vt.count });
+  results.push(
+    await safeDelete(
+      "VerificationToken",
+      { expires: { lt: daysAgo(7) } },
+      (w) => prisma.verificationToken.count(w ? { where: w } : undefined),
+      (a) => prisma.verificationToken.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 2. PasswordResetToken — 7 days
-  const prt = await prisma.passwordResetToken.deleteMany({
-    where: { expires: { lt: daysAgo(7) } },
-  });
-  results.push({ table: "PasswordResetToken", deleted: prt.count });
+  results.push(
+    await safeDelete(
+      "PasswordResetToken",
+      { expires: { lt: daysAgo(7) } },
+      (w) => prisma.passwordResetToken.count(w ? { where: w } : undefined),
+      (a) => prisma.passwordResetToken.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 3. Session — 30 days
-  const sess = await prisma.session.deleteMany({
-    where: { expires: { lt: daysAgo(30) } },
-  });
-  results.push({ table: "Session", deleted: sess.count });
+  results.push(
+    await safeDelete(
+      "Session",
+      { expires: { lt: daysAgo(30) } },
+      (w) => prisma.session.count(w ? { where: w } : undefined),
+      (a) => prisma.session.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 4. Invitation (expired) — 30 days past expiry
-  const inv = await prisma.invitation.deleteMany({
-    where: { expiresAt: { lt: daysAgo(30) } },
-  });
-  results.push({ table: "Invitation", deleted: inv.count });
+  results.push(
+    await safeDelete(
+      "Invitation",
+      { expiresAt: { lt: daysAgo(30) } },
+      (w) => prisma.invitation.count(w ? { where: w } : undefined),
+      (a) => prisma.invitation.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 5. Notification — 90 days
-  const notif = await prisma.notification.deleteMany({
-    where: { createdAt: { lt: daysAgo(90) } },
-  });
-  results.push({ table: "Notification", deleted: notif.count });
+  results.push(
+    await safeDelete(
+      "Notification",
+      { createdAt: { lt: daysAgo(90) } },
+      (w) => prisma.notification.count(w ? { where: w } : undefined),
+      (a) => prisma.notification.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 6. ExportJob — 90 days
-  const ej = await prisma.exportJob.deleteMany({
-    where: { createdAt: { lt: daysAgo(90) } },
-  });
-  results.push({ table: "ExportJob", deleted: ej.count });
+  results.push(
+    await safeDelete(
+      "ExportJob",
+      { createdAt: { lt: daysAgo(90) } },
+      (w) => prisma.exportJob.count(w ? { where: w } : undefined),
+      (a) => prisma.exportJob.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 7. AutoFillLog — 90 days
-  const afl = await prisma.autoFillLog.deleteMany({
-    where: { createdAt: { lt: daysAgo(90) } },
-  });
-  results.push({ table: "AutoFillLog", deleted: afl.count });
+  results.push(
+    await safeDelete(
+      "AutoFillLog",
+      { createdAt: { lt: daysAgo(90) } },
+      (w) => prisma.autoFillLog.count(w ? { where: w } : undefined),
+      (a) => prisma.autoFillLog.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 8. ManagerAlert — acknowledged, 90 days
-  const ma = await prisma.managerAlert.deleteMany({
-    where: {
-      acknowledged: true,
-      acknowledgedAt: { lt: daysAgo(90) },
-    },
-  });
-  results.push({ table: "ManagerAlert (acknowledged)", deleted: ma.count });
+  results.push(
+    await safeDelete(
+      "ManagerAlert (acknowledged)",
+      { acknowledged: true, acknowledgedAt: { lt: daysAgo(90) } },
+      (w) => prisma.managerAlert.count(w ? { where: w } : undefined),
+      (a) => prisma.managerAlert.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 9. AutoScheduleRun — 180 days
-  const asr = await prisma.autoScheduleRun.deleteMany({
-    where: { createdAt: { lt: daysAgo(180) } },
-  });
-  results.push({ table: "AutoScheduleRun", deleted: asr.count });
+  results.push(
+    await safeDelete(
+      "AutoScheduleRun",
+      { createdAt: { lt: daysAgo(180) } },
+      (w) => prisma.autoScheduleRun.count(w ? { where: w } : undefined),
+      (a) => prisma.autoScheduleRun.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 10. PushSubscription — 180 days without activity
-  const ps = await prisma.pushSubscription.deleteMany({
-    where: { createdAt: { lt: daysAgo(180) } },
-  });
-  results.push({ table: "PushSubscription", deleted: ps.count });
+  results.push(
+    await safeDelete(
+      "PushSubscription",
+      { createdAt: { lt: daysAgo(180) } },
+      (w) => prisma.pushSubscription.count(w ? { where: w } : undefined),
+      (a) => prisma.pushSubscription.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 11. AuditLog — 365 days
-  const al = await prisma.auditLog.deleteMany({
-    where: { createdAt: { lt: daysAgo(365) } },
-  });
-  results.push({ table: "AuditLog", deleted: al.count });
+  results.push(
+    await safeDelete(
+      "AuditLog",
+      { createdAt: { lt: daysAgo(365) } },
+      (w) => prisma.auditLog.count(w ? { where: w } : undefined),
+      (a) => prisma.auditLog.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // 12. ChatMessage — 365 days (cascade deletes reactions/attachments)
-  const cm = await prisma.chatMessage.deleteMany({
-    where: { createdAt: { lt: daysAgo(365) } },
-  });
-  results.push({ table: "ChatMessage", deleted: cm.count });
+  results.push(
+    await safeDelete(
+      "ChatMessage",
+      { createdAt: { lt: daysAgo(365) } },
+      (w) => prisma.chatMessage.count(w ? { where: w } : undefined),
+      (a) => prisma.chatMessage.deleteMany(a),
+      dryRun,
+    ),
+  );
 
   // Note: ESignature (10y), ServiceVisitAuditLog (10y), TimeEntryAudit (10y)
   // are retained for legal/tax compliance (§147 AO, eIDAS).
@@ -142,43 +273,57 @@ async function executeRetention(): Promise<RetentionResult[]> {
 }
 
 /** POST — Admin-triggered retention */
-export async function POST(_req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/admin/data-retention",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requireAdmin(user);
     if (forbidden) return forbidden;
 
-    const results = await executeRetention();
+    const { searchParams } = new URL(req.url);
+    const dryRun = searchParams.get("dryRun") === "true";
+
+    const results = await executeRetention(dryRun);
     const totalDeleted = results.reduce((sum, r) => sum + r.deleted, 0);
 
     log.info(
-      `[data-retention] Admin ${user.email} triggered retention: ${totalDeleted} records deleted`,
-      { results },
+      `[data-retention] Admin ${user.email} triggered retention${dryRun ? " (dry-run)" : ""}: ${totalDeleted} records ${dryRun ? "would be " : ""}deleted`,
+      { results, dryRun },
     );
+
+    createAuditLog({
+      action: "DELETE",
+      entityType: "DataRetention",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { totalDeleted, results, dryRun },
+    });
+
+    dispatchWebhook(workspaceId, "data_retention.executed", {
+      totalDeleted,
+      dryRun,
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,
+      dryRun,
       totalDeleted,
       results,
     });
-  } catch (error) {
-    log.error("Data retention error:", { error });
-    captureRouteError(error, {
-      route: "/api/admin/data-retention",
-      method: "POST",
-    });
-    return NextResponse.json({ error: "Retention failed" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);
 
 /** GET — Vercel Cron handler */
-export async function GET(req: Request) {
-  try {
+export const GET = withRoute(
+  "/api/admin/data-retention",
+  "GET",
+  async (req) => {
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");
 
@@ -204,12 +349,5 @@ export async function GET(req: Request) {
       totalDeleted,
       results,
     });
-  } catch (error) {
-    log.error("Data retention cron error:", { error });
-    captureRouteError(error, {
-      route: "/api/admin/data-retention",
-      method: "GET",
-    });
-    return NextResponse.json({ error: "Retention failed" }, { status: 500 });
-  }
-}
+  },
+);

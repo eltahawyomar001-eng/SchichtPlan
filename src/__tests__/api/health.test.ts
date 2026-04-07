@@ -27,7 +27,7 @@ describe("GET /api/health", () => {
   });
 
   it("returns 200 when database is reachable", async () => {
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe("ok");
@@ -41,7 +41,7 @@ describe("GET /api/health", () => {
       new Error("Connection failed"),
     );
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.status).toBe("degraded");

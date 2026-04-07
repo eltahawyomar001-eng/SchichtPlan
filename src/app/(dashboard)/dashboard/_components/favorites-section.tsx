@@ -54,234 +54,234 @@ const PAGE_REGISTRY: Record<string, PageInfo> = {
   shiftPlan: {
     icon: CalendarIcon,
     href: "/schichtplan",
-    color: "text-emerald-600",
-    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-    hoverBorder: "hover:border-emerald-200",
-    hoverBg: "hover:bg-emerald-50/30",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/50 dark:to-emerald-800/50",
+    hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-700",
+    hoverBg: "hover:bg-emerald-50/30 dark:hover:bg-emerald-900/30",
   },
   timeTracking: {
     icon: ClockIcon,
     href: "/zeiterfassung",
-    color: "text-blue-600",
-    bg: "bg-gradient-to-br from-blue-50 to-blue-100",
-    hoverBorder: "hover:border-blue-200",
-    hoverBg: "hover:bg-blue-50/30",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-800/50",
+    hoverBorder: "hover:border-blue-200 dark:hover:border-blue-700",
+    hoverBg: "hover:bg-blue-50/30 dark:hover:bg-blue-900/30",
   },
   absences: {
     icon: CalendarOffIcon,
     href: "/abwesenheiten",
-    color: "text-orange-600",
-    bg: "bg-gradient-to-br from-orange-50 to-orange-100",
-    hoverBorder: "hover:border-orange-200",
-    hoverBg: "hover:bg-orange-50/30",
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/50 dark:to-orange-800/50",
+    hoverBorder: "hover:border-orange-200 dark:hover:border-orange-700",
+    hoverBg: "hover:bg-orange-50/30 dark:hover:bg-orange-900/30",
   },
   shiftSwap: {
     icon: SwapIcon,
     href: "/schichttausch",
-    color: "text-emerald-600",
-    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-    hoverBorder: "hover:border-emerald-200",
-    hoverBg: "hover:bg-emerald-50/30",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/50 dark:to-emerald-800/50",
+    hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-700",
+    hoverBg: "hover:bg-emerald-50/30 dark:hover:bg-emerald-900/30",
   },
   punchClock: {
     icon: TargetIcon,
     href: "/stempeluhr",
-    color: "text-rose-600",
-    bg: "bg-gradient-to-br from-rose-50 to-rose-100",
-    hoverBorder: "hover:border-rose-200",
-    hoverBg: "hover:bg-rose-50/30",
+    color: "text-rose-600 dark:text-rose-400",
+    bg: "bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/50 dark:to-rose-800/50",
+    hoverBorder: "hover:border-rose-200 dark:hover:border-rose-700",
+    hoverBg: "hover:bg-rose-50/30 dark:hover:bg-rose-900/30",
   },
   serviceProof: {
     icon: FileCheckIcon,
     href: "/leistungsnachweis",
-    color: "text-teal-600",
-    bg: "bg-gradient-to-br from-teal-50 to-teal-100",
-    hoverBorder: "hover:border-teal-200",
-    hoverBg: "hover:bg-teal-50/30",
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/50 dark:to-teal-800/50",
+    hoverBorder: "hover:border-teal-200 dark:hover:border-teal-700",
+    hoverBg: "hover:bg-teal-50/30 dark:hover:bg-teal-900/30",
   },
   teamChat: {
     icon: MessageCircleIcon,
     href: "/nachrichten",
-    color: "text-violet-600",
-    bg: "bg-gradient-to-br from-violet-50 to-violet-100",
-    hoverBorder: "hover:border-violet-200",
-    hoverBg: "hover:bg-violet-50/30",
+    color: "text-violet-600 dark:text-violet-400",
+    bg: "bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/50 dark:to-violet-800/50",
+    hoverBorder: "hover:border-violet-200 dark:hover:border-violet-700",
+    hoverBg: "hover:bg-violet-50/30 dark:hover:bg-violet-900/30",
   },
   tickets: {
     icon: TicketIcon,
     href: "/tickets",
-    color: "text-amber-600",
-    bg: "bg-gradient-to-br from-amber-50 to-amber-100",
-    hoverBorder: "hover:border-amber-200",
-    hoverBg: "hover:bg-amber-50/30",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/50 dark:to-amber-800/50",
+    hoverBorder: "hover:border-amber-200 dark:hover:border-amber-700",
+    hoverBg: "hover:bg-amber-50/30 dark:hover:bg-amber-900/30",
   },
   teamCalendar: {
     icon: CalendarUsersIcon,
     href: "/teamkalender",
-    color: "text-indigo-600",
-    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100",
-    hoverBorder: "hover:border-indigo-200",
-    hoverBg: "hover:bg-indigo-50/30",
+    color: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/50 dark:to-indigo-800/50",
+    hoverBorder: "hover:border-indigo-200 dark:hover:border-indigo-700",
+    hoverBg: "hover:bg-indigo-50/30 dark:hover:bg-indigo-900/30",
   },
   annualPlanning: {
     icon: CalendarRangeIcon,
     href: "/jahresplanung",
-    color: "text-cyan-600",
-    bg: "bg-gradient-to-br from-cyan-50 to-cyan-100",
-    hoverBorder: "hover:border-cyan-200",
-    hoverBg: "hover:bg-cyan-50/30",
+    color: "text-cyan-600 dark:text-cyan-400",
+    bg: "bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/50 dark:to-cyan-800/50",
+    hoverBorder: "hover:border-cyan-200 dark:hover:border-cyan-700",
+    hoverBg: "hover:bg-cyan-50/30 dark:hover:bg-cyan-900/30",
   },
   employees: {
     icon: UsersIcon,
     href: "/mitarbeiter",
-    color: "text-emerald-600",
-    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-    hoverBorder: "hover:border-emerald-200",
-    hoverBg: "hover:bg-emerald-50/30",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/50 dark:to-emerald-800/50",
+    hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-700",
+    hoverBg: "hover:bg-emerald-50/30 dark:hover:bg-emerald-900/30",
   },
   departments: {
     icon: LayersIcon,
     href: "/abteilungen",
-    color: "text-purple-600",
-    bg: "bg-gradient-to-br from-purple-50 to-purple-100",
-    hoverBorder: "hover:border-purple-200",
-    hoverBg: "hover:bg-purple-50/30",
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/50 dark:to-purple-800/50",
+    hoverBorder: "hover:border-purple-200 dark:hover:border-purple-700",
+    hoverBg: "hover:bg-purple-50/30 dark:hover:bg-purple-900/30",
   },
   skills: {
     icon: AwardIcon,
     href: "/qualifikationen",
-    color: "text-yellow-600",
-    bg: "bg-gradient-to-br from-yellow-50 to-yellow-100",
-    hoverBorder: "hover:border-yellow-200",
-    hoverBg: "hover:bg-yellow-50/30",
+    color: "text-yellow-600 dark:text-yellow-400",
+    bg: "bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/50 dark:to-yellow-800/50",
+    hoverBorder: "hover:border-yellow-200 dark:hover:border-yellow-700",
+    hoverBg: "hover:bg-yellow-50/30 dark:hover:bg-yellow-900/30",
   },
   locations: {
     icon: MapPinIcon,
     href: "/standorte",
-    color: "text-blue-600",
-    bg: "bg-gradient-to-br from-blue-50 to-blue-100",
-    hoverBorder: "hover:border-blue-200",
-    hoverBg: "hover:bg-blue-50/30",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-800/50",
+    hoverBorder: "hover:border-blue-200 dark:hover:border-blue-700",
+    hoverBg: "hover:bg-blue-50/30 dark:hover:bg-blue-900/30",
   },
   shiftTemplates: {
     icon: TemplateIcon,
     href: "/schichtvorlagen",
-    color: "text-slate-600",
-    bg: "bg-gradient-to-br from-slate-50 to-slate-100",
-    hoverBorder: "hover:border-slate-200",
-    hoverBg: "hover:bg-slate-50/30",
+    color: "text-slate-600 dark:text-slate-400",
+    bg: "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50",
+    hoverBorder: "hover:border-slate-200 dark:hover:border-slate-600",
+    hoverBg: "hover:bg-slate-50/30 dark:hover:bg-slate-900/30",
   },
   projects: {
     icon: FolderIcon,
     href: "/projekte",
-    color: "text-amber-600",
-    bg: "bg-gradient-to-br from-amber-50 to-amber-100",
-    hoverBorder: "hover:border-amber-200",
-    hoverBg: "hover:bg-amber-50/30",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/50 dark:to-amber-800/50",
+    hoverBorder: "hover:border-amber-200 dark:hover:border-amber-700",
+    hoverBg: "hover:bg-amber-50/30 dark:hover:bg-amber-900/30",
   },
   clients: {
     icon: UsersIcon,
     href: "/kunden",
-    color: "text-sky-600",
-    bg: "bg-gradient-to-br from-sky-50 to-sky-100",
-    hoverBorder: "hover:border-sky-200",
-    hoverBg: "hover:bg-sky-50/30",
+    color: "text-sky-600 dark:text-sky-400",
+    bg: "bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-900/50 dark:to-sky-800/50",
+    hoverBorder: "hover:border-sky-200 dark:hover:border-sky-700",
+    hoverBg: "hover:bg-sky-50/30 dark:hover:bg-sky-900/30",
   },
   vacationBalance: {
     icon: PalmtreeIcon,
     href: "/urlaubskonto",
-    color: "text-green-600",
-    bg: "bg-gradient-to-br from-green-50 to-green-100",
-    hoverBorder: "hover:border-green-200",
-    hoverBg: "hover:bg-green-50/30",
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-800/50",
+    hoverBorder: "hover:border-green-200 dark:hover:border-green-700",
+    hoverBg: "hover:bg-green-50/30 dark:hover:bg-green-900/30",
   },
   timeAccounts: {
     icon: ScaleIcon,
     href: "/zeitkonten",
-    color: "text-indigo-600",
-    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100",
-    hoverBorder: "hover:border-indigo-200",
-    hoverBg: "hover:bg-indigo-50/30",
+    color: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/50 dark:to-indigo-800/50",
+    hoverBorder: "hover:border-indigo-200 dark:hover:border-indigo-700",
+    hoverBg: "hover:bg-indigo-50/30 dark:hover:bg-indigo-900/30",
   },
   reports: {
     icon: BarChartIcon,
     href: "/berichte",
-    color: "text-fuchsia-600",
-    bg: "bg-gradient-to-br from-fuchsia-50 to-fuchsia-100",
-    hoverBorder: "hover:border-fuchsia-200",
-    hoverBg: "hover:bg-fuchsia-50/30",
+    color: "text-fuchsia-600 dark:text-fuchsia-400",
+    bg: "bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 dark:from-fuchsia-900/50 dark:to-fuchsia-800/50",
+    hoverBorder: "hover:border-fuchsia-200 dark:hover:border-fuchsia-700",
+    hoverBg: "hover:bg-fuchsia-50/30 dark:hover:bg-fuchsia-900/30",
   },
   payrollExport: {
     icon: FileExportIcon,
     href: "/lohnexport",
-    color: "text-emerald-600",
-    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-    hoverBorder: "hover:border-emerald-200",
-    hoverBg: "hover:bg-emerald-50/30",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/50 dark:to-emerald-800/50",
+    hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-700",
+    hoverBg: "hover:bg-emerald-50/30 dark:hover:bg-emerald-900/30",
   },
   monthClose: {
     icon: ArchiveIcon,
     href: "/monatsabschluss",
-    color: "text-gray-600",
-    bg: "bg-gradient-to-br from-gray-50 to-gray-100",
-    hoverBorder: "hover:border-gray-300",
-    hoverBg: "hover:bg-gray-50/30",
+    color: "text-gray-600 dark:text-gray-400",
+    bg: "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-700/50",
+    hoverBorder: "hover:border-gray-300 dark:hover:border-gray-600",
+    hoverBg: "hover:bg-gray-50/30 dark:hover:bg-gray-900/30",
   },
   dataIO: {
     icon: DatabaseIcon,
     href: "/daten",
-    color: "text-cyan-600",
-    bg: "bg-gradient-to-br from-cyan-50 to-cyan-100",
-    hoverBorder: "hover:border-cyan-200",
-    hoverBg: "hover:bg-cyan-50/30",
+    color: "text-cyan-600 dark:text-cyan-400",
+    bg: "bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/50 dark:to-cyan-800/50",
+    hoverBorder: "hover:border-cyan-200 dark:hover:border-cyan-700",
+    hoverBg: "hover:bg-cyan-50/30 dark:hover:bg-cyan-900/30",
   },
   holidays: {
     icon: FlagIcon,
     href: "/feiertage",
-    color: "text-red-600",
-    bg: "bg-gradient-to-br from-red-50 to-red-100",
-    hoverBorder: "hover:border-red-200",
-    hoverBg: "hover:bg-red-50/30",
+    color: "text-red-600 dark:text-red-400",
+    bg: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/50 dark:to-red-800/50",
+    hoverBorder: "hover:border-red-200 dark:hover:border-red-700",
+    hoverBg: "hover:bg-red-50/30 dark:hover:bg-red-900/30",
   },
   automationRules: {
     icon: ZapIcon,
     href: "/automatisierung",
-    color: "text-yellow-600",
-    bg: "bg-gradient-to-br from-yellow-50 to-yellow-100",
-    hoverBorder: "hover:border-yellow-200",
-    hoverBg: "hover:bg-yellow-50/30",
+    color: "text-yellow-600 dark:text-yellow-400",
+    bg: "bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/50 dark:to-yellow-800/50",
+    hoverBorder: "hover:border-yellow-200 dark:hover:border-yellow-700",
+    hoverBg: "hover:bg-yellow-50/30 dark:hover:bg-yellow-900/30",
   },
   webhooks: {
     icon: LinkIcon,
     href: "/webhooks",
-    color: "text-slate-600",
-    bg: "bg-gradient-to-br from-slate-50 to-slate-100",
-    hoverBorder: "hover:border-slate-200",
-    hoverBg: "hover:bg-slate-50/30",
+    color: "text-slate-600 dark:text-slate-400",
+    bg: "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50",
+    hoverBorder: "hover:border-slate-200 dark:hover:border-slate-600",
+    hoverBg: "hover:bg-slate-50/30 dark:hover:bg-slate-900/30",
   },
   settings: {
     icon: SettingsIcon,
     href: "/einstellungen",
-    color: "text-gray-600",
-    bg: "bg-gradient-to-br from-gray-50 to-gray-100",
-    hoverBorder: "hover:border-gray-300",
-    hoverBg: "hover:bg-gray-50/30",
+    color: "text-gray-600 dark:text-gray-400",
+    bg: "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-700/50",
+    hoverBorder: "hover:border-gray-300 dark:hover:border-gray-600",
+    hoverBg: "hover:bg-gray-50/30 dark:hover:bg-gray-900/30",
   },
   billing: {
     icon: CreditCardIcon,
     href: "/einstellungen/abonnement",
-    color: "text-emerald-600",
-    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
-    hoverBorder: "hover:border-emerald-200",
-    hoverBg: "hover:bg-emerald-50/30",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/50 dark:to-emerald-800/50",
+    hoverBorder: "hover:border-emerald-200 dark:hover:border-emerald-700",
+    hoverBg: "hover:bg-emerald-50/30 dark:hover:bg-emerald-900/30",
   },
   roles: {
     icon: ShieldCheckIcon,
     href: "/einstellungen/rollen",
-    color: "text-violet-600",
-    bg: "bg-gradient-to-br from-violet-50 to-violet-100",
-    hoverBorder: "hover:border-violet-200",
-    hoverBg: "hover:bg-violet-50/30",
+    color: "text-violet-600 dark:text-violet-400",
+    bg: "bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/50 dark:to-violet-800/50",
+    hoverBorder: "hover:border-violet-200 dark:hover:border-violet-700",
+    hoverBg: "hover:bg-violet-50/30 dark:hover:bg-violet-900/30",
   },
 };
 
@@ -375,8 +375,8 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
           className={cn(
             "text-xs font-medium px-3 py-1.5 rounded-lg transition-colors",
             editing
-              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-800/60"
+              : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800",
           )}
         >
           {editing ? t("favDone") : t("favEdit")}
@@ -395,9 +395,9 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                   <Link
                     href={page.href}
                     className={cn(
-                      "flex flex-col items-center justify-center gap-3 rounded-2xl bg-white p-5 sm:p-6 border border-gray-100 transition-all duration-200",
-                      "shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)]",
-                      "hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12)]",
+                      "flex flex-col items-center justify-center gap-3 rounded-2xl bg-white dark:bg-zinc-800/70 p-5 sm:p-6 border border-gray-100 dark:border-zinc-700 transition-all duration-200",
+                      "shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_6px_-1px_rgba(0,0,0,0.3)]",
+                      "hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.4)]",
                       "hover:-translate-y-0.5",
                       page.hoverBorder,
                       page.hoverBg,
@@ -412,7 +412,7 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                     >
                       <Icon className={cn("h-6 w-6", page.color)} />
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 text-center leading-tight">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-zinc-200 text-center leading-tight">
                       {tn(key)}
                     </span>
                   </Link>
@@ -451,8 +451,8 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
 
         {/* Editing: all available pages */}
         {editing && (
-          <div className="mt-5 pt-5 border-t border-gray-100">
-            <p className="text-xs font-medium text-gray-500 mb-3">
+          <div className="mt-5 pt-5 border-t border-gray-100 dark:border-zinc-700">
+            <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 mb-3">
               {t("favAvailable")}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
@@ -468,18 +468,20 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                     className={cn(
                       "flex flex-col items-center justify-center gap-2 rounded-xl p-3 sm:p-4 border transition-all duration-200 min-h-[80px]",
                       pinned
-                        ? "border-emerald-300 bg-emerald-50/60 shadow-sm"
-                        : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50",
+                        ? "border-emerald-300 bg-emerald-50/60 shadow-sm dark:border-emerald-700 dark:bg-emerald-900/40"
+                        : "border-gray-100 bg-white dark:border-zinc-700 dark:bg-zinc-800/70 hover:border-gray-200 hover:bg-gray-50/50 dark:hover:border-zinc-600 dark:hover:bg-zinc-700/70",
                     )}
                   >
                     <div
                       className={cn(
                         "rounded-xl p-2",
-                        pinned ? "bg-emerald-100" : page.bg,
+                        pinned
+                          ? "bg-emerald-100 dark:bg-emerald-900/60"
+                          : page.bg,
                       )}
                     >
                       {pinned ? (
-                        <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
+                        <CheckCircleIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                       ) : (
                         <Icon className={cn("h-5 w-5", page.color)} />
                       )}
@@ -487,7 +489,9 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                     <span
                       className={cn(
                         "text-xs font-medium text-center leading-tight",
-                        pinned ? "text-emerald-700" : "text-gray-600",
+                        pinned
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-gray-600 dark:text-zinc-300",
                       )}
                     >
                       {tn(key)}

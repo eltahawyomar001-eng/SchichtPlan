@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * POST /api/shifts/[id]/confirm
@@ -12,17 +13,17 @@ import { log } from "@/lib/logger";
  * Employee confirms / acknowledges an assigned shift.
  * Changes shift status from SCHEDULED → CONFIRMED.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const POST = withRoute(
+  "/api/shifts/[id]/confirm",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -87,11 +88,6 @@ export async function POST(
       ...updated,
       message: "Schicht erfolgreich bestätigt.",
     });
-  } catch (error) {
-    log.error("Error confirming shift:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim Bestätigen der Schicht" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

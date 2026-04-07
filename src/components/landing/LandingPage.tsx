@@ -31,6 +31,7 @@ import {
   HeadsetIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 
 /**
@@ -51,7 +52,7 @@ import { CookieSettingsButton } from "@/components/cookie-banner";
  */
 export function LandingPage() {
   return (
-    <div className="min-h-[100dvh] bg-white">
+    <div className="min-h-[100dvh] bg-white dark:bg-gray-950 dark:text-gray-100">
       {/* Skip-to-content link (BFSG/WCAG 2.1) */}
       <a
         href="#main-content"
@@ -87,12 +88,12 @@ function Navbar() {
   const t = useTranslations("landing");
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 glass border-b border-white/20">
+    <nav className="fixed top-0 inset-x-0 z-50 glass dark:bg-gray-950/80 dark:backdrop-blur-xl border-b border-white/20 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <ShiftfyMark className="w-8 h-8" />
-          <span className="font-bold text-lg text-gray-900">
+          <span className="font-bold text-lg text-gray-900 dark:text-white">
             Shift<span className="text-gradient">fy</span>
           </span>
         </Link>
@@ -101,31 +102,31 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           <a
             href="#features"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             {t("navFeatures")}
           </a>
           <a
             href="#pricing"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             {t("navPricing")}
           </a>
           <a
             href="#benefits"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             {t("navBenefits")}
           </a>
           <a
             href="#faq"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             {t("navFaq")}
           </a>
           <Link
             href="/blog"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             {t("navBlog")}
           </Link>
@@ -136,15 +137,16 @@ function Navbar() {
           <div className="hidden md:block">
             <LanguageSwitcher />
           </div>
+          <ThemeToggle />
           <Link
             href="/login"
-            className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="hidden sm:inline-flex text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
           >
             {t("navLogin")}
           </Link>
           <Link
             href="/register"
-            className="bg-brand-gradient text-white text-sm font-semibold px-4 sm:px-5 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all"
+            className="bg-brand-gradient text-white text-sm font-semibold px-4 sm:px-5 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200 dark:hover:shadow-emerald-900/40 transition-all"
           >
             {t("navCta")}
           </Link>
@@ -152,7 +154,7 @@ function Navbar() {
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? "Menü schließen" : "Menü öffnen"}
             aria-expanded={mobileOpen}
-            className="md:hidden rounded-lg p-2 text-gray-500 hover:bg-gray-100 transition-colors"
+            className="md:hidden rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
           >
             {mobileOpen ? (
               <XIcon className="h-5 w-5" />
@@ -165,46 +167,46 @@ function Navbar() {
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           <div className="px-4 py-3 space-y-1">
             <a
               href="#features"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
             >
               {t("navFeatures")}
             </a>
             <a
               href="#pricing"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
             >
               {t("navPricing")}
             </a>
             <a
               href="#benefits"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
             >
               {t("navBenefits")}
             </a>
             <a
               href="#faq"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
             >
               {t("navFaq")}
             </a>
             <Link
               href="/blog"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
             >
               {t("navBlog")}
             </Link>
             <Link
               href="/login"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors sm:hidden"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white transition-colors sm:hidden"
             >
               {t("navLogin")}
             </Link>
@@ -222,19 +224,19 @@ function HeroSection() {
   const t = useTranslations("landing");
 
   return (
-    <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-emerald-50/60 via-white to-white">
+    <section className="relative pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-36 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-emerald-50/60 via-white to-white dark:from-gray-950 dark:via-gray-950 dark:to-gray-950">
       {/* Decorative blurs — hidden on mobile to avoid iOS Safari clipping bug */}
-      <div className="absolute top-32 -left-40 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-3xl pointer-events-none hidden sm:block" />
-      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl pointer-events-none hidden sm:block" />
+      <div className="absolute top-32 -left-40 w-[500px] h-[500px] bg-emerald-100/40 dark:bg-emerald-900/20 rounded-full blur-3xl pointer-events-none hidden sm:block" />
+      <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] bg-emerald-100/30 dark:bg-emerald-900/15 rounded-full blur-3xl pointer-events-none hidden sm:block" />
 
       <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
           {/* Left: Text */}
           <div className="flex-1 max-w-xl text-center lg:text-left">
             {/* Rating badge — verifiable claim */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 mb-5">
-              <ShieldCheckIcon className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-xs font-semibold text-emerald-700">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 mb-5">
+              <ShieldCheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                 {t("heroBadge")}
               </span>
             </div>
@@ -356,11 +358,11 @@ function HeroMockup() {
 
   return (
     <div className="relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/50 to-emerald-200/30 rounded-3xl blur-2xl scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/50 to-emerald-200/30 dark:from-emerald-900/30 dark:to-emerald-900/10 rounded-3xl blur-2xl scale-105" />
 
-      <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-emerald-100/50 overflow-hidden">
+      <div className="relative rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-2xl shadow-emerald-100/50 dark:shadow-emerald-900/20 overflow-hidden">
         {/* Title bar */}
-        <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
+        <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-400" />
             <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -449,9 +451,9 @@ function HeroMockup() {
       </div>
 
       {/* Floating notification card */}
-      <div className="absolute -bottom-4 left-0 sm:-left-6 rounded-xl bg-white border border-gray-200 shadow-lg shadow-emerald-100/40 px-4 py-3 flex items-center gap-3 max-w-[220px]">
-        <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-          <CheckCircleIcon className="w-5 h-5 text-emerald-600" />
+      <div className="absolute -bottom-4 left-0 sm:-left-6 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg shadow-emerald-100/40 dark:shadow-emerald-900/20 px-4 py-3 flex items-center gap-3 max-w-[220px]">
+        <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
+          <CheckCircleIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
         <div>
           <div className="text-xs font-semibold text-gray-900">
@@ -464,8 +466,10 @@ function HeroMockup() {
       </div>
 
       {/* Floating stat badge */}
-      <div className="absolute -top-3 right-0 sm:-right-5 rounded-xl bg-white border border-gray-200 shadow-lg shadow-emerald-100/40 px-4 py-2.5 text-center">
-        <div className="text-lg font-bold text-emerald-700">98%</div>
+      <div className="absolute -top-3 right-0 sm:-right-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg shadow-emerald-100/40 dark:shadow-emerald-900/20 px-4 py-2.5 text-center">
+        <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+          98%
+        </div>
         <div className="text-[10px] font-medium text-gray-400">
           {t("heroMockupCoverage")}
         </div>
@@ -545,7 +549,7 @@ function FeatureTabsSection() {
 
         {/* Tab bar */}
         <div className="flex justify-center mb-10">
-          <div className="inline-flex flex-wrap justify-center gap-2 rounded-2xl bg-gray-100 p-1.5">
+          <div className="inline-flex flex-wrap justify-center gap-2 rounded-2xl bg-gray-100 dark:bg-gray-800 p-1.5">
             {tabs.map((tab, i) => {
               const Icon = tab.icon;
               return (
@@ -554,8 +558,8 @@ function FeatureTabsSection() {
                   onClick={() => setActiveTab(i)}
                   className={`flex items-center gap-2 rounded-xl px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
                     activeTab === i
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -570,7 +574,7 @@ function FeatureTabsSection() {
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
           {/* Left: Text */}
           <div className="flex-1 max-w-lg">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4">
               <active.icon className="w-3.5 h-3.5" />
               {active.label}
             </div>
@@ -612,17 +616,17 @@ function FeatureTabsSection() {
 function FeatureTabMockup({ tab }: { tab: number }) {
   return (
     <div className="relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/40 to-emerald-100/20 rounded-3xl blur-2xl scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/40 to-emerald-100/20 dark:from-emerald-900/20 dark:to-emerald-900/10 rounded-3xl blur-2xl scale-105" />
 
-      <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-emerald-100/50 overflow-hidden">
+      <div className="relative rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-2xl shadow-emerald-100/50 dark:shadow-emerald-900/20 overflow-hidden">
         {/* Browser chrome */}
-        <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
+        <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-400" />
             <div className="w-3 h-3 rounded-full bg-amber-400" />
             <div className="w-3 h-3 rounded-full bg-green-400" />
           </div>
-          <div className="flex-1 mx-4 rounded-md bg-white border border-gray-200 px-3 py-1">
+          <div className="flex-1 mx-4 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-3 py-1">
             <span className="text-xs text-gray-400">app.shiftfy.de</span>
           </div>
         </div>
@@ -913,7 +917,7 @@ function PricingSection() {
         tp("featureEnt8"),
       ],
       cta: tp("contactUs"),
-      href: "mailto:info@shiftfy.de",
+      href: "mailto:info@bashabsheh-vergabepartner.de",
       highlighted: false,
       isEnterprise: true,
     },
@@ -929,13 +933,13 @@ function PricingSection() {
           <p className="mt-4 text-gray-500">{t("pricingSubtitle")}</p>
 
           {/* ─── Billing Toggle ─── */}
-          <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 p-1">
+          <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 dark:bg-gray-800 p-1">
             <button
               onClick={() => setAnnual(false)}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                 !annual
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               {tp("billingMonthly")}
@@ -944,12 +948,12 @@ function PricingSection() {
               onClick={() => setAnnual(true)}
               className={`relative rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                 annual
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               {tp("billingAnnual")}
-              <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+              <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                 {tp("saveBadge")}
               </span>
             </button>
@@ -962,12 +966,12 @@ function PricingSection() {
               key={plan.name}
               className={`rounded-2xl border p-6 flex flex-col transition-shadow ${
                 plan.highlighted
-                  ? "border-emerald-500 ring-2 ring-emerald-500 bg-white shadow-lg shadow-emerald-100/50"
-                  : "border-gray-200 bg-white shadow-sm hover:shadow-md"
+                  ? "border-emerald-500 ring-2 ring-emerald-500 bg-white dark:bg-gray-900 shadow-lg shadow-emerald-100/50 dark:shadow-emerald-900/20"
+                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md"
               }`}
             >
               {plan.highlighted && (
-                <span className="inline-block self-start rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 mb-4">
+                <span className="inline-block self-start rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-4">
                   {tp("popular")}
                 </span>
               )}
@@ -1015,7 +1019,7 @@ function PricingSection() {
                 className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${
                   plan.highlighted
                     ? "bg-brand-gradient text-white hover:shadow-lg hover:shadow-emerald-200"
-                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    : "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 {plan.cta}
@@ -1131,19 +1135,21 @@ function BenefitsSection() {
           {benefits.map((b) => (
             <div
               key={b.title}
-              className={`rounded-2xl border p-4 sm:p-5 hover:shadow-[0px_8px_32px_0px_rgba(37,99,235,0.12)] transition-all duration-300 ${
+              className={`rounded-2xl border p-4 sm:p-5 hover:shadow-[0px_8px_32px_0px_rgba(37,99,235,0.12)] dark:hover:shadow-[0px_8px_32px_0px_rgba(0,0,0,0.3)] transition-all duration-300 ${
                 b.highlight
-                  ? "bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 shadow-md ring-1 ring-emerald-200/50"
-                  : "bg-white border-gray-100 shadow-[0px_4px_24px_0px_rgba(37,99,235,0.06)]"
+                  ? "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/30 dark:to-emerald-800/20 border-emerald-200 dark:border-emerald-700 shadow-md ring-1 ring-emerald-200/50 dark:ring-emerald-700/50"
+                  : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 shadow-[0px_4px_24px_0px_rgba(37,99,235,0.06)]"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
-                  b.highlight ? "bg-emerald-600" : "bg-emerald-50"
+                  b.highlight
+                    ? "bg-emerald-600"
+                    : "bg-emerald-50 dark:bg-emerald-900/40"
                 }`}
               >
                 <b.icon
-                  className={`w-5 h-5 ${b.highlight ? "text-white" : ""}`}
+                  className={`w-5 h-5 ${b.highlight ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}
                 />
               </div>
               <h3 className="font-bold text-gray-900">{b.title}</h3>
@@ -1183,9 +1189,9 @@ function FAQSection() {
           {faqs.map((faq) => (
             <details
               key={faq.q}
-              className="group rounded-2xl border border-gray-200 bg-white overflow-hidden"
+              className="group rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden"
             >
-              <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-sm sm:text-base">
+              <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-6 py-4 text-left font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm sm:text-base">
                 {faq.q}
                 <ChevronRightIcon className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-90 shrink-0" />
               </summary>
@@ -1277,10 +1283,10 @@ function AppShowcaseSection() {
             return (
               <div
                 key={d.title}
-                className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 text-center shadow-sm hover:shadow-md transition-shadow"
+                className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 sm:p-8 text-center shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                  <Icon className="w-7 h-7 text-emerald-600" />
+                <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-4">
+                  <Icon className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">{d.title}</h3>
                 <p className="mt-2 text-sm text-gray-500">{d.desc}</p>
@@ -1293,7 +1299,7 @@ function AppShowcaseSection() {
           {badges.map((b) => (
             <span
               key={b}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700"
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
             >
               <CheckCircleIcon className="w-4 h-4" />
               {b}
@@ -1336,7 +1342,7 @@ function TrustSection() {
   ];
 
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
@@ -1351,10 +1357,10 @@ function TrustSection() {
             return (
               <div
                 key={s.label}
-                className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm"
+                className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 text-center shadow-sm"
               >
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                  <Icon className="w-6 h-6 text-emerald-600" />
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-4">
+                  <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="text-3xl font-extrabold text-gray-900">
                   {s.value}
@@ -1376,7 +1382,7 @@ function Footer() {
   const t = useTranslations("landing");
 
   return (
-    <footer className="border-t border-gray-100 bg-gray-50 pt-12 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+    <footer className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 pt-12 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         {/* Mega-footer grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
@@ -1489,7 +1495,7 @@ function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:info@shiftfy.de"
+                  href="mailto:info@bashabsheh-vergabepartner.de"
                   className="hover:text-gray-700 transition-colors"
                 >
                   {t("footerContact")}
@@ -1544,12 +1550,20 @@ function Footer() {
                   {t("footerAccessibility")}
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/sla"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  SLA
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-gray-200 pt-6 flex flex-col items-center gap-4 md:flex-row md:justify-between">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 flex flex-col items-center gap-4 md:flex-row md:justify-between">
           <p className="text-sm text-gray-400">
             © {new Date().getFullYear()} Shiftfy. {t("footerRights")}
           </p>

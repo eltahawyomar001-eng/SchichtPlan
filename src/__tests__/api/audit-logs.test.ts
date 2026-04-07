@@ -22,6 +22,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     auditLog: {
@@ -81,8 +85,8 @@ describe("GET /api/audit-logs", () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.logs).toHaveLength(1);
-    expect(body.total).toBe(1);
+    expect(body.data).toHaveLength(1);
+    expect(body.pagination.total).toBe(1);
   });
 
   it("supports entityType filter", async () => {

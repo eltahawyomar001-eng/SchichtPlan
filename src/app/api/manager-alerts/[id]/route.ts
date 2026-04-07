@@ -6,23 +6,25 @@ import type { SessionUser } from "@/lib/types";
 import { requireManagement } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { updateManagerAlertSchema, validateBody } from "@/lib/validations";
 
 /**
  * PATCH /api/manager-alerts/[id]
  *
  * Acknowledge a manager alert.
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/manager-alerts/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -34,6 +36,8 @@ export async function PATCH(
     if (forbidden) return forbidden;
 
     const body = await req.json();
+    const parsed = validateBody(updateManagerAlertSchema, body);
+    if (!parsed.success) return parsed.response;
 
     // Verify alert belongs to workspace
     const alert = await prisma.managerAlert.findFirst({
@@ -49,9 +53,11 @@ export async function PATCH(
       where: { id },
       data: {
         acknowledged:
-          body.acknowledged !== undefined ? body.acknowledged : true,
-        acknowledgedAt: body.acknowledged !== false ? new Date() : null,
-        acknowledgedBy: body.acknowledged !== false ? user.id : null,
+          parsed.data.acknowledged !== undefined
+            ? parsed.data.acknowledged
+            : true,
+        acknowledgedAt: parsed.data.acknowledged !== false ? new Date() : null,
+        acknowledgedBy: parsed.data.acknowledged !== false ? user.id : null,
       },
     });
 
@@ -71,28 +77,25 @@ export async function PATCH(
     });
 
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating manager alert:", { error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
 /**
  * DELETE /api/manager-alerts/[id]
  *
  * Delete a manager alert.
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "/api/manager-alerts/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -117,8 +120,5 @@ export async function DELETE(
     });
 
     return NextResponse.json({ message: "Alert deleted" });
-  } catch (error) {
-    log.error("Error deleting manager alert:", { error });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

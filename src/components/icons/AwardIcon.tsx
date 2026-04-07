@@ -13,33 +13,14 @@ export function AwardIcon(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
-      <circle
-        cx="12"
-        cy="8"
-        r="6"
-        stroke="url(#award-gradient)"
-        strokeWidth="2"
-      />
+      <circle cx="12" cy="8" r="6" stroke="currentColor" strokeWidth="2" />
       <path
         d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"
-        stroke="url(#award-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="award-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

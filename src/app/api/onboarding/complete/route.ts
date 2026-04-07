@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requireAdmin } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/onboarding/complete
@@ -12,17 +12,13 @@ import { log } from "@/lib/logger";
  * Marks the workspace onboarding as completed.
  * Only OWNER or ADMIN can complete onboarding.
  */
-export async function POST() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/onboarding/complete",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requireAdmin(user);
     if (forbidden) return forbidden;
@@ -32,17 +28,22 @@ export async function POST() {
       data: { onboardingCompleted: true },
     });
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Workspace",
+      entityId: user.workspaceId,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { action: "ONBOARDING_COMPLETE" },
+    });
+
     log.info("Onboarding completed", {
       workspaceId: user.workspaceId,
       userId: user.id,
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error completing onboarding:", { error });
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

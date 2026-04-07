@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
 import {
   getSignaturesForEntity,
   verifySignatureIntegrity,
 } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/e-signatures?entityType=AbsenceRequest&entityId=xxx
@@ -17,44 +16,33 @@ import { log } from "@/lib/logger";
  * Any authenticated workspace member can view signatures — the workspace
  * scope ensures data isolation, and signatures are read-only audit records.
  */
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute("/api/e-signatures", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+  const { searchParams } = new URL(req.url);
+  const entityType = searchParams.get("entityType");
+  const entityId = searchParams.get("entityId");
 
-    const { searchParams } = new URL(req.url);
-    const entityType = searchParams.get("entityType");
-    const entityId = searchParams.get("entityId");
-
-    if (!entityType || !entityId) {
-      return NextResponse.json(
-        { error: "entityType and entityId are required" },
-        { status: 400 },
-      );
-    }
-
-    const signatures = await getSignaturesForEntity(
-      entityType,
-      entityId,
-      user.workspaceId,
+  if (!entityType || !entityId) {
+    return NextResponse.json(
+      { error: "entityType and entityId are required" },
+      { status: 400 },
     );
-
-    // Add integrity verification to each record
-    const withVerification = signatures.map((sig) => ({
-      ...sig,
-      isValid: verifySignatureIntegrity(sig),
-    }));
-
-    return NextResponse.json(withVerification);
-  } catch (error) {
-    log.error("Error fetching e-signatures:", { error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-}
+
+  const signatures = await getSignaturesForEntity(
+    entityType,
+    entityId,
+    user.workspaceId,
+  );
+
+  // Add integrity verification to each record
+  const withVerification = signatures.map((sig) => ({
+    ...sig,
+    isValid: verifySignatureIntegrity(sig),
+  }));
+
+  return NextResponse.json(withVerification);
+});

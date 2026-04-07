@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/export/arbeitszeitnachweis?employeeId=...&month=2025-01
@@ -19,15 +18,13 @@ import { log } from "@/lib/logger";
  * working hours exceeding 8h (ArbZG §16), in practice most employers
  * document all hours.
  */
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const GET = withRoute(
+  "/api/export/arbeitszeitnachweis",
+  "GET",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -247,8 +244,5 @@ export async function GET(req: Request) {
         "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
-  } catch (error) {
-    log.error("Arbeitszeitnachweis export error:", { error });
-    return NextResponse.json({ error: "Export failed" }, { status: 500 });
-  }
-}
+  },
+);

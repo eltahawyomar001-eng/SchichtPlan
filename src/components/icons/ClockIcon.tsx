@@ -18,41 +18,17 @@ export function ClockIcon(props: SVGProps<SVGSVGElement>) {
         cx="12"
         cy="12"
         r="9"
-        stroke="url(#clock-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
         d="M12 7v5l3 3"
-        stroke="url(#clock-hand-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="clock-gradient"
-          x1="3"
-          y1="3"
-          x2="21"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-        <linearGradient
-          id="clock-hand-gradient"
-          x1="12"
-          y1="7"
-          x2="15"
-          y2="15"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

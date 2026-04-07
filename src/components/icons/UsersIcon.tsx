@@ -15,7 +15,7 @@ export function UsersIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-        stroke="url(#users-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -24,41 +24,17 @@ export function UsersIcon(props: SVGProps<SVGSVGElement>) {
         cx="9"
         cy="7"
         r="4"
-        stroke="url(#users-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
         d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-        stroke="url(#users-secondary-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="users-gradient"
-          x1="1"
-          y1="3"
-          x2="17"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-        <linearGradient
-          id="users-secondary-gradient"
-          x1="13"
-          y1="3"
-          x2="23"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#34d399" />
-          <stop offset="1" stopColor="#C4B5FD" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

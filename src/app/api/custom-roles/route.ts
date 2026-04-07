@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { requireAdmin } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
-import type { SessionUser } from "@/lib/types";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * Custom Roles CRUD — stub implementation.
@@ -91,12 +90,10 @@ const BUILT_IN_ROLES = [
 ];
 
 /* ── GET /api/custom-roles ── */
-export async function GET(_req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const user = session.user as SessionUser;
+export const GET = withRoute("/api/custom-roles", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
   // Only admins+ can view roles
   const authError = requireAdmin(user);
@@ -107,33 +104,39 @@ export async function GET(_req: Request) {
   if (planDenied) return planDenied;
 
   return NextResponse.json(BUILT_IN_ROLES);
-}
+});
 
 /* ── POST /api/custom-roles ── */
-export async function POST(_req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = withRoute(
+  "/api/custom-roles",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-  const user = session.user as SessionUser;
+    const authError = requireAdmin(user);
+    if (authError) return authError;
 
-  const authError = requireAdmin(user);
-  if (authError) return authError;
+    const planDenied = await requirePlanFeature(
+      user.workspaceId,
+      "customRoles",
+    );
+    if (planDenied) return planDenied;
 
-  const planDenied = await requirePlanFeature(user.workspaceId, "customRoles");
-  if (planDenied) return planDenied;
-
-  // Not yet implemented — return 501 so the client knows this
-  // feature does not exist yet (not a success status).
-  return NextResponse.json(
-    {
-      error:
-        "Benutzerdefinierte Rollen sind noch nicht verfügbar. " +
-        "Die integrierten Rollen decken die meisten Anwendungsfälle ab.",
-      errorEn:
-        "Custom role creation is not yet available. " +
-        "The built-in roles cover most use cases.",
-    },
-    { status: 501 },
-  );
-}
+    // Not yet implemented — return 501 so the client knows this
+    // feature does not exist yet (not a success status).
+    return NextResponse.json(
+      {
+        error:
+          "Benutzerdefinierte Rollen sind noch nicht verfügbar. " +
+          "Die integrierten Rollen decken die meisten Anwendungsfälle ab.",
+        errorEn:
+          "Custom role creation is not yet available. " +
+          "The built-in roles cover most use cases.",
+      },
+      { status: 501 },
+    );
+  },
+  { idempotent: true },
+);

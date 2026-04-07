@@ -20,20 +20,6 @@ export function ShiftfyLogo(props: SVGProps<SVGSVGElement>) {
       role="img"
       {...props}
     >
-      <defs>
-        <linearGradient
-          id="shiftfy-logo-bg"
-          x1="0"
-          y1="0"
-          x2="36"
-          y2="36"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#065f46" />
-          <stop offset="1" stopColor="#059669" />
-        </linearGradient>
-      </defs>
-
       {/* -- Mark (scaled to 36 x 36) -- */}
       <rect width="36" height="36" rx="9" fill="url(#shiftfy-logo-bg)" />
 

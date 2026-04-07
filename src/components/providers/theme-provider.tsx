@@ -23,6 +23,9 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 const STORAGE_KEY = "shiftfy-theme";
 
+/** Browser / PWA chrome colour per theme */
+const THEME_COLORS = { light: "#059669", dark: "#18181b" } as const;
+
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -36,17 +39,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const isFirstRender = useRef(true);
 
-  // Sync DOM class whenever theme changes (skip first render — inline script handles it)
+  // Sync DOM class + meta theme-color whenever theme changes
+  // (skip first render for the class — inline script handles it)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       // Ensure DOM matches state on hydration (the inline script may have
       // already set the class, but the React state might differ on SSR).
       document.documentElement.classList.toggle("dark", theme === "dark");
-      return;
+    } else {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      localStorage.setItem(STORAGE_KEY, theme);
     }
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem(STORAGE_KEY, theme);
+
+    // Update <meta name="theme-color"> so the browser / PWA chrome adapts
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute("content", THEME_COLORS[theme]);
+    }
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

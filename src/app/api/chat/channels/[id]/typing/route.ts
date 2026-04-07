@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * In-memory typing state.
@@ -19,22 +18,16 @@ const typingState = new Map<
  * POST /api/chat/channels/[id]/typing
  * Signal that the current user is typing.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/chat/channels/[id]/typing",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
-
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     // Verify membership
     const membership = await prisma.chatChannelMember.findUnique({
@@ -55,27 +48,23 @@ export async function POST(
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Error" }, { status: 500 });
-  }
-}
+  },
+);
 
 /**
  * GET /api/chat/channels/[id]/typing
  * Get list of users currently typing in this channel.
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute(
+  "/api/chat/channels/[id]/typing",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     const channelTyping = typingState.get(channelId);
     if (!channelTyping) {
@@ -95,7 +84,5 @@ export async function GET(
     }
 
     return NextResponse.json({ typing: active });
-  } catch {
-    return NextResponse.json({ error: "Error" }, { status: 500 });
-  }
-}
+  },
+);

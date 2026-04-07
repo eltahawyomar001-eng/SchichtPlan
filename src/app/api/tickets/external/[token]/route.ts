@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { serverError, notFound } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * GET  /api/tickets/external/[token]
@@ -13,12 +14,12 @@ import { serverError, notFound } from "@/lib/api-response";
  * Only exposes: ticketNumber, subject, status, category, createdAt,
  * closedAt, and non-internal comments with authorName only.
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ token: string }> },
-) {
-  try {
-    const { token } = await params;
+export const GET = withRoute(
+  "/api/tickets/external/[token]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
+    const { token } = params;
 
     if (!token || token.length < 10) {
       return notFound("Ticket nicht gefunden");
@@ -57,12 +58,5 @@ export async function GET(
     }
 
     return NextResponse.json(ticket);
-  } catch (error) {
-    log.error("Error fetching external ticket:", { error });
-    captureRouteError(error, {
-      route: "/api/tickets/external/[token]",
-      method: "GET",
-    });
-    return serverError("Fehler beim Laden des Tickets");
-  }
-}
+  },
+);

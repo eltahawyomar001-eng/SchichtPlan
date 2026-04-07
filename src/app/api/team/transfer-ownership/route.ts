@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { transferOwnershipSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/team/transfer-ownership
@@ -15,17 +15,13 @@ import { log } from "@/lib/logger";
  *
  * Body: { targetUserId: string }
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/team/transfer-ownership",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // Only the current OWNER can transfer ownership
     if (user.role !== "OWNER") {
@@ -92,6 +88,11 @@ export async function POST(req: Request) {
       },
     });
 
+    dispatchWebhook(user.workspaceId, "workspace.ownership_transferred", {
+      from: user.id,
+      to: targetUser.id,
+    }).catch(() => {});
+
     return NextResponse.json({
       success: true,
       newOwner: {
@@ -100,11 +101,6 @@ export async function POST(req: Request) {
         email: targetUser.email,
       },
     });
-  } catch (error) {
-    log.error("[team/transfer-ownership] Error:", { error });
-    return NextResponse.json(
-      { error: "Fehler bei der Übertragung." },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

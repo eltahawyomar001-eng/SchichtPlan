@@ -9,23 +9,22 @@ import { NextResponse } from "next/server";
 import * as jose from "jose";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { mobileRefreshSchema, validateBody } from "@/lib/validations";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || "fallback-secret-change-me",
 );
 const ACCESS_TOKEN_TTL = "24h";
 
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/auth/mobile/refresh",
+  "POST",
+  async (req) => {
     const body = await req.json();
-    const { refreshToken } = body as { refreshToken?: string };
-
-    if (!refreshToken) {
-      return NextResponse.json(
-        { error: "Refresh-Token erforderlich." },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(mobileRefreshSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { refreshToken } = parsed.data;
 
     // ── Refresh-Token verifizieren ──
     let payload: jose.JWTPayload;
@@ -88,11 +87,5 @@ export async function POST(req: Request) {
       token: newAccessToken,
       expiresAt,
     });
-  } catch (error) {
-    log.error("Mobile token refresh error", { error });
-    return NextResponse.json(
-      { error: "Token-Erneuerung fehlgeschlagen." },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

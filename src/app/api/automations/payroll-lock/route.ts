@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { lockMonthTimeEntries } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { payrollLockSchema, validateBody } from "@/lib/validations";
 
 /**
  * POST /api/automations/payroll-lock
@@ -17,8 +17,10 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
  *  - Manually by managers
  *  - Via Vercel Cron on the 6th of each month at 00:00
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/automations/payroll-lock",
+  "POST",
+  async (req) => {
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");
 
@@ -65,13 +67,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -88,8 +86,11 @@ export async function POST(req: Request) {
 
     try {
       const body = await req.json();
-      if (body.year) year = body.year;
-      if (body.month) month = body.month;
+      const parsed = validateBody(payrollLockSchema, body);
+      if (parsed.success) {
+        if (parsed.data.year) year = parsed.data.year;
+        if (parsed.data.month) month = parsed.data.month;
+      }
     } catch {
       // Use defaults if no body
     }
@@ -101,15 +102,5 @@ export async function POST(req: Request) {
       locked: result.locked,
       month: result.month,
     });
-  } catch (error) {
-    log.error("Error locking payroll:", { error: error });
-    captureRouteError(error, {
-      route: "/api/automations/payroll-lock",
-      method: "POST",
-    });
-    return NextResponse.json(
-      { error: "Error locking payroll" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

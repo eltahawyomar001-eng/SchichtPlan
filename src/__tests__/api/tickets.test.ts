@@ -41,6 +41,10 @@ vi.mock("next-auth", () => ({
 vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 
 vi.mock("@/lib/db", () => {
   const mockPrisma = {
@@ -89,6 +93,8 @@ vi.mock("@/lib/api-response", async (importOriginal) => {
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
 }));
+
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -208,8 +214,27 @@ describe("POST /api/tickets", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 403 for non-employee roles", async () => {
-    mockSession.user = buildOwner();
+  it("allows all roles to create tickets", async () => {
+    const owner = buildOwner();
+    mockSession.user = owner;
+    mockTicketFindFirst.mockResolvedValue(null);
+    mockTicketCreate.mockResolvedValue({
+      id: "t-owner",
+      ticketNumber: "TK-2025-0001",
+      subject: "Build failing",
+      description: "The build is failing on main branch since yesterday",
+      category: "TECHNIK",
+      priority: "HOCH",
+      status: "OFFEN",
+      createdById: owner.id,
+      createdBy: {
+        id: owner.id,
+        name: owner.name,
+        email: owner.email,
+      },
+      assignedTo: null,
+    });
+
     const req = new Request("http://localhost:3000/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -221,7 +246,7 @@ describe("POST /api/tickets", () => {
       }),
     });
     const res = await handler.POST(req);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(201);
   });
 
   it("creates ticket with valid input", async () => {

@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
 import bcrypt from "bcryptjs";
-import type { SessionUser } from "@/lib/types";
 import crypto from "crypto";
 import { twoFactorVerifySchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { encrypt, decrypt, isEncrypted } from "@/lib/encryption";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /* ── helpers ── */
 
@@ -54,136 +53,123 @@ async function hashRecoveryCodes(plainCodes: string[]): Promise<string[]> {
  * DELETE → disable 2FA and clear secret + recovery codes
  */
 
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const GET = withRoute("/api/auth/two-factor", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
+  const url = new URL(req.url);
 
-    const url = new URL(req.url);
-
-    // If query param ?status=1, return current 2FA state only
-    if (url.searchParams.get("status") === "1") {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { twoFactorEnabled: true },
-      });
-      return NextResponse.json({
-        enabled: dbUser?.twoFactorEnabled ?? false,
-      });
-    }
-
-    // Check if there's already a pending secret (2FA not yet enabled).
-    // Reuse it to prevent race conditions where multiple GET calls
-    // overwrite the DB secret while the QR code shown has the old one.
+  // If query param ?status=1, return current 2FA state only
+  if (url.searchParams.get("status") === "1") {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { twoFactorSecret: true, twoFactorEnabled: true },
+      select: { twoFactorEnabled: true },
     });
-
-    const forceNew = url.searchParams.get("force") === "1";
-    const existingSecret =
-      dbUser?.twoFactorSecret && !dbUser.twoFactorEnabled && !forceNew
-        ? dbUser.twoFactorSecret
-        : null;
-
-    // Generate a new plaintext hex secret if needed
-    const plainHexSecret = existingSecret
-      ? isEncrypted(existingSecret)
-        ? decrypt(existingSecret)
-        : existingSecret
-      : generateSecret();
-
-    const totp = buildTOTP(plainHexSecret, user.email);
-    const otpauthUrl = totp.toString();
-    const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
-
-    // Only write to DB if we generated a new secret — always store encrypted
-    if (!existingSecret) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { twoFactorSecret: encrypt(plainHexSecret) },
-      });
-    }
-
     return NextResponse.json({
-      secret: plainHexSecret,
-      qrCode: qrDataUrl,
-      otpauthUrl,
+      enabled: dbUser?.twoFactorEnabled ?? false,
     });
-  } catch (error) {
-    log.error("2FA setup error:", { error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-}
 
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Check if there's already a pending secret (2FA not yet enabled).
+  // Reuse it to prevent race conditions where multiple GET calls
+  // overwrite the DB secret while the QR code shown has the old one.
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { twoFactorSecret: true, twoFactorEnabled: true },
+  });
 
-    const user = session.user as SessionUser;
-    const parsed = validateBody(twoFactorVerifySchema, await req.json());
-    if (!parsed.success) return parsed.response;
-    // Accept both "code" and "token" for backwards compatibility
-    const code: string | undefined = parsed.data.code || parsed.data.token;
+  const forceNew = url.searchParams.get("force") === "1";
+  const existingSecret =
+    dbUser?.twoFactorSecret && !dbUser.twoFactorEnabled && !forceNew
+      ? dbUser.twoFactorSecret
+      : null;
 
-    if (!code) {
-      return NextResponse.json({ error: "Code required" }, { status: 400 });
-    }
+  // Generate a new plaintext hex secret if needed
+  const plainHexSecret = existingSecret
+    ? isEncrypted(existingSecret)
+      ? decrypt(existingSecret)
+      : existingSecret
+    : generateSecret();
 
-    const dbUser = await prisma.user.findUnique({
+  const totp = buildTOTP(plainHexSecret, user.email);
+  const otpauthUrl = totp.toString();
+  const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+  // Only write to DB if we generated a new secret — always store encrypted
+  if (!existingSecret) {
+    await prisma.user.update({
       where: { id: user.id },
-      select: { twoFactorSecret: true },
+      data: { twoFactorSecret: encrypt(plainHexSecret) },
     });
-
-    if (!dbUser?.twoFactorSecret) {
-      return NextResponse.json({ error: "Setup 2FA first" }, { status: 400 });
-    }
-
-    // Validate the TOTP code (window: 2 = ±60 s tolerance)
-    const totp = buildTOTP(dbUser.twoFactorSecret, user.email);
-    const delta = totp.validate({ token: code, window: 2 });
-
-    if (delta === null) {
-      return NextResponse.json({ error: "Invalid code" }, { status: 400 });
-    }
-
-    // Generate recovery codes
-    const plainCodes = generatePlainRecoveryCodes();
-    const hashedCodes = await hashRecoveryCodes(plainCodes);
-
-    // Enable 2FA + store hashed recovery codes
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma.user as any).update({
-      where: { id: user.id },
-      data: {
-        twoFactorEnabled: true,
-        twoFactorRecoveryCodes: JSON.stringify(hashedCodes),
-      },
-    });
-
-    // Return plain codes ONCE — user must save them now
-    return NextResponse.json({
-      success: true,
-      recoveryCodes: plainCodes,
-    });
-  } catch (error) {
-    log.error("2FA verify error:", { error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-}
 
-export async function DELETE() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return NextResponse.json({
+    secret: plainHexSecret,
+    qrCode: qrDataUrl,
+    otpauthUrl,
+  });
+});
 
-    const user = session.user as SessionUser;
+export const POST = withRoute("/api/auth/two-factor", "POST", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
+
+  const parsed = validateBody(twoFactorVerifySchema, await req.json());
+  if (!parsed.success) return parsed.response;
+  // Accept both "code" and "token" for backwards compatibility
+  const code: string | undefined = parsed.data.code || parsed.data.token;
+
+  if (!code) {
+    return NextResponse.json({ error: "Code required" }, { status: 400 });
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { twoFactorSecret: true },
+  });
+
+  if (!dbUser?.twoFactorSecret) {
+    return NextResponse.json({ error: "Setup 2FA first" }, { status: 400 });
+  }
+
+  // Validate the TOTP code (window: 2 = ±60 s tolerance)
+  const totp = buildTOTP(dbUser.twoFactorSecret, user.email);
+  const delta = totp.validate({ token: code, window: 2 });
+
+  if (delta === null) {
+    return NextResponse.json({ error: "Invalid code" }, { status: 400 });
+  }
+
+  // Generate recovery codes
+  const plainCodes = generatePlainRecoveryCodes();
+  const hashedCodes = await hashRecoveryCodes(plainCodes);
+
+  // Enable 2FA + store hashed recovery codes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (prisma.user as any).update({
+    where: { id: user.id },
+    data: {
+      twoFactorEnabled: true,
+      twoFactorRecoveryCodes: JSON.stringify(hashedCodes),
+    },
+  });
+
+  // Return plain codes ONCE — user must save them now
+  return NextResponse.json({
+    success: true,
+    recoveryCodes: plainCodes,
+  });
+});
+
+export const DELETE = withRoute(
+  "/api/auth/two-factor",
+  "DELETE",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma.user as any).update({
@@ -196,8 +182,5 @@ export async function DELETE() {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("2FA disable error:", { error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

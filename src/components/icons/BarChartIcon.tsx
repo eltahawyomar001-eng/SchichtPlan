@@ -18,7 +18,7 @@ export function BarChartIcon(props: SVGProps<SVGSVGElement>) {
         width="4"
         height="9"
         rx="1"
-        fill="url(#barchart-gradient)"
+        fill="currentColor"
         fillOpacity="0.3"
       />
       <rect
@@ -27,7 +27,7 @@ export function BarChartIcon(props: SVGProps<SVGSVGElement>) {
         width="4"
         height="14"
         rx="1"
-        fill="url(#barchart-gradient)"
+        fill="currentColor"
         fillOpacity="0.6"
       />
       <rect
@@ -36,21 +36,8 @@ export function BarChartIcon(props: SVGProps<SVGSVGElement>) {
         width="4"
         height="18"
         rx="1"
-        fill="url(#barchart-gradient)"
-      />
-      <defs>
-        <linearGradient
-          id="barchart-gradient"
-          x1="3"
-          y1="3"
-          x2="21"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+        fill="currentColor"
+      />{" "}
     </svg>
   );
 }

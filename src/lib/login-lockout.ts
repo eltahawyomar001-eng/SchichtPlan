@@ -11,7 +11,8 @@ import { log } from "@/lib/logger";
  * Design decisions:
  * - Uses Redis (not DB) so lockout survives serverless cold-starts
  *   and avoids extra Prisma migrations.
- * - Gracefully degrades if Upstash env vars are missing (dev mode).
+ * - In-memory LRU fallback when Upstash env vars are missing (dev
+ *   mode or Redis outage) — prevents bypassing lockout entirely.
  * ────────────────────────────────────────────────────────────── */
 
 const MAX_ATTEMPTS = 5;
@@ -30,18 +31,73 @@ const redis = hasUpstash
     })
   : undefined;
 
+/* ── In-memory fallback (LRU, 1000 entries max) ────────────── */
+
+interface MemEntry {
+  value: number | string;
+  expiresAt: number;
+}
+
+const MEM_MAX = 1000;
+const memStore = new Map<string, MemEntry>();
+
+function memGet(key: string): number | string | null {
+  const entry = memStore.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    memStore.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function memSet(key: string, value: number | string, ttlSec: number): void {
+  if (memStore.size >= MEM_MAX) {
+    const oldest = memStore.keys().next().value;
+    if (oldest) memStore.delete(oldest);
+  }
+  memStore.set(key, { value, expiresAt: Date.now() + ttlSec * 1000 });
+}
+
+function memIncr(key: string, ttlSec: number): number {
+  const current = memGet(key);
+  const next = typeof current === "number" ? current + 1 : 1;
+  memSet(key, next, ttlSec);
+  return next;
+}
+
+function memDel(key: string): void {
+  memStore.delete(key);
+}
+
+function memTtl(key: string): number {
+  const entry = memStore.get(key);
+  if (!entry) return -2;
+  const remaining = Math.ceil((entry.expiresAt - Date.now()) / 1000);
+  return remaining > 0 ? remaining : -2;
+}
+
 /**
  * Check whether the email is currently locked out.
  * Returns the number of remaining seconds, or 0 if not locked.
  */
 export async function isLockedOut(email: string): Promise<number> {
-  if (!redis) return 0;
+  const lockKey = `${LOCKOUT_PREFIX}${email.toLowerCase()}`;
+
+  if (!redis) {
+    const ttl = memTtl(lockKey);
+    return ttl > 0 ? ttl : 0;
+  }
+
   try {
-    const ttl = await redis.ttl(`${LOCKOUT_PREFIX}${email.toLowerCase()}`);
+    const ttl = await redis.ttl(lockKey);
     return ttl > 0 ? ttl : 0;
   } catch (err) {
-    log.error("login-lockout: isLockedOut failed", { error: err });
-    return 0; // fail-open
+    log.error("login-lockout: isLockedOut Redis failed, using memory", {
+      error: err,
+    });
+    const ttl = memTtl(lockKey);
+    return ttl > 0 ? ttl : 0;
   }
 }
 
@@ -51,8 +107,21 @@ export async function isLockedOut(email: string): Promise<number> {
  * Returns `true` if the account is now locked.
  */
 export async function recordFailedAttempt(email: string): Promise<boolean> {
-  if (!redis) return false;
   const key = `${ATTEMPT_PREFIX}${email.toLowerCase()}`;
+  const lockKey = `${LOCKOUT_PREFIX}${email.toLowerCase()}`;
+
+  if (!redis) {
+    const attempts = memIncr(key, LOCKOUT_SECONDS);
+    if (attempts >= MAX_ATTEMPTS) {
+      memSet(lockKey, "1", LOCKOUT_SECONDS);
+      memDel(key);
+      log.warn("login-lockout: account locked (memory)", {
+        email: email.toLowerCase(),
+      });
+      return true;
+    }
+    return false;
+  }
 
   try {
     const attempts = await redis.incr(key);
@@ -63,7 +132,7 @@ export async function recordFailedAttempt(email: string): Promise<boolean> {
 
     if (attempts >= MAX_ATTEMPTS) {
       // Set lockout key
-      await redis.set(`${LOCKOUT_PREFIX}${email.toLowerCase()}`, "1", {
+      await redis.set(lockKey, "1", {
         ex: LOCKOUT_SECONDS,
       });
       // Reset attempt counter
@@ -74,8 +143,16 @@ export async function recordFailedAttempt(email: string): Promise<boolean> {
 
     return false;
   } catch (err) {
-    log.error("login-lockout: recordFailedAttempt failed", { error: err });
-    return false; // fail-open
+    log.error("login-lockout: recordFailedAttempt Redis failed, using memory", {
+      error: err,
+    });
+    const attempts = memIncr(key, LOCKOUT_SECONDS);
+    if (attempts >= MAX_ATTEMPTS) {
+      memSet(lockKey, "1", LOCKOUT_SECONDS);
+      memDel(key);
+      return true;
+    }
+    return false;
   }
 }
 
@@ -83,10 +160,18 @@ export async function recordFailedAttempt(email: string): Promise<boolean> {
  * Clear failed attempts after a successful login.
  */
 export async function clearFailedAttempts(email: string): Promise<void> {
+  const attemptKey = `${ATTEMPT_PREFIX}${email.toLowerCase()}`;
+  const lockKey = `${LOCKOUT_PREFIX}${email.toLowerCase()}`;
+
+  // Always clear memory fallback
+  memDel(attemptKey);
+  memDel(lockKey);
+
   if (!redis) return;
+
   try {
-    await redis.del(`${ATTEMPT_PREFIX}${email.toLowerCase()}`);
-    await redis.del(`${LOCKOUT_PREFIX}${email.toLowerCase()}`);
+    await redis.del(attemptKey);
+    await redis.del(lockKey);
   } catch (err) {
     log.error("login-lockout: clearFailedAttempts failed", { error: err });
   }

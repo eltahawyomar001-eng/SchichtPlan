@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { generateTimeEntriesFromShifts } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/automations/generate-time-entries
@@ -15,8 +14,10 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
  *  - Manually by managers via dashboard
  *  - Via Vercel Cron at 02:00 daily (with CRON_SECRET)
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/automations/generate-time-entries",
+  "POST",
+  async (req) => {
     // Support both session auth and cron secret
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");
@@ -57,12 +58,10 @@ export async function POST(req: Request) {
     }
 
     // Manual: require session
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    const user = session.user as SessionUser;
     workspaceId = user.workspaceId;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
@@ -78,15 +77,5 @@ export async function POST(req: Request) {
       success: true,
       created: result.created,
     });
-  } catch (error) {
-    log.error("Error generating time entries:", { error: error });
-    captureRouteError(error, {
-      route: "/api/automations/generate-time-entries",
-      method: "POST",
-    });
-    return NextResponse.json(
-      { error: "Error with automatic time tracking" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 // ─── GET  /api/notifications/status ─────────────────────────────
 // Returns unread notification count for the authenticated user.
 // Also includes channel config status for OWNER/ADMIN.
-export async function GET() {
-  try {
+export const GET = withRoute(
+  "/api/notifications/status",
+  "GET",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user } = auth;
@@ -33,8 +36,5 @@ export async function GET() {
     }
 
     return NextResponse.json(response);
-  } catch (error) {
-    log.error("Error fetching notification status:", { error });
-    return serverError("Error loading");
-  }
-}
+  },
+);

@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { isEmployee } from "@/lib/authorization";
 import { createSystemNotification } from "@/lib/automations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
@@ -11,19 +8,21 @@ import {
   validateBody,
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────
 // Management sees all requests for the workspace.
 // Employees see only their own requests.
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const GET = withRoute(
+  "/api/shift-change-requests",
+  "GET",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -71,23 +70,18 @@ export async function GET(req: Request) {
     ]);
 
     return paginatedResponse(requests, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching shift change requests:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── POST  /api/shift-change-requests ───────────────────────────
 // An employee requests a change to one of their shifts.
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/shift-change-requests",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -186,12 +180,22 @@ export async function POST(req: Request) {
       log.error("Failed to send notification for shift change request");
     }
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "ShiftChangeRequest",
+      entityId: changeRequest.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { shiftId, newDate, newStartTime, newEndTime },
+    });
+
+    dispatchWebhook(workspaceId, "shift_change.requested", {
+      id: changeRequest.id,
+      shiftId,
+    }).catch(() => {});
+
     return NextResponse.json(changeRequest, { status: 201 });
-  } catch (error) {
-    log.error("Error creating shift change request:", { error: error });
-    return NextResponse.json(
-      { error: "Error creating request" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

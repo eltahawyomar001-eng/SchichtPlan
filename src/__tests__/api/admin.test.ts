@@ -11,21 +11,21 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
     > | null,
   },
   mockPrisma: {
-    verificationToken: { deleteMany: vi.fn() },
-    passwordResetToken: { deleteMany: vi.fn() },
-    session: { deleteMany: vi.fn() },
-    invitation: { deleteMany: vi.fn() },
-    notification: { deleteMany: vi.fn() },
-    auditLog: { deleteMany: vi.fn() },
-    eSignature: { deleteMany: vi.fn() },
-    chatMessage: { deleteMany: vi.fn() },
-    exportJob: { deleteMany: vi.fn() },
-    serviceVisitAuditLog: { deleteMany: vi.fn() },
-    timeEntryAudit: { deleteMany: vi.fn() },
-    autoFillLog: { deleteMany: vi.fn() },
-    managerAlert: { deleteMany: vi.fn() },
-    autoScheduleRun: { deleteMany: vi.fn() },
-    pushSubscription: { deleteMany: vi.fn() },
+    verificationToken: { deleteMany: vi.fn(), count: vi.fn() },
+    passwordResetToken: { deleteMany: vi.fn(), count: vi.fn() },
+    session: { deleteMany: vi.fn(), count: vi.fn() },
+    invitation: { deleteMany: vi.fn(), count: vi.fn() },
+    notification: { deleteMany: vi.fn(), count: vi.fn() },
+    auditLog: { deleteMany: vi.fn(), count: vi.fn() },
+    eSignature: { deleteMany: vi.fn(), count: vi.fn() },
+    chatMessage: { deleteMany: vi.fn(), count: vi.fn() },
+    exportJob: { deleteMany: vi.fn(), count: vi.fn() },
+    serviceVisitAuditLog: { deleteMany: vi.fn(), count: vi.fn() },
+    timeEntryAudit: { deleteMany: vi.fn(), count: vi.fn() },
+    autoFillLog: { deleteMany: vi.fn(), count: vi.fn() },
+    managerAlert: { deleteMany: vi.fn(), count: vi.fn() },
+    autoScheduleRun: { deleteMany: vi.fn(), count: vi.fn() },
+    pushSubscription: { deleteMany: vi.fn(), count: vi.fn() },
     workspace: { delete: vi.fn() },
     // Workspace wipe chain
     shiftChangeRequest: { deleteMany: vi.fn() },
@@ -50,13 +50,21 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
   cronMonitor: vi.fn(() => ({ start: vi.fn(), error: vi.fn(), ok: vi.fn() })),
+}));
+vi.mock("@/lib/webhooks", () => ({
+  dispatchWebhook: vi.fn(() => Promise.resolve()),
 }));
 
 import { buildOwner, buildAdmin, buildEmployee } from "../helpers/factories";
@@ -142,7 +150,7 @@ describe("POST /api/admin/data-retention", () => {
   it("executes retention successfully for OWNER", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
-    // Mock all deleteMany to return { count: 0 }
+    // Mock all deleteMany to return { count: 0 } and count to return 0
     Object.values(mockPrisma).forEach((model) => {
       if (
         typeof model === "object" &&
@@ -152,6 +160,9 @@ describe("POST /api/admin/data-retention", () => {
         (model.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({
           count: 0,
         });
+      }
+      if (typeof model === "object" && model !== null && "count" in model) {
+        (model.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
       }
     });
 

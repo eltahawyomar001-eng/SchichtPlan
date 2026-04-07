@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { checkOvertimeAlerts } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/automations/overtime-check
@@ -16,8 +15,10 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
  *  - Manually by managers
  *  - Via Vercel Cron on Fridays at 16:00
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/automations/overtime-check",
+  "POST",
+  async (req) => {
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");
 
@@ -50,13 +51,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -71,15 +68,5 @@ export async function POST(req: Request) {
       success: true,
       alerts: result.alerts,
     });
-  } catch (error) {
-    log.error("Error checking overtime:", { error: error });
-    captureRouteError(error, {
-      route: "/api/automations/overtime-check",
-      method: "POST",
-    });
-    return NextResponse.json(
-      { error: "Error checking overtime" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

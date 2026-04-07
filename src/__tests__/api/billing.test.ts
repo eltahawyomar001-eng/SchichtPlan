@@ -35,6 +35,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/stripe", () => ({
   getStripe: () => mockStripe,
@@ -134,20 +138,20 @@ describe("POST /api/billing/portal", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for EMPLOYEE without settings permission", async () => {
     mockSession.user = buildEmployee();
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(403);
   });
 
   it("returns simulation URL in simulation mode", async () => {
     mockSession.user = buildOwner();
     mockSubscription.isSimulationMode.mockReturnValue(true);
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.simulation).toBe(true);
@@ -157,7 +161,7 @@ describe("POST /api/billing/portal", () => {
     mockSession.user = buildOwner();
     mockSubscription.isSimulationMode.mockReturnValue(false);
     mockSubscription.getSubscription.mockResolvedValue(null);
-    const res = await handler.POST();
+    const res = await handler.POST(new Request("http://localhost"));
     expect(res.status).toBe(404);
   });
 });
@@ -173,7 +177,7 @@ describe("GET /api/billing/subscription", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
@@ -189,7 +193,7 @@ describe("GET /api/billing/subscription", () => {
       stripeSubscriptionId: null,
     });
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.plan).toBe("BASIC");
@@ -209,7 +213,7 @@ describe("GET /api/billing/subscription", () => {
       stripeSubscriptionId: null,
     });
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     expect(mockSubscription.ensureSubscription).toHaveBeenCalled();
   });

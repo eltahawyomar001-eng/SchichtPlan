@@ -12,6 +12,7 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
     staffingRequirement: {
       findMany: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
       create: vi.fn(),
     },
   },
@@ -24,6 +25,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
@@ -60,12 +65,13 @@ describe("GET /api/staffing-requirements", () => {
     mockSession.user = owner;
     const requirements = [{ id: "r1", name: "Morning shift", weekday: 1 }];
     mockPrisma.staffingRequirement.findMany.mockResolvedValue(requirements);
+    mockPrisma.staffingRequirement.count.mockResolvedValue(1);
 
     const req = new Request("http://localhost/api/staffing-requirements");
     const res = await handler.GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.requirements).toHaveLength(1);
+    expect(body.data).toHaveLength(1);
     expect(mockPrisma.staffingRequirement.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ workspaceId: owner.workspaceId }),

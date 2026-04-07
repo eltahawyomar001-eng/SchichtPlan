@@ -5,33 +5,34 @@ import { requireLocationSlot } from "@/lib/subscription";
 import { createLocationSchema, validateBody } from "@/lib/validations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { workspaceId } = auth;
+export const GET = withRoute("/api/locations", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { workspaceId } = auth;
 
-    const { take, skip } = parsePagination(req);
+  const { take, skip } = parsePagination(req);
 
-    const [locations, total] = await Promise.all([
-      prisma.location.findMany({
-        where: { workspaceId },
-        orderBy: { name: "asc" },
-        take,
-        skip,
-      }),
-      prisma.location.count({ where: { workspaceId } }),
-    ]);
+  const [locations, total] = await Promise.all([
+    prisma.location.findMany({
+      where: { workspaceId },
+      orderBy: { name: "asc" },
+      take,
+      skip,
+    }),
+    prisma.location.count({ where: { workspaceId } }),
+  ]);
 
-    return paginatedResponse(locations, total, take, skip);
-  } catch {
-    return serverError("Error loading locations");
-  }
-}
+  return paginatedResponse(locations, total, take, skip);
+});
 
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/locations",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -57,8 +58,23 @@ export async function POST(req: Request) {
       },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "Location",
+      entityId: location.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { name, address },
+    });
+
+    dispatchWebhook(workspaceId, "location.created", {
+      id: location.id,
+      name,
+      address,
+    }).catch(() => {});
+
     return NextResponse.json(location, { status: 201 });
-  } catch {
-    return serverError("Error creating location");
-  }
-}
+  },
+  { idempotent: true },
+);

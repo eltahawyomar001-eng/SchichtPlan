@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { log } from "@/lib/logger";
+import { withTimeout } from "@/lib/request-timeout";
 
 /**
  * Webhook delivery timeout (ms).
  * Short timeout prevents blocking serverless function execution time.
  */
-const DELIVERY_TIMEOUT = 5_000; // 5 seconds
+const DELIVERY_TIMEOUT = 10_000; // 10 seconds
 
 /**
  * Dispatch a webhook event to all matching endpoints for a workspace.
@@ -51,16 +52,19 @@ export async function dispatchWebhook(
           .digest("hex");
 
         try {
-          const res = await fetch(ep.url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Shiftfy-Signature": `sha256=${signature}`,
-              "X-Shiftfy-Event": event,
-            },
-            body,
-            signal: AbortSignal.timeout(DELIVERY_TIMEOUT),
-          });
+          const res = await withTimeout(
+            fetch(ep.url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shiftfy-Signature": `sha256=${signature}`,
+                "X-Shiftfy-Event": event,
+              },
+              body,
+            }),
+            DELIVERY_TIMEOUT,
+            `webhook ${ep.url}`,
+          );
 
           if (res.ok) {
             log.info("[webhook] Delivered", {

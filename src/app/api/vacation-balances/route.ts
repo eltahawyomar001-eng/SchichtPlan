@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { createVacationBalanceSchema, validateBody } from "@/lib/validations";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * Calculate the BUrlG (Bundesurlaubsgesetz) legal minimum vacation days.
@@ -22,36 +24,33 @@ function calculateMinEntitlement(workDaysPerWeek: number): number {
  * GET /api/vacation-balances?year=2025&employeeId=xxx
  * Returns vacation balances. Managers see all, employees see own.
  */
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
+  if (!workspaceId) {
+    return NextResponse.json({ error: "No workspace" }, { status: 400 });
+  }
 
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+  const { searchParams } = new URL(req.url);
+  const yearParam = searchParams.get("year");
+  const employeeIdParam = searchParams.get("employeeId");
+  const { take, skip } = parsePagination(req);
 
-    const { searchParams } = new URL(req.url);
-    const yearParam = searchParams.get("year");
-    const employeeIdParam = searchParams.get("employeeId");
+  const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
 
-    const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = { workspaceId, year };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = { workspaceId, year };
+  // EMPLOYEE role: can only see own balance
+  if (user.role === "EMPLOYEE" && user.employeeId) {
+    where.employeeId = user.employeeId;
+  } else if (employeeIdParam) {
+    where.employeeId = employeeIdParam;
+  }
 
-    // EMPLOYEE role: can only see own balance
-    if (user.role === "EMPLOYEE" && user.employeeId) {
-      where.employeeId = user.employeeId;
-    } else if (employeeIdParam) {
-      where.employeeId = employeeIdParam;
-    }
-
-    const balances = await prisma.vacationBalance.findMany({
+  const [balances, total] = await Promise.all([
+    prisma.vacationBalance.findMany({
       where,
       include: {
         employee: {
@@ -65,24 +64,21 @@ export async function GET(req: Request) {
         },
       },
       orderBy: [{ employee: { lastName: "asc" } }, { year: "desc" }],
-    });
+      take,
+      skip,
+    }),
+    prisma.vacationBalance.count({ where }),
+  ]);
 
-    // Enrich response with legal minimum for each balance
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enriched = balances.map((bal: any) => ({
-      ...bal,
-      legalMinimum: calculateMinEntitlement(bal.employee.workDaysPerWeek ?? 5),
-    }));
+  // Enrich response with legal minimum for each balance
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const enriched = balances.map((bal: any) => ({
+    ...bal,
+    legalMinimum: calculateMinEntitlement(bal.employee.workDaysPerWeek ?? 5),
+  }));
 
-    return NextResponse.json(enriched);
-  } catch (error) {
-    log.error("Error fetching vacation balances:", { error: error });
-    return NextResponse.json(
-      { error: "Error loading vacation balances" },
-      { status: 500 },
-    );
-  }
-}
+  return paginatedResponse(enriched, total, take, skip);
+});
 
 /**
  * POST /api/vacation-balances
@@ -92,15 +88,13 @@ export async function GET(req: Request) {
  * Validates against BUrlG §3: entitlement must not be below legal minimum
  * based on employee's workDaysPerWeek.
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/vacation-balances",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -188,12 +182,28 @@ export async function POST(req: Request) {
       },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "VacationBalance",
+      entityId: updated.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: {
+        employeeId,
+        year,
+        totalEntitlement: entitlement,
+        carryOver: carry,
+      },
+    });
+
+    dispatchWebhook(workspaceId, "vacation_balance.created", {
+      id: updated.id,
+      employeeId,
+      year,
+    }).catch(() => {});
+
     return NextResponse.json(updated, { status: 201 });
-  } catch (error) {
-    log.error("Error creating vacation balance:", { error: error });
-    return NextResponse.json(
-      { error: "Error saving vacation balance" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

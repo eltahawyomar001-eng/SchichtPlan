@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { list, del } from "@vercel/blob";
-import type { SessionUser } from "@/lib/types";
 import { requireAdmin } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/admin/blob-cleanup
@@ -21,17 +20,13 @@ import { log } from "@/lib/logger";
  * Query params:
  *   ?dryRun=true  — list files without deleting (default: false)
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/admin/blob-cleanup",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requireAdmin(user);
     if (forbidden) return forbidden;
@@ -101,11 +96,6 @@ export async function POST(req: Request) {
       message: `Successfully deleted ${orphanedUrls.length} orphaned blob(s).`,
       deleted: orphanedUrls.length,
     });
-  } catch (error) {
-    log.error("Blob cleanup error:", { error });
-    return NextResponse.json(
-      { error: "Error during blob cleanup" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

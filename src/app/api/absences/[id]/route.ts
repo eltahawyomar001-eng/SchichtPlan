@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   cascadeAbsenceApproval,
@@ -14,6 +11,9 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateAbsenceStatusSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -21,15 +21,16 @@ interface RouteParams {
 
 // ─── PATCH  /api/absences/[id] ──────────────────────────────────
 // Used for approve / reject / cancel
-export async function PATCH(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PATCH = withRoute(
+  "/api/absences/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    const { id } = await params;
+    const { id } = params;
     const parsed = validateBody(updateAbsenceStatusSchema, await req.json());
     if (!parsed.success) return parsed.response;
 
@@ -51,8 +52,6 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         const forbidden = requirePermission(user, "absences", "approve");
         if (forbidden) return forbidden;
       }
-
-      // ── Idempotency: reject duplicate status transitions ──
       // If the absence is already in the requested status, return it as-is
       // to prevent duplicate signatures, notifications, and emails.
       if (existing.status === body.status) {
@@ -187,24 +186,36 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       );
     }
 
+    createAuditLog({
+      action:
+        body.status === "GENEHMIGT"
+          ? "APPROVE"
+          : body.status === "ABGELEHNT"
+            ? "REJECT"
+            : "UPDATE",
+      entityType: "AbsenceRequest",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId: user.workspaceId!,
+      changes: { status: body.status, previousStatus: existing.status },
+    });
+
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating absence:", { error: error });
-    captureRouteError(error, { route: "/api/absences/[id]", method: "PATCH" });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── DELETE  /api/absences/[id] ─────────────────────────────────
-export async function DELETE(_req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withRoute(
+  "/api/absences/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    const { id } = await params;
+    const { id } = params;
 
     const existing = await prisma.absenceRequest.findUnique({
       where: { id },
@@ -224,11 +235,21 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
       }
     }
 
-    await prisma.absenceRequest.delete({ where: { id } });
+    await prisma.absenceRequest.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    createAuditLog({
+      action: "DELETE",
+      entityType: "AbsenceRequest",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId: user.workspaceId!,
+      changes: { category: existing.category, employeeId: existing.employeeId },
+    });
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error deleting absence:", { error: error });
-    captureRouteError(error, { route: "/api/absences/[id]", method: "DELETE" });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

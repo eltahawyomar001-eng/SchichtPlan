@@ -24,13 +24,16 @@ import {
   notifyTicketAssigned,
   notifyStatusChanged,
 } from "@/lib/ticket-notifications";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/tickets/[id] ────────────────────────────────────
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/tickets/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -38,7 +41,7 @@ export async function GET(
     const perm = requirePermission(user, "tickets", "read");
     if (perm) return perm;
 
-    const { id } = await params;
+    const { id } = params;
 
     const ticket = await prisma.ticket.findFirst({
       where: { id, workspaceId },
@@ -83,19 +86,15 @@ export async function GET(
     }
 
     return NextResponse.json(ticket);
-  } catch (error) {
-    log.error("Error fetching ticket:", { error });
-    captureRouteError(error, { route: "/api/tickets/[id]", method: "GET" });
-    return serverError("Fehler beim Laden des Tickets");
-  }
-}
+  },
+);
 
 // ─── PATCH  /api/tickets/[id] ──────────────────────────────────
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/tickets/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -103,7 +102,7 @@ export async function PATCH(
     const perm = requirePermission(user, "tickets", "update");
     if (perm) return perm;
 
-    const { id } = await params;
+    const { id } = params;
 
     const parsed = validateBody(updateTicketSchema, await req.json());
     if (!parsed.success) return parsed.response;
@@ -167,12 +166,23 @@ export async function PATCH(
       data.closedAt = new Date();
     }
 
-    // Re-open: clear closedAt
+    // Track SLA: resolvedAt on resolution/closure
+    if (
+      (effectiveStatus === "GESCHLOSSEN" || effectiveStatus === "GELOEST") &&
+      (existing.status as string) !== "GESCHLOSSEN" &&
+      (existing.status as string) !== "GELOEST" &&
+      !existing.resolvedAt
+    ) {
+      data.resolvedAt = new Date();
+    }
+
+    // Re-open: clear closedAt and resolvedAt
     if (
       effectiveStatus !== "GESCHLOSSEN" &&
-      existing.status === "GESCHLOSSEN"
+      (existing.status as string) === "GESCHLOSSEN"
     ) {
       data.closedAt = null;
+      data.resolvedAt = null;
     }
 
     // Validate assignedToId belongs to the workspace
@@ -247,10 +257,22 @@ export async function PATCH(
       changes: Object.keys(body),
     });
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Ticket",
+      entityId: ticket.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: body,
+    });
+
+    dispatchWebhook(workspaceId, "ticket.updated", {
+      id: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      ...body,
+    }).catch(() => {});
+
     return NextResponse.json(ticket);
-  } catch (error) {
-    log.error("Error updating ticket:", { error });
-    captureRouteError(error, { route: "/api/tickets/[id]", method: "PATCH" });
-    return serverError("Fehler beim Aktualisieren des Tickets");
-  }
-}
+  },
+);

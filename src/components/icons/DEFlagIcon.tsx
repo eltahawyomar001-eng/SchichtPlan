@@ -13,11 +13,7 @@ export function DEFlagIcon(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
-      <defs>
-        <clipPath id="de-flag-clip">
-          <rect width="24" height="18" rx="3" />
-        </clipPath>
-      </defs>
+      {" "}
       <g clipPath="url(#de-flag-clip)">
         <rect width="24" height="6" fill="#000000" />
         <rect y="6" width="24" height="6" fill="#DD0000" />

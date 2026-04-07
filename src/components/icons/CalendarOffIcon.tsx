@@ -19,45 +19,21 @@ export function CalendarOffIcon(props: SVGProps<SVGSVGElement>) {
         width="18"
         height="18"
         rx="3"
-        stroke="url(#caloff-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <path
         d="M16 2v4M8 2v4M3 10h18"
-        stroke="url(#caloff-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
         d="M10 14l4 4M14 14l-4 4"
-        stroke="url(#caloff-x-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
-      />
-      <defs>
-        <linearGradient
-          id="caloff-gradient"
-          x1="3"
-          y1="2"
-          x2="21"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-        <linearGradient
-          id="caloff-x-gradient"
-          x1="10"
-          y1="14"
-          x2="14"
-          y2="18"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

@@ -10,6 +10,7 @@ import {
   AlertTriangleIcon,
   MailIcon,
 } from "@/components/icons";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function VerifizierungContent() {
   const searchParams = useSearchParams();
@@ -74,15 +75,20 @@ function VerifizierungContent() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <Link href="/" className="mb-8 flex items-center justify-center gap-3">
-          <ShiftfyMark className="h-10 w-10" />
-          <span className="text-xl font-bold text-gray-900">Shiftfy</span>
-        </Link>
+        <div className="mb-8 flex items-center justify-center gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <ShiftfyMark className="h-10 w-10" />
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
+              Shiftfy
+            </span>
+          </Link>
+          <ThemeToggle />
+        </div>
 
-        <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-100 text-center">
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-sm ring-1 ring-gray-100 dark:ring-gray-800 text-center">
           {/* ── Verifying ── */}
           {status === "verifying" && (
             <>

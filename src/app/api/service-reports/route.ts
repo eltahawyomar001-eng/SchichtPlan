@@ -1,69 +1,58 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { createServiceReportSchema, validateBody } from "@/lib/validations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 // ─── GET  /api/service-reports ──────────────────────────────────
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
-
-    const forbidden = requirePermission(user, "service-reports", "read");
-    if (forbidden) return forbidden;
-
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-
-    const where: Record<string, unknown> = { workspaceId };
-    if (status) where.status = status;
-
-    const { take, skip } = parsePagination(req);
-
-    const [reports, total] = await Promise.all([
-      prisma.serviceReport.findMany({
-        where,
-        include: {
-          _count: { select: { visits: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take,
-        skip,
-      }),
-      prisma.serviceReport.count({ where }),
-    ]);
-
-    return paginatedResponse(reports, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching service reports:", { error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+export const GET = withRoute("/api/service-reports", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
+  if (!workspaceId) {
+    return NextResponse.json({ error: "No workspace" }, { status: 400 });
   }
-}
+
+  const forbidden = requirePermission(user, "service-reports", "read");
+  if (forbidden) return forbidden;
+
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+
+  const where: Record<string, unknown> = { workspaceId };
+  if (status) where.status = status;
+
+  const { take, skip } = parsePagination(req);
+
+  const [reports, total] = await Promise.all([
+    prisma.serviceReport.findMany({
+      where,
+      include: {
+        _count: { select: { visits: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+      skip,
+    }),
+    prisma.serviceReport.count({ where }),
+  ]);
+
+  return paginatedResponse(reports, total, take, skip);
+});
 
 // ─── POST  /api/service-reports ─────────────────────────────────
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/service-reports",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -128,9 +117,13 @@ export async function POST(req: Request) {
       completedVisits,
     });
 
+    dispatchWebhook(workspaceId, "service_report.created", {
+      id: report.id,
+      title,
+      totalVisits,
+    }).catch(() => {});
+
     return NextResponse.json(report, { status: 201 });
-  } catch (error) {
-    log.error("Error creating service report:", { error });
-    return NextResponse.json({ error: "Error creating" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

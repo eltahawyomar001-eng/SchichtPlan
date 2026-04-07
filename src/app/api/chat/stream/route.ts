@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import type { SessionUser } from "@/lib/types";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * GET /api/chat/stream?channelId=…
@@ -21,7 +22,7 @@ import { log } from "@/lib/logger";
  * because typing state is in-memory on the origin server and cannot be
  * shared across SSE connections on a serverless platform.
  */
-export async function GET(req: Request) {
+export const GET = withRoute("/api/chat/stream", "GET", async (req) => {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return new Response("Unauthorized", { status: 401 });
@@ -163,4 +164,4 @@ export async function GET(req: Request) {
       "X-Accel-Buffering": "no",
     },
   });
-}
+});

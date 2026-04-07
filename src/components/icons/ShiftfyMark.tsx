@@ -30,20 +30,6 @@ export function ShiftfyMark(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
-      <defs>
-        <linearGradient
-          id="shiftfy-bg"
-          x1="0"
-          y1="0"
-          x2="40"
-          y2="40"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#065f46" />
-          <stop offset="1" stopColor="#059669" />
-        </linearGradient>
-      </defs>
-
       {/* Background */}
       <rect width="40" height="40" rx="10" fill="url(#shiftfy-bg)" />
 

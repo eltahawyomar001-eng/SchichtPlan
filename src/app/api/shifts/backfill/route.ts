@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { runBackfill } from "@/lib/auto-scheduler";
 import { backfillSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/shifts/backfill
@@ -20,15 +19,13 @@ import { log } from "@/lib/logger";
  * Returns a ranked list of available employees who can fill the shift,
  * scored by fairness, preference, fatigue, rotation, and cost.
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/shifts/backfill",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -81,11 +78,6 @@ export async function POST(req: Request) {
       success: true,
       ...result,
     });
-  } catch (error) {
-    log.error("Error in backfill:", { error });
-    return NextResponse.json(
-      { error: "Fehler bei der Ersatzsuche" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

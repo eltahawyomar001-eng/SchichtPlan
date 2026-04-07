@@ -4,37 +4,38 @@ import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { createDepartmentSchema, validateBody } from "@/lib/validations";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { workspaceId } = auth;
+export const GET = withRoute("/api/departments", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { workspaceId } = auth;
 
-    const { take, skip } = parsePagination(req);
+  const { take, skip } = parsePagination(req);
 
-    const [departments, total] = await Promise.all([
-      prisma.department.findMany({
-        where: { workspaceId },
-        include: {
-          location: { select: { id: true, name: true } },
-          _count: { select: { employees: true } },
-        },
-        orderBy: { name: "asc" },
-        take,
-        skip,
-      }),
-      prisma.department.count({ where: { workspaceId } }),
-    ]);
+  const [departments, total] = await Promise.all([
+    prisma.department.findMany({
+      where: { workspaceId },
+      include: {
+        location: { select: { id: true, name: true } },
+        _count: { select: { employees: true } },
+      },
+      orderBy: { name: "asc" },
+      take,
+      skip,
+    }),
+    prisma.department.count({ where: { workspaceId } }),
+  ]);
 
-    return paginatedResponse(departments, total, take, skip);
-  } catch {
-    return serverError("Error loading departments");
-  }
-}
+  return paginatedResponse(departments, total, take, skip);
+});
 
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/departments",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -60,8 +61,24 @@ export async function POST(req: Request) {
       },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "Department",
+      entityId: department.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { name, color, locationId },
+    });
+
+    dispatchWebhook(workspaceId, "department.created", {
+      id: department.id,
+      name,
+      color,
+      locationId,
+    }).catch(() => {});
+
     return NextResponse.json(department, { status: 201 });
-  } catch {
-    return serverError("Error creating department");
-  }
-}
+  },
+  { idempotent: true },
+);

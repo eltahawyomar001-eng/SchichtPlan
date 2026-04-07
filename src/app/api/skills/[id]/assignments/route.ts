@@ -6,16 +6,20 @@ import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { skillAssignmentSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * GET /api/skills/[id]/assignments
  * Returns all employee IDs assigned to this skill.
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/skills/[id]/assignments",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +30,7 @@ export async function GET(
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
     const assignments = await prisma.employeeSkill.findMany({
       where: { skillId: id, employee: { workspaceId } },
@@ -34,18 +38,8 @@ export async function GET(
     });
 
     return NextResponse.json(assignments.map((a) => a.employeeId));
-  } catch (error) {
-    log.error("Error fetching skill assignments:", { error });
-    captureRouteError(error, {
-      route: "/api/skills/[id]/assignments",
-      method: "GET",
-    });
-    return NextResponse.json(
-      { error: "Error loading assignments" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);
 
 /**
  * PUT /api/skills/[id]/assignments
@@ -53,18 +47,14 @@ export async function GET(
  * Body: { employeeIds: string[] }
  * This is a "sync" operation: employees not in the list will be unassigned.
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const PUT = withRoute(
+  "/api/skills/[id]/assignments",
+  "PUT",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -72,11 +62,11 @@ export async function PUT(
     const forbidden = requirePermission(user, "employees", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
     const body = await req.json();
-    const employeeIds: string[] = Array.isArray(body.employeeIds)
-      ? body.employeeIds
-      : [];
+    const parsed = validateBody(skillAssignmentSchema, body);
+    if (!parsed.success) return parsed.response;
+    const employeeIds = parsed.data.employeeIds;
 
     // Verify skill belongs to this workspace
     const skill = await prisma.skill.findFirst({
@@ -119,16 +109,16 @@ export async function PUT(
       ),
     ]);
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error updating skill assignments:", { error });
-    captureRouteError(error, {
-      route: "/api/skills/[id]/assignments",
-      method: "PUT",
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "SkillAssignment",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { added: toAdd, removed: toRemove },
     });
-    return NextResponse.json(
-      { error: "Error updating assignments" },
-      { status: 500 },
-    );
-  }
-}
+
+    return NextResponse.json({ success: true });
+  },
+);

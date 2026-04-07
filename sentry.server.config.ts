@@ -15,6 +15,11 @@ Sentry.init({
   // Filter noisy or expected errors
   ignoreErrors: ["NEXT_NOT_FOUND", "NEXT_REDIRECT"],
   beforeSend(event) {
+    // Tag high-severity events for SLA alerting
+    if (event.level === "fatal" || event.level === "error") {
+      event.tags = { ...event.tags, sla_relevant: "true" };
+    }
+
     // Strip sensitive data from breadcrumbs
     if (event.breadcrumbs) {
       event.breadcrumbs = event.breadcrumbs.map((b) => {

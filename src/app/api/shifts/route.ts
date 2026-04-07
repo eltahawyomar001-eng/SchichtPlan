@@ -20,63 +20,60 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
 
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export const GET = withRoute("/api/shifts", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const startDate = searchParams.get("start");
-    const endDate = searchParams.get("end");
+  const { searchParams } = new URL(req.url);
+  const startDate = searchParams.get("start");
+  const endDate = searchParams.get("end");
 
-    const where: {
-      workspaceId: string;
-      date?: { gte: Date; lte: Date };
-      employeeId?: string;
-    } = {
-      workspaceId,
+  const where: {
+    workspaceId: string;
+    date?: { gte: Date; lte: Date };
+    employeeId?: string;
+  } = {
+    workspaceId,
+  };
+
+  if (startDate && endDate) {
+    where.date = {
+      gte: new Date(startDate),
+      lte: new Date(endDate),
     };
-
-    if (startDate && endDate) {
-      where.date = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      };
-    }
-
-    // EMPLOYEE can only see their own shifts
-    if (isEmployee(user) && user.employeeId) {
-      where.employeeId = user.employeeId;
-    }
-
-    const { take, skip } = parsePagination(req);
-
-    const [shifts, total] = await Promise.all([
-      prisma.shift.findMany({
-        where,
-        include: {
-          employee: true,
-          location: true,
-        },
-        orderBy: [{ date: "asc" }, { startTime: "asc" }],
-        take,
-        skip,
-      }),
-      prisma.shift.count({ where }),
-    ]);
-
-    return paginatedResponse(shifts, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching shifts:", { error: error });
-    captureRouteError(error, { route: "/api/shifts", method: "GET" });
-    return serverError("Error loading");
   }
-}
 
-export async function POST(req: Request) {
-  try {
+  // EMPLOYEE can only see their own shifts
+  if (isEmployee(user) && user.employeeId) {
+    where.employeeId = user.employeeId;
+  }
+
+  const { take, skip } = parsePagination(req);
+
+  const [shifts, total] = await Promise.all([
+    prisma.shift.findMany({
+      where,
+      include: {
+        employee: true,
+        location: true,
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+      take,
+      skip,
+    }),
+    prisma.shift.count({ where }),
+  ]);
+
+  return paginatedResponse(shifts, total, take, skip);
+});
+
+export const POST = withRoute(
+  "/api/shifts",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -254,9 +251,6 @@ export async function POST(req: Request) {
       { ...shift, recurring: recurringResult },
       { status: 201 },
     );
-  } catch (error) {
-    log.error("Error creating shift:", { error: error });
-    captureRouteError(error, { route: "/api/shifts", method: "POST" });
-    return serverError("Error creating resource");
-  }
-}
+  },
+  { idempotent: true },
+);

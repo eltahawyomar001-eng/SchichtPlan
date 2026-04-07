@@ -3,9 +3,12 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { resetPasswordSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/auth/reset-password",
+  "POST",
+  async (req) => {
     const body = await req.json();
     const parsed = validateBody(resetPasswordSchema, body);
     if (!parsed.success) return parsed.response;
@@ -66,11 +69,5 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Passwort erfolgreich zurückgesetzt.",
     });
-  } catch (error) {
-    log.error("Reset password error:", { error: error });
-    return NextResponse.json(
-      { error: "Ein Fehler ist aufgetreten." },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

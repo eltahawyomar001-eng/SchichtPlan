@@ -8,6 +8,7 @@ import {
   SmartphoneIcon,
   ShieldCheckIcon,
 } from "@/components/icons";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
@@ -93,7 +94,7 @@ const benefits = [
 
 export default function ZeiterfassungPage() {
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
       <BreadcrumbJsonLd
         items={[
           { name: "Startseite", url: "/" },
@@ -102,33 +103,34 @@ export default function ZeiterfassungPage() {
       />
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="w-7 h-7" />
-            <span className="font-bold text-base text-gray-900">
+            <span className="font-bold text-base text-gray-900 dark:text-white">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/schichtplanung-software"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Schichtplanung
             </Link>
             <Link
               href="/pricing"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Preise
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Anmelden
             </Link>
+            <ThemeToggle />
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
@@ -141,7 +143,7 @@ export default function ZeiterfassungPage() {
 
       {/* Hero */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 dark:from-emerald-950/40 dark:via-gray-950 dark:to-emerald-950/20" />
         <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-16 pb-12 sm:pt-24 sm:pb-16">
           <div className="max-w-3xl mx-auto text-center">
             <div className="flex items-center justify-center gap-2 mb-5">
@@ -170,7 +172,7 @@ export default function ZeiterfassungPage() {
               </Link>
               <Link
                 href="/pricing"
-                className="border border-gray-300 text-gray-700 font-semibold px-8 py-3.5 rounded-full hover:bg-gray-50 transition-all"
+                className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold px-8 py-3.5 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
               >
                 Preise ansehen
               </Link>
@@ -199,9 +201,9 @@ export default function ZeiterfassungPage() {
               {features.map((f) => (
                 <div
                   key={f.title}
-                  className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm"
+                  className="flex items-start gap-4 p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
                     <f.icon className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
@@ -219,10 +221,10 @@ export default function ZeiterfassungPage() {
         </section>
 
         {/* Benefits */}
-        <section className="py-16 sm:py-20 bg-white border-y border-gray-100">
+        <section className="py-16 sm:py-20 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
           <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
                 Vorteile der digitalen Zeiterfassung mit Shiftfy
               </h2>
             </div>
@@ -253,7 +255,7 @@ export default function ZeiterfassungPage() {
               {useCases.map((uc) => (
                 <div
                   key={uc}
-                  className="rounded-xl border border-gray-200 bg-white p-4 text-center text-sm font-medium text-gray-700"
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-center text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {uc}
                 </div>
@@ -263,9 +265,9 @@ export default function ZeiterfassungPage() {
         </section>
 
         {/* Arbeitszeitgesetz Section (rich keyword content) */}
-        <section className="py-16 sm:py-20 bg-white border-y border-gray-100">
+        <section className="py-16 sm:py-20 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
           <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white text-center mb-8">
               Zeiterfassung Pflicht: Was das Arbeitszeitgesetz vorschreibt
             </h2>
             <div className="prose prose-gray max-w-none">
@@ -330,25 +332,25 @@ export default function ZeiterfassungPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Link
                 href="/schichtplanung-software"
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md transition-all group"
+                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all group"
               >
-                <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-600">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-emerald-600">
                   Schichtplanung Software →
                 </span>
               </Link>
               <Link
                 href="/blog"
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md transition-all group"
+                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all group"
               >
-                <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-600">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-emerald-600">
                   Blog: Tipps & Arbeitsrecht →
                 </span>
               </Link>
               <Link
                 href="/pricing"
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md transition-all group"
+                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all group"
               >
-                <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-600">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-emerald-600">
                   Preise vergleichen →
                 </span>
               </Link>
@@ -358,11 +360,13 @@ export default function ZeiterfassungPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 py-10">
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
-            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-white">
+              Shiftfy
+            </span>
           </div>
           <p className="text-sm text-gray-400">
             © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
@@ -382,6 +386,9 @@ export default function ZeiterfassungPage() {
             </Link>
             <Link href="/agb" className="hover:text-gray-600 transition-colors">
               AGB
+            </Link>
+            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+              SLA
             </Link>
           </div>
         </div>

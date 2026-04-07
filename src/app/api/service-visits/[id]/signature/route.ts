@@ -12,23 +12,25 @@ import {
 } from "@/lib/subscription-guard";
 import { visitSignatureSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { createSystemNotification } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import crypto from "crypto";
+import { withRoute } from "@/lib/with-route";
 
 // ─── POST  /api/service-visits/[id]/signature ──────────────────
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const POST = withRoute(
+  "/api/service-visits/[id]/signature",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -141,6 +143,11 @@ export async function POST(
       metadata: { visitId: id, signerName, signatureHash },
     });
 
+    dispatchWebhook(workspaceId, "service_visit.signature_captured", {
+      visitId: id,
+      signatureId: signature.id,
+    }).catch(() => {});
+
     // Revisionssicher audit trail entry — includes signature data for legal proof
     createVisitAuditEntry(req, {
       eventType: "SIGNATURE_CAPTURED",
@@ -180,11 +187,6 @@ export async function POST(
     );
 
     return NextResponse.json(signature, { status: 201 });
-  } catch (error) {
-    log.error("Error capturing signature:", { error });
-    return NextResponse.json(
-      { error: "Error capturing signature" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

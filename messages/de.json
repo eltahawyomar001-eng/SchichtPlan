@@ -2519,5 +2519,12 @@
       "description": "Erstellen Sie Ihr erstes Ticket, um ein Anliegen zu melden.",
       "managerDescription": "Noch keine Tickets von Mitarbeitern eingegangen."
     }
+  },
+  "maintenance": {
+    "notification_subject": "Geplante Wartung am {date}",
+    "notification_body": "Es ist eine geplante Wartung vorgesehen. Bitte speichern Sie Ihre Arbeit rechtzeitig.",
+    "duration": "Voraussichtliche Dauer: {minutes} Minuten",
+    "title": "Wartungsbenachrichtigung",
+    "description": "Benachrichtigen Sie alle Benutzer über geplante Wartungsarbeiten."
   }
 }

@@ -33,6 +33,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => {
   const mockPrisma = {
     invitation: {
@@ -97,19 +101,19 @@ describe("GET /api/invitations", () => {
 
   it("returns 401 when not authenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
   it("returns 403 when EMPLOYEE tries to list", async () => {
     mockSession.user = buildEmployee();
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(403);
   });
 
   it("returns 403 when MANAGER tries to list", async () => {
     mockSession.user = buildManager();
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(403);
   });
 
@@ -120,7 +124,7 @@ describe("GET /api/invitations", () => {
     ]);
     mockInvitationCount.mockResolvedValue(1);
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
   });
 
@@ -129,7 +133,7 @@ describe("GET /api/invitations", () => {
     mockInvitationFindMany.mockResolvedValue([]);
     mockInvitationCount.mockResolvedValue(0);
 
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
   });
 });

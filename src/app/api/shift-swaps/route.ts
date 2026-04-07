@@ -9,56 +9,56 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createShiftSwapSchema, validateBody } from "@/lib/validations";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export const GET = withRoute("/api/shift-swaps", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
 
-    const where: Record<string, unknown> = { workspaceId };
-    if (status) where.status = status;
+  const where: Record<string, unknown> = { workspaceId };
+  if (status) where.status = status;
 
-    // EMPLOYEE can only see swaps they are involved in
-    if (isEmployee(user) && user.employeeId) {
-      where.OR = [
-        { requesterId: user.employeeId },
-        { targetId: user.employeeId },
-      ];
-    }
-
-    const { take, skip } = parsePagination(req);
-
-    const [swaps, total] = await Promise.all([
-      prisma.shiftSwapRequest.findMany({
-        where,
-        include: {
-          requester: true,
-          target: true,
-          shift: { include: { location: true } },
-          targetShift: { include: { location: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take,
-        skip,
-      }),
-      prisma.shiftSwapRequest.count({ where }),
-    ]);
-
-    return paginatedResponse(swaps, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching shift swaps:", { error: error });
-    return serverError("Error loading");
+  // EMPLOYEE can only see swaps they are involved in
+  if (isEmployee(user) && user.employeeId) {
+    where.OR = [
+      { requesterId: user.employeeId },
+      { targetId: user.employeeId },
+    ];
   }
-}
+
+  const { take, skip } = parsePagination(req);
+
+  const [swaps, total] = await Promise.all([
+    prisma.shiftSwapRequest.findMany({
+      where,
+      include: {
+        requester: true,
+        target: true,
+        shift: { include: { location: true } },
+        targetShift: { include: { location: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+      skip,
+    }),
+    prisma.shiftSwapRequest.count({ where }),
+  ]);
+
+  return paginatedResponse(swaps, total, take, skip);
+});
 
 // ─── POST  /api/shift-swaps ─────────────────────────────────────
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/shift-swaps",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -223,12 +223,27 @@ export async function POST(req: Request) {
       recipientType: "managers",
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "ShiftSwapRequest",
+      entityId: swap.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: {
+        shiftId: body.shiftId,
+        targetId: body.targetId,
+        requesterId: body.requesterId,
+      },
+    });
+
+    dispatchWebhook(workspaceId, "shift_swap.requested", {
+      id: swap.id,
+      shiftId: body.shiftId,
+      requesterId: body.requesterId,
+    }).catch(() => {});
+
     return NextResponse.json(swap, { status: 201 });
-  } catch (error) {
-    log.error("Error creating shift swap:", { error: error });
-    return NextResponse.json(
-      { error: "Error creating resource" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

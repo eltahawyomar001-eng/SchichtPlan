@@ -1,34 +1,36 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/team — list all workspace members
  */
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withRoute("/api/team", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-  const user = session.user as SessionUser;
-  if (!user.workspaceId) {
-    return NextResponse.json({ error: "No workspace" }, { status: 400 });
-  }
+  const { take, skip } = parsePagination(req);
+  const where = { workspaceId: user.workspaceId };
 
-  const members = await prisma.user.findMany({
-    where: { workspaceId: user.workspaceId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-    },
-    orderBy: [{ role: "asc" }, { name: "asc" }],
-  });
+  const [members, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: [{ role: "asc" }, { name: "asc" }],
+      take,
+      skip,
+    }),
+    prisma.user.count({ where }),
+  ]);
 
-  return NextResponse.json(members);
-}
+  return paginatedResponse(members, total, take, skip);
+});

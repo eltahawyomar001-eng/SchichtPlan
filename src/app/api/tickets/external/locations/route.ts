@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { serverError, badRequest, notFound } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * GET  /api/tickets/external/locations?workspace=<slug>
@@ -10,8 +11,10 @@ import { serverError, badRequest, notFound } from "@/lib/api-response";
  * Public endpoint (no authentication). Returns a list of location names
  * for the given workspace so external ticket forms can show a dropdown.
  */
-export async function GET(req: Request) {
-  try {
+export const GET = withRoute(
+  "/api/tickets/external/locations",
+  "GET",
+  async (req) => {
     const { searchParams } = new URL(req.url);
     const workspaceSlug = searchParams.get("workspace");
 
@@ -35,12 +38,5 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json(locations);
-  } catch (error) {
-    log.error("Error fetching external locations:", { error });
-    captureRouteError(error, {
-      route: "/api/tickets/external/locations",
-      method: "GET",
-    });
-    return serverError();
-  }
-}
+  },
+);

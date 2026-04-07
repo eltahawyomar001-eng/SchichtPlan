@@ -13,6 +13,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { Redis } from "@upstash/redis";
+import { withRoute } from "@/lib/with-route";
 
 /* ── Idempotency guard (Upstash Redis) ──────────────────────────
  * Prevent processing the same Stripe event twice (e.g. on retries).
@@ -71,202 +72,189 @@ async function markEventProcessed(eventId: string): Promise<void> {
  *
  * Requires env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
  */
-export async function POST(req: Request) {
-  try {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      return NextResponse.json(
-        { error: "Stripe webhook secret not configured" },
-        { status: 501 },
-      );
-    }
-
-    const stripe = getStripe();
-    const body = await req.text();
-    const headersList = await headers();
-    const sig = headersList.get("stripe-signature");
-
-    if (!sig) {
-      return NextResponse.json(
-        { error: "Missing stripe-signature header" },
-        { status: 400 },
-      );
-    }
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } catch (err) {
-      log.error("[Stripe] Signature verification failed:", { error: err });
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-    }
-
-    // ── Idempotency: skip already-processed events ──
-    if (await isEventProcessed(event.id)) {
-      log.info(`[Stripe] Skipping duplicate event: ${event.id}`);
-      return NextResponse.json({ received: true, duplicate: true });
-    }
-    await markEventProcessed(event.id);
-
-    switch (event.type) {
-      /* ─── Checkout completed → activate subscription ─── */
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        const workspaceId = session.client_reference_id;
-        const subscriptionId =
-          typeof session.subscription === "string"
-            ? session.subscription
-            : session.subscription?.id;
-        const customerId =
-          typeof session.customer === "string"
-            ? session.customer
-            : session.customer?.id;
-
-        if (!workspaceId || !subscriptionId || !customerId) {
-          log.warn("[Stripe] Missing data in checkout session");
-          break;
-        }
-
-        // Fetch full subscription details from Stripe
-        const sub = await stripe.subscriptions.retrieve(subscriptionId);
-        const item = sub.items.data[0];
-        const priceId = item?.price.id;
-        const plan = priceId ? getPlanByPriceId(priceId) : undefined;
-
-        await activateSubscription({
-          workspaceId,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscriptionId,
-          stripePriceId: priceId ?? "",
-          plan: (plan?.id ?? "basic") as PlanId,
-          seatCount: item?.quantity ?? 1,
-          currentPeriodStart: new Date(
-            (item?.current_period_start ?? 0) * 1000,
-          ),
-          currentPeriodEnd: new Date((item?.current_period_end ?? 0) * 1000),
-          trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
-          trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
-          status: sub.status,
-        });
-
-        // Sync usage limits to match the new plan
-        await syncUsageLimits(workspaceId, (plan?.id ?? "basic") as PlanId);
-
-        log.info(
-          `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
-        );
-        break;
-      }
-
-      /* ─── Subscription updated → sync status ─── */
-      case "customer.subscription.updated": {
-        const sub = event.data.object;
-        const updItem = sub.items.data[0];
-        const priceId = updItem?.price.id;
-
-        await updateSubscriptionFromStripe({
-          stripeSubscriptionId: sub.id,
-          stripePriceId: priceId ?? "",
-          status: sub.status,
-          seatCount: updItem?.quantity ?? 1,
-          currentPeriodStart: new Date(
-            (updItem?.current_period_start ?? 0) * 1000,
-          ),
-          currentPeriodEnd: new Date((updItem?.current_period_end ?? 0) * 1000),
-          cancelAtPeriodEnd: sub.cancel_at_period_end,
-        });
-
-        // Sync usage limits if the plan changed
-        const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
-        if (updatedPlan) {
-          const dbSub = await prisma.subscription.findFirst({
-            where: { stripeSubscriptionId: sub.id },
-            select: { workspaceId: true },
-          });
-          if (dbSub) {
-            await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
-          }
-        }
-
-        log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
-        break;
-      }
-
-      /* ─── Subscription deleted → downgrade to free ─── */
-      case "customer.subscription.deleted": {
-        const sub = event.data.object;
-        await cancelSubscription(sub.id);
-        log.info(`[Stripe] Cancelled: ${sub.id}`);
-        break;
-      }
-
-      /* ─── Payment failed → notify workspace owner ─── */
-      case "invoice.payment_failed": {
-        const invoice = event.data.object;
-        log.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
-
-        // Find the workspace owner and notify them
-        const customerId =
-          typeof invoice.customer === "string"
-            ? invoice.customer
-            : invoice.customer?.id;
-
-        if (customerId) {
-          try {
-            // Two-step lookup to avoid stale Prisma relation-filter types
-            const sub = await prisma.subscription.findFirst({
-              where: { stripeCustomerId: customerId },
-              select: { workspaceId: true },
-            });
-
-            if (sub) {
-              const workspace = await prisma.workspace.findUnique({
-                where: { id: sub.workspaceId },
-                select: { name: true },
-              });
-
-              const owner = await prisma.user.findFirst({
-                where: { workspaceId: sub.workspaceId, role: "OWNER" },
-                select: { email: true, name: true },
-              });
-
-              if (owner?.email) {
-                await sendEmail({
-                  to: owner.email,
-                  type: "SYSTEM",
-                  title: "Zahlung fehlgeschlagen – Aktion erforderlich",
-                  message:
-                    `Ihre letzte Zahlung für "${workspace?.name ?? "Ihren Arbeitsbereich"}" ` +
-                    `konnte nicht verarbeitet werden. ` +
-                    `Bitte aktualisieren Sie Ihre Zahlungsmethode in den Einstellungen, ` +
-                    `um eine Unterbrechung Ihres Abonnements zu vermeiden.`,
-                  link: "/einstellungen/abonnement",
-                });
-                log.info(
-                  `[Stripe] Payment failure notification sent to ${owner.email}`,
-                );
-              }
-            }
-          } catch (notifyErr) {
-            log.error("[Stripe] Failed to send payment failure notification:", {
-              error: notifyErr,
-            });
-          }
-        }
-        break;
-      }
-
-      default:
-        log.info(`[Stripe] Unhandled event: ${event.type}`);
-    }
-
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    log.error("[Stripe] Webhook error:", { error: error });
-    captureRouteError(error, { route: "/api/billing/webhook", method: "POST" });
+export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
     return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 },
+      { error: "Stripe webhook secret not configured" },
+      { status: 501 },
     );
   }
-}
+
+  const stripe = getStripe();
+  const body = await req.text();
+  const headersList = await headers();
+  const sig = headersList.get("stripe-signature");
+
+  if (!sig) {
+    return NextResponse.json(
+      { error: "Missing stripe-signature header" },
+      { status: 400 },
+    );
+  }
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+  } catch (err) {
+    log.error("[Stripe] Signature verification failed:", { error: err });
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
+  if (await isEventProcessed(event.id)) {
+    log.info(`[Stripe] Skipping duplicate event: ${event.id}`);
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+  await markEventProcessed(event.id);
+
+  switch (event.type) {
+    /* ─── Checkout completed → activate subscription ─── */
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const workspaceId = session.client_reference_id;
+      const subscriptionId =
+        typeof session.subscription === "string"
+          ? session.subscription
+          : session.subscription?.id;
+      const customerId =
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id;
+
+      if (!workspaceId || !subscriptionId || !customerId) {
+        log.warn("[Stripe] Missing data in checkout session");
+        break;
+      }
+
+      // Fetch full subscription details from Stripe
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      const item = sub.items.data[0];
+      const priceId = item?.price.id;
+      const plan = priceId ? getPlanByPriceId(priceId) : undefined;
+
+      await activateSubscription({
+        workspaceId,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscriptionId,
+        stripePriceId: priceId ?? "",
+        plan: (plan?.id ?? "basic") as PlanId,
+        seatCount: item?.quantity ?? 1,
+        currentPeriodStart: new Date((item?.current_period_start ?? 0) * 1000),
+        currentPeriodEnd: new Date((item?.current_period_end ?? 0) * 1000),
+        trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
+        trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
+        status: sub.status,
+      });
+
+      // Sync usage limits to match the new plan
+      await syncUsageLimits(workspaceId, (plan?.id ?? "basic") as PlanId);
+
+      log.info(
+        `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
+      );
+      break;
+    }
+
+    /* ─── Subscription updated → sync status ─── */
+    case "customer.subscription.updated": {
+      const sub = event.data.object;
+      const updItem = sub.items.data[0];
+      const priceId = updItem?.price.id;
+
+      await updateSubscriptionFromStripe({
+        stripeSubscriptionId: sub.id,
+        stripePriceId: priceId ?? "",
+        status: sub.status,
+        seatCount: updItem?.quantity ?? 1,
+        currentPeriodStart: new Date(
+          (updItem?.current_period_start ?? 0) * 1000,
+        ),
+        currentPeriodEnd: new Date((updItem?.current_period_end ?? 0) * 1000),
+        cancelAtPeriodEnd: sub.cancel_at_period_end,
+      });
+
+      // Sync usage limits if the plan changed
+      const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
+      if (updatedPlan) {
+        const dbSub = await prisma.subscription.findFirst({
+          where: { stripeSubscriptionId: sub.id },
+          select: { workspaceId: true },
+        });
+        if (dbSub) {
+          await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
+        }
+      }
+
+      log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
+      break;
+    }
+
+    /* ─── Subscription deleted → downgrade to free ─── */
+    case "customer.subscription.deleted": {
+      const sub = event.data.object;
+      await cancelSubscription(sub.id);
+      log.info(`[Stripe] Cancelled: ${sub.id}`);
+      break;
+    }
+
+    /* ─── Payment failed → notify workspace owner ─── */
+    case "invoice.payment_failed": {
+      const invoice = event.data.object;
+      log.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
+
+      // Find the workspace owner and notify them
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+
+      if (customerId) {
+        try {
+          // Two-step lookup to avoid stale Prisma relation-filter types
+          const sub = await prisma.subscription.findFirst({
+            where: { stripeCustomerId: customerId },
+            select: { workspaceId: true },
+          });
+
+          if (sub) {
+            const workspace = await prisma.workspace.findUnique({
+              where: { id: sub.workspaceId },
+              select: { name: true },
+            });
+
+            const owner = await prisma.user.findFirst({
+              where: { workspaceId: sub.workspaceId, role: "OWNER" },
+              select: { email: true, name: true },
+            });
+
+            if (owner?.email) {
+              await sendEmail({
+                to: owner.email,
+                type: "SYSTEM",
+                title: "Zahlung fehlgeschlagen – Aktion erforderlich",
+                message:
+                  `Ihre letzte Zahlung für "${workspace?.name ?? "Ihren Arbeitsbereich"}" ` +
+                  `konnte nicht verarbeitet werden. ` +
+                  `Bitte aktualisieren Sie Ihre Zahlungsmethode in den Einstellungen, ` +
+                  `um eine Unterbrechung Ihres Abonnements zu vermeiden.`,
+                link: "/einstellungen/abonnement",
+              });
+              log.info(
+                `[Stripe] Payment failure notification sent to ${owner.email}`,
+              );
+            }
+          }
+        } catch (notifyErr) {
+          log.error("[Stripe] Failed to send payment failure notification:", {
+            error: notifyErr,
+          });
+        }
+      }
+      break;
+    }
+
+    default:
+      log.info(`[Stripe] Unhandled event: ${event.type}`);
+  }
+
+  return NextResponse.json({ received: true });
+});

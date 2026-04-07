@@ -13,69 +13,67 @@ import { log } from "@/lib/logger";
 import { createAbsenceSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { createAuditLog } from "@/lib/audit";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export const GET = withRoute("/api/absences", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-    const employeeId = searchParams.get("employeeId");
-    const year = searchParams.get("year");
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+  const employeeId = searchParams.get("employeeId");
+  const year = searchParams.get("year");
 
-    const where: Record<string, unknown> = { workspaceId };
-    if (status) where.status = status;
-    if (employeeId) where.employeeId = employeeId;
-    if (year) {
-      where.startDate = {
-        gte: new Date(`${year}-01-01`),
-        lte: new Date(`${year}-12-31`),
-      };
-    }
-
-    // EMPLOYEE can only see their own absences
-    if (isEmployee(user) && user.employeeId) {
-      where.employeeId = user.employeeId;
-    }
-
-    const { take, skip } = parsePagination(req);
-
-    const [absences, total] = await Promise.all([
-      prisma.absenceRequest.findMany({
-        where,
-        include: { employee: true },
-        orderBy: { startDate: "desc" },
-        take,
-        skip,
-      }),
-      prisma.absenceRequest.count({ where }),
-    ]);
-
-    // DSGVO Art. 9: Employees only see their own absences with full detail.
-    // For non-management users, mask the category on records belonging to
-    // other employees (defensive — employees are already scoped above).
-    const sanitised = !isManagement(user)
-      ? absences.map((a) => ({
-          ...a,
-          category: a.employeeId === user.employeeId ? a.category : "ABWESEND",
-          reviewNote: a.employeeId === user.employeeId ? a.reviewNote : null,
-        }))
-      : absences;
-
-    return paginatedResponse(sanitised, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching absences:", { error: error });
-    captureRouteError(error, { route: "/api/absences", method: "GET" });
-    return serverError("Error loading");
+  const where: Record<string, unknown> = { workspaceId };
+  if (status) where.status = status;
+  if (employeeId) where.employeeId = employeeId;
+  if (year) {
+    where.startDate = {
+      gte: new Date(`${year}-01-01`),
+      lte: new Date(`${year}-12-31`),
+    };
   }
-}
+
+  // EMPLOYEE can only see their own absences
+  if (isEmployee(user) && user.employeeId) {
+    where.employeeId = user.employeeId;
+  }
+
+  const { take, skip } = parsePagination(req);
+
+  const [absences, total] = await Promise.all([
+    prisma.absenceRequest.findMany({
+      where,
+      include: { employee: true },
+      orderBy: { startDate: "desc" },
+      take,
+      skip,
+    }),
+    prisma.absenceRequest.count({ where }),
+  ]);
+
+  // DSGVO Art. 9: Employees only see their own absences with full detail.
+  // For non-management users, mask the category on records belonging to
+  // other employees (defensive — employees are already scoped above).
+  const sanitised = !isManagement(user)
+    ? absences.map((a) => ({
+        ...a,
+        category: a.employeeId === user.employeeId ? a.category : "ABWESEND",
+        reviewNote: a.employeeId === user.employeeId ? a.reviewNote : null,
+      }))
+    : absences;
+
+  return paginatedResponse(sanitised, total, take, skip);
+});
 
 // ─── POST  /api/absences ────────────────────────────────────────
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/absences",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -231,10 +229,22 @@ export async function POST(req: Request) {
       log.error("[webhook] absence.created dispatch error", { error: err }),
     );
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "AbsenceRequest",
+      entityId: absence.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: {
+        category: body.category,
+        startDate: body.startDate,
+        endDate: body.endDate,
+        employeeId: body.employeeId,
+      },
+    });
+
     return NextResponse.json({ ...result, autoApproved }, { status: 201 });
-  } catch (error) {
-    log.error("Error creating absence:", { error: error });
-    captureRouteError(error, { route: "/api/absences", method: "POST" });
-    return serverError("Error creating resource");
-  }
-}
+  },
+  { idempotent: true },
+);

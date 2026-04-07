@@ -15,6 +15,7 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
     },
     $transaction: vi.fn(),
   },
@@ -27,6 +28,10 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
@@ -50,13 +55,13 @@ describe("GET /api/team", () => {
 
   it("returns 401 when unauthenticated", async () => {
     mockSession.user = null;
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(401);
   });
 
   it("returns 400 when no workspaceId", async () => {
     mockSession.user = buildOwner({ workspaceId: "" });
-    const res = await handler.GET();
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(400);
   });
 
@@ -73,10 +78,11 @@ describe("GET /api/team", () => {
       },
     ];
     mockPrisma.user.findMany.mockResolvedValue(members);
-    const res = await handler.GET();
+    mockPrisma.user.count.mockResolvedValue(1);
+    const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(1);
+    expect(body.data).toHaveLength(1);
     expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { workspaceId: owner.workspaceId } }),
     );

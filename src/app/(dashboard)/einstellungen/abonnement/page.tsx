@@ -576,7 +576,7 @@ function BillingContent() {
                     </div>
                   ) : plan.isEnterprise ? (
                     <a
-                      href="mailto:info@shiftfy.de"
+                      href="mailto:info@bashabsheh-vergabepartner.de"
                       className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:shadow-md"
                     >
                       <StarIcon className="h-4 w-4" />
@@ -635,8 +635,7 @@ function BillingContent() {
                     width="48"
                     height="32"
                     rx="4"
-                    fill="#1A1F71"
-                    fillOpacity="0.08"
+                    className="fill-[#1A1F71]/10 dark:fill-[#1A1F71]/30"
                   />
                   <text
                     x="24"
@@ -644,7 +643,7 @@ function BillingContent() {
                     textAnchor="middle"
                     fontSize="10"
                     fontWeight="bold"
-                    fill="#1A1F71"
+                    className="fill-[#1A1F71] dark:fill-[#93c5fd]"
                   >
                     VISA
                   </text>
@@ -659,8 +658,7 @@ function BillingContent() {
                     width="48"
                     height="32"
                     rx="4"
-                    fill="#EB001B"
-                    fillOpacity="0.08"
+                    className="fill-[#EB001B]/10 dark:fill-[#EB001B]/30"
                   />
                   <text
                     x="24"
@@ -668,7 +666,7 @@ function BillingContent() {
                     textAnchor="middle"
                     fontSize="8"
                     fontWeight="bold"
-                    fill="#EB001B"
+                    className="fill-[#EB001B] dark:fill-[#fca5a5]"
                   >
                     MC
                   </text>
@@ -683,8 +681,7 @@ function BillingContent() {
                     width="48"
                     height="32"
                     rx="4"
-                    fill="#0070BA"
-                    fillOpacity="0.08"
+                    className="fill-[#0070BA]/10 dark:fill-[#0070BA]/30"
                   />
                   <text
                     x="24"
@@ -692,7 +689,7 @@ function BillingContent() {
                     textAnchor="middle"
                     fontSize="7"
                     fontWeight="bold"
-                    fill="#0070BA"
+                    className="fill-[#0070BA] dark:fill-[#93c5fd]"
                   >
                     SEPA
                   </text>

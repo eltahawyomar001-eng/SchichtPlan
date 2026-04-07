@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import {
   createPushSubscriptionSchema,
   deletePushSubscriptionSchema,
   validateBody,
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/push-subscriptions",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const parsed = validateBody(createPushSubscriptionSchema, await req.json());
     if (!parsed.success) return parsed.response;
     const { endpoint, keys } = parsed.data;
@@ -35,21 +35,28 @@ export async function POST(req: Request) {
       },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "PushSubscription",
+      entityId: sub.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+    });
+
     return NextResponse.json(sub, { status: 201 });
-  } catch (error) {
-    log.error("Error saving push subscription:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);
 
-export async function DELETE(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withRoute(
+  "/api/push-subscriptions",
+  "DELETE",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const parsed = validateBody(deletePushSubscriptionSchema, await req.json());
     if (!parsed.success) return parsed.response;
     const { endpoint } = parsed.data;
@@ -58,9 +65,14 @@ export async function DELETE(req: Request) {
       where: { userId: user.id, endpoint },
     });
 
+    createAuditLog({
+      action: "DELETE",
+      entityType: "PushSubscription",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+    });
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error removing push subscription:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

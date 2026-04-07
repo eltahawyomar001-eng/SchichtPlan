@@ -11,6 +11,7 @@ import {
   EyeOffIcon,
   CheckCircleIcon,
 } from "@/components/icons";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -27,7 +28,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md text-center">
           <ShiftfyMark className="mx-auto mb-4 h-12 w-12" />
           <h1 className="text-xl font-bold text-gray-900">
@@ -86,16 +87,19 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-8 flex items-center justify-center gap-4">
           <Link href="/" className="inline-flex items-center gap-2">
             <ShiftfyMark className="h-10 w-10" />
-            <span className="text-xl font-bold text-gray-900">Shiftfy</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
+              Shiftfy
+            </span>
           </Link>
+          <ThemeToggle />
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 shadow-sm">
           {success ? (
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">

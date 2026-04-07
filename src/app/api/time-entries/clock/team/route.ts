@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/time-entries/clock/team
@@ -15,17 +14,13 @@ import { log } from "@/lib/logger";
  *   timezone – IANA timezone string (default Europe/Berlin)
  *   date     – optional ISO date to query (default today in timezone)
  */
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const GET = withRoute(
+  "/api/time-entries/clock/team",
+  "GET",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     // Only management can view team data
     if (!["OWNER", "ADMIN", "MANAGER"].includes(user.role ?? "")) {
@@ -164,8 +159,5 @@ export async function GET(req: Request) {
         offline: team.filter((t) => t.status === "offline").length,
       },
     });
-  } catch (error) {
-    log.error("Team clock status error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

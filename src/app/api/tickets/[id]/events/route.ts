@@ -9,13 +9,14 @@ import {
   notFound,
   forbidden,
 } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
 
 // ─── GET  /api/tickets/[id]/events ─────────────────────────────
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/tickets/[id]/events",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -23,7 +24,7 @@ export async function GET(
     const perm = requirePermission(user, "tickets", "read");
     if (perm) return perm;
 
-    const { id } = await params;
+    const { id } = params;
 
     // Verify the ticket exists and belongs to the workspace
     const ticket = await prisma.ticket.findFirst({
@@ -48,12 +49,5 @@ export async function GET(
     });
 
     return NextResponse.json(events);
-  } catch (error) {
-    log.error("Error fetching ticket events:", { error });
-    captureRouteError(error, {
-      route: "/api/tickets/[id]/events",
-      method: "GET",
-    });
-    return serverError("Fehler beim Laden der Ticket-Ereignisse");
-  }
-}
+  },
+);

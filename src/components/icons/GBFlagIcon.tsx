@@ -13,11 +13,7 @@ export function GBFlagIcon(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
-      <defs>
-        <clipPath id="gb-flag-clip">
-          <rect width="24" height="18" rx="3" />
-        </clipPath>
-      </defs>
+      {" "}
       <g clipPath="url(#gb-flag-clip)">
         {/* Blue background */}
         <rect width="24" height="18" fill="#012169" />

@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { isSimulationMode, simulateSubscription } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
@@ -9,6 +6,9 @@ import type { PlanId } from "@/lib/stripe";
 import { PLANS } from "@/lib/stripe";
 import { billingSimulateSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/billing/simulate
@@ -19,8 +19,10 @@ import { log } from "@/lib/logger";
  *
  * Body: { plan: "basic"|"professional"|"enterprise", billingCycle: "monthly"|"annual" }
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/billing/simulate",
+  "POST",
+  async (req) => {
     // Hard block in production — never allow simulation with real billing
     if (process.env.NODE_ENV === "production") {
       return NextResponse.json(
@@ -37,12 +39,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
@@ -69,6 +69,15 @@ export async function POST(req: Request) {
       `[Billing:Simulate] Workspace ${user.workspaceId} → ${plan} (${billingCycle})`,
     );
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Subscription",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { action: "SIMULATE", plan, billingCycle },
+    });
+
     return NextResponse.json({
       success: true,
       simulation: true,
@@ -78,17 +87,15 @@ export async function POST(req: Request) {
       trialEnd: result.trialEnd,
       limits: planConfig?.limits,
     });
-  } catch (error) {
-    log.error("[Billing:Simulate] Error:", { error });
-    return NextResponse.json({ error: "Simulation failed" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);
 
 /**
  * GET /api/billing/simulate
  * Returns whether simulation mode is enabled. Blocked in production.
  */
-export async function GET() {
+export const GET = withRoute("/api/billing/simulate", "GET", async (req) => {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
       { error: "Not available in production" },
@@ -98,4 +105,4 @@ export async function GET() {
   return NextResponse.json({
     simulationMode: isSimulationMode(),
   });
-}
+});

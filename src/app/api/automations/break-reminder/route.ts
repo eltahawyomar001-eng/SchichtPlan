@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendPushNotification } from "@/lib/notifications/push";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * POST /api/automations/break-reminder
@@ -15,8 +16,10 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
  *
  * Called via Vercel Cron every 15 minutes.
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/automations/break-reminder",
+  "POST",
+  async (req) => {
     // Authenticate: only cron secret allowed
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");
@@ -133,13 +136,5 @@ export async function POST(req: Request) {
       checked: overdueEntries.length,
       notified,
     });
-  } catch (error) {
-    log.error("[break-reminder] Error:", { error });
-    captureRouteError(error, {
-      route: "/api/automations/break-reminder",
-      method: "POST",
-    });
-    // If monitor was created before the error, finish it as error
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

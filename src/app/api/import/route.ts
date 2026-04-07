@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import ExcelJS from "exceljs";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 // ── Import limits ──────────────────────────────────────────────
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -29,17 +30,13 @@ const BATCH_SIZE = 50; // rows per createMany batch
  *  - Batch inserts via createMany in a transaction
  *  - Duplicate detection for employees (by email within workspace)
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/import",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
@@ -274,15 +271,29 @@ export async function POST(req: Request) {
       workspaceId: user.workspaceId,
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "Import",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { type, created, skipped, duplicates, total: rows.length },
+    });
+
+    dispatchWebhook(workspaceId, "import.completed", {
+      type,
+      created,
+      skipped,
+      duplicates,
+      total: rows.length,
+    }).catch(() => {});
+
     return NextResponse.json({
       created,
       skipped,
       duplicates,
       total: rows.length,
     });
-  } catch (error) {
-    captureRouteError(error, { route: "/api/import", method: "POST" });
-    log.error("Import error:", { error: error });
-    return NextResponse.json({ error: "Import failed" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

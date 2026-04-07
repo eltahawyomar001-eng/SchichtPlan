@@ -1,26 +1,28 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { updateProjectSchema, validateBody } from "@/lib/validations";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 /** GET /api/projects/[id] */
-export async function GET(_req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute(
+  "/api/projects/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    const { id } = await params;
+    const { id } = params;
 
     const project = await prisma.project.findFirst({
       where: { id, workspaceId: user.workspaceId },
@@ -46,25 +48,23 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
 
     return NextResponse.json({ ...project, totalMinutes });
-  } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);
 
 /** PATCH /api/projects/[id] */
-export async function PATCH(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PATCH = withRoute(
+  "/api/projects/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "reports", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
     const parsed = validateBody(updateProjectSchema, await req.json());
     if (!parsed.success) return parsed.response;
 
@@ -108,26 +108,38 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       },
     });
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Project",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: body,
+    });
+
+    dispatchWebhook(workspaceId, "project.updated", { id, ...body }).catch(
+      () => {},
+    );
+
     return NextResponse.json(project);
-  } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);
 
 /** DELETE /api/projects/[id] */
-export async function DELETE(_req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withRoute(
+  "/api/projects/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "reports", "delete");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
 
     const existing = await prisma.project.findFirst({
       where: { id, workspaceId: user.workspaceId },
@@ -137,9 +149,18 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     }
 
     await prisma.project.delete({ where: { id } });
+
+    createAuditLog({
+      action: "DELETE",
+      entityType: "Project",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+    });
+
+    dispatchWebhook(workspaceId, "project.deleted", { id }).catch(() => {});
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

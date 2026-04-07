@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { chatReactionSchema, validateBody } from "@/lib/validations";
 
 const ALLOWED_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉", "🔥", "👀"];
 
@@ -12,25 +12,19 @@ const ALLOWED_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉", "🔥"
  * POST /api/chat/channels/[id]/messages/[msgId]/reactions
  * Toggle a reaction on a message. If it exists, remove it. If not, add it.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string; msgId: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/chat/channels/[id]/messages/[msgId]/reactions",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId, msgId } = await params;
+    const { id: channelId, msgId } = params;
 
     // Verify membership
     const membership = await prisma.chatChannelMember.findUnique({
@@ -54,9 +48,11 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { emoji } = body;
+    const parsed = validateBody(chatReactionSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { emoji } = parsed.data;
 
-    if (!emoji || !ALLOWED_EMOJIS.includes(emoji)) {
+    if (!ALLOWED_EMOJIS.includes(emoji)) {
       return NextResponse.json({ error: "Invalid emoji" }, { status: 400 });
     }
 
@@ -88,8 +84,6 @@ export async function POST(
       });
       return NextResponse.json({ action: "added", emoji }, { status: 201 });
     }
-  } catch (error) {
-    log.error("Error toggling reaction:", { error });
-    return NextResponse.json({ error: "Error" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

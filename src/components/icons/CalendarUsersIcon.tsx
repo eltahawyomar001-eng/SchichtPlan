@@ -12,7 +12,7 @@ export function CalendarUsersIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M16 2v4M8 2v4"
-        stroke="url(#caluser-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
@@ -22,42 +22,23 @@ export function CalendarUsersIcon(props: SVGProps<SVGSVGElement>) {
         width="20"
         height="18"
         rx="2"
-        stroke="url(#caluser-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <path
         d="M2 10h20"
-        stroke="url(#caluser-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <circle
-        cx="9"
-        cy="16"
-        r="2"
-        stroke="url(#caluser-gradient)"
-        strokeWidth="1.5"
-      />
+      <circle cx="9" cy="16" r="2" stroke="currentColor" strokeWidth="1.5" />
       <circle
         cx="15"
         cy="16"
         r="2"
-        stroke="url(#caluser-gradient)"
+        stroke="currentColor"
         strokeWidth="1.5"
-      />
-      <defs>
-        <linearGradient
-          id="caluser-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

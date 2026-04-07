@@ -2519,5 +2519,12 @@
       "description": "Create your first ticket to report an issue.",
       "managerDescription": "No tickets from employees yet."
     }
+  },
+  "maintenance": {
+    "notification_subject": "Scheduled Maintenance on {date}",
+    "notification_body": "A scheduled maintenance is planned. Please save your work in advance.",
+    "duration": "Expected duration: {minutes} minutes",
+    "title": "Maintenance Notification",
+    "description": "Notify all users about planned maintenance."
   }
 }

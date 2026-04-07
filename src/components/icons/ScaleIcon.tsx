@@ -15,49 +15,36 @@ export function ScaleIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M12 3v18"
-        stroke="url(#scale-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
         d="M8 21h8"
-        stroke="url(#scale-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
         d="M3 7l4 8h0a4 4 0 0 0 4-4l-4-8"
-        stroke="url(#scale-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M21 7l-4 8h0a4 4 0 0 1-4-4l4-8"
-        stroke="url(#scale-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M3 7h18"
-        stroke="url(#scale-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
-      />
-      <defs>
-        <linearGradient
-          id="scale-gradient"
-          x1="3"
-          y1="3"
-          x2="21"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

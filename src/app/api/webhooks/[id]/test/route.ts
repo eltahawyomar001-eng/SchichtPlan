@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import crypto from "crypto";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -23,18 +22,19 @@ interface RouteParams {
  * a parseable response and can distinguish "test sent, remote rejected" from
  * "Shiftfy-side error".
  */
-export async function POST(_req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/webhooks/[id]/test",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "webhooks", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
 
     const hook = await prisma.webhookEndpoint.findFirst({
       where: { id, workspaceId: user.workspaceId },
@@ -97,8 +97,6 @@ export async function POST(_req: Request, { params }: RouteParams) {
       status: remoteStatus,
       error: errorMsg ?? undefined,
     });
-  } catch (error) {
-    log.error("Webhook test error:", { error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

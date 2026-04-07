@@ -1,37 +1,20 @@
 import { type SVGProps } from "react";
 
 /**
- * Send/dispatch icon with gradient. Used for schedule distribution.
+ * Send/dispatch icon. Uses currentColor by default so it inherits the
+ * parent's text colour (e.g. white inside a Button).
+ * Filled variant for better visibility on coloured backgrounds.
  */
 export function SendIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       {...props}
     >
-      <path
-        d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"
-        stroke="url(#send-gradient)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="send-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
     </svg>
   );
 }

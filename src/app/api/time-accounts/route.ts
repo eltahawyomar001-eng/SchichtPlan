@@ -1,95 +1,93 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createTimeAccountSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/time-accounts ────────────────────────────────────
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withRoute("/api/time-accounts", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
+  if (!workspaceId) {
+    return NextResponse.json({ error: "No workspace" }, { status: 400 });
+  }
 
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
-    if (!workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+  const { searchParams } = new URL(req.url);
+  const employeeId = searchParams.get("employeeId");
+  const { take, skip } = parsePagination(req);
 
-    const { searchParams } = new URL(req.url);
-    const employeeId = searchParams.get("employeeId");
+  const where: Record<string, unknown> = { workspaceId };
+  if (employeeId) where.employeeId = employeeId;
 
-    const where: Record<string, unknown> = { workspaceId };
-    if (employeeId) where.employeeId = employeeId;
+  // EMPLOYEE can only see their own time account
+  if (isEmployee(user) && user.employeeId) {
+    where.employeeId = user.employeeId;
+  }
 
-    // EMPLOYEE can only see their own time account
-    if (isEmployee(user) && user.employeeId) {
-      where.employeeId = user.employeeId;
-    }
-
-    const accounts = await prisma.timeAccount.findMany({
+  const [accounts, total] = await Promise.all([
+    prisma.timeAccount.findMany({
       where,
       include: { employee: true },
       orderBy: { employee: { lastName: "asc" } },
-    });
+      take,
+      skip,
+    }),
+    prisma.timeAccount.count({ where }),
+  ]);
 
-    // Enrich with actual worked hours from confirmed time entries
-    const enriched = await Promise.all(
-      accounts.map(async (account: (typeof accounts)[number]) => {
-        const confirmedEntries = await prisma.timeEntry.aggregate({
-          where: {
-            employeeId: account.employeeId,
-            status: "BESTAETIGT",
-            date: { gte: account.periodStart },
-          },
-          _sum: { netMinutes: true },
-        });
+  // Enrich with actual worked hours from confirmed time entries
+  const enriched = await Promise.all(
+    accounts.map(async (account: (typeof accounts)[number]) => {
+      const confirmedEntries = await prisma.timeEntry.aggregate({
+        where: {
+          employeeId: account.employeeId,
+          status: "BESTAETIGT",
+          date: { gte: account.periodStart },
+        },
+        _sum: { netMinutes: true },
+      });
 
-        const workedMinutes = confirmedEntries._sum.netMinutes || 0;
+      const workedMinutes = confirmedEntries._sum.netMinutes || 0;
 
-        // Calculate expected minutes since period start
-        const now = new Date();
-        const periodStart = new Date(account.periodStart);
-        const weeks = Math.max(
-          1,
-          Math.ceil(
-            (now.getTime() - periodStart.getTime()) / (7 * 24 * 60 * 60 * 1000),
-          ),
-        );
-        const expectedMinutes = weeks * account.contractHours * 60;
+      // Calculate expected minutes since period start
+      const now = new Date();
+      const periodStart = new Date(account.periodStart);
+      const weeks = Math.max(
+        1,
+        Math.ceil(
+          (now.getTime() - periodStart.getTime()) / (7 * 24 * 60 * 60 * 1000),
+        ),
+      );
+      const expectedMinutes = weeks * account.contractHours * 60;
 
-        return {
-          ...account,
-          workedMinutes,
-          expectedMinutes,
-          balanceMinutes:
-            account.carryoverMinutes + workedMinutes - expectedMinutes,
-        };
-      }),
-    );
+      return {
+        ...account,
+        workedMinutes,
+        expectedMinutes,
+        balanceMinutes:
+          account.carryoverMinutes + workedMinutes - expectedMinutes,
+      };
+    }),
+  );
 
-    return NextResponse.json(enriched);
-  } catch (error) {
-    log.error("Error fetching time accounts:", { error: error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  return paginatedResponse(enriched, total, take, skip);
+});
 
 // ─── POST  /api/time-accounts ───────────────────────────────────
 // Create or update a time account for an employee
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/time-accounts",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -99,37 +97,53 @@ export async function POST(req: Request) {
     if (forbidden) return forbidden;
 
     const body = await req.json();
-
-    if (!body.employeeId) {
-      return NextResponse.json(
-        { error: "Employee is required" },
-        { status: 400 },
-      );
-    }
+    const parsed = validateBody(createTimeAccountSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { data: validData } = parsed;
 
     const account = await prisma.timeAccount.upsert({
-      where: { employeeId: body.employeeId },
+      where: { employeeId: validData.employeeId },
       create: {
-        employeeId: body.employeeId,
+        employeeId: validData.employeeId,
         workspaceId,
-        contractHours: body.contractHours ?? 40,
-        carryoverMinutes: body.carryoverMinutes ?? 0,
-        periodStart: body.periodStart
-          ? new Date(body.periodStart)
+        contractHours: validData.contractHours ?? 40,
+        carryoverMinutes: validData.carryoverMinutes ?? 0,
+        periodStart: validData.periodStart
+          ? new Date(validData.periodStart)
           : new Date(new Date().getFullYear(), 0, 1), // Jan 1st
       },
       update: {
-        contractHours: body.contractHours,
-        carryoverMinutes: body.carryoverMinutes,
-        periodStart: body.periodStart ? new Date(body.periodStart) : undefined,
-        periodEnd: body.periodEnd ? new Date(body.periodEnd) : undefined,
+        contractHours: validData.contractHours,
+        carryoverMinutes: validData.carryoverMinutes,
+        periodStart: validData.periodStart
+          ? new Date(validData.periodStart)
+          : undefined,
+        periodEnd: validData.periodEnd
+          ? new Date(validData.periodEnd)
+          : undefined,
       },
       include: { employee: true },
     });
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "TimeAccount",
+      entityId: account.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: {
+        employeeId: validData.employeeId,
+        contractHours: validData.contractHours,
+      },
+    });
+
+    dispatchWebhook(workspaceId, "time_account.updated", {
+      id: account.id,
+      employeeId: validData.employeeId,
+    }).catch(() => {});
+
     return NextResponse.json(account, { status: 201 });
-  } catch (error) {
-    log.error("Error saving time account:", { error: error });
-    return NextResponse.json({ error: "Error saving" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

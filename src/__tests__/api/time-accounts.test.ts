@@ -7,12 +7,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SessionUser } from "@/lib/types";
 
-const { mockSession, mockTimeAccountFindMany, mockTimeEntryAggregate } =
-  vi.hoisted(() => ({
-    mockSession: { user: null as SessionUser | null },
-    mockTimeAccountFindMany: vi.fn(),
-    mockTimeEntryAggregate: vi.fn(),
-  }));
+const {
+  mockSession,
+  mockTimeAccountFindMany,
+  mockTimeEntryAggregate,
+  mockTimeAccountCount,
+} = vi.hoisted(() => ({
+  mockSession: { user: null as SessionUser | null },
+  mockTimeAccountFindMany: vi.fn(),
+  mockTimeEntryAggregate: vi.fn(),
+  mockTimeAccountCount: vi.fn().mockResolvedValue(0),
+}));
 
 vi.mock("next-auth", () => ({
   default: vi.fn(),
@@ -21,10 +26,15 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     timeAccount: {
       findMany: mockTimeAccountFindMany,
+      count: mockTimeAccountCount,
     },
     timeEntry: {
       aggregate: mockTimeEntryAggregate,
@@ -65,6 +75,7 @@ describe("GET /api/time-accounts", () => {
         periodStart: new Date("2025-01-01"),
       },
     ]);
+    mockTimeAccountCount.mockResolvedValue(1);
     mockTimeEntryAggregate.mockResolvedValue({
       _sum: { netMinutes: 2400 },
     });
@@ -74,8 +85,8 @@ describe("GET /api/time-accounts", () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(1);
-    expect(body[0].workedMinutes).toBeDefined();
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].workedMinutes).toBeDefined();
   });
 
   it("EMPLOYEE only sees own time account", async () => {

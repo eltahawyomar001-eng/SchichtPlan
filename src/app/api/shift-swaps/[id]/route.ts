@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   tryAutoApproveSwap,
@@ -10,22 +7,31 @@ import {
 } from "@/lib/automations";
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { updateShiftSwapSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 // ─── PATCH  /api/shift-swaps/[id] ───────────────────────────────
-export async function PATCH(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PATCH = withRoute(
+  "/api/shift-swaps/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
-    const { id } = await params;
+    const { id } = params;
     const body = await req.json();
+    const parsed = validateBody(updateShiftSwapSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { data: validData } = parsed;
 
     const existing = await prisma.shiftSwapRequest.findUnique({
       where: { id },
@@ -39,7 +45,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const data: Record<string, unknown> = {};
 
     // Accept (by target employee only)
-    if (body.status === "ANGENOMMEN") {
+    if (validData.status === "ANGENOMMEN") {
       if (existing.status !== "ANGEFRAGT") {
         return NextResponse.json(
           { error: "Nur offene Anfragen können angenommen werden." },
@@ -67,12 +73,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       }
 
       data.status = "ANGENOMMEN";
-      data.targetId = body.targetId || user.employeeId;
-      if (body.targetShiftId) data.targetShiftId = body.targetShiftId;
+      data.targetId = validData.targetId || user.employeeId;
+      if (validData.targetShiftId) data.targetShiftId = validData.targetShiftId;
     }
 
     // Approve / Reject (by manager — allowed from both ANGEFRAGT and ANGENOMMEN)
-    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+    if (validData.status === "GENEHMIGT" || validData.status === "ABGELEHNT") {
       const forbidden = requirePermission(
         user,
         "shift-swap-requests",
@@ -90,14 +96,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         );
       }
 
-      data.status = body.status;
+      data.status = validData.status;
       data.reviewedBy = user.id;
       data.reviewedAt = new Date();
-      data.reviewNote = body.reviewNote || null;
+      data.reviewNote = validData.reviewNote || null;
     }
 
     // Cancel (by requester only, or by management)
-    if (body.status === "STORNIERT") {
+    if (validData.status === "STORNIERT") {
       if (existing.status !== "ANGEFRAGT" && existing.status !== "ANGENOMMEN") {
         return NextResponse.json(
           { error: "Diese Anfrage kann nicht mehr storniert werden." },
@@ -128,7 +134,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     });
 
     // ── Automation: Auto-approve swap if no conflicts ──
-    if (body.status === "ANGENOMMEN") {
+    if (validData.status === "ANGENOMMEN") {
       const autoApproved = await tryAutoApproveSwap(id);
 
       if (autoApproved) {
@@ -164,7 +170,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     // If approved, actually swap the employee assignments
     if (
-      body.status === "GENEHMIGT" &&
+      validData.status === "GENEHMIGT" &&
       existing.targetId &&
       existing.targetShiftId
     ) {
@@ -183,7 +189,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         }),
       ]);
     } else if (
-      body.status === "GENEHMIGT" &&
+      validData.status === "GENEHMIGT" &&
       existing.targetId &&
       !existing.targetShiftId
     ) {
@@ -201,11 +207,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     }
 
     // ── Automation: Notify on manual approval/rejection ──
-    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+    if (validData.status === "GENEHMIGT" || validData.status === "ABGELEHNT") {
       // ── E-Signature: Record signed approval/rejection ──
       createESignature({
         action:
-          body.status === "GENEHMIGT"
+          validData.status === "GENEHMIGT"
             ? "shift-swap.approve"
             : "shift-swap.reject",
         entityType: "ShiftSwapRequest",
@@ -222,14 +228,14 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       }).catch((err) => log.error("E-signature failed", { error: err }));
 
       const statusText =
-        body.status === "GENEHMIGT" ? "genehmigt" : "abgelehnt";
+        validData.status === "GENEHMIGT" ? "genehmigt" : "abgelehnt";
 
       // Notify requester
       if (updated.requester?.email) {
         await createSystemNotification({
-          type: `SWAP_${body.status}`,
+          type: `SWAP_${validData.status}`,
           title: `Schichttausch ${statusText}`,
-          message: `Ihr Schichttausch-Antrag wurde ${statusText}.${body.reviewNote ? ` Grund: ${body.reviewNote}` : ""}`,
+          message: `Ihr Schichttausch-Antrag wurde ${statusText}.${validData.reviewNote ? ` Grund: ${validData.reviewNote}` : ""}`,
           link: "/schichttausch",
           workspaceId: user.workspaceId!,
           recipientType: "employee",
@@ -240,7 +246,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       // Notify target
       if (updated.target?.email) {
         await createSystemNotification({
-          type: `SWAP_${body.status}`,
+          type: `SWAP_${validData.status}`,
           title: `Schichttausch ${statusText}`,
           message: `Ein Schichttausch, an dem Sie beteiligt sind, wurde ${statusText}.`,
           link: "/schichttausch",
@@ -251,9 +257,32 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       }
     }
 
+    createAuditLog({
+      action:
+        validData.status === "GENEHMIGT"
+          ? "APPROVE"
+          : validData.status === "ABGELEHNT"
+            ? "REJECT"
+            : "UPDATE",
+      entityType: "ShiftSwapRequest",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { status: validData.status, reviewNote: validData.reviewNote },
+    });
+
+    const eventName =
+      validData.status === "GENEHMIGT"
+        ? "shift_swap.approved"
+        : validData.status === "ABGELEHNT"
+          ? "shift_swap.rejected"
+          : "shift_swap.updated";
+    dispatchWebhook(workspaceId, eventName, {
+      id,
+      status: validData.status,
+    }).catch(() => {});
+
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating shift swap:", { error: error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);

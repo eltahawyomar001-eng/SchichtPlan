@@ -35,6 +35,10 @@ vi.mock("next-auth", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 
 vi.mock("@/lib/db", () => {
   const tx = {
@@ -70,6 +74,8 @@ vi.mock("@/lib/automations", () => ({
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
 }));
+
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },

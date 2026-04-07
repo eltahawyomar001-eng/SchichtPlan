@@ -14,7 +14,7 @@ export function UserPlusIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-        stroke="url(#user-plus-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -23,7 +23,7 @@ export function UserPlusIcon(props: SVGProps<SVGSVGElement>) {
         cx="8.5"
         cy="7"
         r="4"
-        stroke="url(#user-plus-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
@@ -32,7 +32,7 @@ export function UserPlusIcon(props: SVGProps<SVGSVGElement>) {
         y1="8"
         x2="20"
         y2="14"
-        stroke="url(#user-plus-secondary)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
@@ -41,34 +41,10 @@ export function UserPlusIcon(props: SVGProps<SVGSVGElement>) {
         y1="11"
         x2="17"
         y2="11"
-        stroke="url(#user-plus-secondary)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
-      />
-      <defs>
-        <linearGradient
-          id="user-plus-gradient"
-          x1="1"
-          y1="3"
-          x2="16"
-          y2="21"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-        <linearGradient
-          id="user-plus-secondary"
-          x1="17"
-          y1="8"
-          x2="23"
-          y2="14"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#C4B5FD" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

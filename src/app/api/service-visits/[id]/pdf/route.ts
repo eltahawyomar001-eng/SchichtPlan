@@ -10,6 +10,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 // Suppress unused import warning — autoTable attaches to jsPDF prototype
 void autoTable;
@@ -35,17 +36,17 @@ const W = [255, 255, 255] as const;
  * 5. Digital Integrity Certificate — SHA-256, server timestamp, device ID
  * 6. Legal disclaimer footer
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/service-visits/[id]/pdf",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -483,11 +484,5 @@ export async function GET(
         "Content-Length": String(pdfBuffer.length),
       },
     });
-  } catch (error) {
-    log.error("Error generating single-visit PDF:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim Erstellen des PDF" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

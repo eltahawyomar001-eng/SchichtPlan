@@ -13,69 +13,70 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { createTimeEntrySchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
 
 // ─── GET  /api/time-entries ─────────────────────────────────────
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export const GET = withRoute("/api/time-entries", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const startDate = searchParams.get("start");
-    const endDate = searchParams.get("end");
-    const employeeId = searchParams.get("employeeId");
-    const status = searchParams.get("status");
+  const { searchParams } = new URL(req.url);
+  const startDate = searchParams.get("start");
+  const endDate = searchParams.get("end");
+  const employeeId = searchParams.get("employeeId");
+  const status = searchParams.get("status");
 
-    const where: Record<string, unknown> = { workspaceId };
+  const where: Record<string, unknown> = { workspaceId };
 
-    if (startDate && endDate) {
-      where.date = { gte: new Date(startDate), lte: new Date(endDate) };
-    }
-    if (employeeId) where.employeeId = employeeId;
-    if (status) where.status = status;
-
-    // Employees can only see their own entries
-    if (user.role === "EMPLOYEE") {
-      const employee = await prisma.employee.findFirst({
-        where: { workspaceId, email: user.email ?? undefined },
-      });
-      if (employee) where.employeeId = employee.id;
-    }
-
-    const { take, skip } = parsePagination(req);
-
-    const [entries, total] = await Promise.all([
-      prisma.timeEntry.findMany({
-        where,
-        include: {
-          employee: true,
-          location: true,
-          auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
-        },
-        orderBy: [{ date: "desc" }, { startTime: "desc" }],
-        take,
-        skip,
-      }),
-      prisma.timeEntry.count({ where }),
-    ]);
-
-    return paginatedResponse(entries, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching time entries:", { error: error });
-    captureRouteError(error, { route: "/api/time-entries", method: "GET" });
-    return serverError("Error loading");
+  if (startDate && endDate) {
+    where.date = { gte: new Date(startDate), lte: new Date(endDate) };
   }
-}
+  if (employeeId) where.employeeId = employeeId;
+  if (status) where.status = status;
+
+  // Employees can only see their own entries
+  if (user.role === "EMPLOYEE") {
+    const employee = await prisma.employee.findFirst({
+      where: { workspaceId, email: user.email ?? undefined },
+    });
+    if (employee) where.employeeId = employee.id;
+  }
+
+  const { take, skip } = parsePagination(req);
+
+  const [entries, total] = await Promise.all([
+    prisma.timeEntry.findMany({
+      where,
+      include: {
+        employee: true,
+        location: true,
+        auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
+      },
+      orderBy: [{ date: "desc" }, { startTime: "desc" }],
+      take,
+      skip,
+    }),
+    prisma.timeEntry.count({ where }),
+  ]);
+
+  return paginatedResponse(entries, total, take, skip);
+});
 
 // ─── POST  /api/time-entries ────────────────────────────────────
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/time-entries",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
 
     const body = await req.json();
+    const parsed = validateBody(createTimeEntrySchema, body);
+    if (!parsed.success) return parsed.response;
 
     // EMPLOYEE can only create time entries for themselves
     if (isEmployee(user)) {
@@ -175,13 +176,25 @@ export async function POST(req: Request) {
       log.error("[webhook] time-entry.created dispatch error", { error: err }),
     );
 
+    createAuditLog({
+      action: "CREATE",
+      entityType: "TimeEntry",
+      entityId: entry.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: {
+        date: body.date,
+        startTime: body.startTime,
+        endTime: body.endTime,
+        employeeId: body.employeeId,
+      },
+    });
+
     return NextResponse.json(entry, { status: 201 });
-  } catch (error) {
-    log.error("Error creating time entry:", { error: error });
-    captureRouteError(error, { route: "/api/time-entries", method: "POST" });
-    return serverError("Error creating resource");
-  }
-}
+  },
+  { idempotent: true },
+);
 
 // ─── Helpers ────────────────────────────────────────────────────
 

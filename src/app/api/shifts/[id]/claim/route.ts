@@ -1,26 +1,24 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { checkShiftConflicts } from "@/lib/automations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/shifts/[id]/claim
  * Allows an employee to claim an open (unassigned) shift.
  */
-export async function POST(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withRoute(
+  "/api/shifts/[id]/claim",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const employeeId = user.employeeId;
 
     if (!employeeId) {
@@ -32,7 +30,7 @@ export async function POST(
       );
     }
 
-    const { id } = await params;
+    const { id } = params;
 
     // Fetch the shift
     const shift = await prisma.shift.findUnique({
@@ -89,12 +87,17 @@ export async function POST(
       },
     });
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Shift",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { action: "CLAIM", employeeId },
+    });
+
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error claiming shift:", { error: error });
-    return NextResponse.json(
-      { error: "Error claiming shift" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

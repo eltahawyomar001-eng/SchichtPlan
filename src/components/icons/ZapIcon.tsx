@@ -14,24 +14,11 @@ export function ZapIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path
         d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-        stroke="url(#zap-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="zap-gradient"
-          x1="3"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

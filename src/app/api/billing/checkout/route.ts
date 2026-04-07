@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe, getPlanByPriceId, PLANS } from "@/lib/stripe";
 import {
@@ -12,6 +9,10 @@ import {
 import type { PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { billingCheckoutSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/billing/checkout
@@ -21,30 +22,22 @@ import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
  *
  * Body: { plan: string; billingCycle: "monthly"|"annual"; priceId?: string }
  */
-export async function POST(req: Request) {
-  try {
-    // ── Idempotency check (prevents double checkout) ──
-    const cached = await checkIdempotency(req);
-    if (cached) return cached;
-
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/billing/checkout",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
     const body = await req.json();
-    const planId = (body.plan as string)?.toLowerCase() as PlanId;
-    const billingCycle: "monthly" | "annual" =
-      body.billingCycle === "monthly" ? "monthly" : "annual";
+    const parsed = validateBody(billingCheckoutSchema, body);
+    if (!parsed.success) return parsed.response;
+    const planId = parsed.data.plan.toLowerCase() as PlanId;
+    const billingCycle = parsed.data.billingCycle;
 
     if (!planId || !PLANS[planId]) {
       return NextResponse.json(
@@ -138,13 +131,17 @@ export async function POST(req: Request) {
     });
 
     const response = NextResponse.json({ url: checkoutSession.url });
-    await cacheIdempotentResponse(req, response);
+
+    createAuditLog({
+      action: "CREATE",
+      entityType: "BillingCheckout",
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { plan: planId, billingCycle },
+    });
+
     return response;
-  } catch (error) {
-    log.error("[Stripe] Checkout error:", { error: error });
-    return NextResponse.json(
-      { error: "Checkout failed. Please try again or contact support." },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { isOwner } from "@/lib/authorization";
 import { workspaceWipeSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { createAuditLog } from "@/lib/audit";
 
 /**
  * DELETE /api/admin/workspace-wipe
@@ -28,14 +28,13 @@ import { log } from "@/lib/logger";
  *    by this endpoint — that must be handled separately via the Stripe
  *    customer portal or billing API.
  */
-export async function DELETE(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
+export const DELETE = withRoute(
+  "/api/admin/workspace-wipe",
+  "DELETE",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     if (!isOwner(user)) {
       return NextResponse.json(
@@ -43,8 +42,6 @@ export async function DELETE(req: Request) {
         { status: 403 },
       );
     }
-
-    const workspaceId = user.workspaceId;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -72,6 +69,17 @@ export async function DELETE(req: Request) {
         userId: user.id,
       },
     );
+
+    // Audit log BEFORE deletion (since workspace cascade will delete audit logs too)
+    createAuditLog({
+      action: "DELETE",
+      entityType: "Workspace",
+      entityId: workspaceId,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      metadata: { action: "WORKSPACE_WIPE" },
+    });
 
     // ── Cascade delete ──────────────────────────────────────────
     // Prisma onDelete: Cascade handles most relations, but we delete
@@ -108,11 +116,5 @@ export async function DELETE(req: Request) {
       message:
         "Alle Daten wurden unwiderruflich gelöscht. (All data has been irreversibly deleted.)",
     });
-  } catch (error) {
-    log.error("Workspace wipe error:", { error });
-    return NextResponse.json(
-      { error: "Deletion failed. Please contact support." },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

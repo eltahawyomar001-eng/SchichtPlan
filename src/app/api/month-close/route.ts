@@ -7,44 +7,52 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { monthCloseSchema, validateBody } from "@/lib/validations";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { withRetry } from "@/lib/prisma-retry";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /** GET /api/month-close — list month-close records for workspace */
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export const GET = withRoute("/api/month-close", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-    const forbidden = requirePermission(user, "month-close", "read");
-    if (forbidden) return forbidden;
+  const forbidden = requirePermission(user, "month-close", "read");
+  if (forbidden) return forbidden;
 
-    const { searchParams } = new URL(req.url);
-    const year = searchParams.get("year");
+  const { searchParams } = new URL(req.url);
+  const year = searchParams.get("year");
+  const { take, skip } = parsePagination(req);
 
-    const where: Record<string, unknown> = {
-      workspaceId,
-    };
-    if (year) where.year = parseInt(year, 10);
+  const where: Record<string, unknown> = {
+    workspaceId,
+  };
+  if (year) where.year = parseInt(year, 10);
 
-    const records = await prisma.monthClose.findMany({
+  const [records, total] = await Promise.all([
+    prisma.monthClose.findMany({
       where,
       include: { exportJobs: true },
       orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
+      take,
+      skip,
+    }),
+    prisma.monthClose.count({ where }),
+  ]);
 
-    return NextResponse.json(records);
-  } catch (error) {
-    captureRouteError(error, { route: "/api/month-close", method: "GET" });
-    return serverError("Error loading month-close");
-  }
-}
+  return paginatedResponse(records, total, take, skip);
+});
 
 /**
  * POST /api/month-close — lock or export a month.
  * Body: { year, month, action: "lock" | "unlock" | "export" }
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/month-close",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -67,36 +75,40 @@ export async function POST(req: Request) {
     });
 
     if (action === "lock") {
-      const record = await prisma.$transaction(async (tx) => {
-        // Check inside transaction to prevent race conditions
-        const found = await tx.monthClose.findFirst({
-          where: {
-            workspaceId,
-            year,
-            month,
-          },
-        });
-
-        return found
-          ? await tx.monthClose.update({
-              where: { id: found.id },
-              data: {
-                status: "LOCKED",
-                lockedBy: user.id,
-                lockedAt: new Date(),
-              },
-            })
-          : await tx.monthClose.create({
-              data: {
+      const record = await withRetry(
+        () =>
+          prisma.$transaction(async (tx) => {
+            // Check inside transaction to prevent race conditions
+            const found = await tx.monthClose.findFirst({
+              where: {
+                workspaceId,
                 year,
                 month,
-                status: "LOCKED",
-                lockedBy: user.id,
-                lockedAt: new Date(),
-                workspaceId,
               },
             });
-      });
+
+            return found
+              ? await tx.monthClose.update({
+                  where: { id: found.id },
+                  data: {
+                    status: "LOCKED",
+                    lockedBy: user.id,
+                    lockedAt: new Date(),
+                  },
+                })
+              : await tx.monthClose.create({
+                  data: {
+                    year,
+                    month,
+                    status: "LOCKED",
+                    lockedBy: user.id,
+                    lockedAt: new Date(),
+                    workspaceId,
+                  },
+                });
+          }),
+        "/api/month-close POST (lock)",
+      );
 
       // ── E-Signature: Record signed month lock (Professional+ only) ──
       const hasESign = await canUseFeature(workspaceId, "eSignatures");
@@ -117,6 +129,22 @@ export async function POST(req: Request) {
         }).catch((err) => log.error("E-signature failed", { error: err }));
       }
 
+      createAuditLog({
+        action: "CREATE",
+        entityType: "MonthClose",
+        entityId: record.id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId,
+        changes: { year, month, action: "lock" },
+      });
+
+      dispatchWebhook(workspaceId, "month_close.locked", {
+        id: record.id,
+        year,
+        month,
+      }).catch(() => {});
+
       return NextResponse.json(record);
     }
 
@@ -129,6 +157,22 @@ export async function POST(req: Request) {
         where: { id: existing.id },
         data: { status: "OPEN", lockedBy: null, lockedAt: null },
       });
+
+      createAuditLog({
+        action: "UPDATE",
+        entityType: "MonthClose",
+        entityId: record.id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId,
+        changes: { year, month, action: "unlock" },
+      });
+
+      dispatchWebhook(workspaceId, "month_close.unlocked", {
+        id: record.id,
+        year,
+        month,
+      }).catch(() => {});
 
       return NextResponse.json(record);
     }
@@ -146,12 +190,26 @@ export async function POST(req: Request) {
         data: { status: "EXPORTED", exportedAt: new Date() },
       });
 
+      createAuditLog({
+        action: "UPDATE",
+        entityType: "MonthClose",
+        entityId: record.id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId,
+        changes: { year, month, action: "export" },
+      });
+
+      dispatchWebhook(workspaceId, "month_close.exported", {
+        id: record.id,
+        year,
+        month,
+      }).catch(() => {});
+
       return NextResponse.json(record);
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error) {
-    captureRouteError(error, { route: "/api/month-close", method: "POST" });
-    return serverError("Error processing month-close");
-  }
-}
+  },
+  { idempotent: true },
+);

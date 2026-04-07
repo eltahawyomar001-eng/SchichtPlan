@@ -5,6 +5,10 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
 import { requireAuth } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
+import { withRetry } from "@/lib/prisma-retry";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/time-entries/clock
@@ -12,8 +16,10 @@ import { requireAuth } from "@/lib/api-response";
  *
  * Body: { action: "in" | "out" | "break-start" | "break-end" }
  */
-export async function POST(req: Request) {
-  try {
+export const POST = withRoute(
+  "/api/time-entries/clock",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user } = auth;
@@ -51,27 +57,31 @@ export async function POST(req: Request) {
       // (two simultaneous clock-ins both passing the findFirst check)
       let entry;
       try {
-        entry = await prisma.$transaction(async (tx) => {
-          const open = await tx.timeEntry.findFirst({
-            where: { employeeId, isLiveClock: true, clockOutAt: null },
-          });
-          if (open) {
-            throw new Error(`ALREADY_CLOCKED_IN:${open.id}`);
-          }
+        entry = await withRetry(
+          () =>
+            prisma.$transaction(async (tx) => {
+              const open = await tx.timeEntry.findFirst({
+                where: { employeeId, isLiveClock: true, clockOutAt: null },
+              });
+              if (open) {
+                throw new Error(`ALREADY_CLOCKED_IN:${open.id}`);
+              }
 
-          return tx.timeEntry.create({
-            data: {
-              date: dateOnly,
-              startTime: timeStr,
-              endTime: timeStr,
-              isLiveClock: true,
-              clockInAt: now,
-              employeeId,
-              workspaceId,
-              status: "ENTWURF",
-            },
-          });
-        });
+              return tx.timeEntry.create({
+                data: {
+                  date: dateOnly,
+                  startTime: timeStr,
+                  endTime: timeStr,
+                  isLiveClock: true,
+                  clockInAt: now,
+                  employeeId,
+                  workspaceId,
+                  status: "ENTWURF",
+                },
+              });
+            }),
+          "/api/time-entries/clock POST (clock-in)",
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         if (msg.startsWith("ALREADY_CLOCKED_IN:")) {
@@ -92,6 +102,21 @@ export async function POST(req: Request) {
         startTime: timeStr,
         action: "clock-in",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
+
+      createAuditLog({
+        action: "CREATE",
+        entityType: "TimeEntry",
+        entityId: entry.id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId,
+        metadata: { action: "clock-in", time: timeStr },
+      });
+
+      dispatchWebhook(workspaceId, "time_entry.clock_in", {
+        id: entry.id,
+        employeeId,
+      }).catch(() => {});
 
       return NextResponse.json(entry, { status: 201 });
     }
@@ -176,51 +201,53 @@ export async function POST(req: Request) {
 
     // ── Clock Out ──
     if (action === "out") {
-      const entry = await prisma
-        .$transaction(async (tx) => {
-          const open = await tx.timeEntry.findFirst({
-            where: { employeeId, isLiveClock: true, clockOutAt: null },
-            orderBy: { clockInAt: "desc" },
-          });
-          if (!open) {
-            throw new Error("NOT_CLOCKED_IN");
-          }
+      const entry = await withRetry(
+        () =>
+          prisma.$transaction(async (tx) => {
+            const open = await tx.timeEntry.findFirst({
+              where: { employeeId, isLiveClock: true, clockOutAt: null },
+              orderBy: { clockInAt: "desc" },
+            });
+            if (!open) {
+              throw new Error("NOT_CLOCKED_IN");
+            }
 
-          // If break is still running, auto-end it now
-          let breakMinutes = open.breakMinutes || 0;
-          let breakEnd = open.breakEnd;
-          if (open.breakStart && !open.breakEnd) {
-            const bsMin = toMinutes(open.breakStart);
-            const beMin = toMinutes(timeStr);
-            breakMinutes = Math.max(0, beMin - bsMin);
-            breakEnd = timeStr;
-          }
+            // If break is still running, auto-end it now
+            let breakMinutes = open.breakMinutes || 0;
+            let breakEnd = open.breakEnd;
+            if (open.breakStart && !open.breakEnd) {
+              const bsMin = toMinutes(open.breakStart);
+              const beMin = toMinutes(timeStr);
+              breakMinutes = Math.max(0, beMin - bsMin);
+              breakEnd = timeStr;
+            }
 
-          const clockIn = open.clockInAt!;
-          const diffMs = now.getTime() - clockIn.getTime();
-          const grossMinutes = Math.round(diffMs / 60000);
-          // ArbZG legal break enforcement
-          const legalBreak = ensureLegalBreak(grossMinutes, breakMinutes);
-          const netMinutes = Math.max(0, grossMinutes - legalBreak);
+            const clockIn = open.clockInAt!;
+            const diffMs = now.getTime() - clockIn.getTime();
+            const grossMinutes = Math.round(diffMs / 60000);
+            // ArbZG legal break enforcement
+            const legalBreak = ensureLegalBreak(grossMinutes, breakMinutes);
+            const netMinutes = Math.max(0, grossMinutes - legalBreak);
 
-          return tx.timeEntry.update({
-            where: { id: open.id },
-            data: {
-              endTime: timeStr,
-              clockOutAt: now,
-              breakEnd,
-              breakMinutes: legalBreak,
-              grossMinutes,
-              netMinutes,
-            },
-          });
-        })
-        .catch((err) => {
-          if (err instanceof Error && err.message === "NOT_CLOCKED_IN") {
-            return { error: "NOT_CLOCKED_IN", status: 404 as const };
-          }
-          throw err;
-        });
+            return tx.timeEntry.update({
+              where: { id: open.id },
+              data: {
+                endTime: timeStr,
+                clockOutAt: now,
+                breakEnd,
+                breakMinutes: legalBreak,
+                grossMinutes,
+                netMinutes,
+              },
+            });
+          }),
+        "/api/time-entries/clock POST (clock-out)",
+      ).catch((err) => {
+        if (err instanceof Error && err.message === "NOT_CLOCKED_IN") {
+          return { error: "NOT_CLOCKED_IN", status: 404 as const };
+        }
+        throw err;
+      });
 
       if ("error" in entry) {
         return NextResponse.json(
@@ -242,19 +269,27 @@ export async function POST(req: Request) {
         action: "clock-out",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
 
+      createAuditLog({
+        action: "UPDATE",
+        entityType: "TimeEntry",
+        entityId: entry.id,
+        userId: user.id,
+        userEmail: user.email,
+        workspaceId,
+        metadata: { action: "clock-out", time: timeStr },
+      });
+
+      dispatchWebhook(workspaceId, "time_entry.clock_out", {
+        id: entry.id,
+        employeeId,
+      }).catch(() => {});
+
       return NextResponse.json(entry);
     }
 
     return NextResponse.json({ error: "INVALID_ACTION" }, { status: 400 });
-  } catch (error) {
-    log.error("Clock error:", { error: error });
-    captureRouteError(error, {
-      route: "/api/time-entries/clock",
-      method: "POST",
-    });
-    return NextResponse.json({ error: "SERVER_ERROR" }, { status: 500 });
-  }
-}
+  },
+);
 
 function toMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
@@ -265,62 +300,53 @@ function toMinutes(t: string): number {
  * GET /api/time-entries/clock
  * Returns current clock-in status + today's completed entries for the employee.
  */
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const tz = searchParams.get("timezone") || "Europe/Berlin";
+export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
+  const { searchParams } = new URL(req.url);
+  const tz = searchParams.get("timezone") || "Europe/Berlin";
 
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user } = auth;
-    const employeeId = user.employeeId;
-    if (!employeeId) {
-      return NextResponse.json({
-        active: false,
-        entry: null,
-        todayEntries: [],
-        noProfile: true,
-      });
-    }
-
-    // Open (active) clock entry
-    const open = await prisma.timeEntry.findFirst({
-      where: { employeeId, isLiveClock: true, clockOutAt: null },
-      orderBy: { clockInAt: "desc" },
-    });
-
-    // Today's completed entries for the log (use client timezone)
-    const localNow = new Date(
-      new Date().toLocaleString("en-US", { timeZone: tz }),
-    );
-    const todayStart = new Date(localNow);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(localNow);
-    todayEnd.setHours(23, 59, 59, 999);
-
-    const todayEntries = await prisma.timeEntry.findMany({
-      where: {
-        employeeId,
-        isLiveClock: true,
-        clockOutAt: { not: null },
-        clockInAt: { gte: todayStart, lte: todayEnd },
-      },
-      orderBy: { clockInAt: "desc" },
-    });
-
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
+  const employeeId = user.employeeId;
+  if (!employeeId) {
     return NextResponse.json({
-      active: !!open,
-      onBreak: open ? !!(open.breakStart && !open.breakEnd) : false,
-      entry: open || null,
-      todayEntries,
-      noProfile: false,
+      active: false,
+      entry: null,
+      todayEntries: [],
+      noProfile: true,
     });
-  } catch (error) {
-    log.error("Clock status error:", { error: error });
-    captureRouteError(error, {
-      route: "/api/time-entries/clock",
-      method: "GET",
-    });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-}
+
+  // Open (active) clock entry
+  const open = await prisma.timeEntry.findFirst({
+    where: { employeeId, isLiveClock: true, clockOutAt: null },
+    orderBy: { clockInAt: "desc" },
+  });
+
+  // Today's completed entries for the log (use client timezone)
+  const localNow = new Date(
+    new Date().toLocaleString("en-US", { timeZone: tz }),
+  );
+  const todayStart = new Date(localNow);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(localNow);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const todayEntries = await prisma.timeEntry.findMany({
+    where: {
+      employeeId,
+      isLiveClock: true,
+      clockOutAt: { not: null },
+      clockInAt: { gte: todayStart, lte: todayEnd },
+    },
+    orderBy: { clockInAt: "desc" },
+  });
+
+  return NextResponse.json({
+    active: !!open,
+    onBreak: open ? !!(open.breakStart && !open.breakEnd) : false,
+    entry: open || null,
+    todayEntries,
+    noProfile: false,
+  });
+});

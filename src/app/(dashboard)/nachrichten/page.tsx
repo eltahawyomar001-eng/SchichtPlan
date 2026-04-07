@@ -2241,7 +2241,7 @@ export default function NachrichtenPage() {
                         size="sm"
                         className="flex-shrink-0 rounded-xl"
                       >
-                        <SendIcon className="h-4 w-4" />
+                        <SendIcon className="h-5 w-5" />
                         <span className="sr-only">{t("send")}</span>
                       </Button>
                     </form>
@@ -2388,7 +2388,7 @@ export default function NachrichtenPage() {
                             size="sm"
                             className="flex-shrink-0 rounded-xl"
                           >
-                            <SendIcon className="h-4 w-4" />
+                            <SendIcon className="h-5 w-5" />
                           </Button>
                         </form>
                       </div>

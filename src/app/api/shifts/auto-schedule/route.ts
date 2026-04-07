@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { runAutoScheduler } from "@/lib/auto-scheduler";
 import { autoScheduleSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * POST /api/shifts/auto-schedule
@@ -18,15 +18,13 @@ import { log } from "@/lib/logger";
  *
  * Body: { startDate, endDate, locationId?, dryRun?, weights? }
  */
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const POST = withRoute(
+  "/api/shifts/auto-schedule",
+  "POST",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -136,6 +134,12 @@ export async function POST(req: Request) {
         assigned: result.assignedCount,
         unresolved: result.unresolvedCount,
       });
+
+      dispatchWebhook(workspaceId, "shift.auto_scheduled", {
+        runId: run.id,
+        assigned: result.assignedCount,
+        unresolved: result.unresolvedCount,
+      }).catch(() => {});
     }
 
     return NextResponse.json({
@@ -151,14 +155,9 @@ export async function POST(req: Request) {
       unresolvedShifts: result.unresolvedShifts,
       employeeHours: result.employeeHours,
     });
-  } catch (error) {
-    log.error("Error in auto-scheduling:", { error });
-    return NextResponse.json(
-      { error: "Fehler bei der automatischen Planung" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);
 
 /**
  * GET /api/shifts/auto-schedule
@@ -166,15 +165,13 @@ export async function POST(req: Request) {
  * List auto-schedule run history for the workspace.
  * Query params: ?limit=10&status=APPLIED
  */
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+export const GET = withRoute(
+  "/api/shifts/auto-schedule",
+  "GET",
+  async (req) => {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
@@ -201,11 +198,5 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ runs });
-  } catch (error) {
-    log.error("Error fetching auto-schedule history:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim Laden der Planungshistorie" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

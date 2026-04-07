@@ -5,20 +5,23 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { updateServiceReportSchema, validateBody } from "@/lib/validations";
 
 // ─── GET  /api/service-reports/[id] ─────────────────────────────
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/service-reports/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -57,24 +60,21 @@ export async function GET(
     }
 
     return NextResponse.json(report);
-  } catch (error) {
-    log.error("Error fetching service report:", { error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── PATCH  /api/service-reports/[id] ───────────────────────────
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/service-reports/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -92,13 +92,17 @@ export async function PATCH(
     }
 
     const body = await req.json();
+    const parsed = validateBody(updateServiceReportSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { data: validData } = parsed;
+
     const data: Record<string, unknown> = {};
-    if (body.title) data.title = body.title;
-    if (body.status) data.status = body.status;
-    if (body.pdfUrl !== undefined) data.pdfUrl = body.pdfUrl || null;
+    if (validData.title) data.title = validData.title;
+    if (validData.status) data.status = validData.status;
+    if (validData.pdfUrl !== undefined) data.pdfUrl = validData.pdfUrl || null;
 
     // If status is ERSTELLT, set generatedAt
-    if (body.status === "ERSTELLT" && !existing.generatedAt) {
+    if (validData.status === "ERSTELLT" && !existing.generatedAt) {
       data.generatedAt = new Date();
     }
 
@@ -116,25 +120,26 @@ export async function PATCH(
       workspaceId,
     });
 
+    dispatchWebhook(workspaceId, "service_report.updated", { id }).catch(
+      () => {},
+    );
+
     return NextResponse.json(report);
-  } catch (error) {
-    log.error("Error updating service report:", { error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── DELETE  /api/service-reports/[id] ──────────────────────────
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "/api/service-reports/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -170,9 +175,10 @@ export async function DELETE(
 
     log.info("[service-reports] Report deleted", { reportId: id });
 
+    dispatchWebhook(workspaceId, "service_report.deleted", { id }).catch(
+      () => {},
+    );
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error deleting service report:", { error });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

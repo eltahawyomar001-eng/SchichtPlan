@@ -1,36 +1,31 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requireManagement } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { updateChatChannelSchema, validateBody } from "@/lib/validations";
 
 /**
  * GET /api/chat/channels/[id]
  * Channel details with member list.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const GET = withRoute(
+  "/api/chat/channels/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
@@ -63,35 +58,26 @@ export async function GET(
     }
 
     return NextResponse.json(channel);
-  } catch (error) {
-    log.error("Error fetching channel:", { error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
 /**
  * PATCH /api/chat/channels/[id]
  * Update channel name/description. Creator or management only.
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const PATCH = withRoute(
+  "/api/chat/channels/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
@@ -108,11 +94,14 @@ export async function PATCH(
     }
 
     const body = await req.json();
+    const parsed = validateBody(updateChatChannelSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { data } = parsed;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
-    if (body.name !== undefined) updateData.name = body.name.trim();
-    if (body.description !== undefined)
-      updateData.description = body.description?.trim() || null;
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined)
+      updateData.description = data.description || null;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
@@ -133,36 +122,31 @@ export async function PATCH(
       changes: updateData,
     });
 
+    dispatchWebhook(user.workspaceId, "chat_channel.updated", {
+      id: channelId,
+    }).catch(() => {});
+
     return NextResponse.json(updated);
-  } catch (error) {
-    log.error("Error updating channel:", { error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
 /**
  * DELETE /api/chat/channels/[id]
  * Delete channel. Creator or management only.
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const DELETE = withRoute(
+  "/api/chat/channels/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     const channel = await prisma.chatChannel.findFirst({
       where: { id: channelId, workspaceId: user.workspaceId },
@@ -195,9 +179,10 @@ export async function DELETE(
       metadata: { channelName: channel.name },
     });
 
+    dispatchWebhook(user.workspaceId, "chat_channel.deleted", {
+      id: channelId,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error deleting channel:", { error });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

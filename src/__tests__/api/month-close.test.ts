@@ -18,12 +18,14 @@ const {
   mockMonthCloseFindFirst,
   mockMonthCloseCreate,
   mockMonthCloseUpdate,
+  mockMonthCloseCount,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockMonthCloseFindMany: vi.fn(),
   mockMonthCloseFindFirst: vi.fn(),
   mockMonthCloseCreate: vi.fn(),
   mockMonthCloseUpdate: vi.fn(),
+  mockMonthCloseCount: vi.fn().mockResolvedValue(0),
 }));
 
 vi.mock("next-auth", () => ({
@@ -34,6 +36,10 @@ vi.mock("next-auth", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
+  cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
+}));
 
 vi.mock("@/lib/db", () => {
   const tx = {
@@ -42,6 +48,7 @@ vi.mock("@/lib/db", () => {
       findFirst: mockMonthCloseFindFirst,
       create: mockMonthCloseCreate,
       update: mockMonthCloseUpdate,
+      count: mockMonthCloseCount,
     },
   };
   return {
@@ -65,6 +72,8 @@ vi.mock("@/lib/e-signature", () => ({
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
 }));
+
+vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -117,13 +126,14 @@ describe("GET /api/month-close", () => {
     mockMonthCloseFindMany.mockResolvedValue([
       { id: "mc-1", year: 2025, month: 1, status: "LOCKED" },
     ]);
+    mockMonthCloseCount.mockResolvedValue(1);
 
     const res = await handler.GET(
       new Request("http://localhost/api/month-close"),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(1);
+    expect(body.data).toHaveLength(1);
   });
 
   it("returns 403 when MANAGER lacks permission", async () => {

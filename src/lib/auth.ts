@@ -55,8 +55,8 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60 /* 1 day */,
-    updateAge: 12 * 60 * 60 /* refresh token every 12h */,
+    maxAge: 60 * 60 /* 1 hour */,
+    updateAge: 5 * 60 /* refresh token every 5 minutes */,
   },
   pages: {
     signIn: "/login",

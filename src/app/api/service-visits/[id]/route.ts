@@ -5,21 +5,24 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { updateServiceVisitSchema, validateBody } from "@/lib/validations";
 
 // ─── GET  /api/service-visits/[id] ─────────────────────────────
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const GET = withRoute(
+  "/api/service-visits/[id]",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -56,24 +59,21 @@ export async function GET(
     }
 
     return NextResponse.json(visit);
-  } catch (error) {
-    log.error("Error fetching service visit:", { error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── PATCH  /api/service-visits/[id] ────────────────────────────
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "/api/service-visits/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -99,11 +99,16 @@ export async function PATCH(
     }
 
     const body = await req.json();
+    const parsed = validateBody(updateServiceVisitSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { data: validData } = parsed;
+
     const data: Record<string, unknown> = {};
-    if (body.scheduledDate) data.scheduledDate = new Date(body.scheduledDate);
-    if (body.employeeId) data.employeeId = body.employeeId;
-    if (body.locationId) data.locationId = body.locationId;
-    if (body.notes !== undefined) data.notes = body.notes || null;
+    if (validData.scheduledDate)
+      data.scheduledDate = new Date(validData.scheduledDate);
+    if (validData.employeeId) data.employeeId = validData.employeeId;
+    if (validData.locationId) data.locationId = validData.locationId;
+    if (validData.notes !== undefined) data.notes = validData.notes || null;
 
     const visit = await prisma.serviceVisit.update({
       where: { id },
@@ -123,25 +128,26 @@ export async function PATCH(
       workspaceId,
     });
 
+    dispatchWebhook(workspaceId, "service_visit.updated", {
+      id: visit.id,
+    }).catch(() => {});
+
     return NextResponse.json(visit);
-  } catch (error) {
-    log.error("Error updating service visit:", { error });
-    return NextResponse.json({ error: "Error updating" }, { status: 500 });
-  }
-}
+  },
+);
 
 // ─── DELETE  /api/service-visits/[id] ───────────────────────────
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "/api/service-visits/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -173,11 +179,11 @@ export async function DELETE(
       },
     });
 
-    // Delete signature first (if any), then visit
-    await prisma.visitSignature.deleteMany({
-      where: { visitId: id },
+    // Soft-delete the service visit (signature is preserved)
+    await prisma.serviceVisit.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
-    await prisma.serviceVisit.delete({ where: { id } });
 
     createAuditLog({
       action: "DELETE",
@@ -188,11 +194,12 @@ export async function DELETE(
       workspaceId,
     });
 
+    dispatchWebhook(workspaceId, "service_visit.deleted", { id }).catch(
+      () => {},
+    );
+
     log.info("[service-visits] Visit deleted", { visitId: id });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error deleting service visit:", { error });
-    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
-  }
-}
+  },
+);

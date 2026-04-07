@@ -1,36 +1,29 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePlanFeature } from "@/lib/subscription";
 import { sanitize } from "@/lib/sanitize";
 import { createChatMessageSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/chat/channels/[id]/messages
  * Paginated messages for a channel (newest first).
  */
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const GET = withRoute(
+  "/api/chat/channels/[id]/messages",
+  "GET",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     // Verify user is a member of this channel
     const membership = await prisma.chatChannelMember.findUnique({
@@ -118,35 +111,26 @@ export async function GET(
       hasMore,
       nextCursor: hasMore ? messages[messages.length - 1]?.id : null,
     });
-  } catch (error) {
-    log.error("Error fetching messages:", { error });
-    return NextResponse.json({ error: "Error loading" }, { status: 500 });
-  }
-}
+  },
+);
 
 /**
  * POST /api/chat/channels/[id]/messages
  * Send a message to a channel.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = session.user as SessionUser;
-    if (!user.workspaceId) {
-      return NextResponse.json({ error: "No workspace" }, { status: 400 });
-    }
+export const POST = withRoute(
+  "/api/chat/channels/[id]/messages",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
     const planGate = await requirePlanFeature(user.workspaceId, "teamChat");
     if (planGate) return planGate;
 
-    const { id: channelId } = await params;
+    const { id: channelId } = params;
 
     // Verify user is a member
     const membership = await prisma.chatChannelMember.findUnique({
@@ -242,8 +226,6 @@ export async function POST(
     })();
 
     return NextResponse.json(message, { status: 201 });
-  } catch (error) {
-    log.error("Error sending message:", { error });
-    return NextResponse.json({ error: "Error sending" }, { status: 500 });
-  }
-}
+  },
+  { idempotent: true },
+);

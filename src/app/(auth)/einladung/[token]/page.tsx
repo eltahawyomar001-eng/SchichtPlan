@@ -12,6 +12,7 @@ import {
   AlertCircleIcon,
   ClockIcon,
 } from "@/components/icons";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 type InvitationDetails = {
   id: string;
@@ -135,7 +136,7 @@ export default function EinladungPage() {
   // Loading state
   if (loading || sessionStatus === "loading") {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
           <p className="mt-3 text-sm text-gray-500">{t("loading")}</p>
@@ -147,8 +148,8 @@ export default function EinladungPage() {
   // Error state (only for fatal errors where we have no invitation data)
   if (error && !invitation) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg text-center">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-lg text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
             <ShiftfyMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">Shiftfy</span>
@@ -184,8 +185,8 @@ export default function EinladungPage() {
   // Accepted state
   if (accepted) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg text-center">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-lg text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
             <ShiftfyMark className="h-8 w-8" />
             <span className="text-lg font-bold text-gray-900">Shiftfy</span>
@@ -209,8 +210,8 @@ export default function EinladungPage() {
 
   // Main invitation view
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-lg">
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="mb-6 inline-flex items-center gap-2">
@@ -227,7 +228,7 @@ export default function EinladungPage() {
         </div>
 
         {/* Invitation details */}
-        <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+        <div className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">{t("workspace")}</span>
             <span className="text-sm font-semibold text-gray-900">

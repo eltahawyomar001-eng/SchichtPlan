@@ -10,6 +10,7 @@ import {
   UsersIcon,
   ClockIcon,
 } from "@/components/icons";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 interface BlogPostContent {
   title: string;
@@ -170,20 +171,20 @@ export default async function BlogPostPage({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="w-7 h-7" />
-            <span className="font-bold text-base text-gray-900">
+            <span className="font-bold text-base text-gray-900 dark:text-white">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/blog"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex items-center gap-1.5"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex items-center gap-1.5"
             >
               <svg
                 className="w-4 h-4"
@@ -202,16 +203,17 @@ export default async function BlogPostPage({ params }: Props) {
             </Link>
             <Link
               href="/pricing"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {tc("pricing")}
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {tc("login")}
             </Link>
+            <ThemeToggle />
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
@@ -223,8 +225,8 @@ export default async function BlogPostPage({ params }: Props) {
       </nav>
 
       {/* Article Hero */}
-      <header className="relative overflow-hidden bg-white border-b border-gray-200/60">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white to-transparent" />
+      <header className="relative overflow-hidden bg-white dark:bg-gray-900 border-b border-gray-200/60 dark:border-gray-800">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white to-transparent dark:from-emerald-950/30 dark:via-gray-900 dark:to-transparent" />
         <div className="relative max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-14 sm:pb-10">
           <Link
             href="/blog"
@@ -287,7 +289,7 @@ export default async function BlogPostPage({ params }: Props) {
               return (
                 <div key={i} className="pt-8 first:pt-0">
                   <div className="flex items-start gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold flex items-center justify-center mt-0.5">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-sm font-bold flex items-center justify-center mt-0.5">
                       {numberMatch[1]}
                     </span>
                     <div>
@@ -331,7 +333,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Related Articles */}
         {relatedPosts.length > 0 && (
-          <section className="mt-14 pt-10 border-t border-gray-200">
+          <section className="mt-14 pt-10 border-t border-gray-200 dark:border-gray-800">
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               {t("relatedArticles")}
             </h2>
@@ -348,9 +350,9 @@ export default async function BlogPostPage({ params }: Props) {
                     href={`/blog/${related.slug}`}
                     className="group block"
                   >
-                    <article className="h-full rounded-xl border border-gray-200/80 bg-white p-5 hover:shadow-lg hover:border-emerald-200/60 transition-all duration-300">
+                    <article className="h-full rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 hover:shadow-lg hover:border-emerald-200/60 dark:hover:border-emerald-700/60 transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/50 flex items-center justify-center">
                           <related.Icon className="w-4 h-4 text-emerald-600" />
                         </div>
                         <span
@@ -378,9 +380,9 @@ export default async function BlogPostPage({ params }: Props) {
       </main>
 
       {/* Footer CTA */}
-      <section className="border-t border-gray-200/60 bg-white">
+      <section className="border-t border-gray-200/60 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {t("ctaTitle")}
           </h2>
           <p className="mt-3 text-gray-600 max-w-lg mx-auto">
@@ -403,11 +405,13 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </section>
 
-      <footer className="border-t border-gray-100 py-10">
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
-            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-white">
+              Shiftfy
+            </span>
           </div>
           <p className="text-sm text-gray-400 text-center">
             © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
@@ -439,6 +443,9 @@ export default async function BlogPostPage({ params }: Props) {
               className="hover:text-gray-600 transition-colors"
             >
               {tf("accessibility")}
+            </Link>
+            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+              SLA
             </Link>
           </div>
         </div>

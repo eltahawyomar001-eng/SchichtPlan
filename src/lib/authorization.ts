@@ -292,7 +292,7 @@ const permissionMatrix: Record<Resource, Record<Action, Role[]>> = {
   },
   tickets: {
     read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE filtered to own
-    create: ["EMPLOYEE"], // Only employees submit tickets to management
+    create: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // All roles can create tickets
     update: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"], // EMPLOYEE: own tickets only
     delete: ["OWNER", "ADMIN"],
     approve: [],

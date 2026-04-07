@@ -10,6 +10,7 @@ import { createAuditLog } from "@/lib/audit";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * POST /api/service-reports/[id]/generate
@@ -24,17 +25,17 @@ import { log } from "@/lib/logger";
  * The generated PDF is returned as a binary download. The report status
  * is updated to ERSTELLT and generatedAt is set.
  */
-export async function POST(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
+export const POST = withRoute(
+  "/api/service-reports/[id]/generate",
+  "POST",
+  async (req, context) => {
+    const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: reportId } = await params;
+    const { id: reportId } = params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
     if (!workspaceId) {
@@ -402,14 +403,9 @@ export async function POST(
         "Content-Length": String(pdfBuffer.length),
       },
     });
-  } catch (error) {
-    log.error("Error generating service report PDF:", { error });
-    return NextResponse.json(
-      { error: "Fehler beim Erstellen des PDF" },
-      { status: 500 },
-    );
-  }
-}
+  },
+  { idempotent: true },
+);
 
 // ─── Helpers ────────────────────────────────────────────────────
 

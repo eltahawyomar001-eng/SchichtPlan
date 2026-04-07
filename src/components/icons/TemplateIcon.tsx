@@ -19,7 +19,7 @@ export function TemplateIcon(props: SVGProps<SVGSVGElement>) {
         x="3"
         y="3"
         rx="1"
-        stroke="url(#template-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <rect
@@ -28,7 +28,7 @@ export function TemplateIcon(props: SVGProps<SVGSVGElement>) {
         x="3"
         y="14"
         rx="1"
-        stroke="url(#template-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
       />
       <rect
@@ -37,22 +37,9 @@ export function TemplateIcon(props: SVGProps<SVGSVGElement>) {
         x="16"
         y="14"
         rx="1"
-        stroke="url(#template-gradient)"
+        stroke="currentColor"
         strokeWidth="2"
-      />
-      <defs>
-        <linearGradient
-          id="template-gradient"
-          x1="2"
-          y1="2"
-          x2="22"
-          y2="22"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#059669" />
-          <stop offset="1" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
+      />{" "}
     </svg>
   );
 }

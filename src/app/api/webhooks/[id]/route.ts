@@ -1,29 +1,35 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
+import { updateWebhookSchema, validateBody } from "@/lib/validations";
+import { createAuditLog } from "@/lib/audit";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 /** PATCH /api/webhooks/[id] — update a webhook */
-export async function PATCH(req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PATCH = withRoute(
+  "/api/webhooks/[id]",
+  "PATCH",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "webhooks", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
     const body = await req.json();
+    const parsed = validateBody(updateWebhookSchema, body);
+    if (!parsed.success) return parsed.response;
+    const { data: validData } = parsed;
 
     const existing = await prisma.webhookEndpoint.findFirst({
       where: { id, workspaceId: user.workspaceId },
@@ -35,32 +41,47 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const hook = await prisma.webhookEndpoint.update({
       where: { id },
       data: {
-        ...(body.url !== undefined && { url: body.url }),
-        ...(body.events !== undefined && { events: body.events }),
-        ...(body.isActive !== undefined && { isActive: body.isActive }),
+        ...(validData.url !== undefined && { url: validData.url }),
+        ...(validData.events !== undefined && { events: validData.events }),
+        ...(validData.isActive !== undefined && {
+          isActive: validData.isActive,
+        }),
       },
     });
 
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "WebhookEndpoint",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: validData,
+    });
+
+    dispatchWebhook(workspaceId, "webhook_endpoint.updated", {
+      id,
+      ...validData,
+    }).catch(() => {});
+
     return NextResponse.json(hook);
-  } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);
 
 /** DELETE /api/webhooks/[id] */
-export async function DELETE(_req: Request, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withRoute(
+  "/api/webhooks/[id]",
+  "DELETE",
+  async (req, context) => {
+    const params = await context!.params;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
 
-    const user = session.user as SessionUser;
     const forbidden = requirePermission(user, "webhooks", "delete");
     if (forbidden) return forbidden;
 
-    const { id } = await params;
+    const { id } = params;
 
     const existing = await prisma.webhookEndpoint.findFirst({
       where: { id, workspaceId: user.workspaceId },
@@ -70,9 +91,20 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     }
 
     await prisma.webhookEndpoint.delete({ where: { id } });
+
+    createAuditLog({
+      action: "DELETE",
+      entityType: "WebhookEndpoint",
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+    });
+
+    dispatchWebhook(workspaceId, "webhook_endpoint.deleted", { id }).catch(
+      () => {},
+    );
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    log.error("Error:", { error: error });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

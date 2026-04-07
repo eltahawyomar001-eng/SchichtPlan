@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import type { SessionUser } from "@/lib/types";
 import { requireAdmin } from "@/lib/authorization";
+import { withRoute } from "@/lib/with-route";
+import { requireAuth } from "@/lib/api-response";
 
 /**
  * GET /api/docs
@@ -10,13 +9,11 @@ import { requireAdmin } from "@/lib/authorization";
  * Returns the OpenAPI 3.0 specification for the Shiftfy API.
  * Restricted to OWNER/ADMIN to prevent unauthenticated API spec exposure.
  */
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withRoute("/api/docs", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { user, workspaceId } = auth;
 
-  const user = session.user as SessionUser;
   const forbidden = requireAdmin(user);
   if (forbidden) return forbidden;
 
@@ -436,4 +433,4 @@ export async function GET() {
       "Cache-Control": "public, max-age=3600",
     },
   });
-}
+});

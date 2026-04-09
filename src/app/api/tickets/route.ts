@@ -5,7 +5,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createTicketSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { badRequest, requireAuth, serverError } from "@/lib/api-response";
 import { logTicketCreated } from "@/lib/ticket-events";
 import { notifyNewTicket } from "@/lib/ticket-notifications";
 import { withRoute } from "@/lib/with-route";
@@ -91,7 +91,14 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "tickets", "create");
     if (forbidden) return forbidden;
 
-    const parsed = validateBody(createTicketSchema, await req.json());
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return badRequest("Ungültiger JSON-Body");
+    }
+
+    const parsed = validateBody(createTicketSchema, rawBody);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;
@@ -115,23 +122,38 @@ export const POST = withRoute(
 
     const ticketNumber = `TK-${year}-${String(nextNumber).padStart(4, "0")}`;
 
-    const ticket = await prisma.ticket.create({
-      data: {
+    let ticket;
+    try {
+      ticket = await prisma.ticket.create({
+        data: {
+          ticketNumber,
+          subject: body.subject,
+          description: body.description,
+          category: body.category,
+          priority: body.priority ?? "MITTEL",
+          ticketType: "INTERN",
+          location: body.location || null,
+          createdById: user.id,
+          workspaceId,
+        },
+        include: {
+          createdBy: { select: { id: true, name: true, email: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
+        },
+      });
+    } catch (dbError) {
+      log.error("Ticket create DB error", {
+        error: dbError,
         ticketNumber,
-        subject: body.subject,
-        description: body.description,
-        category: body.category,
-        priority: body.priority ?? "MITTEL",
-        ticketType: "INTERN",
-        location: body.location || null,
-        createdById: user.id,
+        userId: user.id,
         workspaceId,
-      },
-      include: {
-        createdBy: { select: { id: true, name: true, email: true } },
-        assignedTo: { select: { id: true, name: true, email: true } },
-      },
-    });
+      });
+      captureRouteError(dbError, {
+        route: "/api/tickets",
+        method: "POST",
+      });
+      return serverError("Ticket konnte nicht erstellt werden");
+    }
 
     // Fire-and-forget: audit trail
     logTicketCreated(

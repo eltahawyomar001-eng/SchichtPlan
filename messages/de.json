@@ -633,6 +633,8 @@
       "noLocation": "Kein Standort",
       "object": "Objekt",
       "noObject": "Kein Objekt",
+      "client": "Kunde",
+      "noClient": "Kein Kunde",
       "discardTitle": "Änderungen verwerfen?",
       "discardMessage": "Möchten Sie die eingegebenen Daten wirklich verwerfen? Alle nicht gespeicherten Änderungen gehen verloren.",
       "discardConfirm": "Verwerfen"

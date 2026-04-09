@@ -615,7 +615,7 @@ export function ServiceExecutionView({
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                     {t("execution.step4.signatureTitle")}
                   </h4>
-                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800/50 p-3">
+                  <div className="mt-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700 bg-white p-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={completionData.signatureImage}

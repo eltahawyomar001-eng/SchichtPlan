@@ -19,7 +19,6 @@ import {
   ChevronRightIcon,
   EditIcon,
   TrashIcon,
-  FilterIcon,
   ZapIcon,
   UserPlusIcon,
   AlertCircleIcon,
@@ -621,21 +620,18 @@ export default function SchichtplanPage() {
             </div>
             {/* Location Filter */}
             {locations.length > 0 && (
-              <div className="relative flex-shrink-0">
-                <FilterIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
-                <Select
-                  value={filterLocationId}
-                  onChange={(e) => setFilterLocationId(e.target.value)}
-                  className="pl-10 h-9 min-w-[160px]"
-                >
-                  <option value="">{t("allLocations")}</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
+              <Select
+                value={filterLocationId}
+                onChange={(e) => setFilterLocationId(e.target.value)}
+                className="h-9 min-w-[160px]"
+              >
+                <option value="">{t("allLocations")}</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </Select>
             )}
             <Button
               variant="outline"

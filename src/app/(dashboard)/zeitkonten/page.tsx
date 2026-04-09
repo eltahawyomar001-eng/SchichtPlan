@@ -170,10 +170,10 @@ export default function ZeitkontenPage() {
                   <ScaleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {minutesToDisplay(totalBalance, hrsLabel)}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 break-words">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                     {t("totalBalance")}
                   </p>
                 </div>
@@ -183,14 +183,14 @@ export default function ZeitkontenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-green-50 p-2">
-                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <div className="rounded-xl stat-icon-emerald p-2.5">
+                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {overtimeEmployees}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 break-words">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                     {t("overtime")}
                   </p>
                 </div>
@@ -200,14 +200,14 @@ export default function ZeitkontenPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl stat-icon-red p-2.5">
-                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                <div className="rounded-xl stat-icon-emerald p-2.5">
+                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {undertimeEmployees}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 break-words">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                     {t("undertime")}
                   </p>
                 </div>

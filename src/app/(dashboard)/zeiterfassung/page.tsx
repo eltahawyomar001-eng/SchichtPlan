@@ -419,10 +419,10 @@ export default function ZeiterfassungPage() {
                   <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
                     {t("entries")}
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {filteredEntries.length}
                   </p>
                 </div>
@@ -433,14 +433,14 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-lg bg-yellow-50 p-2 sm:p-2.5 flex-shrink-0">
-                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+                <div className="rounded-xl stat-icon-emerald p-2.5 sm:p-2.5 flex-shrink-0">
+                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
                     {t("open")}
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {pendingCount}
                   </p>
                 </div>
@@ -451,14 +451,14 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-lg bg-green-50 p-2 sm:p-2.5 flex-shrink-0">
-                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <div className="rounded-xl stat-icon-emerald p-2.5 sm:p-2.5 flex-shrink-0">
+                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
                     {t("confirmed")}
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {confirmedCount}
                   </p>
                 </div>

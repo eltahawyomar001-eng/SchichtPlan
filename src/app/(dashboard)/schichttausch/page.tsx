@@ -263,14 +263,14 @@ export default function SchichttauschPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl stat-icon-amber p-2.5">
-                  <SwapIcon className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                <div className="rounded-xl stat-icon-emerald p-2.5">
+                  <SwapIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {openSwaps}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 break-words">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                     {t("openRequests")}
                   </p>
                 </div>
@@ -280,14 +280,14 @@ export default function SchichttauschPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-green-50 p-2">
-                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <div className="rounded-xl stat-icon-emerald p-2.5">
+                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                     {completedSwaps}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 break-words">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                     {t("completed")}
                   </p>
                 </div>

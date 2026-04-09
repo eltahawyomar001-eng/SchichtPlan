@@ -219,8 +219,8 @@ async function EmployeeDashboardContent({
                   className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-2">
-                      <CalendarOffIcon className="h-4 w-4 text-orange-600" />
+                    <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 p-2">
+                      <CalendarOffIcon className="h-4 w-4 text-emerald-600" />
                     </div>
                     <p className="text-sm font-medium text-gray-700">
                       {t("pendingAbsences", {
@@ -237,7 +237,7 @@ async function EmployeeDashboardContent({
                   className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-2">
+                    <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 p-2">
                       <SwapIcon className="h-4 w-4 text-emerald-600" />
                     </div>
                     <p className="text-sm font-medium text-gray-700">
@@ -428,15 +428,15 @@ async function ManagerDashboardContent({
       title: t("locations"),
       value: locationCount,
       icon: MapPinIcon,
-      color: "text-blue-600",
-      bg: "stat-icon-blue",
+      color: "text-emerald-600",
+      bg: "stat-icon-emerald",
     },
     {
       title: t("shiftsToday"),
       value: todayShifts.length,
       icon: ClockIcon,
-      color: "text-amber-600",
-      bg: "stat-icon-amber",
+      color: "text-emerald-600",
+      bg: "stat-icon-emerald",
     },
   ];
 
@@ -450,8 +450,8 @@ async function ManagerDashboardContent({
       done: locationCount > 0,
       href: "/standorte",
       icon: MapPinIcon,
-      color: "text-blue-600",
-      bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+      color: "text-emerald-600",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
     },
     {
       title: to("step2Title"),
@@ -460,7 +460,7 @@ async function ManagerDashboardContent({
       href: "/mitarbeiter",
       icon: UsersIcon,
       color: "text-emerald-600",
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
     },
     {
       title: to("step3Title"),
@@ -468,8 +468,8 @@ async function ManagerDashboardContent({
       done: shiftCount > 0,
       href: "/schichtplan",
       icon: CalendarIcon,
-      color: "text-purple-600",
-      bg: "bg-gradient-to-br from-purple-50 to-purple-100",
+      color: "text-emerald-600",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
     },
   ];
 
@@ -481,8 +481,8 @@ async function ManagerDashboardContent({
       label: t("pendingAbsences", { count: pendingAbsences }),
       href: "/abwesenheiten",
       icon: CalendarOffIcon,
-      color: "text-orange-600",
-      bg: "bg-gradient-to-br from-orange-50 to-orange-100",
+      color: "text-emerald-600",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
     },
     {
       count: pendingSwaps,
@@ -490,15 +490,15 @@ async function ManagerDashboardContent({
       href: "/schichttausch",
       icon: SwapIcon,
       color: "text-emerald-600",
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
     },
     {
       count: pendingTimeEntries,
       label: t("pendingTimeEntries", { count: pendingTimeEntries }),
       href: "/zeiterfassung",
       icon: ClockIcon,
-      color: "text-blue-600",
-      bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+      color: "text-emerald-600",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
     },
   ].filter((item) => item.count > 0);
 
@@ -601,10 +601,10 @@ async function ManagerDashboardContent({
             <CardContent className="p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-gray-500 break-words">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-zinc-400 break-words">
                     {stat.title}
                   </p>
-                  <p className="mt-1.5 text-2xl sm:text-3xl font-bold text-gray-900">
+                  <p className="mt-1.5 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-zinc-100">
                     {stat.value}
                   </p>
                 </div>

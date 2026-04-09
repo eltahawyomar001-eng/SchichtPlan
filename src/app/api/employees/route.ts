@@ -42,6 +42,7 @@ export const GET = withRoute("/api/employees", "GET", async (req) => {
         },
         location: { select: { id: true, name: true } },
         department: { select: { id: true, name: true } },
+        client: { select: { id: true, name: true } },
       },
       orderBy: { lastName: "asc" },
       take,
@@ -85,6 +86,7 @@ export const POST = withRoute(
       color,
       locationId,
       departmentId,
+      clientId,
     } = parsed.data;
 
     const employee = await prisma.$transaction(async (tx) => {
@@ -106,6 +108,7 @@ export const POST = withRoute(
               .padStart(6, "0")}`,
           locationId: locationId || null,
           departmentId: departmentId || null,
+          clientId: clientId || null,
           workspaceId,
         },
       });

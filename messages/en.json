@@ -633,6 +633,8 @@
       "noLocation": "No location",
       "object": "Object",
       "noObject": "No object",
+      "client": "Client",
+      "noClient": "No client",
       "discardTitle": "Discard changes?",
       "discardMessage": "Are you sure you want to discard your changes? All unsaved data will be lost.",
       "discardConfirm": "Discard"

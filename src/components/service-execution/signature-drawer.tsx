@@ -222,7 +222,16 @@ export function SignatureDrawer({
 
     setIsSubmitting(true);
     try {
-      const signatureData = canvas.toDataURL("image/png");
+      // Export with explicit white background (canvas is transparent by default,
+      // which causes dark/invisible signatures in PDFs and dark-mode previews)
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = canvas.width;
+      exportCanvas.height = canvas.height;
+      const exportCtx = exportCanvas.getContext("2d")!;
+      exportCtx.fillStyle = "#ffffff";
+      exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      exportCtx.drawImage(canvas, 0, 0);
+      const signatureData = exportCanvas.toDataURL("image/png");
       await onSubmit({
         signatureData,
         signerName,
@@ -370,8 +379,8 @@ export function SignatureDrawer({
                   className={cn(
                     "relative mt-1.5 rounded-xl border-2 border-dashed transition-colors",
                     hasContent
-                      ? "border-emerald-400 bg-white dark:bg-zinc-800"
-                      : "border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:border-emerald-400",
+                      ? "border-emerald-400 bg-white"
+                      : "border-gray-300 dark:border-zinc-600 bg-white hover:border-emerald-400",
                   )}
                 >
                   <canvas
@@ -388,7 +397,7 @@ export function SignatureDrawer({
                   />
                   {!hasContent && (
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <p className="text-sm text-gray-400 dark:text-zinc-500">
+                      <p className="text-sm text-gray-400">
                         {t("signature.signHere")}
                       </p>
                     </div>

@@ -217,7 +217,7 @@ export default function TicketsPage() {
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="h-20 animate-pulse rounded-xl bg-gray-100"
+                className="h-20 animate-pulse rounded-xl bg-gray-100 dark:bg-zinc-800"
               />
             ))}
           </div>
@@ -246,14 +246,14 @@ export default function TicketsPage() {
             {tickets.map((ticket) => (
               <Card
                 key={ticket.id}
-                className="cursor-pointer transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.995]"
+                className="cursor-pointer transition-all hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800 active:scale-[0.995]"
                 onClick={() => router.push(`/tickets/${ticket.id}`)}
               >
                 <CardContent className="p-4 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-gray-400">
+                        <span className="text-xs font-mono text-gray-400 dark:text-zinc-500">
                           {ticket.ticketNumber}
                         </span>
                         <Badge
@@ -274,10 +274,10 @@ export default function TicketsPage() {
                           </Badge>
                         )}
                       </div>
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 className="font-medium text-gray-900 dark:text-zinc-100 truncate">
                         {ticket.subject}
                       </h3>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
                         <span>{t(`categories.${ticket.category}`)}</span>
                         <span>·</span>
                         <span>
@@ -308,9 +308,9 @@ export default function TicketsPage() {
                       </div>
                     </div>
                     {canManage && ticket.assignedTo && (
-                      <div className="text-right text-xs text-gray-400 flex-shrink-0">
+                      <div className="text-right text-xs text-gray-400 dark:text-zinc-500 flex-shrink-0">
                         <div>{t("assignedTo")}</div>
-                        <div className="font-medium text-gray-600">
+                        <div className="font-medium text-gray-600 dark:text-zinc-300">
                           {ticket.assignedTo.name ?? ticket.assignedTo.email}
                         </div>
                       </div>
@@ -331,30 +331,17 @@ export default function TicketsPage() {
 function StatCard({
   label,
   value,
-  color,
 }: {
   label: string;
   value: number;
-  color: string;
+  color?: string;
 }) {
-  const colorMap: Record<string, string> = {
-    gray: "bg-gray-50 text-gray-700",
-    amber: "bg-amber-50 text-amber-700",
-    emerald: "bg-emerald-50 text-emerald-700",
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-green-50 text-green-700",
-  };
-
   return (
-    <Card>
-      <CardContent className="p-3 sm:p-3 text-center">
-        <div
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${colorMap[color] ?? colorMap.gray}`}
-        >
-          {value}
-        </div>
-        <p className="mt-1 text-xs text-gray-500">{label}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-2xl bg-emerald-600 p-3 sm:p-4 text-center shadow-sm">
+      <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-sm font-bold text-white">
+        {value}
+      </div>
+      <p className="mt-1 text-xs font-medium text-emerald-100">{label}</p>
+    </div>
   );
 }

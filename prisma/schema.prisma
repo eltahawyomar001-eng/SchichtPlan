@@ -270,8 +270,11 @@ model Employee {
   serviceVisits      ServiceVisit[]
   locationId  String?
   location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  clientId    String?
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   @@unique([email, workspaceId])
   @@index([locationId])
+  @@index([clientId])
 }
 
 model Location {
@@ -697,6 +700,7 @@ model Client {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   projects    Project[]
+  employees   Employee[]
   @@index([workspaceId])
 }
 

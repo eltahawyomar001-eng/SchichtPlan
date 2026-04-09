@@ -47,6 +47,7 @@ export const createEmployeeSchema = z.object({
   color: optionalString,
   locationId: z.string().optional().nullable(),
   departmentId: z.string().optional().nullable(),
+  clientId: z.string().optional().nullable(),
 });
 
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({

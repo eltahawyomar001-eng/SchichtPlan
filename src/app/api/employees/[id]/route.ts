@@ -36,6 +36,7 @@ export const GET = withRoute(
         vacationBalances: { orderBy: { year: "desc" }, take: 3 },
         department: { select: { id: true, name: true } },
         location: { select: { id: true, name: true } },
+        client: { select: { id: true, name: true } },
       },
     });
 
@@ -94,6 +95,8 @@ export const PATCH = withRoute(
             body.departmentId !== undefined
               ? body.departmentId || null
               : undefined,
+          clientId:
+            body.clientId !== undefined ? body.clientId || null : undefined,
         },
       });
 

@@ -306,6 +306,9 @@ export const POST = withRoute(
               if (!imgData.startsWith("data:")) {
                 imgData = `data:image/png;base64,${imgData}`;
               }
+              // White background behind signature (old PNGs may have transparent bg)
+              doc.setFillColor(255, 255, 255);
+              doc.rect(14, currentY, 50, 18, "F");
               doc.addImage(imgData, "PNG", 14, currentY, 50, 18);
               currentY += 20;
             } catch {

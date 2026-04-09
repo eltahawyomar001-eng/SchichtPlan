@@ -222,7 +222,7 @@ function LoginForm() {
       </div>
 
       {/* ── Right: Form ── */}
-      <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24 bg-white dark:bg-gray-950">
+      <div className="flex w-full flex-col justify-center px-8 py-10 lg:w-1/2 lg:px-16 xl:px-24 bg-white dark:bg-gray-950">
         <div className="mx-auto w-full max-w-[440px]">
           {/* Logo + headline */}
           <div className="mb-8 flex items-center justify-between">

@@ -620,18 +620,20 @@ export default function SchichtplanPage() {
             </div>
             {/* Location Filter */}
             {locations.length > 0 && (
-              <Select
-                value={filterLocationId}
-                onChange={(e) => setFilterLocationId(e.target.value)}
-                className="h-9 min-w-[160px]"
-              >
-                <option value="">{t("allLocations")}</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
-                ))}
-              </Select>
+              <div className="flex-shrink-0">
+                <Select
+                  value={filterLocationId}
+                  onChange={(e) => setFilterLocationId(e.target.value)}
+                  className="h-9 w-auto min-w-[160px]"
+                >
+                  <option value="">{t("allLocations")}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             )}
             <Button
               variant="outline"

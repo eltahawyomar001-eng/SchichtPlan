@@ -1032,13 +1032,11 @@ export default function ZeiterfassungPage() {
                     );
                   })}
                   {/* Mobile total */}
-                  <div className="p-4 bg-gray-50/50 flex items-center justify-between text-sm">
-                    <span className="font-medium text-gray-700">
-                      {t("total")}
-                    </span>
-                    <span className="font-bold text-gray-900">
+                  <div className="p-4 bg-emerald-600 flex items-center justify-between text-sm">
+                    <span className="font-medium text-white">{t("total")}</span>
+                    <span className="font-bold text-white">
                       {formatMinutesToHHmm(totalNetMinutes)}
-                      <span className="text-xs text-gray-400 ml-1 font-normal">
+                      <span className="text-xs text-emerald-100 ml-1 font-normal">
                         ({formatIndustrial(totalNetMinutes)} h)
                       </span>
                     </span>
@@ -1049,29 +1047,29 @@ export default function ZeiterfassungPage() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b bg-gray-50/50">
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                      <tr className="border-b bg-emerald-600">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.date")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.employee")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.time")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.break")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.net")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.location")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-white">
                           {t("table.status")}
                         </th>
-                        <th className="px-4 py-3 text-right font-medium text-gray-500">
+                        <th className="px-4 py-3 text-right font-medium text-white">
                           {t("table.cw")}
                         </th>
                       </tr>
@@ -1143,16 +1141,16 @@ export default function ZeiterfassungPage() {
                       })}
                     </tbody>
                     <tfoot>
-                      <tr className="bg-gray-50/50 border-t">
+                      <tr className="bg-emerald-600 border-t">
                         <td
                           colSpan={4}
-                          className="px-4 py-3 text-right font-medium text-gray-700"
+                          className="px-4 py-3 text-right font-medium text-white"
                         >
                           {t("total")}
                         </td>
-                        <td className="px-4 py-3 font-bold text-gray-900">
+                        <td className="px-4 py-3 font-bold text-white">
                           {formatMinutesToHHmm(totalNetMinutes)}
-                          <span className="text-xs text-gray-400 ml-1 font-normal">
+                          <span className="text-xs text-emerald-100 ml-1 font-normal">
                             ({formatIndustrial(totalNetMinutes)} h)
                           </span>
                         </td>

@@ -16,7 +16,6 @@ import {
   ZapIcon,
   StarIcon,
 } from "@/components/icons";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function LoginForm() {
   const router = useRouter();
@@ -222,18 +221,15 @@ function LoginForm() {
       </div>
 
       {/* ── Right: Form ── */}
-      <div className="flex w-full flex-col justify-center px-8 py-10 lg:w-1/2 lg:px-16 xl:px-24 bg-white dark:bg-gray-950">
+      <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-[440px]">
           {/* Logo + headline */}
-          <div className="mb-8 flex items-center justify-between">
-            <Link href="/" className="inline-flex items-center gap-3">
-              <ShiftfyMark className="h-10 w-10" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                Shiftfy
-              </span>
-            </Link>
-            <ThemeToggle />
-          </div>
+          <Link href="/" className="mb-8 inline-flex items-center gap-3">
+            <ShiftfyMark className="h-10 w-10" />
+            <span className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+              Shiftfy
+            </span>
+          </Link>
 
           <div className="mb-6">
             <Link
@@ -334,7 +330,7 @@ function LoginForm() {
                   <div>
                     <label
                       htmlFor="totpCode"
-                      className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      className="mb-1.5 block text-sm font-medium text-gray-700"
                     >
                       {t("twoFACodeLabel")}
                     </label>
@@ -351,7 +347,7 @@ function LoginForm() {
                       maxLength={6}
                       autoFocus
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-center text-lg font-mono tracking-widest text-gray-900 dark:text-gray-100 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-center text-lg font-mono tracking-widest text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
@@ -369,7 +365,7 @@ function LoginForm() {
                   <div>
                     <label
                       htmlFor="recoveryCode"
-                      className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      className="mb-1.5 block text-sm font-medium text-gray-700"
                     >
                       {t("twoFARecoveryLabel")}
                     </label>
@@ -385,7 +381,7 @@ function LoginForm() {
                       maxLength={8}
                       autoFocus
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-center text-lg font-mono tracking-widest text-gray-900 dark:text-gray-100 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-center text-lg font-mono tracking-widest text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
@@ -460,7 +456,7 @@ function LoginForm() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    className="mb-1.5 block text-sm font-medium text-gray-700"
                   >
                     {t("email")}
                   </label>
@@ -474,7 +470,7 @@ function LoginForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 pl-11 pr-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -484,7 +480,7 @@ function LoginForm() {
                   <div className="mb-1.5 flex items-center justify-between">
                     <label
                       htmlFor="password"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      className="text-sm font-medium text-gray-700"
                     >
                       {t("password")}
                     </label>
@@ -507,7 +503,7 @@ function LoginForm() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 pl-11 pr-11 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
@@ -568,12 +564,10 @@ function LoginForm() {
               {/* Divider */}
               <div className="relative mt-8">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+                  <div className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white dark:bg-gray-950 px-3 text-gray-400">
-                    {t("or")}
-                  </span>
+                  <span className="bg-white px-3 text-gray-400">{t("or")}</span>
                 </div>
               </div>
 
@@ -581,7 +575,7 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() => signIn("google", { callbackUrl })}
-                className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md active:scale-[0.98]"
+                className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md active:scale-[0.98]"
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <path

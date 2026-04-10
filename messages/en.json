@@ -1806,7 +1806,18 @@
     "since": "since",
     "noTeamEntries": "No activity yet today.",
     "todayTeamTotal": "Today total",
-    "refreshTeam": "Refresh"
+    "refreshTeam": "Refresh",
+    "errorRestPeriod": "ArbZG §5: The 11-hour rest period has not been observed.",
+    "errorMaxHours": "ArbZG §3: Daily maximum working time of 10 hours already reached.",
+    "arbzg": {
+      "info": "8 hours of work reached",
+      "warning": "9 hours of work reached",
+      "critical": "Maximum working time almost reached!",
+      "exceeded": "Maximum working time exceeded!",
+      "workedToday": "Worked today: {hours}h {minutes}min",
+      "remaining": "Remaining: {hours}h {minutes}min",
+      "remainingShort": "remaining"
+    }
   },
   "projects": {
     "title": "Projects",
@@ -2519,6 +2530,9 @@
       "description": "Create your first ticket to report an issue.",
       "managerDescription": "No tickets from employees yet."
     },
+    "errorLoading": "Tickets could not be loaded. Please try again.",
+    "errorNetwork": "Network error. Please check your connection.",
+    "errorNoWorkspace": "No workspace assigned. Please contact your administrator.",
     "externalLink": {
       "label": "Public ticket link",
       "copy": "Copy link",

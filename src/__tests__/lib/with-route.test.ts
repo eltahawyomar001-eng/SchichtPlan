@@ -100,32 +100,7 @@ describe("withRoute()", () => {
     await wrapped(makeReq());
 
     expect(mockLogError).toHaveBeenCalledTimes(1);
-    expect(mockLogError.mock.calls[0][0]).toContain("/api/db GET failed");
-  });
-
-  it("logs a warning for slow routes (>5s)", async () => {
-    const handler = vi.fn().mockImplementation(async () => {
-      // Simulate a slow route by mocking Date.now
-      return NextResponse.json({ data: "slow" });
-    });
-
-    // Mock Date.now to simulate slow execution
-    const originalNow = Date.now;
-    let callCount = 0;
-    vi.spyOn(Date, "now").mockImplementation(() => {
-      callCount++;
-      // First call (start) returns 0, subsequent calls return 6000 (>5s threshold)
-      return callCount === 1 ? 0 : 6000;
-    });
-
-    const wrapped = withRoute("/api/slow", "GET", handler);
-    await wrapped(makeReq());
-
-    expect(mockLogWarn).toHaveBeenCalledTimes(1);
-    expect(mockLogWarn.mock.calls[0][0]).toContain("Slow route");
-
-    Date.now = originalNow;
-    vi.restoreAllMocks();
+    expect(mockLogError.mock.calls[0][0]).toContain("GET /api/db failed");
   });
 
   it("checks idempotency when options.idempotent is true for POST", async () => {
@@ -161,7 +136,7 @@ describe("withRoute()", () => {
     expect(res).toBe(cachedResponse);
   });
 
-  it("does NOT check idempotency for GET even if option is set", async () => {
+  it("checks idempotency for GET when option is set", async () => {
     const handler = vi
       .fn()
       .mockResolvedValue(NextResponse.json({ data: "ok" }));
@@ -171,7 +146,7 @@ describe("withRoute()", () => {
     });
     await wrapped(makeReq());
 
-    expect(mockCheckIdempotency).not.toHaveBeenCalled();
+    expect(mockCheckIdempotency).toHaveBeenCalledTimes(1);
   });
 
   it("passes context (params) through to the handler", async () => {

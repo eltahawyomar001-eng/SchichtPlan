@@ -69,13 +69,34 @@ vi.mock("@/lib/automations", () => ({
     },
   ),
   executeCustomRules: vi.fn().mockResolvedValue(undefined),
+  ARBZG_MAX_DAILY_MINUTES: 600,
+  checkRestPeriod: vi.fn().mockResolvedValue({ allowed: true }),
+  checkMaxDailyWorkTime: vi.fn().mockResolvedValue({
+    allowed: true,
+    todayWorkedMinutes: 0,
+    remainingMinutes: 600,
+  }),
+  getTodayWorkedMinutes: vi.fn().mockResolvedValue(0),
+  capWorkTimeAtLimit: vi.fn(
+    (grossMinutes: number, breakMinutes: number, _todayPrev: number) => {
+      let legalMin = 0;
+      if (grossMinutes > 540) legalMin = 45;
+      else if (grossMinutes > 360) legalMin = 30;
+      const legalBreak = Math.max(breakMinutes, legalMin);
+      return {
+        cappedGross: grossMinutes,
+        cappedNet: Math.max(0, grossMinutes - legalBreak),
+        wasCapped: false,
+        breakMinutes: legalBreak,
+      };
+    },
+  ),
+  getArbZGWarningLevel: vi.fn().mockReturnValue("NONE"),
 }));
 
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
 }));
-
-vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 
 vi.mock("@/lib/logger", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },

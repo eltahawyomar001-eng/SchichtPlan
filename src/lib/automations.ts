@@ -666,6 +666,186 @@ export function ensureLegalBreak(
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// 5b. ArbZG MAXIMUM WORK TIME & REST PERIOD ENFORCEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+/** ArbZG §3: Maximum daily work time in minutes (10 hours). */
+export const ARBZG_MAX_DAILY_MINUTES = 10 * 60; // 600 minutes
+
+/** ArbZG §5: Minimum rest period between shifts in hours. */
+export const ARBZG_MIN_REST_HOURS = 11;
+
+/** Warning thresholds (minutes worked) for approaching max work time. */
+export const ARBZG_WARNING_THRESHOLDS = {
+  /** First warning: 8 hours */
+  INFO: 8 * 60,
+  /** Second warning: 9 hours */
+  WARNING: 9 * 60,
+  /** Final warning: 9.5 hours — approaching hard limit */
+  CRITICAL: 9.5 * 60,
+} as const;
+
+/**
+ * ArbZG §5: Check if the minimum rest period (11 hours) has been
+ * observed since the last clock-out for this employee.
+ *
+ * @returns `{ allowed: true }` if clock-in is permitted, or
+ *          `{ allowed: false, remainingMinutes, nextAllowedAt }` if not.
+ */
+export async function checkRestPeriod(
+  employeeId: string,
+  now: Date = new Date(),
+): Promise<
+  | { allowed: true }
+  | { allowed: false; remainingMinutes: number; nextAllowedAt: Date }
+> {
+  const lastEntry = await prisma.timeEntry.findFirst({
+    where: {
+      employeeId,
+      clockOutAt: { not: null },
+    },
+    orderBy: { clockOutAt: "desc" },
+    select: { clockOutAt: true },
+  });
+
+  if (!lastEntry?.clockOutAt) return { allowed: true };
+
+  const restMs = now.getTime() - lastEntry.clockOutAt.getTime();
+  const restMinutes = restMs / 60000;
+  const requiredMinutes = ARBZG_MIN_REST_HOURS * 60;
+
+  if (restMinutes >= requiredMinutes) return { allowed: true };
+
+  const remainingMinutes = Math.ceil(requiredMinutes - restMinutes);
+  const nextAllowedAt = new Date(
+    lastEntry.clockOutAt.getTime() + requiredMinutes * 60000,
+  );
+  return { allowed: false, remainingMinutes, nextAllowedAt };
+}
+
+/**
+ * ArbZG §3: Check how many minutes the employee has already worked today
+ * (completed entries + any currently running entry).
+ *
+ * @returns Total gross minutes worked today (excluding the currently open entry).
+ */
+export async function getTodayWorkedMinutes(
+  employeeId: string,
+  todayDate: Date,
+  tz: string = "Europe/Berlin",
+): Promise<number> {
+  // Get today's start/end in the employee's timezone
+  const localNow = new Date(
+    new Date().toLocaleString("en-US", { timeZone: tz }),
+  );
+  const todayStart = new Date(localNow);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(localNow);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const completedEntries = await prisma.timeEntry.findMany({
+    where: {
+      employeeId,
+      clockOutAt: { not: null },
+      clockInAt: { gte: todayStart, lte: todayEnd },
+    },
+    select: { grossMinutes: true },
+  });
+
+  return completedEntries.reduce((sum, e) => sum + (e.grossMinutes ?? 0), 0);
+}
+
+/**
+ * ArbZG §3: Check if the employee is allowed to clock in based on the
+ * maximum daily work time (10 hours).
+ *
+ * @returns `{ allowed: true, todayWorkedMinutes, remainingMinutes }` or
+ *          `{ allowed: false, todayWorkedMinutes }` if 10h is already reached.
+ */
+export async function checkMaxDailyWorkTime(
+  employeeId: string,
+  todayDate: Date,
+  tz?: string,
+): Promise<
+  | { allowed: true; todayWorkedMinutes: number; remainingMinutes: number }
+  | { allowed: false; todayWorkedMinutes: number }
+> {
+  const todayWorkedMinutes = await getTodayWorkedMinutes(
+    employeeId,
+    todayDate,
+    tz,
+  );
+
+  if (todayWorkedMinutes >= ARBZG_MAX_DAILY_MINUTES) {
+    return { allowed: false, todayWorkedMinutes };
+  }
+
+  return {
+    allowed: true,
+    todayWorkedMinutes,
+    remainingMinutes: ARBZG_MAX_DAILY_MINUTES - todayWorkedMinutes,
+  };
+}
+
+/**
+ * ArbZG §3: Cap the gross work time at the maximum daily limit and compute
+ * the capped net minutes. Used during clock-out.
+ *
+ * @returns The capped gross and net minutes, plus a flag indicating whether
+ *          the time was capped.
+ */
+export function capWorkTimeAtLimit(
+  grossMinutes: number,
+  breakMinutes: number,
+  todayPreviousGrossMinutes: number,
+): {
+  cappedGross: number;
+  cappedNet: number;
+  wasCapped: boolean;
+  breakMinutes: number;
+} {
+  const totalGross = todayPreviousGrossMinutes + grossMinutes;
+  const overLimit = totalGross - ARBZG_MAX_DAILY_MINUTES;
+
+  if (overLimit <= 0) {
+    // Not over the limit — apply legal break enforcement as usual
+    const legalBreak = ensureLegalBreak(grossMinutes, breakMinutes);
+    const net = Math.max(0, grossMinutes - legalBreak);
+    return {
+      cappedGross: grossMinutes,
+      cappedNet: net,
+      wasCapped: false,
+      breakMinutes: legalBreak,
+    };
+  }
+
+  // Cap: only allow the remaining minutes until 10h total
+  const allowedGross = Math.max(0, grossMinutes - overLimit);
+  const legalBreak = ensureLegalBreak(allowedGross, breakMinutes);
+  const net = Math.max(0, allowedGross - legalBreak);
+
+  return {
+    cappedGross: allowedGross,
+    cappedNet: net,
+    wasCapped: true,
+    breakMinutes: legalBreak,
+  };
+}
+
+/**
+ * Determine the ArbZG warning level based on current elapsed work minutes.
+ */
+export function getArbZGWarningLevel(
+  currentMinutes: number,
+): "NONE" | "INFO" | "WARNING" | "CRITICAL" | "EXCEEDED" {
+  if (currentMinutes >= ARBZG_MAX_DAILY_MINUTES) return "EXCEEDED";
+  if (currentMinutes >= ARBZG_WARNING_THRESHOLDS.CRITICAL) return "CRITICAL";
+  if (currentMinutes >= ARBZG_WARNING_THRESHOLDS.WARNING) return "WARNING";
+  if (currentMinutes >= ARBZG_WARNING_THRESHOLDS.INFO) return "INFO";
+  return "NONE";
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // 6. AUTO-UPDATE TIME ACCOUNT BALANCES
 // ═══════════════════════════════════════════════════════════════════
 

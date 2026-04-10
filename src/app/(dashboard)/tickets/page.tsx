@@ -90,6 +90,7 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterAssignedToMe, setFilterAssignedToMe] = useState(false);
@@ -99,6 +100,7 @@ export default function TicketsPage() {
 
   const fetchTickets = useCallback(async () => {
     try {
+      setFetchError("");
       const params = new URLSearchParams();
       if (filterStatus !== "all") params.set("status", filterStatus);
       if (filterCategory !== "all") params.set("category", filterCategory);
@@ -109,13 +111,27 @@ export default function TicketsPage() {
       if (res.ok) {
         const data = await res.json();
         setTickets(data.data ?? data);
+      } else {
+        const data = await res.json().catch(() => null);
+        setFetchError(
+          data?.error === "NO_WORKSPACE"
+            ? t("errorNoWorkspace")
+            : t("errorLoading"),
+        );
       }
     } catch {
-      // silent
+      setFetchError(t("errorNetwork"));
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterCategory, filterAssignedToMe, user?.id, searchQuery]);
+  }, [
+    filterStatus,
+    filterCategory,
+    filterAssignedToMe,
+    user?.id,
+    searchQuery,
+    t,
+  ]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -125,7 +141,7 @@ export default function TicketsPage() {
         setStats(data);
       }
     } catch {
-      // silent
+      // stats are supplementary — silent
     }
   }, []);
 
@@ -207,6 +223,34 @@ export default function TicketsPage() {
               <ClipboardIcon className="h-3.5 w-3.5" />
               {linkCopied ? t("externalLink.copied") : t("externalLink.copy")}
             </Button>
+          </div>
+        )}
+
+        {/* ── Error banner ────────────────────────────────── */}
+        {fetchError && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-300">
+            <svg
+              className="h-5 w-5 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {fetchError}
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchTickets();
+                fetchStats();
+              }}
+              className="ml-auto text-xs font-semibold underline hover:no-underline"
+            >
+              {tc("tryAgain")}
+            </button>
           </div>
         )}
 

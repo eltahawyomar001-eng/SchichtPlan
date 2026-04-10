@@ -59,6 +59,13 @@ interface TeamSummary {
   offline: number;
 }
 
+interface ArbZGInfo {
+  maxDailyMinutes: number;
+  todayWorkedMinutes: number;
+  remainingMinutes: number;
+  warningLevel: "NONE" | "INFO" | "WARNING" | "CRITICAL" | "EXCEEDED";
+}
+
 type ClockState = "idle" | "working" | "break";
 
 export default function StempeluhrSeite() {
@@ -75,6 +82,7 @@ export default function StempeluhrSeite() {
   const [elapsed, setElapsed] = useState("");
   const [error, setError] = useState("");
   const [noProfile, setNoProfile] = useState(false);
+  const [arbZG, setArbZG] = useState<ArbZGInfo | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
 
   // ── Team state (management only) ──
@@ -123,6 +131,7 @@ export default function StempeluhrSeite() {
       }
       setEntry(data.entry);
       setTodayEntries(data.todayEntries || []);
+      if (data.arbZG) setArbZG(data.arbZG);
       if (data.active && data.onBreak) {
         setClockState("break");
       } else if (data.active) {
@@ -156,7 +165,7 @@ export default function StempeluhrSeite() {
   // ── Check GPS permission ──
   // GPS collection disabled — removed for legal compliance (§87 BetrVG)
 
-  // ── Live timer ──
+  // ── Live timer + periodic ArbZG refresh ──
   useEffect(() => {
     if (
       (clockState === "working" || clockState === "break") &&
@@ -173,13 +182,22 @@ export default function StempeluhrSeite() {
       };
       update();
       timerRef.current = setInterval(update, 1000);
+
+      // Re-fetch status every 5 minutes to get updated ArbZG info
+      // (warnings, remaining time); more often when near the limit
+      const refreshInterval =
+        arbZG && arbZG.remainingMinutes <= 30 ? 60000 : 300000;
+      const arbzgRefresh = setInterval(fetchStatus, refreshInterval);
+
       return () => {
         if (timerRef.current) clearInterval(timerRef.current);
+        clearInterval(arbzgRefresh);
       };
     } else {
       setElapsed("");
     }
-  }, [clockState, entry?.clockInAt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clockState, entry?.clockInAt, arbZG?.warningLevel]);
 
   // ── Perform action ──
   async function handleClock(
@@ -206,8 +224,10 @@ export default function StempeluhrSeite() {
           BREAK_ALREADY_ACTIVE: t("errorBreakActive"),
           NO_ACTIVE_BREAK: t("errorNoBreak"),
           NO_EMPLOYEE_PROFILE: t("errorNoProfile"),
+          REST_PERIOD_VIOLATION: data.message || t("errorRestPeriod"),
+          MAX_DAILY_HOURS_REACHED: data.message || t("errorMaxHours"),
         };
-        setError(errorMessages[errorKey] || t("errorGeneric"));
+        setError(errorMessages[errorKey] || data.message || t("errorGeneric"));
         return;
       }
 
@@ -315,9 +335,48 @@ export default function StempeluhrSeite() {
         <div className="mx-auto max-w-md space-y-4">
           {/* ── Error banner ── */}
           {error && (
-            <div className="flex items-center gap-2 rounded-[14px] bg-red-50 px-4 py-3 text-[15px] font-medium text-red-700">
+            <div className="flex items-center gap-2 rounded-[14px] bg-red-50 dark:bg-red-950/40 px-4 py-3 text-[15px] font-medium text-red-700 dark:text-red-300">
               <AlertTriangleIcon className="h-5 w-5 shrink-0" />
               {error}
+            </div>
+          )}
+
+          {/* ── ArbZG compliance warning ── */}
+          {arbZG && arbZG.warningLevel !== "NONE" && clockState !== "idle" && (
+            <div
+              className={`flex items-start gap-3 rounded-[14px] px-4 py-3 text-[14px] font-medium ${
+                arbZG.warningLevel === "EXCEEDED"
+                  ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50"
+                  : arbZG.warningLevel === "CRITICAL"
+                    ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 animate-pulse"
+                    : arbZG.warningLevel === "WARNING"
+                      ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300"
+                      : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+              }`}
+            >
+              <AlertTriangleIcon className="h-5 w-5 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">
+                  {arbZG.warningLevel === "EXCEEDED"
+                    ? t("arbzg.exceeded")
+                    : arbZG.warningLevel === "CRITICAL"
+                      ? t("arbzg.critical")
+                      : arbZG.warningLevel === "WARNING"
+                        ? t("arbzg.warning")
+                        : t("arbzg.info")}
+                </p>
+                <p className="mt-0.5 text-[13px] opacity-80">
+                  {t("arbzg.workedToday", {
+                    hours: Math.floor(arbZG.todayWorkedMinutes / 60),
+                    minutes: arbZG.todayWorkedMinutes % 60,
+                  })}{" "}
+                  ·{" "}
+                  {t("arbzg.remaining", {
+                    hours: Math.floor(arbZG.remainingMinutes / 60),
+                    minutes: arbZG.remainingMinutes % 60,
+                  })}
+                </p>
+              </div>
             </div>
           )}
 
@@ -431,27 +490,36 @@ export default function StempeluhrSeite() {
               {/* ── Today progress bar (when active) ── */}
               {clockState !== "idle" && todayTotalMinutes > 0 && (
                 <div className="mb-5">
-                  <div className="mb-1.5 flex items-center justify-between text-xs text-gray-400">
+                  <div className="mb-1.5 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                     <span>{t("todayLog")}</span>
-                    <span className="font-medium text-gray-600">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">
                       {todayHours}h {String(todayMins).padStart(2, "0")}m
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        clockState === "working"
-                          ? "bg-emerald-500"
-                          : "bg-amber-400"
+                        arbZG && arbZG.warningLevel === "CRITICAL"
+                          ? "bg-red-500"
+                          : arbZG && arbZG.warningLevel === "WARNING"
+                            ? "bg-amber-500"
+                            : clockState === "working"
+                              ? "bg-emerald-500"
+                              : "bg-amber-400"
                       }`}
                       style={{
-                        width: `${Math.min(100, (todayTotalMinutes / 480) * 100)}%`,
+                        width: `${Math.min(100, (todayTotalMinutes / (arbZG?.maxDailyMinutes ?? 600)) * 100)}%`,
                       }}
                     />
                   </div>
-                  <p className="mt-1 text-right text-[11px] text-gray-300">
-                    / 8h
-                  </p>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-300 dark:text-gray-600">
+                    <span>
+                      {arbZG
+                        ? `${Math.floor(arbZG.remainingMinutes / 60)}h ${arbZG.remainingMinutes % 60}m ${t("arbzg.remainingShort")}`
+                        : ""}
+                    </span>
+                    <span>/ 10h (ArbZG)</span>
+                  </div>
                 </div>
               )}
 

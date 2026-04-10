@@ -1806,7 +1806,18 @@
     "since": "seit",
     "noTeamEntries": "Heute noch keine Aktivität.",
     "todayTeamTotal": "Heute gesamt",
-    "refreshTeam": "Aktualisieren"
+    "refreshTeam": "Aktualisieren",
+    "errorRestPeriod": "ArbZG §5: Die 11-stündige Ruhezeit wurde noch nicht eingehalten.",
+    "errorMaxHours": "ArbZG §3: Tägliche Höchstarbeitszeit von 10 Stunden bereits erreicht.",
+    "arbzg": {
+      "info": "8 Stunden Arbeitszeit erreicht",
+      "warning": "9 Stunden Arbeitszeit erreicht",
+      "critical": "Höchstarbeitszeit fast erreicht!",
+      "exceeded": "Höchstarbeitszeit überschritten!",
+      "workedToday": "Heute gearbeitet: {hours}h {minutes}min",
+      "remaining": "Verbleibend: {hours}h {minutes}min",
+      "remainingShort": "verbleibend"
+    }
   },
   "projects": {
     "title": "Projekte",
@@ -2519,6 +2530,9 @@
       "description": "Erstellen Sie Ihr erstes Ticket, um ein Anliegen zu melden.",
       "managerDescription": "Noch keine Tickets von Mitarbeitern eingegangen."
     },
+    "errorLoading": "Tickets konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "errorNetwork": "Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung.",
+    "errorNoWorkspace": "Kein Workspace zugeordnet. Bitte wenden Sie sich an Ihren Administrator.",
     "externalLink": {
       "label": "Öffentlicher Ticket-Link",
       "copy": "Link kopieren",

@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { ensureLegalBreak, executeCustomRules } from "@/lib/automations";
+import {
+  executeCustomRules,
+  checkRestPeriod,
+  checkMaxDailyWorkTime,
+  capWorkTimeAtLimit,
+  getTodayWorkedMinutes,
+  getArbZGWarningLevel,
+  ARBZG_MAX_DAILY_MINUTES,
+} from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
 import { requireAuth } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
-import { withRetry } from "@/lib/prisma-retry";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/time-entries/clock
@@ -53,35 +58,58 @@ export const POST = withRoute(
 
     // ── Clock In ──
     if (action === "in") {
+      // ArbZG §5: Check 11-hour rest period since last clock-out
+      const restCheck = await checkRestPeriod(employeeId, now);
+      if (!restCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: "REST_PERIOD_VIOLATION",
+            message: `ArbZG §5: Ruhezeit von 11 Stunden nicht eingehalten. Nächster Arbeitsbeginn möglich ab ${restCheck.nextAllowedAt.toLocaleTimeString("de-DE", { timeZone: tz, hour: "2-digit", minute: "2-digit" })} Uhr.`,
+            remainingMinutes: restCheck.remainingMinutes,
+            nextAllowedAt: restCheck.nextAllowedAt.toISOString(),
+          },
+          { status: 403 },
+        );
+      }
+
+      // ArbZG §3: Check if 10-hour daily limit is already reached
+      const dailyCheck = await checkMaxDailyWorkTime(employeeId, dateOnly, tz);
+      if (!dailyCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: "MAX_DAILY_HOURS_REACHED",
+            message: `ArbZG §3: Tägliche Höchstarbeitszeit von 10 Stunden bereits erreicht (${Math.floor(dailyCheck.todayWorkedMinutes / 60)}h ${dailyCheck.todayWorkedMinutes % 60}min gearbeitet).`,
+            todayWorkedMinutes: dailyCheck.todayWorkedMinutes,
+          },
+          { status: 403 },
+        );
+      }
+
       // Use a serializable transaction to prevent race conditions
       // (two simultaneous clock-ins both passing the findFirst check)
       let entry;
       try {
-        entry = await withRetry(
-          () =>
-            prisma.$transaction(async (tx) => {
-              const open = await tx.timeEntry.findFirst({
-                where: { employeeId, isLiveClock: true, clockOutAt: null },
-              });
-              if (open) {
-                throw new Error(`ALREADY_CLOCKED_IN:${open.id}`);
-              }
+        entry = await prisma.$transaction(async (tx) => {
+          const open = await tx.timeEntry.findFirst({
+            where: { employeeId, isLiveClock: true, clockOutAt: null },
+          });
+          if (open) {
+            throw new Error(`ALREADY_CLOCKED_IN:${open.id}`);
+          }
 
-              return tx.timeEntry.create({
-                data: {
-                  date: dateOnly,
-                  startTime: timeStr,
-                  endTime: timeStr,
-                  isLiveClock: true,
-                  clockInAt: now,
-                  employeeId,
-                  workspaceId,
-                  status: "ENTWURF",
-                },
-              });
-            }),
-          "/api/time-entries/clock POST (clock-in)",
-        );
+          return tx.timeEntry.create({
+            data: {
+              date: dateOnly,
+              startTime: timeStr,
+              endTime: timeStr,
+              isLiveClock: true,
+              clockInAt: now,
+              employeeId,
+              workspaceId,
+              status: "ENTWURF",
+            },
+          });
+        });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         if (msg.startsWith("ALREADY_CLOCKED_IN:")) {
@@ -102,21 +130,6 @@ export const POST = withRoute(
         startTime: timeStr,
         action: "clock-in",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
-
-      createAuditLog({
-        action: "CREATE",
-        entityType: "TimeEntry",
-        entityId: entry.id,
-        userId: user.id,
-        userEmail: user.email,
-        workspaceId,
-        metadata: { action: "clock-in", time: timeStr },
-      });
-
-      dispatchWebhook(workspaceId, "time_entry.clock_in", {
-        id: entry.id,
-        employeeId,
-      }).catch(() => {});
 
       return NextResponse.json(entry, { status: 201 });
     }
@@ -201,53 +214,75 @@ export const POST = withRoute(
 
     // ── Clock Out ──
     if (action === "out") {
-      const entry = await withRetry(
-        () =>
-          prisma.$transaction(async (tx) => {
-            const open = await tx.timeEntry.findFirst({
-              where: { employeeId, isLiveClock: true, clockOutAt: null },
-              orderBy: { clockInAt: "desc" },
+      const entry = await prisma
+        .$transaction(async (tx) => {
+          const open = await tx.timeEntry.findFirst({
+            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            orderBy: { clockInAt: "desc" },
+          });
+          if (!open) {
+            throw new Error("NOT_CLOCKED_IN");
+          }
+
+          // If break is still running, auto-end it now
+          let breakMinutes = open.breakMinutes || 0;
+          let breakEnd = open.breakEnd;
+          if (open.breakStart && !open.breakEnd) {
+            const bsMin = toMinutes(open.breakStart);
+            const beMin = toMinutes(timeStr);
+            breakMinutes = Math.max(0, beMin - bsMin);
+            breakEnd = timeStr;
+          }
+
+          const clockIn = open.clockInAt!;
+          const diffMs = now.getTime() - clockIn.getTime();
+          const grossMinutes = Math.round(diffMs / 60000);
+
+          // ArbZG §3: Get today's prior completed work to enforce 10h cap
+          const todayPrevious = await getTodayWorkedMinutes(
+            employeeId,
+            dateOnly,
+            tz,
+          );
+
+          const capped = capWorkTimeAtLimit(
+            grossMinutes,
+            breakMinutes,
+            todayPrevious,
+          );
+
+          if (capped.wasCapped) {
+            log.warn("ArbZG: Work time capped at 10h daily limit", {
+              employeeId,
+              originalGross: grossMinutes,
+              cappedGross: capped.cappedGross,
+              todayPrevious,
             });
-            if (!open) {
-              throw new Error("NOT_CLOCKED_IN");
-            }
+          }
 
-            // If break is still running, auto-end it now
-            let breakMinutes = open.breakMinutes || 0;
-            let breakEnd = open.breakEnd;
-            if (open.breakStart && !open.breakEnd) {
-              const bsMin = toMinutes(open.breakStart);
-              const beMin = toMinutes(timeStr);
-              breakMinutes = Math.max(0, beMin - bsMin);
-              breakEnd = timeStr;
-            }
-
-            const clockIn = open.clockInAt!;
-            const diffMs = now.getTime() - clockIn.getTime();
-            const grossMinutes = Math.round(diffMs / 60000);
-            // ArbZG legal break enforcement
-            const legalBreak = ensureLegalBreak(grossMinutes, breakMinutes);
-            const netMinutes = Math.max(0, grossMinutes - legalBreak);
-
-            return tx.timeEntry.update({
-              where: { id: open.id },
-              data: {
-                endTime: timeStr,
-                clockOutAt: now,
-                breakEnd,
-                breakMinutes: legalBreak,
-                grossMinutes,
-                netMinutes,
-              },
-            });
-          }),
-        "/api/time-entries/clock POST (clock-out)",
-      ).catch((err) => {
-        if (err instanceof Error && err.message === "NOT_CLOCKED_IN") {
-          return { error: "NOT_CLOCKED_IN", status: 404 as const };
-        }
-        throw err;
-      });
+          return tx.timeEntry.update({
+            where: { id: open.id },
+            data: {
+              endTime: timeStr,
+              clockOutAt: now,
+              breakEnd,
+              breakMinutes: capped.breakMinutes,
+              grossMinutes: capped.cappedGross,
+              netMinutes: capped.cappedNet,
+              ...(capped.wasCapped
+                ? {
+                    remarks: "ArbZG §3: Arbeitszeit auf 10h-Tageslimit gekappt",
+                  }
+                : {}),
+            },
+          });
+        })
+        .catch((err) => {
+          if (err instanceof Error && err.message === "NOT_CLOCKED_IN") {
+            return { error: "NOT_CLOCKED_IN", status: 404 as const };
+          }
+          throw err;
+        });
 
       if ("error" in entry) {
         return NextResponse.json(
@@ -269,21 +304,6 @@ export const POST = withRoute(
         action: "clock-out",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
 
-      createAuditLog({
-        action: "UPDATE",
-        entityType: "TimeEntry",
-        entityId: entry.id,
-        userId: user.id,
-        userEmail: user.email,
-        workspaceId,
-        metadata: { action: "clock-out", time: timeStr },
-      });
-
-      dispatchWebhook(workspaceId, "time_entry.clock_out", {
-        id: entry.id,
-        employeeId,
-      }).catch(() => {});
-
       return NextResponse.json(entry);
     }
 
@@ -299,6 +319,7 @@ function toMinutes(t: string): number {
 /**
  * GET /api/time-entries/clock
  * Returns current clock-in status + today's completed entries for the employee.
+ * Includes ArbZG compliance info (remaining work time, warning level).
  */
 export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
   const { searchParams } = new URL(req.url);
@@ -342,11 +363,39 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
     orderBy: { clockInAt: "desc" },
   });
 
+  // ── ArbZG compliance data ──
+  const todayCompletedMinutes = todayEntries.reduce(
+    (sum, e) => sum + (e.grossMinutes ?? 0),
+    0,
+  );
+
+  // If currently clocked in, add elapsed time to the total
+  let currentSessionMinutes = 0;
+  if (open?.clockInAt) {
+    const now = new Date();
+    currentSessionMinutes = Math.round(
+      (now.getTime() - open.clockInAt.getTime()) / 60000,
+    );
+  }
+
+  const totalTodayMinutes = todayCompletedMinutes + currentSessionMinutes;
+  const remainingMinutes = Math.max(
+    0,
+    ARBZG_MAX_DAILY_MINUTES - totalTodayMinutes,
+  );
+  const warningLevel = getArbZGWarningLevel(totalTodayMinutes);
+
   return NextResponse.json({
     active: !!open,
     onBreak: open ? !!(open.breakStart && !open.breakEnd) : false,
     entry: open || null,
     todayEntries,
     noProfile: false,
+    arbZG: {
+      maxDailyMinutes: ARBZG_MAX_DAILY_MINUTES,
+      todayWorkedMinutes: totalTodayMinutes,
+      remainingMinutes,
+      warningLevel,
+    },
   });
 });

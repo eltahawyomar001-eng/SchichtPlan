@@ -282,10 +282,10 @@ export default function BerichteSeite() {
                         ),
                       }}
                     >
-                      <ResponsiveContainer width="100%" height={280}>
+                      <ResponsiveContainer width="100%" height={320}>
                         <BarChart
                           data={data.employeeStats.slice(0, 10)}
-                          margin={{ top: 5, right: 20, left: 0, bottom: 60 }}
+                          margin={{ top: 5, right: 20, left: 0, bottom: 80 }}
                         >
                           <CartesianGrid
                             strokeDasharray="3 3"
@@ -293,16 +293,23 @@ export default function BerichteSeite() {
                           />
                           <XAxis
                             dataKey="name"
-                            tick={{ fontSize: 10, fill: chartColors.tick }}
+                            tick={{
+                              fontSize: 12,
+                              fill: chartColors.tick,
+                              fontWeight: 500,
+                            }}
+                            stroke={chartColors.tick}
                             angle={-45}
                             textAnchor="end"
-                            height={70}
+                            height={90}
+                            interval={0}
                             tickFormatter={(name: string) =>
-                              name.length > 12 ? `${name.slice(0, 11)}…` : name
+                              name.length > 15 ? `${name.slice(0, 14)}…` : name
                             }
                           />
                           <YAxis
                             tick={{ fontSize: 11, fill: chartColors.tick }}
+                            stroke={chartColors.tick}
                             width={40}
                           />
                           <Tooltip
@@ -344,9 +351,31 @@ export default function BerichteSeite() {
                         outerRadius={85}
                         dataKey="value"
                         paddingAngle={3}
-                        label={({ name, percent }) =>
-                          `${(name ?? "").length > 10 ? (name ?? "").slice(0, 9) + "…" : (name ?? "")} ${((percent ?? 0) * 100).toFixed(0)}%`
-                        }
+                        label={(props) => {
+                          const RADIAN = Math.PI / 180;
+                          const cx = Number(props.cx ?? 0);
+                          const cy = Number(props.cy ?? 0);
+                          const midAngle = Number(props.midAngle ?? 0);
+                          const or = Number(props.outerRadius ?? 85);
+                          const name = String(props.name ?? "");
+                          const percent = Number(props.percent ?? 0);
+                          const radius = or + 20;
+                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                          const label = `${name.length > 10 ? name.slice(0, 9) + "…" : name} ${(percent * 100).toFixed(0)}%`;
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill={chartColors.labelText}
+                              textAnchor={x > cx ? "start" : "end"}
+                              dominantBaseline="central"
+                              fontSize={12}
+                            >
+                              {label}
+                            </text>
+                          );
+                        }}
                         labelLine={{ stroke: chartColors.tick }}
                       >
                         {shiftTypeData.map((_, idx) => (
@@ -388,7 +417,30 @@ export default function BerichteSeite() {
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
+                      label={(props) => {
+                        const RADIAN = Math.PI / 180;
+                        const cx = Number(props.cx ?? 0);
+                        const cy = Number(props.cy ?? 0);
+                        const midAngle = Number(props.midAngle ?? 0);
+                        const or = Number(props.outerRadius ?? 80);
+                        const name = String(props.name ?? "");
+                        const value = Number(props.value ?? 0);
+                        const radius = or + 20;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (
+                          <text
+                            x={x}
+                            y={y}
+                            fill={chartColors.labelText}
+                            textAnchor={x > cx ? "start" : "end"}
+                            dominantBaseline="central"
+                            fontSize={12}
+                          >
+                            {`${name}: ${value}`}
+                          </text>
+                        );
+                      }}
                       labelLine={{ stroke: chartColors.tick }}
                     >
                       {absenceData.map((entry, idx) => (

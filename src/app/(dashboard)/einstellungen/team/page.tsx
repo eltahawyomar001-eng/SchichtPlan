@@ -284,7 +284,7 @@ export default function TeamPage() {
                   <div className="flex-1 space-y-1.5">
                     <Label htmlFor="invite-email">{t("emailLabel")}</Label>
                     <div className="relative">
-                      <MailIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <MailIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       <Input
                         id="invite-email"
                         type="email"
@@ -292,7 +292,7 @@ export default function TeamPage() {
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                         required
-                        className="ps-10"
+                        className="pl-10"
                       />
                     </div>
                   </div>

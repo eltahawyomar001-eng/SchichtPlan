@@ -144,15 +144,24 @@ describe("subscription-guard", () => {
   // ─── countOccupiedSlots ───────────────────────────────────
 
   describe("countOccupiedSlots", () => {
-    it("returns sum of active employees and pending invitations", async () => {
+    it("returns sum of linked employees (userId != null) and pending invitations", async () => {
       mockEmployeeCount.mockResolvedValue(5);
       mockInvitationCount.mockResolvedValue(3);
 
       const count = await countOccupiedSlots(WS_ID);
       expect(count).toBe(8);
+
+      // Verify employee count only includes linked users
+      expect(mockEmployeeCount).toHaveBeenCalledWith({
+        where: {
+          workspaceId: WS_ID,
+          isActive: true,
+          userId: { not: null },
+        },
+      });
     });
 
-    it("returns 0 when no employees or invitations", async () => {
+    it("returns 0 when no linked employees or invitations", async () => {
       mockEmployeeCount.mockResolvedValue(0);
       mockInvitationCount.mockResolvedValue(0);
 

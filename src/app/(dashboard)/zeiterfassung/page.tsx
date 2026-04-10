@@ -419,10 +419,10 @@ export default function ZeiterfassungPage() {
                   <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {t("entries")}
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {filteredEntries.length}
                   </p>
                 </div>
@@ -433,14 +433,14 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-xl stat-icon-emerald p-2.5 sm:p-2.5 flex-shrink-0">
-                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                <div className="rounded-lg bg-yellow-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {t("open")}
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {pendingCount}
                   </p>
                 </div>
@@ -451,14 +451,14 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="rounded-xl stat-icon-emerald p-2.5 sm:p-2.5 flex-shrink-0">
-                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                <div className="rounded-lg bg-green-50 p-2 sm:p-2.5 flex-shrink-0">
+                  <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {t("confirmed")}
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">
                     {confirmedCount}
                   </p>
                 </div>
@@ -984,13 +984,13 @@ export default function ZeiterfassungPage() {
             ) : (
               <>
                 {/* ── Mobile card list ── */}
-                <div className="divide-y sm:hidden">
+                <div className="divide-y divide-zinc-800 sm:hidden bg-zinc-900">
                   {filteredEntries.map((entry) => {
                     const d = new Date(entry.date);
                     return (
                       <div
                         key={entry.id}
-                        className="p-4 space-y-2 cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="p-4 space-y-2 cursor-pointer hover:bg-zinc-800/70 transition-colors"
                         onClick={() => setSelectedEntry(entry)}
                       >
                         <div className="flex items-center justify-between">
@@ -1002,7 +1002,7 @@ export default function ZeiterfassungPage() {
                                   entry.employee.color ?? "#6b7280",
                               }}
                             />
-                            <span className="font-medium text-gray-900 text-sm">
+                            <span className="font-medium text-zinc-100 text-sm">
                               {entry.employee.firstName}{" "}
                               {entry.employee.lastName}
                             </span>
@@ -1011,19 +1011,19 @@ export default function ZeiterfassungPage() {
                             {t(`statuses.${entry.status}`)}
                           </Badge>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center justify-between text-xs text-zinc-400">
                           <span>
                             {format(d, "dd.MM.yyyy", { locale: dateFnsLocale })}
                           </span>
                           <span>
                             {entry.startTime} – {entry.endTime}
                           </span>
-                          <span className="font-medium text-gray-700">
+                          <span className="font-medium text-emerald-400">
                             {formatMinutesToHHmm(entry.netMinutes)}
                           </span>
                         </div>
                         {entry.location && (
-                          <div className="flex items-center gap-1 text-xs text-gray-400">
+                          <div className="flex items-center gap-1 text-xs text-zinc-500">
                             <MapPinIcon className="h-3 w-3 shrink-0" />
                             {entry.location.name}
                           </div>
@@ -1032,11 +1032,13 @@ export default function ZeiterfassungPage() {
                     );
                   })}
                   {/* Mobile total */}
-                  <div className="p-4 bg-emerald-600 flex items-center justify-between text-sm">
-                    <span className="font-medium text-white">{t("total")}</span>
-                    <span className="font-bold text-white">
+                  <div className="p-4 bg-zinc-950 flex items-center justify-between text-sm">
+                    <span className="font-medium text-emerald-500">
+                      {t("total")}
+                    </span>
+                    <span className="font-bold text-emerald-400">
                       {formatMinutesToHHmm(totalNetMinutes)}
-                      <span className="text-xs text-emerald-100 ml-1 font-normal">
+                      <span className="text-xs text-emerald-600 ml-1 font-normal">
                         ({formatIndustrial(totalNetMinutes)} h)
                       </span>
                     </span>
@@ -1047,34 +1049,34 @@ export default function ZeiterfassungPage() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b bg-emerald-600">
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                      <tr className="border-b border-zinc-800 bg-zinc-950 dark:bg-zinc-950">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.date")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.employee")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.time")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.break")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.net")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.location")}
                         </th>
-                        <th className="px-4 py-3 text-left font-medium text-white">
+                        <th className="px-4 py-3 text-left font-medium text-emerald-500">
                           {t("table.status")}
                         </th>
-                        <th className="px-4 py-3 text-right font-medium text-white">
+                        <th className="px-4 py-3 text-right font-medium text-emerald-500">
                           {t("table.cw")}
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="bg-zinc-900 dark:bg-zinc-900">
                       {filteredEntries.map((entry) => {
                         const d = new Date(entry.date);
                         const kw = getCalendarWeek(d);
@@ -1082,15 +1084,15 @@ export default function ZeiterfassungPage() {
                         return (
                           <tr
                             key={entry.id}
-                            className="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                            className="border-b border-zinc-800 last:border-b-0 hover:bg-zinc-800/70 cursor-pointer transition-colors"
                             onClick={() => setSelectedEntry(entry)}
                           >
-                            <td className="px-4 py-3 font-medium text-gray-900">
+                            <td className="px-4 py-3 font-medium text-zinc-100">
                               {format(d, "dd.MM.yyyy", {
                                 locale: dateFnsLocale,
                               })}
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-zinc-200">
                               <div className="flex items-center gap-2">
                                 <div
                                   className="h-2 w-2 rounded-full"
@@ -1103,19 +1105,19 @@ export default function ZeiterfassungPage() {
                                 {entry.employee.lastName}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-gray-600">
+                            <td className="px-4 py-3 text-zinc-300">
                               {entry.startTime} – {entry.endTime}
                             </td>
-                            <td className="px-4 py-3 text-gray-600">
+                            <td className="px-4 py-3 text-zinc-300">
                               {formatMinutesToHHmm(entry.breakMinutes)}
                             </td>
-                            <td className="px-4 py-3 font-medium">
+                            <td className="px-4 py-3 font-medium text-emerald-400">
                               {formatMinutesToHHmm(entry.netMinutes)}
-                              <span className="text-xs text-gray-400 ml-1">
+                              <span className="text-xs text-zinc-500 ml-1">
                                 ({formatIndustrial(entry.netMinutes)})
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-gray-600">
+                            <td className="px-4 py-3 text-zinc-400">
                               <div className="space-y-1">
                                 {entry.location && (
                                   <span className="flex items-center gap-1">
@@ -1133,7 +1135,7 @@ export default function ZeiterfassungPage() {
                                 {t(`statuses.${entry.status}`)}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-right text-gray-500">
+                            <td className="px-4 py-3 text-right text-zinc-500">
                               {kw}
                             </td>
                           </tr>
@@ -1141,16 +1143,16 @@ export default function ZeiterfassungPage() {
                       })}
                     </tbody>
                     <tfoot>
-                      <tr className="bg-emerald-600 border-t">
+                      <tr className="bg-zinc-950 dark:bg-zinc-950 border-t border-zinc-800">
                         <td
                           colSpan={4}
-                          className="px-4 py-3 text-right font-medium text-white"
+                          className="px-4 py-3 text-right font-medium text-emerald-500"
                         >
                           {t("total")}
                         </td>
-                        <td className="px-4 py-3 font-bold text-white">
+                        <td className="px-4 py-3 font-bold text-emerald-400">
                           {formatMinutesToHHmm(totalNetMinutes)}
-                          <span className="text-xs text-emerald-100 ml-1 font-normal">
+                          <span className="text-xs text-emerald-600 ml-1 font-normal">
                             ({formatIndustrial(totalNetMinutes)} h)
                           </span>
                         </td>

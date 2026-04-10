@@ -4,8 +4,6 @@ import { sendEmail } from "@/lib/notifications/email";
 import { randomBytes } from "crypto";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/invitations/[id]/resend — resend an invitation email with a fresh token
@@ -62,21 +60,6 @@ export const POST = withRoute(
       message: `${inviterName} has reminded you about your invitation to join "${workspaceName}" as ${invitation.role.charAt(0) + invitation.role.slice(1).toLowerCase()}. Click the button below to accept. This invitation expires in 7 days.`,
       link: inviteLink,
     });
-
-    createAuditLog({
-      action: "UPDATE",
-      entityType: "Invitation",
-      entityId: id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      metadata: { action: "RESEND", email: invitation.email },
-    });
-
-    dispatchWebhook(workspaceId, "invitation.resent", {
-      id,
-      email: invitation.email,
-    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   },

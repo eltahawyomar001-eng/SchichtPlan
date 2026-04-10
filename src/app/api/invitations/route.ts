@@ -4,11 +4,8 @@ import { sendEmail } from "@/lib/notifications/email";
 import { randomBytes } from "crypto";
 import { createInvitationSchema, validateBody } from "@/lib/validations";
 import { requireUserSlot } from "@/lib/subscription-guard";
-import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * GET /api/invitations — list all invitations for the current workspace
@@ -23,23 +20,15 @@ export const GET = withRoute("/api/invitations", "GET", async (req) => {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { take, skip } = parsePagination(req);
-  const where = { workspaceId: user.workspaceId };
+  const invitations = await prisma.invitation.findMany({
+    where: { workspaceId: user.workspaceId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      invitedBy: { select: { name: true, email: true } },
+    },
+  });
 
-  const [invitations, total] = await Promise.all([
-    prisma.invitation.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take,
-      skip,
-      include: {
-        invitedBy: { select: { name: true, email: true } },
-      },
-    }),
-    prisma.invitation.count({ where }),
-  ]);
-
-  return paginatedResponse(invitations, total, take, skip);
+  return NextResponse.json(invitations);
 });
 
 /**
@@ -130,22 +119,6 @@ export const POST = withRoute(
       message: `${inviterName} has invited you to join "${workspaceName}" as ${role.charAt(0) + role.slice(1).toLowerCase()}. Click the button below to accept the invitation. This invitation expires in 7 days.`,
       link: inviteLink,
     });
-
-    createAuditLog({
-      action: "CREATE",
-      entityType: "Invitation",
-      entityId: invitation.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      changes: { email, role },
-    });
-
-    dispatchWebhook(workspaceId, "invitation.created", {
-      id: invitation.id,
-      email,
-      role,
-    }).catch(() => {});
 
     return NextResponse.json(invitation, { status: 201 });
   },

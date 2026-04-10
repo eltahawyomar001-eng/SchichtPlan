@@ -21,7 +21,6 @@ export const POST = withRoute(
     // Support both session auth and cron secret
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");
-    let workspaceId: string | null = null;
 
     // If a Bearer token was provided, it MUST match CRON_SECRET
     if (authHeader?.startsWith("Bearer ")) {
@@ -62,8 +61,8 @@ export const POST = withRoute(
     if (!auth.ok) return auth.response;
     const { user } = auth;
 
-    workspaceId = user.workspaceId;
-    if (!workspaceId) {
+    const manualWorkspaceId = user.workspaceId;
+    if (!manualWorkspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
@@ -71,7 +70,7 @@ export const POST = withRoute(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const result = await generateTimeEntriesFromShifts(workspaceId);
+    const result = await generateTimeEntriesFromShifts(manualWorkspaceId);
 
     return NextResponse.json({
       success: true,

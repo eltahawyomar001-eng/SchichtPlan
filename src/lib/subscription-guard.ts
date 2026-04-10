@@ -100,18 +100,30 @@ export async function syncUsageLimits(workspaceId: string, planId: PlanId) {
    ═══════════════════════════════════════════════════════════════ */
 
 /**
- * Count all occupied user slots: active employees + pending invitations.
+ * Count all occupied user slots for billing purposes.
+ *
+ * Only employees **linked to a User account** (userId != null) count toward
+ * the plan limit — this means the employee has accepted an invitation and
+ * registered. Unlinked employee records (created by admins for shift
+ * planning but without a real user login) are NOT billed.
+ *
+ * Pending invitations also reserve a slot so that an admin cannot invite
+ * more people than the plan allows.
  */
 export async function countOccupiedSlots(workspaceId: string): Promise<number> {
-  const [activeEmployees, pendingInvitations] = await Promise.all([
+  const [linkedEmployees, pendingInvitations] = await Promise.all([
     prisma.employee.count({
-      where: { workspaceId, isActive: true },
+      where: {
+        workspaceId,
+        isActive: true,
+        userId: { not: null }, // only registered users count
+      },
     }),
     prisma.invitation.count({
       where: { workspaceId, status: "PENDING" },
     }),
   ]);
-  return activeEmployees + pendingInvitations;
+  return linkedEmployees + pendingInvitations;
 }
 
 /**

@@ -21,6 +21,7 @@ import { DownloadIcon } from "@/components/icons";
 import { PageContent } from "@/components/ui/page-content";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/providers/theme-provider";
 
 interface ReportData {
   period: { start: string; end: string };
@@ -61,7 +62,20 @@ const COLORS = [
 export default function BerichteSeite() {
   const t = useTranslations("reports");
   const tc = useTranslations("common");
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const { handlePlanLimit } = usePlanLimit();
+
+  // Chart colors adapted to current theme
+  const chartColors = {
+    tick: isDark ? "#a1a1aa" : "#6b7280", // zinc-400 / gray-500
+    grid: isDark ? "#27272a" : "#f0f0f0", // zinc-800 / light gray
+    tooltipBg: isDark ? "#18181b" : "#ffffff", // zinc-900 / white
+    tooltipBorder: isDark ? "#3f3f46" : "#e5e7eb", // zinc-700 / gray-200
+    tooltipText: isDark ? "#e4e4e7" : "#111827", // zinc-200 / gray-900
+    labelText: isDark ? "#a1a1aa" : "#6b7280", // zinc-400 / gray-500
+    legendText: isDark ? "#d4d4d8" : "#374151", // zinc-300 / gray-700
+  };
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -166,7 +180,7 @@ export default function BerichteSeite() {
       <PageContent>
         {/* Error */}
         {loadError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 p-4 text-sm text-red-800 dark:text-red-400">
             {loadError}
           </div>
         )}
@@ -174,7 +188,7 @@ export default function BerichteSeite() {
         {/* Date range filter + export */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <label className="text-sm text-gray-600 flex-shrink-0">
+            <label className="text-sm text-gray-600 dark:text-zinc-400 flex-shrink-0">
               {t("from")}
             </label>
             <Input
@@ -183,7 +197,7 @@ export default function BerichteSeite() {
               onChange={(e) => setStartDate(e.target.value)}
               className="flex-1 min-w-0"
             />
-            <label className="text-sm text-gray-600 flex-shrink-0">
+            <label className="text-sm text-gray-600 dark:text-zinc-400 flex-shrink-0">
               {t("to")}
             </label>
             <Input
@@ -255,8 +269,8 @@ export default function BerichteSeite() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {/* Employee Hours Bar Chart */}
               {data.employeeStats.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-                  <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm">
+                  <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-zinc-100">
                     {t("employeeHours")}
                   </h2>
                   <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
@@ -275,11 +289,11 @@ export default function BerichteSeite() {
                         >
                           <CartesianGrid
                             strokeDasharray="3 3"
-                            stroke="#f0f0f0"
+                            stroke={chartColors.grid}
                           />
                           <XAxis
                             dataKey="name"
-                            tick={{ fontSize: 10 }}
+                            tick={{ fontSize: 10, fill: chartColors.tick }}
                             angle={-45}
                             textAnchor="end"
                             height={70}
@@ -287,9 +301,20 @@ export default function BerichteSeite() {
                               name.length > 12 ? `${name.slice(0, 11)}…` : name
                             }
                           />
-                          <YAxis tick={{ fontSize: 11 }} width={40} />
+                          <YAxis
+                            tick={{ fontSize: 11, fill: chartColors.tick }}
+                            width={40}
+                          />
                           <Tooltip
                             formatter={(val) => [`${val}h`, t("totalHours")]}
+                            contentStyle={{
+                              backgroundColor: chartColors.tooltipBg,
+                              borderColor: chartColors.tooltipBorder,
+                              color: chartColors.tooltipText,
+                              borderRadius: 8,
+                            }}
+                            labelStyle={{ color: chartColors.tooltipText }}
+                            itemStyle={{ color: chartColors.tooltipText }}
                           />
                           <Bar
                             dataKey="hours"
@@ -305,8 +330,8 @@ export default function BerichteSeite() {
 
               {/* Shift Types Pie Chart */}
               {shiftTypeData.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-                  <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm">
+                  <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-zinc-100">
                     {t("totalShifts")}
                   </h2>
                   <ResponsiveContainer width="100%" height={280}>
@@ -322,6 +347,7 @@ export default function BerichteSeite() {
                         label={({ name, percent }) =>
                           `${(name ?? "").length > 10 ? (name ?? "").slice(0, 9) + "…" : (name ?? "")} ${((percent ?? 0) * 100).toFixed(0)}%`
                         }
+                        labelLine={{ stroke: chartColors.tick }}
                       >
                         {shiftTypeData.map((_, idx) => (
                           <Cell
@@ -330,8 +356,18 @@ export default function BerichteSeite() {
                           />
                         ))}
                       </Pie>
-                      <Tooltip />
-                      <Legend />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: chartColors.tooltipBg,
+                          borderColor: chartColors.tooltipBorder,
+                          color: chartColors.tooltipText,
+                          borderRadius: 8,
+                        }}
+                        itemStyle={{ color: chartColors.tooltipText }}
+                      />
+                      <Legend
+                        wrapperStyle={{ color: chartColors.legendText }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -340,8 +376,8 @@ export default function BerichteSeite() {
 
             {/* Absence Pie Chart */}
             {absenceData.length > 0 && (
-              <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm max-w-md">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm max-w-md">
+                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-zinc-100">
                   {t("absences")}
                 </h2>
                 <ResponsiveContainer width="100%" height={240}>
@@ -353,13 +389,22 @@ export default function BerichteSeite() {
                       outerRadius={80}
                       dataKey="value"
                       label={({ name, value }) => `${name}: ${value}`}
+                      labelLine={{ stroke: chartColors.tick }}
                     >
                       {absenceData.map((entry, idx) => (
                         <Cell key={`abs-${idx}`} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        borderColor: chartColors.tooltipBorder,
+                        color: chartColors.tooltipText,
+                        borderRadius: 8,
+                      }}
+                      itemStyle={{ color: chartColors.tooltipText }}
+                    />
+                    <Legend wrapperStyle={{ color: chartColors.legendText }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -367,31 +412,31 @@ export default function BerichteSeite() {
 
             {/* Employee hours ranking table */}
             {data.employeeStats.length > 0 && (
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 px-6 py-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+                <div className="border-b border-gray-200 dark:border-zinc-700 px-6 py-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
                     {t("employeeHours")}
                   </h2>
                 </div>
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-gray-100 dark:divide-zinc-800">
                   {data.employeeStats.map((emp, idx) => (
                     <li
                       key={emp.employeeId}
                       className="flex items-center justify-between px-4 sm:px-6 py-3 gap-3"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 flex-shrink-0">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800 text-xs font-medium text-gray-600 dark:text-zinc-400 flex-shrink-0">
                           {idx + 1}
                         </span>
-                        <span className="text-sm font-medium text-gray-900 truncate">
+                        <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
                           {emp.name}
                         </span>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                           {emp.hours}h
                         </span>
-                        <span className="ml-2 text-xs text-gray-500">
+                        <span className="ml-2 text-xs text-gray-500 dark:text-zinc-400">
                           ({emp.shifts} {t("shifts")})
                         </span>
                       </div>
@@ -402,7 +447,9 @@ export default function BerichteSeite() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">{t("noData")}</p>
+          <p className="text-sm text-gray-500 dark:text-zinc-400">
+            {t("noData")}
+          </p>
         )}
       </PageContent>
     </div>
@@ -419,18 +466,18 @@ function StatCard({
   accent?: "amber" | "blue" | "red";
 }) {
   const accentColors = {
-    amber: "text-amber-600",
-    blue: "text-emerald-600",
-    red: "text-red-600",
+    amber: "text-amber-600 dark:text-amber-400",
+    blue: "text-emerald-600 dark:text-emerald-400",
+    red: "text-red-600 dark:text-red-400",
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+    <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+      <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
         {label}
       </p>
       <p
-        className={`mt-1 text-2xl font-bold ${accent ? accentColors[accent] : "text-gray-900"}`}
+        className={`mt-1 text-2xl font-bold ${accent ? accentColors[accent] : "text-gray-900 dark:text-zinc-100"}`}
       >
         {value}
       </p>

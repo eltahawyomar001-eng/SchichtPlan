@@ -289,7 +289,7 @@ export default function AutomatisierungSeite() {
       <PageContent>
         {/* Error */}
         {loadError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 p-4 text-sm text-red-800 dark:text-red-400">
             {loadError}
           </div>
         )}
@@ -367,7 +367,7 @@ export default function AutomatisierungSeite() {
                     </button>
                   </div>
                   {formConditions.length === 0 && (
-                    <p className="text-xs text-gray-400 py-2">
+                    <p className="text-xs text-gray-400 dark:text-zinc-500 py-2">
                       Ohne Bedingungen wird die Regel bei jedem Auslöser
                       ausgeführt.
                     </p>
@@ -376,7 +376,7 @@ export default function AutomatisierungSeite() {
                     {formConditions.map((cond, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 p-3"
                       >
                         <Select
                           value={cond.field}
@@ -463,7 +463,7 @@ export default function AutomatisierungSeite() {
                     {formActions.map((action, idx) => (
                       <div
                         key={idx}
-                        className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2"
+                        className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 p-3 space-y-2"
                       >
                         <div className="flex items-center gap-2">
                           <Select
@@ -607,11 +607,11 @@ export default function AutomatisierungSeite() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : rules.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-8 sm:p-12">
+          <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 p-8 sm:p-12">
             <div className="mx-auto max-w-lg text-center space-y-4">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/50">
                 <svg
-                  className="h-7 w-7 text-emerald-600"
+                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -630,17 +630,17 @@ export default function AutomatisierungSeite() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-semibold text-gray-900">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
                   {t("noRules")}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
                   {t("emptyDescription")}
                 </p>
               </div>
 
               {/* Example templates */}
               <div className="text-left space-y-2 pt-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
                   {t("exampleTemplatesTitle")}
                 </p>
                 <div className="space-y-1.5">
@@ -660,7 +660,7 @@ export default function AutomatisierungSeite() {
                   ].map((ex, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-sm text-gray-600"
+                      className="flex items-start gap-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm text-gray-600 dark:text-zinc-300"
                     >
                       <span className="flex-shrink-0 mt-0.5">{ex.icon}</span>
                       <span>{ex.label}</span>
@@ -680,33 +680,35 @@ export default function AutomatisierungSeite() {
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-1">
-                    <h3 className="font-medium text-gray-900">{rule.name}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-zinc-100">
+                      {rule.name}
+                    </h3>
                     {rule.description && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-zinc-400">
                         {rule.description}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2 pt-1">
-                      <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
                         {formatTrigger(rule.trigger)}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                      <span className="inline-flex items-center rounded-md bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-gray-600 dark:text-zinc-400">
                         {t("conditionsCount", {
                           count: rule.conditions?.length || 0,
                         })}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                      <span className="inline-flex items-center rounded-md bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-gray-600 dark:text-zinc-400">
                         {t("actionsCount", {
                           count: rule.actions?.length || 0,
                         })}
                       </span>
                     </div>
                     {rule.lastTriggered && (
-                      <p className="text-xs text-gray-400 pt-1">
+                      <p className="text-xs text-gray-400 dark:text-zinc-500 pt-1">
                         {t("lastTriggered")}: {formatDate(rule.lastTriggered)}
                       </p>
                     )}
@@ -716,15 +718,15 @@ export default function AutomatisierungSeite() {
                       onClick={() => toggleActive(rule)}
                       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                         rule.isActive
-                          ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
                       }`}
                     >
                       {rule.isActive ? t("active") : t("inactive")}
                     </button>
                     <button
                       onClick={() => setDeleteTarget(rule.id)}
-                      className="rounded-md p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="rounded-md p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:text-zinc-500 dark:hover:text-red-400 dark:hover:bg-red-950/50 transition-colors"
                       aria-label={t("remove")}
                     >
                       <svg

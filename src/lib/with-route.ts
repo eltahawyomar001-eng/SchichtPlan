@@ -1,109 +1,92 @@
 /* ═══════════════════════════════════════════════════════════════
-   Route Handler Wrapper — withRoute()
+   Route wrapper — standardised error handling for API routes
    ═══════════════════════════════════════════════════════════════
-   Higher-order function that wraps every API route handler with
-   consistent error handling, Sentry capture, logging, and
-   performance monitoring.
+   Wraps a route handler with:
+     - try/catch with structured logging + Sentry capture
+     - Optional idempotency check/cache on POST
 
    Usage:
      import { withRoute } from "@/lib/with-route";
 
-     export const GET = withRoute("/api/employees", "GET", async (req) => {
-       // ... business logic ...
-       return apiSuccess(data);
+     export const GET = withRoute("/api/skills", "GET", async (req) => {
+       // ... handler logic, return NextResponse
      });
 
-     // With idempotency for POST:
-     export const POST = withRoute("/api/employees", "POST", async (req) => {
-       // ... business logic ...
-     }, { idempotent: true });
+     // With route params:
+     export const PATCH = withRoute("/api/items/[id]", "PATCH", async (req, context) => {
+       const params = await context!.params;
+       // ...
+     });
 
-   What withRoute handles automatically:
-     ✅ try/catch wrapping
-     ✅ captureRouteError() on exception
-     ✅ log.error() on exception
-     ✅ serverError() response on uncaught exception
-     ✅ Slow route warnings (>5s)
-     ✅ Optional idempotency check/cache for POST routes
+     // With idempotency:
+     export const POST = withRoute("/api/items", "POST", async (req) => {
+       // ...
+     }, { idempotent: true });
    ═══════════════════════════════════════════════════════════════ */
 
-import { NextRequest, NextResponse } from "next/server";
-import { captureRouteError } from "@/lib/sentry";
+import { NextResponse } from "next/server";
 import { log } from "@/lib/logger";
-import { serverError } from "@/lib/api-response";
+import { captureRouteError } from "@/lib/sentry";
 import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
-/** The shape every API route handler must satisfy */
-type RouteHandler = (
-  req: NextRequest | Request,
-  context?: { params: Promise<Record<string, string>> },
-) => Promise<NextResponse | Response>;
-
-interface WithRouteOptions {
-  /** Enable idempotency check/cache for POST routes (default: false) */
-  idempotent?: boolean;
+export interface RouteContext {
+  params: Promise<Record<string, string>>;
 }
 
-/* ── Thresholds ─────────────────────────────────────────────── */
+type RouteHandler = (
+  req: Request,
+  context?: RouteContext,
+) => Promise<NextResponse>;
 
-/** Warn when a route takes longer than this (ms) */
-const SLOW_ROUTE_THRESHOLD_MS = 5_000;
+interface WithRouteOptions {
+  /** Enable idempotency-key caching for this POST route. */
+  idempotent?: boolean;
+}
 
 /* ── Wrapper ────────────────────────────────────────────────── */
 
 /**
- * Wrap an API route handler with consistent error handling.
+ * Wrap a Next.js route handler with standardised error handling.
  *
- * @param routePath  e.g. "/api/employees" or "/api/shifts/[id]"
- * @param method     HTTP method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE"
- * @param handler    The actual route handler
- * @param options    Optional flags (idempotency, etc.)
+ * @param route   — route path for logging (e.g. "/api/skills")
+ * @param method  — HTTP method for logging (e.g. "GET")
+ * @param handler — the actual handler function
+ * @param options — optional config (idempotency, etc.)
  */
 export function withRoute(
-  routePath: string,
+  route: string,
   method: string,
   handler: RouteHandler,
   options?: WithRouteOptions,
-): RouteHandler {
-  return async (req: NextRequest | Request, context?) => {
-    const start = Date.now();
-
+): (req: Request, context?: RouteContext) => Promise<NextResponse> {
+  return async (
+    req: Request,
+    context?: RouteContext,
+  ): Promise<NextResponse> => {
     try {
-      // ── Idempotency check (POST only) ──────────────────────
-      if (options?.idempotent && method === "POST") {
+      // ── Idempotency check (opt-in) ──
+      if (options?.idempotent) {
         const cached = await checkIdempotency(req);
         if (cached) return cached;
       }
 
-      // ── Run the handler ────────────────────────────────────
       const response = await handler(req, context);
 
-      // ── Slow route warning ─────────────────────────────────
-      const duration = Date.now() - start;
-      if (duration > SLOW_ROUTE_THRESHOLD_MS) {
-        log.warn(`Slow route: ${routePath} ${method} took ${duration}ms`, {
-          route: routePath,
-          method,
-          durationMs: duration,
-        });
-      }
-
-      // ── Idempotency cache (POST only) ──────────────────────
-      if (
-        options?.idempotent &&
-        method === "POST" &&
-        response instanceof NextResponse
-      ) {
+      // ── Cache response for idempotent routes ──
+      if (options?.idempotent) {
         await cacheIdempotentResponse(req, response);
       }
 
       return response;
     } catch (error) {
-      log.error(`${routePath} ${method} failed`, { error });
-      captureRouteError(error, { route: routePath, method });
-      return serverError();
+      log.error(`${method} ${route} failed`, { error });
+      captureRouteError(error, { route, method });
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 },
+      );
     }
   };
 }

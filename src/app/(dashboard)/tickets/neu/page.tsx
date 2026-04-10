@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
 import { ArrowLeftIcon, SendIcon } from "@/components/icons";
+import type { SessionUser } from "@/lib/types";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -24,6 +26,8 @@ interface LocationItem {
 export default function NewTicketPage() {
   const t = useTranslations("tickets");
   const router = useRouter();
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
 
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -86,21 +90,24 @@ export default function NewTicketPage() {
       <PageContent className="max-w-2xl">
         <button
           onClick={() => router.push("/tickets")}
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-2"
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           {t("backToList")}
         </button>
 
-        <Card>
-          <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                  {error}
-                </div>
-              )}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 mb-4 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("newTicket")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="subject">{t("subject")}</Label>
                 <Input
@@ -179,7 +186,7 @@ export default function NewTicketPage() {
                   required
                   minLength={10}
                   rows={6}
-                  className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-emerald-600 dark:focus:ring-emerald-600"
+                  className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
                 />
                 {description.length > 0 && description.length < 10 && (
                   <p className="mt-1 text-xs text-amber-600">

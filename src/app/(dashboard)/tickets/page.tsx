@@ -12,7 +12,13 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { PageContent } from "@/components/ui/page-content";
 import { EmptyState } from "@/components/ui/empty-state";
-import { TicketIcon, PlusIcon, SearchIcon } from "@/components/icons";
+import {
+  TicketIcon,
+  PlusIcon,
+  SearchIcon,
+  LinkIcon,
+  ClipboardIcon,
+} from "@/components/icons";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -88,6 +94,8 @@ export default function TicketsPage() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterAssignedToMe, setFilterAssignedToMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [workspaceSlug, setWorkspaceSlug] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -126,6 +134,23 @@ export default function TicketsPage() {
     fetchStats();
   }, [fetchTickets, fetchStats]);
 
+  // Fetch workspace slug for the public ticket link
+  useEffect(() => {
+    if (!canManage) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/workspace");
+        if (res.ok) {
+          const data = await res.json();
+          const ws = data.data ?? data;
+          if (ws?.slug) setWorkspaceSlug(ws.slug);
+        }
+      } catch {
+        // silent
+      }
+    })();
+  }, [canManage]);
+
   return (
     <>
       <Topbar title={t("title")} />
@@ -136,7 +161,7 @@ export default function TicketsPage() {
             <StatCard
               label={t("stats.total")}
               value={stats.total}
-              color="gray"
+              color="emerald"
             />
             <StatCard
               label={t("stats.open")}
@@ -146,13 +171,42 @@ export default function TicketsPage() {
             <StatCard
               label={t("stats.inProgress")}
               value={stats.byStatus.IN_BEARBEITUNG ?? 0}
-              color="emerald"
+              color="blue"
             />
             <StatCard
               label={t("stats.closed")}
               value={stats.byStatus.GESCHLOSSEN ?? 0}
-              color="green"
+              color="gray"
             />
+          </div>
+        )}
+
+        {/* ── Public Ticket Link (Admins) ────────────────── */}
+        {canManage && workspaceSlug && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-2.5">
+            <LinkIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm text-emerald-800 dark:text-emerald-300 truncate flex-1">
+              {t("externalLink.label")}:{" "}
+              <code className="rounded bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 text-xs font-mono text-emerald-700 dark:text-emerald-300">
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/ticket/neu/${workspaceSlug}`
+                  : `/ticket/neu/${workspaceSlug}`}
+              </code>
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 gap-1.5"
+              onClick={() => {
+                const url = `${window.location.origin}/ticket/neu/${workspaceSlug}`;
+                navigator.clipboard.writeText(url);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+            >
+              <ClipboardIcon className="h-3.5 w-3.5" />
+              {linkCopied ? t("externalLink.copied") : t("externalLink.copy")}
+            </Button>
           </div>
         )}
 
@@ -160,13 +214,13 @@ export default function TicketsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2">
             <div className="relative flex-1 max-w-xs">
-              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
+              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 sm:left-3" />
               <Input
                 type="text"
                 placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-11 sm:ps-10"
+                className="ps-11 sm:ps-9"
               />
             </div>
             <Select
@@ -217,7 +271,7 @@ export default function TicketsPage() {
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="h-20 animate-pulse rounded-xl bg-gray-100 dark:bg-zinc-800"
+                className="h-20 animate-pulse rounded-xl bg-gray-100"
               />
             ))}
           </div>
@@ -246,14 +300,14 @@ export default function TicketsPage() {
             {tickets.map((ticket) => (
               <Card
                 key={ticket.id}
-                className="cursor-pointer transition-all hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800 active:scale-[0.995]"
+                className="cursor-pointer transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.995]"
                 onClick={() => router.push(`/tickets/${ticket.id}`)}
               >
                 <CardContent className="p-4 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-gray-400 dark:text-zinc-500">
+                        <span className="text-xs font-mono text-gray-400">
                           {ticket.ticketNumber}
                         </span>
                         <Badge
@@ -274,10 +328,10 @@ export default function TicketsPage() {
                           </Badge>
                         )}
                       </div>
-                      <h3 className="font-medium text-gray-900 dark:text-zinc-100 truncate">
+                      <h3 className="font-medium text-gray-900 truncate">
                         {ticket.subject}
                       </h3>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
+                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
                         <span>{t(`categories.${ticket.category}`)}</span>
                         <span>·</span>
                         <span>
@@ -308,9 +362,9 @@ export default function TicketsPage() {
                       </div>
                     </div>
                     {canManage && ticket.assignedTo && (
-                      <div className="text-right text-xs text-gray-400 dark:text-zinc-500 flex-shrink-0">
+                      <div className="text-right text-xs text-gray-400 flex-shrink-0">
                         <div>{t("assignedTo")}</div>
-                        <div className="font-medium text-gray-600 dark:text-zinc-300">
+                        <div className="font-medium text-gray-600">
                           {ticket.assignedTo.name ?? ticket.assignedTo.email}
                         </div>
                       </div>
@@ -331,17 +385,45 @@ export default function TicketsPage() {
 function StatCard({
   label,
   value,
+  color,
 }: {
   label: string;
   value: number;
-  color?: string;
+  color: string;
 }) {
+  const styles: Record<string, { card: string; badge: string }> = {
+    emerald: {
+      card: "border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/40",
+      badge: "bg-emerald-600 dark:bg-emerald-500 text-white",
+    },
+    amber: {
+      card: "border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40",
+      badge: "bg-amber-500 dark:bg-amber-500 text-white",
+    },
+    blue: {
+      card: "border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/40",
+      badge: "bg-blue-500 dark:bg-blue-500 text-white",
+    },
+    gray: {
+      card: "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/60",
+      badge: "bg-gray-500 dark:bg-zinc-500 text-white",
+    },
+  };
+
+  const s = styles[color] ?? styles.gray;
+
   return (
-    <div className="rounded-2xl bg-emerald-600 p-3 sm:p-4 text-center shadow-sm">
-      <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-sm font-bold text-white">
+    <div
+      className={`rounded-2xl border p-3 text-center transition-shadow ${s.card}`}
+    >
+      <div
+        className={`mx-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${s.badge}`}
+      >
         {value}
       </div>
-      <p className="mt-1 text-xs font-medium text-emerald-100">{label}</p>
+      <p className="mt-1.5 text-xs font-medium text-gray-600 dark:text-zinc-400">
+        {label}
+      </p>
     </div>
   );
 }

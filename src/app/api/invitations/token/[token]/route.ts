@@ -3,8 +3,6 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * GET /api/invitations/token/[token] — get invitation details (public, no auth required)
@@ -146,7 +144,7 @@ export const POST = withRoute(
         });
       } else {
         // No existing employee — create one and link it
-        const displayName = user.name || user.email!;
+        const displayName = (user as SessionUser).name || user.email!;
         const nameParts = displayName.trim().split(/\s+/);
         await tx.employee.create({
           data: {
@@ -159,21 +157,6 @@ export const POST = withRoute(
         });
       }
     });
-
-    createAuditLog({
-      action: "UPDATE",
-      entityType: "Invitation",
-      entityId: invitation.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId: invitation.workspaceId,
-      metadata: { action: "ACCEPTED", role: invitation.role },
-    });
-
-    dispatchWebhook(invitation.workspaceId, "invitation.accepted", {
-      id: invitation.id,
-      role: invitation.role,
-    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

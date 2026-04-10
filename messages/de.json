@@ -633,8 +633,6 @@
       "noLocation": "Kein Standort",
       "object": "Objekt",
       "noObject": "Kein Objekt",
-      "client": "Kunde",
-      "noClient": "Kein Kunde",
       "discardTitle": "Änderungen verwerfen?",
       "discardMessage": "Möchten Sie die eingegebenen Daten wirklich verwerfen? Alle nicht gespeicherten Änderungen gehen verloren.",
       "discardConfirm": "Verwerfen"
@@ -2520,13 +2518,11 @@
       "title": "Noch keine Tickets",
       "description": "Erstellen Sie Ihr erstes Ticket, um ein Anliegen zu melden.",
       "managerDescription": "Noch keine Tickets von Mitarbeitern eingegangen."
+    },
+    "externalLink": {
+      "label": "Öffentlicher Ticket-Link",
+      "copy": "Link kopieren",
+      "copied": "Kopiert!"
     }
-  },
-  "maintenance": {
-    "notification_subject": "Geplante Wartung am {date}",
-    "notification_body": "Es ist eine geplante Wartung vorgesehen. Bitte speichern Sie Ihre Arbeit rechtzeitig.",
-    "duration": "Voraussichtliche Dauer: {minutes} Minuten",
-    "title": "Wartungsbenachrichtigung",
-    "description": "Benachrichtigen Sie alle Benutzer über geplante Wartungsarbeiten."
   }
 }

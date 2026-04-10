@@ -306,9 +306,6 @@ export const POST = withRoute(
               if (!imgData.startsWith("data:")) {
                 imgData = `data:image/png;base64,${imgData}`;
               }
-              // White background behind signature (old PNGs may have transparent bg)
-              doc.setFillColor(255, 255, 255);
-              doc.rect(14, currentY, 50, 18, "F");
               doc.addImage(imgData, "PNG", 14, currentY, 50, 18);
               currentY += 20;
             } catch {
@@ -398,7 +395,7 @@ export const POST = withRoute(
     // ── Return PDF as download ──
     const filename = `Leistungsnachweis_${report.title.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, "_")}_${periodStart}-${periodEnd}.pdf`;
 
-    return new Response(pdfBuffer, {
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

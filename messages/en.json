@@ -1935,14 +1935,14 @@
     "recipientEmail": "Recipient Email",
     "surchargePercent": "Surcharge (%)",
     "triggerLabels": {
-      "shift.created": "Shift created",
-      "shift.updated": "Shift updated",
-      "shift.deleted": "Shift deleted",
-      "time-entry.created": "Time entry created (Clock in)",
-      "time-entry.submitted": "Time entry submitted (Clock out)",
-      "absence.created": "Absence request created",
-      "absence.approved": "Absence approved",
-      "employee.created": "Employee created"
+      "shift_created": "Shift created",
+      "shift_updated": "Shift updated",
+      "shift_deleted": "Shift deleted",
+      "time-entry_created": "Time entry created (Clock in)",
+      "time-entry_submitted": "Time entry submitted (Clock out)",
+      "absence_created": "Absence request created",
+      "absence_approved": "Absence approved",
+      "employee_created": "Employee created"
     },
     "operatorLabels": {
       "equals": "equals",

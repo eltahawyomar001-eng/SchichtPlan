@@ -261,7 +261,9 @@ export default function AutomatisierungSeite() {
 
   // ── Formatting helpers ──
   function formatTrigger(trigger: string): string {
-    return t(`triggerLabels.${trigger}` as Parameters<typeof t>[0]);
+    // Replace dots with underscores to match translation keys (next-intl uses dots for nesting)
+    const key = trigger.replace(/\./g, "_");
+    return t(`triggerLabels.${key}` as Parameters<typeof t>[0]);
   }
 
   function formatDate(iso: string): string {

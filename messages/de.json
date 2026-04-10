@@ -1935,14 +1935,14 @@
     "recipientEmail": "Empfänger-E-Mail",
     "surchargePercent": "Zuschlag (%)",
     "triggerLabels": {
-      "shift.created": "Schicht erstellt",
-      "shift.updated": "Schicht aktualisiert",
-      "shift.deleted": "Schicht gelöscht",
-      "time-entry.created": "Zeiteintrag erstellt (Einstempeln)",
-      "time-entry.submitted": "Zeiteintrag abgegeben (Ausstempeln)",
-      "absence.created": "Abwesenheitsantrag erstellt",
-      "absence.approved": "Abwesenheit genehmigt",
-      "employee.created": "Mitarbeiter angelegt"
+      "shift_created": "Schicht erstellt",
+      "shift_updated": "Schicht aktualisiert",
+      "shift_deleted": "Schicht gelöscht",
+      "time-entry_created": "Zeiteintrag erstellt (Einstempeln)",
+      "time-entry_submitted": "Zeiteintrag abgegeben (Ausstempeln)",
+      "absence_created": "Abwesenheitsantrag erstellt",
+      "absence_approved": "Abwesenheit genehmigt",
+      "employee_created": "Mitarbeiter angelegt"
     },
     "operatorLabels": {
       "equals": "ist gleich",

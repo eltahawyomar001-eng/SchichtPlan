@@ -38,7 +38,7 @@ export interface RouteContext {
 type RouteHandler = (
   req: Request,
   context?: RouteContext,
-) => Promise<NextResponse>;
+) => Promise<NextResponse | Response>;
 
 interface WithRouteOptions {
   /** Enable idempotency-key caching for this POST route. */
@@ -60,11 +60,11 @@ export function withRoute(
   method: string,
   handler: RouteHandler,
   options?: WithRouteOptions,
-): (req: Request, context?: RouteContext) => Promise<NextResponse> {
+): (req: Request, context?: RouteContext) => Promise<NextResponse | Response> {
   return async (
     req: Request,
     context?: RouteContext,
-  ): Promise<NextResponse> => {
+  ): Promise<NextResponse | Response> => {
     try {
       // ── Idempotency check (opt-in) ──
       if (options?.idempotent) {
@@ -75,7 +75,7 @@ export function withRoute(
       const response = await handler(req, context);
 
       // ── Cache response for idempotent routes ──
-      if (options?.idempotent) {
+      if (options?.idempotent && response instanceof NextResponse) {
         await cacheIdempotentResponse(req, response);
       }
 

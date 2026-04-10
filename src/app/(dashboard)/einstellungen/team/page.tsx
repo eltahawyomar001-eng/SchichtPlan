@@ -85,7 +85,13 @@ export default function TeamPage() {
     try {
       const res = await fetch("/api/team");
       if (res.ok) {
-        const data = await res.json();
+        const json = await res.json();
+        // Handle both flat array and paginated { data: [...] } shapes
+        const data = Array.isArray(json)
+          ? json
+          : Array.isArray(json?.data)
+            ? json.data
+            : [];
         setMembers(data);
       }
     } catch {
@@ -99,7 +105,13 @@ export default function TeamPage() {
     try {
       const res = await fetch("/api/invitations");
       if (res.ok) {
-        const data = await res.json();
+        const json = await res.json();
+        // Handle both flat array and paginated { data: [...] } shapes
+        const data = Array.isArray(json)
+          ? json
+          : Array.isArray(json?.data)
+            ? json.data
+            : [];
         setInvitations(data);
       }
     } catch {
@@ -272,7 +284,7 @@ export default function TeamPage() {
                   <div className="flex-1 space-y-1.5">
                     <Label htmlFor="invite-email">{t("emailLabel")}</Label>
                     <div className="relative">
-                      <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
+                      <MailIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
                         id="invite-email"
                         type="email"
@@ -280,7 +292,7 @@ export default function TeamPage() {
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                         required
-                        className="ps-11 sm:ps-10"
+                        className="ps-10"
                       />
                     </div>
                   </div>

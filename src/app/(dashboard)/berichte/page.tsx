@@ -66,15 +66,16 @@ export default function BerichteSeite() {
   const isDark = theme === "dark";
   const { handlePlanLimit } = usePlanLimit();
 
-  // Chart colors adapted to current theme
+  // Chart colors adapted to current theme — high-contrast pairs
   const chartColors = {
-    tick: isDark ? "#a1a1aa" : "#6b7280", // zinc-400 / gray-500
-    grid: isDark ? "#27272a" : "#f0f0f0", // zinc-800 / light gray
+    tick: isDark ? "#d4d4d8" : "#374151", // zinc-300 / gray-700
+    grid: isDark ? "#27272a" : "#e5e7eb", // zinc-800 / gray-200
     tooltipBg: isDark ? "#18181b" : "#ffffff", // zinc-900 / white
     tooltipBorder: isDark ? "#3f3f46" : "#e5e7eb", // zinc-700 / gray-200
     tooltipText: isDark ? "#e4e4e7" : "#111827", // zinc-200 / gray-900
-    labelText: isDark ? "#a1a1aa" : "#6b7280", // zinc-400 / gray-500
+    labelText: isDark ? "#d4d4d8" : "#374151", // zinc-300 / gray-700
     legendText: isDark ? "#d4d4d8" : "#374151", // zinc-300 / gray-700
+    axisLine: isDark ? "#3f3f46" : "#d1d5db", // zinc-700 / gray-300
   };
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -267,88 +268,94 @@ export default function BerichteSeite() {
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Employee Hours Bar Chart */}
+              {/* Employee Hours — Horizontal Bar Chart */}
               {data.employeeStats.length > 0 && (
                 <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm">
                   <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-zinc-100">
                     {t("employeeHours")}
                   </h2>
-                  <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-                    <div
-                      style={{
-                        minWidth: Math.max(
-                          320,
-                          data.employeeStats.slice(0, 10).length * 60,
-                        ),
-                      }}
+                  <ResponsiveContainer
+                    width="100%"
+                    height={Math.max(
+                      200,
+                      data.employeeStats.slice(0, 10).length * 44 + 40,
+                    )}
+                  >
+                    <BarChart
+                      data={data.employeeStats.slice(0, 10)}
+                      layout="vertical"
+                      margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
                     >
-                      <ResponsiveContainer width="100%" height={320}>
-                        <BarChart
-                          data={data.employeeStats.slice(0, 10)}
-                          margin={{ top: 5, right: 20, left: 0, bottom: 80 }}
-                        >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke={chartColors.grid}
-                          />
-                          <XAxis
-                            dataKey="name"
-                            tick={{
-                              fontSize: 12,
-                              fill: chartColors.tick,
-                              fontWeight: 500,
-                            }}
-                            stroke={chartColors.tick}
-                            angle={-45}
-                            textAnchor="end"
-                            height={90}
-                            interval={0}
-                            tickFormatter={(name: string) =>
-                              name.length > 15 ? `${name.slice(0, 14)}…` : name
-                            }
-                          />
-                          <YAxis
-                            tick={{ fontSize: 11, fill: chartColors.tick }}
-                            stroke={chartColors.tick}
-                            width={40}
-                          />
-                          <Tooltip
-                            formatter={(val) => [`${val}h`, t("totalHours")]}
-                            contentStyle={{
-                              backgroundColor: chartColors.tooltipBg,
-                              borderColor: chartColors.tooltipBorder,
-                              color: chartColors.tooltipText,
-                              borderRadius: 8,
-                            }}
-                            labelStyle={{ color: chartColors.tooltipText }}
-                            itemStyle={{ color: chartColors.tooltipText }}
-                          />
-                          <Bar
-                            dataKey="hours"
-                            fill="#059669"
-                            radius={[4, 4, 0, 0]}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={chartColors.grid}
+                        horizontal={false}
+                      />
+                      <XAxis
+                        type="number"
+                        tick={{ fontSize: 12, fill: chartColors.tick }}
+                        stroke={chartColors.axisLine}
+                        tickLine={false}
+                        axisLine={false}
+                        unit="h"
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        tick={{ fontSize: 13, fill: chartColors.tick }}
+                        stroke={chartColors.axisLine}
+                        tickLine={false}
+                        axisLine={false}
+                        width={120}
+                      />
+                      <Tooltip
+                        formatter={(val) => [`${val}h`, t("totalHours")]}
+                        contentStyle={{
+                          backgroundColor: chartColors.tooltipBg,
+                          borderColor: chartColors.tooltipBorder,
+                          color: chartColors.tooltipText,
+                          borderRadius: 8,
+                          fontSize: 13,
+                        }}
+                        labelStyle={{
+                          color: chartColors.tooltipText,
+                          fontWeight: 600,
+                        }}
+                        itemStyle={{ color: chartColors.tooltipText }}
+                        cursor={{ fill: isDark ? "#27272a" : "#f3f4f6" }}
+                      />
+                      <Bar
+                        dataKey="hours"
+                        fill="#059669"
+                        radius={[0, 6, 6, 0]}
+                        barSize={28}
+                        label={{
+                          position: "right",
+                          fill: chartColors.labelText,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          formatter: (v) => `${v}h`,
+                        }}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               )}
 
-              {/* Shift Types Pie Chart */}
+              {/* Shift Types — Donut Chart */}
               {shiftTypeData.length > 0 && (
                 <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm">
                   <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-zinc-100">
                     {t("totalShifts")}
                   </h2>
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
                         data={shiftTypeData}
                         cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={85}
+                        cy="45%"
+                        innerRadius={55}
+                        outerRadius={95}
                         dataKey="value"
                         paddingAngle={3}
                         label={(props) => {
@@ -356,13 +363,11 @@ export default function BerichteSeite() {
                           const cx = Number(props.cx ?? 0);
                           const cy = Number(props.cy ?? 0);
                           const midAngle = Number(props.midAngle ?? 0);
-                          const or = Number(props.outerRadius ?? 85);
-                          const name = String(props.name ?? "");
+                          const or = Number(props.outerRadius ?? 95);
                           const percent = Number(props.percent ?? 0);
-                          const radius = or + 20;
+                          const radius = or + 18;
                           const x = cx + radius * Math.cos(-midAngle * RADIAN);
                           const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                          const label = `${name.length > 10 ? name.slice(0, 9) + "…" : name} ${(percent * 100).toFixed(0)}%`;
                           return (
                             <text
                               x={x}
@@ -370,13 +375,17 @@ export default function BerichteSeite() {
                               fill={chartColors.labelText}
                               textAnchor={x > cx ? "start" : "end"}
                               dominantBaseline="central"
-                              fontSize={12}
+                              fontSize={13}
+                              fontWeight={600}
                             >
-                              {label}
+                              {`${(percent * 100).toFixed(0)}%`}
                             </text>
                           );
                         }}
-                        labelLine={{ stroke: chartColors.tick }}
+                        labelLine={{
+                          stroke: chartColors.axisLine,
+                          strokeWidth: 1,
+                        }}
                       >
                         {shiftTypeData.map((_, idx) => (
                           <Cell
@@ -391,11 +400,24 @@ export default function BerichteSeite() {
                           borderColor: chartColors.tooltipBorder,
                           color: chartColors.tooltipText,
                           borderRadius: 8,
+                          fontSize: 13,
                         }}
                         itemStyle={{ color: chartColors.tooltipText }}
                       />
                       <Legend
-                        wrapperStyle={{ color: chartColors.legendText }}
+                        verticalAlign="bottom"
+                        iconType="circle"
+                        iconSize={10}
+                        formatter={(value) => (
+                          <span
+                            style={{
+                              color: chartColors.legendText,
+                              fontSize: 13,
+                            }}
+                          >
+                            {value}
+                          </span>
+                        )}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -403,18 +425,18 @@ export default function BerichteSeite() {
               )}
             </div>
 
-            {/* Absence Pie Chart */}
+            {/* Absence — Pie Chart */}
             {absenceData.length > 0 && (
               <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm max-w-md">
                 <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-zinc-100">
                   {t("absences")}
                 </h2>
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
                       data={absenceData}
                       cx="50%"
-                      cy="50%"
+                      cy="45%"
                       outerRadius={80}
                       dataKey="value"
                       label={(props) => {
@@ -423,9 +445,8 @@ export default function BerichteSeite() {
                         const cy = Number(props.cy ?? 0);
                         const midAngle = Number(props.midAngle ?? 0);
                         const or = Number(props.outerRadius ?? 80);
-                        const name = String(props.name ?? "");
                         const value = Number(props.value ?? 0);
-                        const radius = or + 20;
+                        const radius = or + 18;
                         const x = cx + radius * Math.cos(-midAngle * RADIAN);
                         const y = cy + radius * Math.sin(-midAngle * RADIAN);
                         return (
@@ -435,13 +456,17 @@ export default function BerichteSeite() {
                             fill={chartColors.labelText}
                             textAnchor={x > cx ? "start" : "end"}
                             dominantBaseline="central"
-                            fontSize={12}
+                            fontSize={13}
+                            fontWeight={600}
                           >
-                            {`${name}: ${value}`}
+                            {value}
                           </text>
                         );
                       }}
-                      labelLine={{ stroke: chartColors.tick }}
+                      labelLine={{
+                        stroke: chartColors.axisLine,
+                        strokeWidth: 1,
+                      }}
                     >
                       {absenceData.map((entry, idx) => (
                         <Cell key={`abs-${idx}`} fill={entry.fill} />
@@ -453,10 +478,25 @@ export default function BerichteSeite() {
                         borderColor: chartColors.tooltipBorder,
                         color: chartColors.tooltipText,
                         borderRadius: 8,
+                        fontSize: 13,
                       }}
                       itemStyle={{ color: chartColors.tooltipText }}
                     />
-                    <Legend wrapperStyle={{ color: chartColors.legendText }} />
+                    <Legend
+                      verticalAlign="bottom"
+                      iconType="circle"
+                      iconSize={10}
+                      formatter={(value) => (
+                        <span
+                          style={{
+                            color: chartColors.legendText,
+                            fontSize: 13,
+                          }}
+                        >
+                          {value}
+                        </span>
+                      )}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

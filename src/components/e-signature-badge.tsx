@@ -92,11 +92,11 @@ export function ESignatureBadge({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="inline-flex items-center gap-1 text-xs font-medium transition-colors rounded-full px-2 py-0.5 cursor-pointer"
-        style={{
-          backgroundColor: allValid ? "rgb(236 253 245)" : "rgb(254 242 242)",
-          color: allValid ? "rgb(4 120 87)" : "rgb(185 28 28)",
-        }}
+        className={`inline-flex items-center gap-1 text-xs font-medium transition-colors rounded-full px-2 py-0.5 cursor-pointer ${
+          allValid
+            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
+            : "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-400"
+        }`}
         title={allValid ? t("integrityValid") : t("integrityInvalid")}
       >
         {allValid ? (
@@ -115,12 +115,11 @@ export function ESignatureBadge({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md px-2.5 py-1 cursor-pointer border"
-        style={{
-          backgroundColor: allValid ? "rgb(236 253 245)" : "rgb(254 242 242)",
-          color: allValid ? "rgb(4 120 87)" : "rgb(185 28 28)",
-          borderColor: allValid ? "rgb(167 243 208)" : "rgb(254 202 202)",
-        }}
+        className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md px-2.5 py-1 cursor-pointer border ${
+          allValid
+            ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800"
+            : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800"
+        }`}
       >
         {allValid ? (
           <ShieldCheckIcon className="h-3.5 w-3.5" />
@@ -147,21 +146,21 @@ export function ESignatureBadge({
           {deduped.map((sig) => (
             <div
               key={sig.id}
-              className="rounded-lg border border-gray-100 bg-gray-50/50 p-3 text-xs space-y-1.5"
+              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/80 p-3 text-xs space-y-1.5"
             >
               {/* Integrity status */}
               <div className="flex items-center gap-1.5">
                 {sig.isValid ? (
                   <>
-                    <ShieldCheckIcon className="h-3.5 w-3.5 text-emerald-600" />
-                    <span className="font-medium text-emerald-700">
+                    <ShieldCheckIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-medium text-emerald-700 dark:text-emerald-400">
                       {t("integrityValid")}
                     </span>
                   </>
                 ) : (
                   <>
-                    <AlertTriangleIcon className="h-3.5 w-3.5 text-red-600" />
-                    <span className="font-medium text-red-700">
+                    <AlertTriangleIcon className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                    <span className="font-medium text-red-700 dark:text-red-400">
                       {t("integrityInvalid")}
                     </span>
                   </>
@@ -169,22 +168,28 @@ export function ESignatureBadge({
               </div>
 
               {/* Signer info */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600 dark:text-zinc-400">
                 <div>
-                  <span className="text-gray-400">{t("signedBy")}:</span>{" "}
-                  <span className="font-medium text-gray-700">
+                  <span className="text-gray-400 dark:text-zinc-500">
+                    {t("signedBy")}:
+                  </span>{" "}
+                  <span className="font-medium text-gray-700 dark:text-zinc-200">
                     {sig.signerName}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">{t("role")}:</span>{" "}
-                  <span className="font-medium text-gray-700">
+                  <span className="text-gray-400 dark:text-zinc-500">
+                    {t("role")}:
+                  </span>{" "}
+                  <span className="font-medium text-gray-700 dark:text-zinc-200">
                     {t(`roles.${sig.signerRole}`)}
                   </span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-gray-400">{t("signedAt")}:</span>{" "}
-                  <span className="font-medium text-gray-700">
+                  <span className="text-gray-400 dark:text-zinc-500">
+                    {t("signedAt")}:
+                  </span>{" "}
+                  <span className="font-medium text-gray-700 dark:text-zinc-200">
                     {format(new Date(sig.signedAt), "dd.MM.yyyy HH:mm:ss", {
                       locale: dateFnsLocale,
                     })}
@@ -193,19 +198,21 @@ export function ESignatureBadge({
               </div>
 
               {/* Consent statement */}
-              <div className="border-t border-gray-200/60 pt-1.5">
-                <span className="text-gray-400 block mb-0.5">
+              <div className="border-t border-gray-200 dark:border-zinc-700 pt-1.5">
+                <span className="text-gray-400 dark:text-zinc-500 block mb-0.5">
                   {t("consentStatement")}:
                 </span>
-                <p className="text-gray-600 italic leading-relaxed">
+                <p className="text-gray-600 dark:text-zinc-300 italic leading-relaxed">
                   &ldquo;{sig.statement}&rdquo;
                 </p>
               </div>
 
               {/* Signature hash */}
-              <div className="border-t border-gray-200/60 pt-1.5">
-                <span className="text-gray-400">{t("hashLabel")}:</span>{" "}
-                <code className="text-[10px] text-gray-500 font-mono break-all">
+              <div className="border-t border-gray-200 dark:border-zinc-700 pt-1.5">
+                <span className="text-gray-400 dark:text-zinc-500">
+                  {t("hashLabel")}:
+                </span>{" "}
+                <code className="text-[10px] text-gray-500 dark:text-zinc-400 font-mono break-all">
                   {sig.signatureHash}
                 </code>
               </div>

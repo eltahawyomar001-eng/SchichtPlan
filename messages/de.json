@@ -2073,7 +2073,8 @@
     "analyticsDesc": "Diese Cookies helfen uns, die Nutzung der Website zu verstehen und Fehler zu erkennen (z. B. Sentry-Fehlerüberwachung). Es werden keine Daten an Werbenetzwerke weitergegeben.",
     "saveSettings": "Auswahl speichern",
     "back": "Zurück",
-    "footerLink": "Cookie-Einstellungen"
+    "footerLink": "Cookie-Einstellungen",
+    "required": "Erforderlich"
   },
   "blog": {
     "backToHome": "Zurück zur Startseite",

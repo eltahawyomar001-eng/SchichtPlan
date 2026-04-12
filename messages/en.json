@@ -2073,7 +2073,8 @@
     "analyticsDesc": "These cookies help us understand website usage and detect errors (e.g. Sentry error monitoring). No data is shared with advertising networks.",
     "saveSettings": "Save Settings",
     "back": "Back",
-    "footerLink": "Cookie Settings"
+    "footerLink": "Cookie Settings",
+    "required": "Required"
   },
   "blog": {
     "backToHome": "Back to Home",

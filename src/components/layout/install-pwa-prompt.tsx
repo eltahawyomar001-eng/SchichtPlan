@@ -107,20 +107,20 @@ export function InstallPwaPrompt() {
           className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
           onClick={handleDismiss}
         />
-        <div className="fixed inset-x-0 bottom-0 z-[70] rounded-t-2xl bg-white shadow-xl animate-slide-up">
+        <div className="fixed inset-x-0 bottom-0 z-[70] rounded-t-2xl bg-white dark:bg-zinc-900 shadow-xl dark:shadow-black/40 animate-slide-up">
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-1">
-            <div className="h-1 w-10 rounded-full bg-gray-300" />
+            <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-zinc-600" />
           </div>
 
           <div className="px-5 pb-6 pt-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
                 {t("iosTitle")}
               </h3>
               <button
                 onClick={handleDismiss}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
               >
                 <XIcon className="h-5 w-5" />
               </button>
@@ -129,14 +129,14 @@ export function InstallPwaPrompt() {
             <div className="space-y-4">
               {/* Step 1 */}
               <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 flex-shrink-0">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-400 flex-shrink-0">
                   1
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                     {t("iosStep1")}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
                     {t("iosStep1Desc")}
                   </p>
                 </div>
@@ -144,14 +144,14 @@ export function InstallPwaPrompt() {
 
               {/* Step 2 */}
               <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 flex-shrink-0">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-400 flex-shrink-0">
                   2
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                     {t("iosStep2")}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
                     {t("iosStep2Desc")}
                   </p>
                 </div>
@@ -159,14 +159,14 @@ export function InstallPwaPrompt() {
 
               {/* Step 3 */}
               <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 flex-shrink-0">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-400 flex-shrink-0">
                   3
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                     {t("iosStep3")}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
                     {t("iosStep3Desc")}
                   </p>
                 </div>
@@ -190,18 +190,22 @@ export function InstallPwaPrompt() {
 
   // Install banner (Android/Chrome or iOS initial prompt)
   return (
-    <div className="fixed bottom-4 inset-x-4 z-[60] sm:inset-x-auto sm:right-4 sm:left-auto sm:w-80 rounded-2xl border border-gray-200 bg-white shadow-xl p-4 animate-slide-up mb-[env(safe-area-inset-bottom)]">
+    <div className="fixed bottom-4 inset-x-4 z-[60] sm:inset-x-auto sm:right-4 sm:left-auto sm:w-80 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl dark:shadow-black/40 p-4 animate-slide-up mb-[env(safe-area-inset-bottom)]">
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-emerald-50 p-2.5 flex-shrink-0">
-          <SmartphoneIcon className="h-5 w-5 text-emerald-600" />
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 p-2.5 flex-shrink-0">
+          <SmartphoneIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{t("title")}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{t("description")}</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+            {t("title")}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
+            {t("description")}
+          </p>
         </div>
         <button
           onClick={handleDismiss}
-          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0 -mt-0.5 -mr-1"
+          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 flex-shrink-0 -mt-0.5 -mr-1"
         >
           <XIcon className="h-4 w-4" />
         </button>
@@ -209,7 +213,7 @@ export function InstallPwaPrompt() {
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleDismiss}
-          className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          className="flex-1 rounded-xl border border-gray-200 dark:border-zinc-700 px-3 py-2 text-xs font-medium text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
         >
           {t("later")}
         </button>

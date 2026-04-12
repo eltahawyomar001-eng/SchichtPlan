@@ -113,14 +113,14 @@ export function CookieBanner() {
       aria-label={t("title")}
       className="fixed inset-x-0 bottom-0 z-[9999] px-4 pb-4 sm:px-6 sm:pb-6"
     >
-      <div className="mx-auto max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-gray-900/10">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl shadow-gray-900/10 dark:shadow-black/30">
         {/* ── Main banner ── */}
         {!showSettings && (
           <div className="p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-gray-900">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
               {t("title")}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-zinc-400">
               {t("description")}{" "}
               <Link
                 href="/datenschutz"
@@ -132,13 +132,13 @@ export function CookieBanner() {
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
               <button
                 onClick={() => setShowSettings(true)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                className="rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
               >
                 {t("settings")}
               </button>
               <button
                 onClick={handleRejectAll}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                className="rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
               >
                 {t("rejectAll")}
               </button>
@@ -155,10 +155,10 @@ export function CookieBanner() {
         {/* ── Settings panel ── */}
         {showSettings && (
           <div className="p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-gray-900">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
               {t("settingsTitle")}
             </h2>
-            <p className="mt-1.5 text-sm text-gray-500">
+            <p className="mt-1.5 text-sm text-gray-500 dark:text-zinc-400">
               {t("settingsDescription")}
             </p>
 
@@ -170,6 +170,7 @@ export function CookieBanner() {
                 checked={true}
                 disabled={true}
                 onChange={() => {}}
+                requiredLabel={t("required")}
               />
 
               {/* Analytics */}
@@ -185,7 +186,7 @@ export function CookieBanner() {
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
               <button
                 onClick={() => setShowSettings(false)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                className="rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
               >
                 {t("back")}
               </button>
@@ -226,30 +227,32 @@ function CookieCategory({
   checked,
   disabled,
   onChange,
+  requiredLabel,
 }: {
   label: string;
   description: string;
   checked: boolean;
   disabled: boolean;
   onChange: (v: boolean) => void;
+  requiredLabel?: string;
 }) {
   const id = `cookie-cat-${label.toLowerCase().replace(/\s/g, "-")}`;
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 sm:p-4">
+    <div className="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-zinc-700 p-3 sm:p-4">
       <div className="flex-1 min-w-0">
         <label
           htmlFor={id}
-          className="block text-sm font-medium text-gray-900 cursor-pointer"
+          className="block text-sm font-medium text-gray-900 dark:text-zinc-100 cursor-pointer"
         >
           {label}
           {disabled && (
-            <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 uppercase">
-              Erforderlich
+            <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400 uppercase">
+              {requiredLabel}
             </span>
           )}
         </label>
-        <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+        <p className="mt-0.5 text-xs leading-relaxed text-gray-500 dark:text-zinc-400">
           {description}
         </p>
       </div>
@@ -263,8 +266,8 @@ function CookieCategory({
         className={`
           relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
           transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2
-          focus:ring-emerald-500 focus:ring-offset-2
-          ${checked ? "bg-emerald-600" : "bg-gray-200"}
+          focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900
+          ${checked ? "bg-emerald-600" : "bg-gray-200 dark:bg-zinc-700"}
           ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
         `}
       >

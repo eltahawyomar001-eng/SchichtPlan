@@ -179,7 +179,11 @@ export const DELETE = withRoute(
       },
     });
 
-    await prisma.serviceVisit.delete({ where: { id } });
+    // Soft-delete the service visit (signature is preserved)
+    await prisma.serviceVisit.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
     createAuditLog({
       action: "DELETE",

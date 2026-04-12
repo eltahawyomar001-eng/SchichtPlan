@@ -520,6 +520,7 @@ model AbsenceRequest {
   reviewNote  String?             @db.Text
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
   employeeId  String
   employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId String
@@ -1143,6 +1144,7 @@ model ServiceVisit {
   workspace         Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   reportId          String?
   report            ServiceReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  deletedAt         DateTime?
   @@index([workspaceId, scheduledDate])
   @@index([employeeId, scheduledDate])
   @@index([locationId])
@@ -1316,6 +1318,9 @@ model Ticket {
   workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   firstViewedAt         DateTime?       /// When a processor first opened the ticket
   firstViewedById       String?         /// Who first viewed the ticket
+  firstResponseAt       DateTime?       /// When first non-reporter responded
+  resolvedAt            DateTime?       /// When ticket was resolved/closed
+  slaBreached           Boolean         @default(false) /// Whether SLA was breached
   closedAt              DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt

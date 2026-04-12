@@ -271,6 +271,7 @@ describe("POST /api/employees — MiLoG warning", () => {
       body: JSON.stringify({
         firstName: "Max",
         lastName: "Mustermann",
+        email: "max@example.com",
         hourlyRate: 10.5,
       }),
     });
@@ -320,6 +321,7 @@ describe("POST /api/employees — MiLoG warning", () => {
       body: JSON.stringify({
         firstName: "Erika",
         lastName: "Musterfrau",
+        email: "erika@example.com",
         hourlyRate: 15.0,
       }),
     });

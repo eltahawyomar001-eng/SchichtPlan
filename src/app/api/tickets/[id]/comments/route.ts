@@ -74,6 +74,24 @@ export const POST = withRoute(
       },
     });
 
+    // Track SLA: first response time (non-reporter, non-internal comment)
+    if (
+      !ticket.firstResponseAt &&
+      user.id !== ticket.createdById &&
+      !isInternal
+    ) {
+      const now = new Date();
+      const createdMs = ticket.createdAt.getTime();
+      const responseMs = now.getTime() - createdMs;
+      const responseHours = responseMs / (1000 * 60 * 60);
+      // SLA breach: >24h for BASIC tier, >8h for higher (simplified: use 24h)
+      const slaBreached = responseHours > 24;
+      await prisma.ticket.update({
+        where: { id },
+        data: { firstResponseAt: now, slaBreached },
+      });
+    }
+
     const actor = { id: user.id, name: user.name ?? "System" };
 
     // Auto-update ticket status if currently OFFEN and management replies

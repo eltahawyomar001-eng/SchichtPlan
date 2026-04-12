@@ -58,6 +58,7 @@ export default function SchichtvorlagenSeite() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -109,7 +110,9 @@ export default function SchichtvorlagenSeite() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setFormError(null);
+    setSaving(true);
     try {
       const url = editId
         ? `/api/shift-templates/${editId}`
@@ -134,6 +137,8 @@ export default function SchichtvorlagenSeite() {
       }
     } catch {
       setFormError(tc("errorOccurred"));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -287,7 +292,9 @@ export default function SchichtvorlagenSeite() {
               >
                 {tc("cancel")}
               </Button>
-              <Button type="submit">{editId ? tc("save") : t("create")}</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? tc("saving") : editId ? tc("save") : t("create")}
+              </Button>
             </ModalFooter>
           </form>
         </AdaptiveModal>

@@ -112,6 +112,7 @@ export default function LeistungsnachweisSeite() {
     notes: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   // Check-in/out
   const [acting, setActing] = useState<string | null>(null);
@@ -162,6 +163,7 @@ export default function LeistungsnachweisSeite() {
   // ────────── Actions ──────────
 
   const handleCreate = async () => {
+    if (creating) return;
     setFormError(null);
     // For employees, the backend enforces their own employeeId —
     // we send a placeholder that will be overridden server-side
@@ -176,6 +178,7 @@ export default function LeistungsnachweisSeite() {
       setFormError(t("errors.locationRequired"));
       return;
     }
+    setCreating(true);
     try {
       const payload = {
         ...createForm,
@@ -203,6 +206,8 @@ export default function LeistungsnachweisSeite() {
       fetchVisits();
     } catch {
       setFormError(t("errors.networkError"));
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -428,9 +433,10 @@ export default function LeistungsnachweisSeite() {
             </Button>
             <Button
               onClick={handleCreate}
+              disabled={creating}
               className="flex-1 !h-14 md:!h-10 md:flex-none font-bold"
             >
-              {tc("create")}
+              {creating ? tc("saving") : tc("create")}
             </Button>
           </div>
         }

@@ -46,6 +46,7 @@ export default function QualifikationenSeite() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
@@ -121,7 +122,9 @@ export default function QualifikationenSeite() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setFormError(null);
+    setSaving(true);
     try {
       const url = editId ? `/api/skills/${editId}` : "/api/skills";
       const method = editId ? "PUT" : "POST";
@@ -154,9 +157,10 @@ export default function QualifikationenSeite() {
       }
     } catch {
       setFormError(tc("errorOccurred"));
+    } finally {
+      setSaving(false);
     }
   }
-
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
@@ -358,7 +362,9 @@ export default function QualifikationenSeite() {
               >
                 {tc("cancel")}
               </Button>
-              <Button type="submit">{editId ? tc("save") : t("create")}</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? tc("saving") : editId ? tc("save") : t("create")}
+              </Button>
             </ModalFooter>
           </form>
         </AdaptiveModal>

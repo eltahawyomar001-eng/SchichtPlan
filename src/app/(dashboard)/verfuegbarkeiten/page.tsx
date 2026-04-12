@@ -67,6 +67,7 @@ export default function VerfuegbarkeitenPage() {
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const defaultEntries = (): WeekdayEntry[] =>
@@ -130,7 +131,8 @@ export default function VerfuegbarkeitenPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formEmployee) return;
+    if (!formEmployee || saving) return;
+    setSaving(true);
 
     try {
       const res = await fetch("/api/availability", {
@@ -149,6 +151,8 @@ export default function VerfuegbarkeitenPage() {
       }
     } catch {
       setLoadError(tc("errorOccurred"));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -390,9 +394,9 @@ export default function VerfuegbarkeitenPage() {
                   >
                     {tc("cancel")}
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" disabled={saving}>
                     <CheckCircleIcon className="h-4 w-4" />
-                    {tc("save")}
+                    {saving ? tc("saving") : tc("save")}
                   </Button>
                 </div>
               </form>

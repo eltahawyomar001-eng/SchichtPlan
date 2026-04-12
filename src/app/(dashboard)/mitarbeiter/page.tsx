@@ -97,6 +97,7 @@ export default function MitarbeiterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -267,7 +268,9 @@ export default function MitarbeiterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     setFormError(null);
+    setSaving(true);
     try {
       const url = editingEmployee
         ? `/api/employees/${editingEmployee.id}`
@@ -323,6 +326,8 @@ export default function MitarbeiterPage() {
     } catch (error) {
       console.error("Error:", error);
       setFormError(t("networkError"));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -626,8 +631,12 @@ export default function MitarbeiterPage() {
               >
                 {tc("cancel")}
               </Button>
-              <Button type="submit">
-                {editingEmployee ? tc("save") : t("addEmployee")}
+              <Button type="submit" disabled={saving}>
+                {saving
+                  ? tc("saving")
+                  : editingEmployee
+                    ? tc("save")
+                    : t("addEmployee")}
               </Button>
             </ModalFooter>
           </form>

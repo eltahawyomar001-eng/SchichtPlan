@@ -37,6 +37,7 @@ export default function StandortePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", address: "" });
@@ -73,7 +74,9 @@ export default function StandortePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     setFormError(null);
+    setSaving(true);
     try {
       const url = editingLocation
         ? `/api/locations/${editingLocation.id}`
@@ -100,6 +103,8 @@ export default function StandortePage() {
       }
     } catch {
       setFormError(t("networkError"));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -202,8 +207,12 @@ export default function StandortePage() {
               >
                 {tc("cancel")}
               </Button>
-              <Button type="submit">
-                {editingLocation ? tc("save") : t("addLocation")}
+              <Button type="submit" disabled={saving}>
+                {saving
+                  ? tc("saving")
+                  : editingLocation
+                    ? tc("save")
+                    : t("addLocation")}
               </Button>
             </ModalFooter>
           </form>

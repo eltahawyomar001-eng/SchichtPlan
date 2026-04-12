@@ -46,6 +46,7 @@ export default function AbteilungenSeite() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -96,7 +97,9 @@ export default function AbteilungenSeite() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setFormError(null);
+    setSaving(true);
     try {
       const url = editId ? `/api/departments/${editId}` : "/api/departments";
       const method = editId ? "PUT" : "POST";
@@ -116,6 +119,8 @@ export default function AbteilungenSeite() {
       }
     } catch {
       setFormError(tc("errorOccurred"));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -241,7 +246,9 @@ export default function AbteilungenSeite() {
               >
                 {tc("cancel")}
               </Button>
-              <Button type="submit">{editId ? tc("save") : t("create")}</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? tc("saving") : editId ? tc("save") : t("create")}
+              </Button>
             </ModalFooter>
           </form>
         </AdaptiveModal>

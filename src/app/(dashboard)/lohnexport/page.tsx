@@ -260,7 +260,7 @@ export default function LohnexportPage() {
         {/* ─── Prerequisites checklist ─────────────────────── */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+            <CardTitle className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
               {t("requirementsTitle")}
             </CardTitle>
           </CardHeader>
@@ -268,7 +268,7 @@ export default function LohnexportPage() {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
+                <p className="text-sm font-medium text-gray-800 dark:text-zinc-200">
                   {t("requirementConfirmed")}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
@@ -279,7 +279,7 @@ export default function LohnexportPage() {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
+                <p className="text-sm font-medium text-gray-800 dark:text-zinc-200">
                   {t("requirementPeriod")}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
@@ -382,15 +382,15 @@ export default function LohnexportPage() {
 
             {/* Format help expandable */}
             {showFormatHelp && (
-              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50/60 p-4 space-y-3">
-                <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 p-4 space-y-3">
+                <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
                   {t("formatHelpTitle")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
                     className={`rounded-lg border p-3 ${exportFormat === "datev" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"}`}
                   >
-                    <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200">
                       {t("datev")}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
@@ -400,7 +400,7 @@ export default function LohnexportPage() {
                   <div
                     className={`rounded-lg border p-3 ${exportFormat === "csv" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"}`}
                   >
-                    <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200">
                       {t("csv")}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
@@ -470,7 +470,7 @@ export default function LohnexportPage() {
                       <UsersIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                         {totalEmployees}
                       </p>
                       <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
@@ -487,7 +487,7 @@ export default function LohnexportPage() {
                       <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
                         {totalHours.toFixed(2)}
                       </p>
                       <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
@@ -504,7 +504,7 @@ export default function LohnexportPage() {
               <CardHeader>
                 <CardTitle>
                   {t("summary")}{" "}
-                  <span className="text-sm font-normal text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <span className="text-sm font-normal text-gray-500 dark:text-zinc-400">
                     {format(new Date(startDate), "dd.MM.yyyy", {
                       locale: dateFnsLocale,
                     })}{" "}
@@ -519,11 +519,11 @@ export default function LohnexportPage() {
                 {preview.length === 0 ? (
                   <div className="text-center py-10 space-y-3">
                     <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-sm font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                    <p className="text-sm font-medium text-gray-700 dark:text-zinc-300">
                       {t("noEntries")}
                     </p>
                     <div className="text-left max-w-sm mx-auto space-y-2">
-                      <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                      <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">
                         {t("noEntriesHint")}
                       </p>
                       <ul className="text-xs text-gray-500 dark:text-zinc-400 space-y-1 list-disc list-inside">
@@ -544,10 +544,10 @@ export default function LohnexportPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-200 dark:border-zinc-700">
-                          <th className="text-left py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                          <th className="text-left py-2 px-3 font-medium text-gray-500 dark:text-zinc-400">
                             {tc("employee")}
                           </th>
-                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400">
                             {tc("days")}
                           </th>
                           <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 hidden sm:table-cell">
@@ -556,7 +556,7 @@ export default function LohnexportPage() {
                           <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 hidden sm:table-cell">
                             {t("break")}
                           </th>
-                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400">
                             {t("net")}
                           </th>
                         </tr>
@@ -569,17 +569,17 @@ export default function LohnexportPage() {
                           >
                             <td className="py-2.5 px-3">
                               <div>
-                                <p className="font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                                <p className="font-medium text-gray-900 dark:text-zinc-100">
                                   {row.name}
                                 </p>
                                 {row.position && (
-                                  <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                                  <p className="text-xs text-gray-400 dark:text-zinc-500">
                                     {row.position}
                                   </p>
                                 )}
                               </div>
                             </td>
-                            <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                            <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300">
                               {row.days}
                             </td>
                             <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 hidden sm:table-cell">
@@ -588,7 +588,7 @@ export default function LohnexportPage() {
                             <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 hidden sm:table-cell">
                               {row.totalBreakHours.toFixed(2)} {tc("hrsShort")}
                             </td>
-                            <td className="text-right py-2.5 px-3 font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                            <td className="text-right py-2.5 px-3 font-medium text-gray-900 dark:text-zinc-100">
                               {row.totalNetHours.toFixed(2)} {tc("hrsShort")}
                             </td>
                           </tr>
@@ -596,10 +596,10 @@ export default function LohnexportPage() {
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 border-gray-200 dark:border-zinc-700">
-                          <td className="py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                          <td className="py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100">
                             {tc("total")}
                           </td>
-                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100">
                             {preview.reduce((s, r) => s + r.days, 0)}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 hidden sm:table-cell">
@@ -614,7 +614,7 @@ export default function LohnexportPage() {
                               .toFixed(2)}{" "}
                             {tc("hrsShort")}
                           </td>
-                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100">
                             {totalHours.toFixed(2)} {tc("hrsShort")}
                           </td>
                         </tr>
@@ -639,7 +639,7 @@ export default function LohnexportPage() {
           <Card>
             <CardContent className="py-10 sm:py-10 text-center">
               <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-sm text-gray-500 dark:text-zinc-400">
                 {t("helpText")}
               </p>
               <p className="text-xs text-gray-400 dark:text-zinc-500 mt-2 max-w-md mx-auto">

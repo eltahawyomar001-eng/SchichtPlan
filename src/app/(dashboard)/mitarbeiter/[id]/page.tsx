@@ -156,7 +156,7 @@ export default function EmployeeDetailPage({
         <Topbar title={t("title")} />
         <div className="p-6">
           <Card>
-            <CardContent className="py-12 sm:py-12 text-center text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+            <CardContent className="py-12 sm:py-12 text-center text-sm text-gray-500 dark:text-zinc-400">
               {error || t("notFound")}
             </CardContent>
           </Card>
@@ -205,7 +205,7 @@ export default function EmployeeDetailPage({
               />
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
                     {emp.firstName} {emp.lastName}
                   </h2>
                   <Badge variant={emp.isActive ? "success" : "outline"}>
@@ -213,11 +213,11 @@ export default function EmployeeDetailPage({
                   </Badge>
                 </div>
                 {emp.position && (
-                  <p className="text-sm text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-sm text-gray-600 dark:text-zinc-400">
                     {emp.position}
                   </p>
                 )}
-                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500 dark:text-zinc-400">
                   {emp.email && (
                     <span className="inline-flex items-center gap-1.5">
                       <MailIcon className="h-4 w-4 shrink-0" /> {emp.email}
@@ -252,10 +252,10 @@ export default function EmployeeDetailPage({
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
               <CalendarIcon className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
-              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 {emp.shifts.length}
               </p>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
                 {t("recentShifts")}
               </p>
             </CardContent>
@@ -263,10 +263,10 @@ export default function EmployeeDetailPage({
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
               <ClockIcon className="h-5 w-5 mx-auto text-blue-600 mb-1" />
-              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 {emp.timeEntries.length}
               </p>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
                 {t("recentTimeEntries")}
               </p>
             </CardContent>
@@ -274,10 +274,10 @@ export default function EmployeeDetailPage({
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
               <CalendarOffIcon className="h-5 w-5 mx-auto text-amber-600 mb-1" />
-              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 {emp.absenceRequests.length}
               </p>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
                 {t("absences")}
               </p>
             </CardContent>
@@ -285,10 +285,10 @@ export default function EmployeeDetailPage({
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
               <PalmtreeIcon className="h-5 w-5 mx-auto text-teal-600 mb-1" />
-              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 {currentBalance ? currentBalance.remaining : "–"}
               </p>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
                 {t("vacationRemaining")}
               </p>
             </CardContent>
@@ -309,7 +309,7 @@ export default function EmployeeDetailPage({
               <div className="overflow-x-auto -mx-6">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-left text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                    <tr className="border-b text-left text-gray-500 dark:text-zinc-400">
                       <th className="px-6 pb-2 font-medium">{t("date")}</th>
                       <th className="px-6 pb-2 font-medium">{t("time")}</th>
                       <th className="px-6 pb-2 font-medium">{t("status")}</th>
@@ -320,7 +320,7 @@ export default function EmployeeDetailPage({
                     {emp.shifts.map((s) => (
                       <tr
                         key={s.id}
-                        className="hover:bg-gray-50 dark:bg-zinc-800/50"
+                        className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                       >
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(s.date, locale)}
@@ -361,7 +361,7 @@ export default function EmployeeDetailPage({
               <div className="overflow-x-auto -mx-6">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-left text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                    <tr className="border-b text-left text-gray-500 dark:text-zinc-400">
                       <th className="px-6 pb-2 font-medium">{t("date")}</th>
                       <th className="px-6 pb-2 font-medium">{t("time")}</th>
                       <th className="px-6 pb-2 font-medium">{t("breakMin")}</th>
@@ -373,7 +373,7 @@ export default function EmployeeDetailPage({
                     {emp.timeEntries.map((te) => (
                       <tr
                         key={te.id}
-                        className="hover:bg-gray-50 dark:bg-zinc-800/50"
+                        className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                       >
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(te.date, locale)}
@@ -413,7 +413,7 @@ export default function EmployeeDetailPage({
               <div className="overflow-x-auto -mx-6">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-left text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                    <tr className="border-b text-left text-gray-500 dark:text-zinc-400">
                       <th className="px-6 pb-2 font-medium">{t("category")}</th>
                       <th className="px-6 pb-2 font-medium">{t("period")}</th>
                       <th className="px-6 pb-2 font-medium">{t("days")}</th>
@@ -424,7 +424,7 @@ export default function EmployeeDetailPage({
                     {emp.absenceRequests.map((ar) => (
                       <tr
                         key={ar.id}
-                        className="hover:bg-gray-50 dark:bg-zinc-800/50"
+                        className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                       >
                         <td className="px-6 py-2">
                           {t.has(`absenceCategories.${ar.category}`)
@@ -463,34 +463,34 @@ export default function EmployeeDetailPage({
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
                 <div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100">
                     {currentBalance.totalEntitlement}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("entitlement")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100">
                     {currentBalance.carryOver}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("carryOver")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100">
                     {currentBalance.used}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("used")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-lg font-bold text-gray-900 dark:text-zinc-100">
                     {currentBalance.planned}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("planned")}
                   </p>
                 </div>
@@ -498,7 +498,7 @@ export default function EmployeeDetailPage({
                   <p className="text-lg font-bold text-emerald-600">
                     {currentBalance.remaining}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("remaining")}
                   </p>
                 </div>

@@ -221,7 +221,7 @@ export default function WebhooksSeite() {
                     className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
                       formEvents.includes(event)
                         ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                        : "bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:bg-zinc-800"
+                        : "bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
                     }`}
                   >
                     {event}
@@ -256,7 +256,7 @@ export default function WebhooksSeite() {
         ) : hooks.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
-              <p className="text-lg font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-lg font-medium text-gray-900 dark:text-zinc-100">
                 {t("noWebhooks")}
               </p>
               <Button className="mt-4" onClick={() => setShowForm(true)}>

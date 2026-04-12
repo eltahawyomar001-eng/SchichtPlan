@@ -172,7 +172,7 @@ export default function BenachrichtigungenPage() {
             <BellIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
               {t("emailNotifications")}
             </p>
             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
@@ -212,7 +212,7 @@ export default function BenachrichtigungenPage() {
                     className={`text-[10px] px-1.5 py-0 ${
                       emailEnabled
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
+                        : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400"
                     }`}
                   >
                     {emailEnabled ? t("enabled") : t("disabled")}

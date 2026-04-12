@@ -732,7 +732,7 @@ export default function SchichtplanPage() {
                                 ? "bg-emerald-600 text-white shadow-sm"
                                 : today
                                   ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                  : "text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50",
+                                  : "text-gray-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50",
                             )}
                           >
                             <span className="text-[13px] leading-none font-semibold">
@@ -786,7 +786,7 @@ export default function SchichtplanPage() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between px-1">
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                            <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
                               {format(selectedMonthDay, "EEEE, d. MMMM", {
                                 locale: dateFnsLocale,
                               })}
@@ -803,7 +803,7 @@ export default function SchichtplanPage() {
                           {canManage && (
                             <button
                               onClick={() => openCreateForm(selectedMonthDay)}
-                              className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                              className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
                             >
                               <PlusIcon className="h-5 w-5" />
                             </button>
@@ -811,7 +811,7 @@ export default function SchichtplanPage() {
                         </div>
                         {dayShifts.length === 0 ? (
                           <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 py-8 text-center">
-                            <p className="text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                            <p className="text-sm text-gray-400 dark:text-zinc-500">
                               {t("noShifts")}
                             </p>
                           </div>
@@ -843,7 +843,7 @@ export default function SchichtplanPage() {
                     {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
                       <div
                         key={d}
-                        className="bg-gray-50 dark:bg-zinc-800/50 p-2 text-center text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
+                        className="bg-gray-50 dark:bg-zinc-800/50 p-2 text-center text-xs font-medium text-gray-500 dark:text-zinc-400"
                       >
                         {d}
                       </div>
@@ -931,7 +931,7 @@ export default function SchichtplanPage() {
                     <div className="sm:hidden space-y-2">
                       <div className="flex items-center justify-between px-1">
                         <div>
-                          <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                          <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
                             {format(dayDate, "EEEE, d. MMMM", {
                               locale: dateFnsLocale,
                             })}
@@ -948,7 +948,7 @@ export default function SchichtplanPage() {
                         {canManage && (
                           <button
                             onClick={() => openCreateForm(dayDate)}
-                            className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                            className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
                           >
                             <PlusIcon className="h-5 w-5" />
                           </button>
@@ -956,7 +956,7 @@ export default function SchichtplanPage() {
                       </div>
                       {getShiftsForDay(dayDate).length === 0 ? (
                         <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 py-8 text-center">
-                          <p className="text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                          <p className="text-sm text-gray-400 dark:text-zinc-500">
                             {t("noShifts")}
                           </p>
                         </div>
@@ -1005,7 +1005,7 @@ export default function SchichtplanPage() {
                           {canManage && (
                             <button
                               onClick={() => openCreateForm(dayDate)}
-                              className="rounded-lg p-2 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
+                              className="rounded-lg p-2 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"
                             >
                               <PlusIcon className="h-5 w-5" />
                             </button>
@@ -1094,7 +1094,7 @@ export default function SchichtplanPage() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between px-1">
                             <div>
-                              <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                              <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
                                 {format(selectedDay, "EEEE, d. MMMM", {
                                   locale: dateFnsLocale,
                                 })}
@@ -1111,7 +1111,7 @@ export default function SchichtplanPage() {
                             {canManage && (
                               <button
                                 onClick={() => openCreateForm(selectedDay)}
-                                className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                                className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
                               >
                                 <PlusIcon className="h-5 w-5" />
                               </button>
@@ -1119,7 +1119,7 @@ export default function SchichtplanPage() {
                           </div>
                           {dayShifts.length === 0 ? (
                             <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 py-8 text-center">
-                              <p className="text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                              <p className="text-sm text-gray-400 dark:text-zinc-500">
                                 {t("noShifts")}
                               </p>
                             </div>
@@ -1185,7 +1185,7 @@ export default function SchichtplanPage() {
                                 {canManage && (
                                   <button
                                     onClick={() => openCreateForm(day)}
-                                    className="rounded-md p-1 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
+                                    className="rounded-md p-1 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"
                                   >
                                     <PlusIcon className="h-4 w-4" />
                                   </button>
@@ -1242,7 +1242,7 @@ export default function SchichtplanPage() {
                       : undefined
                   }
                 >
-                  <p className="font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="font-medium text-gray-900 dark:text-zinc-100">
                     {activeShift.employee
                       ? `${activeShift.employee.firstName} ${activeShift.employee.lastName}`
                       : t("openShiftLabel")}
@@ -1288,7 +1288,7 @@ export default function SchichtplanPage() {
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
                 <CalendarIcon className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.dateAndTime")}
                 </span>
               </div>
@@ -1369,7 +1369,7 @@ export default function SchichtplanPage() {
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
                 <UserIcon className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.assignment")}
                 </span>
               </div>
@@ -1433,7 +1433,7 @@ export default function SchichtplanPage() {
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
                 <EditIcon className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.additional")}
                 </span>
               </div>
@@ -1469,7 +1469,7 @@ export default function SchichtplanPage() {
                     }
                     className="mt-1.5"
                   />
-                  <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500">
                     {t("form.repeatWeeksHint")}
                   </p>
                 </div>
@@ -1545,7 +1545,7 @@ export default function SchichtplanPage() {
             <div className="flex items-center gap-2">
               <ShiftStatusBadge status={detailShift.status} />
               {detailShift.status === "CANCELLED" && (
-                <span className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                <span className="text-xs text-gray-400 dark:text-zinc-500">
                   {t("shiftCancelledNote")}
                 </span>
               )}
@@ -1555,13 +1555,13 @@ export default function SchichtplanPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 p-2">
-                  <ClockIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400 dark:text-zinc-400" />
+                  <ClockIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("form.date")}
                   </p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                     {new Date(detailShift.date).toLocaleDateString(
                       locale === "de" ? "de-DE" : "en-US",
                       {
@@ -1572,7 +1572,7 @@ export default function SchichtplanPage() {
                       },
                     )}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-sm text-gray-600 dark:text-zinc-400">
                     {detailShift.startTime} – {detailShift.endTime}
                   </p>
                 </div>
@@ -1580,13 +1580,13 @@ export default function SchichtplanPage() {
 
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 p-2">
-                  <UserIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400 dark:text-zinc-400" />
+                  <UserIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
                     {t("form.employee")}
                   </p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                     {detailShift.employee
                       ? `${detailShift.employee.firstName} ${detailShift.employee.lastName}`
                       : t("openShiftLabel")}
@@ -1597,13 +1597,13 @@ export default function SchichtplanPage() {
               {detailShift.location && (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 p-2">
-                    <MapPinIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400 dark:text-zinc-400" />
+                    <MapPinIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                    <p className="text-xs text-gray-500 dark:text-zinc-400">
                       {t("form.location")}
                     </p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                    <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                       {detailShift.location.name}
                     </p>
                   </div>
@@ -1615,7 +1615,7 @@ export default function SchichtplanPage() {
                   <p className="text-xs text-gray-500 dark:text-zinc-400 mb-1">
                     {t("form.notes")}
                   </p>
-                  <p className="text-sm text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                  <p className="text-sm text-gray-700 dark:text-zinc-300">
                     {detailShift.notes}
                   </p>
                 </div>
@@ -1713,10 +1713,10 @@ export default function SchichtplanPage() {
               />
             </div>
             <div className="text-center space-y-1.5">
-              <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                 {t("autoScheduleLoadingTitle")}
               </p>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
                 {t("autoScheduleLoadingDesc")}
               </p>
             </div>
@@ -1765,7 +1765,7 @@ export default function SchichtplanPage() {
                   <AlertCircleIcon className="h-7 w-7 text-amber-500" />
                 </div>
                 <div className="space-y-1.5 max-w-xs">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                     {t("autoScheduleNoOpenShiftsTitle")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
@@ -1773,7 +1773,7 @@ export default function SchichtplanPage() {
                   </p>
                 </div>
                 <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 p-4 w-full max-w-sm text-left space-y-2.5">
-                  <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                  <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
                     {t("autoScheduleNoOpenShiftsSteps")}
                   </p>
                   <div className="space-y-2">
@@ -1875,7 +1875,7 @@ export default function SchichtplanPage() {
                 {autoScheduleResult.fairnessScore != null && (
                   <div className="space-y-2 px-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                      <span className="text-xs font-medium text-gray-700 dark:text-zinc-300">
                         {t("autoScheduleFairnessLabel")}
                       </span>
                       <span
@@ -1918,7 +1918,7 @@ export default function SchichtplanPage() {
                       <button
                         type="button"
                         onClick={() => setShowEmployeeHours((s) => !s)}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50/80 hover:bg-gray-100 dark:bg-zinc-800/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
                       >
                         <span>{t("autoScheduleEmployeeHours")}</span>
                         <ChevronDownIcon
@@ -1929,7 +1929,7 @@ export default function SchichtplanPage() {
                         <div className="max-h-52 overflow-y-auto overscroll-contain border-t border-gray-100">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="bg-gray-50 dark:bg-zinc-800/50/50 text-left text-xs text-gray-500 dark:text-zinc-400 sticky top-0">
+                              <tr className="bg-gray-50 dark:bg-zinc-800/50 text-left text-xs text-gray-500 dark:text-zinc-400 sticky top-0">
                                 <th className="px-4 py-2 font-medium">
                                   {t("autoScheduleEmployee")}
                                 </th>
@@ -1952,12 +1952,12 @@ export default function SchichtplanPage() {
                                 .map(([id, emp]) => (
                                   <tr
                                     key={id}
-                                    className="hover:bg-gray-50 dark:bg-zinc-800/50/50 transition-colors"
+                                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
                                   >
                                     <td className="px-4 py-2 text-gray-800 dark:text-zinc-200 font-medium">
                                       {emp.name}
                                     </td>
-                                    <td className="px-4 py-2 text-right font-mono text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
+                                    <td className="px-4 py-2 text-right font-mono text-gray-600 dark:text-zinc-400">
                                       {emp.scheduled.toFixed(1)}h
                                     </td>
                                     <td className="px-4 py-2 text-right font-mono text-gray-400 dark:text-zinc-500 hidden sm:table-cell">
@@ -2068,7 +2068,7 @@ export default function SchichtplanPage() {
                   <SparklesIcon className="h-5 w-5 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                     {t("autoScheduleTitle")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
@@ -2109,7 +2109,7 @@ export default function SchichtplanPage() {
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                  <p className="text-[11px] text-gray-400 dark:text-zinc-500">
                     {t("autoScheduleMaxDays")}
                   </p>
                 </div>
@@ -2120,10 +2120,10 @@ export default function SchichtplanPage() {
                 <button
                   type="button"
                   onClick={() => setShowWeightsConfig((s) => !s)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50/80 hover:bg-gray-100 dark:bg-zinc-800/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <SettingsIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500 dark:text-zinc-500" />
+                    <SettingsIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
                     {t("autoScheduleWeights")}
                   </span>
                   <ChevronDownIcon
@@ -2132,7 +2132,7 @@ export default function SchichtplanPage() {
                 </button>
                 {showWeightsConfig && (
                   <div className="p-4 space-y-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                    <p className="text-xs text-gray-500 dark:text-zinc-400">
                       {t("autoScheduleWeightsDesc")}
                     </p>
                     {(
@@ -2275,7 +2275,7 @@ function DraggableShiftChip({
         canManage && "active:cursor-grabbing",
         isDragging && "opacity-40",
         isCancelled &&
-          "opacity-50 line-through text-gray-400 dark:text-zinc-500 dark:text-zinc-500",
+          "opacity-50 line-through text-gray-400 dark:text-zinc-500",
         isOpen &&
           "border border-dashed border-amber-400 bg-amber-50 text-amber-700",
         !isOpen && !isCancelled && "text-gray-800",
@@ -2368,14 +2368,14 @@ function DraggableShiftCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p
-            className={`font-medium text-sm ${isCancelled ? "line-through text-gray-400 dark:text-zinc-500 dark:text-zinc-500" : isOpen ? "text-amber-700" : "text-gray-900"}`}
+            className={`font-medium text-sm ${isCancelled ? "line-through text-gray-400 dark:text-zinc-500" : isOpen ? "text-amber-700" : "text-gray-900"}`}
           >
             {isOpen
               ? t("openShiftLabel")
               : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
           </p>
           {isCancelled && (
-            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-gray-500 dark:text-zinc-400">
               {t("statusCancelled")}
             </span>
           )}
@@ -2554,7 +2554,7 @@ function MobileShiftCard({
               className={cn(
                 "font-semibold text-[15px]",
                 isCancelled
-                  ? "line-through text-gray-400 dark:text-zinc-500 dark:text-zinc-500"
+                  ? "line-through text-gray-400 dark:text-zinc-500"
                   : isOpen
                     ? "text-amber-700"
                     : "text-gray-900",
@@ -2565,7 +2565,7 @@ function MobileShiftCard({
                 : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
             </p>
             {isCancelled && (
-              <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400">
                 {t("statusCancelled")}
               </span>
             )}

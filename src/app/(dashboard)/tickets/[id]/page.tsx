@@ -250,7 +250,7 @@ export default function TicketDetailPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
               {ticket.subject}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -316,7 +316,7 @@ export default function TicketDetailPage() {
                           .charAt(0)
                           .toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                         {comment.authorName ??
                           comment.author?.name ??
                           comment.author?.email ??
@@ -530,7 +530,7 @@ export default function TicketDetailPage() {
                       </option>
                     </Select>
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                  <p className="text-xs text-gray-400 dark:text-zinc-500">
                     {t("assigneeStatusHint")}
                   </p>
                 </CardContent>
@@ -551,7 +551,7 @@ export default function TicketDetailPage() {
                     >
                       <ClockIcon className="h-3.5 w-3.5 mt-0.5 text-gray-400 dark:text-zinc-500 flex-shrink-0" />
                       <div>
-                        <span className="font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
+                        <span className="font-medium text-gray-700 dark:text-zinc-300">
                           {event.actorName}
                         </span>{" "}
                         <span className="text-gray-500">
@@ -588,10 +588,8 @@ export default function TicketDetailPage() {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
-        {label}
-      </span>
-      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+      <span className="text-xs text-gray-500 dark:text-zinc-400">{label}</span>
+      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
         {value}
       </span>
     </div>

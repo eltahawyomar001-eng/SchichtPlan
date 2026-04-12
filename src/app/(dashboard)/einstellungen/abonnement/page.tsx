@@ -442,7 +442,7 @@ function BillingContent() {
                 <button
                   onClick={handlePortal}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-zinc-800/50 hover:shadow-md disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:shadow-md disabled:opacity-60"
                 >
                   {portalLoading ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
@@ -577,7 +577,7 @@ function BillingContent() {
                   ) : plan.isEnterprise ? (
                     <a
                       href="mailto:info@bashabsheh-vergabepartner.de"
-                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 dark:bg-zinc-800/50 hover:shadow-md"
+                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:shadow-md"
                     >
                       <StarIcon className="h-4 w-4" />
                       {t("contactSales")}
@@ -589,7 +589,7 @@ function BillingContent() {
                       className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
                         plan.highlighted
                           ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-200/50 hover:shadow-xl hover:brightness-110"
-                          : "border border-gray-200 dark:border-zinc-700 text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50 hover:shadow-md"
+                          : "border border-gray-200 dark:border-zinc-700 text-gray-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:shadow-md"
                       }`}
                     >
                       {checkoutLoading === plan.id ? (

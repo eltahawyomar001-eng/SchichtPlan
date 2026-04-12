@@ -365,7 +365,7 @@ export default function KundenSeite() {
           {!loading && filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700 py-16 text-center">
               <UsersIcon className="h-10 w-10 text-gray-300 mb-3" />
-              <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-sm font-medium text-gray-500 dark:text-zinc-400">
                 {search ? t("noResults") : t("empty")}
               </p>
               {!search && (
@@ -403,7 +403,7 @@ export default function KundenSeite() {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500 dark:text-zinc-400">
                         {client.email && <span>{client.email}</span>}
                         {client.phone && <span>{client.phone}</span>}
                         {client.address && (

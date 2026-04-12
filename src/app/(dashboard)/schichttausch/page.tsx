@@ -536,7 +536,7 @@ export default function SchichttauschPage() {
                 <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:bg-zinc-800"
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800"
                 >
                   <XIcon className="h-5 w-5 text-gray-400" />
                 </button>

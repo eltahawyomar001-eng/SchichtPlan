@@ -140,10 +140,10 @@ export default function UrlaubskontoSeite() {
           </div>
         ) : balances.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-800/50 py-12 text-center">
-            <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+            <p className="text-sm text-gray-500 dark:text-zinc-400">
               {t("empty")}
             </p>
-            <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+            <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500">
               {t("emptyHint")}
             </p>
           </div>
@@ -157,7 +157,7 @@ export default function UrlaubskontoSeite() {
               >
                 <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 dark:bg-zinc-800/50 px-6 py-4">
                   <PalmtreeIcon className="h-5 w-5 text-emerald-600" />
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
                     {bal.employee.firstName} {bal.employee.lastName} — {year}
                   </h3>
                 </div>
@@ -166,11 +166,11 @@ export default function UrlaubskontoSeite() {
                     <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
                       {t("entitlement")}
                     </p>
-                    <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                    <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-zinc-100">
                       {bal.totalEntitlement + bal.carryOver}
                     </p>
                     {bal.carryOver > 0 && (
-                      <p className="mt-0.5 text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                      <p className="mt-0.5 text-xs text-gray-400 dark:text-zinc-500">
                         {bal.totalEntitlement} + {bal.carryOver}{" "}
                         {t("carryOver")}
                       </p>
@@ -180,7 +180,7 @@ export default function UrlaubskontoSeite() {
                     <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
                       {t("used")}
                     </p>
-                    <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                    <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-zinc-100">
                       {bal.used}
                     </p>
                   </div>
@@ -255,7 +255,7 @@ export default function UrlaubskontoSeite() {
               <div className="overflow-x-auto">
                 <div className="min-w-[740px]">
                   {/* Header */}
-                  <div className="grid grid-cols-8 gap-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <div className="grid grid-cols-8 gap-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-zinc-400">
                     <div className="col-span-2">{t("employee")}</div>
                     <div className="text-center">{t("contractTypeLabel")}</div>
                     <div className="text-center">{t("entitlement")}</div>
@@ -275,11 +275,11 @@ export default function UrlaubskontoSeite() {
                         className={`grid grid-cols-8 gap-4 border-b border-gray-100 px-6 py-3 last:border-0 ${belowMin ? "bg-red-50/50" : ""}`}
                       >
                         <div className="col-span-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                          <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                             {bal.employee.firstName} {bal.employee.lastName}
                           </p>
                           {bal.carryOver > 0 && (
-                            <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                            <p className="text-xs text-gray-400 dark:text-zinc-500">
                               +{bal.carryOver} {t("carryOver")}
                             </p>
                           )}
@@ -385,7 +385,7 @@ export default function UrlaubskontoSeite() {
                 value={editEntitlement}
                 onChange={(e) => setEditEntitlement(e.target.value)}
               />
-              <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+              <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500">
                 {t("entitlementHintDynamic", {
                   min: editTarget.legalMinimum ?? 20,
                   workDays: editTarget.employee.workDaysPerWeek ?? 5,

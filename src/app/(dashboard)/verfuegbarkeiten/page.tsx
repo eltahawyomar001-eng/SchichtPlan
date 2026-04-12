@@ -220,14 +220,14 @@ export default function VerfuegbarkeitenPage() {
 
         {/* Availability cards per employee */}
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+          <p className="text-sm text-gray-500 dark:text-zinc-400">
             {tc("loading")}
           </p>
         ) : Object.keys(grouped).length === 0 ? (
           <Card>
             <CardContent className="py-10 sm:py-10 text-center">
               <HandRaisedIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <p className="text-sm text-gray-500 dark:text-zinc-400">
                 {t("noEntries")}
               </p>
             </CardContent>
@@ -259,7 +259,7 @@ export default function VerfuegbarkeitenPage() {
                         : {
                             value: "",
                             color:
-                              "bg-gray-50 dark:bg-zinc-800/50 text-gray-400 dark:text-zinc-500 dark:text-zinc-500",
+                              "bg-gray-50 dark:bg-zinc-800/50 text-gray-400 dark:text-zinc-500",
                           };
                       return (
                         <div
@@ -301,9 +301,9 @@ export default function VerfuegbarkeitenPage() {
                 <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:bg-zinc-800"
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800"
                 >
-                  <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 dark:text-zinc-500" />
+                  <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500" />
                 </button>
               </div>
             </CardHeader>
@@ -365,7 +365,7 @@ export default function VerfuegbarkeitenPage() {
                             }
                             className="w-[100px] text-xs"
                           />
-                          <span className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                          <span className="text-xs text-gray-400 dark:text-zinc-500">
                             –
                           </span>
                           <Input

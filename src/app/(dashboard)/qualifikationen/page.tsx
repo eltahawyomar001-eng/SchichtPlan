@@ -292,7 +292,7 @@ export default function QualifikationenSeite() {
                       {employees.map((emp) => (
                         <label
                           key={emp.id}
-                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:bg-zinc-800/50 cursor-pointer text-sm"
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800/50 cursor-pointer text-sm"
                         >
                           <input
                             type="checkbox"
@@ -371,7 +371,7 @@ export default function QualifikationenSeite() {
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
-              <p className="text-lg font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+              <p className="text-lg font-medium text-gray-900 dark:text-zinc-100">
                 {search ? tc("noResults") : t("empty")}
               </p>
               {!search && (
@@ -386,7 +386,7 @@ export default function QualifikationenSeite() {
           <div className="space-y-6">
             {Object.entries(grouped).map(([category, items]) => (
               <div key={category}>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
                   {category}
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

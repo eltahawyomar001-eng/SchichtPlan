@@ -104,7 +104,9 @@ export default function LeistungsnachweisSeite() {
   // Create form
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({
-    scheduledDate: new Date().toISOString().split("T")[0],
+    scheduledDate: new Date().toLocaleDateString("en-CA", {
+      timeZone: "Europe/Berlin",
+    }),
     employeeId: "",
     locationId: "",
     notes: "",
@@ -191,7 +193,9 @@ export default function LeistungsnachweisSeite() {
       }
       setShowCreate(false);
       setCreateForm({
-        scheduledDate: new Date().toISOString().split("T")[0],
+        scheduledDate: new Date().toLocaleDateString("en-CA", {
+          timeZone: "Europe/Berlin",
+        }),
         employeeId: "",
         locationId: "",
         notes: "",

@@ -1062,7 +1062,7 @@ export default function NachrichtenPage() {
         </h3>
         <button
           onClick={() => setShowSettings(false)}
-          className="flex-shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 active:scale-95 lg:rounded-lg lg:p-1"
+          className="flex-shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 active:scale-95 lg:rounded-lg lg:p-1"
         >
           <XIcon className="h-4 w-4" />
         </button>
@@ -1152,7 +1152,7 @@ export default function NachrichtenPage() {
             {settingMembers.map((m: ChannelMember) => (
               <li
                 key={m.userId}
-                className="group/member flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:bg-zinc-800/50"
+                className="group/member flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
@@ -1470,7 +1470,7 @@ export default function NachrichtenPage() {
                             setShowSearchResults(false);
                             setSearchResults([]);
                           }}
-                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
+                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
                         >
                           <XIcon className="h-3.5 w-3.5" />
                         </button>
@@ -1478,7 +1478,7 @@ export default function NachrichtenPage() {
                     ) : (
                       <button
                         onClick={() => setShowSearchResults(true)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:bg-zinc-800"
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800"
                         title={t("searchMessages")}
                       >
                         <SearchIcon className="h-4 w-4" />
@@ -1491,7 +1491,7 @@ export default function NachrichtenPage() {
                       setShowPinned(!showPinned);
                       if (!showPinned) fetchPinnedMessages();
                     }}
-                    className={`rounded-lg p-1.5 transition-colors ${showPinned ? "bg-amber-50 text-amber-600" : "text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"}`}
+                    className={`rounded-lg p-1.5 transition-colors ${showPinned ? "bg-amber-50 text-amber-600" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"}`}
                     title={t("pinnedMessages")}
                   >
                     <svg
@@ -1517,7 +1517,7 @@ export default function NachrichtenPage() {
                     className={`rounded-lg p-1.5 transition-colors ${
                       showSettings
                         ? "bg-emerald-50 text-emerald-600"
-                        : "text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
+                        : "text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
                     }`}
                     title={t("channelSettings")}
                   >
@@ -1681,7 +1681,7 @@ export default function NachrichtenPage() {
                                           setShowReactionPicker(msg.id);
                                         }
                                       }}
-                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
+                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"
                                       title={t("addReaction")}
                                     >
                                       <SmileIcon className="h-3.5 w-3.5" />
@@ -1692,7 +1692,7 @@ export default function NachrichtenPage() {
                                           setEditingMessage(msg.id);
                                           setEditContent(msg.content);
                                         }}
-                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
+                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"
                                         title={t("editMessage")}
                                       >
                                         <EditIcon className="h-3.5 w-3.5" />
@@ -1718,7 +1718,7 @@ export default function NachrichtenPage() {
                                               : msg.id,
                                           )
                                         }
-                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
+                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"
                                       >
                                         <MoreVerticalIcon className="h-3.5 w-3.5" />
                                       </button>
@@ -1726,7 +1726,7 @@ export default function NachrichtenPage() {
                                     {/* Thread reply */}
                                     <button
                                       onClick={() => openThread(msg)}
-                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
+                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"
                                       title={t("replyInThread")}
                                     >
                                       <svg
@@ -1745,7 +1745,7 @@ export default function NachrichtenPage() {
                                     {/* Pin toggle */}
                                     <button
                                       onClick={() => handleTogglePin(msg.id)}
-                                      className={`rounded p-1 ${msg.pinnedAt ? "text-amber-500 hover:bg-amber-50" : "text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"}`}
+                                      className={`rounded p-1 ${msg.pinnedAt ? "text-amber-500 hover:bg-amber-50" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600"}`}
                                       title={
                                         msg.pinnedAt
                                           ? t("unpinMessage")
@@ -1779,7 +1779,7 @@ export default function NachrichtenPage() {
                                   >
                                     <button
                                       onClick={() => handleTogglePin(msg.id)}
-                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50"
+                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                                     >
                                       <svg
                                         className="h-3 w-3"
@@ -1799,7 +1799,7 @@ export default function NachrichtenPage() {
                                     </button>
                                     <button
                                       onClick={() => openThread(msg)}
-                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50"
+                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                                     >
                                       <svg
                                         className="h-3 w-3"
@@ -1844,7 +1844,7 @@ export default function NachrichtenPage() {
                                         onClick={() =>
                                           handleReaction(msg.id, emoji)
                                         }
-                                        className="rounded-lg p-1 text-base transition-transform hover:scale-110 hover:bg-gray-100 dark:bg-zinc-800 sm:text-lg sm:hover:scale-125"
+                                        className="rounded-lg p-1 text-base transition-transform hover:scale-110 hover:bg-gray-100 dark:hover:bg-zinc-800 sm:text-lg sm:hover:scale-125"
                                       >
                                         {emoji}
                                       </button>
@@ -1868,7 +1868,7 @@ export default function NachrichtenPage() {
                                           className={`flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] transition-colors sm:gap-1 sm:px-2 sm:text-xs ${
                                             iReacted
                                               ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                                              : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-600 hover:bg-gray-50 dark:bg-zinc-800/50"
+                                              : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-600 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                                           }`}
                                         >
                                           <span>{g.emoji}</span>
@@ -1913,7 +1913,7 @@ export default function NachrichtenPage() {
                                           className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
                                             isOwn
                                               ? "border-emerald-500/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30"
-                                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-700 hover:bg-gray-100 dark:bg-zinc-800"
+                                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
                                           }`}
                                         >
                                           <svg
@@ -1956,7 +1956,7 @@ export default function NachrichtenPage() {
                                           className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
                                             isOwn
                                               ? "border-emerald-500/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30"
-                                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-700 hover:bg-gray-100 dark:bg-zinc-800"
+                                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
                                           }`}
                                         >
                                           <svg
@@ -2054,7 +2054,7 @@ export default function NachrichtenPage() {
                               setMessageSearch("");
                               setSearchResults([]);
                             }}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
+                            className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
                           >
                             <XIcon className="h-3.5 w-3.5" />
                           </button>
@@ -2078,7 +2078,7 @@ export default function NachrichtenPage() {
                           {searchResults.map((msg) => (
                             <div
                               key={msg.id}
-                              className="cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50 dark:bg-zinc-800/50"
+                              className="cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                               onClick={() => {
                                 setShowSearchResults(false);
                                 setMessageSearch("");
@@ -2202,7 +2202,7 @@ export default function NachrichtenPage() {
                             className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors ${
                               i === mentionIndex
                                 ? "bg-emerald-50 text-emerald-700"
-                                : "text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50"
+                                : "text-gray-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
                             }`}
                           >
                             <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-xs font-bold text-gray-600">
@@ -2306,14 +2306,14 @@ export default function NachrichtenPage() {
                             setThreadParent(null);
                             setThreadMessages([]);
                           }}
-                          className="rounded-full p-2 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 active:scale-95 lg:rounded-lg lg:p-1"
+                          className="rounded-full p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 active:scale-95 lg:rounded-lg lg:p-1"
                         >
                           <XIcon className="h-4 w-4" />
                         </button>
                       </div>
 
                       {/* Parent message */}
-                      <div className="flex-shrink-0 border-b border-gray-100 bg-gray-50 dark:bg-zinc-800/50/50 px-4 py-3">
+                      <div className="flex-shrink-0 border-b border-gray-100 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
                             {threadParent.senderName[0]?.toUpperCase()}
@@ -2441,7 +2441,7 @@ export default function NachrichtenPage() {
               </div>
               <button
                 onClick={closeNewChannelModal}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
               >
                 <XIcon className="h-4 w-4" />
               </button>
@@ -2591,7 +2591,7 @@ export default function NachrichtenPage() {
                   setShowNewDM(false);
                   setMemberSearch("");
                 }}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
               >
                 <XIcon className="h-4 w-4" />
               </button>

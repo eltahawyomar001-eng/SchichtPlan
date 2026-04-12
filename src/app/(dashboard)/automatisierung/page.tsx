@@ -609,7 +609,7 @@ export default function AutomatisierungSeite() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : rules.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50/50 dark:bg-zinc-900/50 p-8 sm:p-12">
+          <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900/50 p-8 sm:p-12">
             <div className="mx-auto max-w-lg text-center space-y-4">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/50">
                 <svg

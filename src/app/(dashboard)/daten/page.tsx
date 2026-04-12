@@ -139,7 +139,7 @@ export default function DatenSeite() {
                 <select
                   value={importType}
                   onChange={(e) => setImportType(e.target.value)}
-                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
+                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 >
                   <option value="employees">{t("employees")}</option>
                   <option value="shifts">{t("shifts")}</option>
@@ -192,7 +192,7 @@ export default function DatenSeite() {
                 <select
                   value={exportType}
                   onChange={(e) => setExportType(e.target.value)}
-                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
+                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 >
                   <option value="shifts">{t("shifts")}</option>
                   <option value="time-entries">{t("timeEntries")}</option>
@@ -206,7 +206,7 @@ export default function DatenSeite() {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value)}
-                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
+                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 >
                   <option value="xlsx">Excel (.xlsx)</option>
                   <option value="csv">CSV (.csv)</option>
@@ -221,7 +221,7 @@ export default function DatenSeite() {
                   type="date"
                   value={exportStart}
                   onChange={(e) => setExportStart(e.target.value)}
-                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
+                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 />
               </div>
               <div>
@@ -232,7 +232,7 @@ export default function DatenSeite() {
                   type="date"
                   value={exportEnd}
                   onChange={(e) => setExportEnd(e.target.value)}
-                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
+                  className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 />
               </div>
               <button
@@ -264,7 +264,7 @@ export default function DatenSeite() {
             <CardTitle>{t("icalTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
+            <p className="text-sm text-gray-600 dark:text-zinc-400">
               {t("icalDesc")}
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -275,7 +275,7 @@ export default function DatenSeite() {
               />
               <button
                 onClick={copyIcal}
-                className="rounded-lg border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:bg-zinc-800/50"
+                className="rounded-lg border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
               >
                 {icalCopied ? "✓" : t("copy")}
               </button>

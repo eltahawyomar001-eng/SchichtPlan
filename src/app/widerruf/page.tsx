@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 
 export default function WiderrufPage() {
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 dark:bg-gray-950">
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="h-7 w-7" />
-            <span className="font-bold text-base text-gray-900 dark:text-white">
+            <span className="font-bold text-base text-gray-900 dark:text-zinc-100 dark:text-white">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
@@ -58,10 +58,10 @@ export default function WiderrufPage() {
       </nav>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
           Widerrufsbelehrung
         </h1>
-        <p className="text-sm text-gray-500 mb-8">
+        <p className="text-sm text-gray-500 dark:text-zinc-400 mb-8">
           Stand:{" "}
           {new Date().toLocaleDateString("de-DE", {
             year: "numeric",
@@ -70,10 +70,10 @@ export default function WiderrufPage() {
           })}
         </p>
 
-        <div className="prose prose-gray max-w-none space-y-6 text-sm text-gray-700 leading-relaxed">
+        <div className="prose prose-gray dark:prose-invert max-w-none space-y-6 text-sm text-gray-700 dark:text-zinc-300 leading-relaxed">
           {/* 1. Widerrufsrecht */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
               1. Widerrufsrecht
             </h2>
             <p>
@@ -117,7 +117,7 @@ export default function WiderrufPage() {
 
           {/* 2. Folgen des Widerrufs */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
               2. Folgen des Widerrufs
             </h2>
             <p>
@@ -141,7 +141,7 @@ export default function WiderrufPage() {
 
           {/* 3. Vorzeitiges Erlöschen */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
               3. Vorzeitiges Erlöschen des Widerrufsrechts
             </h2>
             <p>
@@ -163,7 +163,7 @@ export default function WiderrufPage() {
 
           {/* 4. Muster-Widerrufsformular */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
               4. Muster-Widerrufsformular
             </h2>
             <p className="mb-3">
@@ -185,7 +185,7 @@ export default function WiderrufPage() {
                 abgeschlossenen Vertrag über die Erbringung der folgenden
                 Dienstleistung:
               </p>
-              <p className="text-gray-500 italic">
+              <p className="text-gray-500 dark:text-zinc-400 italic">
                 Nutzung der Shiftfy-Plattform (Schichtplanung, Zeiterfassung,
                 Personalverwaltung)
               </p>
@@ -199,7 +199,7 @@ export default function WiderrufPage() {
                 </li>
                 <li>Datum: _______________</li>
               </ul>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-400 dark:text-zinc-500 mt-3">
                 (*) Unzutreffendes streichen.
               </p>
             </div>
@@ -207,7 +207,7 @@ export default function WiderrufPage() {
 
           {/* 5. Rechtsgrundlagen */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
               5. Rechtsgrundlagen
             </h2>
             <p>
@@ -220,44 +220,52 @@ export default function WiderrufPage() {
         </div>
       </main>
 
-      <footer className="border-t border-gray-100 py-10">
+      <footer className="border-t border-gray-100 dark:border-zinc-800 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
-            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-zinc-100">
+              Shiftfy
+            </span>
           </div>
-          <p className="text-sm text-gray-400 text-center">
+          <p className="text-sm text-gray-400 dark:text-zinc-500 text-center">
             © {new Date().getFullYear()} Shiftfy. Alle Rechte vorbehalten.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400 dark:text-zinc-500">
             <Link
               href="/datenschutz"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >
               Datenschutz
             </Link>
             <Link
               href="/impressum"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >
               Impressum
             </Link>
-            <Link href="/agb" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/agb"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+            >
               AGB
             </Link>
             <Link
               href="/widerruf"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >
               Widerruf
             </Link>
             <Link
               href="/barrierefreiheit"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >
               Barrierefreiheit
             </Link>
-            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/sla"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+            >
               SLA
             </Link>
           </div>

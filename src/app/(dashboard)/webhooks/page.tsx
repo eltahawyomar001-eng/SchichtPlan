@@ -221,7 +221,7 @@ export default function WebhooksSeite() {
                     className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
                       formEvents.includes(event)
                         ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                        : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                        : "bg-gray-50 text-gray-600 dark:text-zinc-400 border-gray-200 hover:bg-gray-100"
                     }`}
                   >
                     {event}
@@ -256,7 +256,7 @@ export default function WebhooksSeite() {
         ) : hooks.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
-              <p className="text-lg font-medium text-gray-900">
+              <p className="text-lg font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                 {t("noWebhooks")}
               </p>
               <Button className="mt-4" onClick={() => setShowForm(true)}>
@@ -272,14 +272,14 @@ export default function WebhooksSeite() {
                 <CardContent className="p-4 sm:p-4">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-mono text-sm text-gray-900 truncate">
+                      <p className="font-mono text-sm text-gray-900 dark:text-zinc-100 truncate">
                         {hook.url}
                       </p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {hook.events.map((ev) => (
                           <Badge
                             key={ev}
-                            className="bg-gray-100 text-gray-600 text-xs"
+                            className="bg-gray-100 text-gray-600 dark:text-zinc-400 text-xs"
                           >
                             {ev}
                           </Badge>
@@ -288,7 +288,7 @@ export default function WebhooksSeite() {
 
                       {/* Secret (masked by default) */}
                       <div className="mt-2 flex items-center gap-2">
-                        <p className="font-mono text-xs text-gray-400 break-all">
+                        <p className="font-mono text-xs text-gray-400 dark:text-zinc-500 break-all">
                           {t("secret")}:{" "}
                           {revealedSecret === hook.id
                             ? hook.secret
@@ -301,7 +301,7 @@ export default function WebhooksSeite() {
                               revealedSecret === hook.id ? null : hook.id,
                             )
                           }
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                          className="p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 rounded"
                           title={
                             revealedSecret === hook.id
                               ? t("hideSecret")
@@ -317,7 +317,7 @@ export default function WebhooksSeite() {
                         <button
                           type="button"
                           onClick={() => copySecret(hook.secret, hook.id)}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                          className="p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 rounded"
                           title={t("copySecret")}
                         >
                           <ClipboardIcon className="h-3.5 w-3.5" />

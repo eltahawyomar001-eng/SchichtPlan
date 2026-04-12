@@ -88,21 +88,12 @@ export const metadata: Metadata = {
     title: "Shiftfy – Schichtplanung & Zeiterfassung Software",
     description:
       "Digitale Schichtplanung, Zeiterfassung und Personalmanagement – alles in einer App. Kostenlos starten, DSGVO-konform, made in Germany.",
-    images: [
-      {
-        url: `${SITE_URL}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "Shiftfy – Intelligente Schichtplanung und Zeiterfassung",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shiftfy – Schichtplanung & Zeiterfassung Software",
     description:
       "Digitale Schichtplanung, Zeiterfassung und Personalmanagement. Kostenlos starten.",
-    images: [`${SITE_URL}/og-image.png`],
   },
   robots: {
     index: true,
@@ -152,7 +143,7 @@ export default async function RootLayout({
         {/* Apply persisted theme before first paint to prevent FOUC */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('shiftfy-theme');var d=t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark');var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',d?'#18181b':'#059669')}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('shiftfy-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}
         />
         {/* Preconnect to critical third-party origins */}

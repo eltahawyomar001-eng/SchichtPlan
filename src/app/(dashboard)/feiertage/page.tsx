@@ -115,7 +115,7 @@ export default function FeiertageSeite() {
         ) : data ? (
           <Card>
             <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                 {data.bundeslandName} — {data.year} ({data.holidays.length}{" "}
                 {t("holidaysCount")})
               </p>
@@ -144,7 +144,7 @@ export default function FeiertageSeite() {
                           className={`h-2 w-2 rounded-full ${holiday.isNational ? "bg-red-500" : "bg-amber-500"}`}
                         />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                             {holiday.name}
                           </p>
                           <Badge
@@ -155,8 +155,12 @@ export default function FeiertageSeite() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-900">{dateFormatted}</p>
-                        <p className="text-xs text-gray-500">{weekday}</p>
+                        <p className="text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                          {dateFormatted}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                          {weekday}
+                        </p>
                       </div>
                     </li>
                   );
@@ -167,7 +171,9 @@ export default function FeiertageSeite() {
         ) : (
           <Card>
             <CardContent className="flex items-center justify-center py-12 sm:py-12">
-              <p className="text-sm text-gray-500">{t("noData")}</p>
+              <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                {t("noData")}
+              </p>
             </CardContent>
           </Card>
         )}

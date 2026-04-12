@@ -211,7 +211,7 @@ export default function QualifikationenSeite() {
         {/* Search */}
         {skills.length > 0 && (
           <div className="relative max-w-full sm:max-w-md">
-            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-zinc-500 sm:left-3 sm:h-4 sm:w-4" />
             <Input
               placeholder={tc("search")}
               value={search}
@@ -284,7 +284,7 @@ export default function QualifikationenSeite() {
                         : t("selectEmployees")}
                     </span>
                     <ChevronDownIcon
-                      className={`h-4 w-4 text-gray-400 transition-transform ${employeeDropdownOpen ? "rotate-180" : ""}`}
+                      className={`h-4 w-4 text-gray-400 dark:text-zinc-500 transition-transform ${employeeDropdownOpen ? "rotate-180" : ""}`}
                     />
                   </button>
                   {employeeDropdownOpen && (
@@ -371,7 +371,7 @@ export default function QualifikationenSeite() {
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 sm:py-12">
-              <p className="text-lg font-medium text-gray-900">
+              <p className="text-lg font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                 {search ? tc("noResults") : t("empty")}
               </p>
               {!search && (
@@ -386,7 +386,7 @@ export default function QualifikationenSeite() {
           <div className="space-y-6">
             {Object.entries(grouped).map(([category, items]) => (
               <div key={category}>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {category}
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -394,10 +394,10 @@ export default function QualifikationenSeite() {
                     <Card key={skill.id} className="card-elevated">
                       <CardContent className="flex items-center justify-between gap-2 p-4 sm:p-4">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
                             {skill.name}
                           </p>
-                          <Badge className="mt-1 bg-gray-100 text-gray-600 text-xs">
+                          <Badge className="mt-1 bg-gray-100 text-gray-600 dark:text-zinc-400 text-xs">
                             {skill._count.employeeSkills} {t("assigned")}
                           </Badge>
                         </div>

@@ -19,10 +19,10 @@ export default function Error({
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+      <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg dark:bg-zinc-900 dark:shadow-zinc-800/20">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
           <svg
-            className="h-7 w-7 text-red-600"
+            className="h-7 w-7 text-red-600 dark:text-red-400"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -35,13 +35,15 @@ export default function Error({
             />
           </svg>
         </div>
-        <h2 className="mb-2 text-lg font-semibold text-gray-900">
+        <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-zinc-100">
           {t("errorOccurred")}
         </h2>
-        <p className="mb-6 text-sm text-gray-500">{t("errorLoadingPage")}</p>
+        <p className="mb-6 text-sm text-gray-500 dark:text-zinc-400">
+          {t("errorLoadingPage")}
+        </p>
         <button
           onClick={() => reset()}
-          className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+          className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
         >
           {t("tryAgain")}
         </button>

@@ -139,7 +139,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="flex min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] dark:bg-zinc-950">
       {/* ── Left: Decorative panel ── */}
       <div className="relative hidden overflow-hidden lg:flex lg:w-1/2 lg:items-center lg:justify-center bg-gradient-to-br from-[var(--brand-700)] via-[var(--brand-600)] to-[var(--brand-500)]">
         {/* Background pattern */}
@@ -221,7 +221,7 @@ function LoginForm() {
       </div>
 
       {/* ── Right: Form ── */}
-      <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24">
+      <div className="flex w-full flex-col justify-center px-6 py-10 lg:w-1/2 lg:px-16 xl:px-24 dark:bg-zinc-950">
         <div className="mx-auto w-full max-w-[440px]">
           {/* Logo + headline */}
           <Link href="/" className="mb-8 inline-flex items-center gap-3">
@@ -234,7 +234,7 @@ function LoginForm() {
           <div className="mb-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
             >
               <svg
                 className="w-4 h-4"
@@ -253,14 +253,16 @@ function LoginForm() {
             </Link>
           </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-zinc-100 sm:text-4xl">
             {t("login")}
           </h1>
-          <p className="mt-2 text-base text-gray-500">{t("signInSubtitle")}</p>
+          <p className="mt-2 text-base text-gray-500 dark:text-zinc-400">
+            {t("signInSubtitle")}
+          </p>
 
           {/* Success banner (after email verification) */}
           {justVerified && (
-            <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
               <CheckCircleIcon className="h-5 w-5 shrink-0" />
               {t("emailVerified")}
             </div>
@@ -268,7 +270,7 @@ function LoginForm() {
 
           {/* Success banner (after registration) */}
           {justRegistered && (
-            <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            <div className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
               <CheckCircleIcon className="h-5 w-5 shrink-0" />
               {t("accountCreated")}
             </div>
@@ -276,14 +278,14 @@ function LoginForm() {
 
           {/* Email not verified banner */}
           {emailNotVerified && (
-            <div className="mt-6 rounded-xl bg-amber-50 border border-amber-200 px-4 py-4">
+            <div className="mt-6 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 px-4 py-4">
               <div className="flex items-start gap-2">
-                <MailIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <MailIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                     {t("emailNotVerifiedTitle")}
                   </p>
-                  <p className="mt-1 text-xs text-amber-600">
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                     {t("emailNotVerifiedDesc")}
                   </p>
                   <button
@@ -300,7 +302,7 @@ function LoginForm() {
 
           {/* Error banner */}
           {error && (
-            <div className="mt-6 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <div className="mt-6 flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-300">
               <svg
                 viewBox="0 0 20 20"
                 fill="currentColor"
@@ -321,7 +323,7 @@ function LoginForm() {
             {twoFAStep ? (
               /* ── 2FA Challenge Step ── */
               <div className="space-y-4">
-                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
                   <ShieldCheckIcon className="h-5 w-5 shrink-0" />
                   {t("twoFARequired")}
                 </div>
@@ -330,7 +332,7 @@ function LoginForm() {
                   <div>
                     <label
                       htmlFor="totpCode"
-                      className="mb-1.5 block text-sm font-medium text-gray-700"
+                      className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300"
                     >
                       {t("twoFACodeLabel")}
                     </label>
@@ -347,7 +349,7 @@ function LoginForm() {
                       maxLength={6}
                       autoFocus
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-center text-lg font-mono tracking-widest text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 text-center text-lg font-mono tracking-widest text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
@@ -365,7 +367,7 @@ function LoginForm() {
                   <div>
                     <label
                       htmlFor="recoveryCode"
-                      className="mb-1.5 block text-sm font-medium text-gray-700"
+                      className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300"
                     >
                       {t("twoFARecoveryLabel")}
                     </label>
@@ -381,7 +383,7 @@ function LoginForm() {
                       maxLength={8}
                       autoFocus
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-center text-lg font-mono tracking-widest text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 text-center text-lg font-mono tracking-widest text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
@@ -444,7 +446,7 @@ function LoginForm() {
                     setUseRecoveryCode(false);
                     setError("");
                   }}
-                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="w-full text-center text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-colors"
                 >
                   {t("twoFABack")}
                 </button>
@@ -456,12 +458,12 @@ function LoginForm() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                    className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300"
                   >
                     {t("email")}
                   </label>
                   <div className="relative">
-                    <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                     <input
                       id="email"
                       type="email"
@@ -470,7 +472,7 @@ function LoginForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 pl-11 pr-4 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -480,7 +482,7 @@ function LoginForm() {
                   <div className="mb-1.5 flex items-center justify-between">
                     <label
                       htmlFor="password"
-                      className="text-sm font-medium text-gray-700"
+                      className="text-sm font-medium text-gray-700 dark:text-zinc-300"
                     >
                       {t("password")}
                     </label>
@@ -494,7 +496,7 @@ function LoginForm() {
                     </span>
                   </div>
                   <div className="relative">
-                    <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                     <input
                       id="password"
                       type={showPassword ? "text" : "password"}
@@ -503,13 +505,13 @@ function LoginForm() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 pl-11 pr-11 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
                       tabIndex={-1}
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
                     >
                       {showPassword ? (
                         <EyeOffIcon className="h-5 w-5" />
@@ -564,10 +566,12 @@ function LoginForm() {
               {/* Divider */}
               <div className="relative mt-8">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-gray-200 dark:border-zinc-700" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-3 text-gray-400">{t("or")}</span>
+                  <span className="bg-white dark:bg-zinc-950 px-3 text-gray-400 dark:text-zinc-500">
+                    {t("or")}
+                  </span>
                 </div>
               </div>
 
@@ -575,7 +579,7 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() => signIn("google", { callbackUrl })}
-                className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md active:scale-[0.98]"
+                className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm font-medium text-gray-700 dark:text-zinc-200 shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-zinc-700 hover:shadow-md active:scale-[0.98]"
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <path
@@ -599,7 +603,7 @@ function LoginForm() {
               </button>
 
               {/* Footer link */}
-              <p className="mt-8 text-center text-sm text-gray-500">
+              <p className="mt-8 text-center text-sm text-gray-500 dark:text-zinc-400">
                 {t("noAccount")}{" "}
                 <Link
                   href="/register"

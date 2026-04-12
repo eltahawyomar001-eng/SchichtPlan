@@ -242,7 +242,7 @@ export default function TicketDetailPage() {
         {/* ── Back + Header ────────────────────────────── */}
         <button
           onClick={() => router.push("/tickets")}
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
+          className="flex items-center gap-1 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-700 mb-2"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           {t("backToList")}
@@ -250,7 +250,7 @@ export default function TicketDetailPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
               {ticket.subject}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -277,7 +277,7 @@ export default function TicketDetailPage() {
                 <CardTitle className="text-sm">{t("description")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <p className="text-sm text-gray-700 dark:text-zinc-300 whitespace-pre-wrap">
                   {ticket.description}
                 </p>
               </CardContent>
@@ -292,7 +292,7 @@ export default function TicketDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {ticket.comments.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">
+                  <p className="text-sm text-gray-400 dark:text-zinc-500 text-center py-4">
                     {t("noComments")}
                   </p>
                 )}
@@ -316,7 +316,7 @@ export default function TicketDetailPage() {
                           .charAt(0)
                           .toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                         {comment.authorName ??
                           comment.author?.name ??
                           comment.author?.email ??
@@ -325,7 +325,7 @@ export default function TicketDetailPage() {
                       {comment.isInternal && (
                         <Badge variant="warning">{t("internalNote")}</Badge>
                       )}
-                      <span className="text-xs text-gray-400 ml-auto">
+                      <span className="text-xs text-gray-400 dark:text-zinc-500 ml-auto">
                         {format(
                           new Date(comment.createdAt),
                           "dd.MM.yyyy HH:mm",
@@ -333,7 +333,7 @@ export default function TicketDetailPage() {
                         )}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap ml-8">
+                    <p className="text-sm text-gray-700 dark:text-zinc-300 whitespace-pre-wrap ml-8">
                       {comment.content}
                     </p>
                   </div>
@@ -346,12 +346,12 @@ export default function TicketDetailPage() {
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder={t("commentPlaceholder")}
                     rows={3}
-                    className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
+                    className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
                   />
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {canManage && (
-                        <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                        <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={isInternal}
@@ -530,7 +530,7 @@ export default function TicketDetailPage() {
                       </option>
                     </Select>
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                     {t("assigneeStatusHint")}
                   </p>
                 </CardContent>
@@ -549,9 +549,9 @@ export default function TicketDetailPage() {
                       key={event.id}
                       className="flex items-start gap-2 text-xs"
                     >
-                      <ClockIcon className="h-3.5 w-3.5 mt-0.5 text-gray-400 flex-shrink-0" />
+                      <ClockIcon className="h-3.5 w-3.5 mt-0.5 text-gray-400 dark:text-zinc-500 flex-shrink-0" />
                       <div>
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                           {event.actorName}
                         </span>{" "}
                         <span className="text-gray-500">
@@ -588,8 +588,12 @@ export default function TicketDetailPage() {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-500">{label}</span>
-      <span className="text-sm font-medium text-gray-900">{value}</span>
+      <span className="text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+        {label}
+      </span>
+      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+        {value}
+      </span>
     </div>
   );
 }

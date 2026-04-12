@@ -133,20 +133,20 @@ export default function DatenSeite() {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   {t("importType")}
                 </label>
                 <select
                   value={importType}
                   onChange={(e) => setImportType(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
                 >
                   <option value="employees">{t("employees")}</option>
                   <option value="shifts">{t("shifts")}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   {t("file")}
                 </label>
                 <input
@@ -186,13 +186,13 @@ export default function DatenSeite() {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   {t("exportType")}
                 </label>
                 <select
                   value={exportType}
                   onChange={(e) => setExportType(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
                 >
                   <option value="shifts">{t("shifts")}</option>
                   <option value="time-entries">{t("timeEntries")}</option>
@@ -200,13 +200,13 @@ export default function DatenSeite() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   {t("format")}
                 </label>
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
                 >
                   <option value="xlsx">Excel (.xlsx)</option>
                   <option value="csv">CSV (.csv)</option>
@@ -214,25 +214,25 @@ export default function DatenSeite() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   {t("from")}
                 </label>
                 <input
                   type="date"
                   value={exportStart}
                   onChange={(e) => setExportStart(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
                   {t("to")}
                 </label>
                 <input
                   type="date"
                   value={exportEnd}
                   onChange={(e) => setExportEnd(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100"
                 />
               </div>
               <button
@@ -264,16 +264,18 @@ export default function DatenSeite() {
             <CardTitle>{t("icalTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600">{t("icalDesc")}</p>
+            <p className="text-sm text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
+              {t("icalDesc")}
+            </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <input
                 readOnly
                 value={icalUrl}
-                className="flex-1 min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700 truncate"
+                className="flex-1 min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700 dark:text-zinc-300 truncate"
               />
               <button
                 onClick={copyIcal}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50"
               >
                 {icalCopied ? "✓" : t("copy")}
               </button>

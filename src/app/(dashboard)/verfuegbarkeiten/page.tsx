@@ -220,12 +220,16 @@ export default function VerfuegbarkeitenPage() {
 
         {/* Availability cards per employee */}
         {loading ? (
-          <p className="text-sm text-gray-500">{tc("loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+            {tc("loading")}
+          </p>
         ) : Object.keys(grouped).length === 0 ? (
           <Card>
             <CardContent className="py-10 sm:py-10 text-center">
               <HandRaisedIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">{t("noEntries")}</p>
+              <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                {t("noEntries")}
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -252,18 +256,22 @@ export default function VerfuegbarkeitenPage() {
                       const entry = entries.find((e) => e.weekday === i);
                       const typeInfo = entry
                         ? getTypeInfo(entry.type)
-                        : { value: "", color: "bg-gray-50 text-gray-400" };
+                        : {
+                            value: "",
+                            color:
+                              "bg-gray-50 text-gray-400 dark:text-zinc-500 dark:text-zinc-500",
+                          };
                       return (
                         <div
                           key={i}
                           className="flex items-center justify-between gap-2 py-1.5 border-b border-gray-50 last:border-0"
                         >
-                          <span className="text-sm font-medium text-gray-700 w-24 shrink-0">
+                          <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 w-24 shrink-0">
                             {t(`weekdays.${i}`)}
                           </span>
                           <div className="flex items-center gap-2 min-w-0">
                             {entry?.startTime && entry?.endTime && (
-                              <span className="text-xs text-gray-500 hidden sm:inline">
+                              <span className="text-xs text-gray-500 dark:text-zinc-400 hidden sm:inline">
                                 {entry.startTime} – {entry.endTime}
                               </span>
                             )}
@@ -295,7 +303,7 @@ export default function VerfuegbarkeitenPage() {
                   onClick={() => setShowForm(false)}
                   className="rounded-lg p-1.5 hover:bg-gray-100"
                 >
-                  <XIcon className="h-5 w-5 text-gray-400" />
+                  <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 dark:text-zinc-500" />
                 </button>
               </div>
             </CardHeader>
@@ -328,7 +336,7 @@ export default function VerfuegbarkeitenPage() {
                       key={i}
                       className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-gray-50"
                     >
-                      <span className="text-sm font-medium text-gray-700 w-20 shrink-0">
+                      <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 w-20 shrink-0">
                         <span className="hidden sm:inline">
                           {t(`weekdays.${i}`)}
                         </span>
@@ -357,7 +365,9 @@ export default function VerfuegbarkeitenPage() {
                             }
                             className="w-[100px] text-xs"
                           />
-                          <span className="text-xs text-gray-400">–</span>
+                          <span className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
+                            –
+                          </span>
                           <Input
                             type="time"
                             value={entry.endTime}

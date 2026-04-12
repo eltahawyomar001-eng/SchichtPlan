@@ -40,11 +40,11 @@ export default function GlobalError({
 
   return (
     <html lang={locale}>
-      <body className="flex min-h-[100dvh] items-center justify-center bg-gray-50">
-        <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+      <body className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-zinc-950">
+        <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg dark:bg-zinc-900 dark:shadow-zinc-800/20">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
             <svg
-              className="h-8 w-8 text-red-600"
+              className="h-8 w-8 text-red-600 dark:text-red-400"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
@@ -57,13 +57,15 @@ export default function GlobalError({
               />
             </svg>
           </div>
-          <h1 className="mb-2 text-xl font-semibold text-gray-900">
+          <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-zinc-100">
             {t.title}
           </h1>
-          <p className="mb-6 text-sm text-gray-500">{t.description}</p>
+          <p className="mb-6 text-sm text-gray-500 dark:text-zinc-400">
+            {t.description}
+          </p>
           <button
             onClick={() => reset()}
-            className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
           >
             {t.tryAgain}
           </button>

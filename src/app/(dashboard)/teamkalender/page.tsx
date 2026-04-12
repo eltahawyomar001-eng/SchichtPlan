@@ -67,7 +67,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   FRUEH: "bg-blue-100 text-blue-800",
   SPAET: "bg-orange-100 text-orange-800",
   NACHT: "bg-purple-100 text-purple-800",
-  FREI: "bg-gray-100 text-gray-500",
+  FREI: "bg-gray-100 text-gray-500 dark:text-zinc-400 dark:text-zinc-400",
 };
 
 const STATUS_BORDER: Record<string, string> = {
@@ -198,7 +198,7 @@ export default function TeamkalenderSeite() {
             >
               <ChevronLeftIcon className="h-5 w-5" />
             </button>
-            <span className="text-sm font-medium text-gray-700 min-w-[180px] text-center">
+            <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 min-w-[180px] text-center">
               {headerLabel}
             </span>
             <button
@@ -210,7 +210,7 @@ export default function TeamkalenderSeite() {
           </div>
 
           {/* Legend */}
-          <div className="ml-auto hidden sm:flex items-center gap-3 text-xs text-gray-500">
+          <div className="ml-auto hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
             <span className="flex items-center gap-1">
               <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-200" />
               {t("early")}
@@ -234,22 +234,24 @@ export default function TeamkalenderSeite() {
         )}
 
         {loading ? (
-          <div className="py-20 text-center text-gray-500">{t("loading")}</div>
+          <div className="py-20 text-center text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+            {t("loading")}
+          </div>
         ) : viewMode === "week" ? (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-3 py-2 text-left text-gray-600 min-w-[140px]">
+                  <th className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-3 py-2 text-left text-gray-600 dark:text-zinc-400 min-w-[140px]">
                     {t("employee")}
                   </th>
                   {days.map((d) => (
                     <th
                       key={d.toISOString()}
-                      className="border-b border-gray-200 px-2 py-2 text-center text-gray-600 min-w-[100px]"
+                      className="border-b border-gray-200 px-2 py-2 text-center text-gray-600 dark:text-zinc-400 min-w-[100px]"
                     >
                       <div>{format(d, "EEE", { locale: dateFnsLocale })}</div>
-                      <div className="text-xs font-normal text-gray-400">
+                      <div className="text-xs font-normal text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                         {format(d, "d.M.")}
                       </div>
                     </th>
@@ -259,7 +261,7 @@ export default function TeamkalenderSeite() {
               <tbody>
                 {employees.map((emp) => (
                   <tr key={emp.id} className="border-b border-gray-100">
-                    <td className="sticky left-0 z-10 bg-white border-r border-gray-200 px-3 py-2 font-medium text-gray-900">
+                    <td className="sticky left-0 z-10 bg-white border-r border-gray-200 px-3 py-2 font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       <div className="flex items-center gap-2">
                         <div
                           className="h-2.5 w-2.5 rounded-full flex-shrink-0"
@@ -295,7 +297,7 @@ export default function TeamkalenderSeite() {
                   <tr>
                     <td
                       colSpan={days.length + 1}
-                      className="py-8 text-center text-gray-500"
+                      className="py-8 text-center text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
                     >
                       {t("noEmployees")}
                     </td>
@@ -313,12 +315,12 @@ export default function TeamkalenderSeite() {
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: emp.color || "#10b981" }}
                   />
-                  <span className="text-sm font-semibold text-gray-800">
+                  <span className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                     {emp.firstName} {emp.lastName}
                   </span>
                 </div>
                 <CardContent className="p-0 sm:p-0">
-                  <div className="grid grid-cols-7 text-center text-xs text-gray-500 border-b border-gray-100">
+                  <div className="grid grid-cols-7 text-center text-xs text-gray-500 dark:text-zinc-400 border-b border-gray-100">
                     {DAY_HEADERS.map((dh) => (
                       <div key={dh} className="py-1">
                         {dh}
@@ -339,7 +341,7 @@ export default function TeamkalenderSeite() {
                           key={d.toISOString()}
                           className="border-t border-r border-gray-100 p-1 min-h-[48px]"
                         >
-                          <div className="text-xs text-gray-400 mb-0.5">
+                          <div className="text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
                             {format(d, "d")}
                           </div>
                           {dayShifts.map((s) => {
@@ -361,7 +363,7 @@ export default function TeamkalenderSeite() {
               </Card>
             ))}
             {employees.length === 0 && (
-              <div className="py-12 text-center text-gray-500">
+              <div className="py-12 text-center text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                 {t("noEmployees")}
               </div>
             )}

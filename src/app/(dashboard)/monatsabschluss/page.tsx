@@ -109,7 +109,10 @@ export default function MonatsabschlussSeite() {
   ] as const;
 
   const statusConfig: Record<string, { color: string; label: string }> = {
-    OPEN: { color: "bg-gray-100 text-gray-700", label: t("open") },
+    OPEN: {
+      color: "bg-gray-100 text-gray-700 dark:text-zinc-300 dark:text-zinc-300",
+      label: t("open"),
+    },
     LOCKED: { color: "bg-emerald-100 text-emerald-800", label: t("locked") },
     EXPORTED: {
       color: "bg-emerald-100 text-emerald-800",
@@ -162,7 +165,7 @@ export default function MonatsabschlussSeite() {
                   <Card key={m} className="card-elevated">
                     <CardContent className="p-5 sm:p-5">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                           {t(monthKeys[m - 1])}
                         </h3>
                         <Badge className={sc.color}>{sc.label}</Badge>
@@ -193,7 +196,7 @@ export default function MonatsabschlussSeite() {
                         {(status === "LOCKED" || status === "EXPORTED") && (
                           <div className="flex flex-col gap-2 w-full">
                             {record?.lockedAt && (
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                                 {t("closedAt")}:{" "}
                                 {new Date(record.lockedAt).toLocaleDateString(
                                   locale === "en" ? "en-GB" : "de-DE",

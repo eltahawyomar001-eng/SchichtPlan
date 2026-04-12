@@ -482,23 +482,23 @@ export default function EinstellungenPage() {
                         setProfileName(session?.user?.name || "");
                       }}
                     >
-                      <XIcon className="h-4 w-4 text-gray-400" />
+                      <XIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500 dark:text-zinc-500" />
                     </Button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <p className="text-lg font-medium text-gray-900">
+                    <p className="text-lg font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       {session?.user?.name || "–"}
                     </p>
                     <button
                       onClick={() => setEditingProfile(true)}
-                      className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                      className="rounded p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 hover:bg-gray-100"
                     >
                       <EditIcon className="h-4 w-4" />
                     </button>
                   </div>
                 )}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {session?.user?.email || "–"}
                 </p>
                 <Badge className="mt-1">{translatedRole}</Badge>
@@ -533,7 +533,7 @@ export default function EinstellungenPage() {
                 {!editingWorkspace && (
                   <button
                     onClick={() => setEditingWorkspace(true)}
-                    className="rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    className="rounded p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 hover:bg-gray-100"
                   >
                     <EditIcon className="h-4 w-4" />
                   </button>
@@ -577,7 +577,7 @@ export default function EinstellungenPage() {
                       <option value="SH">Schleswig-Holstein</option>
                       <option value="TH">Thüringen</option>
                     </select>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                       {t("bundeslandHint")}
                     </p>
                   </div>
@@ -611,41 +611,43 @@ export default function EinstellungenPage() {
               ) : (
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                       {t("workspaceName")}
                     </span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       {wsName ||
                         (session?.user as SessionUser)?.workspaceName ||
                         "–"}
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                       {t("bundesland")}
                     </span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       {wsBundesland || "–"}
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                       {t("industry")}
                     </span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       {wsIndustry || "–"}
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                       {t("workspaceId")}
                     </span>
-                    <span className="text-sm font-mono text-gray-900 break-all">
+                    <span className="text-sm font-mono text-gray-900 dark:text-zinc-100 break-all">
                       {(session?.user as SessionUser)?.workspaceId || "–"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-500">{t("role")}</span>
+                    <span className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                      {t("role")}
+                    </span>
                     <Badge variant="outline">{translatedRole}</Badge>
                   </div>
                 </div>
@@ -674,14 +676,14 @@ export default function EinstellungenPage() {
                   <ZapIcon className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-gray-900">
+                  <p className="text-base font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                     {t("automations")}
                   </p>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
                     {t("automationsDesc")}
                   </p>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
               </CardContent>
             </Card>
           </Link>
@@ -695,14 +697,14 @@ export default function EinstellungenPage() {
                 <BellIcon className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-gray-900">
+                <p className="text-base font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                   {t("notificationPrefs")}
                 </p>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
                   {t("notificationPrefsDesc")}
                 </p>
               </div>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+              <ChevronRightIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
             </CardContent>
           </Card>
         </Link>
@@ -716,14 +718,14 @@ export default function EinstellungenPage() {
                   <UsersIcon className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-gray-900">
+                  <p className="text-base font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                     {t("teamManagement")}
                   </p>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
                     {t("teamManagementDesc")}
                   </p>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
               </CardContent>
             </Card>
           </Link>
@@ -829,7 +831,7 @@ export default function EinstellungenPage() {
 
               {/* Two-Factor Authentication */}
               <div className="border-t border-gray-100 pt-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-2">
                   {t("twoFactorAuth")}
                 </h3>
 
@@ -846,7 +848,7 @@ export default function EinstellungenPage() {
                       {twoFARecoveryCodes.map((code, i) => (
                         <code
                           key={i}
-                          className="rounded bg-white px-2 py-1 text-xs font-mono text-gray-800 text-center border border-amber-200"
+                          className="rounded bg-white px-2 py-1 text-xs font-mono text-gray-800 dark:text-zinc-200 text-center border border-amber-200"
                         >
                           {code}
                         </code>
@@ -897,7 +899,9 @@ export default function EinstellungenPage() {
                   </div>
                 ) : twoFASetup ? (
                   <div className="space-y-3 rounded-lg border border-gray-200 p-4">
-                    <p className="text-sm text-gray-600">{t("twoFAScanQR")}</p>
+                    <p className="text-sm text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
+                      {t("twoFAScanQR")}
+                    </p>
                     {twoFAQr && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -906,7 +910,7 @@ export default function EinstellungenPage() {
                         className="mx-auto w-48 h-48"
                       />
                     )}
-                    <p className="text-xs text-gray-400 break-all font-mono">
+                    <p className="text-xs text-gray-400 dark:text-zinc-500 break-all font-mono">
                       {twoFASecret}
                     </p>
                     <div className="flex items-center gap-2">
@@ -959,10 +963,10 @@ export default function EinstellungenPage() {
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       {t("pushNotifications")}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
                       {t("pushNotificationsDesc")}
                     </p>
                     {!pushSupported && (
@@ -1018,7 +1022,7 @@ export default function EinstellungenPage() {
             <div className="space-y-4">
               {/* Export Data */}
               <div>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-zinc-400 mb-2">
                   {t("exportDataInfo")}
                 </p>
                 <Button
@@ -1032,7 +1036,7 @@ export default function EinstellungenPage() {
               </div>
 
               <div className="border-t border-gray-100 pt-4">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-zinc-400 mb-2">
                   {t("deleteAccountInfo")}
                 </p>
                 <Button

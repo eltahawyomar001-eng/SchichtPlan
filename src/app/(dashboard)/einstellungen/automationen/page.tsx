@@ -270,7 +270,7 @@ export default function AutomationenPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <Link
             href="/einstellungen"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 transition-colors"
           >
             <ChevronLeftIcon className="h-4 w-4" />
             {t("backToSettings")}
@@ -319,12 +319,14 @@ export default function AutomationenPage() {
             <ZapIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
               {enabledCount}/{totalCount}{" "}
               {enabledCount === 1 ? "Automation" : t("title").toLowerCase()}{" "}
               {t("enabled").toLowerCase()}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">{t("subtitle")}</p>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
+              {t("subtitle")}
+            </p>
           </div>
         </div>
 
@@ -372,20 +374,20 @@ export default function AutomationenPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                               {t(`rules.${rule.key}.name`)}
                             </p>
                             <span
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                                 isEnabled
                                   ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-gray-100 text-gray-500"
+                                  : "bg-gray-100 text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
                               }`}
                             >
                               {isEnabled ? t("enabled") : t("disabled")}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
                             {t(`rules.${rule.key}.desc`)}
                           </p>
                         </div>

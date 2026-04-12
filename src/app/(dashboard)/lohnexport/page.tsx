@@ -250,7 +250,7 @@ export default function LohnexportPage() {
                   {t(s.step)}
                 </p>
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed">
+              <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
                 {t(s.desc)}
               </p>
             </div>
@@ -260,7 +260,7 @@ export default function LohnexportPage() {
         {/* ─── Prerequisites checklist ─────────────────────── */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-gray-700">
+            <CardTitle className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
               {t("requirementsTitle")}
             </CardTitle>
           </CardHeader>
@@ -268,10 +268,10 @@ export default function LohnexportPage() {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                   {t("requirementConfirmed")}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
                   {t("requirementConfirmedHint")}
                 </p>
               </div>
@@ -279,10 +279,10 @@ export default function LohnexportPage() {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                   {t("requirementPeriod")}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
                   {t("requirementPeriodHint")}
                 </p>
               </div>
@@ -301,7 +301,7 @@ export default function LohnexportPage() {
           <CardContent className="space-y-4">
             {/* Quick presets */}
             <div>
-              <Label className="text-xs text-gray-500 mb-2 block">
+              <Label className="text-xs text-gray-500 dark:text-zinc-400 mb-2 block">
                 {t("quickSelect")}
               </Label>
               <div className="flex items-center gap-2 flex-wrap">
@@ -313,7 +313,7 @@ export default function LohnexportPage() {
                   <button
                     key={preset.months}
                     onClick={() => setPreset(preset.months)}
-                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 dark:text-zinc-400 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
                   >
                     {preset.label}
                   </button>
@@ -383,27 +383,27 @@ export default function LohnexportPage() {
             {/* Format help expandable */}
             {showFormatHelp && (
               <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-3">
-                <p className="text-sm font-semibold text-gray-700">
+                <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                   {t("formatHelpTitle")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
                     className={`rounded-lg border p-3 ${exportFormat === "datev" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 bg-white"}`}
                   >
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                       {t("datev")}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
                       {t("datevHint")}
                     </p>
                   </div>
                   <div
                     className={`rounded-lg border p-3 ${exportFormat === "csv" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 bg-white"}`}
                   >
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                       {t("csv")}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
                       {t("csvHint")}
                     </p>
                   </div>
@@ -470,10 +470,10 @@ export default function LohnexportPage() {
                       <UsersIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                         {totalEmployees}
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-500 break-words">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                         {tc("employees")}
                       </p>
                     </div>
@@ -487,10 +487,10 @@ export default function LohnexportPage() {
                       <ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                      <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                         {totalHours.toFixed(2)}
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-500 break-words">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                         {t("netHours")}
                       </p>
                     </div>
@@ -504,7 +504,7 @@ export default function LohnexportPage() {
               <CardHeader>
                 <CardTitle>
                   {t("summary")}{" "}
-                  <span className="text-sm font-normal text-gray-500">
+                  <span className="text-sm font-normal text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                     {format(new Date(startDate), "dd.MM.yyyy", {
                       locale: dateFnsLocale,
                     })}{" "}
@@ -519,14 +519,14 @@ export default function LohnexportPage() {
                 {preview.length === 0 ? (
                   <div className="text-center py-10 space-y-3">
                     <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-sm font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                       {t("noEntries")}
                     </p>
                     <div className="text-left max-w-sm mx-auto space-y-2">
-                      <p className="text-xs font-medium text-gray-500">
+                      <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                         {t("noEntriesHint")}
                       </p>
-                      <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
+                      <ul className="text-xs text-gray-500 dark:text-zinc-400 space-y-1 list-disc list-inside">
                         <li>{t("noEntriesReason1")}</li>
                         <li>{t("noEntriesReason2")}</li>
                       </ul>
@@ -544,19 +544,19 @@ export default function LohnexportPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-2 px-3 font-medium text-gray-500">
+                          <th className="text-left py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                             {tc("employee")}
                           </th>
-                          <th className="text-right py-2 px-3 font-medium text-gray-500">
+                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                             {tc("days")}
                           </th>
-                          <th className="text-right py-2 px-3 font-medium text-gray-500 hidden sm:table-cell">
+                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 hidden sm:table-cell">
                             {t("gross")}
                           </th>
-                          <th className="text-right py-2 px-3 font-medium text-gray-500 hidden sm:table-cell">
+                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 hidden sm:table-cell">
                             {t("break")}
                           </th>
-                          <th className="text-right py-2 px-3 font-medium text-gray-500">
+                          <th className="text-right py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                             {t("net")}
                           </th>
                         </tr>
@@ -569,26 +569,26 @@ export default function LohnexportPage() {
                           >
                             <td className="py-2.5 px-3">
                               <div>
-                                <p className="font-medium text-gray-900">
+                                <p className="font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                                   {row.name}
                                 </p>
                                 {row.position && (
-                                  <p className="text-xs text-gray-400">
+                                  <p className="text-xs text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                                     {row.position}
                                   </p>
                                 )}
                               </div>
                             </td>
-                            <td className="text-right py-2.5 px-3 text-gray-700">
+                            <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                               {row.days}
                             </td>
-                            <td className="text-right py-2.5 px-3 text-gray-700 hidden sm:table-cell">
+                            <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 hidden sm:table-cell">
                               {row.totalGrossHours.toFixed(2)} {tc("hrsShort")}
                             </td>
-                            <td className="text-right py-2.5 px-3 text-gray-700 hidden sm:table-cell">
+                            <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 hidden sm:table-cell">
                               {row.totalBreakHours.toFixed(2)} {tc("hrsShort")}
                             </td>
-                            <td className="text-right py-2.5 px-3 font-medium text-gray-900">
+                            <td className="text-right py-2.5 px-3 font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                               {row.totalNetHours.toFixed(2)} {tc("hrsShort")}
                             </td>
                           </tr>
@@ -596,25 +596,25 @@ export default function LohnexportPage() {
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 border-gray-200">
-                          <td className="py-2.5 px-3 font-bold text-gray-900">
+                          <td className="py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                             {tc("total")}
                           </td>
-                          <td className="text-right py-2.5 px-3 font-bold text-gray-900">
+                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                             {preview.reduce((s, r) => s + r.days, 0)}
                           </td>
-                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 hidden sm:table-cell">
+                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 hidden sm:table-cell">
                             {preview
                               .reduce((s, r) => s + r.totalGrossHours, 0)
                               .toFixed(2)}{" "}
                             {tc("hrsShort")}
                           </td>
-                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 hidden sm:table-cell">
+                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 hidden sm:table-cell">
                             {preview
                               .reduce((s, r) => s + r.totalBreakHours, 0)
                               .toFixed(2)}{" "}
                             {tc("hrsShort")}
                           </td>
-                          <td className="text-right py-2.5 px-3 font-bold text-gray-900">
+                          <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                             {totalHours.toFixed(2)} {tc("hrsShort")}
                           </td>
                         </tr>
@@ -623,7 +623,7 @@ export default function LohnexportPage() {
 
                     {/* Confirmation note */}
                     <div className="mt-4 pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-400 italic">
+                      <p className="text-xs text-gray-400 dark:text-zinc-500 italic">
                         {t("onlyConfirmed")}
                       </p>
                     </div>
@@ -639,8 +639,10 @@ export default function LohnexportPage() {
           <Card>
             <CardContent className="py-10 sm:py-10 text-center">
               <FileExportIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">{t("helpText")}</p>
-              <p className="text-xs text-gray-400 mt-2 max-w-md mx-auto">
+              <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                {t("helpText")}
+              </p>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 mt-2 max-w-md mx-auto">
                 {t("helpHint")}
               </p>
             </CardContent>

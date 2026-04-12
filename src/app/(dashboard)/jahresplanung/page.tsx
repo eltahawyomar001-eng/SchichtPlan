@@ -242,7 +242,7 @@ export default function JahresplanungSeite() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setYear((y) => y - 1)}
-              className="rounded-lg border border-gray-300 p-2 text-gray-600 hover:bg-gray-50 transition-colors"
+              className="rounded-lg border border-gray-300 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 transition-colors"
               aria-label={t("previousYear")}
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -260,7 +260,7 @@ export default function JahresplanungSeite() {
             </Select>
             <button
               onClick={() => setYear((y) => y + 1)}
-              className="rounded-lg border border-gray-300 p-2 text-gray-600 hover:bg-gray-50 transition-colors"
+              className="rounded-lg border border-gray-300 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 transition-colors"
               aria-label={t("nextYear")}
             >
               <ChevronRightIcon className="h-4 w-4" />
@@ -291,7 +291,7 @@ export default function JahresplanungSeite() {
                 className={cn(
                   "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
                   activeTab === "calendar"
-                    ? "bg-white text-gray-900 shadow-sm"
+                    ? "bg-white text-gray-900 dark:text-zinc-100 shadow-sm"
                     : "text-gray-500 hover:text-gray-700",
                 )}
               >
@@ -303,7 +303,7 @@ export default function JahresplanungSeite() {
                 className={cn(
                   "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
                   activeTab === "summary"
-                    ? "bg-white text-gray-900 shadow-sm"
+                    ? "bg-white text-gray-900 dark:text-zinc-100 shadow-sm"
                     : "text-gray-500 hover:text-gray-700",
                 )}
               >
@@ -346,13 +346,13 @@ export default function JahresplanungSeite() {
 
         {/* Content */}
         {loading ? (
-          <div className="text-center py-20 text-sm text-gray-400">
+          <div className="text-center py-20 text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
             {t("loading")}
           </div>
         ) : error ? (
           <div className="text-center py-20 text-sm text-red-500">{error}</div>
         ) : filteredEmployees.length === 0 ? (
-          <div className="text-center py-20 text-sm text-gray-400">
+          <div className="text-center py-20 text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
             {t("noEmployees")}
           </div>
         ) : activeTab === "calendar" ? (
@@ -481,7 +481,7 @@ function MonthMiniCard({
     >
       <CardContent className="p-2.5 sm:p-3">
         <div className="flex items-start justify-between mb-2 gap-1">
-          <h3 className="text-sm font-semibold text-gray-900 shrink-0">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 shrink-0">
             {t(`months.${month}`)}
           </h3>
           <div className="flex flex-wrap items-center justify-end gap-1 text-xs min-w-0">
@@ -530,7 +530,7 @@ function MonthMiniCard({
               return (
                 <div key={emp.id} className="flex gap-px mb-px">
                   <div
-                    className="w-14 shrink-0 truncate text-[8px] text-gray-500 leading-3 pr-1"
+                    className="w-14 shrink-0 truncate text-[8px] text-gray-500 dark:text-zinc-400 leading-3 pr-1"
                     title={`${emp.firstName} ${emp.lastName}`}
                   >
                     {emp.lastName}
@@ -566,7 +566,7 @@ function MonthMiniCard({
               );
             })}
             {employees.length > 10 && (
-              <p className="text-[8px] text-gray-400 mt-0.5">
+              <p className="text-[8px] text-gray-400 dark:text-zinc-500 mt-0.5">
                 +{employees.length - 10} {t("more")}
               </p>
             )}
@@ -624,12 +624,12 @@ function MonthDetail({
       <CardContent className="p-0 sm:p-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-3 sm:px-4 py-3">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
             {t(`months.${month}`)} {year}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="rounded-lg p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-gray-600 transition-colors"
             aria-label={t("close")}
           >
             <XIcon className="h-5 w-5" />
@@ -644,7 +644,7 @@ function MonthDetail({
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 w-44 min-w-[11rem] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
+                <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-zinc-400 w-44 min-w-[11rem] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
                   {t("employee")}
                 </th>
                 {Array.from({ length: daysInMonth }, (_, d) => {
@@ -682,7 +682,7 @@ function MonthDetail({
               </tr>
               {/* Overlap indicator row */}
               <tr className="border-b border-gray-200">
-                <td className="sticky left-0 z-10 bg-white px-3 py-1 text-[10px] text-gray-400 font-medium after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
+                <td className="sticky left-0 z-10 bg-white px-3 py-1 text-[10px] text-gray-400 dark:text-zinc-500 font-medium after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
                   {t("absenceCount")}
                 </td>
                 {Array.from({ length: daysInMonth }, (_, d) => {
@@ -725,7 +725,7 @@ function MonthDetail({
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: emp.color || "#9ca3af" }}
                         />
-                        <span className="text-xs font-medium text-gray-700 truncate max-w-[8rem]">
+                        <span className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate max-w-[8rem]">
                           {emp.firstName} {emp.lastName}
                         </span>
                       </div>
@@ -790,7 +790,7 @@ function MonthDetail({
 
         {/* Week summary at bottom */}
         <div className="border-t border-gray-200 px-3 sm:px-4 py-3">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
             {t("weekOverview")}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -810,7 +810,7 @@ function MonthDetail({
                       ? "border-rose-200 bg-rose-50 text-rose-700"
                       : weekAbsCount > 0
                         ? "border-amber-200 bg-amber-50 text-amber-700"
-                        : "border-gray-200 bg-white text-gray-500",
+                        : "border-gray-200 bg-white text-gray-500 dark:text-zinc-400 dark:text-zinc-400",
                   )}
                 >
                   <span className="font-medium">
@@ -875,10 +875,12 @@ function SummaryTable({
     <Card className="border-gray-200">
       <CardContent className="p-0 sm:p-0">
         <div className="border-b border-gray-200 px-3 sm:px-4 py-3">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
             {t("yearSummary")} {year}
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">{t("yearSummaryDesc")}</p>
+          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
+            {t("yearSummaryDesc")}
+          </p>
         </div>
 
         <div
@@ -888,37 +890,37 @@ function SummaryTable({
           <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-left text-xs font-medium text-gray-500 w-48 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
+                <th className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-zinc-400 w-48 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
                   {t("employee")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("entitlement")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("carryOver")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("totalAvailable")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("approvedDays")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("pendingDays")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("usedDays")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("remainingDays")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("overtimeDays")}
                 </th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("sickDays")}
                 </th>
-                <th className="px-3 py-2.5 text-center text-xs font-medium text-gray-500">
+                <th className="px-3 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {t("status")}
                 </th>
               </tr>
@@ -942,24 +944,24 @@ function SummaryTable({
                           style={{ backgroundColor: emp.color || "#9ca3af" }}
                         />
                         <div>
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                             {emp.firstName} {emp.lastName}
                           </span>
                           {emp.department && (
-                            <span className="block text-[10px] text-gray-400">
+                            <span className="block text-[10px] text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                               {emp.department.name}
                             </span>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5 text-right text-sm text-gray-700">
+                    <td className="px-3 py-2.5 text-right text-sm text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                       {s.totalEntitlement}
                     </td>
-                    <td className="px-3 py-2.5 text-right text-sm text-gray-500">
+                    <td className="px-3 py-2.5 text-right text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                       {s.carryOver > 0 ? `+${s.carryOver}` : "–"}
                     </td>
-                    <td className="px-3 py-2.5 text-right text-sm font-medium text-gray-900">
+                    <td className="px-3 py-2.5 text-right text-sm font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       {totalAvailable}
                     </td>
                     <td className="px-3 py-2.5 text-right text-sm text-emerald-600 font-medium">
@@ -968,7 +970,7 @@ function SummaryTable({
                     <td className="px-3 py-2.5 text-right text-sm text-amber-600 font-medium">
                       {s.pendingVacationDays > 0 ? s.pendingVacationDays : "–"}
                     </td>
-                    <td className="px-3 py-2.5 text-right text-sm text-gray-700">
+                    <td className="px-3 py-2.5 text-right text-sm text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                       {s.used}
                     </td>
                     <td
@@ -1009,16 +1011,16 @@ function SummaryTable({
             {/* Totals footer */}
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50/80 font-semibold">
-                <td className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm text-gray-900 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
+                <td className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm text-gray-900 dark:text-zinc-100 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
                   {t("total")} ({employees.length} {t("employeesCount")})
                 </td>
-                <td className="px-3 py-2.5 text-right text-sm text-gray-700">
+                <td className="px-3 py-2.5 text-right text-sm text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                   {totals.entitlement}
                 </td>
-                <td className="px-3 py-2.5 text-right text-sm text-gray-500">
+                <td className="px-3 py-2.5 text-right text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                   {totals.carryOver > 0 ? `+${totals.carryOver}` : "–"}
                 </td>
-                <td className="px-3 py-2.5 text-right text-sm text-gray-900">
+                <td className="px-3 py-2.5 text-right text-sm text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                   {totals.entitlement + totals.carryOver}
                 </td>
                 <td className="px-3 py-2.5 text-right text-sm text-emerald-600">
@@ -1027,7 +1029,7 @@ function SummaryTable({
                 <td className="px-3 py-2.5 text-right text-sm text-amber-600">
                   {totals.pending > 0 ? totals.pending : "–"}
                 </td>
-                <td className="px-3 py-2.5 text-right text-sm text-gray-700">
+                <td className="px-3 py-2.5 text-right text-sm text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                   {totals.used}
                 </td>
                 <td className="px-3 py-2.5 text-right text-sm text-emerald-600">

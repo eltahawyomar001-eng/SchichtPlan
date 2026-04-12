@@ -241,7 +241,7 @@ export default function KundenSeite() {
 
           {/* Search */}
           <div className="relative max-w-xs">
-            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-3 sm:h-4 sm:w-4" />
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-zinc-500 sm:left-3 sm:h-4 sm:w-4" />
             <Input
               type="search"
               placeholder={t("searchPlaceholder")}
@@ -332,7 +332,7 @@ export default function KundenSeite() {
                       value={formData.notes}
                       onChange={(e) => handleField("notes", e.target.value)}
                       placeholder={t("notesPlaceholder")}
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
                     />
                   </div>
 
@@ -365,7 +365,7 @@ export default function KundenSeite() {
           {!loading && filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
               <UsersIcon className="h-10 w-10 text-gray-300 mb-3" />
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                 {search ? t("noResults") : t("empty")}
               </p>
               {!search && (
@@ -389,7 +389,7 @@ export default function KundenSeite() {
                   <CardContent className="flex items-start justify-between gap-4 p-4 sm:p-5">
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-gray-900 truncate">
+                        <h3 className="font-semibold text-gray-900 dark:text-zinc-100 truncate">
                           {client.name}
                         </h3>
                         <Badge
@@ -403,7 +403,7 @@ export default function KundenSeite() {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                         {client.email && <span>{client.email}</span>}
                         {client.phone && <span>{client.phone}</span>}
                         {client.address && (
@@ -413,7 +413,7 @@ export default function KundenSeite() {
                         )}
                       </div>
                       {client.notes && (
-                        <p className="text-sm text-gray-400 line-clamp-2">
+                        <p className="text-sm text-gray-400 dark:text-zinc-500 line-clamp-2">
                           {client.notes}
                         </p>
                       )}

@@ -241,7 +241,7 @@ export default function TeamPage() {
     OWNER: "bg-amber-100 text-amber-800",
     ADMIN: "bg-emerald-100 text-emerald-800",
     MANAGER: "bg-emerald-100 text-emerald-800",
-    EMPLOYEE: "bg-gray-100 text-gray-700",
+    EMPLOYEE: "bg-gray-100 dark:bg-zinc-800 text-gray-700",
   };
 
   const statusLabels: Record<string, string> = {
@@ -446,7 +446,7 @@ export default function TeamPage() {
                       key={inv.id}
                       className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800">
                         <MailIcon className="h-4 w-4 text-gray-500" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -511,7 +511,7 @@ export default function TeamPage() {
                     key={inv.id}
                     className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800">
                       {inv.status === "ACCEPTED" ? (
                         <CheckCircleIcon className="h-4 w-4 text-green-500" />
                       ) : (

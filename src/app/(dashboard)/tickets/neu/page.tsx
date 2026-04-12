@@ -192,7 +192,7 @@ export default function NewTicketPage() {
                   required
                   minLength={10}
                   rows={6}
-                  className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
+                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
                 />
                 {description.length > 0 && description.length < 10 && (
                   <p className="mt-1 text-xs text-amber-600">

@@ -206,7 +206,7 @@ export default function TicketDetailPage() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-24 animate-pulse rounded-xl bg-gray-100"
+                className="h-24 animate-pulse rounded-xl bg-gray-100 dark:bg-zinc-800"
               />
             ))}
           </div>
@@ -302,7 +302,7 @@ export default function TicketDetailPage() {
                     className={`rounded-lg p-3 ${
                       comment.isInternal
                         ? "bg-amber-50 border border-amber-200"
-                        : "bg-gray-50"
+                        : "bg-gray-50 dark:bg-zinc-800/50"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -346,7 +346,7 @@ export default function TicketDetailPage() {
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder={t("commentPlaceholder")}
                     rows={3}
-                    className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
+                    className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:border-emerald-300 focus:ring-1 focus:ring-emerald-300 focus:outline-none resize-none"
                   />
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -356,7 +356,7 @@ export default function TicketDetailPage() {
                             type="checkbox"
                             checked={isInternal}
                             onChange={(e) => setIsInternal(e.target.checked)}
-                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                            className="rounded border-gray-300 dark:border-zinc-600 text-emerald-600 focus:ring-emerald-500"
                           />
                           {t("internalNote")}
                         </label>

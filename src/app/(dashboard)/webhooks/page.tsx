@@ -221,7 +221,7 @@ export default function WebhooksSeite() {
                     className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
                       formEvents.includes(event)
                         ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                        : "bg-gray-50 text-gray-600 dark:text-zinc-400 border-gray-200 hover:bg-gray-100"
+                        : "bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:bg-zinc-800"
                     }`}
                   >
                     {event}
@@ -279,7 +279,7 @@ export default function WebhooksSeite() {
                         {hook.events.map((ev) => (
                           <Badge
                             key={ev}
-                            className="bg-gray-100 text-gray-600 dark:text-zinc-400 text-xs"
+                            className="bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 text-xs"
                           >
                             {ev}
                           </Badge>

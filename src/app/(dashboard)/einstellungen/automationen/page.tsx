@@ -315,7 +315,7 @@ export default function AutomationenPage() {
 
         {/* Summary banner */}
         <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-50 to-emerald-50 border border-emerald-100 px-4 py-3">
-          <div className="rounded-lg bg-white p-2 shadow-sm">
+          <div className="rounded-lg bg-white dark:bg-zinc-900 p-2 shadow-sm">
             <ZapIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
@@ -381,7 +381,7 @@ export default function AutomationenPage() {
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                                 isEnabled
                                   ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-gray-100 text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
+                                  : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
                               }`}
                             >
                               {isEnabled ? t("enabled") : t("disabled")}

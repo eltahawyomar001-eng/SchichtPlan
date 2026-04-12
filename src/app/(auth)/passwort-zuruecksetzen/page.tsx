@@ -11,7 +11,6 @@ import {
   EyeOffIcon,
   CheckCircleIcon,
 } from "@/components/icons";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -28,13 +27,13 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md text-center">
           <ShiftfyMark className="mx-auto mb-4 h-12 w-12" />
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
             {t("invalidResetLink")}
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">
             {t("invalidResetLinkDesc")}
           </p>
           <Link
@@ -87,42 +86,41 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex items-center justify-center gap-4">
+        <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
             <ShiftfyMark className="h-10 w-10" />
             <span className="text-xl font-bold text-gray-900 dark:text-white">
               Shiftfy
             </span>
           </Link>
-          <ThemeToggle />
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-8 shadow-sm">
           {success ? (
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircleIcon className="h-6 w-6 text-emerald-600" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
                 {t("passwordResetSuccess")}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">
                 {t("passwordResetSuccessDesc")}
               </p>
             </div>
           ) : (
             <>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 {t("newPasswordTitle")}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">
                 {t("newPasswordDesc")}
               </p>
 
               {error && (
-                <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
                   {error}
                 </div>
               )}
@@ -131,12 +129,12 @@ function ResetPasswordForm() {
                 <div>
                   <label
                     htmlFor="password"
-                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                    className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300"
                   >
                     {t("newPassword")}
                   </label>
                   <div className="relative">
-                    <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                     <input
                       id="password"
                       type={showPassword ? "text" : "password"}
@@ -144,13 +142,13 @@ function ResetPasswordForm() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 pl-11 pr-11 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                     <button
                       type="button"
                       tabIndex={-1}
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300"
                     >
                       {showPassword ? (
                         <EyeOffIcon className="h-5 w-5" />
@@ -164,12 +162,12 @@ function ResetPasswordForm() {
                 <div>
                   <label
                     htmlFor="confirmPassword"
-                    className="mb-1.5 block text-sm font-medium text-gray-700"
+                    className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-zinc-300"
                   >
                     {t("confirmPassword")}
                   </label>
                   <div className="relative">
-                    <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-zinc-500" />
                     <input
                       id="confirmPassword"
                       type={showPassword ? "text" : "password"}
@@ -177,7 +175,7 @@ function ResetPasswordForm() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
+                      className="h-12 w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 pl-11 pr-4 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 transition-shadow focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                     />
                   </div>
                 </div>

@@ -378,7 +378,7 @@ export default function AutomatisierungSeite() {
                     {formConditions.map((cond, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 p-3"
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800 p-3"
                       >
                         <Select
                           value={cond.field}
@@ -465,7 +465,7 @@ export default function AutomatisierungSeite() {
                     {formActions.map((action, idx) => (
                       <div
                         key={idx}
-                        className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 p-3 space-y-2"
+                        className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800 p-3 space-y-2"
                       >
                         <div className="flex items-center gap-2">
                           <Select
@@ -609,7 +609,7 @@ export default function AutomatisierungSeite() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : rules.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 p-8 sm:p-12">
+          <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50/50 dark:bg-zinc-900/50 p-8 sm:p-12">
             <div className="mx-auto max-w-lg text-center space-y-4">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/50">
                 <svg
@@ -662,7 +662,7 @@ export default function AutomatisierungSeite() {
                   ].map((ex, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm text-gray-600 dark:text-zinc-300"
+                      className="flex items-start gap-2 rounded-lg bg-white dark:bg-zinc-900 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm text-gray-600 dark:text-zinc-300"
                     >
                       <span className="flex-shrink-0 mt-0.5">{ex.icon}</span>
                       <span>{ex.label}</span>
@@ -721,7 +721,7 @@ export default function AutomatisierungSeite() {
                       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                         rule.isActive
                           ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                          : "bg-gray-100 dark:bg-zinc-800 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
                       }`}
                     >
                       {rule.isActive ? t("active") : t("inactive")}

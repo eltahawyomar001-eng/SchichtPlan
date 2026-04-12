@@ -733,7 +733,7 @@ export default function ZeiterfassungPage() {
               <textarea
                 id="remarks"
                 rows={2}
-                className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                className="flex w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 value={formData.remarks}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, remarks: e.target.value }))
@@ -865,7 +865,7 @@ export default function ZeiterfassungPage() {
                       </Label>
                       <textarea
                         rows={2}
-                        className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        className="flex w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                         value={actionComment}
                         onChange={(e) => setActionComment(e.target.value)}
                         placeholder={t("commentPlaceholder")}

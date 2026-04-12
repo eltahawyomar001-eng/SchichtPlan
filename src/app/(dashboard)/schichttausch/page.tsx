@@ -306,7 +306,7 @@ export default function SchichttauschPage() {
                 className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                   filterStatus === s
                     ? "bg-emerald-100 text-emerald-700"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-gray-100 dark:bg-zinc-800 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {s === "all" ? tc("all") : t(STATUS_KEYS[s]) || s}
@@ -536,7 +536,7 @@ export default function SchichttauschPage() {
                 <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100"
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:bg-zinc-800"
                 >
                   <XIcon className="h-5 w-5 text-gray-400" />
                 </button>
@@ -566,7 +566,7 @@ export default function SchichttauschPage() {
                       ))}
                     </Select>
                   ) : (
-                    <div className="flex w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                    <div className="flex w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-3 py-2 text-sm text-gray-700">
                       {employees.find((e) => e.id === formData.requesterId)
                         ? `${employees.find((e) => e.id === formData.requesterId)!.firstName} ${employees.find((e) => e.id === formData.requesterId)!.lastName}`
                         : user?.name || "—"}
@@ -619,7 +619,7 @@ export default function SchichttauschPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, reason: e.target.value })
                     }
-                    className="flex w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
+                    className="flex w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[80px] resize-none"
                     placeholder={t("form.reasonPlaceholder")}
                   />
                 </div>

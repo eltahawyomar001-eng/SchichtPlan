@@ -110,7 +110,8 @@ export default function MonatsabschlussSeite() {
 
   const statusConfig: Record<string, { color: string; label: string }> = {
     OPEN: {
-      color: "bg-gray-100 text-gray-700 dark:text-zinc-300 dark:text-zinc-300",
+      color:
+        "bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 dark:text-zinc-300",
       label: t("open"),
     },
     LOCKED: { color: "bg-emerald-100 text-emerald-800", label: t("locked") },

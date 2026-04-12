@@ -216,7 +216,7 @@ async function EmployeeDashboardContent({
               {myPendingAbsences > 0 && (
                 <Link
                   href="/abwesenheiten"
-                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
+                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:bg-zinc-800/50/50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 p-2">
@@ -234,7 +234,7 @@ async function EmployeeDashboardContent({
               {myPendingSwaps > 0 && (
                 <Link
                   href="/schichttausch"
-                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all group"
+                  className="flex items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:bg-zinc-800/50/50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 p-2">
@@ -265,7 +265,7 @@ async function EmployeeDashboardContent({
               {(myTodayShifts as ShiftWithRelations[]).map((shift) => (
                 <div
                   key={shift.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 dark:bg-zinc-800/50/30 p-4"
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div
@@ -311,7 +311,7 @@ async function EmployeeDashboardContent({
               {(myUpcomingShifts as ShiftWithRelations[]).map((shift) => (
                 <div
                   key={shift.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 dark:bg-zinc-800/50/30 p-4"
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div
@@ -530,7 +530,7 @@ async function ManagerDashboardContent({
                   {onboardingSteps.length}
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-2 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
                   style={{
@@ -548,7 +548,7 @@ async function ManagerDashboardContent({
                   className={`flex items-center gap-3 sm:gap-4 rounded-xl border p-3.5 sm:p-4 transition-all duration-200 ${
                     step.done
                       ? "border-green-100 bg-green-50/40"
-                      : "border-gray-100 bg-white hover:border-emerald-200 hover:shadow-sm"
+                      : "border-gray-100 bg-white dark:bg-zinc-900 hover:border-emerald-200 hover:shadow-sm"
                   }`}
                 >
                   <div
@@ -641,7 +641,7 @@ async function ManagerDashboardContent({
                 <Link
                   key={i}
                   href={item.href}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 hover:bg-gray-50/50 transition-all duration-200 group"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3.5 hover:border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:bg-zinc-800/50/50 transition-all duration-200 group"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`rounded-xl p-2 ${item.bg}`}>
@@ -677,7 +677,7 @@ async function ManagerDashboardContent({
               {(todayShifts as ShiftWithRelations[]).map((shift) => (
                 <div
                   key={shift.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 dark:bg-zinc-800/50/30 p-4"
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div

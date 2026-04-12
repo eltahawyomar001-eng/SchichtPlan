@@ -54,7 +54,7 @@ const CATEGORY_KEYS = [
   { value: "KRANK", color: "bg-red-100 text-red-700" },
   { value: "ELTERNZEIT", color: "bg-pink-100 text-pink-700" },
   { value: "SONDERURLAUB", color: "bg-emerald-100 text-emerald-700" },
-  { value: "UNBEZAHLT", color: "bg-gray-100 text-gray-700" },
+  { value: "UNBEZAHLT", color: "bg-gray-100 dark:bg-zinc-800 text-gray-700" },
   { value: "FORTBILDUNG", color: "bg-teal-100 text-teal-700" },
   { value: "SONSTIGES", color: "bg-amber-100 text-amber-700" },
 ];
@@ -318,7 +318,7 @@ export default function AbwesenheitenPage() {
               className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                 filterStatus === s
                   ? "bg-emerald-100 text-emerald-700"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  : "bg-gray-100 dark:bg-zinc-800 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {s === "all" ? tc("all") : t(STATUS_KEYS[s]) || s}
@@ -465,7 +465,7 @@ export default function AbwesenheitenPage() {
                 <CardTitle>{t("newRequest")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100"
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:bg-zinc-800"
                 >
                   <XIcon className="h-5 w-5 text-gray-400" />
                 </button>

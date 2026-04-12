@@ -96,8 +96,8 @@ export default function BenachrichtigungenPage() {
         <Topbar title={t("title")} description={t("description")} />
         <PageContent className="max-w-3xl">
           <div className="animate-pulse space-y-4">
-            <div className="h-24 bg-gray-100 rounded-xl" />
-            <div className="h-40 bg-gray-100 rounded-xl" />
+            <div className="h-24 bg-gray-100 dark:bg-zinc-800 rounded-xl" />
+            <div className="h-40 bg-gray-100 dark:bg-zinc-800 rounded-xl" />
           </div>
         </PageContent>
       </div>
@@ -212,7 +212,7 @@ export default function BenachrichtigungenPage() {
                     className={`text-[10px] px-1.5 py-0 ${
                       emailEnabled
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-gray-100 text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
+                        : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
                     }`}
                   >
                     {emailEnabled ? t("enabled") : t("disabled")}

@@ -1009,7 +1009,7 @@ export default function NachrichtenPage() {
           />
         </div>
         {/* Mobile loading header */}
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-white dark:bg-zinc-900 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
           <h1 className="text-lg font-bold text-gray-900">{t("title")}</h1>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white">
@@ -1037,7 +1037,7 @@ export default function NachrichtenPage() {
         </div>
         <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white p-6">
           <div className="flex flex-col items-center">
-            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 sm:h-20 sm:w-20">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-zinc-800 sm:h-20 sm:w-20">
               <MessageCircleIcon className="h-8 w-8 text-gray-300 sm:h-10 sm:w-10" />
             </div>
             <p className="mb-2 text-center text-base font-bold text-gray-800 sm:text-lg">
@@ -1056,13 +1056,13 @@ export default function NachrichtenPage() {
 
   const settingsPanelContent = activeChannel && (
     <>
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-3">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-3">
         <h3 className="truncate text-sm font-semibold text-gray-900">
           {t("channelSettings")}
         </h3>
         <button
           onClick={() => setShowSettings(false)}
-          className="flex-shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 active:scale-95 lg:rounded-lg lg:p-1"
+          className="flex-shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 active:scale-95 lg:rounded-lg lg:p-1"
         >
           <XIcon className="h-4 w-4" />
         </button>
@@ -1118,7 +1118,7 @@ export default function NachrichtenPage() {
                   value={addMemberSearch}
                   onChange={(e) => setAddMemberSearch(e.target.value)}
                   placeholder={t("searchMembers")}
-                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800 py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
                   autoFocus
                 />
               </div>
@@ -1152,7 +1152,7 @@ export default function NachrichtenPage() {
             {settingMembers.map((m: ChannelMember) => (
               <li
                 key={m.userId}
-                className="group/member flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50"
+                className="group/member flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:bg-zinc-800/50"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
@@ -1212,7 +1212,7 @@ export default function NachrichtenPage() {
         {/* ─── Channel List (mobile: full screen when no channel selected, hidden when chat active) ─── */}
         <aside
           className={cn(
-            "flex flex-col bg-white/80 backdrop-blur-xl md:border-r md:border-gray-200",
+            "flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl md:border-r md:border-gray-200 dark:border-zinc-700",
             // Mobile: full screen channel list, hidden when a channel is selected
             activeChannel ? "hidden md:flex" : "flex w-full",
             // Desktop: fixed width sidebar
@@ -1220,7 +1220,7 @@ export default function NachrichtenPage() {
           )}
         >
           {/* Mobile channel list header — iOS style */}
-          <div className="flex items-center justify-between bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3 md:bg-white md:backdrop-blur-none">
+          <div className="flex items-center justify-between bg-white dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] md:pt-3 md:bg-white md:backdrop-blur-none">
             <h1 className="text-[34px] font-bold tracking-tight text-gray-900 md:text-sm md:font-semibold">
               {t("title")}
             </h1>
@@ -1245,7 +1245,7 @@ export default function NachrichtenPage() {
             </div>
           </div>
           {/* iOS hairline separator */}
-          <div className="h-px bg-black/[0.08] dark:bg-white/[0.08] md:bg-gray-100 md:dark:bg-zinc-700" />
+          <div className="h-px bg-black/[0.08] dark:bg-white dark:bg-zinc-900/[0.08] md:bg-gray-100 dark:bg-zinc-800 md:dark:bg-zinc-700" />
 
           {/* Channel search — iOS style */}
           <div className="flex-shrink-0 px-3.5 py-2 md:px-3 md:py-2">
@@ -1256,7 +1256,7 @@ export default function NachrichtenPage() {
                 value={channelSearch}
                 onChange={(e) => setChannelSearch(e.target.value)}
                 placeholder={t("searchChannels")}
-                className="w-full rounded-[10px] border-0 bg-[#767680]/[0.12] py-[7px] pl-8 pr-3 text-[15px] text-gray-900 dark:text-zinc-100 placeholder:text-[#8e8e93] transition-all focus:bg-[#767680]/[0.18] focus:ring-0 focus:outline-none md:py-2 md:pl-9 md:text-xs md:rounded-xl md:border md:border-gray-200 md:dark:border-zinc-700 md:bg-white md:dark:bg-zinc-800 md:shadow-sm md:dark:shadow-none md:placeholder:text-gray-400 md:dark:placeholder:text-zinc-500 md:focus:ring-2 md:focus:ring-emerald-100 md:dark:focus:ring-emerald-900 md:focus:bg-white md:dark:focus:bg-zinc-800"
+                className="w-full rounded-[10px] border-0 bg-[#767680]/[0.12] py-[7px] pl-8 pr-3 text-[15px] text-gray-900 dark:text-zinc-100 placeholder:text-[#8e8e93] transition-all focus:bg-[#767680]/[0.18] focus:ring-0 focus:outline-none md:py-2 md:pl-9 md:text-xs md:rounded-xl md:border md:border-gray-200 dark:border-zinc-700 md:dark:border-zinc-700 md:bg-white dark:bg-zinc-900 md:dark:bg-zinc-800 md:shadow-sm md:dark:shadow-none md:placeholder:text-gray-400 md:dark:placeholder:text-zinc-500 md:focus:ring-2 md:focus:ring-emerald-100 md:dark:focus:ring-emerald-900 md:focus:bg-white md:dark:focus:bg-zinc-800"
               />
             </div>
           </div>
@@ -1395,7 +1395,7 @@ export default function NachrichtenPage() {
         {/* ─── Main Message Area ─── */}
         <main
           className={cn(
-            "flex min-w-0 flex-1 flex-col bg-white",
+            "flex min-w-0 flex-1 flex-col bg-white dark:bg-zinc-900",
             // Mobile: full screen when channel active, hidden when no channel
             activeChannel ? "flex" : "hidden md:flex",
           )}
@@ -1403,7 +1403,7 @@ export default function NachrichtenPage() {
           {activeChannel ? (
             <>
               {/* Channel header — mobile: iOS nav bar; desktop: standard header */}
-              <div className="flex flex-shrink-0 items-center justify-between gap-2 bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-2 sm:px-4 sm:py-3 md:bg-white md:backdrop-blur-none">
+              <div className="flex flex-shrink-0 items-center justify-between gap-2 bg-white dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-2 sm:px-4 sm:py-3 md:bg-white md:backdrop-blur-none">
                 <div className="flex min-w-0 items-center gap-1">
                   {/* Mobile back — iOS chevron style */}
                   <button
@@ -1461,7 +1461,7 @@ export default function NachrichtenPage() {
                           value={messageSearch}
                           onChange={(e) => setMessageSearch(e.target.value)}
                           placeholder={t("searchMessages")}
-                          className="w-28 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 px-2 py-1 text-xs text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700 sm:w-40"
+                          className="w-28 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800 px-2 py-1 text-xs text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700 sm:w-40"
                           autoFocus
                         />
                         <button
@@ -1470,7 +1470,7 @@ export default function NachrichtenPage() {
                             setShowSearchResults(false);
                             setSearchResults([]);
                           }}
-                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"
+                          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
                         >
                           <XIcon className="h-3.5 w-3.5" />
                         </button>
@@ -1478,7 +1478,7 @@ export default function NachrichtenPage() {
                     ) : (
                       <button
                         onClick={() => setShowSearchResults(true)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100"
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:bg-zinc-800"
                         title={t("searchMessages")}
                       >
                         <SearchIcon className="h-4 w-4" />
@@ -1491,7 +1491,7 @@ export default function NachrichtenPage() {
                       setShowPinned(!showPinned);
                       if (!showPinned) fetchPinnedMessages();
                     }}
-                    className={`rounded-lg p-1.5 transition-colors ${showPinned ? "bg-amber-50 text-amber-600" : "text-gray-400 hover:bg-gray-100"}`}
+                    className={`rounded-lg p-1.5 transition-colors ${showPinned ? "bg-amber-50 text-amber-600" : "text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"}`}
                     title={t("pinnedMessages")}
                   >
                     <svg
@@ -1517,7 +1517,7 @@ export default function NachrichtenPage() {
                     className={`rounded-lg p-1.5 transition-colors ${
                       showSettings
                         ? "bg-emerald-50 text-emerald-600"
-                        : "text-gray-400 hover:bg-gray-100"
+                        : "text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
                     }`}
                     title={t("channelSettings")}
                   >
@@ -1594,7 +1594,7 @@ export default function NachrichtenPage() {
                             )}
 
                             {isDeleted ? (
-                              <div className="rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2 text-xs italic text-gray-400 sm:px-4 sm:py-2.5 sm:text-sm">
+                              <div className="rounded-2xl border border-gray-100 bg-gray-50 dark:bg-zinc-800/50 px-3 py-2 text-xs italic text-gray-400 sm:px-4 sm:py-2.5 sm:text-sm">
                                 {t("messageDeleted")}
                               </div>
                             ) : isEditing ? (
@@ -1638,7 +1638,7 @@ export default function NachrichtenPage() {
                                   className={`rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug sm:px-4 sm:py-2.5 sm:text-sm ${
                                     isOwn
                                       ? "rounded-br-md bg-emerald-600 text-white"
-                                      : "rounded-bl-md bg-[#e9e9eb] text-gray-900 md:bg-white md:border md:border-gray-100 md:shadow-sm"
+                                      : "rounded-bl-md bg-[#e9e9eb] text-gray-900 md:bg-white dark:bg-zinc-900 md:border md:border-gray-100 md:shadow-sm"
                                   }`}
                                   style={{
                                     overflowWrap: "break-word",
@@ -1681,7 +1681,7 @@ export default function NachrichtenPage() {
                                           setShowReactionPicker(msg.id);
                                         }
                                       }}
-                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
                                       title={t("addReaction")}
                                     >
                                       <SmileIcon className="h-3.5 w-3.5" />
@@ -1692,7 +1692,7 @@ export default function NachrichtenPage() {
                                           setEditingMessage(msg.id);
                                           setEditContent(msg.content);
                                         }}
-                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
                                         title={t("editMessage")}
                                       >
                                         <EditIcon className="h-3.5 w-3.5" />
@@ -1718,7 +1718,7 @@ export default function NachrichtenPage() {
                                               : msg.id,
                                           )
                                         }
-                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                        className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
                                       >
                                         <MoreVerticalIcon className="h-3.5 w-3.5" />
                                       </button>
@@ -1726,7 +1726,7 @@ export default function NachrichtenPage() {
                                     {/* Thread reply */}
                                     <button
                                       onClick={() => openThread(msg)}
-                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
                                       title={t("replyInThread")}
                                     >
                                       <svg
@@ -1745,7 +1745,7 @@ export default function NachrichtenPage() {
                                     {/* Pin toggle */}
                                     <button
                                       onClick={() => handleTogglePin(msg.id)}
-                                      className={`rounded p-1 ${msg.pinnedAt ? "text-amber-500 hover:bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"}`}
+                                      className={`rounded p-1 ${msg.pinnedAt ? "text-amber-500 hover:bg-amber-50" : "text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"}`}
                                       title={
                                         msg.pinnedAt
                                           ? t("unpinMessage")
@@ -1779,7 +1779,7 @@ export default function NachrichtenPage() {
                                   >
                                     <button
                                       onClick={() => handleTogglePin(msg.id)}
-                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50"
                                     >
                                       <svg
                                         className="h-3 w-3"
@@ -1799,7 +1799,7 @@ export default function NachrichtenPage() {
                                     </button>
                                     <button
                                       onClick={() => openThread(msg)}
-                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50"
                                     >
                                       <svg
                                         className="h-3 w-3"
@@ -1844,7 +1844,7 @@ export default function NachrichtenPage() {
                                         onClick={() =>
                                           handleReaction(msg.id, emoji)
                                         }
-                                        className="rounded-lg p-1 text-base transition-transform hover:scale-110 hover:bg-gray-100 sm:text-lg sm:hover:scale-125"
+                                        className="rounded-lg p-1 text-base transition-transform hover:scale-110 hover:bg-gray-100 dark:bg-zinc-800 sm:text-lg sm:hover:scale-125"
                                       >
                                         {emoji}
                                       </button>
@@ -1868,7 +1868,7 @@ export default function NachrichtenPage() {
                                           className={`flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] transition-colors sm:gap-1 sm:px-2 sm:text-xs ${
                                             iReacted
                                               ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                                              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                                              : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-600 hover:bg-gray-50 dark:bg-zinc-800/50"
                                           }`}
                                         >
                                           <span>{g.emoji}</span>
@@ -1913,7 +1913,7 @@ export default function NachrichtenPage() {
                                           className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
                                             isOwn
                                               ? "border-emerald-500/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30"
-                                              : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-700 hover:bg-gray-100 dark:bg-zinc-800"
                                           }`}
                                         >
                                           <svg
@@ -1956,7 +1956,7 @@ export default function NachrichtenPage() {
                                           className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
                                             isOwn
                                               ? "border-emerald-500/30 bg-emerald-500/20 text-white hover:bg-emerald-500/30"
-                                              : "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-700 hover:bg-gray-100 dark:bg-zinc-800"
                                           }`}
                                         >
                                           <svg
@@ -2023,7 +2023,7 @@ export default function NachrichtenPage() {
 
                   {/* Typing indicator */}
                   {typingUsers.length > 0 && (
-                    <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm px-4 py-1.5">
+                    <div className="flex-shrink-0 bg-white dark:bg-zinc-900/80 backdrop-blur-sm px-4 py-1.5">
                       <div className="h-px bg-black/[0.06] -mx-4 mb-1.5" />
                       <p className="flex items-center gap-1.5 text-xs text-gray-500">
                         <span className="inline-flex gap-0.5">
@@ -2040,8 +2040,8 @@ export default function NachrichtenPage() {
 
                   {/* Search results overlay */}
                   {showSearchResults && (
-                    <div className="absolute inset-x-0 top-14 bottom-16 z-30 overflow-y-auto bg-white/98 backdrop-blur-sm">
-                      <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5">
+                    <div className="absolute inset-x-0 top-14 bottom-16 z-30 overflow-y-auto bg-white dark:bg-zinc-900/98 backdrop-blur-sm">
+                      <div className="border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-4 py-2.5">
                         <div className="flex items-center justify-between">
                           <h3 className="text-xs font-semibold text-gray-700">
                             {t("searchResults")}{" "}
@@ -2054,7 +2054,7 @@ export default function NachrichtenPage() {
                               setMessageSearch("");
                               setSearchResults([]);
                             }}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                            className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
                           >
                             <XIcon className="h-3.5 w-3.5" />
                           </button>
@@ -2078,7 +2078,7 @@ export default function NachrichtenPage() {
                           {searchResults.map((msg) => (
                             <div
                               key={msg.id}
-                              className="cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50"
+                              className="cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50 dark:bg-zinc-800/50"
                               onClick={() => {
                                 setShowSearchResults(false);
                                 setMessageSearch("");
@@ -2117,8 +2117,8 @@ export default function NachrichtenPage() {
 
                   {/* Pinned messages overlay */}
                   {showPinned && (
-                    <div className="absolute inset-x-0 top-14 bottom-16 z-30 overflow-y-auto bg-white/98 backdrop-blur-sm">
-                      <div className="border-b border-gray-200 bg-amber-50 px-4 py-2.5">
+                    <div className="absolute inset-x-0 top-14 bottom-16 z-30 overflow-y-auto bg-white dark:bg-zinc-900/98 backdrop-blur-sm">
+                      <div className="border-b border-gray-200 dark:border-zinc-700 bg-amber-50 px-4 py-2.5">
                         <div className="flex items-center justify-between">
                           <h3 className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
                             <svg
@@ -2186,14 +2186,14 @@ export default function NachrichtenPage() {
                   )}
 
                   {/* Compose area */}
-                  <div className="relative flex-shrink-0 bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-2.5 md:bg-white md:backdrop-blur-none">
+                  <div className="relative flex-shrink-0 bg-white dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-[1.8] px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-2.5 md:bg-white md:backdrop-blur-none">
                     {/* iOS hairline separator */}
                     <div className="absolute inset-x-0 top-0 h-px bg-black/[0.08] md:bg-gray-200" />
                     {/* @mention autocomplete popup */}
                     {showMentions && filteredMentionUsers.length > 0 && (
                       <div
                         ref={mentionRef}
-                        className="absolute bottom-full left-2 right-2 mb-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg sm:left-3 sm:right-3"
+                        className="absolute bottom-full left-2 right-2 mb-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg sm:left-3 sm:right-3"
                       >
                         {filteredMentionUsers.map((mu, i) => (
                           <button
@@ -2202,7 +2202,7 @@ export default function NachrichtenPage() {
                             className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors ${
                               i === mentionIndex
                                 ? "bg-emerald-50 text-emerald-700"
-                                : "text-gray-700 hover:bg-gray-50"
+                                : "text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50"
                             }`}
                           >
                             <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-xs font-bold text-gray-600">
@@ -2283,9 +2283,9 @@ export default function NachrichtenPage() {
                         setThreadMessages([]);
                       }}
                     />
-                    <aside className="fixed inset-y-0 right-0 z-50 flex w-[340px] max-w-[90vw] flex-col border-l border-gray-200 bg-white pr-[env(safe-area-inset-right)] shadow-xl lg:static lg:z-auto lg:w-80 lg:max-w-none lg:pr-0 lg:shadow-none xl:w-96">
+                    <aside className="fixed inset-y-0 right-0 z-50 flex w-[340px] max-w-[90vw] flex-col border-l border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 pr-[env(safe-area-inset-right)] shadow-xl lg:static lg:z-auto lg:w-80 lg:max-w-none lg:pr-0 lg:shadow-none xl:w-96">
                       {/* Thread header */}
-                      <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-3">
+                      <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 dark:border-zinc-700 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-3">
                         <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                           <svg
                             className="h-4 w-4 text-emerald-600"
@@ -2306,14 +2306,14 @@ export default function NachrichtenPage() {
                             setThreadParent(null);
                             setThreadMessages([]);
                           }}
-                          className="rounded-full p-2 text-gray-400 hover:bg-gray-100 active:scale-95 lg:rounded-lg lg:p-1"
+                          className="rounded-full p-2 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800 active:scale-95 lg:rounded-lg lg:p-1"
                         >
                           <XIcon className="h-4 w-4" />
                         </button>
                       </div>
 
                       {/* Parent message */}
-                      <div className="flex-shrink-0 border-b border-gray-100 bg-gray-50/50 px-4 py-3">
+                      <div className="flex-shrink-0 border-b border-gray-100 bg-gray-50 dark:bg-zinc-800/50/50 px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
                             {threadParent.senderName[0]?.toUpperCase()}
@@ -2344,7 +2344,7 @@ export default function NachrichtenPage() {
                         ) : (
                           threadMessages.map((msg) => (
                             <div key={msg.id} className="flex gap-2">
-                              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600">
+                              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800 text-[10px] font-bold text-gray-600">
                                 {msg.senderName[0]?.toUpperCase()}
                               </span>
                               <div className="min-w-0 flex-1">
@@ -2369,7 +2369,7 @@ export default function NachrichtenPage() {
                       </div>
 
                       {/* Thread compose */}
-                      <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                      <div className="flex-shrink-0 border-t border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                         <form
                           onSubmit={handleSendThreadReply}
                           className="flex items-center gap-2"
@@ -2431,8 +2431,8 @@ export default function NachrichtenPage() {
       {/* ─── New Channel Modal ─── */}
       {showNewChannel && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="flex max-h-[90dvh] w-full flex-col rounded-t-xl bg-white shadow-xl sm:max-w-lg sm:rounded-xl">
-            <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex max-h-[90dvh] w-full flex-col rounded-t-xl bg-white dark:bg-zinc-900 shadow-xl sm:max-w-lg sm:rounded-xl">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 dark:border-zinc-700 px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-5 w-5 text-emerald-600" />
                 <h2 className="text-sm font-semibold text-gray-900 sm:text-base">
@@ -2441,7 +2441,7 @@ export default function NachrichtenPage() {
               </div>
               <button
                 onClick={closeNewChannelModal}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
               >
                 <XIcon className="h-4 w-4" />
               </button>
@@ -2510,7 +2510,7 @@ export default function NachrichtenPage() {
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     placeholder={t("searchMembers")}
-                    className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                    className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
                   />
                 </div>
 
@@ -2578,8 +2578,8 @@ export default function NachrichtenPage() {
       {/* ─── New DM Modal ─── */}
       {showNewDM && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="flex max-h-[85dvh] w-full flex-col rounded-t-xl bg-white shadow-xl sm:max-w-md sm:rounded-xl">
-            <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex max-h-[85dvh] w-full flex-col rounded-t-xl bg-white dark:bg-zinc-900 shadow-xl sm:max-w-md sm:rounded-xl">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 dark:border-zinc-700 px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex items-center gap-2">
                 <UserIcon className="h-5 w-5 text-emerald-600" />
                 <h2 className="text-sm font-semibold text-gray-900 sm:text-base">
@@ -2591,7 +2591,7 @@ export default function NachrichtenPage() {
                   setShowNewDM(false);
                   setMemberSearch("");
                 }}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:bg-zinc-800"
               >
                 <XIcon className="h-4 w-4" />
               </button>
@@ -2605,7 +2605,7 @@ export default function NachrichtenPage() {
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
                   placeholder={t("searchMembers")}
-                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
+                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm text-gray-700 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-emerald-300 dark:focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:focus:ring-emerald-700"
                   autoFocus
                 />
               </div>

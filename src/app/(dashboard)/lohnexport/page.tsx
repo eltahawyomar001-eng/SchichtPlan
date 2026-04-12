@@ -239,7 +239,7 @@ export default function LohnexportPage() {
               className={`rounded-xl border p-4 transition-all ${
                 s.active
                   ? "border-emerald-300 bg-emerald-50/60 shadow-sm"
-                  : "border-gray-200 bg-white"
+                  : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
               }`}
             >
               <div className="flex items-center gap-2.5 mb-1.5">
@@ -313,7 +313,7 @@ export default function LohnexportPage() {
                   <button
                     key={preset.months}
                     onClick={() => setPreset(preset.months)}
-                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 dark:text-zinc-400 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
                   >
                     {preset.label}
                   </button>
@@ -382,13 +382,13 @@ export default function LohnexportPage() {
 
             {/* Format help expandable */}
             {showFormatHelp && (
-              <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-3">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50/60 p-4 space-y-3">
                 <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                   {t("formatHelpTitle")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
-                    className={`rounded-lg border p-3 ${exportFormat === "datev" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 bg-white"}`}
+                    className={`rounded-lg border p-3 ${exportFormat === "datev" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"}`}
                   >
                     <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                       {t("datev")}
@@ -398,7 +398,7 @@ export default function LohnexportPage() {
                     </p>
                   </div>
                   <div
-                    className={`rounded-lg border p-3 ${exportFormat === "csv" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 bg-white"}`}
+                    className={`rounded-lg border p-3 ${exportFormat === "csv" ? "border-emerald-300 bg-emerald-50/60" : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"}`}
                   >
                     <p className="text-sm font-semibold text-gray-800 dark:text-zinc-200 dark:text-zinc-200">
                       {t("csv")}
@@ -543,7 +543,7 @@ export default function LohnexportPage() {
                   <div className="overflow-x-auto -mx-4 sm:mx-0">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-200">
+                        <tr className="border-b border-gray-200 dark:border-zinc-700">
                           <th className="text-left py-2 px-3 font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                             {tc("employee")}
                           </th>
@@ -595,7 +595,7 @@ export default function LohnexportPage() {
                         ))}
                       </tbody>
                       <tfoot>
-                        <tr className="border-t-2 border-gray-200">
+                        <tr className="border-t-2 border-gray-200 dark:border-zinc-700">
                           <td className="py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                             {tc("total")}
                           </td>

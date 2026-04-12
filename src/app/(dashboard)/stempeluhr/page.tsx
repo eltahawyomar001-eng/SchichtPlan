@@ -421,7 +421,7 @@ export default function StempeluhrSeite() {
                 ? "bg-gradient-to-b from-emerald-50 to-white shadow-[0_2px_20px_-4px_rgba(5,150,105,0.2)]"
                 : clockState === "break"
                   ? "bg-gradient-to-b from-amber-50 to-white shadow-[0_2px_20px_-4px_rgba(217,119,6,0.2)]"
-                  : "bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)]"
+                  : "bg-white dark:bg-zinc-900 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)]"
             }`}
           >
             <div className="px-6 pb-7 pt-6">
@@ -438,7 +438,7 @@ export default function StempeluhrSeite() {
                       ? "bg-emerald-100 text-emerald-700"
                       : clockState === "break"
                         ? "bg-amber-100 text-amber-700"
-                        : "bg-gray-100 text-gray-500"
+                        : "bg-gray-100 dark:bg-zinc-800 text-gray-500"
                   }`}
                 >
                   <span
@@ -530,7 +530,7 @@ export default function StempeluhrSeite() {
                       {todayHours}h {String(todayMins).padStart(2, "0")}m
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-zinc-800 dark:bg-gray-800">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
                         arbZG && arbZG.warningLevel === "CRITICAL"
@@ -606,7 +606,7 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("out")}
                       disabled={acting}
-                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white dark:bg-zinc-900 px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
                     >
                       {acting ? (
                         <>
@@ -643,7 +643,7 @@ export default function StempeluhrSeite() {
                     <button
                       onClick={() => handleClock("out")}
                       disabled={acting}
-                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
+                      className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white dark:bg-zinc-900 px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
                     >
                       <LogOutIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                       {t("clockOut")}
@@ -658,7 +658,7 @@ export default function StempeluhrSeite() {
 
           {/* ── Today's log ── */}
           {todayEntries.length > 0 && (
-            <div className="rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
+            <div className="rounded-2xl bg-white dark:bg-zinc-900 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
@@ -675,7 +675,7 @@ export default function StempeluhrSeite() {
               <div className="divide-y divide-gray-50">
                 {todayEntries.map((e, idx) => (
                   <div key={e.id} className="flex items-center gap-3 px-4 py-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800 text-xs font-semibold text-gray-500">
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -704,7 +704,7 @@ export default function StempeluhrSeite() {
         {/* ── Team Overview (management only) ── */}
         {isManager && (
           <div className="mx-auto mt-6 max-w-4xl">
-            <div className="rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
+            <div className="rounded-2xl bg-white dark:bg-zinc-900 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
               <div className="p-4 sm:p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
@@ -738,7 +738,7 @@ export default function StempeluhrSeite() {
                         count: teamSummary.onBreak,
                       })}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-gray-500">
                       <span className="h-2 w-2 rounded-full bg-gray-400" />
                       {t("employeesOffline", {
                         count: teamSummary.offline,
@@ -834,7 +834,7 @@ export default function StempeluhrSeite() {
       {/* ── Mobile Sticky Bottom Action Bar ── */}
       {!loading && !noProfile && (
         <div className="fixed inset-x-0 z-40 lg:hidden bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
-          <div className="bg-white/80 backdrop-blur-xl border-t border-gray-100/60 px-4 py-3">
+          <div className="bg-white dark:bg-zinc-900/80 backdrop-blur-xl border-t border-gray-100/60 px-4 py-3">
             {clockState === "idle" && (
               <button
                 onClick={() => handleClock("in")}
@@ -873,7 +873,7 @@ export default function StempeluhrSeite() {
                 <button
                   onClick={() => handleClock("out")}
                   disabled={acting}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white dark:bg-zinc-900 px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
                 >
                   <LogOutIcon className="h-4 w-4" />
                   {t("clockOut")}
@@ -893,7 +893,7 @@ export default function StempeluhrSeite() {
                 <button
                   onClick={() => handleClock("out")}
                   disabled={acting}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white dark:bg-zinc-900 px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
                 >
                   <LogOutIcon className="h-4 w-4" />
                   {t("clockOut")}

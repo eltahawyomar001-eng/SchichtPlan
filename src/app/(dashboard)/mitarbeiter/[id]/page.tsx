@@ -318,7 +318,10 @@ export default function EmployeeDetailPage({
                   </thead>
                   <tbody className="divide-y">
                     {emp.shifts.map((s) => (
-                      <tr key={s.id} className="hover:bg-gray-50">
+                      <tr
+                        key={s.id}
+                        className="hover:bg-gray-50 dark:bg-zinc-800/50"
+                      >
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(s.date, locale)}
                         </td>
@@ -368,7 +371,10 @@ export default function EmployeeDetailPage({
                   </thead>
                   <tbody className="divide-y">
                     {emp.timeEntries.map((te) => (
-                      <tr key={te.id} className="hover:bg-gray-50">
+                      <tr
+                        key={te.id}
+                        className="hover:bg-gray-50 dark:bg-zinc-800/50"
+                      >
                         <td className="px-6 py-2 whitespace-nowrap">
                           {fmtDate(te.date, locale)}
                         </td>
@@ -416,7 +422,10 @@ export default function EmployeeDetailPage({
                   </thead>
                   <tbody className="divide-y">
                     {emp.absenceRequests.map((ar) => (
-                      <tr key={ar.id} className="hover:bg-gray-50">
+                      <tr
+                        key={ar.id}
+                        className="hover:bg-gray-50 dark:bg-zinc-800/50"
+                      >
                         <td className="px-6 py-2">
                           {t.has(`absenceCategories.${ar.category}`)
                             ? t(`absenceCategories.${ar.category}`)

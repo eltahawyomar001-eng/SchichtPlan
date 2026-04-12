@@ -281,7 +281,7 @@ export default function ZeitkontenPage() {
                           {tc("hrsShort")}
                         </span>
                       </div>
-                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
                             isPositive ? "bg-green-500" : "bg-red-400"
@@ -315,7 +315,7 @@ export default function ZeitkontenPage() {
                 <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100"
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:bg-zinc-800"
                 >
                   <XIcon className="h-5 w-5 text-gray-400" />
                 </button>

@@ -139,7 +139,7 @@ export default function UrlaubskontoSeite() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : balances.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
+          <div className="rounded-xl border border-dashed border-gray-300 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-800/50 py-12 text-center">
             <p className="text-sm text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
               {t("empty")}
             </p>
@@ -153,16 +153,16 @@ export default function UrlaubskontoSeite() {
             {balances.map((bal) => (
               <div
                 key={bal.id}
-                className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+                className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
               >
-                <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-4">
+                <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 dark:bg-zinc-800/50 px-6 py-4">
                   <PalmtreeIcon className="h-5 w-5 text-emerald-600" />
                   <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                     {bal.employee.firstName} {bal.employee.lastName} — {year}
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6">
-                  <div className="text-center rounded-lg border border-gray-100 bg-gray-50 p-4">
+                  <div className="text-center rounded-lg border border-gray-100 bg-gray-50 dark:bg-zinc-800/50 p-4">
                     <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
                       {t("entitlement")}
                     </p>
@@ -176,7 +176,7 @@ export default function UrlaubskontoSeite() {
                       </p>
                     )}
                   </div>
-                  <div className="text-center rounded-lg border border-gray-100 bg-gray-50 p-4">
+                  <div className="text-center rounded-lg border border-gray-100 bg-gray-50 dark:bg-zinc-800/50 p-4">
                     <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
                       {t("used")}
                     </p>
@@ -184,7 +184,7 @@ export default function UrlaubskontoSeite() {
                       {bal.used}
                     </p>
                   </div>
-                  <div className="text-center rounded-lg border border-gray-100 bg-gray-50 p-4">
+                  <div className="text-center rounded-lg border border-gray-100 bg-gray-50 dark:bg-zinc-800/50 p-4">
                     <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
                       {t("planned")}
                     </p>
@@ -251,11 +251,11 @@ export default function UrlaubskontoSeite() {
               </div>
             )}
 
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="overflow-x-auto">
                 <div className="min-w-[740px]">
                   {/* Header */}
-                  <div className="grid grid-cols-8 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+                  <div className="grid grid-cols-8 gap-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                     <div className="col-span-2">{t("employee")}</div>
                     <div className="text-center">{t("contractTypeLabel")}</div>
                     <div className="text-center">{t("entitlement")}</div>

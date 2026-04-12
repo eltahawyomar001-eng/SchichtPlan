@@ -599,7 +599,7 @@ export default function SchichtplanPage() {
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
             {/* View mode toggle */}
-            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 flex-shrink-0">
+            <div className="inline-flex rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 flex-shrink-0">
               {(["day", "week", "month"] as const).map((mode) => (
                 <button
                   key={mode}
@@ -698,7 +698,7 @@ export default function SchichtplanPage() {
                 {/* ── Mobile Month View ── */}
                 <div className="sm:hidden space-y-3">
                   {/* Mini calendar grid */}
-                  <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-3">
+                  <div className="rounded-2xl bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-gray-100 p-3">
                     {/* Day-of-week headers */}
                     <div className="grid grid-cols-7 mb-1">
                       {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
@@ -732,7 +732,7 @@ export default function SchichtplanPage() {
                                 ? "bg-emerald-600 text-white shadow-sm"
                                 : today
                                   ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                  : "text-gray-700 hover:bg-gray-50",
+                                  : "text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50",
                             )}
                           >
                             <span className="text-[13px] leading-none font-semibold">
@@ -803,14 +803,14 @@ export default function SchichtplanPage() {
                           {canManage && (
                             <button
                               onClick={() => openCreateForm(selectedMonthDay)}
-                              className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                              className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
                             >
                               <PlusIcon className="h-5 w-5" />
                             </button>
                           )}
                         </div>
                         {dayShifts.length === 0 ? (
-                          <div className="rounded-xl bg-gray-50 py-8 text-center">
+                          <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 py-8 text-center">
                             <p className="text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                               {t("noShifts")}
                             </p>
@@ -838,12 +838,12 @@ export default function SchichtplanPage() {
 
                 {/* ── Desktop Month View ── */}
                 <div className="hidden sm:block">
-                  <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200">
+                  <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700">
                     {/* Day headers */}
                     {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
                       <div
                         key={d}
-                        className="bg-gray-50 p-2 text-center text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
+                        className="bg-gray-50 dark:bg-zinc-800/50 p-2 text-center text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400"
                       >
                         {d}
                       </div>
@@ -852,7 +852,7 @@ export default function SchichtplanPage() {
                     {Array.from({ length: padStart }).map((_, i) => (
                       <div
                         key={`pad-${i}`}
-                        className="bg-white p-2 min-h-[80px]"
+                        className="bg-white dark:bg-zinc-900 p-2 min-h-[80px]"
                       />
                     ))}
                     {/* Month day cells */}
@@ -867,7 +867,7 @@ export default function SchichtplanPage() {
                         >
                           <div
                             className={cn(
-                              "bg-white p-1.5 min-h-[80px]",
+                              "bg-white dark:bg-zinc-900 p-1.5 min-h-[80px]",
                               today && "ring-2 ring-inset ring-emerald-500",
                               dayHoliday && "bg-red-50/40",
                             )}
@@ -948,14 +948,14 @@ export default function SchichtplanPage() {
                         {canManage && (
                           <button
                             onClick={() => openCreateForm(dayDate)}
-                            className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                            className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
                           >
                             <PlusIcon className="h-5 w-5" />
                           </button>
                         )}
                       </div>
                       {getShiftsForDay(dayDate).length === 0 ? (
-                        <div className="rounded-xl bg-gray-50 py-8 text-center">
+                        <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 py-8 text-center">
                           <p className="text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                             {t("noShifts")}
                           </p>
@@ -1005,7 +1005,7 @@ export default function SchichtplanPage() {
                           {canManage && (
                             <button
                               onClick={() => openCreateForm(dayDate)}
-                              className="rounded-lg p-2 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-gray-600"
+                              className="rounded-lg p-2 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
                             >
                               <PlusIcon className="h-5 w-5" />
                             </button>
@@ -1058,7 +1058,7 @@ export default function SchichtplanPage() {
                               ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                               : today
                                 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                : "bg-white text-gray-700 dark:text-zinc-300 ring-1 ring-gray-100",
+                                : "bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300 ring-1 ring-gray-100",
                           )}
                         >
                           <span className="text-[10px] font-medium uppercase leading-tight">
@@ -1111,14 +1111,14 @@ export default function SchichtplanPage() {
                             {canManage && (
                               <button
                                 onClick={() => openCreateForm(selectedDay)}
-                                className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
+                                className="rounded-xl p-3 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-emerald-600 active:bg-gray-200 min-w-[48px] min-h-[48px] flex items-center justify-center transition-colors"
                               >
                                 <PlusIcon className="h-5 w-5" />
                               </button>
                             )}
                           </div>
                           {dayShifts.length === 0 ? (
-                            <div className="rounded-xl bg-gray-50 py-8 text-center">
+                            <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 py-8 text-center">
                               <p className="text-sm text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
                                 {t("noShifts")}
                               </p>
@@ -1185,7 +1185,7 @@ export default function SchichtplanPage() {
                                 {canManage && (
                                   <button
                                     onClick={() => openCreateForm(day)}
-                                    className="rounded-md p-1 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-gray-600"
+                                    className="rounded-md p-1 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600"
                                   >
                                     <PlusIcon className="h-4 w-4" />
                                   </button>
@@ -1554,7 +1554,7 @@ export default function SchichtplanPage() {
             {/* Shift details grid */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2">
+                <div className="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 p-2">
                   <ClockIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400 dark:text-zinc-400" />
                 </div>
                 <div>
@@ -1579,7 +1579,7 @@ export default function SchichtplanPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2">
+                <div className="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 p-2">
                   <UserIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400 dark:text-zinc-400" />
                 </div>
                 <div>
@@ -1596,7 +1596,7 @@ export default function SchichtplanPage() {
 
               {detailShift.location && (
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2">
+                  <div className="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 p-2">
                     <MapPinIcon className="h-4 w-4 text-gray-500 dark:text-zinc-400 dark:text-zinc-400" />
                   </div>
                   <div>
@@ -1611,7 +1611,7 @@ export default function SchichtplanPage() {
               )}
 
               {detailShift.notes && (
-                <div className="rounded-lg bg-gray-50 p-3">
+                <div className="rounded-lg bg-gray-50 dark:bg-zinc-800/50 p-3">
                   <p className="text-xs text-gray-500 dark:text-zinc-400 mb-1">
                     {t("form.notes")}
                   </p>
@@ -1720,7 +1720,7 @@ export default function SchichtplanPage() {
                 {t("autoScheduleLoadingDesc")}
               </p>
             </div>
-            <div className="w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-48 h-1 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
               <div className="h-full w-1/2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full ai-progress-bar" />
             </div>
           </div>
@@ -1772,7 +1772,7 @@ export default function SchichtplanPage() {
                     {t("autoScheduleNoOpenShiftsDesc")}
                   </p>
                 </div>
-                <div className="rounded-xl bg-gray-50 p-4 w-full max-w-sm text-left space-y-2.5">
+                <div className="rounded-xl bg-gray-50 dark:bg-zinc-800/50 p-4 w-full max-w-sm text-left space-y-2.5">
                   <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                     {t("autoScheduleNoOpenShiftsSteps")}
                   </p>
@@ -1832,7 +1832,7 @@ export default function SchichtplanPage() {
 
                   {/* Stat cards — 2×2 on mobile, 4-col on tablet+ */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-1 shadow-sm">
+                    <div className="bg-white dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-1 shadow-sm">
                       <p className="text-xl sm:text-2xl font-bold text-emerald-700 ai-count-up">
                         {autoScheduleResult.assigned}
                       </p>
@@ -1840,7 +1840,7 @@ export default function SchichtplanPage() {
                         {t("autoScheduleAssigned")}
                       </p>
                     </div>
-                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-2 shadow-sm">
+                    <div className="bg-white dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-2 shadow-sm">
                       <p className="text-xl sm:text-2xl font-bold text-amber-600 ai-count-up">
                         {autoScheduleResult.unresolved}
                       </p>
@@ -1849,7 +1849,7 @@ export default function SchichtplanPage() {
                       </p>
                     </div>
                     {autoScheduleResult.fairnessScore != null && (
-                      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-3 shadow-sm">
+                      <div className="bg-white dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-3 shadow-sm">
                         <p className="text-xl sm:text-2xl font-bold text-blue-600 ai-count-up">
                           {Math.round(autoScheduleResult.fairnessScore * 100)}%
                         </p>
@@ -1859,7 +1859,7 @@ export default function SchichtplanPage() {
                       </div>
                     )}
                     {autoScheduleResult.totalCostEstimate != null && (
-                      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-4 shadow-sm">
+                      <div className="bg-white dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-4 shadow-sm">
                         <p className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-zinc-300 ai-count-up">
                           €{autoScheduleResult.totalCostEstimate.toFixed(0)}
                         </p>
@@ -1894,7 +1894,7 @@ export default function SchichtplanPage() {
                             : t("autoScheduleFairnessPoor")}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ease-out ${
                           autoScheduleResult.fairnessScore >= 0.8
@@ -1918,7 +1918,7 @@ export default function SchichtplanPage() {
                       <button
                         type="button"
                         onClick={() => setShowEmployeeHours((s) => !s)}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/80 hover:bg-gray-100/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50/80 hover:bg-gray-100 dark:bg-zinc-800/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
                       >
                         <span>{t("autoScheduleEmployeeHours")}</span>
                         <ChevronDownIcon
@@ -1929,7 +1929,7 @@ export default function SchichtplanPage() {
                         <div className="max-h-52 overflow-y-auto overscroll-contain border-t border-gray-100">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="bg-gray-50/50 text-left text-xs text-gray-500 dark:text-zinc-400 sticky top-0">
+                              <tr className="bg-gray-50 dark:bg-zinc-800/50/50 text-left text-xs text-gray-500 dark:text-zinc-400 sticky top-0">
                                 <th className="px-4 py-2 font-medium">
                                   {t("autoScheduleEmployee")}
                                 </th>
@@ -1952,7 +1952,7 @@ export default function SchichtplanPage() {
                                 .map(([id, emp]) => (
                                   <tr
                                     key={id}
-                                    className="hover:bg-gray-50/50 transition-colors"
+                                    className="hover:bg-gray-50 dark:bg-zinc-800/50/50 transition-colors"
                                   >
                                     <td className="px-4 py-2 text-gray-800 dark:text-zinc-200 font-medium">
                                       {emp.name}
@@ -2120,7 +2120,7 @@ export default function SchichtplanPage() {
                 <button
                   type="button"
                   onClick={() => setShowWeightsConfig((s) => !s)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/80 hover:bg-gray-100/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50/80 hover:bg-gray-100 dark:bg-zinc-800/80 text-sm font-medium text-gray-700 dark:text-zinc-300 transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <SettingsIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500 dark:text-zinc-500" />
@@ -2375,7 +2375,7 @@ function DraggableShiftCard({
               : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
           </p>
           {isCancelled && (
-            <span className="inline-flex items-center rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
               {t("statusCancelled")}
             </span>
           )}
@@ -2412,7 +2412,7 @@ function DraggableShiftCard({
               e.stopPropagation();
               onEdit();
             }}
-            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white/50 hover:text-emerald-500"
+            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-emerald-500"
           >
             <EditIcon className="h-4 w-4" />
           </button>
@@ -2421,7 +2421,7 @@ function DraggableShiftCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white/50 hover:text-red-500"
+            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-red-500"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
@@ -2451,7 +2451,7 @@ function ShiftStatusBadge({ status }: { status: string }) {
       label: t("statusInProgress"),
     },
     COMPLETED: {
-      bg: "bg-gray-100",
+      bg: "bg-gray-100 dark:bg-zinc-800",
       text: "text-gray-700",
       label: t("statusCompleted"),
     },
@@ -2472,7 +2472,7 @@ function ShiftStatusBadge({ status }: { status: string }) {
     },
   };
   const c = config[status] ?? {
-    bg: "bg-gray-100",
+    bg: "bg-gray-100 dark:bg-zinc-800",
     text: "text-gray-600",
     label: status,
   };
@@ -2517,7 +2517,7 @@ function MobileShiftCard({
         isCancelled && "opacity-50",
         isOpen
           ? "border-2 border-dashed border-amber-300 bg-amber-50/60"
-          : "bg-white shadow-sm ring-1 ring-gray-100",
+          : "bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-gray-100",
         showHolidayWarning && "ring-2 ring-red-300",
       )}
       style={
@@ -2565,7 +2565,7 @@ function MobileShiftCard({
                 : `${shift.employee!.firstName} ${shift.employee!.lastName}`}
             </p>
             {isCancelled && (
-              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
+              <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                 {t("statusCancelled")}
               </span>
             )}
@@ -2605,7 +2605,7 @@ function MobileShiftCard({
               e.stopPropagation();
               onEdit();
             }}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium text-gray-600 dark:text-zinc-400 bg-gray-50 active:bg-gray-100 transition-colors min-h-[48px]"
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium text-gray-600 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800/50 active:bg-gray-100 dark:bg-zinc-800 transition-colors min-h-[48px]"
           >
             <EditIcon className="h-4 w-4" />
             {t("form.editTitle")}

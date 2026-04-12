@@ -67,7 +67,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   FRUEH: "bg-blue-100 text-blue-800",
   SPAET: "bg-orange-100 text-orange-800",
   NACHT: "bg-purple-100 text-purple-800",
-  FREI: "bg-gray-100 text-gray-500 dark:text-zinc-400 dark:text-zinc-400",
+  FREI: "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 dark:text-zinc-400",
 };
 
 const STATUS_BORDER: Record<string, string> = {
@@ -176,14 +176,14 @@ export default function TeamkalenderSeite() {
       <PageContent className="space-y-4">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-lg bg-gray-100 p-1">
+          <div className="inline-flex rounded-lg bg-gray-100 dark:bg-zinc-800 p-1">
             {(["week", "month"] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setViewMode(m)}
                 className={`rounded-md px-3 py-1 text-sm font-medium transition ${
                   viewMode === m
-                    ? "bg-white text-emerald-700 shadow-sm"
+                    ? "bg-white dark:bg-zinc-900 text-emerald-700 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
                 }`}
               >
@@ -194,7 +194,7 @@ export default function TeamkalenderSeite() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(-1)}
-              className="rounded-lg p-1 hover:bg-gray-100"
+              className="rounded-lg p-1 hover:bg-gray-100 dark:bg-zinc-800"
             >
               <ChevronLeftIcon className="h-5 w-5" />
             </button>
@@ -203,7 +203,7 @@ export default function TeamkalenderSeite() {
             </span>
             <button
               onClick={() => navigate(1)}
-              className="rounded-lg p-1 hover:bg-gray-100"
+              className="rounded-lg p-1 hover:bg-gray-100 dark:bg-zinc-800"
             >
               <ChevronRightIcon className="h-5 w-5" />
             </button>
@@ -242,13 +242,13 @@ export default function TeamkalenderSeite() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-3 py-2 text-left text-gray-600 dark:text-zinc-400 min-w-[140px]">
+                  <th className="sticky left-0 z-10 bg-white dark:bg-zinc-900 border-b border-r border-gray-200 dark:border-zinc-700 px-3 py-2 text-left text-gray-600 dark:text-zinc-400 min-w-[140px]">
                     {t("employee")}
                   </th>
                   {days.map((d) => (
                     <th
                       key={d.toISOString()}
-                      className="border-b border-gray-200 px-2 py-2 text-center text-gray-600 dark:text-zinc-400 min-w-[100px]"
+                      className="border-b border-gray-200 dark:border-zinc-700 px-2 py-2 text-center text-gray-600 dark:text-zinc-400 min-w-[100px]"
                     >
                       <div>{format(d, "EEE", { locale: dateFnsLocale })}</div>
                       <div className="text-xs font-normal text-gray-400 dark:text-zinc-500 dark:text-zinc-500">
@@ -261,7 +261,7 @@ export default function TeamkalenderSeite() {
               <tbody>
                 {employees.map((emp) => (
                   <tr key={emp.id} className="border-b border-gray-100">
-                    <td className="sticky left-0 z-10 bg-white border-r border-gray-200 px-3 py-2 font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-700 px-3 py-2 font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
                       <div className="flex items-center gap-2">
                         <div
                           className="h-2.5 w-2.5 rounded-full flex-shrink-0"
@@ -310,7 +310,7 @@ export default function TeamkalenderSeite() {
           <div className="space-y-4">
             {employees.map((emp) => (
               <Card key={emp.id} className="overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-700">
                   <div
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: emp.color || "#10b981" }}

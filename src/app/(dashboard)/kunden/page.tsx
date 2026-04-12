@@ -332,7 +332,7 @@ export default function KundenSeite() {
                       value={formData.notes}
                       onChange={(e) => handleField("notes", e.target.value)}
                       placeholder={t("notesPlaceholder")}
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
+                      className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
                     />
                   </div>
 
@@ -355,7 +355,7 @@ export default function KundenSeite() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-20 rounded-xl bg-gray-100 animate-pulse"
+                  className="h-20 rounded-xl bg-gray-100 dark:bg-zinc-800 animate-pulse"
                 />
               ))}
             </div>
@@ -363,7 +363,7 @@ export default function KundenSeite() {
 
           {/* Empty state */}
           {!loading && filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 dark:border-zinc-700 py-16 text-center">
               <UsersIcon className="h-10 w-10 text-gray-300 mb-3" />
               <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
                 {search ? t("noResults") : t("empty")}

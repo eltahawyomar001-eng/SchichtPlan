@@ -270,7 +270,7 @@ export default function QualifikationenSeite() {
                   <button
                     type="button"
                     onClick={() => setEmployeeDropdownOpen((o) => !o)}
-                    className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-left hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="flex w-full items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-left hover:border-gray-300 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     <span
                       className={
@@ -288,11 +288,11 @@ export default function QualifikationenSeite() {
                     />
                   </button>
                   {employeeDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-48 overflow-y-auto">
+                    <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg max-h-48 overflow-y-auto">
                       {employees.map((emp) => (
                         <label
                           key={emp.id}
-                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:bg-zinc-800/50 cursor-pointer text-sm"
                         >
                           <input
                             type="checkbox"
@@ -304,7 +304,7 @@ export default function QualifikationenSeite() {
                                   : prev.filter((id) => id !== emp.id),
                               );
                             }}
-                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                            className="rounded border-gray-300 dark:border-zinc-600 text-emerald-600 focus:ring-emerald-500"
                           />
                           <span className="text-gray-900">
                             {emp.firstName} {emp.lastName}
@@ -397,7 +397,7 @@ export default function QualifikationenSeite() {
                           <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
                             {skill.name}
                           </p>
-                          <Badge className="mt-1 bg-gray-100 text-gray-600 dark:text-zinc-400 text-xs">
+                          <Badge className="mt-1 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 text-xs">
                             {skill._count.employeeSkills} {t("assigned")}
                           </Badge>
                         </div>

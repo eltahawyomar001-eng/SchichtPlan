@@ -71,7 +71,7 @@ const statusColors: Record<ServiceVisit["status"], string> = {
   GEPLANT: "bg-blue-100 text-blue-700",
   EINGECHECKT: "bg-amber-100 text-amber-700",
   ABGESCHLOSSEN: "bg-emerald-100 text-emerald-700",
-  STORNIERT: "bg-gray-100 text-gray-500",
+  STORNIERT: "bg-gray-100 dark:bg-zinc-800 text-gray-500",
 };
 
 const statusI18nKey: Record<ServiceVisit["status"], string> = {

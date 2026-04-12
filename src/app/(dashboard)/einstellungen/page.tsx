@@ -492,7 +492,7 @@ export default function EinstellungenPage() {
                     </p>
                     <button
                       onClick={() => setEditingProfile(true)}
-                      className="rounded p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 hover:bg-gray-100"
+                      className="rounded p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 hover:bg-gray-100 dark:bg-zinc-800"
                     >
                       <EditIcon className="h-4 w-4" />
                     </button>
@@ -533,7 +533,7 @@ export default function EinstellungenPage() {
                 {!editingWorkspace && (
                   <button
                     onClick={() => setEditingWorkspace(true)}
-                    className="rounded p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 hover:bg-gray-100"
+                    className="rounded p-1 text-gray-400 dark:text-zinc-500 hover:text-gray-600 hover:bg-gray-100 dark:bg-zinc-800"
                   >
                     <EditIcon className="h-4 w-4" />
                   </button>
@@ -557,7 +557,7 @@ export default function EinstellungenPage() {
                       id="wsBundesland"
                       value={wsBundesland}
                       onChange={(e) => setWsBundesland(e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     >
                       <option value="">{t("selectBundesland")}</option>
                       <option value="BW">Baden-Württemberg</option>
@@ -757,7 +757,7 @@ export default function EinstellungenPage() {
               ) : (
                 <form
                   onSubmit={handleChangePassword}
-                  className="space-y-3 rounded-lg border border-gray-200 p-4"
+                  className="space-y-3 rounded-lg border border-gray-200 dark:border-zinc-700 p-4"
                 >
                   <div className="space-y-1.5">
                     <Label htmlFor="currentPassword">
@@ -848,7 +848,7 @@ export default function EinstellungenPage() {
                       {twoFARecoveryCodes.map((code, i) => (
                         <code
                           key={i}
-                          className="rounded bg-white px-2 py-1 text-xs font-mono text-gray-800 dark:text-zinc-200 text-center border border-amber-200"
+                          className="rounded bg-white dark:bg-zinc-900 px-2 py-1 text-xs font-mono text-gray-800 dark:text-zinc-200 text-center border border-amber-200"
                         >
                           {code}
                         </code>
@@ -898,7 +898,7 @@ export default function EinstellungenPage() {
                     </Button>
                   </div>
                 ) : twoFASetup ? (
-                  <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+                  <div className="space-y-3 rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
                     <p className="text-sm text-gray-600 dark:text-zinc-400 dark:text-zinc-400">
                       {t("twoFAScanQR")}
                     </p>

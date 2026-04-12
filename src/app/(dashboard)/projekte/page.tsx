@@ -248,7 +248,10 @@ export default function ProjekteSeite() {
       color: "bg-emerald-100 text-emerald-800",
       label: t("completed"),
     },
-    ARCHIVIERT: { color: "bg-gray-100 text-gray-800", label: t("archived") },
+    ARCHIVIERT: {
+      color: "bg-gray-100 dark:bg-zinc-800 text-gray-800",
+      label: t("archived"),
+    },
   };
 
   const filteredProjects = projects.filter((p) =>
@@ -574,7 +577,7 @@ export default function ProjekteSeite() {
           <div className="grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => {
               const sc = statusConfig[project.status] || {
-                color: "bg-gray-100 text-gray-800",
+                color: "bg-gray-100 dark:bg-zinc-800 text-gray-800",
                 label: project.status,
               };
               const budget = formatBudgetProgress(project);

@@ -120,7 +120,7 @@ export default function RollenPage() {
                     {role.permissions.map((perm) => (
                       <span
                         key={perm}
-                        className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300"
+                        className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300"
                       >
                         <LockIcon className="h-3 w-3" />
                         {t.has(`permissions.${permToI18nKey(perm)}`)

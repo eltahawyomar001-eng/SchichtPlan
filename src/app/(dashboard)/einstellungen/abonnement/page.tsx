@@ -305,7 +305,7 @@ function BillingContent() {
       },
       CANCELED: {
         label: t("statusCanceled"),
-        variant: "bg-gray-100 text-gray-600",
+        variant: "bg-gray-100 dark:bg-zinc-800 text-gray-600",
       },
       UNPAID: {
         label: t("statusUnpaid"),
@@ -314,7 +314,7 @@ function BillingContent() {
     };
     const s = map[status] ?? {
       label: status,
-      variant: "bg-gray-100 text-gray-600",
+      variant: "bg-gray-100 dark:bg-zinc-800 text-gray-600",
     };
     return (
       <span
@@ -386,7 +386,7 @@ function BillingContent() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-gray-200 p-4">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("plan")}
                 </p>
@@ -398,7 +398,7 @@ function BillingContent() {
                     : t("planBasic")}
                 </p>
               </div>
-              <div className="rounded-xl border border-gray-200 p-4">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("seats")}
                 </p>
@@ -406,7 +406,7 @@ function BillingContent() {
                   {subscription?.seatCount ?? 1}
                 </p>
               </div>
-              <div className="rounded-xl border border-gray-200 p-4">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("employees")}
                 </p>
@@ -417,7 +417,7 @@ function BillingContent() {
                     : (subscription?.limits.maxEmployees ?? 5)}
                 </p>
               </div>
-              <div className="rounded-xl border border-gray-200 p-4">
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("renewalDate")}
                 </p>
@@ -442,7 +442,7 @@ function BillingContent() {
                 <button
                   onClick={handlePortal}
                   disabled={portalLoading}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:bg-zinc-800/50 hover:shadow-md disabled:opacity-60"
                 >
                   {portalLoading ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
@@ -461,7 +461,7 @@ function BillingContent() {
 
         {/* ─── Billing Cycle Toggle ─── */}
         <div className="flex flex-col items-center gap-3">
-          <div className="inline-flex items-center rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+          <div className="inline-flex items-center rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1 shadow-sm">
             <button
               onClick={() => setBillingCycle("monthly")}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
@@ -509,10 +509,10 @@ function BillingContent() {
                 key={plan.id}
                 className={`relative rounded-2xl border p-5 sm:p-6 flex flex-col transition-shadow ${
                   plan.highlighted
-                    ? "border-emerald-500 ring-2 ring-emerald-500 bg-white shadow-lg shadow-emerald-100/50"
+                    ? "border-emerald-500 ring-2 ring-emerald-500 bg-white dark:bg-zinc-900 shadow-lg shadow-emerald-100/50"
                     : isCurrentPlan
                       ? "border-emerald-300 bg-emerald-50/30 shadow-sm"
-                      : "border-gray-200 bg-white shadow-sm hover:shadow-md"
+                      : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 }`}
               >
                 {plan.highlighted && (
@@ -577,7 +577,7 @@ function BillingContent() {
                   ) : plan.isEnterprise ? (
                     <a
                       href="mailto:info@bashabsheh-vergabepartner.de"
-                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:shadow-md"
+                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 dark:bg-zinc-800/50 hover:shadow-md"
                     >
                       <StarIcon className="h-4 w-4" />
                       {t("contactSales")}
@@ -589,7 +589,7 @@ function BillingContent() {
                       className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
                         plan.highlighted
                           ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-200/50 hover:shadow-xl hover:brightness-110"
-                          : "border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md"
+                          : "border border-gray-200 dark:border-zinc-700 text-gray-700 hover:bg-gray-50 dark:bg-zinc-800/50 hover:shadow-md"
                       }`}
                     >
                       {checkoutLoading === plan.id ? (
@@ -700,7 +700,7 @@ function BillingContent() {
         </Card>
 
         {/* ─── FAQ Hints ─── */}
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 sm:p-6">
+        <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 p-5 sm:p-6">
           <h3 className="text-sm font-semibold text-gray-900">
             {t("billingFaqTitle")}
           </h3>

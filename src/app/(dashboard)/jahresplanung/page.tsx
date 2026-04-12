@@ -85,7 +85,7 @@ const CATEGORY_COLORS: Record<
   UNBEZAHLT: {
     bg: "bg-gray-200",
     text: "text-gray-700",
-    border: "border-gray-300",
+    border: "border-gray-300 dark:border-zinc-600",
   },
   FORTBILDUNG: {
     bg: "bg-teal-100",
@@ -242,7 +242,7 @@ export default function JahresplanungSeite() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setYear((y) => y - 1)}
-              className="rounded-lg border border-gray-300 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 transition-colors"
+              className="rounded-lg border border-gray-300 dark:border-zinc-600 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:bg-zinc-800/50 transition-colors"
               aria-label={t("previousYear")}
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -260,7 +260,7 @@ export default function JahresplanungSeite() {
             </Select>
             <button
               onClick={() => setYear((y) => y + 1)}
-              className="rounded-lg border border-gray-300 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 transition-colors"
+              className="rounded-lg border border-gray-300 dark:border-zinc-600 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:bg-zinc-800/50 transition-colors"
               aria-label={t("nextYear")}
             >
               <ChevronRightIcon className="h-4 w-4" />
@@ -285,13 +285,13 @@ export default function JahresplanungSeite() {
             )}
 
             {/* View tabs — full width on mobile, auto on sm+ */}
-            <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+            <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-zinc-800 p-1">
               <button
                 onClick={() => setActiveTab("calendar")}
                 className={cn(
                   "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
                   activeTab === "calendar"
-                    ? "bg-white text-gray-900 dark:text-zinc-100 shadow-sm"
+                    ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
                     : "text-gray-500 hover:text-gray-700",
                 )}
               >
@@ -303,7 +303,7 @@ export default function JahresplanungSeite() {
                 className={cn(
                   "flex-1 sm:flex-none rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors",
                   activeTab === "summary"
-                    ? "bg-white text-gray-900 dark:text-zinc-100 shadow-sm"
+                    ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
                     : "text-gray-500 hover:text-gray-700",
                 )}
               >
@@ -337,7 +337,10 @@ export default function JahresplanungSeite() {
             color="bg-teal-100 border-teal-300"
             label={t("training")}
           />
-          <LegendItem color="bg-gray-200 border-gray-300" label={t("unpaid")} />
+          <LegendItem
+            color="bg-gray-200 border-gray-300 dark:border-zinc-600"
+            label={t("unpaid")}
+          />
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 rounded-sm bg-rose-200 border border-rose-400" />
             <span className="text-gray-600">{t("overlapWarning")}</span>
@@ -476,7 +479,7 @@ function MonthMiniCard({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow border-gray-200 overflow-hidden"
+      className="cursor-pointer hover:shadow-md transition-shadow border-gray-200 dark:border-zinc-700 overflow-hidden"
       onClick={onClick}
     >
       <CardContent className="p-2.5 sm:p-3">
@@ -542,7 +545,9 @@ function MonthMiniCard({
                     const dayAbs = empAbsences?.get(dateKey);
                     const overlap = (overlapMap.get(dateKey) || 0) >= 2;
 
-                    let cellColor = we ? "bg-gray-50" : "bg-white";
+                    let cellColor = we
+                      ? "bg-gray-50 dark:bg-zinc-800/50"
+                      : "bg-white dark:bg-zinc-900";
                     if (dayAbs && dayAbs.length > 0) {
                       const abs = dayAbs[0];
                       const c = getAbsenceColor(abs.category, abs.status);
@@ -620,16 +625,16 @@ function MonthDetail({
   }, [year, month, daysInMonth]);
 
   return (
-    <Card className="border-gray-200">
+    <Card className="border-gray-200 dark:border-zinc-700">
       <CardContent className="p-0 sm:p-0">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-3 sm:px-4 py-3">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700 px-3 sm:px-4 py-3">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
             {t(`months.${month}`)} {year}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="rounded-lg p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:bg-zinc-800 hover:text-gray-600 transition-colors"
             aria-label={t("close")}
           >
             <XIcon className="h-5 w-5" />
@@ -644,7 +649,7 @@ function MonthDetail({
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-zinc-400 w-44 min-w-[11rem] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
+                <th className="sticky left-0 z-10 bg-white dark:bg-zinc-900 px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-zinc-400 w-44 min-w-[11rem] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 dark:bg-zinc-800 after:content-['']">
                   {t("employee")}
                 </th>
                 {Array.from({ length: daysInMonth }, (_, d) => {
@@ -657,7 +662,7 @@ function MonthDetail({
                       key={d}
                       className={cn(
                         "px-0 py-1 text-center min-w-[2rem] w-8",
-                        we ? "bg-gray-50" : "",
+                        we ? "bg-gray-50 dark:bg-zinc-800/50" : "",
                       )}
                     >
                       <div
@@ -681,8 +686,8 @@ function MonthDetail({
                 })}
               </tr>
               {/* Overlap indicator row */}
-              <tr className="border-b border-gray-200">
-                <td className="sticky left-0 z-10 bg-white px-3 py-1 text-[10px] text-gray-400 dark:text-zinc-500 font-medium after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
+              <tr className="border-b border-gray-200 dark:border-zinc-700">
+                <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 px-3 py-1 text-[10px] text-gray-400 dark:text-zinc-500 font-medium after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 dark:bg-zinc-800 after:content-['']">
                   {t("absenceCount")}
                 </td>
                 {Array.from({ length: daysInMonth }, (_, d) => {
@@ -695,7 +700,9 @@ function MonthDetail({
                       key={d}
                       className={cn(
                         "text-center text-[10px] font-medium px-0 py-1",
-                        we ? "bg-gray-50 text-gray-300" : "",
+                        we
+                          ? "bg-gray-50 dark:bg-zinc-800/50 text-gray-300"
+                          : "",
                         count >= 3
                           ? "text-rose-600 bg-rose-50"
                           : count >= 2
@@ -717,9 +724,9 @@ function MonthDetail({
                 return (
                   <tr
                     key={emp.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50"
+                    className="border-b border-gray-50 hover:bg-gray-50 dark:bg-zinc-800/50/50"
                   >
-                    <td className="sticky left-0 z-10 bg-white px-3 py-1.5 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 px-3 py-1.5 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 dark:bg-zinc-800 after:content-['']">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-2 h-2 rounded-full shrink-0"
@@ -743,7 +750,7 @@ function MonthDetail({
                             key={d}
                             className={cn(
                               "px-0 py-1.5",
-                              we ? "bg-gray-50" : "",
+                              we ? "bg-gray-50 dark:bg-zinc-800/50" : "",
                             )}
                           />
                         );
@@ -789,7 +796,7 @@ function MonthDetail({
         </div>
 
         {/* Week summary at bottom */}
-        <div className="border-t border-gray-200 px-3 sm:px-4 py-3">
+        <div className="border-t border-gray-200 dark:border-zinc-700 px-3 sm:px-4 py-3">
           <h3 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
             {t("weekOverview")}
           </h3>
@@ -810,7 +817,7 @@ function MonthDetail({
                       ? "border-rose-200 bg-rose-50 text-rose-700"
                       : weekAbsCount > 0
                         ? "border-amber-200 bg-amber-50 text-amber-700"
-                        : "border-gray-200 bg-white text-gray-500 dark:text-zinc-400 dark:text-zinc-400",
+                        : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400 dark:text-zinc-400",
                   )}
                 >
                   <span className="font-medium">
@@ -872,9 +879,9 @@ function SummaryTable({
   }, [employees]);
 
   return (
-    <Card className="border-gray-200">
+    <Card className="border-gray-200 dark:border-zinc-700">
       <CardContent className="p-0 sm:p-0">
-        <div className="border-b border-gray-200 px-3 sm:px-4 py-3">
+        <div className="border-b border-gray-200 dark:border-zinc-700 px-3 sm:px-4 py-3">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-zinc-100 dark:text-zinc-100">
             {t("yearSummary")} {year}
           </h2>
@@ -889,8 +896,8 @@ function SummaryTable({
         >
           <table className="w-full min-w-[900px]">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-zinc-400 w-48 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
+              <tr className="border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50/50">
+                <th className="sticky left-0 z-10 bg-gray-50 dark:bg-zinc-800/50 px-3 sm:px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-zinc-400 w-48 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
                   {t("employee")}
                 </th>
                 <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-zinc-400 dark:text-zinc-400">
@@ -935,9 +942,9 @@ function SummaryTable({
                 return (
                   <tr
                     key={emp.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50"
+                    className="border-b border-gray-50 hover:bg-gray-50 dark:bg-zinc-800/50/50"
                   >
-                    <td className="sticky left-0 z-10 bg-white px-3 sm:px-4 py-2.5 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 after:content-['']">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2.5 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-100 dark:bg-zinc-800 after:content-['']">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -1010,8 +1017,8 @@ function SummaryTable({
             </tbody>
             {/* Totals footer */}
             <tfoot>
-              <tr className="border-t-2 border-gray-200 bg-gray-50/80 font-semibold">
-                <td className="sticky left-0 z-10 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm text-gray-900 dark:text-zinc-100 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
+              <tr className="border-t-2 border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50/80 font-semibold">
+                <td className="sticky left-0 z-10 bg-gray-50 dark:bg-zinc-800/50 px-3 sm:px-4 py-2.5 text-sm text-gray-900 dark:text-zinc-100 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-gray-200 after:content-['']">
                   {t("total")} ({employees.length} {t("employeesCount")})
                 </td>
                 <td className="px-3 py-2.5 text-right text-sm text-gray-700 dark:text-zinc-300 dark:text-zinc-300">

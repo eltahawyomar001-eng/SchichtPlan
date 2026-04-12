@@ -114,7 +114,7 @@ export default function FeiertageSeite() {
           </div>
         ) : data ? (
           <Card>
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
+            <div className="border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-6 py-3">
               <p className="text-sm font-medium text-gray-700 dark:text-zinc-300 dark:text-zinc-300">
                 {data.bundeslandName} — {data.year} ({data.holidays.length}{" "}
                 {t("holidaysCount")})

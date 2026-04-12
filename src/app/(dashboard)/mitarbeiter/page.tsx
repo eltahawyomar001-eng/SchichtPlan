@@ -597,7 +597,7 @@ export default function MitarbeiterPage() {
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, color: e.target.value }))
                   }
-                  className="h-9 w-12 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                  className="h-9 w-12 rounded-lg border border-gray-200 dark:border-zinc-700 cursor-pointer p-0.5"
                 />
                 <span className="text-sm text-gray-500 font-mono">
                   {formData.color}

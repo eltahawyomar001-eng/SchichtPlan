@@ -259,7 +259,7 @@ export default function VerfuegbarkeitenPage() {
                         : {
                             value: "",
                             color:
-                              "bg-gray-50 text-gray-400 dark:text-zinc-500 dark:text-zinc-500",
+                              "bg-gray-50 dark:bg-zinc-800/50 text-gray-400 dark:text-zinc-500 dark:text-zinc-500",
                           };
                       return (
                         <div
@@ -301,7 +301,7 @@ export default function VerfuegbarkeitenPage() {
                 <CardTitle>{t("form.title")}</CardTitle>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100"
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:bg-zinc-800"
                 >
                   <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 dark:text-zinc-500" />
                 </button>
@@ -334,7 +334,7 @@ export default function VerfuegbarkeitenPage() {
                   {formEntries.map((entry, i) => (
                     <div
                       key={i}
-                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-gray-50"
+                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-gray-50 dark:bg-zinc-800/50"
                     >
                       <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 w-20 shrink-0">
                         <span className="hidden sm:inline">

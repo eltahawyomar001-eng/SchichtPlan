@@ -27,3 +27,18 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+/**
+ * Format a number with locale-aware decimal separator.
+ * German: 8,50  English: 8.50
+ */
+export function fmtNum(
+  value: number,
+  decimals: number = 2,
+  locale: string = "de",
+): string {
+  return value.toLocaleString(locale === "en" ? "en-GB" : "de-DE", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}

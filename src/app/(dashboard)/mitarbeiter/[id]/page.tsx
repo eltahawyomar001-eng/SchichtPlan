@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { PageContent } from "@/components/ui/page-content";
+import { fmtNum } from "@/lib/utils";
 import {
   ChevronLeftIcon,
   MailIcon,
@@ -231,7 +232,7 @@ export default function EmployeeDetailPage({
                   {emp.hourlyRate != null && (
                     <span className="inline-flex items-center gap-1.5">
                       <BriefcaseIcon className="h-4 w-4 shrink-0" />
-                      {emp.hourlyRate.toFixed(2)} €/h
+                      {fmtNum(emp.hourlyRate)} €/h
                       {emp.weeklyHours != null &&
                         ` · ${emp.weeklyHours}${tc("hrsPerWeek")}`}
                     </span>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
+import { fmtNum } from "@/lib/utils";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   FileExportIcon,
@@ -488,7 +489,7 @@ export default function LohnexportPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
-                        {totalHours.toFixed(2)}
+                        {fmtNum(totalHours)}
                       </p>
                       <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 break-words">
                         {t("netHours")}
@@ -583,13 +584,13 @@ export default function LohnexportPage() {
                               {row.days}
                             </td>
                             <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 hidden sm:table-cell">
-                              {row.totalGrossHours.toFixed(2)} {tc("hrsShort")}
+                              {fmtNum(row.totalGrossHours)} {tc("hrsShort")}
                             </td>
                             <td className="text-right py-2.5 px-3 text-gray-700 dark:text-zinc-300 hidden sm:table-cell">
-                              {row.totalBreakHours.toFixed(2)} {tc("hrsShort")}
+                              {fmtNum(row.totalBreakHours)} {tc("hrsShort")}
                             </td>
                             <td className="text-right py-2.5 px-3 font-medium text-gray-900 dark:text-zinc-100">
-                              {row.totalNetHours.toFixed(2)} {tc("hrsShort")}
+                              {fmtNum(row.totalNetHours)} {tc("hrsShort")}
                             </td>
                           </tr>
                         ))}
@@ -603,19 +604,25 @@ export default function LohnexportPage() {
                             {preview.reduce((s, r) => s + r.days, 0)}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 hidden sm:table-cell">
-                            {preview
-                              .reduce((s, r) => s + r.totalGrossHours, 0)
-                              .toFixed(2)}{" "}
+                            {fmtNum(
+                              preview.reduce(
+                                (s, r) => s + r.totalGrossHours,
+                                0,
+                              ),
+                            )}{" "}
                             {tc("hrsShort")}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100 hidden sm:table-cell">
-                            {preview
-                              .reduce((s, r) => s + r.totalBreakHours, 0)
-                              .toFixed(2)}{" "}
+                            {fmtNum(
+                              preview.reduce(
+                                (s, r) => s + r.totalBreakHours,
+                                0,
+                              ),
+                            )}{" "}
                             {tc("hrsShort")}
                           </td>
                           <td className="text-right py-2.5 px-3 font-bold text-gray-900 dark:text-zinc-100">
-                            {totalHours.toFixed(2)} {tc("hrsShort")}
+                            {fmtNum(totalHours)} {tc("hrsShort")}
                           </td>
                         </tr>
                       </tfoot>

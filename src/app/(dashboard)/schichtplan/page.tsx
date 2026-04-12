@@ -52,7 +52,7 @@ import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
 import { getGermanHolidays, type HolidayDefinition } from "@/lib/holidays";
-import { cn } from "@/lib/utils";
+import { cn, fmtNum } from "@/lib/utils";
 import {
   DndContext,
   DragOverlay,
@@ -1861,7 +1861,7 @@ export default function SchichtplanPage() {
                     {autoScheduleResult.totalCostEstimate != null && (
                       <div className="bg-white dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl p-3 text-center ai-stagger-4 shadow-sm">
                         <p className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-zinc-300 ai-count-up">
-                          €{autoScheduleResult.totalCostEstimate.toFixed(0)}
+                          €{fmtNum(autoScheduleResult.totalCostEstimate, 0)}
                         </p>
                         <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5">
                           {t("autoScheduleCost")}
@@ -1958,10 +1958,10 @@ export default function SchichtplanPage() {
                                       {emp.name}
                                     </td>
                                     <td className="px-4 py-2 text-right font-mono text-gray-600 dark:text-zinc-400">
-                                      {emp.scheduled.toFixed(1)}h
+                                      {fmtNum(emp.scheduled, 1)}h
                                     </td>
                                     <td className="px-4 py-2 text-right font-mono text-gray-400 dark:text-zinc-500 hidden sm:table-cell">
-                                      {emp.contract.toFixed(1)}h
+                                      {fmtNum(emp.contract, 1)}h
                                     </td>
                                     <td className="px-4 py-2 text-right">
                                       <span

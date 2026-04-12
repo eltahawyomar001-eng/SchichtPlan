@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
+import { fmtNum } from "@/lib/utils";
 import {
   ScaleIcon,
   PlusIcon,
@@ -51,7 +52,7 @@ function minutesToDisplay(minutes: number, suffix: string): string {
 }
 
 function minutesToDecimal(minutes: number): string {
-  return (minutes / 60).toFixed(2);
+  return fmtNum(minutes / 60);
 }
 
 // ─── Component ──────────────────────────────────────────────────

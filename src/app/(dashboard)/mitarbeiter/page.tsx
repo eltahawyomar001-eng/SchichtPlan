@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
+import { fmtNum } from "@/lib/utils";
 import {
   PlusIcon,
   SearchIcon,
@@ -811,7 +812,7 @@ export default function MitarbeiterPage() {
                     {employee.hourlyRate && (
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
                         <BriefcaseIcon className="h-4 w-4" />
-                        {employee.hourlyRate.toFixed(2)} €/h
+                        {fmtNum(employee.hourlyRate)} €/h
                         {employee.weeklyHours &&
                           ` · ${employee.weeklyHours}${tc("hrsPerWeek")}`}
                       </div>

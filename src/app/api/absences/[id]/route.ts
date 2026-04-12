@@ -235,10 +235,7 @@ export const DELETE = withRoute(
       }
     }
 
-    await prisma.absenceRequest.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.absenceRequest.delete({ where: { id } });
 
     createAuditLog({
       action: "DELETE",

@@ -166,23 +166,12 @@ export const PATCH = withRoute(
       data.closedAt = new Date();
     }
 
-    // Track SLA: resolvedAt on resolution/closure
-    if (
-      (effectiveStatus === "GESCHLOSSEN" || effectiveStatus === "GELOEST") &&
-      (existing.status as string) !== "GESCHLOSSEN" &&
-      (existing.status as string) !== "GELOEST" &&
-      !existing.resolvedAt
-    ) {
-      data.resolvedAt = new Date();
-    }
-
-    // Re-open: clear closedAt and resolvedAt
+    // Re-open: clear closedAt
     if (
       effectiveStatus !== "GESCHLOSSEN" &&
       (existing.status as string) === "GESCHLOSSEN"
     ) {
       data.closedAt = null;
-      data.resolvedAt = null;
     }
 
     // Validate assignedToId belongs to the workspace

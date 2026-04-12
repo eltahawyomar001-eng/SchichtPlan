@@ -8,13 +8,7 @@ import { requireAuth, forbidden } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
-const RESTORABLE_TYPES = [
-  "Employee",
-  "Shift",
-  "TimeEntry",
-  "AbsenceRequest",
-  "ServiceVisit",
-] as const;
+const RESTORABLE_TYPES = ["Employee", "Shift", "TimeEntry"] as const;
 
 type RestorableType = (typeof RESTORABLE_TYPES)[number];
 

@@ -465,7 +465,7 @@ export const GET = withRoute(
 
     // ── Return PDF ──
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
-    const filename = `Leistungsnachweis_${visit.location.name.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, "_")}_${new Date(visit.scheduledDate).toISOString().split("T")[0]}.pdf`;
+    const filename = `Leistungsnachweis_${visit.location.name.replace(/[^a-zA-Z0-9äöüÄÖÜß-]/g, "_")}_${new Date(visit.scheduledDate).toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" })}.pdf`;
 
     log.info("[service-visits] Audit-ready PDF generated", {
       visitId: id,

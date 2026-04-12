@@ -139,8 +139,12 @@ export default function SchichttauschPage() {
       const today = new Date();
       const futureEnd = new Date();
       futureEnd.setDate(futureEnd.getDate() + 56);
-      const start = today.toISOString().split("T")[0];
-      const end = futureEnd.toISOString().split("T")[0];
+      const start = today.toLocaleDateString("en-CA", {
+        timeZone: "Europe/Berlin",
+      });
+      const end = futureEnd.toLocaleDateString("en-CA", {
+        timeZone: "Europe/Berlin",
+      });
       const [empRes, shiftRes] = await Promise.all([
         fetch("/api/employees"),
         fetch(`/api/shifts?start=${start}&end=${end}`),

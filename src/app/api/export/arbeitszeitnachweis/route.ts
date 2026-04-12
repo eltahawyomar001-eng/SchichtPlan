@@ -98,7 +98,9 @@ export const GET = withRoute(
     // Create a map of entries by date
     const entriesByDate = new Map<string, typeof timeEntries>();
     for (const entry of timeEntries) {
-      const dateKey = entry.date.toISOString().split("T")[0];
+      const dateKey = new Date(entry.date).toLocaleDateString("en-CA", {
+        timeZone: "Europe/Berlin",
+      });
       const existing = entriesByDate.get(dateKey) || [];
       existing.push(entry);
       entriesByDate.set(dateKey, existing);
@@ -110,7 +112,9 @@ export const GET = withRoute(
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, monthNum - 1, day);
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = date.toLocaleDateString("en-CA", {
+        timeZone: "Europe/Berlin",
+      });
       const dayName = weekdayNames[date.getDay()];
       const formattedDate = `${dayName}, ${String(day).padStart(2, "0")}.${String(monthNum).padStart(2, "0")}.${year}`;
 
@@ -213,7 +217,7 @@ export const GET = withRoute(
       const expectedMonthlyHours =
         (employee.weeklyHours as number) * (daysInMonth / 7);
       doc.text(
-        `Soll-Stunden (ca.): ${expectedMonthlyHours.toFixed(1)} h`,
+        `Soll-Stunden (ca.): ${expectedMonthlyHours.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h`,
         14,
         finalY + 17,
       );

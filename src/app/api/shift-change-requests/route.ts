@@ -10,8 +10,6 @@ import {
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────
 // Management sees all requests for the workspace.
@@ -170,7 +168,7 @@ export const POST = withRoute(
       await createSystemNotification({
         type: "SHIFT_CHANGE_REQUESTED",
         title: "Neue Schichtänderungsanfrage",
-        message: `${linkedEmployee.firstName} ${linkedEmployee.lastName} hat eine Änderung für die Schicht am ${shift.date.toISOString().split("T")[0]} angefragt.`,
+        message: `${linkedEmployee.firstName} ${linkedEmployee.lastName} hat eine Änderung für die Schicht am ${new Date(shift.date).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} angefragt.`,
         link: "/schichtplan?tab=requests",
         workspaceId,
         recipientType: "managers",
@@ -179,21 +177,6 @@ export const POST = withRoute(
       // Don't fail the request if notifications fail
       log.error("Failed to send notification for shift change request");
     }
-
-    createAuditLog({
-      action: "CREATE",
-      entityType: "ShiftChangeRequest",
-      entityId: changeRequest.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      changes: { shiftId, newDate, newStartTime, newEndTime },
-    });
-
-    dispatchWebhook(workspaceId, "shift_change.requested", {
-      id: changeRequest.id,
-      shiftId,
-    }).catch(() => {});
 
     return NextResponse.json(changeRequest, { status: 201 });
   },

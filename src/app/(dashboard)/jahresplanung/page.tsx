@@ -119,7 +119,7 @@ function isWeekend(year: number, month: number, day: number): boolean {
 }
 
 function dateToStr(d: Date): string {
-  return d.toISOString().split("T")[0];
+  return d.toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" });
 }
 
 function parseDate(s: string): Date {

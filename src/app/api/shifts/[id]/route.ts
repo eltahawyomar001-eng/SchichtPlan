@@ -63,7 +63,11 @@ export const PATCH = withRoute(
     ) {
       const conflicts = await checkShiftConflicts({
         employeeId: resolvedEmployeeId,
-        date: body.date || currentShift.date.toISOString().split("T")[0],
+        date:
+          body.date ||
+          new Date(currentShift.date).toLocaleDateString("en-CA", {
+            timeZone: "Europe/Berlin",
+          }),
         startTime: body.startTime || currentShift.startTime,
         endTime: body.endTime || currentShift.endTime,
         workspaceId,
@@ -206,9 +210,8 @@ export const DELETE = withRoute(
     if (forbidden) return forbidden;
 
     await prisma.$transaction(async (tx) => {
-      await tx.shift.updateMany({
+      await tx.shift.deleteMany({
         where: { id, workspaceId },
-        data: { deletedAt: new Date() },
       });
 
       // ── Audit log (atomic) ──
@@ -219,7 +222,6 @@ export const DELETE = withRoute(
         userId: user.id,
         userEmail: user.email ?? undefined,
         workspaceId: workspaceId!,
-        metadata: { softDelete: true },
       });
     });
 

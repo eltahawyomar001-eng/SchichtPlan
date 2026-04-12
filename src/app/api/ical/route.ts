@@ -6,7 +6,6 @@ import type { SessionUser } from "@/lib/types";
 import ical, { ICalCalendarMethod } from "ical-generator";
 import { randomBytes } from "crypto";
 import { log } from "@/lib/logger";
-import { withRoute } from "@/lib/with-route";
 
 /** Token is valid for 90 days before automatic rotation. */
 const TOKEN_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
@@ -116,77 +115,84 @@ async function resolveUser(req: Request): Promise<{
  * Auth: session cookie OR ?token= query parameter.
  * Query params: start, end (optional date filters)
  */
-export const GET = withRoute("/api/ical", "GET", async (req) => {
-  const authedUser = await resolveUser(req);
-  if (!authedUser) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { employeeId, workspaceId, rotatedFeedUrl } = authedUser;
-
-  // Fetch workspace name for calendar branding
-  const workspace = await prisma.workspace.findUnique({
-    where: { id: workspaceId },
-    select: { name: true },
-  });
-  const companyName = workspace?.name || "Schichtplan";
-
-  const { searchParams } = new URL(req.url);
-  const start = searchParams.get("start");
-  const end = searchParams.get("end");
-
-  const where: Record<string, unknown> = { workspaceId };
-  if (employeeId) where.employeeId = employeeId;
-  if (start && end) {
-    where.date = { gte: new Date(start), lte: new Date(end) };
-  }
-
-  const shifts = await prisma.shift.findMany({
-    where,
-    include: { employee: true, location: true },
-    orderBy: { date: "asc" },
-  });
-
-  const cal = ical({
-    name: companyName,
-    method: ICalCalendarMethod.PUBLISH,
-  });
-
-  for (const shift of shifts) {
-    const dateStr = shift.date.toISOString().split("T")[0];
-    const startDt = new Date(`${dateStr}T${shift.startTime}:00`);
-
-    // Handle overnight shifts
-    let endDt = new Date(`${dateStr}T${shift.endTime}:00`);
-    if (endDt <= startDt) {
-      endDt = new Date(endDt.getTime() + 24 * 60 * 60 * 1000);
+export async function GET(req: Request) {
+  try {
+    const authedUser = await resolveUser(req);
+    if (!authedUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    cal.createEvent({
-      start: startDt,
-      end: endDt,
-      summary: shift.employee
-        ? `${shift.employee.firstName} ${shift.employee.lastName}`
-        : "Offene Schicht",
-      location: shift.location?.name || undefined,
-      description: shift.notes || undefined,
+    const { employeeId, workspaceId, rotatedFeedUrl } = authedUser;
+
+    // Fetch workspace name for calendar branding
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { name: true },
     });
+    const companyName = workspace?.name || "Schichtplan";
+
+    const { searchParams } = new URL(req.url);
+    const start = searchParams.get("start");
+    const end = searchParams.get("end");
+
+    const where: Record<string, unknown> = { workspaceId };
+    if (employeeId) where.employeeId = employeeId;
+    if (start && end) {
+      where.date = { gte: new Date(start), lte: new Date(end) };
+    }
+
+    const shifts = await prisma.shift.findMany({
+      where,
+      include: { employee: true, location: true },
+      orderBy: { date: "asc" },
+    });
+
+    const cal = ical({
+      name: companyName,
+      method: ICalCalendarMethod.PUBLISH,
+    });
+
+    for (const shift of shifts) {
+      const dateStr = new Date(shift.date).toLocaleDateString("en-CA", {
+        timeZone: "Europe/Berlin",
+      });
+      const startDt = new Date(`${dateStr}T${shift.startTime}:00`);
+
+      // Handle overnight shifts
+      let endDt = new Date(`${dateStr}T${shift.endTime}:00`);
+      if (endDt <= startDt) {
+        endDt = new Date(endDt.getTime() + 24 * 60 * 60 * 1000);
+      }
+
+      cal.createEvent({
+        start: startDt,
+        end: endDt,
+        summary: shift.employee
+          ? `${shift.employee.firstName} ${shift.employee.lastName}`
+          : "Offene Schicht",
+        location: shift.location?.name || undefined,
+        description: shift.notes || undefined,
+      });
+    }
+
+    const safeCalName = companyName
+      .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
+    const headers: Record<string, string> = {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": `attachment; filename=${safeCalName}-schichtplan.ics`,
+    };
+
+    // Inform the client about the rotated token URL
+    if (rotatedFeedUrl) {
+      headers["X-ICal-New-Token-URL"] = rotatedFeedUrl;
+    }
+
+    return new Response(cal.toString(), { status: 200, headers });
+  } catch (error) {
+    log.error("iCal error:", { error: error });
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  const safeCalName = companyName
-    .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase();
-
-  const headers: Record<string, string> = {
-    "Content-Type": "text/calendar; charset=utf-8",
-    "Content-Disposition": `attachment; filename=${safeCalName}-schichtplan.ics`,
-  };
-
-  // Inform the client about the rotated token URL
-  if (rotatedFeedUrl) {
-    headers["X-ICal-New-Token-URL"] = rotatedFeedUrl;
-  }
-
-  return new Response(cal.toString(), { status: 200, headers });
-});
+}

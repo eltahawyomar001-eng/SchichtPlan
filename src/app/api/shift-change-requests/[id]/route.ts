@@ -13,8 +13,6 @@ import {
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -88,20 +86,6 @@ export const PATCH = withRoute(
         data: { status: "STORNIERT" },
       });
 
-      createAuditLog({
-        action: "UPDATE",
-        entityType: "ShiftChangeRequest",
-        entityId: id,
-        userId: user.id,
-        userEmail: user.email,
-        workspaceId: workspaceId!,
-        changes: { action: "cancel", status: "STORNIERT" },
-      });
-
-      dispatchWebhook(workspaceId!, "shift_change.cancelled", { id }).catch(
-        () => {},
-      );
-
       return NextResponse.json(updated);
     }
 
@@ -147,7 +131,7 @@ export const PATCH = withRoute(
           await createSystemNotification({
             type: "SHIFT_CHANGE_REJECTED",
             title: "Schichtänderung abgelehnt",
-            message: `Ihre Änderungsanfrage für die Schicht am ${updated.shift.date.toISOString().split("T")[0]} wurde abgelehnt.${reviewNote ? ` Grund: ${reviewNote}` : ""}`,
+            message: `Ihre Änderungsanfrage für die Schicht am ${new Date(updated.shift.date).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} wurde abgelehnt.${reviewNote ? ` Grund: ${reviewNote}` : ""}`,
             link: "/schichtplan",
             workspaceId: workspaceId!,
             recipientType: "employee",
@@ -157,20 +141,6 @@ export const PATCH = withRoute(
           log.error("Failed to send rejection notification");
         }
       }
-
-      createAuditLog({
-        action: "REJECT",
-        entityType: "ShiftChangeRequest",
-        entityId: id,
-        userId: user.id,
-        userEmail: user.email,
-        workspaceId: workspaceId!,
-        changes: { action: "reject", reviewNote },
-      });
-
-      dispatchWebhook(workspaceId!, "shift_change.rejected", { id }).catch(
-        () => {},
-      );
 
       return NextResponse.json(updated);
     }
@@ -200,9 +170,13 @@ export const PATCH = withRoute(
       ) {
         const conflicts = await checkShiftConflicts({
           employeeId: changeRequest.shift.employeeId,
-          date:
-            (shiftUpdate.date as Date)?.toISOString().split("T")[0] ||
-            changeRequest.shift.date.toISOString().split("T")[0],
+          date: (shiftUpdate.date as Date)
+            ? new Date(shiftUpdate.date as Date).toLocaleDateString("en-CA", {
+                timeZone: "Europe/Berlin",
+              })
+            : new Date(changeRequest.shift.date).toLocaleDateString("en-CA", {
+                timeZone: "Europe/Berlin",
+              }),
           startTime:
             (shiftUpdate.startTime as string) || changeRequest.shift.startTime,
           endTime:
@@ -263,7 +237,7 @@ export const PATCH = withRoute(
           await createSystemNotification({
             type: "SHIFT_CHANGE_APPROVED",
             title: "Schichtänderung genehmigt",
-            message: `Ihre Änderungsanfrage für die Schicht am ${changeRequest.shift.date.toISOString().split("T")[0]} wurde genehmigt und die Schicht aktualisiert.`,
+            message: `Ihre Änderungsanfrage für die Schicht am ${new Date(changeRequest.shift.date).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} wurde genehmigt und die Schicht aktualisiert.`,
             link: "/schichtplan",
             workspaceId: workspaceId!,
             recipientType: "employee",
@@ -273,20 +247,6 @@ export const PATCH = withRoute(
           log.error("Failed to send approval notification");
         }
       }
-
-      createAuditLog({
-        action: "APPROVE",
-        entityType: "ShiftChangeRequest",
-        entityId: id,
-        userId: user.id,
-        userEmail: user.email,
-        workspaceId: workspaceId!,
-        changes: { action: "approve" },
-      });
-
-      dispatchWebhook(workspaceId!, "shift_change.approved", { id }).catch(
-        () => {},
-      );
 
       return NextResponse.json({
         request: updatedRequest,

@@ -179,8 +179,8 @@ export const GET = withRoute("/api/reports", "GET", async (req) => {
 
   return NextResponse.json({
     period: {
-      start: start.toISOString().split("T")[0],
-      end: end.toISOString().split("T")[0],
+      start: start.toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" }),
+      end: end.toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" }),
     },
     summary: {
       totalShifts: shifts.length,

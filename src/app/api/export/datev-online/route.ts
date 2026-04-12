@@ -240,6 +240,7 @@ function buildDatevOnlinePayload(
 }
 
 function formatDateISO(date: Date): string {
-  const d = new Date(date);
-  return d.toISOString().split("T")[0];
+  return new Date(date).toLocaleDateString("en-CA", {
+    timeZone: "Europe/Berlin",
+  });
 }

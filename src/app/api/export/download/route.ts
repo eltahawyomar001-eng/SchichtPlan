@@ -110,7 +110,9 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
       const isClosed = closedMonths.has(monthKey);
 
       ws.addRow({
-        date: e.date.toISOString().split("T")[0],
+        date: new Date(e.date).toLocaleDateString("en-CA", {
+          timeZone: "Europe/Berlin",
+        }),
         employee: `${e.employee.firstName} ${e.employee.lastName}`,
         startTime: e.startTime,
         endTime: e.endTime,
@@ -147,7 +149,9 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
     ];
     shifts.forEach((s) =>
       ws.addRow({
-        date: s.date.toISOString().split("T")[0],
+        date: new Date(s.date).toLocaleDateString("en-CA", {
+          timeZone: "Europe/Berlin",
+        }),
         employee: s.employee
           ? `${s.employee.firstName} ${s.employee.lastName}`
           : "—",
@@ -204,8 +208,12 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
     // Record PDF generation against monthly quota
     await recordPdfGeneration(user.workspaceId!);
   } else if (format === "csv") {
-    const csvBuffer = await workbook.csv.writeBuffer();
-    buffer = Buffer.from(csvBuffer);
+    // German Excel expects semicolon separator + UTF-8 BOM
+    const csvBuffer = await workbook.csv.writeBuffer({
+      formatterOptions: { delimiter: ";" },
+    });
+    const BOM = Buffer.from("\uFEFF", "utf-8");
+    buffer = Buffer.concat([BOM, Buffer.from(csvBuffer)]);
     contentType = "text/csv; charset=utf-8";
     ext = "csv";
   } else {
@@ -220,7 +228,7 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
     .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "")
     .replace(/\s+/g, "-")
     .toLowerCase();
-  const filename = `${safeName}_${type}_${new Date().toISOString().split("T")[0]}.${ext}`;
+  const filename = `${safeName}_${type}_${new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" })}.${ext}`;
 
   return new Response(new Uint8Array(buffer), {
     status: 200,

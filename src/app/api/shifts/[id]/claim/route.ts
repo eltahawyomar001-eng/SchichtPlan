@@ -4,7 +4,6 @@ import { checkShiftConflicts } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/shifts/[id]/claim
@@ -57,7 +56,9 @@ export const POST = withRoute(
     // Check for conflicts
     const conflicts = await checkShiftConflicts({
       employeeId,
-      date: shift.date.toISOString().split("T")[0],
+      date: new Date(shift.date).toLocaleDateString("en-CA", {
+        timeZone: "Europe/Berlin",
+      }),
       startTime: shift.startTime,
       endTime: shift.endTime,
       workspaceId: shift.workspaceId,
@@ -85,16 +86,6 @@ export const POST = withRoute(
         employee: true,
         location: true,
       },
-    });
-
-    createAuditLog({
-      action: "UPDATE",
-      entityType: "Shift",
-      entityId: id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      metadata: { action: "CLAIM", employeeId },
     });
 
     return NextResponse.json(updated);

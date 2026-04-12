@@ -61,12 +61,27 @@ export const POST = withRoute(
       // ArbZG §5: Check 11-hour rest period since last clock-out
       const restCheck = await checkRestPeriod(employeeId, now);
       if (!restCheck.allowed) {
+        const lastClockOutStr = restCheck.lastClockOut.toLocaleTimeString(
+          "de-DE",
+          { timeZone: tz, hour: "2-digit", minute: "2-digit" },
+        );
+        const nextAllowedStr = restCheck.nextAllowedAt.toLocaleTimeString(
+          "de-DE",
+          {
+            timeZone: tz,
+            hour: "2-digit",
+            minute: "2-digit",
+          },
+        );
+        const remainHours = Math.floor(restCheck.remainingMinutes / 60);
+        const remainMins = restCheck.remainingMinutes % 60;
         return NextResponse.json(
           {
             error: "REST_PERIOD_VIOLATION",
-            message: `ArbZG §5: Ruhezeit von 11 Stunden nicht eingehalten. Nächster Arbeitsbeginn möglich ab ${restCheck.nextAllowedAt.toLocaleTimeString("de-DE", { timeZone: tz, hour: "2-digit", minute: "2-digit" })} Uhr.`,
+            message: `ArbZG §5: Zwischen zwei Arbeitszeiten müssen mindestens 11 Stunden Ruhezeit liegen. Letzte Ausstempelung war um ${lastClockOutStr} Uhr. Nächster Arbeitsbeginn möglich ab ${nextAllowedStr} Uhr (noch ${remainHours}h ${remainMins}min).`,
             remainingMinutes: restCheck.remainingMinutes,
             nextAllowedAt: restCheck.nextAllowedAt.toISOString(),
+            lastClockOut: restCheck.lastClockOut.toISOString(),
           },
           { status: 403 },
         );

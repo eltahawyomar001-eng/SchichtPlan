@@ -697,7 +697,12 @@ export async function checkRestPeriod(
   now: Date = new Date(),
 ): Promise<
   | { allowed: true }
-  | { allowed: false; remainingMinutes: number; nextAllowedAt: Date }
+  | {
+      allowed: false;
+      remainingMinutes: number;
+      nextAllowedAt: Date;
+      lastClockOut: Date;
+    }
 > {
   const lastEntry = await prisma.timeEntry.findFirst({
     where: {
@@ -720,7 +725,12 @@ export async function checkRestPeriod(
   const nextAllowedAt = new Date(
     lastEntry.clockOutAt.getTime() + requiredMinutes * 60000,
   );
-  return { allowed: false, remainingMinutes, nextAllowedAt };
+  return {
+    allowed: false,
+    remainingMinutes,
+    nextAllowedAt,
+    lastClockOut: lastEntry.clockOutAt,
+  };
 }
 
 /**

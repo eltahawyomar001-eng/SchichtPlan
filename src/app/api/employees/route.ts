@@ -8,56 +8,64 @@ import { createAuditLogTx } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
-import { requireAuth } from "@/lib/api-response";
-import { withRoute } from "@/lib/with-route";
+import { captureRouteError } from "@/lib/sentry";
+import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
+import { requireAuth, serverError } from "@/lib/api-response";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
 
-export const GET = withRoute("/api/employees", "GET", async (req) => {
-  const auth = await requireAuth();
-  if (!auth.ok) return auth.response;
-  const { workspaceId } = auth;
+export async function GET(req: Request) {
+  try {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { workspaceId } = auth;
 
-  const { searchParams } = new URL(req.url);
-  const search = searchParams.get("search");
-  const { take, skip } = parsePagination(req);
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
+    const { take, skip } = parsePagination(req);
 
-  const where: Record<string, unknown> = { workspaceId };
-  if (search) {
-    where.OR = [
-      { firstName: { contains: search, mode: "insensitive" } },
-      { lastName: { contains: search, mode: "insensitive" } },
-      { email: { contains: search, mode: "insensitive" } },
-    ];
-  }
+    const where: Record<string, unknown> = { workspaceId };
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
-  const [employees, total] = await Promise.all([
-    prisma.employee.findMany({
-      where,
-      include: {
-        employeeSkills: {
-          include: { skill: { select: { id: true, name: true } } },
-          orderBy: { createdAt: "asc" },
+    const [employees, total] = await Promise.all([
+      prisma.employee.findMany({
+        where,
+        include: {
+          employeeSkills: {
+            include: { skill: { select: { id: true, name: true } } },
+            orderBy: { createdAt: "asc" },
+          },
+          location: { select: { id: true, name: true } },
+          department: { select: { id: true, name: true } },
         },
-        location: { select: { id: true, name: true } },
-        department: { select: { id: true, name: true } },
-        client: { select: { id: true, name: true } },
-      },
-      orderBy: { lastName: "asc" },
-      take,
-      skip,
-    }),
-    prisma.employee.count({ where }),
-  ]);
+        orderBy: { lastName: "asc" },
+        take,
+        skip,
+      }),
+      prisma.employee.count({ where }),
+    ]);
 
-  return paginatedResponse(employees, total, take, skip);
-});
+    return paginatedResponse(employees, total, take, skip);
+  } catch (error) {
+    log.error("Error fetching employees:", { error: error });
+    captureRouteError(error, { route: "/api/employees", method: "GET" });
+    return serverError("Error loading");
+  }
+}
 
-export const POST = withRoute(
-  "/api/employees",
-  "POST",
-  async (req) => {
+export async function POST(req: Request) {
+  try {
+    // ── Idempotency check (prevents duplicate employee creation) ──
+    const cached = await checkIdempotency(req);
+    if (cached) return cached;
+
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -86,7 +94,6 @@ export const POST = withRoute(
       color,
       locationId,
       departmentId,
-      clientId,
     } = parsed.data;
 
     const employee = await prisma.$transaction(async (tx) => {
@@ -94,7 +101,7 @@ export const POST = withRoute(
         data: {
           firstName,
           lastName,
-          email: email || null,
+          email,
           phone: phone || null,
           position: position || null,
           hourlyRate: hourlyRate ?? null,
@@ -108,7 +115,6 @@ export const POST = withRoute(
               .padStart(6, "0")}`,
           locationId: locationId || null,
           departmentId: departmentId || null,
-          clientId: clientId || null,
           workspaceId,
         },
       });
@@ -132,7 +138,7 @@ export const POST = withRoute(
       id: employee.id,
       firstName,
       lastName,
-      email: email || "",
+      email,
       position: position || "",
     });
 
@@ -141,7 +147,7 @@ export const POST = withRoute(
       id: employee.id,
       firstName,
       lastName,
-      email: email || null,
+      email,
       position: position || null,
     }).catch((err) =>
       log.error("[webhook] employee.created dispatch error", { error: err }),
@@ -158,7 +164,11 @@ export const POST = withRoute(
       { ...employee, ...(warnings.length ? { warnings } : {}) },
       { status: 201 },
     );
+    await cacheIdempotentResponse(req, response);
     return response;
-  },
-  { idempotent: true },
-);
+  } catch (error) {
+    log.error("Error creating employee:", { error: error });
+    captureRouteError(error, { route: "/api/employees", method: "POST" });
+    return serverError("Error creating resource");
+  }
+}

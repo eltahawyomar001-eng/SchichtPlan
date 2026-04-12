@@ -7,8 +7,6 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 // ── Import limits ──────────────────────────────────────────────
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -168,7 +166,14 @@ export const POST = withRoute(
         }
 
         const email = (row["email"] || "").toLowerCase() || null;
-        if (email && existingEmails.has(email)) {
+
+        // Email is mandatory for employee assignment & billing
+        if (!email) {
+          skipped++;
+          continue;
+        }
+
+        if (existingEmails.has(email)) {
           duplicates++;
           continue;
         }
@@ -270,23 +275,6 @@ export const POST = withRoute(
       total: rows.length,
       workspaceId: user.workspaceId,
     });
-
-    createAuditLog({
-      action: "CREATE",
-      entityType: "Import",
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      metadata: { type, created, skipped, duplicates, total: rows.length },
-    });
-
-    dispatchWebhook(workspaceId, "import.completed", {
-      type,
-      created,
-      skipped,
-      duplicates,
-      total: rows.length,
-    }).catch(() => {});
 
     return NextResponse.json({
       created,

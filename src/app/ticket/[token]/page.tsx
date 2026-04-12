@@ -39,6 +39,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   LOHNABRECHNUNG: "Lohnabrechnung",
   TECHNIK: "Technik",
   HR: "HR / Personal",
+  QUALITAETSMANGEL: "Qualitätsmangel",
+  FEHLENDE_LEISTUNG: "Fehlende Leistungserbringung",
   SONSTIGES: "Sonstiges",
 };
 

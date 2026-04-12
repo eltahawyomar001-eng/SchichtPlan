@@ -33,7 +33,7 @@ const contractTypeEnum = z
 export const createEmployeeSchema = z.object({
   firstName: requiredString.max(100, "Maximal 100 Zeichen"),
   lastName: requiredString.max(100, "Maximal 100 Zeichen"),
-  email: optionalEmail,
+  email: email,
   phone: optionalString.pipe(z.string().max(30).optional()),
   position: optionalString.pipe(z.string().max(100).optional()),
   hourlyRate: positiveNumber,
@@ -47,7 +47,6 @@ export const createEmployeeSchema = z.object({
   color: optionalString,
   locationId: z.string().optional().nullable(),
   departmentId: z.string().optional().nullable(),
-  clientId: z.string().optional().nullable(),
 });
 
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
@@ -165,11 +164,6 @@ export const checkoutSchema = z.object({
   quantity: z.coerce.number().int().min(1).max(10000).optional(),
 });
 
-export const billingCheckoutSchema = z.object({
-  plan: trimmedString.min(1, "Pflichtfeld"),
-  billingCycle: z.enum(["monthly", "annual"]).optional().default("annual"),
-});
-
 // ── Profile: Change Password ────────────────────────────────────
 export const changePasswordSchema = z.object({
   currentPassword: requiredString,
@@ -180,12 +174,6 @@ export const changePasswordSchema = z.object({
 export const createWebhookSchema = z.object({
   url: trimmedString.url("Ungültige URL"),
   events: z.array(z.string().min(1)).min(1, "Mindestens ein Event auswählen"),
-});
-
-export const updateWebhookSchema = z.object({
-  url: trimmedString.url("Ungültige URL").optional(),
-  events: z.array(z.string().min(1)).min(1).optional(),
-  isActive: z.boolean().optional(),
 });
 
 // ── Service Visit (Leistungsnachweis) ───────────────────────────
@@ -220,12 +208,6 @@ export const createServiceReportSchema = z.object({
   periodStart: dateString,
   periodEnd: dateString,
   locationId: optionalString, // filter visits by location
-});
-
-export const updateServiceReportSchema = z.object({
-  title: optionalString.pipe(z.string().max(300).optional()),
-  status: z.enum(["ENTWURF", "ERSTELLT", "VERSENDET"]).optional(),
-  pdfUrl: trimmedString.url().optional().nullable(),
 });
 
 export const updateLocationGeoSchema = z.object({
@@ -306,15 +288,6 @@ export const createShiftSwapSchema = z.object({
   targetId: optionalString.nullable(),
   targetShiftId: optionalString.nullable(),
   reason: optionalString.pipe(z.string().max(1000).optional()),
-});
-
-export const updateShiftSwapSchema = z.object({
-  status: z.enum(["ANGENOMMEN", "GENEHMIGT", "ABGELEHNT", "STORNIERT"], {
-    message: "Ungültiger Status",
-  }),
-  targetId: optionalString.nullable(),
-  targetShiftId: optionalString.nullable(),
-  reviewNote: optionalString.pipe(z.string().max(2000).optional()),
 });
 
 // ── Availability ────────────────────────────────────────────────
@@ -417,24 +390,10 @@ export const createChatChannelSchema = z.object({
   departmentId: optionalString.nullable(),
 });
 
-export const updateChatChannelSchema = z.object({
-  name: optionalString.pipe(z.string().max(200).optional()),
-  description: optionalString.pipe(z.string().max(1000).optional()),
-});
-
 // ── Chat Message ────────────────────────────────────────────────
 export const createChatMessageSchema = z.object({
   content: requiredString.max(5000, "Maximal 5000 Zeichen"),
   parentId: optionalString.nullable(),
-});
-
-export const updateChatMessageSchema = z.object({
-  content: requiredString.max(5000, "Maximal 5000 Zeichen"),
-});
-
-// ── Chat Reaction ───────────────────────────────────────────────
-export const chatReactionSchema = z.object({
-  emoji: requiredString.max(10, "Maximal 10 Zeichen"),
 });
 
 // ── Chat Members (add) ──────────────────────────────────────────
@@ -518,15 +477,6 @@ export const createAutomationRuleSchema = z.object({
   trigger: requiredString.max(200, "Maximal 200 Zeichen"),
   conditions: z.unknown().optional(),
   actions: z.unknown(),
-});
-
-export const updateAutomationRuleSchema = z.object({
-  name: optionalString.pipe(z.string().max(200).optional()),
-  description: optionalString.pipe(z.string().max(1000).optional()),
-  trigger: optionalString.pipe(z.string().max(200).optional()),
-  conditions: z.unknown().optional(),
-  actions: z.unknown().optional(),
-  isActive: z.boolean().optional(),
 });
 
 // ── Team: Update Role ───────────────────────────────────────────
@@ -647,74 +597,6 @@ export const updateShiftSchema = z.object({
   status: z.enum(["SCHEDULED", "OPEN", "COMPLETED", "CANCELLED"]).optional(),
 });
 
-// ── Location (update) ───────────────────────────────────────────
-export const updateLocationSchema = z.object({
-  name: optionalString.pipe(z.string().max(200).optional()),
-  address: optionalString.pipe(z.string().max(500).optional()),
-});
-
-// ── Automation Settings ─────────────────────────────────────────
-export const updateAutomationSettingsSchema = z.object({
-  settings: z.record(z.string(), z.boolean()),
-});
-
-// ── Payroll Lock ────────────────────────────────────────────────
-export const payrollLockSchema = z.object({
-  year: z.coerce.number().int().min(2020).max(2100).optional(),
-  month: z.coerce.number().int().min(1).max(12).optional(),
-});
-
-// ── Dashboard Favorites ─────────────────────────────────────────
-export const updateFavoritesSchema = z.object({
-  favorites: z.array(z.string().min(1).max(100)).max(20),
-});
-
-// ── Manager Alert Acknowledge ───────────────────────────────────
-export const updateManagerAlertSchema = z.object({
-  acknowledged: z.boolean().optional(),
-});
-
-// ── Notifications (mark read) ───────────────────────────────────
-export const updateNotificationsSchema = z.object({
-  markAllRead: z.boolean().optional(),
-  notificationId: optionalString,
-  id: optionalString,
-});
-
-// ── Service Visit (update) ──────────────────────────────────────
-export const updateServiceVisitSchema = z.object({
-  scheduledDate: optionalString,
-  employeeId: optionalString,
-  locationId: optionalString,
-  notes: optionalString.pipe(z.string().max(2000).optional()),
-});
-
-// ── Skill Assignment (bulk) ─────────────────────────────────────
-export const skillAssignmentSchema = z.object({
-  employeeIds: z.array(z.string()),
-});
-
-// ── Time Account (create/update) ────────────────────────────────
-export const createTimeAccountSchema = z.object({
-  employeeId: requiredString,
-  contractHours: z.coerce.number().nonnegative().optional(),
-  carryoverMinutes: z.coerce.number().int().optional(),
-  periodStart: optionalString,
-  periodEnd: optionalString,
-});
-
-// ── Auth: Mobile Login ──────────────────────────────────────────
-export const mobileLoginSchema = z.object({
-  email: email,
-  password: requiredString,
-  totpCode: optionalString,
-});
-
-// ── Auth: Mobile Refresh ────────────────────────────────────────
-export const mobileRefreshSchema = z.object({
-  refreshToken: requiredString,
-});
-
 /* ═══════════════════════════════════════════════════════════════
    Validation helper — parse & return typed 400 on failure
    ═══════════════════════════════════════════════════════════════ */
@@ -781,6 +663,8 @@ export const TICKET_CATEGORIES = [
   "LOHNABRECHNUNG",
   "TECHNIK",
   "HR",
+  "QUALITAETSMANGEL",
+  "FEHLENDE_LEISTUNG",
   "SONSTIGES",
 ] as const;
 

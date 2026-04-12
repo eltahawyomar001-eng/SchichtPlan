@@ -9,22 +9,21 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateEmployeeSchema, validateBody } from "@/lib/validations";
-import { withRoute } from "@/lib/with-route";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
 
-export const GET = withRoute(
-  "/api/employees/[id]",
-  "GET",
-  async (req, context) => {
-    const params = await context!.params;
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const workspaceId = (session.user as SessionUser).workspaceId;
 
     const employee = await prisma.employee.findFirst({
@@ -36,7 +35,6 @@ export const GET = withRoute(
         vacationBalances: { orderBy: { year: "desc" }, take: 3 },
         department: { select: { id: true, name: true } },
         location: { select: { id: true, name: true } },
-        client: { select: { id: true, name: true } },
       },
     });
 
@@ -48,20 +46,24 @@ export const GET = withRoute(
     }
 
     return NextResponse.json(employee);
-  },
-);
+  } catch (error) {
+    log.error("Error fetching employee:", { error: error });
+    captureRouteError(error, { route: "/api/employees/[id]", method: "GET" });
+    return NextResponse.json({ error: "Error loading" }, { status: 500 });
+  }
+}
 
-export const PATCH = withRoute(
-  "/api/employees/[id]",
-  "PATCH",
-  async (req, context) => {
-    const params = await context!.params;
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -80,7 +82,7 @@ export const PATCH = withRoute(
         data: {
           firstName: body.firstName,
           lastName: body.lastName,
-          email: body.email || null,
+          email: body.email || undefined,
           phone: body.phone || null,
           position: body.position || null,
           hourlyRate: body.hourlyRate ?? null,
@@ -95,8 +97,6 @@ export const PATCH = withRoute(
             body.departmentId !== undefined
               ? body.departmentId || null
               : undefined,
-          clientId:
-            body.clientId !== undefined ? body.clientId || null : undefined,
         },
       });
 
@@ -132,20 +132,24 @@ export const PATCH = withRoute(
       ...employee,
       ...(warnings.length ? { warnings } : {}),
     });
-  },
-);
+  } catch (error) {
+    log.error("Error updating employee:", { error: error });
+    captureRouteError(error, { route: "/api/employees/[id]", method: "PATCH" });
+    return NextResponse.json({ error: "Error updating" }, { status: 500 });
+  }
+}
 
-export const DELETE = withRoute(
-  "/api/employees/[id]",
-  "DELETE",
-  async (req, context) => {
-    const params = await context!.params;
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const user = session.user as SessionUser;
     const workspaceId = user.workspaceId;
 
@@ -154,9 +158,8 @@ export const DELETE = withRoute(
     if (forbidden) return forbidden;
 
     await prisma.$transaction(async (tx) => {
-      await tx.employee.updateMany({
+      await tx.employee.deleteMany({
         where: { id, workspaceId },
-        data: { deletedAt: new Date() },
       });
 
       // ── Audit log (atomic) ──
@@ -167,10 +170,16 @@ export const DELETE = withRoute(
         userId: user.id,
         userEmail: user.email ?? undefined,
         workspaceId: workspaceId!,
-        metadata: { softDelete: true },
       });
     });
 
     return NextResponse.json({ message: "Employee deleted" });
-  },
-);
+  } catch (error) {
+    log.error("Error deleting employee:", { error: error });
+    captureRouteError(error, {
+      route: "/api/employees/[id]",
+      method: "DELETE",
+    });
+    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
+  }
+}

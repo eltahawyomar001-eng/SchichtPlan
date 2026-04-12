@@ -270,11 +270,8 @@ model Employee {
   serviceVisits      ServiceVisit[]
   locationId  String?
   location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  clientId    String?
-  client      Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   @@unique([email, workspaceId])
   @@index([locationId])
-  @@index([clientId])
 }
 
 model Location {
@@ -523,7 +520,6 @@ model AbsenceRequest {
   reviewNote  String?             @db.Text
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
-  deletedAt   DateTime?
   employeeId  String
   employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId String
@@ -700,7 +696,6 @@ model Client {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   projects    Project[]
-  employees   Employee[]
   @@index([workspaceId])
 }
 
@@ -1139,7 +1134,6 @@ model ServiceVisit {
   visitAuditLogs    ServiceVisitAuditLog[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
-  deletedAt         DateTime?
   /// Relations
   employeeId        String
   employee          Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -1270,6 +1264,8 @@ enum TicketCategory {
   LOHNABRECHNUNG
   TECHNIK
   HR
+  QUALITAETSMANGEL
+  FEHLENDE_LEISTUNG
   SONSTIGES
 }
 
@@ -1320,9 +1316,6 @@ model Ticket {
   workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   firstViewedAt         DateTime?       /// When a processor first opened the ticket
   firstViewedById       String?         /// Who first viewed the ticket
-  firstResponseAt       DateTime?       /// When first non-reporter comment was added
-  resolvedAt            DateTime?       /// When ticket was resolved/closed
-  slaBreached           Boolean         @default(false) /// Whether SLA targets were missed
   closedAt              DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt

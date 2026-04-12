@@ -83,7 +83,9 @@ export default function StempeluhrSeite() {
   const [error, setError] = useState("");
   const [noProfile, setNoProfile] = useState(false);
   const [arbZG, setArbZG] = useState<ArbZGInfo | null>(null);
+  const [autoClockOutDone, setAutoClockOutDone] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
+  const autoClockOutRef = useRef(false);
 
   // ── Team state (management only) ──
   const isManager = ["OWNER", "ADMIN", "MANAGER"].includes(user?.role ?? "");
@@ -198,6 +200,25 @@ export default function StempeluhrSeite() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockState, entry?.clockInAt, arbZG?.warningLevel]);
+
+  // ── ArbZG §3: Auto clock-out when daily limit exceeded ──
+  useEffect(() => {
+    if (
+      arbZG?.warningLevel === "EXCEEDED" &&
+      (clockState === "working" || clockState === "break") &&
+      !autoClockOutRef.current &&
+      !acting
+    ) {
+      autoClockOutRef.current = true;
+      setAutoClockOutDone(true);
+      handleClock("out");
+    }
+    // Reset the guard when the user is idle (allows re-trigger on next shift)
+    if (clockState === "idle") {
+      autoClockOutRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arbZG?.warningLevel, clockState, acting]);
 
   // ── Perform action ──
   async function handleClock(
@@ -338,6 +359,19 @@ export default function StempeluhrSeite() {
             <div className="flex items-center gap-2 rounded-[14px] bg-red-50 dark:bg-red-950/40 px-4 py-3 text-[15px] font-medium text-red-700 dark:text-red-300">
               <AlertTriangleIcon className="h-5 w-5 shrink-0" />
               {error}
+            </div>
+          )}
+
+          {/* ── Auto clock-out notification ── */}
+          {autoClockOutDone && clockState === "idle" && (
+            <div className="flex items-start gap-3 rounded-[14px] border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-[14px] font-medium text-red-700 dark:text-red-300">
+              <AlertTriangleIcon className="h-5 w-5 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">{t("arbzg.autoClockOut")}</p>
+                <p className="mt-0.5 text-[13px] opacity-80">
+                  {t("arbzg.autoClockOutDesc")}
+                </p>
+              </div>
             </div>
           )}
 

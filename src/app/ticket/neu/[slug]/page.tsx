@@ -9,6 +9,8 @@ const CATEGORIES = [
   { value: "LOHNABRECHNUNG", label: "Lohnabrechnung" },
   { value: "TECHNIK", label: "Technik" },
   { value: "HR", label: "HR / Personal" },
+  { value: "QUALITAETSMANGEL", label: "Qualitätsmangel" },
+  { value: "FEHLENDE_LEISTUNG", label: "Fehlende Leistungserbringung" },
   { value: "SONSTIGES", label: "Sonstiges" },
 ];
 

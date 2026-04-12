@@ -358,6 +358,7 @@ describe("validateBody XSS sanitization", () => {
     const result = validateBody(createEmployeeSchema, {
       firstName: '<script>alert("xss")</script>Max',
       lastName: "Mustermann",
+      email: "max@example.com",
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -370,6 +371,7 @@ describe("validateBody XSS sanitization", () => {
     const result = validateBody(createEmployeeSchema, {
       firstName: 'Max" onmouseover="alert(1)',
       lastName: "Mustermann",
+      email: "max@example.com",
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -393,6 +395,7 @@ describe("validateBody XSS sanitization", () => {
     const result = validateBody(createEmployeeSchema, {
       firstName: "Müller-Lüdenscheid",
       lastName: "O'Connor",
+      email: "muller@example.com",
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -405,6 +408,17 @@ describe("validateBody XSS sanitization", () => {
     const result = validateBody(createEmployeeSchema, {
       firstName: "", // required
       lastName: "",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.response.status).toBe(400);
+    }
+  });
+
+  it("rejects employee creation without email", () => {
+    const result = validateBody(createEmployeeSchema, {
+      firstName: "Max",
+      lastName: "Mustermann",
     });
     expect(result.success).toBe(false);
     if (!result.success) {

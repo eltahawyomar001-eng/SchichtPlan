@@ -612,12 +612,14 @@
     "emptyTip2": "Set hourly rate and weekly hours",
     "emptyTip3": "Invite employees via email",
     "view": "View",
+    "missingEmail": "Email missing – please add",
     "form": {
       "title": "New Employee",
       "editTitle": "Edit Employee",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
+      "emailPlaceholder": "employee@company.com",
       "phone": "Phone",
       "position": "Position",
       "hourlyRate": "Hourly rate (€)",
@@ -1814,6 +1816,8 @@
       "warning": "9 hours of work reached",
       "critical": "Maximum working time almost reached!",
       "exceeded": "Maximum working time exceeded!",
+      "autoClockOut": "Automatically clocked out",
+      "autoClockOutDesc": "You were automatically clocked out because the daily maximum working time of 10 hours (ArbZG §3) has been reached.",
       "workedToday": "Worked today: {hours}h {minutes}min",
       "remaining": "Remaining: {hours}h {minutes}min",
       "remainingShort": "remaining"
@@ -2498,6 +2502,8 @@
       "LOHNABRECHNUNG": "Payroll",
       "TECHNIK": "Technical",
       "HR": "Human Resources",
+      "QUALITAETSMANGEL": "Quality Deficiency",
+      "FEHLENDE_LEISTUNG": "Missing Service Delivery",
       "SONSTIGES": "Other"
     },
     "ticketTypes": {

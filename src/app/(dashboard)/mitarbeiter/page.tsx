@@ -28,6 +28,7 @@ import {
   MapPinIcon,
   BuildingIcon,
   ClockIcon,
+  AlertCircleIcon,
 } from "@/components/icons";
 
 interface EmployeeSkill {
@@ -76,8 +77,6 @@ interface Employee {
   location?: LocationItem | null;
   departmentId?: string | null;
   department?: DepartmentItem | null;
-  clientId?: string | null;
-  client?: { id: string; name: string } | null;
 }
 
 export default function MitarbeiterPage() {
@@ -89,7 +88,6 @@ export default function MitarbeiterPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [departments, setDepartments] = useState<DepartmentItem[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   const [teamStatusMap, setTeamStatusMap] = useState<
     Record<string, TeamMemberStatus>
   >({});
@@ -113,7 +111,6 @@ export default function MitarbeiterPage() {
     color: "#10b981",
     locationId: "",
     departmentId: "",
-    clientId: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -180,18 +177,6 @@ export default function MitarbeiterPage() {
     }
   }, []);
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/clients");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data.data ?? data);
-      }
-    } catch {
-      // Non-critical
-    }
-  }, []);
-
   /** Fetch live clock-in status for all employees */
   const fetchTeamStatus = useCallback(async () => {
     try {
@@ -213,15 +198,8 @@ export default function MitarbeiterPage() {
     fetchEmployees();
     fetchLocations();
     fetchDepartments();
-    fetchClients();
     fetchTeamStatus();
-  }, [
-    fetchEmployees,
-    fetchLocations,
-    fetchDepartments,
-    fetchClients,
-    fetchTeamStatus,
-  ]);
+  }, [fetchEmployees, fetchLocations, fetchDepartments, fetchTeamStatus]);
 
   // Auto-open edit form when navigated from detail page with ?edit=<id>
   // (placed after openEditForm so it can reference it)
@@ -242,7 +220,6 @@ export default function MitarbeiterPage() {
       color: "#10b981",
       locationId: "",
       departmentId: "",
-      clientId: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -265,7 +242,6 @@ export default function MitarbeiterPage() {
       color: emp.color || "#10b981",
       locationId: emp.locationId || "",
       departmentId: emp.departmentId || "",
-      clientId: emp.clientId || "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -320,7 +296,6 @@ export default function MitarbeiterPage() {
           color: "#10b981",
           locationId: "",
           departmentId: "",
-          clientId: "",
         });
         fetchEmployees();
       } else {
@@ -455,7 +430,7 @@ export default function MitarbeiterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">{t("form.email")}</Label>
+              <Label htmlFor="email">{t("form.email")} *</Label>
               <Input
                 id="email"
                 type="email"
@@ -463,6 +438,8 @@ export default function MitarbeiterPage() {
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, email: e.target.value }))
                 }
+                required
+                placeholder={t("form.emailPlaceholder")}
               />
             </div>
 
@@ -605,28 +582,6 @@ export default function MitarbeiterPage() {
                 {departments.map((dep) => (
                   <option key={dep.id} value={dep.id}>
                     {dep.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Kunde */}
-            <div className="space-y-2">
-              <Label htmlFor="clientId">{t("form.client")}</Label>
-              <Select
-                id="clientId"
-                value={formData.clientId}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    clientId: e.target.value,
-                  }))
-                }
-              >
-                <option value="">{t("form.noClient")}</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
                   </option>
                 ))}
               </Select>
@@ -811,10 +766,15 @@ export default function MitarbeiterPage() {
                     })()}
 
                   <div className="mt-4 space-y-2">
-                    {employee.email && (
+                    {employee.email ? (
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
                         <MailIcon className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{employee.email}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 min-w-0">
+                        <AlertCircleIcon className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{t("missingEmail")}</span>
                       </div>
                     )}
                     {employee.phone && (

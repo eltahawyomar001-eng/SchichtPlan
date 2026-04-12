@@ -9,9 +9,6 @@ import { requireManagement } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { cache } from "@/lib/cache";
-import { withRoute } from "@/lib/with-route";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * POST /api/time-entries/clock/create-profile
@@ -21,10 +18,8 @@ import { dispatchWebhook } from "@/lib/webhooks";
  *
  * Only allowed when the user does NOT already have a linked employee profile.
  */
-export const POST = withRoute(
-  "/api/time-entries/clock/create-profile",
-  "POST",
-  async (req) => {
+export async function POST() {
+  try {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -50,11 +45,14 @@ export const POST = withRoute(
 
     // Create the employee and link to this user in a transaction
     const employee = await prisma.$transaction(async (tx) => {
+      if (!user.email) {
+        throw new Error("User email is required for employee profile creation");
+      }
       const created = await tx.employee.create({
         data: {
           firstName: user.name?.split(" ")[0] || "Mitarbeiter",
           lastName: user.name?.split(" ").slice(1).join(" ") || "",
-          email: user.email || null,
+          email: user.email,
           workspaceId,
           userId: user.id,
           isActive: true,
@@ -71,21 +69,13 @@ export const POST = withRoute(
       employeeId: employee.id,
     });
 
-    createAuditLog({
-      action: "CREATE",
-      entityType: "Employee",
-      entityId: employee.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      metadata: { source: "clock-create-profile" },
-    });
-
-    dispatchWebhook(workspaceId, "clock_profile.created", {
-      employeeId: employee.id,
-    }).catch(() => {});
-
     return apiSuccess({ employeeId: employee.id }, 201);
-  },
-  { idempotent: true },
-);
+  } catch (error) {
+    log.error("Create clock profile error:", { error });
+    captureRouteError(error, {
+      route: "/api/time-entries/clock/create-profile",
+      method: "POST",
+    });
+    return serverError();
+  }
+}

@@ -140,6 +140,12 @@ export default function NewTicketPage() {
                     </option>
                     <option value="TECHNIK">{t("categories.TECHNIK")}</option>
                     <option value="HR">{t("categories.HR")}</option>
+                    <option value="QUALITAETSMANGEL">
+                      {t("categories.QUALITAETSMANGEL")}
+                    </option>
+                    <option value="FEHLENDE_LEISTUNG">
+                      {t("categories.FEHLENDE_LEISTUNG")}
+                    </option>
                     <option value="SONSTIGES">
                       {t("categories.SONSTIGES")}
                     </option>

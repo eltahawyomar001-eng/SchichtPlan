@@ -37,13 +37,10 @@ import {
   MessageCircleIcon,
   FileCheckIcon,
   TicketIcon,
-  MoonIcon,
-  SunIcon,
 } from "@/components/icons";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
-import { useTheme } from "@/components/providers/theme-provider";
 import type { Role } from "@/lib/authorization";
 
 interface NavItem {
@@ -239,7 +236,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const { data: session } = useSession();
-  const { theme, toggleTheme } = useTheme();
   const userRole = (session?.user as { role?: string } | undefined)?.role as
     | Role
     | undefined;
@@ -355,7 +351,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   {userName}
                 </p>
                 {userEmail && (
-                  <p className="truncate text-xs text-gray-400 dark:text-zinc-500">
+                  <p className="truncate text-xs text-gray-400 dark:text-zinc-400">
                     {userEmail}
                   </p>
                 )}
@@ -365,18 +361,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400">
             <CookieSettingsButton />
           </div>
-          {/* Dark / Light mode toggle */}
-          <button
-            onClick={toggleTheme}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-200 active:bg-gray-100 dark:active:bg-zinc-700 active:scale-[0.98] transition-colors"
-          >
-            {theme === "dark" ? (
-              <SunIcon className="h-[18px] w-[18px]" />
-            ) : (
-              <MoonIcon className="h-[18px] w-[18px]" />
-            )}
-            {theme === "dark" ? t("lightMode") : t("darkMode")}
-          </button>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             aria-label={t("logout")}

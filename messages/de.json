@@ -612,12 +612,14 @@
     "emptyTip2": "Hinterlegen Sie Stundenlohn und Wochenstunden",
     "emptyTip3": "Laden Sie Mitarbeiter per E-Mail-Einladung ein",
     "view": "Anzeigen",
+    "missingEmail": "E-Mail fehlt – bitte ergänzen",
     "form": {
       "title": "Neuer Mitarbeiter",
       "editTitle": "Mitarbeiter bearbeiten",
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail",
+      "emailPlaceholder": "mitarbeiter@firma.de",
       "phone": "Telefon",
       "position": "Position",
       "hourlyRate": "Stundenlohn (€)",
@@ -1814,6 +1816,8 @@
       "warning": "9 Stunden Arbeitszeit erreicht",
       "critical": "Höchstarbeitszeit fast erreicht!",
       "exceeded": "Höchstarbeitszeit überschritten!",
+      "autoClockOut": "Automatisch ausgestempelt",
+      "autoClockOutDesc": "Sie wurden automatisch ausgestempelt, da die tägliche Höchstarbeitszeit von 10 Stunden (ArbZG §3) erreicht wurde.",
       "workedToday": "Heute gearbeitet: {hours}h {minutes}min",
       "remaining": "Verbleibend: {hours}h {minutes}min",
       "remainingShort": "verbleibend"
@@ -2498,6 +2502,8 @@
       "LOHNABRECHNUNG": "Lohnabrechnung",
       "TECHNIK": "Technik",
       "HR": "Personal",
+      "QUALITAETSMANGEL": "Qualitätsmangel",
+      "FEHLENDE_LEISTUNG": "Fehlende Leistungserbringung",
       "SONSTIGES": "Sonstiges"
     },
     "ticketTypes": {

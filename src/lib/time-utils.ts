@@ -57,9 +57,15 @@ export function toIndustrialHours(minutes: number): number {
   return Math.round((minutes / 60) * 100) / 100;
 }
 
-/** Format decimal hours with 2 decimals  (7.5 → "7.50") */
-export function formatIndustrial(minutes: number): string {
-  return toIndustrialHours(minutes).toFixed(2);
+/** Format decimal hours with 2 decimals, German locale (7.5 → "7,50") */
+export function formatIndustrial(
+  minutes: number,
+  locale: string = "de",
+): string {
+  return toIndustrialHours(minutes).toLocaleString(
+    locale === "en" ? "en-GB" : "de-DE",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+  );
 }
 
 // ─── Calendar week (ISO 8601) ───────────────────────────────────

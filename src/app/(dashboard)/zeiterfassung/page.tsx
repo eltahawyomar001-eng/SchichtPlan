@@ -405,7 +405,8 @@ export default function ZeiterfassungPage() {
                     {formatMinutesToHHmm(totalNetMinutes)}
                   </p>
                   <p className="text-[10px] sm:text-xs text-gray-400 break-words">
-                    {formatIndustrial(totalNetMinutes)} {t("industrialHrs")}
+                    {formatIndustrial(totalNetMinutes, locale)}{" "}
+                    {t("industrialHrs")}
                   </p>
                 </div>
               </div>
@@ -783,7 +784,7 @@ export default function ZeiterfassungPage() {
                   <span className="text-gray-500">{t("detail.net")}</span>
                   <p className="font-medium">
                     {formatMinutesToHHmm(selectedEntry.netMinutes)} (
-                    {formatIndustrial(selectedEntry.netMinutes)} h)
+                    {formatIndustrial(selectedEntry.netMinutes, locale)} h)
                   </p>
                 </div>
                 {selectedEntry.location && (
@@ -1039,7 +1040,7 @@ export default function ZeiterfassungPage() {
                     <span className="font-bold text-emerald-400">
                       {formatMinutesToHHmm(totalNetMinutes)}
                       <span className="text-xs text-emerald-600 ml-1 font-normal">
-                        ({formatIndustrial(totalNetMinutes)} h)
+                        ({formatIndustrial(totalNetMinutes, locale)} h)
                       </span>
                     </span>
                   </div>
@@ -1114,7 +1115,7 @@ export default function ZeiterfassungPage() {
                             <td className="px-4 py-3 font-medium text-emerald-400">
                               {formatMinutesToHHmm(entry.netMinutes)}
                               <span className="text-xs text-zinc-500 ml-1">
-                                ({formatIndustrial(entry.netMinutes)})
+                                ({formatIndustrial(entry.netMinutes, locale)})
                               </span>
                             </td>
                             <td className="px-4 py-3 text-zinc-400">
@@ -1153,7 +1154,7 @@ export default function ZeiterfassungPage() {
                         <td className="px-4 py-3 font-bold text-emerald-400">
                           {formatMinutesToHHmm(totalNetMinutes)}
                           <span className="text-xs text-emerald-600 ml-1 font-normal">
-                            ({formatIndustrial(totalNetMinutes)} h)
+                            ({formatIndustrial(totalNetMinutes, locale)} h)
                           </span>
                         </td>
                         <td colSpan={3} />

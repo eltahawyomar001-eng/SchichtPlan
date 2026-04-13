@@ -156,7 +156,7 @@ export async function POST(req: Request) {
     const warnings: string[] = [];
     if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {
       warnings.push(
-        `Stundenlohn (${hourlyRate.toFixed(2)} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toFixed(2)} €/h, MiLoG)`,
+        `Stundenlohn (${hourlyRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h, MiLoG)`,
       );
     }
 

@@ -47,6 +47,11 @@ import {
 } from "@/lib/holidays";
 import { log } from "@/lib/logger";
 
+/** Convert Date to YYYY-MM-DD in Berlin timezone */
+function toBerlinDateStr(date: Date): string {
+  return date.toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" });
+}
+
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -265,7 +270,7 @@ export async function runAutoScheduler(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slots: ShiftSlot[] = openShifts.map((shift: any) => {
     const shiftDate = shift.date;
-    const dateStr = shiftDate.toISOString().split("T")[0];
+    const dateStr = toBerlinDateStr(shiftDate);
     const holiday = isPublicHoliday(shiftDate, bundesland);
     const sunday = isSunday(shiftDate);
     const night = isNightShift(shift.startTime, shift.endTime);
@@ -318,7 +323,7 @@ export async function runAutoScheduler(
   // Seed with existing (already-assigned) shifts
   for (const shift of existingShifts) {
     if (!shift.employeeId) continue;
-    const dateStr = shift.date.toISOString().split("T")[0];
+    const dateStr = toBerlinDateStr(shift.date);
     const minutes = calcGrossMinutes(shift.startTime, shift.endTime);
 
     addMinutes(employeeDayMinutes, shift.employeeId, dateStr, minutes);
@@ -349,7 +354,7 @@ export async function runAutoScheduler(
   const employeeWorkDates = new Map<string, Set<string>>();
   for (const shift of existingShifts) {
     if (!shift.employeeId) continue;
-    const dateStr = shift.date.toISOString().split("T")[0];
+    const dateStr = toBerlinDateStr(shift.date);
     if (!employeeWorkDates.has(shift.employeeId)) {
       employeeWorkDates.set(shift.employeeId, new Set());
     }
@@ -625,7 +630,7 @@ async function loadEmployees(
       const current = new Date(absence.startDate);
       const end = new Date(absence.endDate);
       while (current <= end) {
-        absenceDates.add(current.toISOString().split("T")[0]);
+        absenceDates.add(toBerlinDateStr(current));
         current.setDate(current.getDate() + 1);
       }
     }
@@ -1017,7 +1022,7 @@ function checkRestPeriod(
   // Check previous day
   const prevDate = new Date(slot.date);
   prevDate.setDate(prevDate.getDate() - 1);
-  const prevDateStr = prevDate.toISOString().split("T")[0];
+  const prevDateStr = toBerlinDateStr(prevDate);
   const prevShifts = getShiftTimes(shiftTimes, employeeId, prevDateStr);
   for (const existing of prevShifts) {
     // Gap = (24:00 - prevEnd) + slotStart
@@ -1028,7 +1033,7 @@ function checkRestPeriod(
   // Check next day
   const nextDate = new Date(slot.date);
   nextDate.setDate(nextDate.getDate() + 1);
-  const nextDateStr = nextDate.toISOString().split("T")[0];
+  const nextDateStr = toBerlinDateStr(nextDate);
   const nextShifts = getShiftTimes(shiftTimes, employeeId, nextDateStr);
   for (const existing of nextShifts) {
     // Gap = (24:00 - slotEnd) + nextStart
@@ -1068,7 +1073,7 @@ function getWeekKey(date: Date): string {
   const dayOfWeek = d.getDay();
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   d.setDate(d.getDate() + mondayOffset);
-  return d.toISOString().split("T")[0];
+  return toBerlinDateStr(d);
 }
 
 function addMinutes(
@@ -1167,7 +1172,7 @@ function getConsecutiveDays(
   const d = new Date(dateStr);
   // Include the proposed date itself
   while (true) {
-    const key = d.toISOString().split("T")[0];
+    const key = toBerlinDateStr(d);
     if (dates.has(key)) {
       count++;
       d.setDate(d.getDate() - 1);
@@ -1237,7 +1242,7 @@ export async function runBackfill(
   }
 
   const shiftDate = shift.date;
-  const dateStr = shiftDate.toISOString().split("T")[0];
+  const dateStr = toBerlinDateStr(shiftDate);
 
   // Build the slot
   const holiday = isPublicHoliday(shiftDate, bundesland);
@@ -1306,7 +1311,7 @@ export async function runBackfill(
 
   for (const s of existingShifts) {
     if (!s.employeeId) continue;
-    const sDateStr = s.date.toISOString().split("T")[0];
+    const sDateStr = toBerlinDateStr(s.date);
     const minutes = calcGrossMinutes(s.startTime, s.endTime);
 
     addMinutes(employeeDayMinutes, s.employeeId, sDateStr, minutes);

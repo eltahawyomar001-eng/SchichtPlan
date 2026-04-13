@@ -29,7 +29,7 @@ function addDays(date: Date, days: number): Date {
 }
 
 function dateStr(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return date.toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" });
 }
 
 export interface HolidayDefinition {

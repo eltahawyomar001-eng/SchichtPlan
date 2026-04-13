@@ -118,7 +118,7 @@ export async function PATCH(
     const parsedRate = body.hourlyRate ?? null;
     if (parsedRate != null && parsedRate < MILOG_MIN_WAGE) {
       warnings.push(
-        `Stundenlohn (${parsedRate.toFixed(2)} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toFixed(2)} €/h, MiLoG)`,
+        `Stundenlohn (${parsedRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h, MiLoG)`,
       );
     }
 

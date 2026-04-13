@@ -337,7 +337,8 @@
     "statusOpen": "Offen",
     "holidayBadge": "Feiertag",
     "holidayWarning": "⚠ Feiertag: {name}",
-    "holidayShiftWarning": "Schicht an einem Feiertag ({name})"
+    "holidayShiftWarning": "Schicht an einem Feiertag ({name})",
+    "dayAbbrev": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
   },
   "timeTracking": {
     "title": "Zeiterfassung",

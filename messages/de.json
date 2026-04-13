@@ -51,6 +51,7 @@
     "errorOccurred": "Fehler aufgetreten",
     "errorLoadingPage": "Beim Laden dieser Seite ist ein Fehler aufgetreten.",
     "errorLoading": "Beim Laden ist ein Fehler aufgetreten.",
+    "loadError": "Fehler beim Laden",
     "errorCode": "Fehlercode",
     "somethingWentWrong": "Etwas ist schiefgelaufen",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",

@@ -51,6 +51,7 @@
     "errorOccurred": "Error occurred",
     "errorLoadingPage": "An error occurred while loading this page.",
     "errorLoading": "An error occurred while loading.",
+    "loadError": "Error loading data",
     "errorCode": "Error code",
     "somethingWentWrong": "Something went wrong",
     "unexpectedError": "An unexpected error occurred. Please try again.",

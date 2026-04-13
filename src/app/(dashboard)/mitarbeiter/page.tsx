@@ -149,11 +149,11 @@ export default function MitarbeiterPage() {
       const data = await res.json();
       setEmployees(data.data ?? data);
     } catch {
-      setError("Fehler beim Laden");
+      setError(tc("loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   const fetchLocations = useCallback(async () => {
     try {

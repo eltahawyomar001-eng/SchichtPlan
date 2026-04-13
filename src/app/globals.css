@@ -340,6 +340,26 @@
   background-color: #2e1065 !important;
 }
 
+/* Status-50 backgrounds with opacity (used in banners/info boxes) */
+:is(.dark) .bg-blue-50\/60 {
+  background-color: rgba(23, 37, 84, 0.6) !important;
+}
+:is(.dark) .bg-emerald-50\/60 {
+  background-color: rgba(2, 44, 34, 0.6) !important;
+}
+:is(.dark) .bg-emerald-50\/30 {
+  background-color: rgba(2, 44, 34, 0.3) !important;
+}
+:is(.dark) .bg-gray-50\/60 {
+  background-color: rgba(39, 39, 42, 0.6) !important;
+}
+:is(.dark) .bg-amber-50\/60 {
+  background-color: rgba(69, 26, 3, 0.6) !important;
+}
+:is(.dark) .bg-red-50\/60 {
+  background-color: rgba(69, 10, 10, 0.6) !important;
+}
+
 /* Status-100 backgrounds (badge/tag tints) */
 :is(.dark) .bg-emerald-100 {
   background-color: #064e3b !important;
@@ -365,6 +385,24 @@
 :is(.dark) .bg-purple-100 {
   background-color: #4c1d95 !important;
 }
+:is(.dark) .bg-pink-100 {
+  background-color: #831843 !important;
+}
+:is(.dark) .bg-rose-100 {
+  background-color: #881337 !important;
+}
+:is(.dark) .bg-teal-100 {
+  background-color: #134e4a !important;
+}
+:is(.dark) .bg-indigo-100 {
+  background-color: #312e81 !important;
+}
+:is(.dark) .bg-sky-100 {
+  background-color: #0c4a6e !important;
+}
+:is(.dark) .bg-violet-100 {
+  background-color: #4c1d95 !important;
+}
 
 /* Hover status backgrounds */
 :is(.dark) .hover\:bg-red-50:hover {
@@ -381,6 +419,248 @@
 }
 :is(.dark) .hover\:bg-green-200:hover {
   background-color: #065f46 !important;
+}
+:is(.dark) .hover\:bg-emerald-200:hover {
+  background-color: #065f46 !important;
+}
+:is(.dark) .hover\:bg-blue-50:hover {
+  background-color: #172554 !important;
+}
+
+/* ── Status text colors (amber / blue / red / emerald / green / purple / orange) ── */
+:is(.dark) .text-amber-900 {
+  color: #fde68a !important;
+}
+:is(.dark) .text-amber-800 {
+  color: #fcd34d !important;
+}
+:is(.dark) .text-amber-700 {
+  color: #fbbf24 !important;
+}
+:is(.dark) .text-amber-600 {
+  color: #f59e0b !important;
+}
+:is(.dark) .text-blue-900 {
+  color: #bfdbfe !important;
+}
+:is(.dark) .text-blue-800 {
+  color: #93c5fd !important;
+}
+:is(.dark) .text-blue-700 {
+  color: #60a5fa !important;
+}
+:is(.dark) .text-blue-600 {
+  color: #3b82f6 !important;
+}
+:is(.dark) .text-red-800 {
+  color: #fca5a5 !important;
+}
+:is(.dark) .text-red-700 {
+  color: #f87171 !important;
+}
+:is(.dark) .text-red-600 {
+  color: #ef4444 !important;
+}
+:is(.dark) .text-emerald-700 {
+  color: #6ee7b7 !important;
+}
+:is(.dark) .text-emerald-600 {
+  color: #34d399 !important;
+}
+:is(.dark) .text-green-700 {
+  color: #6ee7b7 !important;
+}
+:is(.dark) .text-green-600 {
+  color: #34d399 !important;
+}
+:is(.dark) .text-orange-700 {
+  color: #fb923c !important;
+}
+:is(.dark) .text-orange-600 {
+  color: #f97316 !important;
+}
+:is(.dark) .text-purple-700 {
+  color: #c4b5fd !important;
+}
+:is(.dark) .text-yellow-800 {
+  color: #fde047 !important;
+}
+:is(.dark) .text-yellow-700 {
+  color: #facc15 !important;
+}
+:is(.dark) .text-orange-800 {
+  color: #fdba74 !important;
+}
+:is(.dark) .text-purple-800 {
+  color: #d8b4fe !important;
+}
+:is(.dark) .text-pink-700 {
+  color: #f9a8d4 !important;
+}
+:is(.dark) .text-pink-800 {
+  color: #fbcfe8 !important;
+}
+:is(.dark) .text-rose-700 {
+  color: #fda4af !important;
+}
+:is(.dark) .text-rose-800 {
+  color: #fecdd3 !important;
+}
+:is(.dark) .text-teal-700 {
+  color: #5eead4 !important;
+}
+:is(.dark) .text-teal-800 {
+  color: #99f6e4 !important;
+}
+:is(.dark) .text-indigo-700 {
+  color: #a5b4fc !important;
+}
+:is(.dark) .text-indigo-800 {
+  color: #c7d2fe !important;
+}
+:is(.dark) .text-sky-700 {
+  color: #7dd3fc !important;
+}
+:is(.dark) .text-sky-800 {
+  color: #bae6fd !important;
+}
+:is(.dark) .text-violet-700 {
+  color: #c4b5fd !important;
+}
+
+/* ── Status border colors ── */
+:is(.dark) .border-amber-200 {
+  border-color: #92400e !important;
+}
+:is(.dark) .border-amber-300 {
+  border-color: #b45309 !important;
+}
+:is(.dark) .border-blue-200 {
+  border-color: #1e3a5f !important;
+}
+:is(.dark) .border-blue-300 {
+  border-color: #1d4ed8 !important;
+}
+:is(.dark) .border-red-200 {
+  border-color: #991b1b !important;
+}
+:is(.dark) .border-red-300 {
+  border-color: #dc2626 !important;
+}
+:is(.dark) .border-emerald-200 {
+  border-color: #065f46 !important;
+}
+:is(.dark) .border-emerald-300 {
+  border-color: #059669 !important;
+}
+:is(.dark) .border-emerald-500 {
+  border-color: #10b981 !important;
+}
+:is(.dark) .border-green-200 {
+  border-color: #065f46 !important;
+}
+:is(.dark) .border-orange-200 {
+  border-color: #9a3412 !important;
+}
+:is(.dark) .border-purple-200 {
+  border-color: #5b21b6 !important;
+}
+:is(.dark) .border-pink-200 {
+  border-color: #9d174d !important;
+}
+:is(.dark) .border-rose-200 {
+  border-color: #9f1239 !important;
+}
+:is(.dark) .border-teal-200 {
+  border-color: #115e59 !important;
+}
+:is(.dark) .border-indigo-200 {
+  border-color: #3730a3 !important;
+}
+:is(.dark) .border-yellow-200 {
+  border-color: #854d0e !important;
+}
+:is(.dark) .border-sky-200 {
+  border-color: #075985 !important;
+}
+
+/* ── Hover status text/bg for interactive colored elements ── */
+:is(.dark) .hover\:bg-emerald-100:hover {
+  background-color: #064e3b !important;
+}
+:is(.dark) .hover\:text-emerald-700:hover {
+  color: #6ee7b7 !important;
+}
+:is(.dark) .hover\:text-blue-700:hover {
+  color: #60a5fa !important;
+}
+:is(.dark) .hover\:text-red-600:hover {
+  color: #ef4444 !important;
+}
+:is(.dark) .hover\:text-amber-600:hover {
+  color: #f59e0b !important;
+}
+:is(.dark) .hover\:text-amber-700:hover {
+  color: #fbbf24 !important;
+}
+:is(.dark) .hover\:bg-blue-50:hover {
+  background-color: #172554 !important;
+}
+:is(.dark) .hover\:bg-amber-600:hover {
+  background-color: #d97706 !important;
+}
+:is(.dark) .hover\:border-amber-300:hover {
+  border-color: #b45309 !important;
+}
+:is(.dark) .hover\:border-amber-200:hover {
+  border-color: #92400e !important;
+}
+:is(.dark) .hover\:border-blue-200:hover {
+  border-color: #1e3a5f !important;
+}
+
+/* Additional missing status borders */
+:is(.dark) .border-amber-100 {
+  border-color: #78350f !important;
+}
+:is(.dark) .border-amber-400 {
+  border-color: #d97706 !important;
+}
+:is(.dark) .border-blue-100 {
+  border-color: #1e3a5f !important;
+}
+
+/* Opacity-30 bg variants */
+:is(.dark) .bg-blue-50\/30 {
+  background-color: rgba(23, 37, 84, 0.3) !important;
+}
+:is(.dark) .hover\:bg-blue-50\/30:hover {
+  background-color: rgba(23, 37, 84, 0.3) !important;
+}
+:is(.dark) .bg-amber-500\/\[0\.08\] {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* ── Ring overrides for colored rings ── */
+:is(.dark) .ring-emerald-500 {
+  --tw-ring-color: #10b981 !important;
+}
+:is(.dark) .ring-2.ring-emerald-500 {
+  --tw-ring-color: #10b981 !important;
+}
+
+/* ── Shadow overrides for colored shadows ── */
+:is(.dark) .shadow-emerald-100\/50 {
+  --tw-shadow-color: rgba(6, 78, 59, 0.3) !important;
+}
+:is(.dark) .shadow-emerald-200\/50 {
+  --tw-shadow-color: rgba(6, 78, 59, 0.3) !important;
+}
+:is(.dark) .shadow-lg.shadow-emerald-100\/50 {
+  --tw-shadow-color: rgba(6, 78, 59, 0.3) !important;
+}
+:is(.dark) .shadow-lg.shadow-emerald-200\/50 {
+  --tw-shadow-color: rgba(6, 78, 59, 0.3) !important;
 }
 
 /* Dashed borders */
@@ -416,6 +696,11 @@
 /* Gradient overrides */
 :is(.dark) .bg-hero-gradient {
   background: #0a0a0a !important;
+}
+:is(.dark) .bg-grid {
+  background-image:
+    linear-gradient(rgba(5, 150, 105, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(5, 150, 105, 0.06) 1px, transparent 1px) !important;
 }
 :is(.dark) .bg-section-alt {
   background: #0a0a0a !important;
@@ -476,6 +761,18 @@
   border-color: #34d399;
 }
 
+/* Date / time / datetime-local input icons (calendar, clock pickers) */
+:is(.dark) input[type="date"],
+:is(.dark) input[type="time"],
+:is(.dark) input[type="datetime-local"] {
+  color-scheme: dark;
+}
+:is(.dark) input[type="date"]::-webkit-calendar-picker-indicator,
+:is(.dark) input[type="time"]::-webkit-calendar-picker-indicator,
+:is(.dark) input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.8);
+}
+
 /* Table elements */
 :is(.dark) th {
   color: #a1a1aa;
@@ -487,15 +784,39 @@
   background-color: rgba(39, 39, 42, 0.5);
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling — global thin scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+/* Firefox thin scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+
 :is(.dark) ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: transparent;
 }
 :is(.dark) ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #065f46;
+  border-radius: 9999px;
 }
 :is(.dark) ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #059669;
+}
+:is(.dark) * {
+  scrollbar-color: #065f46 transparent;
 }
 
 /* Selection */
@@ -671,17 +992,6 @@ body {
   transition:
     box-shadow var(--duration-normal) var(--ease-in-out),
     transform var(--duration-normal) var(--ease-in-out);
-}
-
-:is(.dark) .card-elevated {
-  --tw-ring-color: rgb(16 185 129 / 0.3); /* emerald-500/30 */
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0
-    var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0
-    calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow:
-    var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--shadow-md);
-  border: 1px solid rgb(16 185 129 / 0.3);
 }
 
 @media (hover: hover) {
@@ -1438,4 +1748,221 @@ body {
 }
 .fluid-4xl {
   font-size: var(--text-4xl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Dark Mode — Landing / Auth / Public Pages
+   
+   These pages were built light-only. Rather than modifying 2000+
+   lines of JSX, we override the recurring Tailwind utility patterns
+   at the CSS level for .dark contexts.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Text colors ────────────────────────────────────────────── */
+:is(.dark) .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+:is(.dark) .text-gray-800 {
+  color: #e5e7eb !important;
+}
+:is(.dark) .text-gray-700 {
+  color: #d1d5db !important;
+}
+:is(.dark) .text-gray-600 {
+  color: #9ca3af !important;
+}
+:is(.dark) .text-gray-500 {
+  color: #9ca3af !important;
+}
+:is(.dark) .text-gray-400 {
+  color: #6b7280 !important;
+}
+
+/* ── Background colors ──────────────────────────────────────── */
+:is(.dark) .bg-white {
+  background-color: #030712 !important;
+}
+:is(.dark) .bg-gray-50 {
+  background-color: #111827 !important;
+}
+:is(.dark) .bg-gray-100 {
+  background-color: #1f2937 !important;
+}
+:is(.dark) .bg-gray-900 {
+  background-color: #030712 !important;
+}
+:is(.dark) .bg-white\/95 {
+  background-color: rgba(3, 7, 18, 0.95) !important;
+}
+:is(.dark) .bg-white\/80 {
+  background-color: rgba(3, 7, 18, 0.8) !important;
+}
+:is(.dark) .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+:is(.dark) .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+:is(.dark) .bg-white\/15 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── Border colors ──────────────────────────────────────────── */
+:is(.dark) .border-gray-100 {
+  border-color: #1f2937 !important;
+}
+:is(.dark) .border-gray-200 {
+  border-color: #374151 !important;
+}
+:is(.dark) .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+:is(.dark) .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── Hover overrides ────────────────────────────────────────── */
+:is(.dark) .hover\:bg-gray-50:hover {
+  background-color: #1f2937 !important;
+}
+:is(.dark) .hover\:bg-gray-100:hover {
+  background-color: #374151 !important;
+}
+:is(.dark) .hover\:text-gray-900:hover {
+  color: #f9fafb !important;
+}
+:is(.dark) .hover\:text-gray-700:hover {
+  color: #e5e7eb !important;
+}
+
+/* ── Emerald tinted backgrounds (alerts, badges on light) ─── */
+:is(.dark) .bg-emerald-50 {
+  background-color: rgba(6, 78, 59, 0.25) !important;
+}
+:is(.dark) .bg-emerald-100 {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+}
+:is(.dark) .text-emerald-700 {
+  color: #6ee7b7 !important;
+}
+:is(.dark) .text-emerald-800 {
+  color: #a7f3d0 !important;
+}
+:is(.dark) .border-emerald-200 {
+  border-color: rgba(6, 78, 59, 0.4) !important;
+}
+
+/* ── Amber tinted backgrounds ─────────────────────────────── */
+:is(.dark) .bg-amber-50 {
+  background-color: rgba(120, 53, 15, 0.25) !important;
+}
+:is(.dark) .border-amber-200 {
+  border-color: rgba(120, 53, 15, 0.4) !important;
+}
+:is(.dark) .text-amber-600 {
+  color: #fbbf24 !important;
+}
+:is(.dark) .text-amber-700 {
+  color: #fcd34d !important;
+}
+
+/* ── Red tinted backgrounds ───────────────────────────────── */
+:is(.dark) .bg-red-50 {
+  background-color: rgba(127, 29, 29, 0.25) !important;
+}
+:is(.dark) .text-red-700 {
+  color: #fca5a5 !important;
+}
+
+/* ── Shadow adjustments for dark mode ─────────────────────── */
+:is(.dark) .shadow-lg {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 4px 6px -4px rgba(0, 0, 0, 0.3) !important;
+}
+:is(.dark) .shadow-xl {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.4),
+    0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
+}
+:is(.dark) .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+:is(.dark) .hover\:shadow-lg:hover {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 4px 6px -4px rgba(0, 0, 0, 0.3) !important;
+}
+:is(.dark) .hover\:shadow-xl:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.4),
+    0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
+}
+:is(.dark) .hover\:shadow-md:hover {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.35),
+    0 2px 4px -2px rgba(0, 0, 0, 0.3) !important;
+}
+:is(.dark) .shadow-emerald-200 {
+  --tw-shadow-color: rgba(6, 78, 59, 0.3) !important;
+}
+:is(.dark) .hover\:shadow-emerald-200:hover {
+  --tw-shadow-color: rgba(6, 78, 59, 0.3) !important;
+}
+
+/* ── Dividers ─────────────────────────────────────────────── */
+:is(.dark) .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #374151 !important;
+}
+
+/* ── Ring colors ──────────────────────────────────────────── */
+:is(.dark) .ring-gray-200 {
+  --tw-ring-color: #374151 !important;
+}
+:is(.dark) .ring-gray-100 {
+  --tw-ring-color: #1f2937 !important;
+}
+
+/* ── Form inputs (auth pages) ────────────────────────────── */
+:is(.dark) input[type="email"],
+:is(.dark) input[type="password"],
+:is(.dark) input[type="text"],
+:is(.dark) input[type="tel"],
+:is(.dark) input[type="url"] {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+:is(.dark) input::placeholder {
+  color: #6b7280 !important;
+}
+:is(.dark) input:focus {
+  border-color: var(--brand-500) !important;
+  --tw-ring-color: var(--brand-200) !important;
+}
+
+/* ── Gradient text (keep visible in dark) ────────────────── */
+:is(.dark) .text-gradient {
+  background-image: linear-gradient(
+    135deg,
+    #34d399,
+    #10b981,
+    #059669
+  ) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+/* ── Google sign-in button (auth pages) ──────────────────── */
+:is(.dark) .border-gray-300.bg-white.text-gray-700 {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+/* ── Or-divider line on auth pages ───────────────────────── */
+:is(.dark) .bg-white.px-3.text-gray-400 {
+  background-color: #030712 !important;
+  color: #6b7280 !important;
 }

@@ -59,14 +59,13 @@ export function ServiceWorkerProvider() {
           },
           60 * 60 * 1000,
         );
-      } catch (err) {
+      } catch {
         // Fallback to raw registration if workbox-window fails
-        console.error("[SW] Workbox registration failed, using fallback:", err);
         try {
           registration = await navigator.serviceWorker.register("/sw.js");
           setInterval(() => registration?.update(), 60 * 60 * 1000);
-        } catch (fallbackErr) {
-          console.error("[SW] Fallback registration also failed:", fallbackErr);
+        } catch {
+          // Service worker registration failed - app will work without offline support
         }
       }
     }

@@ -253,8 +253,7 @@ export default function ZeiterfassungPage() {
 
       resetForm();
       fetchEntries();
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
       setFormErrors([t("networkError")]);
     } finally {
       setSubmitting(false);

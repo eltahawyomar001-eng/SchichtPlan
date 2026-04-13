@@ -324,8 +324,7 @@ export default function MitarbeiterPage() {
           setFormError(data.error || t("saveError"));
         }
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
       setFormError(t("networkError"));
     } finally {
       setSaving(false);

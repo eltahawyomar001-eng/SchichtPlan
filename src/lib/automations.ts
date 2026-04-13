@@ -290,7 +290,7 @@ export async function checkShiftConflicts(params: {
     if (totalDayHours > MAX_DAILY_HOURS) {
       conflicts.push({
         type: "MAX_DAILY_HOURS",
-        message: `${totalDayHours.toFixed(1)}h Gesamtarbeitszeit am Tag überschreitet das Maximum von ${MAX_DAILY_HOURS}h (ArbZG §3)`,
+        message: `${totalDayHours.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h Gesamtarbeitszeit am Tag überschreitet das Maximum von ${MAX_DAILY_HOURS}h (ArbZG §3)`,
       });
     }
   }
@@ -326,7 +326,7 @@ export async function checkShiftConflicts(params: {
     if (totalWeekHours > MAX_WEEKLY_HOURS) {
       conflicts.push({
         type: "MAX_WEEKLY_HOURS",
-        message: `${totalWeekHours.toFixed(1)}h Wochenarbeitszeit überschreitet das Maximum von ${MAX_WEEKLY_HOURS}h (ArbZG §3)`,
+        message: `${totalWeekHours.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h Wochenarbeitszeit überschreitet das Maximum von ${MAX_WEEKLY_HOURS}h (ArbZG §3)`,
       });
     }
   }
@@ -945,7 +945,9 @@ export async function createRecurringShifts(params: {
   for (let week = 1; week <= repeatWeeks; week++) {
     const newDate = new Date(baseShift.date);
     newDate.setDate(newDate.getDate() + week * 7);
-    const dateStr = newDate.toISOString().split("T")[0];
+    const dateStr = newDate.toLocaleDateString("en-CA", {
+      timeZone: "Europe/Berlin",
+    });
 
     // Check for conflicts
     const conflicts = await checkShiftConflicts({
@@ -1056,9 +1058,15 @@ export async function tryAutoApproveSwap(swapId: string): Promise<boolean> {
   }
 
   // Check: can targetId work the requester's shift?
+  const shiftDateStr =
+    swap.shift.date instanceof Date
+      ? swap.shift.date.toLocaleDateString("en-CA", {
+          timeZone: "Europe/Berlin",
+        })
+      : String(swap.shift.date).split("T")[0];
   const targetConflicts = await checkShiftConflicts({
     employeeId: swap.targetId,
-    date: swap.shift.date.toISOString().split("T")[0],
+    date: shiftDateStr,
     startTime: swap.shift.startTime,
     endTime: swap.shift.endTime,
     workspaceId: swap.workspaceId,
@@ -1069,9 +1077,15 @@ export async function tryAutoApproveSwap(swapId: string): Promise<boolean> {
 
   // If two-way swap, check reverse too
   if (swap.targetShift) {
+    const targetShiftDateStr =
+      swap.targetShift.date instanceof Date
+        ? swap.targetShift.date.toLocaleDateString("en-CA", {
+            timeZone: "Europe/Berlin",
+          })
+        : String(swap.targetShift.date).split("T")[0];
     const requesterConflicts = await checkShiftConflicts({
       employeeId: swap.requesterId,
-      date: swap.targetShift.date.toISOString().split("T")[0],
+      date: targetShiftDateStr,
       startTime: swap.targetShift.startTime,
       endTime: swap.targetShift.endTime,
       workspaceId: swap.workspaceId,
@@ -1169,7 +1183,13 @@ export async function checkOvertimeAlerts(workspaceId: string) {
     const contractMinutes = account.contractHours * 60;
 
     if (workedMinutes > contractMinutes) {
-      const overtimeHours = ((workedMinutes - contractMinutes) / 60).toFixed(1);
+      const overtimeHours = (
+        (workedMinutes - contractMinutes) /
+        60
+      ).toLocaleString("de-DE", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
       const name = `${account.employee.firstName} ${account.employee.lastName}`;
       alerts.push(`${name}: ${overtimeHours}h Überstunden`);
     }

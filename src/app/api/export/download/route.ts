@@ -208,12 +208,14 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
     // Record PDF generation against monthly quota
     await recordPdfGeneration(user.workspaceId!);
   } else if (format === "csv") {
-    // German Excel expects semicolon separator + UTF-8 BOM
+    // German Excel expects semicolon separator + UTF-8 BOM + sep=; header
     const csvBuffer = await workbook.csv.writeBuffer({
-      formatterOptions: { delimiter: ";" },
+      formatterOptions: { delimiter: ";", quote: true, quoteColumns: true },
     });
+    // Prepend sep=; line and BOM for proper Excel parsing
+    const sepLine = Buffer.from("sep=;\r\n", "utf-8");
     const BOM = Buffer.from("\uFEFF", "utf-8");
-    buffer = Buffer.concat([BOM, Buffer.from(csvBuffer)]);
+    buffer = Buffer.concat([sepLine, BOM, Buffer.from(csvBuffer)]);
     contentType = "text/csv; charset=utf-8";
     ext = "csv";
   } else {

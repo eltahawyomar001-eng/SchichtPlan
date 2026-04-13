@@ -1,115 +1,128 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import type { SessionUser } from "@/lib/types";
 import { toIndustrialHours } from "@/lib/time-utils";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import { log } from "@/lib/logger";
-import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
 // Returns a DATEV-compatible CSV for payroll
-export const GET = withRoute("/api/export/datev", "GET", async (req) => {
-  const auth = await requireAuth();
-  if (!auth.ok) return auth.response;
-  const { user, workspaceId } = auth;
-  if (!workspaceId) {
-    return NextResponse.json({ error: "No workspace" }, { status: 400 });
-  }
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  // Only managers/admins/owners can export
-  const forbidden = requirePermission(user, "payroll-export", "read");
-  if (forbidden) return forbidden;
+    const user = session.user as SessionUser;
+    const workspaceId = user.workspaceId;
+    if (!workspaceId) {
+      return NextResponse.json({ error: "No workspace" }, { status: 400 });
+    }
 
-  // Check plan feature
-  const planGate = await requirePlanFeature(workspaceId, "datevExport");
-  if (planGate) return planGate;
+    // Only managers/admins/owners can export
+    const forbidden = requirePermission(user, "payroll-export", "read");
+    if (forbidden) return forbidden;
 
-  // Check export/PDF monthly quota (DATEV exports count against quota)
-  const pdfLimit = await requirePdfQuota(workspaceId);
-  if (pdfLimit) return pdfLimit;
+    // Check plan feature
+    const planGate = await requirePlanFeature(workspaceId, "datevExport");
+    if (planGate) return planGate;
 
-  const { searchParams } = new URL(req.url);
-  const startDate = searchParams.get("start");
-  const endDate = searchParams.get("end");
-  const employeeId = searchParams.get("employeeId");
-  const format = searchParams.get("format") || "datev"; // datev | csv
+    // Check export/PDF monthly quota (DATEV exports count against quota)
+    const pdfLimit = await requirePdfQuota(workspaceId);
+    if (pdfLimit) return pdfLimit;
 
-  if (!startDate || !endDate) {
-    return NextResponse.json(
-      { error: "Start and end date are required" },
-      { status: 400 },
-    );
-  }
+    const { searchParams } = new URL(req.url);
+    const startDate = searchParams.get("start");
+    const endDate = searchParams.get("end");
+    const employeeId = searchParams.get("employeeId");
+    const format = searchParams.get("format") || "datev"; // datev | csv
 
-  const where: Record<string, unknown> = {
-    workspaceId,
-    date: {
-      gte: new Date(startDate),
-      lte: new Date(endDate),
-    },
-  };
+    if (!startDate || !endDate) {
+      return NextResponse.json(
+        { error: "Start and end date are required" },
+        { status: 400 },
+      );
+    }
 
-  if (employeeId) where.employeeId = employeeId;
-
-  const entries = await prisma.timeEntry.findMany({
-    where,
-    include: {
-      employee: true,
-      location: true,
-    },
-    orderBy: [{ employee: { lastName: "asc" } }, { date: "asc" }],
-  });
-
-  // Check which months are closed (LOCKED or EXPORTED) to show "Abgeschlossen"
-  const monthCloseRecords = await prisma.monthClose.findMany({
-    where: {
+    const where: Record<string, unknown> = {
       workspaceId,
-      status: { in: ["LOCKED", "EXPORTED"] },
-    },
-    select: { year: true, month: true },
-  });
-  const closedMonths = new Set(
-    monthCloseRecords.map((mc) => `${mc.year}-${mc.month}`),
-  );
+      date: {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      },
+    };
 
-  // Build filename with employee name if a specific employee was selected
-  let employeeName = "Alle";
-  if (employeeId && entries.length > 0) {
-    const emp = entries[0].employee;
-    employeeName = `${emp.lastName}-${emp.firstName}`;
-  } else if (employeeId) {
-    // No entries found but employee was selected — look up their name
-    const emp = await prisma.employee.findUnique({
-      where: { id: employeeId },
-      select: { firstName: true, lastName: true },
+    if (employeeId) where.employeeId = employeeId;
+
+    const entries = await prisma.timeEntry.findMany({
+      where,
+      include: {
+        employee: true,
+        location: true,
+      },
+      orderBy: [{ employee: { lastName: "asc" } }, { date: "asc" }],
     });
-    if (emp) employeeName = `${emp.lastName}-${emp.firstName}`;
+
+    // Check which months are closed (LOCKED or EXPORTED) to show "Abgeschlossen"
+    const monthCloseRecords = await prisma.monthClose.findMany({
+      where: {
+        workspaceId,
+        status: { in: ["LOCKED", "EXPORTED"] },
+      },
+      select: { year: true, month: true },
+    });
+    const closedMonths = new Set(
+      monthCloseRecords.map((mc) => `${mc.year}-${mc.month}`),
+    );
+
+    // Build filename with employee name if a specific employee was selected
+    let employeeName = "Alle";
+    if (employeeId && entries.length > 0) {
+      const emp = entries[0].employee;
+      employeeName = `${emp.lastName}-${emp.firstName}`;
+    } else if (employeeId) {
+      // No entries found but employee was selected — look up their name
+      const emp = await prisma.employee.findUnique({
+        where: { id: employeeId },
+        select: { firstName: true, lastName: true },
+      });
+      if (emp) employeeName = `${emp.lastName}-${emp.firstName}`;
+    }
+    // Sanitize for filename (remove special chars)
+    const safeEmployeeName = employeeName.replace(
+      /[^a-zA-Z0-9äöüÄÖÜß\-]/g,
+      "_",
+    );
+    const filename = `lohnexport-${safeEmployeeName}-${startDate}-${endDate}`;
+
+    if (format === "json") {
+      // Return raw JSON for preview
+      const summary = aggregateByEmployee(entries);
+      return NextResponse.json(summary);
+    }
+
+    // Build CSV
+    const csv = buildDATEVCsv(entries, format === "datev", closedMonths);
+
+    // Record export against monthly quota
+    await recordPdfGeneration(workspaceId);
+
+    return new Response(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}.csv"`,
+      },
+    });
+  } catch (error) {
+    log.error("Error exporting:", { error: error });
+    return NextResponse.json({ error: "Error exporting" }, { status: 500 });
   }
-  // Sanitize for filename (remove special chars)
-  const safeEmployeeName = employeeName.replace(/[^a-zA-Z0-9äöüÄÖÜß\-]/g, "_");
-  const filename = `lohnexport-${safeEmployeeName}-${startDate}-${endDate}`;
-
-  if (format === "json") {
-    // Return raw JSON for preview
-    const summary = aggregateByEmployee(entries);
-    return NextResponse.json(summary);
-  }
-
-  // Build CSV
-  const csv = buildDATEVCsv(entries, format === "datev", closedMonths);
-
-  // Record export against monthly quota
-  await recordPdfGeneration(workspaceId);
-
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}.csv"`,
-    },
-  });
-});
+}
 
 // ─── Aggregation helper ─────────────────────────────────────────
 
@@ -227,11 +240,14 @@ function buildDATEVCsv(
   });
 
   const csvLines = [
-    headers.join(sep),
-    ...rows.map((r) => r.map((v) => `"${v}"`).join(sep)),
+    headers.map((h) => `"${h}"`).join(sep),
+    ...rows.map((r) =>
+      r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(sep),
+    ),
   ];
 
-  return BOM + csvLines.join("\r\n");
+  // sep=; tells Excel to use semicolon as delimiter
+  return "sep=;\r\n" + BOM + csvLines.join("\r\n");
 }
 
 function formatDateDE(date: Date): string {

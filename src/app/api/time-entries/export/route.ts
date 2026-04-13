@@ -65,7 +65,9 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
     "Status",
     "Freigabe durch",
     "Freigabe am",
-  ].join(sep);
+  ]
+    .map((h) => `"${h}"`)
+    .join(sep);
 
   const rows = entries.map((e: EntryRow) => {
     const d = new Date(e.date);
@@ -96,7 +98,9 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
             year: "numeric",
           })
         : "",
-    ].join(sep);
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(sep);
   });
 
   // Summary row
@@ -124,10 +128,14 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
       "",
       "",
       "",
-    ].join(sep),
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(sep),
   );
 
-  const csv = "\uFEFF" + [header, ...rows].join("\r\n"); // BOM for German Excel
+  // sep=; tells Excel to use semicolon as delimiter
+  // BOM (\uFEFF) ensures UTF-8 encoding is recognized
+  const csv = "sep=;\r\n" + "\uFEFF" + [header, ...rows].join("\r\n");
 
   return new Response(csv, {
     status: 200,

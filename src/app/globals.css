@@ -998,8 +998,8 @@ body {
 }
 
 :is(.dark) .card-base {
-  border: 1px solid #10b981; /* emerald-500 */
-  box-shadow: 0 0 0 1px #10b981; /* emerald ring */
+  border: 1px solid rgba(16, 185, 129, 0.4); /* emerald-500 at 40% */
+  box-shadow: none;
 }
 
 /* Elevated card — premium hover-lift with refined shadow (hover-capable devices only) */
@@ -1012,8 +1012,8 @@ body {
 }
 
 :is(.dark) .card-elevated {
-  border: 1px solid #10b981;
-  box-shadow: 0 0 0 1px #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4); /* emerald-500 at 40% */
+  box-shadow: none;
 }
 
 @media (hover: hover) {

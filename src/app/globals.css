@@ -805,6 +805,11 @@
   scrollbar-color: #d4d4d8 transparent;
 }
 
+/* Dark mode scrollbar — emerald green */
+:is(.dark) ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 :is(.dark) ::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -816,6 +821,7 @@
   background: #059669;
 }
 :is(.dark) * {
+  scrollbar-width: thin;
   scrollbar-color: #065f46 transparent;
 }
 

@@ -991,6 +991,17 @@ body {
   }
 }
 
+/* Base card — border styling for light and dark mode */
+.card-base {
+  border: 1px solid #e5e7eb; /* gray-200 */
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.04); /* ring effect */
+}
+
+:is(.dark) .card-base {
+  border: 1px solid #10b981; /* emerald-500 */
+  box-shadow: 0 0 0 1px #10b981; /* emerald ring */
+}
+
 /* Elevated card — premium hover-lift with refined shadow (hover-capable devices only) */
 .card-elevated {
   box-shadow: var(--shadow-md);
@@ -998,6 +1009,11 @@ body {
   transition:
     box-shadow var(--duration-normal) var(--ease-in-out),
     transform var(--duration-normal) var(--ease-in-out);
+}
+
+:is(.dark) .card-elevated {
+  border: 1px solid #10b981;
+  box-shadow: 0 0 0 1px #10b981;
 }
 
 @media (hover: hover) {

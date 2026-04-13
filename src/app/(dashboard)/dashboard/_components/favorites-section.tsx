@@ -395,7 +395,7 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                   <Link
                     href={page.href}
                     className={cn(
-                      "flex flex-col items-center justify-center gap-3 rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 border border-gray-100 dark:border-emerald-500 ring-1 ring-gray-900/[0.04] dark:ring-emerald-500 transition-all duration-200",
+                      "card-base flex flex-col items-center justify-center gap-3 rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 transition-all duration-200",
                       "shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)]",
                       "hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12)]",
                       "hover:-translate-y-0.5",

@@ -431,8 +431,8 @@ export default function EinstellungenPage() {
         });
         setPushEnabled(true);
       }
-    } catch {
-      // Push toggle failed - user will see the toggle unchanged
+    } catch (err) {
+      console.error("[push] toggle error:", err);
     } finally {
       setPushLoading(false);
     }

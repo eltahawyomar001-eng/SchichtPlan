@@ -78,8 +78,8 @@ export function NotificationDropdown() {
         setNotifications(data.data ?? []);
         setUnreadCount(data.unreadCount ?? 0);
       }
-    } catch {
-      // Silent fail - notifications will retry on next poll
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
     }
   }, []);
 
@@ -116,8 +116,8 @@ export function NotificationDropdown() {
       });
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch {
-      // Silent fail
+    } catch (err) {
+      console.error("Failed to mark all read:", err);
     } finally {
       setLoading(false);
     }
@@ -134,8 +134,8 @@ export function NotificationDropdown() {
         prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
       );
       setUnreadCount((c) => Math.max(0, c - 1));
-    } catch {
-      // Silent fail
+    } catch (err) {
+      console.error("Failed to mark read:", err);
     }
   }
 

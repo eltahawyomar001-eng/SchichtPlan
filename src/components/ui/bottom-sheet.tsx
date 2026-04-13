@@ -236,7 +236,7 @@ export function BottomSheet({
             <button
               onClick={guardedClose}
               className="flex-shrink-0 -mr-1 rounded-xl p-2.5 hover:bg-gray-100 dark:hover:bg-zinc-800 active:bg-gray-200 dark:active:bg-zinc-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Schließen"
+              aria-label="Close"
             >
               <XIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500" />
             </button>

@@ -167,8 +167,8 @@ export default function AutomationenPage() {
         const data = await res.json();
         setSettings(data.settings);
       }
-    } catch {
-      // Settings will use defaults
+    } catch (err) {
+      console.error("Failed to fetch automation settings:", err);
     } finally {
       setLoading(false);
     }

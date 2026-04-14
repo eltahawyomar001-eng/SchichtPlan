@@ -45,7 +45,7 @@ import {
   CelebrationsCard,
   type CelebrationEntry,
 } from "./_components/celebrations-card";
-import { WeatherCard, type WeatherLocation } from "./_components/weather-card";
+import { WeatherCard } from "./_components/weather-card";
 import {
   ComplianceAlertsCard,
   type ComplianceAlert,
@@ -460,7 +460,6 @@ async function ManagerDashboardContent({
     monthShiftsForCalendar,
     monthAbsencesForCalendar,
     allActiveEmployees,
-    weatherLocations,
     complianceTimeEntries,
     timeAccounts,
     weekTimeEntries,
@@ -550,12 +549,6 @@ async function ManagerDashboardContent({
         color: true,
         createdAt: true,
       },
-    }),
-    /* Widget: Weather — locations */
-    prisma.location.findMany({
-      where: { workspaceId },
-      select: { id: true, name: true, address: true },
-      orderBy: { name: "asc" },
     }),
     /* Widget: Compliance */
     prisma.timeEntry.findMany({
@@ -985,13 +978,6 @@ async function ManagerDashboardContent({
     }
   }
   celebrations.sort((a, b) => a.daysUntil - b.daysUntil);
-
-  /* ── Widget: Weather ── */
-  const weatherLocs: WeatherLocation[] = weatherLocations.map((loc) => ({
-    id: loc.id,
-    name: loc.name,
-    geocodeQuery: loc.address || loc.name,
-  }));
 
   /* ── Widget: Compliance Alerts ── */
   const complianceAlerts: ComplianceAlert[] = [];
@@ -1574,7 +1560,7 @@ async function ManagerDashboardContent({
           absencesLabel={t("widgets.absences")}
         />
         <WeatherCard
-          locations={weatherLocs}
+          hasLocations={locationCount > 0}
           title={t("widgets.weather")}
           humidityLabel={t("widgets.humidity")}
           windLabel={t("widgets.wind")}

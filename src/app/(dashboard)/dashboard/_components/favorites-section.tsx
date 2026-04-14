@@ -385,7 +385,7 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
       <CardContent>
         {/* Pinned Favorites — full-width large tiles */}
         {favorites.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4">
             {favorites.map((key) => {
               const page = PAGE_REGISTRY[key];
               if (!page) return null;
@@ -395,24 +395,24 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                   <Link
                     href={page.href}
                     className={cn(
-                      "card-base flex flex-col items-center justify-center gap-3 rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 transition-all duration-200",
+                      "card-base flex flex-col items-center justify-center gap-2.5 rounded-2xl bg-white dark:bg-zinc-900 p-4 sm:p-5 transition-all duration-200",
                       "shadow-[0_1px_6px_-1px_rgba(0,0,0,0.06)]",
                       "hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12)]",
                       "hover:-translate-y-0.5",
                       page.hoverBorder,
                       page.hoverBg,
-                      "min-h-[100px] sm:min-h-[110px]",
+                      "min-h-[90px] sm:min-h-[100px]",
                     )}
                   >
                     <div
                       className={cn(
-                        "rounded-2xl p-3 transition-colors",
+                        "rounded-xl p-2.5 transition-colors",
                         page.bg,
                       )}
                     >
-                      <Icon className={cn("h-6 w-6", page.color)} />
+                      <Icon className={cn("h-5 w-5", page.color)} />
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-zinc-200 text-center leading-tight">
+                    <span className="text-xs font-semibold text-gray-700 dark:text-zinc-200 text-center leading-tight line-clamp-2">
                       {tn(key)}
                     </span>
                   </Link>
@@ -455,7 +455,7 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
             <p className="text-xs font-medium text-gray-500 dark:text-zinc-400 mb-3">
               {t("favAvailable")}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
               {ALL_PAGE_KEYS.map((key) => {
                 const page = PAGE_REGISTRY[key];
                 const pinned = favorites.includes(key);
@@ -466,28 +466,32 @@ export function FavoritesSection({ initialFavorites }: FavoritesSectionProps) {
                     onClick={() => toggleFavorite(key)}
                     disabled={isSaving}
                     className={cn(
-                      "flex flex-col items-center justify-center gap-2 rounded-xl p-3 sm:p-4 border transition-all duration-200 min-h-[80px]",
+                      "flex flex-col items-center justify-center gap-2 rounded-xl p-3 border transition-all duration-200 min-h-[72px]",
                       pinned
-                        ? "border-emerald-300 bg-emerald-50/60 shadow-sm"
+                        ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-950/30 shadow-sm"
                         : "border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-gray-200 dark:hover:border-emerald-500/30 hover:bg-gray-50/50 dark:hover:bg-zinc-800",
                     )}
                   >
                     <div
                       className={cn(
                         "rounded-xl p-2",
-                        pinned ? "bg-emerald-100" : page.bg,
+                        pinned
+                          ? "bg-emerald-100 dark:bg-emerald-900/50"
+                          : page.bg,
                       )}
                     >
                       {pinned ? (
-                        <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
+                        <CheckCircleIcon className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <Icon className={cn("h-5 w-5", page.color)} />
+                        <Icon className={cn("h-4.5 w-4.5", page.color)} />
                       )}
                     </div>
                     <span
                       className={cn(
-                        "text-xs font-medium text-center leading-tight",
-                        pinned ? "text-emerald-700" : "text-gray-600",
+                        "text-[11px] font-medium text-center leading-tight line-clamp-2",
+                        pinned
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-gray-600 dark:text-zinc-400",
                       )}
                     >
                       {tn(key)}

@@ -48,7 +48,9 @@ export function WeatherCard({
 
     async function fetchWeather() {
       try {
-        const res = await fetch("/api/weather");
+        const res = await fetch("/api/weather", {
+          signal: AbortSignal.timeout(15000), // 15s client-side timeout
+        });
         if (!res.ok) {
           setError(true);
           return;

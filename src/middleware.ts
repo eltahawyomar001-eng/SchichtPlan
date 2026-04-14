@@ -31,10 +31,13 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com https://vercel.live",
+    "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com https://vercel.live wss://ws-us3.pusher.com https://vitals.vercel-insights.com",
+    // Allow Vercel Live toolbar iframe in non-production
+    `frame-src 'self' https://vercel.live`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "manifest-src 'self'",
     // NOTE: "require-trusted-types-for 'script'" removed — React/Next.js
     // runtime uses innerHTML internally (hydration, error boundaries) and
     // does not ship Trusted Types policies, causing Chrome to block rendering.

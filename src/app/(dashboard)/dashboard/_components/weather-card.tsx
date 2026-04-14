@@ -8,6 +8,7 @@ import { MapPinIcon } from "@/components/icons";
 export interface WeatherLocation {
   id: string;
   name: string;
+  geocodeQuery?: string; // address or name for geocoding
   temp?: number;
   condition?: string;
   icon?: string; // emoji
@@ -27,13 +28,13 @@ interface WeatherCardProps {
 /* Simple weather condition → emoji mapping */
 function conditionEmoji(condition: string): string {
   const c = condition.toLowerCase();
-  if (c.includes("clear") || c.includes("sunny")) return "☀️";
-  if (c.includes("partly") || c.includes("cloud")) return "⛅";
-  if (c.includes("overcast")) return "☁️";
-  if (c.includes("rain") || c.includes("drizzle")) return "🌧️";
-  if (c.includes("thunder") || c.includes("storm")) return "⛈️";
-  if (c.includes("snow")) return "🌨️";
-  if (c.includes("fog") || c.includes("mist")) return "🌫️";
+  if (c.includes("klar") || c.includes("sonnig")) return "☀️";
+  if (c.includes("teilweise") || c.includes("wolkig")) return "⛅";
+  if (c.includes("bedeckt")) return "☁️";
+  if (c.includes("regen") || c.includes("niesel")) return "🌧️";
+  if (c.includes("gewitter")) return "⛈️";
+  if (c.includes("schnee")) return "🌨️";
+  if (c.includes("nebel") || c.includes("dunst")) return "🌫️";
   if (c.includes("wind")) return "💨";
   return "🌤️";
 }
@@ -48,32 +49,73 @@ export function WeatherCard({
 }: WeatherCardProps) {
   const [weather, setWeather] = useState<WeatherLocation[]>(locations);
   const [loading, setLoading] = useState(
-    locations.every((l) => l.temp === undefined),
+    locations.length > 0 && locations.every((l) => l.temp === undefined),
   );
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Fetch weather for locations without data
     const locationsNeedingData = weather.filter((l) => l.temp === undefined);
     if (locationsNeedingData.length === 0) {
       setLoading(false);
       return;
     }
 
-    // Use Open-Meteo free API (no key needed) with geocoding
+    let cancelled = false;
+
     async function fetchWeather() {
       try {
         const updated = await Promise.all(
           weather.map(async (loc) => {
             if (loc.temp !== undefined) return loc;
             try {
-              // Geocode the location name
+              const query = loc.geocodeQuery || loc.name;
+              let latitude: number | null = null;
+              let longitude: number | null = null;
+
+              // Strategy 1: Try the full address/name
               const geoRes = await fetch(
-                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc.name)}&count=1&language=de`,
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de`,
               );
               const geoData = await geoRes.json();
-              if (!geoData.results?.[0]) return loc;
+              if (geoData.results?.[0]) {
+                latitude = geoData.results[0].latitude;
+                longitude = geoData.results[0].longitude;
+              }
 
-              const { latitude, longitude } = geoData.results[0];
+              // Strategy 2: Extract city from comma-separated address
+              if (!latitude && query.includes(",")) {
+                const parts = query.split(",");
+                const cityPart = parts[parts.length - 1].trim();
+                if (cityPart.length >= 2) {
+                  const geoRes2 = await fetch(
+                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityPart)}&count=1&language=de`,
+                  );
+                  const geoData2 = await geoRes2.json();
+                  if (geoData2.results?.[0]) {
+                    latitude = geoData2.results[0].latitude;
+                    longitude = geoData2.results[0].longitude;
+                  }
+                }
+              }
+
+              // Strategy 3: Try the display name if different from geocodeQuery
+              if (
+                !latitude &&
+                loc.geocodeQuery &&
+                loc.geocodeQuery !== loc.name
+              ) {
+                const geoRes3 = await fetch(
+                  `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc.name)}&count=1&language=de`,
+                );
+                const geoData3 = await geoRes3.json();
+                if (geoData3.results?.[0]) {
+                  latitude = geoData3.results[0].latitude;
+                  longitude = geoData3.results[0].longitude;
+                }
+              }
+
+              if (!latitude || !longitude) return loc;
+
               // Fetch current weather
               const wxRes = await fetch(
                 `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`,
@@ -82,7 +124,6 @@ export function WeatherCard({
               const current = wxData.current;
               if (!current) return loc;
 
-              // WMO weather code → description
               const wmoDesc = getWmoDescription(current.weather_code ?? 0);
               return {
                 ...loc,
@@ -97,13 +138,20 @@ export function WeatherCard({
             }
           }),
         );
-        setWeather(updated);
+        if (!cancelled) {
+          const hasAnyWeather = updated.some((l) => l.temp !== undefined);
+          if (!hasAnyWeather) setError(true);
+          setWeather(updated);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchWeather();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -127,6 +175,16 @@ export function WeatherCard({
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-500" />
             <span className="ml-2 text-sm text-gray-400">{loadingLabel}</span>
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <span className="text-3xl mb-2">🌤️</span>
+            <p className="text-sm text-gray-400 dark:text-zinc-500">
+              Wetterdaten konnten nicht geladen werden
+            </p>
+            <p className="text-xs text-gray-300 dark:text-zinc-600 mt-1">
+              Standort-Adressen prüfen
+            </p>
+          </div>
         ) : (
           <div className="space-y-2.5">
             {weather.map((loc) => (
@@ -148,17 +206,25 @@ export function WeatherCard({
                   )}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  {loc.temp !== undefined && (
-                    <p className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-                      {loc.temp}°
+                  {loc.temp !== undefined ? (
+                    <>
+                      <p className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+                        {loc.temp}°C
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-zinc-500">
+                        {loc.humidity !== undefined && (
+                          <span>💧 {loc.humidity}%</span>
+                        )}
+                        {loc.wind !== undefined && (
+                          <span>💨 {loc.wind} km/h</span>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-300 dark:text-zinc-600">
+                      –
                     </p>
                   )}
-                  <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-zinc-500">
-                    {loc.humidity !== undefined && (
-                      <span>💧 {loc.humidity}%</span>
-                    )}
-                    {loc.wind !== undefined && <span>💨 {loc.wind} km/h</span>}
-                  </div>
                 </div>
               </div>
             ))}
@@ -169,32 +235,37 @@ export function WeatherCard({
   );
 }
 
-/* WMO Weather Code → human description */
+/* WMO Weather Code → German description */
 function getWmoDescription(code: number): string {
   const map: Record<number, string> = {
-    0: "Clear sky",
-    1: "Mainly clear",
-    2: "Partly cloudy",
-    3: "Overcast",
-    45: "Fog",
-    48: "Rime fog",
-    51: "Light drizzle",
-    53: "Moderate drizzle",
-    55: "Dense drizzle",
-    61: "Slight rain",
-    63: "Moderate rain",
-    65: "Heavy rain",
-    71: "Slight snow",
-    73: "Moderate snow",
-    75: "Heavy snow",
-    80: "Slight rain showers",
-    81: "Moderate rain showers",
-    82: "Violent rain showers",
-    85: "Slight snow showers",
-    86: "Heavy snow showers",
-    95: "Thunderstorm",
-    96: "Thunderstorm with hail",
-    99: "Thunderstorm with heavy hail",
+    0: "Klarer Himmel",
+    1: "Überwiegend klar",
+    2: "Teilweise bewölkt",
+    3: "Bedeckt",
+    45: "Nebel",
+    48: "Reifnebel",
+    51: "Leichter Nieselregen",
+    53: "Mäßiger Nieselregen",
+    55: "Starker Nieselregen",
+    56: "Gefrierender Nieselregen",
+    57: "Starker gefr. Nieselregen",
+    61: "Leichter Regen",
+    63: "Mäßiger Regen",
+    65: "Starker Regen",
+    66: "Gefrierender Regen",
+    67: "Starker gefr. Regen",
+    71: "Leichter Schneefall",
+    73: "Mäßiger Schneefall",
+    75: "Starker Schneefall",
+    77: "Schneegriesel",
+    80: "Leichte Regenschauer",
+    81: "Mäßige Regenschauer",
+    82: "Starke Regenschauer",
+    85: "Leichte Schneeschauer",
+    86: "Starke Schneeschauer",
+    95: "Gewitter",
+    96: "Gewitter mit Hagel",
+    99: "Gewitter mit starkem Hagel",
   };
-  return map[code] ?? "Unknown";
+  return map[code] ?? "Unbekannt";
 }

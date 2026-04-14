@@ -71,7 +71,6 @@ import {
   LocationDistributionCard,
   type LocationGroup,
 } from "./_components/location-distribution-card";
-import { MyTasksCard } from "./_components/my-tasks-card";
 import {
   RecentActivityCard,
   type ActivityEvent,
@@ -557,7 +556,7 @@ async function ManagerDashboardContent({
     /* Widget: Weather — locations */
     prisma.location.findMany({
       where: { workspaceId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, address: true },
       orderBy: { name: "asc" },
     }),
     /* Widget: Compliance */
@@ -974,6 +973,7 @@ async function ManagerDashboardContent({
   const weatherLocs: WeatherLocation[] = weatherLocations.map((loc) => ({
     id: loc.id,
     name: loc.name,
+    geocodeQuery: loc.address || loc.name,
   }));
 
   /* ── Widget: Compliance Alerts ── */
@@ -1592,15 +1592,6 @@ async function ManagerDashboardContent({
           loadingLabel={t("widgets.loadingWeather")}
         />
       </div>
-
-      {/* My Tasks */}
-      <MyTasksCard
-        tasks={[]}
-        title={t("widgets.myTasks")}
-        newLabel={t("widgets.newTask")}
-        emptyLabel={t("widgets.noTasks")}
-        emptyDesc={t("widgets.noTasksDesc")}
-      />
     </div>
   );
 }

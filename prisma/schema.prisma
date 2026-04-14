@@ -1301,7 +1301,7 @@ enum TicketEventType {
 
 model Ticket {
   id                    String          @id @default(cuid())
-  ticketNumber          String          @unique /// Human-readable e.g. TK-2025-0042
+  ticketNumber          String          /// Human-readable e.g. TK-2025-0042 (unique per workspace)
   ticketType            TicketType      @default(INTERN)
   subject               String          @db.VarChar(200)
   description           String          @db.Text
@@ -1327,13 +1327,13 @@ model Ticket {
   updatedAt             DateTime        @updatedAt
   comments              TicketComment[]
   events                TicketEvent[]
+  @@unique([workspaceId, ticketNumber])
   @@index([workspaceId])
   @@index([createdById])
   @@index([assignedToId])
   @@index([status])
   @@index([externalToken])
   @@index([workspaceId, status])
-  @@index([workspaceId, ticketNumber])
 }
 
 model TicketComment {

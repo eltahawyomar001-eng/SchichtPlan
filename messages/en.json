@@ -173,6 +173,7 @@
       "recentActivity": "Recent Activity",
       "liveProjects": "Live Project Overview",
       "noRecentActivity": "No activity today",
+      "timeUnit": "h",
       "noActiveProjects": "No active projects",
       "workTime": "Work time",
       "breakTime": "Break",

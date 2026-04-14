@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 
 /* ── Types ── */
 export interface DailyHours {
@@ -218,20 +217,12 @@ export function HoursChartCard({
             ))}
           </div>
 
-          {/* Date range + nav */}
+          {/* Date range */}
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
             <span className="tabular-nums">{dateRange}</span>
-            <div className="flex items-center gap-1">
-              <button className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
-                <ChevronLeftIcon className="h-4 w-4" />
-              </button>
-              <span className="font-medium text-gray-700 dark:text-zinc-300">
-                {todayLabel}
-              </span>
-              <button className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
-                <ChevronRightIcon className="h-4 w-4" />
-              </button>
-            </div>
+            <span className="font-medium text-gray-700 dark:text-zinc-300">
+              {todayLabel}
+            </span>
           </div>
         </div>
 

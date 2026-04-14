@@ -26,6 +26,7 @@ interface RecentActivityCardProps {
   events: ActivityEvent[];
   title: string;
   emptyLabel: string;
+  timeUnit?: string; // e.g. "Uhr" or "h" — defaults to "Uhr" for backward compat
 }
 
 /* ── Icon + color per activity type ── */
@@ -68,6 +69,7 @@ export function RecentActivityCard({
   events,
   title,
   emptyLabel,
+  timeUnit = "Uhr",
 }: RecentActivityCardProps) {
   return (
     <Card>
@@ -114,7 +116,7 @@ export function RecentActivityCard({
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-sm">
                       <span className="font-semibold text-gray-900 dark:text-zinc-100 tabular-nums">
-                        {event.time} Uhr
+                        {event.time} {timeUnit}
                       </span>
                       <span className="text-gray-300 dark:text-zinc-600">
                         |

@@ -811,7 +811,7 @@ async function ManagerDashboardContent({
           : "working";
       const clockIn = entry.clockInAt ? new Date(entry.clockInAt) : null;
       const sinceStr = clockIn
-        ? clockIn.toLocaleTimeString("de-DE", {
+        ? clockIn.toLocaleTimeString(localeFmt, {
             hour: "2-digit",
             minute: "2-digit",
             timeZone: "Europe/Berlin",
@@ -1146,7 +1146,7 @@ async function ManagerDashboardContent({
     .map((entry) => {
       const empName = `${entry.employee.lastName}, ${entry.employee.firstName}`;
       const time = entry.clockInAt
-        ? new Date(entry.clockInAt).toLocaleTimeString("de-DE", {
+        ? new Date(entry.clockInAt).toLocaleTimeString(localeFmt, {
             hour: "2-digit",
             minute: "2-digit",
             timeZone: "Europe/Berlin",
@@ -1172,7 +1172,7 @@ async function ManagerDashboardContent({
     .filter((e) => e.employee && e.project)
     .map((entry) => {
       const clockIn = entry.clockInAt ? new Date(entry.clockInAt) : new Date();
-      const startStr = clockIn.toLocaleTimeString("de-DE", {
+      const startStr = clockIn.toLocaleTimeString(localeFmt, {
         hour: "2-digit",
         minute: "2-digit",
         timeZone: "Europe/Berlin",
@@ -1199,12 +1199,11 @@ async function ManagerDashboardContent({
   const categoryLabel = (cat: string) => {
     const catMap: Record<string, string> = {
       URLAUB: t("widgets.vacation"),
-      KRANKHEIT: t("widgets.illness"),
+      KRANK: t("widgets.illness"),
       SONDERURLAUB: t("widgets.specialLeave"),
       ELTERNZEIT: t("widgets.parentalLeave"),
       FORTBILDUNG: t("widgets.training"),
       UNBEZAHLT: t("widgets.unpaid"),
-      HOMEOFFICE: t("widgets.homeoffice"),
       SONSTIGES: t("widgets.other"),
     };
     return catMap[cat] ?? cat;
@@ -1465,6 +1464,7 @@ async function ManagerDashboardContent({
           events={activityEvents}
           title={t("widgets.recentActivity")}
           emptyLabel={t("widgets.noRecentActivity")}
+          timeUnit={t("widgets.timeUnit")}
         />
 
         {/* Shift Coverage */}

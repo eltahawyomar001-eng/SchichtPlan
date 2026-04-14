@@ -102,17 +102,9 @@ export function AbsenteeismCard({
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-zinc-500">
             <span>{todayDate}</span>
-            <div className="flex items-center gap-1">
-              <button className="p-0.5 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors">
-                ‹
-              </button>
-              <span className="font-medium text-gray-600 dark:text-zinc-300">
-                {todayLabel}
-              </span>
-              <button className="p-0.5 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors">
-                ›
-              </button>
-            </div>
+            <span className="font-medium text-gray-600 dark:text-zinc-300">
+              {todayLabel}
+            </span>
           </div>
         </div>
       </CardHeader>

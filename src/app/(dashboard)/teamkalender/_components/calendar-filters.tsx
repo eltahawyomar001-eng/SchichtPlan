@@ -101,12 +101,11 @@ export function CalendarFilters({
 
 /* ─── Reusable Filter Select ─────────────────────────────────── */
 function FilterSelect({
-  label,
   value,
   onChange,
   options,
 }: {
-  label: string;
+  label?: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
@@ -124,12 +123,6 @@ function FilterSelect({
           </option>
         ))}
       </select>
-      {/* Custom dropdown indicator showing label + chevron */}
-      <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-        <span className="text-sm text-gray-700 dark:text-zinc-300">
-          {label}
-        </span>
-      </div>
       <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
         <ChevronDownIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
       </div>

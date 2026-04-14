@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusIcon, TrashIcon } from "@/components/icons";
+import { PlusIcon, TrashIcon, CheckIcon } from "@/components/icons";
 
 /* ── Types ── */
 export interface Task {
@@ -137,7 +137,7 @@ export function MyTasksCard({
               disabled={!newTitle.trim()}
               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 text-xs font-semibold text-white transition-colors"
             >
-              <PlusIcon className="h-4 w-4" />
+              <CheckIcon className="h-4 w-4" />
             </button>
           </form>
         )}

@@ -69,7 +69,6 @@ export function LandingPage() {
 
       <main id="main-content">
         <HeroSection />
-        <SocialProofSection />
         <FeatureTabsSection />
         <BenefitsSection />
         <AppShowcaseSection />
@@ -1145,9 +1144,6 @@ function PricingSection() {
               }`}
             >
               {tp("billingAnnual")}
-              <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                {tp("saveBadge")}
-              </span>
             </button>
           </div>
         </div>
@@ -1451,11 +1447,7 @@ function AppShowcaseSection() {
     },
   ];
 
-  const badges = [
-    t("appShowcaseOffline"),
-    t("appShowcaseInstant"),
-    t("appShowcaseNoInstall"),
-  ];
+  const badges = [t("appShowcaseInstant"), t("appShowcaseNoInstall")];
 
   return (
     <section className="py-16 sm:py-24 dark:bg-zinc-950">
@@ -1555,14 +1547,6 @@ function IntegrationsSection() {
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-          {/* DATEV Partner badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 mb-5">
-            <AwardIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-              {t("integrationsBadge")}
-            </span>
-          </div>
-
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
             {t("integrationsTitle")}
           </h2>

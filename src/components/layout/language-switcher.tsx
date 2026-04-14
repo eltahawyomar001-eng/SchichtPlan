@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type ComponentType, type SVGProps } from "react";
+import { useState, type ComponentType, type SVGProps } from "react";
 import { useLocale } from "next-intl";
 import { setLocale } from "@/i18n/locale";
 import { DEFlagIcon, GBFlagIcon } from "@/components/icons";
@@ -18,14 +18,18 @@ const LOCALES: {
 
 export function LanguageSwitcher() {
   const locale = useLocale();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleChange(nextLocale: Locale) {
-    if (nextLocale === locale) return;
-    startTransition(async () => {
+  async function handleChange(nextLocale: Locale) {
+    if (nextLocale === locale || isPending) return;
+    setIsPending(true);
+    try {
       await setLocale(nextLocale);
-      window.location.reload();
-    });
+    } catch {
+      // Cookie may still have been set — reload anyway
+    }
+    // Always reload regardless of server action success/failure
+    window.location.reload();
   }
 
   return (

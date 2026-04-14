@@ -41,22 +41,60 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Today's Shifts */}
-      <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 sm:shadow-sm">
-        <div className="mb-5 h-5 w-36 shimmer rounded-lg bg-gray-100" />
+      <div className="rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 dark:sm:border-zinc-800 sm:shadow-sm">
+        <div className="mb-5 h-5 w-36 shimmer rounded-lg bg-gray-100 dark:bg-zinc-800" />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center gap-4 rounded-xl bg-gray-50/30 p-4"
+              className="flex items-center gap-4 rounded-xl bg-gray-50/30 dark:bg-zinc-800/30 p-4"
             >
-              <div className="h-10 w-10 shimmer rounded-xl bg-gray-100 flex-shrink-0" />
+              <div className="h-10 w-10 shimmer rounded-xl bg-gray-100 dark:bg-zinc-800 flex-shrink-0" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 shimmer rounded-lg bg-gray-100" />
-                <div className="h-3 w-1/2 shimmer rounded-lg bg-gray-50" />
+                <div className="h-4 w-3/4 shimmer rounded-lg bg-gray-100 dark:bg-zinc-800" />
+                <div className="h-3 w-1/2 shimmer rounded-lg bg-gray-50 dark:bg-zinc-800/50" />
               </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Chart + Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 dark:sm:border-zinc-800 sm:shadow-sm">
+          <div className="mb-4 h-5 w-44 shimmer rounded-lg bg-gray-100 dark:bg-zinc-800" />
+          <div className="h-48 shimmer rounded-xl bg-gray-50 dark:bg-zinc-800/50" />
+        </div>
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 dark:sm:border-zinc-800 sm:shadow-sm">
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2 p-3">
+                <div className="h-3 w-16 shimmer rounded bg-gray-100 dark:bg-zinc-800" />
+                <div className="h-6 w-10 shimmer rounded bg-gray-100 dark:bg-zinc-800" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Widget grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:border sm:border-gray-100 dark:sm:border-zinc-800 sm:shadow-sm"
+          >
+            <div className="mb-4 h-5 w-32 shimmer rounded-lg bg-gray-100 dark:bg-zinc-800" />
+            <div className="space-y-2.5">
+              {Array.from({ length: 3 }).map((_, j) => (
+                <div
+                  key={j}
+                  className="h-14 shimmer rounded-xl bg-gray-50 dark:bg-zinc-800/50"
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -99,7 +99,10 @@
     "tickets": "Tickets",
     "more": "Mehr",
     "darkMode": "Dunkelmodus",
-    "lightMode": "Hellmodus"
+    "lightMode": "Hellmodus",
+    "sidebarSearch": "Navigation durchsuchen…",
+    "favAdd": "Zu Favoriten hinzufügen",
+    "favRemove": "Aus Favoriten entfernen"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -791,6 +794,7 @@
   "settings": {
     "title": "Einstellungen",
     "description": "Konto und Arbeitsbereich konfigurieren",
+    "loading": "Laden…",
     "profile": "Profil",
     "profileDesc": "Persönliche Daten und Kontoinformationen",
     "workspace": "Arbeitsbereich",

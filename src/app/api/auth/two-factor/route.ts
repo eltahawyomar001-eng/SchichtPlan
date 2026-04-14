@@ -56,7 +56,7 @@ async function hashRecoveryCodes(plainCodes: string[]): Promise<string[]> {
 export const GET = withRoute("/api/auth/two-factor", "GET", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
-  const { user, workspaceId } = auth;
+  const { user } = auth;
 
   const url = new URL(req.url);
 
@@ -69,6 +69,15 @@ export const GET = withRoute("/api/auth/two-factor", "GET", async (req) => {
     return NextResponse.json({
       enabled: dbUser?.twoFactorEnabled ?? false,
     });
+  }
+
+  // Encryption key is required for 2FA — fail early with a clear message
+  if (!process.env.ENCRYPTION_KEY) {
+    log.error("ENCRYPTION_KEY is not set — cannot setup 2FA");
+    return NextResponse.json(
+      { error: "2FA is not available. Server configuration missing." },
+      { status: 503 },
+    );
   }
 
   // Check if there's already a pending secret (2FA not yet enabled).
@@ -118,7 +127,7 @@ export const GET = withRoute("/api/auth/two-factor", "GET", async (req) => {
 export const POST = withRoute("/api/auth/two-factor", "POST", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
-  const { user, workspaceId } = auth;
+  const { user } = auth;
 
   const parsed = validateBody(twoFactorVerifySchema, await req.json());
   if (!parsed.success) return parsed.response;
@@ -170,10 +179,10 @@ export const POST = withRoute("/api/auth/two-factor", "POST", async (req) => {
 export const DELETE = withRoute(
   "/api/auth/two-factor",
   "DELETE",
-  async (req) => {
+  async (_req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+    const { user } = auth;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma.user as any).update({

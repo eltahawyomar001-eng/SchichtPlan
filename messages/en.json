@@ -99,7 +99,10 @@
     "tickets": "Tickets",
     "more": "More",
     "darkMode": "Dark mode",
-    "lightMode": "Light mode"
+    "lightMode": "Light mode",
+    "sidebarSearch": "Search navigation…",
+    "favAdd": "Add to favorites",
+    "favRemove": "Remove from favorites"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -791,6 +794,7 @@
   "settings": {
     "title": "Settings",
     "description": "Configure your account and workspace",
+    "loading": "Loading…",
     "profile": "Profile",
     "profileDesc": "Personal information and account details",
     "workspace": "Workspace",

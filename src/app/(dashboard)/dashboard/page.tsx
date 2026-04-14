@@ -24,8 +24,65 @@ import {
   EmployeeDashboardSkeleton,
 } from "./_components/dashboard-skeleton";
 import { FavoritesSection } from "./_components/favorites-section";
+import {
+  LiveOverviewCard,
+  type LiveEmployee,
+  type LiveStatus,
+} from "./_components/live-overview-card";
+import {
+  OvertimeTrackerCard,
+  type OvertimeEmployee,
+} from "./_components/overtime-tracker-card";
+import {
+  ShiftCoverageCard,
+  type CoverageDay,
+} from "./_components/shift-coverage-card";
+import {
+  TeamCalendarMiniCard,
+  type CalendarDay,
+} from "./_components/team-calendar-mini-card";
+import {
+  CelebrationsCard,
+  type CelebrationEntry,
+} from "./_components/celebrations-card";
+import { WeatherCard, type WeatherLocation } from "./_components/weather-card";
+import {
+  ComplianceAlertsCard,
+  type ComplianceAlert,
+  type AlertSeverity,
+} from "./_components/compliance-alerts-card";
+import {
+  HoursChartCard,
+  type DailyHours,
+} from "./_components/hours-chart-card";
+import {
+  WorkforceStatsGrid,
+  type WorkforceStat,
+} from "./_components/workforce-stats-grid";
+import {
+  AbsenteeismCard,
+  type AbsentEmployee,
+} from "./_components/absenteeism-card";
+import {
+  PendingRequestsCard,
+  type PendingRequest,
+} from "./_components/pending-requests-card";
+import {
+  LocationDistributionCard,
+  type LocationGroup,
+} from "./_components/location-distribution-card";
+import { MyTasksCard } from "./_components/my-tasks-card";
+import {
+  RecentActivityCard,
+  type ActivityEvent,
+  type ActivityType,
+} from "./_components/recent-activity-card";
+import {
+  LiveProjectsCard,
+  type LiveProject,
+} from "./_components/live-projects-card";
 
-export const revalidate = 0; // Always fresh data, but allows bfcache (no cache-control: no-store)
+export const revalidate = 0;
 
 interface ShiftWithRelations {
   id: string;
@@ -74,7 +131,6 @@ export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
 
-  // Guard: if no workspace yet (e.g. fresh OAuth sign-up), show setup prompt
   if (!workspaceId) {
     return (
       <div>
@@ -101,7 +157,6 @@ export default async function DashboardPage() {
 
   const isManager = user ? isManagement(user) : false;
 
-  // Render Topbar immediately (LCP), stream data sections via Suspense
   if (!isManager) {
     return (
       <div>
@@ -200,10 +255,8 @@ async function EmployeeDashboardContent({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* Employee Favorites */}
       <FavoritesSection initialFavorites={favorites} />
 
-      {/* My Pending Requests */}
       {(myPendingAbsences > 0 || myPendingSwaps > 0) && (
         <Card>
           <CardHeader>
@@ -223,9 +276,7 @@ async function EmployeeDashboardContent({
                       <CalendarOffIcon className="h-4 w-4 text-emerald-600" />
                     </div>
                     <p className="text-sm font-medium text-gray-700">
-                      {t("pendingAbsences", {
-                        count: myPendingAbsences,
-                      })}
+                      {t("pendingAbsences", { count: myPendingAbsences })}
                     </p>
                   </div>
                   <ArrowRightIcon className="h-4 w-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
@@ -252,7 +303,6 @@ async function EmployeeDashboardContent({
         </Card>
       )}
 
-      {/* My Shifts Today */}
       <Card>
         <CardHeader>
           <CardTitle>{t("myShiftsToday")}</CardTitle>
@@ -300,7 +350,6 @@ async function EmployeeDashboardContent({
         </CardContent>
       </Card>
 
-      {/* Upcoming Shifts */}
       {(myUpcomingShifts as ShiftWithRelations[]).length > 0 && (
         <Card>
           <CardHeader>
@@ -366,8 +415,34 @@ async function ManagerDashboardContent({
 }) {
   const t = await getTranslations("dashboard");
   const to = await getTranslations("onboarding");
+  const locale = await getLocale();
+  const localeFmt = locale === "en" ? "en-GB" : "de-DE";
   const statusLabel = getStatusLabel(t);
   const { todayStart, todayEnd } = getTodayBounds();
+
+  /* ── Date ranges for widget queries ── */
+  const berlinDateStr = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Europe/Berlin",
+  });
+  const berlinNow = new Date(`${berlinDateStr}T12:00:00.000Z`);
+  const dayOfWeek = berlinNow.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const weekStart = new Date(berlinNow);
+  weekStart.setDate(weekStart.getDate() + mondayOffset);
+  weekStart.setUTCHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setUTCHours(23, 59, 59, 999);
+  const monthStart = new Date(`${berlinDateStr.slice(0, 7)}-01T00:00:00.000Z`);
+  const monthEnd = new Date(monthStart);
+  monthEnd.setMonth(monthEnd.getMonth() + 1);
+  monthEnd.setMilliseconds(-1);
+
+  /* ── Date ranges for chart ── */
+  const yearStart = new Date(
+    `${berlinDateStr.slice(0, 4)}-01-01T00:00:00.000Z`,
+  );
+  const yearEnd = new Date(`${berlinDateStr.slice(0, 4)}-12-31T23:59:59.999Z`);
 
   const [
     employeeCount,
@@ -378,15 +453,28 @@ async function ManagerDashboardContent({
     pendingSwaps,
     pendingTimeEntries,
     currentUser,
+    liveTimeEntries,
+    weekShiftsForCoverage,
+    monthShiftsForCalendar,
+    monthAbsencesForCalendar,
+    allActiveEmployees,
+    weatherLocations,
+    complianceTimeEntries,
+    timeAccounts,
+    weekTimeEntries,
+    monthTimeEntries,
+    yearTimeEntries,
+    activeAbsences,
+    pendingAbsenceRequests,
+    allLocationsWithEmployees,
+    recentTimeEntries,
+    liveProjectEntries,
   ] = await Promise.all([
     prisma.employee.count({ where: { workspaceId, isActive: true } }),
     prisma.shift.count({ where: { workspaceId } }),
     prisma.location.count({ where: { workspaceId } }),
     prisma.shift.findMany({
-      where: {
-        workspaceId,
-        date: { gte: todayStart, lt: todayEnd },
-      },
+      where: { workspaceId, date: { gte: todayStart, lt: todayEnd } },
       include: { employee: true, location: true },
       orderBy: { startTime: "asc" },
     }),
@@ -396,12 +484,196 @@ async function ManagerDashboardContent({
     prisma.shiftSwapRequest.count({
       where: { workspaceId, status: "ANGEFRAGT" },
     }),
-    prisma.timeEntry.count({
-      where: { workspaceId, status: "EINGEREICHT" },
-    }),
+    prisma.timeEntry.count({ where: { workspaceId, status: "EINGEREICHT" } }),
     prisma.user.findUnique({
       where: { id: userId },
       select: { dashboardFavorites: true },
+    }),
+    /* Widget: Live Overview */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        clockInAt: { not: null },
+        isLiveClock: true,
+        date: { gte: todayStart, lt: todayEnd },
+      },
+      include: {
+        employee: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            color: true,
+            location: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { clockInAt: "desc" },
+    }),
+    /* Widget: Shift Coverage */
+    prisma.shift.findMany({
+      where: {
+        workspaceId,
+        date: { gte: weekStart, lte: weekEnd },
+        deletedAt: null,
+      },
+      select: { date: true, status: true, employeeId: true },
+    }),
+    /* Widget: Calendar — shifts */
+    prisma.shift.findMany({
+      where: {
+        workspaceId,
+        date: { gte: monthStart, lte: monthEnd },
+        deletedAt: null,
+      },
+      select: { date: true },
+    }),
+    /* Widget: Calendar — absences */
+    prisma.absenceRequest.findMany({
+      where: {
+        workspaceId,
+        status: "GENEHMIGT",
+        startDate: { lte: monthEnd },
+        endDate: { gte: monthStart },
+      },
+      select: { startDate: true, endDate: true },
+    }),
+    /* Widget: Celebrations + Employee lookup */
+    prisma.employee.findMany({
+      where: { workspaceId, isActive: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        color: true,
+        createdAt: true,
+      },
+    }),
+    /* Widget: Weather — locations */
+    prisma.location.findMany({
+      where: { workspaceId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    /* Widget: Compliance */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        date: { gte: new Date(todayStart.getTime() - 86400000), lt: todayEnd },
+        deletedAt: null,
+        clockOutAt: { not: null },
+      },
+      select: {
+        employeeId: true,
+        date: true,
+        clockInAt: true,
+        clockOutAt: true,
+        grossMinutes: true,
+        netMinutes: true,
+        breakMinutes: true,
+      },
+      orderBy: { clockInAt: "asc" },
+    }),
+    /* Widget: Overtime */
+    prisma.timeAccount.findMany({
+      where: { workspaceId },
+      select: { currentBalance: true, contractHours: true, employeeId: true },
+    }),
+    /* Widget: Hours Chart — week */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        deletedAt: null,
+        date: { gte: weekStart, lte: weekEnd },
+        status: { not: "ENTWURF" },
+      },
+      select: { date: true, netMinutes: true },
+    }),
+    /* Widget: Hours Chart — month */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        deletedAt: null,
+        date: { gte: monthStart, lte: monthEnd },
+        status: { not: "ENTWURF" },
+      },
+      select: { date: true, netMinutes: true },
+    }),
+    /* Widget: Hours Chart — year */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        deletedAt: null,
+        date: { gte: yearStart, lte: yearEnd },
+        status: { not: "ENTWURF" },
+      },
+      select: { date: true, netMinutes: true },
+    }),
+    /* Widget: Absenteeism — active today */
+    prisma.absenceRequest.findMany({
+      where: {
+        workspaceId,
+        status: "GENEHMIGT",
+        startDate: { lte: todayEnd },
+        endDate: { gte: todayStart },
+      },
+      include: {
+        employee: {
+          select: { id: true, firstName: true, lastName: true, color: true },
+        },
+      },
+    }),
+    /* Widget: Pending Requests */
+    prisma.absenceRequest.findMany({
+      where: { workspaceId, status: "AUSSTEHEND" },
+      include: {
+        employee: { select: { firstName: true, lastName: true, color: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    /* Widget: Location Distribution */
+    prisma.location.findMany({
+      where: { workspaceId },
+      select: {
+        id: true,
+        name: true,
+        employees: {
+          where: { isActive: true },
+          select: { id: true, firstName: true, lastName: true, color: true },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    /* Widget: Recent Activity */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        date: { gte: todayStart, lt: todayEnd },
+        clockInAt: { not: null },
+        deletedAt: null,
+      },
+      include: {
+        employee: { select: { firstName: true, lastName: true } },
+        project: { select: { name: true } },
+      },
+      orderBy: { clockInAt: "desc" },
+      take: 10,
+    }),
+    /* Widget: Live Projects */
+    prisma.timeEntry.findMany({
+      where: {
+        workspaceId,
+        isLiveClock: true,
+        clockOutAt: null,
+        date: { gte: todayStart, lt: todayEnd },
+        projectId: { not: null },
+      },
+      include: {
+        employee: { select: { firstName: true, lastName: true, color: true } },
+        project: { select: { name: true } },
+      },
+      orderBy: { clockInAt: "desc" },
     }),
   ]);
 
@@ -502,6 +774,469 @@ async function ManagerDashboardContent({
     },
   ].filter((item) => item.count > 0);
 
+  /* ══════════════════════════════════════════════════════════
+   * Widget data processing
+   * ══════════════════════════════════════════════════════════ */
+
+  const empMap = new Map(allActiveEmployees.map((e) => [e.id, e]));
+
+  /* ── Widget: Live Overview ── */
+  // eslint-disable-next-line react-hooks/purity -- server component, rendered once per request
+  const nowMs = Date.now();
+  const liveEmployees: LiveEmployee[] = liveTimeEntries
+    .filter((e) => e.employee)
+    .map((entry) => {
+      const hasBreakStart = !!entry.breakStart;
+      const hasBreakEnd = !!entry.breakEnd;
+      const isOnBreak = hasBreakStart && !hasBreakEnd;
+      const isClockedOut = !!entry.clockOutAt;
+      const status: LiveStatus = isClockedOut
+        ? "clocked_out"
+        : isOnBreak
+          ? "break"
+          : "working";
+      const clockIn = entry.clockInAt ? new Date(entry.clockInAt) : null;
+      const sinceStr = clockIn
+        ? clockIn.toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Europe/Berlin",
+          })
+        : undefined;
+      const elapsedMs = clockIn ? nowMs - clockIn.getTime() : 0;
+      const elapsedH = Math.floor(elapsedMs / 3600000);
+      const elapsedM = Math.floor((elapsedMs % 3600000) / 60000);
+      const duration = elapsedMs > 0 ? `${elapsedH}h ${elapsedM}m` : undefined;
+      return {
+        id: entry.employee!.id,
+        firstName: entry.employee!.firstName,
+        lastName: entry.employee!.lastName,
+        color: entry.employee!.color,
+        status,
+        since: sinceStr,
+        duration,
+        location: entry.employee!.location?.name,
+      };
+    });
+  const liveEmployeeMap = new Map<string, LiveEmployee>();
+  for (const emp of liveEmployees) liveEmployeeMap.set(emp.id, emp);
+  const uniqueLiveEmployees = Array.from(liveEmployeeMap.values()).sort(
+    (a, b) => {
+      const order: Record<LiveStatus, number> = {
+        working: 0,
+        break: 1,
+        clocked_out: 2,
+      };
+      return order[a.status] - order[b.status];
+    },
+  );
+
+  /* ── Widget: Overtime Tracker ── */
+  const overtimeEmployees: OvertimeEmployee[] = timeAccounts
+    .filter((ta) => ta.currentBalance !== 0)
+    .map((ta) => {
+      const emp = empMap.get(ta.employeeId);
+      return {
+        id: ta.employeeId,
+        firstName: emp?.firstName ?? "–",
+        lastName: emp?.lastName ?? "",
+        color: emp?.color ?? null,
+        overtimeMinutes: ta.currentBalance,
+        contractHours: ta.contractHours,
+      };
+    })
+    .sort((a, b) => Math.abs(b.overtimeMinutes) - Math.abs(a.overtimeMinutes))
+    .slice(0, 8);
+
+  /* ── Widget: Shift Coverage ── */
+  const dayNamesShort =
+    locale === "en"
+      ? ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+      : ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  const coverageDays: CoverageDay[] = [];
+  for (let d = 0; d < 7; d++) {
+    const day = new Date(weekStart);
+    day.setDate(day.getDate() + d);
+    const dayStr = day.toLocaleDateString("en-CA", {
+      timeZone: "Europe/Berlin",
+    });
+    const dayShifts = weekShiftsForCoverage.filter(
+      (s) =>
+        new Date(s.date).toLocaleDateString("en-CA", {
+          timeZone: "Europe/Berlin",
+        }) === dayStr,
+    );
+    const total = dayShifts.length;
+    const open = dayShifts.filter(
+      (s) => s.status === "OPEN" || !s.employeeId,
+    ).length;
+    coverageDays.push({
+      date: dayStr,
+      label: `${dayNamesShort[day.getDay()]} ${day.toLocaleDateString(localeFmt, { day: "numeric", month: "numeric" })}`,
+      totalShifts: total,
+      filledShifts: total - open,
+      openShifts: open,
+    });
+  }
+
+  /* ── Widget: Team Calendar Mini ── */
+  const calYear = monthStart.getFullYear();
+  const calMonth = monthStart.getMonth();
+  const firstOfMonth = new Date(calYear, calMonth, 1);
+  const calStart = new Date(firstOfMonth);
+  const firstDow = calStart.getDay();
+  const calMondayOff = firstDow === 0 ? -6 : 1 - firstDow;
+  calStart.setDate(calStart.getDate() + calMondayOff);
+  const calendarDays: CalendarDay[] = [];
+  const berlinToday = new Date(
+    new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" }),
+  );
+  const todayIso = berlinToday.toLocaleDateString("en-CA");
+  const shiftDateSet = new Set(
+    monthShiftsForCalendar.map((s) =>
+      new Date(s.date).toLocaleDateString("en-CA"),
+    ),
+  );
+  const absenceDateSet = new Set<string>();
+  for (const abs of monthAbsencesForCalendar) {
+    const start = new Date(abs.startDate);
+    const end = new Date(abs.endDate);
+    for (let dd = new Date(start); dd <= end; dd.setDate(dd.getDate() + 1)) {
+      absenceDateSet.add(dd.toLocaleDateString("en-CA"));
+    }
+  }
+  for (let i = 0; i < 42; i++) {
+    const cd = new Date(calStart);
+    cd.setDate(cd.getDate() + i);
+    const iso = cd.toLocaleDateString("en-CA");
+    calendarDays.push({
+      date: iso,
+      day: cd.getDate(),
+      isToday: iso === todayIso,
+      isCurrentMonth: cd.getMonth() === calMonth,
+      hasShifts: shiftDateSet.has(iso),
+      hasAbsences: absenceDateSet.has(iso),
+      shiftCount: monthShiftsForCalendar.filter(
+        (s) => new Date(s.date).toLocaleDateString("en-CA") === iso,
+      ).length,
+      absenceCount: absenceDateSet.has(iso) ? 1 : 0,
+    });
+  }
+  const monthLabelStr = firstOfMonth.toLocaleDateString(localeFmt, {
+    month: "long",
+    year: "numeric",
+  });
+  const calDayLabels = [
+    t("widgets.dayMo"),
+    t("widgets.dayTu"),
+    t("widgets.dayWe"),
+    t("widgets.dayTh"),
+    t("widgets.dayFr"),
+    t("widgets.daySa"),
+    t("widgets.daySu"),
+  ];
+
+  /* ── Widget: Celebrations ── */
+  const berlinTodayMs = berlinToday.getTime();
+  const celebrations: CelebrationEntry[] = [];
+  for (const emp of allActiveEmployees) {
+    const hireDate = new Date(emp.createdAt);
+    const yearsWorked = berlinToday.getFullYear() - hireDate.getFullYear();
+    if (yearsWorked >= 1) {
+      const anniv = new Date(
+        berlinToday.getFullYear(),
+        hireDate.getMonth(),
+        hireDate.getDate(),
+      );
+      const diff = Math.floor((anniv.getTime() - berlinTodayMs) / 86400000);
+      if (diff >= 0 && diff <= 7) {
+        celebrations.push({
+          id: `ann_${emp.id}`,
+          firstName: emp.firstName,
+          lastName: emp.lastName,
+          color: emp.color,
+          type: "anniversary",
+          date: anniv.toLocaleDateString(localeFmt),
+          detail: t("widgets.yearsAnniversary", { count: yearsWorked }),
+          daysUntil: diff,
+        });
+      }
+    }
+  }
+  celebrations.sort((a, b) => a.daysUntil - b.daysUntil);
+
+  /* ── Widget: Weather ── */
+  const weatherLocs: WeatherLocation[] = weatherLocations.map((loc) => ({
+    id: loc.id,
+    name: loc.name,
+  }));
+
+  /* ── Widget: Compliance Alerts ── */
+  const complianceAlerts: ComplianceAlert[] = [];
+  const compByEmployee = new Map<string, typeof complianceTimeEntries>();
+  for (const entry of complianceTimeEntries) {
+    const existing = compByEmployee.get(entry.employeeId) ?? [];
+    existing.push(entry);
+    compByEmployee.set(entry.employeeId, existing);
+  }
+  for (const [empId, entries] of compByEmployee) {
+    const emp = empMap.get(empId);
+    const empName = emp ? `${emp.firstName} ${emp.lastName}` : "–";
+    for (const entry of entries) {
+      if (entry.grossMinutes > 600) {
+        complianceAlerts.push({
+          id: `max_${entry.employeeId}_${entry.date}`,
+          severity: "critical" as AlertSeverity,
+          title: t("widgets.maxHoursViolation"),
+          description: t("widgets.maxHoursDesc"),
+          employeeName: empName,
+          date: new Date(entry.date).toLocaleDateString(localeFmt),
+          href: "/zeiterfassung",
+        });
+      }
+      if (entry.grossMinutes > 360 && entry.breakMinutes < 30) {
+        complianceAlerts.push({
+          id: `break_${entry.employeeId}_${entry.date}`,
+          severity: "warning" as AlertSeverity,
+          title: t("widgets.missingBreak"),
+          description: t("widgets.missingBreakDesc"),
+          employeeName: empName,
+          date: new Date(entry.date).toLocaleDateString(localeFmt),
+          href: "/zeiterfassung",
+        });
+      }
+    }
+    const sorted = [...entries]
+      .filter((e) => e.clockOutAt)
+      .sort(
+        (a, b) =>
+          new Date(a.clockInAt!).getTime() - new Date(b.clockInAt!).getTime(),
+      );
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const outTime = new Date(sorted[i].clockOutAt!).getTime();
+      const nextIn = new Date(sorted[i + 1].clockInAt!).getTime();
+      const restHours = (nextIn - outTime) / 3600000;
+      if (restHours < 11 && restHours >= 0) {
+        complianceAlerts.push({
+          id: `rest_${empId}_${i}`,
+          severity: "critical" as AlertSeverity,
+          title: t("widgets.restPeriodViolation"),
+          description: t("widgets.restPeriodDesc"),
+          employeeName: empName,
+          href: "/zeiterfassung",
+        });
+      }
+    }
+  }
+
+  /* ── Widget: Hours Chart ── */
+  function aggregateHours(
+    entries: { date: Date; netMinutes: number }[],
+    mode: "day" | "month",
+  ): DailyHours[] {
+    const map = new Map<string, number>();
+    for (const e of entries) {
+      const key =
+        mode === "day"
+          ? new Date(e.date).toLocaleDateString("en-CA")
+          : new Date(e.date).toLocaleDateString("en-CA").slice(0, 7);
+      map.set(key, (map.get(key) ?? 0) + e.netMinutes);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, mins]) => ({
+        date: key,
+        label:
+          mode === "day"
+            ? new Date(key).toLocaleDateString(localeFmt, {
+                day: "numeric",
+                month: "numeric",
+              })
+            : new Date(`${key}-15`).toLocaleDateString(localeFmt, {
+                month: "short",
+              }),
+        hours: Math.round((mins / 60) * 10) / 10,
+      }));
+  }
+
+  const weekChartData = aggregateHours(
+    weekTimeEntries as { date: Date; netMinutes: number }[],
+    "day",
+  );
+  const monthChartData = aggregateHours(
+    monthTimeEntries as { date: Date; netMinutes: number }[],
+    "day",
+  );
+  const yearChartData = aggregateHours(
+    yearTimeEntries as { date: Date; netMinutes: number }[],
+    "month",
+  );
+
+  const chartDateRange = `${weekStart.toLocaleDateString(localeFmt)} – ${weekEnd.toLocaleDateString(localeFmt)}`;
+
+  /* ── Widget: Workforce Stats ── */
+  const totalOvertimeMin = timeAccounts.reduce(
+    (sum, ta) => sum + ta.currentBalance,
+    0,
+  );
+  const workforceStats: WorkforceStat[] = [
+    {
+      id: "active",
+      label: t("employees"),
+      value: String(employeeCount),
+      numericValue: employeeCount,
+    },
+    {
+      id: "absent",
+      label: t("widgets.absent"),
+      value: String(activeAbsences.length),
+      numericValue: activeAbsences.length,
+    },
+    {
+      id: "overtime",
+      label: t("widgets.overtime"),
+      value: `${totalOvertimeMin >= 0 ? "+" : ""}${Math.round(totalOvertimeMin / 60)} ${t("widgets.hrs")}`,
+      numericValue: totalOvertimeMin,
+    },
+    {
+      id: "pending",
+      label: t("pendingItems"),
+      value: String(totalPending),
+      numericValue: totalPending,
+    },
+  ];
+
+  /* ── Widget: Absenteeism ── */
+  const absentEmployees: AbsentEmployee[] = activeAbsences.map((abs) => ({
+    id: abs.employee.id,
+    firstName: abs.employee.firstName,
+    lastName: abs.employee.lastName,
+    color: abs.employee.color,
+    category: abs.category,
+    daysRemaining: Math.max(
+      0,
+      Math.ceil((new Date(abs.endDate).getTime() - nowMs) / 86400000),
+    ),
+  }));
+
+  /* ── Widget: Pending Requests ── */
+  const pendingReqs: PendingRequest[] = pendingAbsenceRequests.map((req) => ({
+    id: req.id,
+    employee: {
+      firstName: req.employee.firstName,
+      lastName: req.employee.lastName,
+      color: req.employee.color,
+    },
+    category: req.category,
+    startDate: new Date(req.startDate).toLocaleDateString(localeFmt),
+    endDate: new Date(req.endDate).toLocaleDateString(localeFmt),
+  }));
+
+  /* ── Widget: Location Distribution ── */
+  const locationColors = [
+    "bg-emerald-500",
+    "bg-blue-500",
+    "bg-amber-500",
+    "bg-violet-500",
+    "bg-rose-500",
+    "bg-cyan-500",
+  ];
+  const locationGroups: LocationGroup[] = (
+    allLocationsWithEmployees as {
+      id: string;
+      name: string;
+      employees: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        color: string | null;
+      }[];
+    }[]
+  ).map((loc, i) => ({
+    id: loc.id,
+    name: loc.name,
+    color: locationColors[i % locationColors.length],
+    barColor: locationColors[i % locationColors.length],
+    employees: loc.employees,
+  }));
+  const totalDistEmployees = locationGroups.reduce(
+    (s, l) => s + l.employees.length,
+    0,
+  );
+
+  /* ── Widget: Recent Activity ── */
+  const activityEvents: ActivityEvent[] = recentTimeEntries
+    .filter((e) => e.employee)
+    .map((entry) => {
+      const empName = `${entry.employee.lastName}, ${entry.employee.firstName}`;
+      const time = entry.clockInAt
+        ? new Date(entry.clockInAt).toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Europe/Berlin",
+          })
+        : entry.startTime;
+      let actType: ActivityType = "clock_in";
+      if (entry.clockOutAt) actType = "clock_out";
+      else if (entry.breakStart && !entry.breakEnd) actType = "break_start";
+      else if (entry.breakEnd) actType = "break_end";
+      else if (entry.project) actType = "project";
+      const label = entry.project?.name ?? t("widgets.workTime");
+      return {
+        id: entry.id,
+        type: actType,
+        time,
+        employeeName: empName,
+        label,
+      };
+    });
+
+  /* ── Widget: Live Projects ── */
+  const liveProjects: LiveProject[] = liveProjectEntries
+    .filter((e) => e.employee && e.project)
+    .map((entry) => {
+      const clockIn = entry.clockInAt ? new Date(entry.clockInAt) : new Date();
+      const startStr = clockIn.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Berlin",
+      });
+      const elapsed = nowMs - clockIn.getTime();
+      const progressPercent = Math.min(
+        100,
+        Math.round((elapsed / (8 * 3600000)) * 100),
+      );
+      return {
+        id: entry.id,
+        projectName: entry.project!.name,
+        startTime: startStr,
+        sinceLabel: t("widgets.since", { time: startStr }),
+        progressPercent,
+        employee: {
+          name: `${entry.employee.firstName} ${entry.employee.lastName}`,
+          color: entry.employee.color,
+        },
+      };
+    });
+
+  /* ── Widget: Absence category label ── */
+  const categoryLabel = (cat: string) => {
+    const catMap: Record<string, string> = {
+      URLAUB: t("widgets.vacation"),
+      KRANKHEIT: t("widgets.illness"),
+      SONDERURLAUB: t("widgets.specialLeave"),
+      ELTERNZEIT: t("widgets.parentalLeave"),
+      FORTBILDUNG: t("widgets.training"),
+      UNBEZAHLT: t("widgets.unpaid"),
+      HOMEOFFICE: t("widgets.homeoffice"),
+      SONSTIGES: t("widgets.other"),
+    };
+    return catMap[cat] ?? cat;
+  };
+
+  /* ══════════════════════════════════════════════════════════
+   * Render
+   * ══════════════════════════════════════════════════════════ */
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Onboarding Wizard */}
@@ -521,7 +1256,6 @@ async function ManagerDashboardContent({
                 </p>
               </div>
             </div>
-            {/* Progress bar */}
             <div className="mt-4">
               <div className="flex justify-between text-xs text-gray-500 mb-1.5">
                 <span>{to("progress") || "Fortschritt"}</span>
@@ -552,9 +1286,7 @@ async function ManagerDashboardContent({
                   }`}
                 >
                   <div
-                    className={`flex-shrink-0 rounded-xl p-2.5 ${
-                      step.done ? "bg-green-100" : step.bg
-                    }`}
+                    className={`flex-shrink-0 rounded-xl p-2.5 ${step.done ? "bg-green-100" : step.bg}`}
                   >
                     {step.done ? (
                       <CheckCircleIcon className="h-5 w-5 text-green-600" />
@@ -564,11 +1296,7 @@ async function ManagerDashboardContent({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p
-                      className={`font-medium text-sm ${
-                        step.done
-                          ? "text-green-700 line-through"
-                          : "text-gray-900"
-                      }`}
+                      className={`font-medium text-sm ${step.done ? "text-green-700 line-through" : "text-gray-900"}`}
                     >
                       {step.title}
                     </p>
@@ -619,7 +1347,10 @@ async function ManagerDashboardContent({
         ))}
       </div>
 
-      {/* Favorites — full-width */}
+      {/* Workforce Stats */}
+      <WorkforceStatsGrid stats={workforceStats} />
+
+      {/* Favorites */}
       <FavoritesSection initialFavorites={favorites} />
 
       {/* Pending Items */}
@@ -714,6 +1445,156 @@ async function ManagerDashboardContent({
           )}
         </CardContent>
       </Card>
+
+      {/* ── Hours Chart ── */}
+      <HoursChartCard
+        weekData={weekChartData}
+        monthData={monthChartData}
+        yearData={yearChartData}
+        dateRange={chartDateRange}
+        title={t("widgets.totalRecordedHours")}
+        avgLabel={(hours) => t("widgets.avgPerDay", { hours })}
+        periodLabels={{
+          week: t("widgets.week"),
+          month: t("widgets.month"),
+          year: t("widgets.year"),
+        }}
+        todayLabel={t("widgets.today")}
+      />
+
+      {/* ── Widget Grid: 2 columns ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Live Overview */}
+        <LiveOverviewCard
+          employees={uniqueLiveEmployees}
+          title={t("widgets.liveOverview")}
+          workingLabel={t("widgets.working")}
+          breakLabel={t("widgets.onBreak")}
+          clockedOutLabel={t("widgets.clockedOut")}
+          sinceLabel={t("widgets.sinceTime")}
+          emptyLabel={t("widgets.noOneOnline")}
+        />
+
+        {/* Overtime Tracker */}
+        <OvertimeTrackerCard
+          employees={overtimeEmployees}
+          title={t("widgets.overtimeTracker")}
+          totalLabel={t("widgets.totalOvertime")}
+          hoursLabel={t("widgets.hrs")}
+          emptyLabel={t("widgets.noOvertimeData")}
+          emptyDesc={t("widgets.noOvertimeDataDesc")}
+          overtimeLabel={t("widgets.overtime")}
+          undertimeLabel={t("widgets.undertime")}
+        />
+
+        {/* Shift Coverage */}
+        <ShiftCoverageCard
+          days={coverageDays}
+          title={t("widgets.shiftCoverage")}
+          coverageLabel={t("widgets.coverage")}
+          openShiftsLabel={t("widgets.openShifts")}
+          fullCoverageLabel={t("widgets.fullCoverage")}
+          viewPlanLabel={t("widgets.viewPlan")}
+          emptyLabel={t("widgets.noShiftsPlanned")}
+        />
+
+        {/* Compliance Alerts */}
+        <ComplianceAlertsCard
+          alerts={complianceAlerts}
+          title={t("widgets.complianceAlerts")}
+          criticalLabel={t("widgets.critical")}
+          warningLabel={t("widgets.warning")}
+          allClearLabel={t("widgets.allCompliant")}
+          allClearDesc={t("widgets.allCompliantDesc")}
+          viewLabel={t("widgets.view")}
+        />
+
+        {/* Absenteeism */}
+        <AbsenteeismCard
+          employees={absentEmployees}
+          title={t("widgets.absent")}
+          todayLabel={t("widgets.today")}
+          todayDate={berlinToday.toLocaleDateString(localeFmt)}
+          daysRemainingLabel={(count) => t("widgets.daysRemaining", { count })}
+          categoryLabel={categoryLabel}
+          emptyLabel={t("widgets.noAbsences")}
+          viewAllLabel={t("widgets.viewAll")}
+          viewAllHref="/abwesenheiten"
+        />
+
+        {/* Pending Requests */}
+        <PendingRequestsCard
+          requests={pendingReqs}
+          title={t("widgets.pendingRequests")}
+          categoryLabel={categoryLabel}
+          emptyLabel={t("widgets.noPendingRequests")}
+          viewAllLabel={t("widgets.viewAll")}
+          viewAllHref="/abwesenheiten"
+        />
+
+        {/* Location Distribution */}
+        <LocationDistributionCard
+          locations={locationGroups}
+          title={t("widgets.whoIsWhere")}
+          total={totalDistEmployees}
+        />
+
+        {/* Recent Activity */}
+        <RecentActivityCard
+          events={activityEvents}
+          title={t("widgets.recentActivity")}
+          emptyLabel={t("widgets.noRecentActivity")}
+        />
+
+        {/* Celebrations */}
+        <CelebrationsCard
+          entries={celebrations}
+          title={t("widgets.celebrations")}
+          birthdayLabel={t("widgets.birthday")}
+          anniversaryLabel={t("widgets.anniversary")}
+          todayLabel={t("widgets.today")}
+          tomorrowLabel={t("widgets.tomorrow")}
+          inDaysLabel={(count) => t("widgets.inDays", { count })}
+          emptyLabel={t("widgets.noCelebrations")}
+          emptyDesc={t("widgets.noCelebrationsDesc")}
+        />
+
+        {/* Live Projects */}
+        <LiveProjectsCard
+          projects={liveProjects}
+          title={t("widgets.liveProjects")}
+          emptyLabel={t("widgets.noActiveProjects")}
+        />
+      </div>
+
+      {/* Full-width: Team Calendar + Weather */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <TeamCalendarMiniCard
+          days={calendarDays}
+          title={t("widgets.teamCalendar")}
+          monthLabel={monthLabelStr}
+          dayLabels={calDayLabels}
+          shiftsLabel={t("widgets.shifts")}
+          absencesLabel={t("widgets.absences")}
+        />
+        <WeatherCard
+          locations={weatherLocs}
+          title={t("widgets.weather")}
+          humidityLabel={t("widgets.humidity")}
+          windLabel={t("widgets.wind")}
+          emptyLabel={t("widgets.noLocations")}
+          loadingLabel={t("widgets.loadingWeather")}
+        />
+      </div>
+
+      {/* My Tasks */}
+      <MyTasksCard
+        tasks={[]}
+        title={t("widgets.myTasks")}
+        newLabel={t("widgets.newTask")}
+        emptyLabel={t("widgets.noTasks")}
+        emptyDesc={t("widgets.noTasksDesc")}
+      />
     </div>
   );
 }

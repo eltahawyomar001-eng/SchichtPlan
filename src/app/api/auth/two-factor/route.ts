@@ -96,6 +96,10 @@ export const GET = withRoute("/api/auth/two-factor", "GET", async (req) => {
   const otpauthUrl = totp.toString();
   const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
 
+  // Extract the base32-encoded secret from the TOTP instance.
+  // Authenticator apps expect base32 for manual entry — NOT hex.
+  const base32Secret = totp.secret.base32;
+
   // Only write to DB if we generated a new secret — always store encrypted
   if (!existingSecret) {
     await prisma.user.update({
@@ -105,7 +109,7 @@ export const GET = withRoute("/api/auth/two-factor", "GET", async (req) => {
   }
 
   return NextResponse.json({
-    secret: plainHexSecret,
+    secret: base32Secret,
     qrCode: qrDataUrl,
     otpauthUrl,
   });

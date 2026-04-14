@@ -37,8 +37,8 @@ type ClockState = "idle" | "working" | "break";
 /*  Circular progress ring (SVG)                             */
 /* ────────────────────────────────────────────────────────── */
 
-const RING_SIZE = 120;
-const RING_STROKE = 6;
+const RING_SIZE = 140;
+const RING_STROKE = 7;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
@@ -112,6 +112,7 @@ export function TimeClockPopover() {
   const [error, setError] = useState("");
   const [noProfile, setNoProfile] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
@@ -143,6 +144,7 @@ export function TimeClockPopover() {
         setClockState("idle");
       }
       setError("");
+      setShowClockOutConfirm(false);
     } catch {
       // silent — popover is supplementary
     } finally {
@@ -191,6 +193,7 @@ export function TimeClockPopover() {
         (!portalRef.current || !portalRef.current.contains(target))
       ) {
         setOpen(false);
+        setShowClockOutConfirm(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -288,17 +291,17 @@ export function TimeClockPopover() {
     }
 
     return (
-      <div className="px-5 pb-5 pt-4">
+      <div className="px-5 pb-5 pt-5">
         {/* ── Circular timer ── */}
-        <div className="flex flex-col items-center mb-4">
-          <div className="relative">
+        <div className="flex flex-col items-center mb-5">
+          <div className="relative flex items-center justify-center">
             <ProgressRing progress={progress} state={clockState} />
             {/* Timer text centred inside ring */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-semibold tabular-nums tracking-tight text-gray-900 dark:text-zinc-100">
+              <span className="text-2xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-zinc-100">
                 {clockState === "idle" ? "--:--:--" : elapsed}
               </span>
-              <span className="text-[11px] font-medium mt-0.5 text-gray-500 dark:text-zinc-400">
+              <span className="text-xs font-medium mt-1 text-gray-500 dark:text-zinc-400">
                 {clockState === "idle"
                   ? t("inactive")
                   : clockState === "break"
@@ -311,7 +314,7 @@ export function TimeClockPopover() {
 
         {/* ── ArbZG remaining time ── */}
         {arbZG && clockState !== "idle" && (
-          <div className="text-center mb-4">
+          <div className="text-center mb-5">
             <p
               className={`text-xs font-medium ${arbzgColor(arbZG.warningLevel)}`}
             >
@@ -327,7 +330,7 @@ export function TimeClockPopover() {
         )}
 
         {/* ── Action buttons ── */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {clockState === "idle" && (
             <button
               onClick={() => handleClock("in")}
@@ -350,7 +353,7 @@ export function TimeClockPopover() {
                 {t("startBreak")}
               </button>
               <button
-                onClick={() => handleClock("out")}
+                onClick={() => setShowClockOutConfirm(true)}
                 disabled={acting}
                 className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
               >
@@ -371,7 +374,7 @@ export function TimeClockPopover() {
                 {t("endBreak")}
               </button>
               <button
-                onClick={() => handleClock("out")}
+                onClick={() => setShowClockOutConfirm(true)}
                 disabled={acting}
                 className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
               >
@@ -381,6 +384,61 @@ export function TimeClockPopover() {
             </>
           )}
         </div>
+
+        {/* ── Clock-out confirmation dialog (ArbZG §5 warning) ── */}
+        {showClockOutConfirm && (
+          <div className="mt-3 rounded-2xl border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20 p-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangleIcon className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                  {t("clockOutConfirmTitle")}
+                </p>
+                <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                  {t("clockOutConfirmDesc")}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-white/60 dark:bg-zinc-900/60 px-3 py-2 space-y-1">
+              <p className="text-xs font-medium text-gray-700 dark:text-zinc-300">
+                {t("clockOutConfirmNext", {
+                  time: new Date(
+                    Date.now() + 11 * 60 * 60 * 1000,
+                  ).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                })}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                {t("clockOutConfirmWorked", {
+                  hours: Math.floor(workedMinutes / 60),
+                  minutes: workedMinutes % 60,
+                })}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowClockOutConfirm(false)}
+                className="flex-1 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-xs font-semibold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+              >
+                {t("clockOutCancelButton")}
+              </button>
+              <button
+                onClick={() => {
+                  setShowClockOutConfirm(false);
+                  handleClock("out");
+                }}
+                disabled={acting}
+                className="flex-1 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50 transition-colors"
+              >
+                {acting ? <Spinner /> : t("clockOutConfirmButton")}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Error message ── */}
         {error && (
@@ -462,8 +520,8 @@ export function TimeClockPopover() {
   /* ── Header bar (shared between desktop & mobile) ── */
   function PanelHeader() {
     return (
-      <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-3">
-        <h3 className="font-semibold text-gray-900 dark:text-zinc-100 text-sm">
+      <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-3.5">
+        <h3 className="font-semibold text-gray-900 dark:text-zinc-100 text-sm tracking-tight">
           {t("title")}
         </h3>
         <span
@@ -499,7 +557,10 @@ export function TimeClockPopover() {
     <div className="relative" ref={dropdownRef}>
       {/* ── Trigger button ── */}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setOpen((o) => !o);
+          setShowClockOutConfirm(false);
+        }}
         className="relative rounded-xl p-2.5 sm:p-2 text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 active:bg-gray-200 dark:active:bg-zinc-700 transition-colors"
         aria-label={t("title")}
       >
@@ -514,7 +575,7 @@ export function TimeClockPopover() {
 
       {/* ── Desktop dropdown ── */}
       {open && (
-        <div className="hidden sm:block absolute right-0 top-full mt-2 w-80 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden z-50">
+        <div className="hidden sm:block absolute right-0 top-full mt-2 w-[340px] rounded-3xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden z-50">
           <PanelHeader />
           {initialLoad ? (
             <div className="flex items-center justify-center py-10">
@@ -534,10 +595,13 @@ export function TimeClockPopover() {
             {/* Backdrop */}
             <div
               className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                setShowClockOutConfirm(false);
+              }}
             />
             {/* Sheet */}
-            <div className="fixed inset-x-0 bottom-0 z-[9999] rounded-t-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
+            <div className="fixed inset-x-0 bottom-0 z-[9999] rounded-t-3xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
               {/* Drag handle */}
               <div className="flex justify-center pt-2.5 pb-1">
                 <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-zinc-600" />

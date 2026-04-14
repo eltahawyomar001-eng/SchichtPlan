@@ -933,7 +933,10 @@ export default function EinstellungenPage() {
                       <Input
                         placeholder="000000"
                         value={twoFAToken}
-                        onChange={(e) => setTwoFAToken(e.target.value)}
+                        onChange={(e) =>
+                          setTwoFAToken(e.target.value.replace(/\D/g, ""))
+                        }
+                        inputMode="numeric"
                         maxLength={6}
                         className="max-w-[120px] font-mono text-center"
                       />

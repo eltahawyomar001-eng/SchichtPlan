@@ -245,7 +245,8 @@
       "missingBreakDesc": "Über 6 Std. ohne 30 Min. Pause",
       "restPeriodViolation": "Ruhezeit unterschritten",
       "restPeriodDesc": "Weniger als 11 Std. zwischen Schichten",
-      "yearsAnniversary": "{count} {count, plural, =1 {Jahr} other {Jahre}}"
+      "yearsAnniversary": "{count} {count, plural, =1 {Jahr} other {Jahre}}",
+      "noData": "Keine Daten vorhanden"
     }
   },
   "onboarding": {

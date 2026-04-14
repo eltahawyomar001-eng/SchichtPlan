@@ -94,15 +94,20 @@ interface ShiftWithRelations {
   location: { name: string } | null;
 }
 
-/* ── Helper: Berlin "today" bounds ── */
+/* ── Helper: Berlin "today" bounds ──
+ * For @db.Date (PostgreSQL DATE) fields Prisma truncates DateTime to
+ * the date part, so  `date < '2026-04-14T23:59:59'`  becomes
+ * `date < '2026-04-14'`  which **excludes** today.
+ * Fix: use `tomorrow` (next day at 00:00) and keep `lt: tomorrow`.
+ * This is correct for both DATE and TIMESTAMP columns.
+ */
 function getTodayBounds() {
   const berlinDate = new Date().toLocaleDateString("en-CA", {
     timeZone: "Europe/Berlin",
   });
-  return {
-    todayStart: new Date(`${berlinDate}T00:00:00.000Z`),
-    todayEnd: new Date(`${berlinDate}T23:59:59.999Z`),
-  };
+  const todayStart = new Date(`${berlinDate}T00:00:00.000Z`);
+  const tomorrow = new Date(todayStart.getTime() + 86_400_000); // +24h
+  return { todayStart, tomorrow };
 }
 
 /* ── Helper: shift status label ── */
@@ -197,7 +202,7 @@ async function EmployeeDashboardContent({
   const t = await getTranslations("dashboard");
   const locale = await getLocale();
   const statusLabel = getStatusLabel(t);
-  const { todayStart, todayEnd } = getTodayBounds();
+  const { todayStart, tomorrow } = getTodayBounds();
 
   const [
     myTodayShifts,
@@ -211,7 +216,7 @@ async function EmployeeDashboardContent({
           where: {
             workspaceId,
             employeeId,
-            date: { gte: todayStart, lt: todayEnd },
+            date: { gte: todayStart, lt: tomorrow },
           },
           include: { employee: true, location: true },
           orderBy: { startTime: "asc" },
@@ -222,7 +227,7 @@ async function EmployeeDashboardContent({
           where: {
             workspaceId,
             employeeId,
-            date: { gt: todayEnd },
+            date: { gte: tomorrow },
           },
           include: { employee: true, location: true },
           orderBy: [{ date: "asc" }, { startTime: "asc" }],
@@ -418,7 +423,7 @@ async function ManagerDashboardContent({
   const locale = await getLocale();
   const localeFmt = locale === "en" ? "en-GB" : "de-DE";
   const statusLabel = getStatusLabel(t);
-  const { todayStart, todayEnd } = getTodayBounds();
+  const { todayStart, tomorrow } = getTodayBounds();
 
   /* ── Date ranges for widget queries ── */
   const berlinDateStr = new Date().toLocaleDateString("en-CA", {
@@ -474,7 +479,7 @@ async function ManagerDashboardContent({
     prisma.shift.count({ where: { workspaceId } }),
     prisma.location.count({ where: { workspaceId } }),
     prisma.shift.findMany({
-      where: { workspaceId, date: { gte: todayStart, lt: todayEnd } },
+      where: { workspaceId, date: { gte: todayStart, lt: tomorrow } },
       include: { employee: true, location: true },
       orderBy: { startTime: "asc" },
     }),
@@ -495,7 +500,7 @@ async function ManagerDashboardContent({
         workspaceId,
         clockInAt: { not: null },
         isLiveClock: true,
-        date: { gte: todayStart, lt: todayEnd },
+        date: { gte: todayStart, lt: tomorrow },
       },
       include: {
         employee: {
@@ -559,7 +564,7 @@ async function ManagerDashboardContent({
     prisma.timeEntry.findMany({
       where: {
         workspaceId,
-        date: { gte: new Date(todayStart.getTime() - 86400000), lt: todayEnd },
+        date: { gte: new Date(todayStart.getTime() - 86400000), lt: tomorrow },
         deletedAt: null,
         clockOutAt: { not: null },
       },
@@ -614,7 +619,7 @@ async function ManagerDashboardContent({
       where: {
         workspaceId,
         status: "GENEHMIGT",
-        startDate: { lte: todayEnd },
+        startDate: { lt: tomorrow },
         endDate: { gte: todayStart },
       },
       include: {
@@ -649,7 +654,7 @@ async function ManagerDashboardContent({
     prisma.timeEntry.findMany({
       where: {
         workspaceId,
-        date: { gte: todayStart, lt: todayEnd },
+        date: { gte: todayStart, lt: tomorrow },
         clockInAt: { not: null },
         deletedAt: null,
       },
@@ -666,7 +671,7 @@ async function ManagerDashboardContent({
         workspaceId,
         isLiveClock: true,
         clockOutAt: null,
-        date: { gte: todayStart, lt: todayEnd },
+        date: { gte: todayStart, lt: tomorrow },
         projectId: { not: null },
       },
       include: {
@@ -1350,6 +1355,17 @@ async function ManagerDashboardContent({
       {/* Workforce Stats */}
       <WorkforceStatsGrid stats={workforceStats} />
 
+      {/* ── Live Overview (full width — primary real-time widget) ── */}
+      <LiveOverviewCard
+        employees={uniqueLiveEmployees}
+        title={t("widgets.liveOverview")}
+        workingLabel={t("widgets.working")}
+        breakLabel={t("widgets.onBreak")}
+        clockedOutLabel={t("widgets.clockedOut")}
+        sinceLabel={t("widgets.sinceTime")}
+        emptyLabel={t("widgets.noOneOnline")}
+      />
+
       {/* Favorites */}
       <FavoritesSection initialFavorites={favorites} />
 
@@ -1464,17 +1480,6 @@ async function ManagerDashboardContent({
 
       {/* ── Widget Grid: 2 columns ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Live Overview */}
-        <LiveOverviewCard
-          employees={uniqueLiveEmployees}
-          title={t("widgets.liveOverview")}
-          workingLabel={t("widgets.working")}
-          breakLabel={t("widgets.onBreak")}
-          clockedOutLabel={t("widgets.clockedOut")}
-          sinceLabel={t("widgets.sinceTime")}
-          emptyLabel={t("widgets.noOneOnline")}
-        />
-
         {/* Overtime Tracker */}
         <OvertimeTrackerCard
           employees={overtimeEmployees}
@@ -1485,6 +1490,13 @@ async function ManagerDashboardContent({
           emptyDesc={t("widgets.noOvertimeDataDesc")}
           overtimeLabel={t("widgets.overtime")}
           undertimeLabel={t("widgets.undertime")}
+        />
+
+        {/* Recent Activity */}
+        <RecentActivityCard
+          events={activityEvents}
+          title={t("widgets.recentActivity")}
+          emptyLabel={t("widgets.noRecentActivity")}
         />
 
         {/* Shift Coverage */}
@@ -1537,13 +1549,14 @@ async function ManagerDashboardContent({
           locations={locationGroups}
           title={t("widgets.whoIsWhere")}
           total={totalDistEmployees}
+          emptyLabel={t("widgets.noData")}
         />
 
-        {/* Recent Activity */}
-        <RecentActivityCard
-          events={activityEvents}
-          title={t("widgets.recentActivity")}
-          emptyLabel={t("widgets.noRecentActivity")}
+        {/* Live Projects */}
+        <LiveProjectsCard
+          projects={liveProjects}
+          title={t("widgets.liveProjects")}
+          emptyLabel={t("widgets.noActiveProjects")}
         />
 
         {/* Celebrations */}
@@ -1557,13 +1570,6 @@ async function ManagerDashboardContent({
           inDaysLabel={(count) => t("widgets.inDays", { count })}
           emptyLabel={t("widgets.noCelebrations")}
           emptyDesc={t("widgets.noCelebrationsDesc")}
-        />
-
-        {/* Live Projects */}
-        <LiveProjectsCard
-          projects={liveProjects}
-          title={t("widgets.liveProjects")}
-          emptyLabel={t("widgets.noActiveProjects")}
         />
       </div>
 

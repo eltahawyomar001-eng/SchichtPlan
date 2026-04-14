@@ -19,12 +19,14 @@ interface LocationDistributionCardProps {
   locations: LocationGroup[];
   title: string;
   total: number;
+  emptyLabel?: string;
 }
 
 export function LocationDistributionCard({
   locations,
   title,
   total,
+  emptyLabel,
 }: LocationDistributionCardProps) {
   return (
     <Card>
@@ -97,7 +99,7 @@ export function LocationDistributionCard({
         {total === 0 && (
           <div className="py-8 text-center">
             <p className="text-sm text-gray-500 dark:text-zinc-400">
-              Keine Daten
+              {emptyLabel || "Keine Daten"}
             </p>
           </div>
         )}

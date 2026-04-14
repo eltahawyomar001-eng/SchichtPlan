@@ -245,7 +245,8 @@
       "missingBreakDesc": "Over 6 hrs without 30 min break",
       "restPeriodViolation": "Rest period violated",
       "restPeriodDesc": "Less than 11 hrs between shifts",
-      "yearsAnniversary": "{count} {count, plural, =1 {year} other {years}}"
+      "yearsAnniversary": "{count} {count, plural, =1 {year} other {years}}",
+      "noData": "No data available"
     }
   },
   "onboarding": {

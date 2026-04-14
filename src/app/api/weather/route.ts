@@ -7,13 +7,14 @@ import { log } from "@/lib/logger";
 /* ═══════════════════════════════════════════════════════════════
    GET /api/weather
    Returns weather data for all workspace locations.
-   Geocodes addresses via Nominatim (server-side, no CORS issues)
-   and fetches current weather from Open-Meteo.
-   Results are cached for 30 minutes per workspace.
 
-   Performance: locations are processed concurrently in batches of 3
-   to avoid Vercel function timeouts while still respecting
-   Nominatim's 1 req/sec fair-use policy.
+   Geocoding strategy (fast → slow):
+   1. Per-location geocode cache (7 days — coords never change)
+   2. Open-Meteo Geocoding API (no rate limit, parallelizable)
+   3. Nominatim fallback (1 req/sec, sequential — last resort)
+
+   Weather data cached 30 min per workspace.
+   All external fetches have 5s timeouts.
    ═══════════════════════════════════════════════════════════════ */
 
 interface GeoResult {
@@ -31,44 +32,51 @@ interface WeatherResult {
   wind: number;
 }
 
-const CACHE_TTL = 1800; // 30 minutes
-const GEOCODE_TIMEOUT = 4000; // 4s per request
-const WEATHER_TIMEOUT = 4000; // 4s per request
-const NOMINATIM_DELAY = 1100; // 1.1s between Nominatim requests (fair-use)
+const WEATHER_CACHE_TTL = 1800; // 30 min — weather results per workspace
+const GEO_CACHE_TTL = 604800; // 7 days — geocode results per location
+const FETCH_TIMEOUT = 5000; // 5s per external request
 
-/** Global Nominatim request queue — serialized to respect 1 req/sec */
-let lastNominatimRequest = 0;
+/* ── Geocoding: Open-Meteo (primary) ───────────────────────── */
 
-async function throttledGeocode(query: string): Promise<GeoResult | null> {
-  // Ensure at least NOMINATIM_DELAY between consecutive Nominatim requests
-  const now = Date.now();
-  const elapsed = now - lastNominatimRequest;
-  if (elapsed < NOMINATIM_DELAY) {
-    await new Promise((r) => setTimeout(r, NOMINATIM_DELAY - elapsed));
+/**
+ * Open-Meteo geocoding — same provider as the weather API.
+ * No rate limit, no IP blocking, can be called in parallel.
+ * https://open-meteo.com/en/docs/geocoding-api
+ */
+async function geocodeOpenMeteo(query: string): Promise<GeoResult | null> {
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de&format=json`;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const hit = data?.results?.[0];
+    if (hit?.latitude && hit?.longitude) {
+      return { lat: hit.latitude, lon: hit.longitude };
+    }
+    return null;
+  } catch (err) {
+    log.warn("Open-Meteo geocode failed", { query, error: String(err) });
+    return null;
   }
-  lastNominatimRequest = Date.now();
+}
 
+/* ── Geocoding: Nominatim (fallback) ──────────────────────── */
+
+async function geocodeNominatim(query: string): Promise<GeoResult | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Shiftfy-SaaS/1.0 (schichtplan@example.com)",
+        "User-Agent": "Shiftfy-SaaS/1.0 (kontakt@shiftfy.de)",
       },
-      signal: AbortSignal.timeout(GEOCODE_TIMEOUT),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
     });
-    if (!res.ok) {
-      log.warn("Nominatim returned non-OK status", {
-        status: res.status,
-        query,
-      });
-      return null;
-    }
+    if (!res.ok) return null;
     const data = await res.json();
     if (data?.[0]?.lat && data?.[0]?.lon) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lon: parseFloat(data[0].lon),
-      };
+      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
     }
     return null;
   } catch (err) {
@@ -77,23 +85,51 @@ async function throttledGeocode(query: string): Promise<GeoResult | null> {
   }
 }
 
-/** Geocode with max 2 fallback strategies (down from 4 to save time) */
-async function geocodeWithFallbacks(
+/* ── Geocode a single location (cached) ───────────────────── */
+
+async function geocodeLocation(
+  locationId: string,
   address: string | null,
   name: string,
 ): Promise<GeoResult | null> {
-  // Strategy 1: address (most specific)
-  if (address) {
-    const geo = await throttledGeocode(address);
-    if (geo) return geo;
+  // Check per-location geocode cache first
+  const geoCacheKey = `geo:${locationId}`;
+  const cached = await cache.get<GeoResult>(geoCacheKey);
+  if (cached) return cached;
+
+  // Build search terms — most specific first
+  const queries: string[] = [];
+  if (address) queries.push(address);
+  queries.push(name);
+
+  // Try Open-Meteo geocoding (primary — no rate limit)
+  for (const q of queries) {
+    const geo = await geocodeOpenMeteo(q);
+    if (geo) {
+      await cache.set(geoCacheKey, geo, GEO_CACHE_TTL);
+      return geo;
+    }
   }
 
-  // Strategy 2: location name + Deutschland
-  const geo2 = await throttledGeocode(`${name}, Deutschland`);
-  return geo2;
+  // Fallback: Nominatim (may be rate-limited on shared IPs)
+  for (const q of queries) {
+    const geo = await geocodeNominatim(q);
+    if (geo) {
+      await cache.set(geoCacheKey, geo, GEO_CACHE_TTL);
+      return geo;
+    }
+  }
+
+  log.info("Weather: could not geocode location", {
+    locationId,
+    name,
+    address,
+  });
+  return null;
 }
 
-/** WMO weather code → condition string + emoji */
+/* ── WMO weather code → condition + emoji ─────────────────── */
+
 function wmoToCondition(code: number): { condition: string; icon: string } {
   const map: Record<number, [string, string]> = {
     0: ["Klarer Himmel", "☀️"],
@@ -131,7 +167,8 @@ function wmoToCondition(code: number): { condition: string; icon: string } {
     : { condition: "Unbekannt", icon: "🌤️" };
 }
 
-/** Fetch weather for a single already-geocoded location */
+/* ── Fetch weather for one geocoded location ──────────────── */
+
 async function fetchWeatherForCoords(
   loc: { id: string; name: string },
   geo: GeoResult,
@@ -139,10 +176,10 @@ async function fetchWeatherForCoords(
   try {
     const wxRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`,
-      { signal: AbortSignal.timeout(WEATHER_TIMEOUT) },
+      { signal: AbortSignal.timeout(FETCH_TIMEOUT) },
     );
     if (!wxRes.ok) {
-      log.warn("Open-Meteo returned non-OK", {
+      log.warn("Open-Meteo weather returned non-OK", {
         status: wxRes.status,
         locationId: loc.id,
       });
@@ -171,12 +208,14 @@ async function fetchWeatherForCoords(
   }
 }
 
+/* ── Route handler ────────────────────────────────────────── */
+
 export const GET = withRoute("/api/weather", "GET", async () => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { workspaceId } = auth;
 
-  // Check cache first
+  // Check weather cache first (30 min)
   const cacheKey = `weather:${workspaceId}`;
   const cached = await cache.get<WeatherResult[]>(cacheKey);
   if (cached) {
@@ -195,32 +234,28 @@ export const GET = withRoute("/api/weather", "GET", async () => {
     return apiSuccess([]);
   }
 
-  // Phase 1: Geocode all locations sequentially (Nominatim rate limit)
-  const geoResults: (GeoResult | null)[] = [];
-  for (const loc of locations) {
-    const geo = await geocodeWithFallbacks(loc.address, loc.name);
-    geoResults.push(geo);
-    if (!geo) {
-      log.info("Weather: could not geocode location", {
-        locationId: loc.id,
-        name: loc.name,
-        address: loc.address,
-      });
-    }
-  }
+  // Phase 1: Geocode all locations IN PARALLEL
+  // (Open-Meteo geocoding has no rate limit; per-location cache avoids repeat calls)
+  const geoResults = await Promise.all(
+    locations.map((loc) => geocodeLocation(loc.id, loc.address, loc.name)),
+  );
 
   // Phase 2: Fetch weather for all geocoded locations IN PARALLEL
-  const weatherPromises = locations.map((loc, i) => {
-    const geo = geoResults[i];
-    if (!geo) return Promise.resolve(null);
-    return fetchWeatherForCoords(loc, geo);
-  });
+  const weatherResults = await Promise.all(
+    locations.map((loc, i) => {
+      const geo = geoResults[i];
+      if (!geo) return Promise.resolve(null);
+      return fetchWeatherForCoords(loc, geo);
+    }),
+  );
 
-  const weatherResults = await Promise.all(weatherPromises);
   const results = weatherResults.filter(Boolean) as WeatherResult[];
 
-  // Cache results for 30 minutes (even empty — avoids re-trying failed geocodes)
-  await cache.set(cacheKey, results, CACHE_TTL);
+  // Only cache non-empty results — if all geocodes failed we want to retry
+  // next request instead of serving stale empty data for 30 min
+  if (results.length > 0) {
+    await cache.set(cacheKey, results, WEATHER_CACHE_TTL);
+  }
 
   return apiSuccess(results);
 });

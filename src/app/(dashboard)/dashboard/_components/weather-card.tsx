@@ -23,6 +23,8 @@ interface WeatherCardProps {
   windLabel: string;
   emptyLabel: string;
   loadingLabel: string;
+  errorLabel?: string;
+  errorHint?: string;
 }
 
 /* Simple weather condition → emoji mapping */
@@ -46,6 +48,8 @@ export function WeatherCard({
   windLabel: _windLabel,
   emptyLabel,
   loadingLabel,
+  errorLabel,
+  errorHint,
 }: WeatherCardProps) {
   const [weather, setWeather] = useState<WeatherLocation[]>(locations);
   const [loading, setLoading] = useState(
@@ -64,80 +68,86 @@ export function WeatherCard({
 
     async function fetchWeather() {
       try {
-        const updated = await Promise.all(
-          weather.map(async (loc) => {
-            if (loc.temp !== undefined) return loc;
-            try {
-              const query = loc.geocodeQuery || loc.name;
-              let latitude: number | null = null;
-              let longitude: number | null = null;
+        const updated: WeatherLocation[] = [];
+        for (let i = 0; i < weather.length; i++) {
+          const loc = weather[i];
+          if (loc.temp !== undefined) {
+            updated.push(loc);
+            continue;
+          }
+          // Small delay between Nominatim requests (rate limit: 1 req/s)
+          if (i > 0) await new Promise((r) => setTimeout(r, 300));
+          try {
+            const query = loc.geocodeQuery || loc.name;
+            let latitude: number | null = null;
+            let longitude: number | null = null;
 
-              // Strategy 1: Try the full address/name
-              const geoRes = await fetch(
-                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de`,
+            // Helper: geocode via Nominatim with country hint
+            const nominatim = async (q: string) => {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=de`,
+                { headers: { "User-Agent": "Shiftfy/1.0" } },
               );
-              const geoData = await geoRes.json();
-              if (geoData.results?.[0]) {
-                latitude = geoData.results[0].latitude;
-                longitude = geoData.results[0].longitude;
+              const data = await res.json();
+              if (data?.[0]) {
+                return {
+                  lat: parseFloat(data[0].lat),
+                  lon: parseFloat(data[0].lon),
+                };
               }
+              return null;
+            };
 
-              // Strategy 2: Extract city from comma-separated address
-              if (!latitude && query.includes(",")) {
-                const parts = query.split(",");
-                const cityPart = parts[parts.length - 1].trim();
-                if (cityPart.length >= 2) {
-                  const geoRes2 = await fetch(
-                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityPart)}&count=1&language=de`,
-                  );
-                  const geoData2 = await geoRes2.json();
-                  if (geoData2.results?.[0]) {
-                    latitude = geoData2.results[0].latitude;
-                    longitude = geoData2.results[0].longitude;
-                  }
-                }
-              }
+            // Try 1: full geocodeQuery (address)
+            let geo = await nominatim(query);
 
-              // Strategy 3: Try the display name if different from geocodeQuery
-              if (
-                !latitude &&
-                loc.geocodeQuery &&
-                loc.geocodeQuery !== loc.name
-              ) {
-                const geoRes3 = await fetch(
-                  `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc.name)}&count=1&language=de`,
-                );
-                const geoData3 = await geoRes3.json();
-                if (geoData3.results?.[0]) {
-                  latitude = geoData3.results[0].latitude;
-                  longitude = geoData3.results[0].longitude;
-                }
-              }
-
-              if (!latitude || !longitude) return loc;
-
-              // Fetch current weather
-              const wxRes = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`,
-              );
-              const wxData = await wxRes.json();
-              const current = wxData.current;
-              if (!current) return loc;
-
-              const wmoDesc = getWmoDescription(current.weather_code ?? 0);
-              return {
-                ...loc,
-                temp: Math.round(current.temperature_2m ?? 0),
-                condition: wmoDesc,
-                icon: conditionEmoji(wmoDesc),
-                humidity: current.relative_humidity_2m,
-                wind: Math.round(current.wind_speed_10m ?? 0),
-              };
-            } catch {
-              return loc;
+            // Try 2: append ", Deutschland" if no result
+            if (!geo) {
+              geo = await nominatim(query + ", Deutschland");
             }
-          }),
-        );
+
+            // Try 3: fallback to just the location display name
+            if (!geo && loc.geocodeQuery && loc.geocodeQuery !== loc.name) {
+              geo = await nominatim(loc.name);
+              if (!geo) {
+                geo = await nominatim(loc.name + ", Deutschland");
+              }
+            }
+
+            if (geo) {
+              latitude = geo.lat;
+              longitude = geo.lon;
+            }
+
+            if (!latitude || !longitude) {
+              updated.push(loc);
+              continue;
+            }
+
+            // Fetch current weather
+            const wxRes = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`,
+            );
+            const wxData = await wxRes.json();
+            const current = wxData.current;
+            if (!current) {
+              updated.push(loc);
+              continue;
+            }
+
+            const wmoDesc = getWmoDescription(current.weather_code ?? 0);
+            updated.push({
+              ...loc,
+              temp: Math.round(current.temperature_2m ?? 0),
+              condition: wmoDesc,
+              icon: conditionEmoji(wmoDesc),
+              humidity: current.relative_humidity_2m,
+              wind: Math.round(current.wind_speed_10m ?? 0),
+            });
+          } catch {
+            updated.push(loc);
+          }
+        }
         if (!cancelled) {
           const hasAnyWeather = updated.some((l) => l.temp !== undefined);
           if (!hasAnyWeather) setError(true);
@@ -179,10 +189,10 @@ export function WeatherCard({
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <span className="text-3xl mb-2">🌤️</span>
             <p className="text-sm text-gray-400 dark:text-zinc-500">
-              Wetterdaten konnten nicht geladen werden
+              {errorLabel ?? "Wetterdaten konnten nicht geladen werden"}
             </p>
             <p className="text-xs text-gray-300 dark:text-zinc-600 mt-1">
-              Standort-Adressen prüfen
+              {errorHint ?? "Standort-Adressen prüfen"}
             </p>
           </div>
         ) : (

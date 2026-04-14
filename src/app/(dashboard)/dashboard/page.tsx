@@ -55,10 +55,7 @@ import {
   HoursChartCard,
   type DailyHours,
 } from "./_components/hours-chart-card";
-import {
-  WorkforceStatsGrid,
-  type WorkforceStat,
-} from "./_components/workforce-stats-grid";
+
 import {
   AbsenteeismCard,
   type AbsentEmployee,
@@ -80,6 +77,7 @@ import {
   LiveProjectsCard,
   type LiveProject,
 } from "./_components/live-projects-card";
+import { MyTasksCard } from "./_components/my-tasks-card";
 
 export const revalidate = 0;
 
@@ -685,6 +683,11 @@ async function ManagerDashboardContent({
     ? JSON.parse(currentUser.dashboardFavorites)
     : [];
 
+  const totalOvertimeMin = timeAccounts.reduce(
+    (sum, ta) => sum + ta.currentBalance,
+    0,
+  );
+
   const stats = [
     {
       title: t("employees"),
@@ -697,6 +700,20 @@ async function ManagerDashboardContent({
       title: t("totalShifts"),
       value: shiftCount,
       icon: CalendarIcon,
+      color: "text-emerald-600",
+      bg: "stat-icon-emerald",
+    },
+    {
+      title: t("widgets.absent"),
+      value: activeAbsences.length,
+      icon: CalendarOffIcon,
+      color: "text-emerald-600",
+      bg: "stat-icon-emerald",
+    },
+    {
+      title: t("widgets.overtime"),
+      value: `${totalOvertimeMin >= 0 ? "+" : ""}${Math.round(totalOvertimeMin / 60)} ${t("widgets.hrs")}`,
+      icon: ClockIcon,
       color: "text-emerald-600",
       bg: "stat-icon-emerald",
     },
@@ -1079,38 +1096,6 @@ async function ManagerDashboardContent({
 
   const chartDateRange = `${weekStart.toLocaleDateString(localeFmt)} – ${weekEnd.toLocaleDateString(localeFmt)}`;
 
-  /* ── Widget: Workforce Stats ── */
-  const totalOvertimeMin = timeAccounts.reduce(
-    (sum, ta) => sum + ta.currentBalance,
-    0,
-  );
-  const workforceStats: WorkforceStat[] = [
-    {
-      id: "active",
-      label: t("employees"),
-      value: String(employeeCount),
-      numericValue: employeeCount,
-    },
-    {
-      id: "absent",
-      label: t("widgets.absent"),
-      value: String(activeAbsences.length),
-      numericValue: activeAbsences.length,
-    },
-    {
-      id: "overtime",
-      label: t("widgets.overtime"),
-      value: `${totalOvertimeMin >= 0 ? "+" : ""}${Math.round(totalOvertimeMin / 60)} ${t("widgets.hrs")}`,
-      numericValue: totalOvertimeMin,
-    },
-    {
-      id: "pending",
-      label: t("pendingItems"),
-      value: String(totalPending),
-      numericValue: totalPending,
-    },
-  ];
-
   /* ── Widget: Absenteeism ── */
   const absentEmployees: AbsentEmployee[] = activeAbsences.map((abs) => ({
     id: abs.employee.id,
@@ -1328,7 +1313,7 @@ async function ManagerDashboardContent({
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.title} className="card-elevated">
             <CardContent className="p-5 sm:p-6">
@@ -1351,9 +1336,6 @@ async function ManagerDashboardContent({
           </Card>
         ))}
       </div>
-
-      {/* Workforce Stats */}
-      <WorkforceStatsGrid stats={workforceStats} />
 
       {/* ── Live Overview (full width — primary real-time widget) ── */}
       <LiveOverviewCard
@@ -1571,6 +1553,14 @@ async function ManagerDashboardContent({
           emptyLabel={t("widgets.noCelebrations")}
           emptyDesc={t("widgets.noCelebrationsDesc")}
         />
+
+        {/* My Tasks (localStorage-backed personal todos) */}
+        <MyTasksCard
+          title={t("widgets.myTasks")}
+          newLabel={t("widgets.newTask")}
+          emptyLabel={t("widgets.noTasks")}
+          emptyDesc={t("widgets.noTasksDesc")}
+        />
       </div>
 
       {/* Full-width: Team Calendar + Weather */}
@@ -1590,6 +1580,8 @@ async function ManagerDashboardContent({
           windLabel={t("widgets.wind")}
           emptyLabel={t("widgets.noLocations")}
           loadingLabel={t("widgets.loadingWeather")}
+          errorLabel={t("widgets.weatherError")}
+          errorHint={t("widgets.weatherErrorHint")}
         />
       </div>
     </div>

@@ -233,6 +233,8 @@
       "wind": "Wind",
       "noLocations": "Keine Standorte vorhanden",
       "loadingWeather": "Wetter wird geladen…",
+      "weatherError": "Wetterdaten konnten nicht geladen werden",
+      "weatherErrorHint": "Standort-Adressen prüfen",
       "complianceAlerts": "Compliance-Warnungen",
       "critical": "Kritisch",
       "warning": "Warnung",

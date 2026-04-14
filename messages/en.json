@@ -233,6 +233,8 @@
       "wind": "Wind",
       "noLocations": "No locations available",
       "loadingWeather": "Loading weather…",
+      "weatherError": "Could not load weather data",
+      "weatherErrorHint": "Check location addresses",
       "complianceAlerts": "Compliance Alerts",
       "critical": "Critical",
       "warning": "Warning",

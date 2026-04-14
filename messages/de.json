@@ -844,7 +844,8 @@
       "name": "Name",
       "namePlaceholder": "z. B. Hauptstandort",
       "address": "Adresse",
-      "addressPlaceholder": "z. B. Musterstraße 1, 36037 Fulda"
+      "addressPlaceholder": "z. B. Musterstraße 1, 36037 Fulda",
+      "addressTip": "Format: Straße Nr., PLZ Stadt — wird für die Wetteranzeige im Dashboard verwendet"
     }
   },
   "settings": {
@@ -1474,7 +1475,6 @@
     "footerTerms": "AGB",
     "footerWithdrawal": "Widerruf",
     "footerAccessibility": "Barrierefreiheit",
-
     "socialProofTitle": "Vertraut von Teams in ganz Deutschland",
     "socialProofSubtitle": "Unternehmen jeder Größe setzen auf Shiftfy für ihre Schichtplanung und Zeiterfassung.",
     "socialProofIndustry1": "Gastronomie",
@@ -1483,7 +1483,6 @@
     "socialProofIndustry4": "Handwerk",
     "socialProofIndustry5": "Logistik",
     "socialProofIndustry6": "Hotellerie",
-
     "testimonial1Name": "Maria K.",
     "testimonial1Role": "Betriebsleiterin",
     "testimonial1Company": "Restaurant & Catering",
@@ -1496,7 +1495,6 @@
     "testimonial3Role": "HR-Managerin",
     "testimonial3Company": "Einzelhandelskette",
     "testimonial3Text": "Der DATEV-Export allein spart uns zwei Arbeitstage im Monat. Und die automatische Pausenberechnung nach ArbZG gibt uns Rechtssicherheit.",
-
     "comparisonTitle": "Der Unterschied mit Shiftfy",
     "comparisonWithout": "Ohne Shiftfy",
     "comparisonWith": "Mit Shiftfy",
@@ -1508,7 +1506,6 @@
     "comparisonAfter2": "Digitale Anträge mit Ein-Klick-Freigabe",
     "comparisonAfter3": "DATEV-Export per Knopfdruck",
     "comparisonAfter4": "Echtzeit-Dashboard für alle Standorte",
-
     "integrationsTitle": "Nahtlose Integration in Ihre bestehende Software",
     "integrationsSubtitle": "Shiftfy verbindet sich mit den führenden Tools für Buchhaltung, Lohnabrechnung und HR — für einen reibungslosen Workflow.",
     "integrationDatev": "DATEV",

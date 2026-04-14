@@ -844,7 +844,8 @@
       "name": "Name",
       "namePlaceholder": "e.g. Main Office",
       "address": "Address",
-      "addressPlaceholder": "e.g. 123 Main St, Berlin"
+      "addressPlaceholder": "e.g. 123 Main St, Berlin",
+      "addressTip": "Format: Street No., Postal Code City — used for the weather widget on your dashboard"
     }
   },
   "settings": {
@@ -1474,7 +1475,6 @@
     "footerTerms": "Terms",
     "footerWithdrawal": "Withdrawal",
     "footerAccessibility": "Accessibility",
-
     "socialProofTitle": "Trusted by teams across Germany",
     "socialProofSubtitle": "Companies of every size rely on Shiftfy for shift planning and time tracking.",
     "socialProofIndustry1": "Restaurants",
@@ -1483,7 +1483,6 @@
     "socialProofIndustry4": "Trades & Crafts",
     "socialProofIndustry5": "Logistics",
     "socialProofIndustry6": "Hotels",
-
     "testimonial1Name": "Maria K.",
     "testimonial1Role": "Operations Manager",
     "testimonial1Company": "Restaurant & Catering",
@@ -1496,7 +1495,6 @@
     "testimonial3Role": "HR Manager",
     "testimonial3Company": "Retail Chain",
     "testimonial3Text": "The DATEV export alone saves us two working days a month. And the automatic break calculation per ArbZG gives us legal certainty.",
-
     "comparisonTitle": "The difference with Shiftfy",
     "comparisonWithout": "Without Shiftfy",
     "comparisonWith": "With Shiftfy",
@@ -1508,7 +1506,6 @@
     "comparisonAfter2": "Digital requests with one-click approval",
     "comparisonAfter3": "DATEV export at the push of a button",
     "comparisonAfter4": "Real-time dashboard for all locations",
-
     "integrationsTitle": "Seamless integration with your existing software",
     "integrationsSubtitle": "Shiftfy connects with leading tools for accounting, payroll and HR — for a smooth workflow.",
     "integrationDatev": "DATEV",

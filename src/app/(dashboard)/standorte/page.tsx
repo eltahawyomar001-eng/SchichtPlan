@@ -191,6 +191,10 @@ export default function StandortePage() {
                 }
                 placeholder={t("form.addressPlaceholder")}
               />
+              <p className="text-[11px] text-gray-400 dark:text-zinc-500 flex items-center gap-1.5">
+                <MapPinIcon className="h-3 w-3 flex-shrink-0 text-emerald-500" />
+                {t("form.addressTip")}
+              </p>
             </div>
 
             {formError && (

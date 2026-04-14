@@ -1453,7 +1453,7 @@ async function ManagerDashboardContent({
         yearData={yearChartData}
         dateRange={chartDateRange}
         title={t("widgets.totalRecordedHours")}
-        avgLabel={(hours) => t("widgets.avgPerDay", { hours })}
+        avgLabelTemplate={t("widgets.avgPerDay", { hours: "{hours}" })}
         periodLabels={{
           week: t("widgets.week"),
           month: t("widgets.month"),

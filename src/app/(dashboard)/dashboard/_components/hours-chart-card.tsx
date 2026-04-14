@@ -19,7 +19,7 @@ interface HoursChartCardProps {
   yearData: DailyHours[];
   dateRange: string; // e.g. "13.4.2026 – 13.4.2026"
   title: string;
-  avgLabel: (hours: string) => string; // "Ø {hours} Std pro Tag"
+  avgLabelTemplate: string; // e.g. "Ø {hours} Std pro Tag" — {hours} gets replaced client-side
   periodLabels: { week: string; month: string; year: string };
   todayLabel: string;
 }
@@ -169,7 +169,7 @@ export function HoursChartCard({
   yearData,
   dateRange,
   title,
-  avgLabel,
+  avgLabelTemplate,
   periodLabels,
   todayLabel,
 }: HoursChartCardProps) {
@@ -241,7 +241,7 @@ export function HoursChartCard({
             {title}
           </h3>
           <span className="text-lg font-bold text-cyan-500">
-            {avgLabel(avgHours)}
+            {avgLabelTemplate.replace("{hours}", avgHours)}
           </span>
         </div>
 

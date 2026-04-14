@@ -31,7 +31,6 @@ import {
   HeadsetIcon,
   StarIcon,
   QuoteIcon,
-  LinkIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -72,7 +71,6 @@ export function LandingPage() {
         <FeatureTabsSection />
         <BenefitsSection />
         <AppShowcaseSection />
-        <IntegrationsSection />
         <TrustSection />
         <PricingSection />
         <FAQSection />
@@ -1486,110 +1484,6 @@ function AppShowcaseSection() {
               <CheckCircleIcon className="w-4 h-4" />
               {b}
             </span>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── Integrations Section ─── */
-function IntegrationsSection() {
-  const t = useTranslations("landing");
-
-  const integrations = [
-    {
-      name: t("integrationDatev"),
-      desc: t("integrationDatevDesc"),
-      abbr: "DT",
-      color: "bg-green-100 text-green-700 border-green-200",
-      featured: true,
-    },
-    {
-      name: t("integrationLexware"),
-      desc: t("integrationLexwareDesc"),
-      abbr: "LX",
-      color: "bg-blue-100 text-blue-700 border-blue-200",
-      featured: true,
-    },
-    {
-      name: t("integrationSevdesk"),
-      desc: t("integrationSevdeskDesc"),
-      abbr: "SD",
-      color: "bg-purple-100 text-purple-700 border-purple-200",
-      featured: true,
-    },
-    {
-      name: t("integrationSap"),
-      desc: t("integrationSapDesc"),
-      abbr: "SAP",
-      color: "bg-sky-100 text-sky-700 border-sky-200",
-      featured: false,
-    },
-    {
-      name: t("integrationPersonio"),
-      desc: t("integrationPersonioDesc"),
-      abbr: "PE",
-      color: "bg-orange-100 text-orange-700 border-orange-200",
-      featured: false,
-    },
-    {
-      name: t("integrationSage"),
-      desc: t("integrationSageDesc"),
-      abbr: "SG",
-      color: "bg-teal-100 text-teal-700 border-teal-200",
-      featured: false,
-    },
-  ];
-
-  return (
-    <section className="py-16 sm:py-24 bg-gradient-to-b from-white to-gray-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900">
-            {t("integrationsTitle")}
-          </h2>
-          <p className="mt-4 text-gray-500">{t("integrationsSubtitle")}</p>
-        </div>
-
-        {/* Integration cards grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {integrations.map((item) => (
-            <div
-              key={item.abbr}
-              className="group relative rounded-3xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm hover:shadow-md hover:border-emerald-100 dark:hover:border-emerald-800/50 transition-all"
-            >
-              {/* Coming soon badge for non-featured */}
-              {!item.featured && (
-                <span className="absolute top-4 right-4 text-[10px] font-semibold text-gray-400 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-0.5">
-                  {t("integrationsComingSoon")}
-                </span>
-              )}
-
-              <div className="flex items-start gap-4">
-                {/* Logo placeholder */}
-                <div
-                  className={`w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0 text-sm font-bold ${item.color}`}
-                >
-                  {item.abbr}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-gray-900">
-                      {item.name}
-                    </h3>
-                    {item.featured && (
-                      <LinkIcon className="w-3.5 h-3.5 text-emerald-500" />
-                    )}
-                  </div>
-                  <p className="mt-1.5 text-xs text-gray-400 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            </div>
           ))}
         </div>
       </div>

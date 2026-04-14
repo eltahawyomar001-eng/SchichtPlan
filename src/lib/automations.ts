@@ -20,6 +20,7 @@
 import { prisma } from "@/lib/db";
 import { calcGrossMinutes } from "@/lib/time-utils";
 import { dispatchExternalNotification, sendEmail } from "@/lib/notifications";
+import { getWorkspaceOwnerLocale } from "@/lib/notifications/locale-helper";
 import { log } from "@/lib/logger";
 import { batchAutoFill } from "@/lib/auto-fill";
 
@@ -525,13 +526,14 @@ export async function createSystemNotification(params: {
       );
       // No User account for this employee — still send a direct email
       try {
+        const locale = await getWorkspaceOwnerLocale(workspaceId);
         const result = await sendEmail({
           to: employeeEmail,
           type,
           title,
           message,
           link,
-          locale: "de",
+          locale,
         });
         if (result.success) {
           log.info(`[notification] Direct email sent to ${employeeEmail}`);
@@ -1452,11 +1454,13 @@ async function executeAction(
     case "send_email": {
       const email = (action.to as string) || (context.employeeEmail as string);
       if (!email) break;
+      const locale = await getWorkspaceOwnerLocale(workspaceId);
       await sendEmail({
         to: email,
         type: "AUTOMATION",
         title: interpolate(action.title as string, context),
         message: interpolate(action.message as string, context),
+        locale,
       });
       break;
     }

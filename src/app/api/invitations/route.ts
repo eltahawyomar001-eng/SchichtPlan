@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { invitationEmail } from "@/lib/notifications/email-i18n";
 import { randomBytes } from "crypto";
 import { createInvitationSchema, validateBody } from "@/lib/validations";
 import { requireUserSlot } from "@/lib/subscription-guard";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
  * GET /api/invitations — list all invitations for the current workspace
  */
-export const GET = withRoute("/api/invitations", "GET", async (req) => {
+export const GET = withRoute("/api/invitations", "GET", async (_req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
-  const { user, workspaceId } = auth;
+  const { user } = auth;
 
   // Only OWNER / ADMIN can view invitations
   if (!["OWNER", "ADMIN"].includes(user.role)) {
@@ -40,7 +42,7 @@ export const POST = withRoute(
   async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+    const { user } = auth;
 
     // Only OWNER / ADMIN can invite
     if (!["OWNER", "ADMIN"].includes(user.role)) {
@@ -111,13 +113,16 @@ export const POST = withRoute(
     const inviteLink = `/einladung/${token}`;
     const inviterName = user.name || user.email || "Someone";
     const workspaceName = workspace?.name || "a workspace";
+    const locale = await getLocaleFromCookie();
+    const copy = invitationEmail(locale, inviterName, workspaceName, role);
 
     await sendEmail({
       to: email,
-      type: "INVITATION",
-      title: `You've been invited to join ${workspaceName} on Shiftfy`,
-      message: `${inviterName} has invited you to join "${workspaceName}" as ${role.charAt(0) + role.slice(1).toLowerCase()}. Click the button below to accept the invitation. This invitation expires in 7 days.`,
+      type: "invitation",
+      title: copy.subject,
+      message: copy.body,
       link: inviteLink,
+      locale,
     });
 
     return NextResponse.json(invitation, { status: 201 });

@@ -326,6 +326,7 @@ export default function EinstellungenPage() {
   // 2FA handlers
   const handleSetup2FA = async () => {
     setTwoFAMsg(null);
+    setTwoFASaving(true);
     try {
       const res = await fetch("/api/auth/two-factor");
       if (res.ok) {
@@ -333,9 +334,17 @@ export default function EinstellungenPage() {
         setTwoFAQr(data.qrCode);
         setTwoFASecret(data.secret);
         setTwoFASetup(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setTwoFAMsg({
+          type: "error",
+          text: data.error || t("twoFASetupError"),
+        });
       }
     } catch {
       setTwoFAMsg({ type: "error", text: t("networkError") });
+    } finally {
+      setTwoFASaving(false);
     }
   };
 
@@ -367,11 +376,18 @@ export default function EinstellungenPage() {
 
   const handleDisable2FA = async () => {
     setTwoFASaving(true);
+    setTwoFAMsg(null);
     try {
       const res = await fetch("/api/auth/two-factor", { method: "DELETE" });
       if (res.ok) {
         setTwoFAEnabled(false);
         setTwoFAMsg({ type: "success", text: t("twoFADisabled") });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setTwoFAMsg({
+          type: "error",
+          text: data.error || t("networkError"),
+        });
       }
     } catch {
       setTwoFAMsg({ type: "error", text: t("networkError") });
@@ -830,25 +846,25 @@ export default function EinstellungenPage() {
               )}
 
               {/* Two-Factor Authentication */}
-              <div className="border-t border-gray-100 pt-4">
+              <div className="border-t border-gray-100 dark:border-zinc-700 pt-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-2">
                   {t("twoFactorAuth")}
                 </h3>
 
                 {/* Recovery codes display (shown once after enabling) */}
                 {twoFARecoveryCodes && (
-                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-sm font-semibold text-amber-800 mb-2">
+                  <div className="mb-4 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30 p-4">
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-2">
                       {t("twoFARecoveryTitle")}
                     </p>
-                    <p className="text-xs text-amber-700 mb-3">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
                       {t("twoFARecoveryDesc")}
                     </p>
                     <div className="grid grid-cols-2 gap-1.5">
                       {twoFARecoveryCodes.map((code, i) => (
                         <code
                           key={i}
-                          className="rounded bg-white dark:bg-zinc-900 px-2 py-1 text-xs font-mono text-gray-800 dark:text-zinc-200 text-center border border-amber-200"
+                          className="rounded bg-white dark:bg-zinc-900 px-2 py-1 text-xs font-mono text-gray-800 dark:text-zinc-200 text-center border border-amber-200 dark:border-amber-800/50"
                         >
                           {code}
                         </code>
@@ -884,7 +900,7 @@ export default function EinstellungenPage() {
                   <div className="flex items-center gap-3">
                     <Badge
                       variant="default"
-                      className="bg-green-100 text-green-800"
+                      className="bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300 dark:border dark:border-green-800/50"
                     >
                       {t("twoFAActive")}
                     </Badge>
@@ -907,7 +923,7 @@ export default function EinstellungenPage() {
                       <img
                         src={twoFAQr}
                         alt="2FA QR Code"
-                        className="mx-auto w-48 h-48"
+                        className="mx-auto w-48 h-48 rounded-lg bg-white p-2"
                       />
                     )}
                     <p className="text-xs text-gray-400 dark:text-zinc-500 break-all font-mono">
@@ -941,17 +957,21 @@ export default function EinstellungenPage() {
                     </div>
                   </div>
                 ) : (
-                  <Button variant="outline" onClick={handleSetup2FA}>
+                  <Button
+                    variant="outline"
+                    onClick={handleSetup2FA}
+                    disabled={twoFASaving}
+                  >
                     <ShieldCheckIcon className="h-4 w-4" />
-                    {t("twoFASetup")}
+                    {twoFASaving ? t("loading") : t("twoFASetup")}
                   </Button>
                 )}
                 {twoFAMsg && (
                   <div
                     className={`mt-2 rounded-lg p-3 text-sm ${
                       twoFAMsg.type === "success"
-                        ? "bg-green-50 text-green-800 border border-green-200"
-                        : "bg-red-50 text-red-800 border border-red-200"
+                        ? "bg-green-50 text-green-800 border border-green-200 dark:bg-green-950/30 dark:text-green-300 dark:border-green-800/50"
+                        : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800/50"
                     }`}
                   >
                     {twoFAMsg.text}

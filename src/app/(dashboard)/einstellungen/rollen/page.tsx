@@ -83,14 +83,14 @@ export default function RollenPage() {
         {!loading && !error && (
           <div className="space-y-4">
             {/* Info banner */}
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+            <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 p-4">
               <div className="flex items-start gap-3">
-                <ShieldCheckIcon className="h-5 w-5 text-emerald-600 mt-0.5" />
+                <ShieldCheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-emerald-900">
+                  <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">
                     {t("builtInInfo")}
                   </p>
-                  <p className="mt-1 text-xs text-emerald-700">
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
                     {t("customRolesInfo")}
                   </p>
                 </div>

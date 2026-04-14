@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -37,6 +38,9 @@ import {
   MessageCircleIcon,
   FileCheckIcon,
   TicketIcon,
+  SearchIcon,
+  StarIcon,
+  ChevronDownIcon,
 } from "@/components/icons";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { cn } from "@/lib/utils";
@@ -232,6 +236,82 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+const FAVORITES_KEY = "shiftfy-sidebar-favorites";
+const COLLAPSED_KEY = "shiftfy-sidebar-collapsed";
+
+function useFavorites() {
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem(FAVORITES_KEY);
+      if (stored) {
+        const parsed: unknown = JSON.parse(stored);
+        if (
+          Array.isArray(parsed) &&
+          parsed.every((v) => typeof v === "string")
+        ) {
+          return parsed as string[];
+        }
+        localStorage.removeItem(FAVORITES_KEY);
+      }
+    } catch {
+      /* ignore — invalid JSON or storage unavailable */
+    }
+    return [];
+  });
+
+  const toggle = useCallback((href: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(href)
+        ? prev.filter((f) => f !== href)
+        : prev.length < 8
+          ? [...prev, href]
+          : prev;
+      try {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  return { favorites, toggle };
+}
+
+function useCollapsedGroups() {
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const stored = localStorage.getItem(COLLAPSED_KEY);
+      if (stored) {
+        const parsed: unknown = JSON.parse(stored);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed as Record<number, boolean>;
+        }
+        localStorage.removeItem(COLLAPSED_KEY);
+      }
+    } catch {
+      /* ignore — invalid JSON or storage unavailable */
+    }
+    return {};
+  });
+
+  const toggleGroup = useCallback((idx: number) => {
+    setCollapsed((prev) => {
+      const next = { ...prev, [idx]: !prev[idx] };
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  return { collapsed, toggleGroup };
+}
+
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
@@ -241,6 +321,32 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     | undefined;
   const userName = (session?.user as { name?: string } | undefined)?.name;
   const userEmail = (session?.user as { email?: string } | undefined)?.email;
+
+  const [search, setSearch] = useState("");
+  const { favorites, toggle: toggleFavorite } = useFavorites();
+  const { collapsed, toggleGroup } = useCollapsedGroups();
+
+  /* Build a flat list of all visible nav items for search + favorites */
+  const allVisibleItems = useMemo(() => {
+    const items: NavItem[] = [];
+    for (const group of navGroups) {
+      for (const item of group.items) {
+        if (!item.roles || (userRole && item.roles.includes(userRole))) {
+          items.push(item);
+        }
+      }
+    }
+    return items;
+  }, [userRole]);
+
+  /* Pinned items (favorites) */
+  const pinnedItems = useMemo(
+    () => allVisibleItems.filter((item) => favorites.includes(item.href)),
+    [allVisibleItems, favorites],
+  );
+
+  /* Search-filtered groups */
+  const query = search.trim().toLowerCase();
 
   return (
     <>
@@ -281,8 +387,62 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
+        {/* Search bar */}
+        <div className="px-3 pb-2">
+          <div className="relative">
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("sidebarSearch")}
+              className="w-full rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50 pl-8 pr-3 py-1.5 text-xs text-gray-700 dark:text-zinc-300 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Scrollable Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-2">
+          {/* ── Favorites group ── */}
+          {pinnedItems.length > 0 && !query && (
+            <div className="mb-4">
+              <div className="mb-2 flex items-center gap-2 px-3">
+                <StarIcon className="w-3 h-3 text-amber-400" />
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                  {t("favorites")}
+                </p>
+                <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+              </div>
+              <div className="space-y-0.5">
+                {pinnedItems.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
+                  return (
+                    <NavLink
+                      key={"fav-" + item.href}
+                      item={item}
+                      isActive={isActive}
+                      isFavorite
+                      onToggleFavorite={() => toggleFavorite(item.href)}
+                      onClick={onClose}
+                      t={t}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Regular nav groups ── */}
           {navGroups.map((group, groupIdx) => {
             const visibleItems = group.items.filter((item) => {
               if (!item.roles) return true;
@@ -292,47 +452,64 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
             if (visibleItems.length === 0) return null;
 
+            /* Search filter */
+            const filteredItems = query
+              ? visibleItems.filter((item) =>
+                  t(item.key).toLowerCase().includes(query),
+                )
+              : visibleItems;
+
+            if (query && filteredItems.length === 0) return null;
+
+            const isCollapsed = !query && collapsed[groupIdx];
+
             return (
-              <div key={groupIdx} className={groupIdx > 0 ? "mt-5" : ""}>
-                {group.labelKey && (
-                  <div className="mb-2 flex items-center gap-2 px-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+              <div key={groupIdx} className={groupIdx > 0 ? "mt-4" : ""}>
+                {group.labelKey ? (
+                  <button
+                    onClick={() => !query && toggleGroup(groupIdx)}
+                    className="w-full mb-1.5 flex items-center gap-2 px-3 group/header"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 group-hover/header:text-gray-600 dark:group-hover/header:text-zinc-300 transition-colors">
                       {t(group.labelKey)}
                     </p>
                     <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+                    {!query && (
+                      <ChevronDownIcon
+                        className={cn(
+                          "w-3 h-3 text-gray-300 dark:text-zinc-600 transition-transform duration-200",
+                          isCollapsed && "-rotate-90",
+                        )}
+                      />
+                    )}
+                  </button>
+                ) : groupIdx > 0 ? (
+                  <div className="mb-1.5 px-3">
+                    <div className="h-px bg-gray-100 dark:bg-zinc-800" />
+                  </div>
+                ) : null}
+
+                {!isCollapsed && (
+                  <div className="space-y-0.5">
+                    {filteredItems.map((item) => {
+                      const isActive =
+                        pathname === item.href ||
+                        pathname.startsWith(item.href + "/");
+                      const isFav = favorites.includes(item.href);
+                      return (
+                        <NavLink
+                          key={item.href}
+                          item={item}
+                          isActive={isActive}
+                          isFavorite={isFav}
+                          onToggleFavorite={() => toggleFavorite(item.href)}
+                          onClick={onClose}
+                          t={t}
+                        />
+                      );
+                    })}
                   </div>
                 )}
-                <div className="space-y-1">
-                  {visibleItems.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      pathname.startsWith(item.href + "/");
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={onClose}
-                        aria-current={isActive ? "page" : undefined}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 min-w-0 active:scale-[0.98]",
-                          isActive
-                            ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-emerald-100 dark:shadow-emerald-900/30 sidebar-active-glow"
-                            : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-200 active:bg-gray-100 dark:active:bg-zinc-700",
-                        )}
-                      >
-                        <item.icon
-                          className={cn(
-                            "h-[18px] w-[18px] flex-shrink-0 transition-colors",
-                            isActive
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-gray-400 dark:text-zinc-500",
-                          )}
-                        />
-                        <span className="truncate">{t(item.key)}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
               </div>
             );
           })}
@@ -372,5 +549,66 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
       </aside>
     </>
+  );
+}
+
+/* ─── Individual Nav Link with favorite star ─── */
+function NavLink({
+  item,
+  isActive,
+  isFavorite,
+  onToggleFavorite,
+  onClick,
+  t,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  onClick?: () => void;
+  t: ReturnType<typeof useTranslations<"nav">>;
+}) {
+  return (
+    <div className="group/nav relative flex items-center">
+      <Link
+        href={item.href}
+        onClick={onClick}
+        aria-current={isActive ? "page" : undefined}
+        className={cn(
+          "flex flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 min-w-0 active:scale-[0.98]",
+          isActive
+            ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-emerald-100 dark:shadow-emerald-900/30 sidebar-active-glow"
+            : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-200 active:bg-gray-100 dark:active:bg-zinc-700",
+        )}
+      >
+        <item.icon
+          className={cn(
+            "h-[18px] w-[18px] flex-shrink-0 transition-colors",
+            isActive
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-gray-400 dark:text-zinc-500",
+          )}
+        />
+        <span className="truncate">{t(item.key)}</span>
+      </Link>
+
+      {/* Favorite star — shows on hover or if already favorited */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleFavorite();
+        }}
+        aria-label={isFavorite ? t("favRemove") : t("favAdd")}
+        className={cn(
+          "absolute right-1.5 p-1 rounded-md transition-all",
+          isFavorite
+            ? "opacity-100 text-amber-400 hover:text-amber-500"
+            : "opacity-0 group-hover/nav:opacity-100 text-gray-300 dark:text-zinc-600 hover:text-amber-400 dark:hover:text-amber-400",
+        )}
+      >
+        <StarIcon className={cn("w-3 h-3", isFavorite && "fill-amber-400")} />
+      </button>
+    </div>
   );
 }

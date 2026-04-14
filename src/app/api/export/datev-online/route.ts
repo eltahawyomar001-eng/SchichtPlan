@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { toIndustrialHours } from "@/lib/time-utils";
+import { toIndustrialHours, toPersonnelNumber } from "@/lib/time-utils";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { createAuditLog } from "@/lib/audit";
@@ -180,7 +180,7 @@ function buildDatevOnlinePayload(
 ) {
   // DATEV Lohn & Gehalt record format
   const records = entries.map((e) => ({
-    personalnummer: e.employee.id.slice(-6),
+    personalnummer: toPersonnelNumber(e.employee.id),
     nachname: e.employee.lastName,
     vorname: e.employee.firstName,
     datum: formatDateISO(e.date),
@@ -214,8 +214,8 @@ function buildDatevOnlinePayload(
         personalnummer: key,
         name: `${r.nachname}, ${r.vorname}`,
         position:
-          entries.find((e) => e.employee.id.slice(-6) === key)?.employee
-            .position ?? null,
+          entries.find((e) => toPersonnelNumber(e.employee.id) === key)
+            ?.employee.position ?? null,
         totalBrutto: 0,
         totalNetto: 0,
         totalPause: 0,

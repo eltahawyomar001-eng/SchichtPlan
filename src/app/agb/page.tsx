@@ -121,9 +121,9 @@ export default function AGBPage() {
             <p>
               Shiftfy wird in verschiedenen Tarifstufen angeboten.
               Kostenpflichtige Tarife (BASIC, PROFESSIONAL, ENTERPRISE) werden
-              monatlich im Voraus abgerechnet. Die Preise setzen sich aus einer
-              Grundgebühr pro Workspace und einem Betrag pro Nutzer zusammen.
-              Die jeweils aktuellen Preise sind auf der{" "}
+              monatlich im Voraus abgerechnet. Die Preise richten sich nach der
+              Anzahl aktiver Nutzer — ohne zusätzliche Grundgebühr. Die jeweils
+              aktuellen Preise sind auf der{" "}
               <Link
                 href="/pricing"
                 className="text-emerald-600 hover:text-emerald-700 underline"

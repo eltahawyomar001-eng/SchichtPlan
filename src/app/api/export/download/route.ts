@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
@@ -7,9 +6,10 @@ import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import ExcelJS from "exceljs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { getExportHeaders, getStatusLabel } from "@/lib/time-utils";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
  * GET /api/export?type=shifts|time-entries|employees&format=xlsx|csv|pdf&start=...&end=...
@@ -17,7 +17,7 @@ import { requireAuth } from "@/lib/api-response";
 export const GET = withRoute("/api/export/download", "GET", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
-  const { user, workspaceId } = auth;
+  const { user } = auth;
 
   const forbidden = requirePermission(user, "reports", "read");
   if (forbidden) return forbidden;
@@ -46,6 +46,11 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
   });
   const companyName = workspace?.name || "Export";
 
+  // Resolve the user's chosen locale for locale-aware export
+  const locale = await getLocaleFromCookie();
+  const h = getExportHeaders(locale);
+  const dateFmt = locale === "en" ? "en-GB" : "de-DE";
+
   const workbook = new ExcelJS.Workbook();
   workbook.creator = companyName;
 
@@ -55,15 +60,15 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
       orderBy: { lastName: "asc" },
     });
 
-    const ws = workbook.addWorksheet("Mitarbeiter");
+    const ws = workbook.addWorksheet(h.sheetEmployees);
     ws.columns = [
-      { header: "Vorname", key: "firstName", width: 20 },
-      { header: "Nachname", key: "lastName", width: 20 },
-      { header: "E-Mail", key: "email", width: 30 },
-      { header: "Telefon", key: "phone", width: 20 },
-      { header: "Position", key: "position", width: 20 },
-      { header: "Stundenlohn", key: "hourlyRate", width: 15 },
-      { header: "Wochenstunden", key: "weeklyHours", width: 15 },
+      { header: h.firstName, key: "firstName", width: 20 },
+      { header: h.lastName, key: "lastName", width: 20 },
+      { header: h.email, key: "email", width: 30 },
+      { header: h.phone, key: "phone", width: 20 },
+      { header: h.position, key: "position", width: 20 },
+      { header: h.hourlyRate, key: "hourlyRate", width: 15 },
+      { header: h.weeklyHours, key: "weeklyHours", width: 15 },
     ];
     employees.forEach((e) => ws.addRow(e));
   } else if (type === "time-entries") {
@@ -81,7 +86,7 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
 
-    // Check which months are closed to show "Abgeschlossen" in Status
+    // Check which months are closed to show "Abgeschlossen"/"Closed" in Status
     const monthCloseRecords = await prisma.monthClose.findMany({
       where: {
         workspaceId: user.workspaceId,
@@ -93,16 +98,16 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
       monthCloseRecords.map((mc) => `${mc.year}-${mc.month}`),
     );
 
-    const ws = workbook.addWorksheet("Zeiteinträge");
+    const ws = workbook.addWorksheet(h.sheetTimeEntries);
     ws.columns = [
-      { header: "Datum", key: "date", width: 15 },
-      { header: "Mitarbeiter", key: "employee", width: 25 },
-      { header: "Start", key: "startTime", width: 10 },
-      { header: "Ende", key: "endTime", width: 10 },
-      { header: "Pause (Min)", key: "breakMinutes", width: 12 },
-      { header: "Netto (Min)", key: "netMinutes", width: 12 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Bemerkung", key: "remarks", width: 30 },
+      { header: h.date, key: "date", width: 15 },
+      { header: h.employee, key: "employee", width: 25 },
+      { header: h.start, key: "startTime", width: 10 },
+      { header: h.end, key: "endTime", width: 10 },
+      { header: h.pauseMinOnly, key: "breakMinutes", width: 12 },
+      { header: h.netMin, key: "netMinutes", width: 12 },
+      { header: h.status, key: "status", width: 15 },
+      { header: h.remarks, key: "remarks", width: 30 },
     ];
     entries.forEach((e) => {
       const entryDate = new Date(e.date);
@@ -118,7 +123,7 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
         endTime: e.endTime,
         breakMinutes: e.breakMinutes,
         netMinutes: e.netMinutes,
-        status: isClosed ? "Abgeschlossen" : e.status,
+        status: isClosed ? h.closed : getStatusLabel(e.status, locale),
         remarks: e.remarks,
       });
     });
@@ -137,15 +142,15 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
 
-    const ws = workbook.addWorksheet("Schichtplan");
+    const ws = workbook.addWorksheet(h.sheetShiftPlan);
     ws.columns = [
-      { header: "Datum", key: "date", width: 15 },
-      { header: "Mitarbeiter", key: "employee", width: 25 },
-      { header: "Start", key: "startTime", width: 10 },
-      { header: "Ende", key: "endTime", width: 10 },
-      { header: "Standort", key: "location", width: 20 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Notizen", key: "notes", width: 30 },
+      { header: h.date, key: "date", width: 15 },
+      { header: h.employee, key: "employee", width: 25 },
+      { header: h.start, key: "startTime", width: 10 },
+      { header: h.end, key: "endTime", width: 10 },
+      { header: h.location, key: "location", width: 20 },
+      { header: h.status, key: "status", width: 15 },
+      { header: h.notes, key: "notes", width: 30 },
     ];
     shifts.forEach((s) =>
       ws.addRow({
@@ -158,7 +163,7 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
         startTime: s.startTime,
         endTime: s.endTime,
         location: s.location?.name || "—",
-        status: s.status,
+        status: getStatusLabel(s.status, locale),
         notes: s.notes,
       }),
     );
@@ -189,7 +194,12 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
       doc.setFontSize(14);
       doc.text(`${companyName} – ${type}`, 14, 15);
       doc.setFontSize(8);
-      doc.text(`Erstellt am ${new Date().toLocaleDateString("de-DE")}`, 14, 22);
+      const createdLabel = locale === "en" ? "Created on" : "Erstellt am";
+      doc.text(
+        `${createdLabel} ${new Date().toLocaleDateString(dateFmt)}`,
+        14,
+        22,
+      );
 
       autoTable(doc, {
         head: [headers],
@@ -208,14 +218,14 @@ export const GET = withRoute("/api/export/download", "GET", async (req) => {
     // Record PDF generation against monthly quota
     await recordPdfGeneration(user.workspaceId!);
   } else if (format === "csv") {
-    // German Excel expects semicolon separator + UTF-8 BOM + sep=; header
+    // Excel expects semicolon separator + UTF-8 BOM + sep=; header
     const csvBuffer = await workbook.csv.writeBuffer({
       formatterOptions: { delimiter: ";", quote: true, quoteColumns: true },
     });
-    // Prepend sep=; line and BOM for proper Excel parsing
-    const sepLine = Buffer.from("sep=;\r\n", "utf-8");
+    // BOM MUST be the very first bytes so Excel recognises UTF-8
     const BOM = Buffer.from("\uFEFF", "utf-8");
-    buffer = Buffer.concat([sepLine, BOM, Buffer.from(csvBuffer)]);
+    const sepLine = Buffer.from("sep=;\r\n", "utf-8");
+    buffer = Buffer.concat([BOM, sepLine, Buffer.from(csvBuffer)]);
     contentType = "text/csv; charset=utf-8";
     ext = "csv";
   } else {

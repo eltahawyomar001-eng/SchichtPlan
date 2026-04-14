@@ -4,7 +4,6 @@ import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import ExcelJS from "exceljs";
 import { log } from "@/lib/logger";
-import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 
@@ -34,7 +33,7 @@ export const POST = withRoute(
   async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+    const { user } = auth;
 
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
@@ -53,9 +52,9 @@ export const POST = withRoute(
     if (!file) {
       return NextResponse.json({ error: "No file" }, { status: 400 });
     }
-    if (!["employees", "shifts"].includes(type)) {
+    if (!["employees", "shifts", "time-entries"].includes(type)) {
       return NextResponse.json(
-        { error: "type must be 'employees' or 'shifts'" },
+        { error: "type must be 'employees', 'shifts', or 'time-entries'" },
         { status: 400 },
       );
     }
@@ -256,6 +255,123 @@ export const POST = withRoute(
         for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
           const batch = validRows.slice(i, i + BATCH_SIZE);
           await tx.shift.createMany({
+            data: batch.map((r) => ({
+              ...r,
+              workspaceId: user.workspaceId!,
+            })),
+          });
+        }
+      });
+
+      created = validRows.length;
+    }
+
+    if (type === "time-entries") {
+      // Build employee lookup by email within this workspace
+      const employees = await prisma.employee.findMany({
+        where: { workspaceId: user.workspaceId! },
+        select: { id: true, email: true, firstName: true, lastName: true },
+      });
+      const emailToId = new Map<string, string>();
+      const nameToId = new Map<string, string>();
+      for (const emp of employees) {
+        if (emp.email) emailToId.set(emp.email.toLowerCase(), emp.id);
+        nameToId.set(
+          `${emp.firstName.toLowerCase()} ${emp.lastName.toLowerCase()}`,
+          emp.id,
+        );
+        nameToId.set(
+          `${emp.lastName.toLowerCase()}, ${emp.firstName.toLowerCase()}`,
+          emp.id,
+        );
+      }
+
+      // Helper to parse HH:MM time strings
+      const isValidTime = (t: string) => /^\d{1,2}:\d{2}$/.test(t);
+
+      const validRows: {
+        date: Date;
+        startTime: string;
+        endTime: string;
+        breakMinutes: number;
+        grossMinutes: number;
+        netMinutes: number;
+        employeeId: string;
+        remarks: string | null;
+      }[] = [];
+
+      for (const row of rows) {
+        const date = row["datum"] || row["date"];
+        const startTime =
+          row["start"] || row["startzeit"] || row["starttime"] || row["von"];
+        const endTime =
+          row["ende"] || row["endzeit"] || row["endtime"] || row["bis"];
+
+        if (!date || !startTime || !endTime) {
+          skipped++;
+          continue;
+        }
+
+        const parsedDate = new Date(date);
+        if (isNaN(parsedDate.getTime())) {
+          skipped++;
+          continue;
+        }
+
+        if (!isValidTime(startTime) || !isValidTime(endTime)) {
+          skipped++;
+          continue;
+        }
+
+        // Resolve employee
+        const empEmail = (row["email"] || row["e-mail"] || "").toLowerCase();
+        const empName = (
+          row["mitarbeiter"] ||
+          row["employee"] ||
+          row["name"] ||
+          ""
+        ).toLowerCase();
+
+        let employeeId: string | undefined;
+        if (empEmail && emailToId.has(empEmail)) {
+          employeeId = emailToId.get(empEmail);
+        } else if (empName && nameToId.has(empName)) {
+          employeeId = nameToId.get(empName);
+        }
+
+        if (!employeeId) {
+          skipped++;
+          continue;
+        }
+
+        // Calculate minutes
+        const breakStr =
+          row["pause"] || row["pauseminuten"] || row["break"] || "0";
+        const breakMinutes = parseInt(breakStr, 10) || 0;
+
+        const [sH, sM] = startTime.split(":").map(Number);
+        const [eH, eM] = endTime.split(":").map(Number);
+        let grossMinutes = eH * 60 + eM - (sH * 60 + sM);
+        if (grossMinutes < 0) grossMinutes += 24 * 60; // overnight
+        const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+
+        validRows.push({
+          date: parsedDate,
+          startTime: startTime.padStart(5, "0"),
+          endTime: endTime.padStart(5, "0"),
+          breakMinutes,
+          grossMinutes,
+          netMinutes,
+          employeeId,
+          remarks: row["bemerkung"] || row["remarks"] || row["notizen"] || null,
+        });
+      }
+
+      // Batch insert in a transaction
+      await prisma.$transaction(async (tx) => {
+        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+          const batch = validRows.slice(i, i + BATCH_SIZE);
+          await tx.timeEntry.createMany({
             data: batch.map((r) => ({
               ...r,
               workspaceId: user.workspaceId!,

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default function SLAPage() {
-  const effectiveDate = "01.07.2025";
+  const effectiveDate = "01.03.2026";
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">

@@ -89,3 +89,7 @@ export { FileCheckIcon } from "./FileCheckIcon";
 export { TicketIcon } from "./TicketIcon";
 export { MoonIcon } from "./MoonIcon";
 export { SunIcon } from "./SunIcon";
+export { PauseIcon } from "./PauseIcon";
+export { ArrowDownIcon } from "./ArrowDownIcon";
+export { ArrowUpIcon } from "./ArrowUpIcon";
+export { ChevronUpIcon } from "./ChevronUpIcon";

@@ -238,8 +238,8 @@ export default function JahresplanungSeite() {
       <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Controls bar */}
         <div className="flex flex-col items-center gap-2 sm:gap-3">
-          {/* Year selector */}
-          <div className="flex items-center gap-1">
+          {/* Year selector — always centered */}
+          <div className="flex w-full items-center justify-center gap-1">
             <button
               onClick={() => setYear((y) => y - 1)}
               className="rounded-lg border border-gray-300 dark:border-zinc-600 p-2 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"

@@ -1,234 +1,306 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useTranslations, useLocale } from "next-intl";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageContent } from "@/components/ui/page-content";
 import {
   format,
-  startOfWeek,
-  endOfWeek,
-  addWeeks,
-  subWeeks,
   addMonths,
   subMonths,
   startOfMonth,
   endOfMonth,
-  eachDayOfInterval,
-  getDay,
-  isSameDay,
+  startOfWeek,
+  endOfWeek,
 } from "date-fns";
-import { de, enUS } from "date-fns/locale";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+  RefreshIcon,
+} from "@/components/icons";
+import { CalendarGrid } from "./_components/calendar-grid";
+import { CalendarFilters } from "./_components/calendar-filters";
+import type {
+  CalendarShift,
+  CalendarAbsence,
+  CalendarHoliday,
+  CalendarEmployee,
+  CalendarDepartment,
+  CalendarProject,
+} from "./_components/types";
 
-interface ShiftEntry {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-  isNightShift?: boolean;
-  employee?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    color: string | null;
-  };
-}
-
-interface EmployeeInfo {
-  id: string;
-  firstName: string;
-  lastName: string;
-  color: string | null;
-}
-
-/**
- * Derive a visual shift category from time-of-day.
- * German scheduling industry standard:
- *  - Frühschicht: start before 10:00
- *  - Spätschicht: start 10:00–17:59
- *  - Nachtschicht: start >= 18:00 OR flagged isNightShift
- */
-function deriveShiftCategory(
-  shift: ShiftEntry,
-): "FRUEH" | "SPAET" | "NACHT" | "FREI" {
-  if (shift.isNightShift) return "NACHT";
-  if (shift.status === "CANCELLED") return "FREI";
-
-  const hour = parseInt(shift.startTime.split(":")[0], 10);
-  if (hour < 10) return "FRUEH";
-  if (hour < 18) return "SPAET";
-  return "NACHT";
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  FRUEH: "bg-blue-100 text-blue-800",
-  SPAET: "bg-orange-100 text-orange-800",
-  NACHT: "bg-purple-100 text-purple-800",
-  FREI: "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400",
-};
-
-const STATUS_BORDER: Record<string, string> = {
-  SCHEDULED: "border-l-2 border-l-gray-400",
-  CONFIRMED: "border-l-2 border-l-emerald-500",
-  IN_PROGRESS: "border-l-2 border-l-blue-500",
-  COMPLETED: "border-l-2 border-l-green-500",
-  CANCELLED: "border-l-2 border-l-red-400",
-  NO_SHOW: "border-l-2 border-l-red-600",
-  OPEN: "border-l-2 border-l-amber-400",
-};
+type ViewTab = "employeePlanner" | "calendar" | "projectPlanner";
+type PeriodTab = "year" | "month" | "week" | "day";
 
 export default function TeamkalenderSeite() {
   const t = useTranslations("teamCalendar");
   const tc = useTranslations("common");
-  const locale = useLocale();
-  const dateFnsLocale = locale === "en" ? enUS : de;
-  const [viewMode, setViewMode] = useState<"week" | "month">("week");
+
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [shifts, setShifts] = useState<ShiftEntry[]>([]);
-  const [employees, setEmployees] = useState<EmployeeInfo[]>([]);
+  const [activeViewTab, setActiveViewTab] = useState<ViewTab>("calendar");
+  const [activePeriod, setActivePeriod] = useState<PeriodTab>("month");
+
+  // Data
+  const [shifts, setShifts] = useState<CalendarShift[]>([]);
+  const [absences, setAbsences] = useState<CalendarAbsence[]>([]);
+  const [publicHolidays, setPublicHolidays] = useState<CalendarHoliday[]>([]);
+  const [employees, setEmployees] = useState<CalendarEmployee[]>([]);
+  const [departments, setDepartments] = useState<CalendarDepartment[]>([]);
+  const [projects, setProjects] = useState<CalendarProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filters
+  const [selectedProject, setSelectedProject] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedEventType, setSelectedEventType] = useState("");
+
+  // Date range for current view
   const dateRange = useMemo(() => {
-    if (viewMode === "week") {
-      return {
-        start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-        end: endOfWeek(currentDate, { weekStartsOn: 1 }),
-      };
-    }
-    return {
-      start: startOfMonth(currentDate),
-      end: endOfMonth(currentDate),
-    };
-  }, [currentDate, viewMode]);
+    const ms = startOfMonth(currentDate);
+    const me = endOfMonth(currentDate);
+    // Include full weeks that overlap the month
+    const start = startOfWeek(ms, { weekStartsOn: 1 });
+    const end = endOfWeek(me, { weekStartsOn: 1 });
+    return { start, end };
+  }, [currentDate]);
 
-  const days = useMemo(
-    () => eachDayOfInterval({ start: dateRange.start, end: dateRange.end }),
-    [dateRange],
-  );
-
-  const padStart = useMemo(() => {
-    if (viewMode !== "month") return 0;
-    const d = getDay(dateRange.start);
-    return d === 0 ? 6 : d - 1;
-  }, [viewMode, dateRange.start]);
-
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange]);
-
-  async function fetchData() {
+  // Fetch data
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const startStr = format(dateRange.start, "yyyy-MM-dd");
       const endStr = format(dateRange.end, "yyyy-MM-dd");
-      const [sRes, eRes] = await Promise.all([
-        fetch(`/api/shifts?start=${startStr}&end=${endStr}`),
-        fetch("/api/employees"),
-      ]);
-      if (!sRes.ok || !eRes.ok) {
+
+      const res = await fetch(`/api/calendar?start=${startStr}&end=${endStr}`);
+      if (!res.ok) {
         setError(tc("errorLoading"));
         return;
       }
-      const sJson = await sRes.json();
-      setShifts(sJson.data ?? sJson);
-      const eJson = await eRes.json();
-      setEmployees(eJson.data ?? (Array.isArray(eJson) ? eJson : []));
+      const data = await res.json();
+      setShifts(data.shifts ?? []);
+      setAbsences(data.absences ?? []);
+      setPublicHolidays(data.publicHolidays ?? []);
+      setEmployees(data.employees ?? []);
+      setDepartments(data.departments ?? []);
+      setProjects(data.projects ?? []);
     } catch {
       setError(tc("errorLoading"));
     } finally {
       setLoading(false);
     }
-  }
+  }, [dateRange, tc]);
 
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Navigation
   function navigate(dir: number) {
-    if (viewMode === "week") {
-      setCurrentDate((p) => (dir > 0 ? addWeeks(p, 1) : subWeeks(p, 1)));
-    } else {
-      setCurrentDate((p) => (dir > 0 ? addMonths(p, 1) : subMonths(p, 1)));
+    setCurrentDate((p) => (dir > 0 ? addMonths(p, 1) : subMonths(p, 1)));
+  }
+
+  function goToday() {
+    setCurrentDate(new Date());
+  }
+
+  // Apply filters
+  const filteredShifts = useMemo(() => {
+    let result = shifts;
+    if (selectedEmployee) {
+      result = result.filter((s) => s.employee?.id === selectedEmployee);
     }
-  }
+    if (selectedDepartment) {
+      result = result.filter(
+        (s) => s.employee?.departmentId === selectedDepartment,
+      );
+    }
+    // If event type filter is set and it's not "shift", hide all shifts
+    if (selectedEventType && selectedEventType !== "shift") {
+      result = [];
+    }
+    return result;
+  }, [shifts, selectedEmployee, selectedDepartment, selectedEventType]);
 
-  const headerLabel =
-    viewMode === "week"
-      ? `${format(dateRange.start, "d. MMM", { locale: dateFnsLocale })} – ${format(dateRange.end, "d. MMM yyyy", { locale: dateFnsLocale })}`
-      : format(currentDate, "MMMM yyyy", { locale: dateFnsLocale });
+  const filteredAbsences = useMemo(() => {
+    let result = absences;
+    if (selectedEmployee) {
+      result = result.filter((a) => a.employee?.id === selectedEmployee);
+    }
+    if (selectedDepartment) {
+      result = result.filter(
+        (a) => a.employee?.departmentId === selectedDepartment,
+      );
+    }
+    if (selectedEventType) {
+      // Map event type back to AbsenceCategory
+      const categoryMap: Record<string, string> = {
+        vacation: "URLAUB",
+        sick: "KRANK",
+        parentalLeave: "ELTERNZEIT",
+        specialLeave: "SONDERURLAUB",
+        unpaidLeave: "UNBEZAHLT",
+        training: "FORTBILDUNG",
+        other: "SONSTIGES",
+      };
+      if (
+        selectedEventType === "shift" ||
+        selectedEventType === "publicHoliday"
+      ) {
+        result = [];
+      } else if (categoryMap[selectedEventType]) {
+        result = result.filter(
+          (a) => a.category === categoryMap[selectedEventType],
+        );
+      }
+    }
+    return result;
+  }, [absences, selectedEmployee, selectedDepartment, selectedEventType]);
 
-  function shiftsForEmployeeDay(empId: string, day: Date) {
-    return shifts.filter(
-      (s) => s.employee?.id === empId && isSameDay(new Date(s.date), day),
-    );
-  }
+  const filteredHolidays = useMemo(() => {
+    if (selectedEventType && selectedEventType !== "publicHoliday") {
+      return [];
+    }
+    return publicHolidays;
+  }, [publicHolidays, selectedEventType]);
 
-  const DAY_HEADERS = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(2024, 0, 1 + i);
-    return format(d, "EEE", { locale: dateFnsLocale });
-  });
+  const filteredEmployees = useMemo(() => {
+    let result = employees;
+    if (selectedDepartment) {
+      result = result.filter((e) => e.departmentId === selectedDepartment);
+    }
+    if (selectedEmployee) {
+      result = result.filter((e) => e.id === selectedEmployee);
+    }
+    return result;
+  }, [employees, selectedDepartment, selectedEmployee]);
+
+  // Category label helper
+  const categoryLabel = useCallback(
+    (cat: string): string => {
+      const map: Record<string, string> = {
+        URLAUB: t("vacation"),
+        KRANK: t("sick"),
+        ELTERNZEIT: t("parentalLeave"),
+        SONDERURLAUB: t("specialLeave"),
+        UNBEZAHLT: t("unpaidLeave"),
+        FORTBILDUNG: t("training"),
+        SONSTIGES: t("other"),
+      };
+      return map[cat] ?? cat;
+    },
+    [t],
+  );
+
+  const viewTabs: { key: ViewTab; label: string }[] = [
+    { key: "employeePlanner", label: t("tabEmployeePlanner") },
+    { key: "calendar", label: t("tabCalendar") },
+    { key: "projectPlanner", label: t("tabProjectPlanner") },
+  ];
+
+  const periodTabs: { key: PeriodTab; label: string }[] = [
+    { key: "year", label: t("year") },
+    { key: "month", label: t("month") },
+    { key: "week", label: t("week") },
+    { key: "day", label: t("day") },
+  ];
 
   return (
     <div>
       <Topbar title={t("title")} description={t("description")} />
-      <PageContent className="space-y-4">
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-lg bg-gray-100 dark:bg-zinc-800 p-1">
-            {(["week", "month"] as const).map((m) => (
+      <PageContent className="space-y-5">
+        {/* ─── Top action buttons ─────────────────────────────── */}
+        <div className="flex justify-end gap-3">
+          <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+            <DownloadIcon className="h-4 w-4" />
+            {t("exportCalendar")}
+          </button>
+          <button className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors">
+            <RefreshIcon className="h-4 w-4" />
+            {t("syncCalendar")}
+          </button>
+        </div>
+
+        {/* ─── Filter bar ─────────────────────────────────────── */}
+        <CalendarFilters
+          projects={projects}
+          employees={employees}
+          departments={departments}
+          selectedProject={selectedProject}
+          selectedEmployee={selectedEmployee}
+          selectedDepartment={selectedDepartment}
+          selectedEventType={selectedEventType}
+          onProjectChange={setSelectedProject}
+          onEmployeeChange={setSelectedEmployee}
+          onDepartmentChange={setSelectedDepartment}
+          onEventTypeChange={setSelectedEventType}
+        />
+
+        {/* ─── View tabs + Navigation ─────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* View tabs: Mitarbeiterplaner | Kalender | Projektplaner */}
+          <div className="flex items-center gap-1 border-b border-gray-200 dark:border-zinc-700">
+            {viewTabs.map((tab) => (
               <button
-                key={m}
-                onClick={() => setViewMode(m)}
-                className={`rounded-md px-3 py-1 text-sm font-medium transition ${
-                  viewMode === m
-                    ? "bg-white dark:bg-zinc-900 text-emerald-700 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                key={tab.key}
+                onClick={() => setActiveViewTab(tab.key)}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                  activeViewTab === tab.key
+                    ? "border-emerald-600 text-emerald-700 dark:text-emerald-400"
+                    : "border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
                 }`}
               >
-                {m === "week" ? t("week") : t("month")}
+                {tab.label}
               </button>
             ))}
           </div>
+
+          {/* Navigation: ◄ Heute ► */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(-1)}
-              className="rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
+              className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
             >
-              <ChevronLeftIcon className="h-5 w-5" />
+              <ChevronLeftIcon className="h-4 w-4 text-gray-600 dark:text-zinc-400" />
             </button>
-            <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 min-w-[180px] text-center">
-              {headerLabel}
-            </span>
+            <button
+              onClick={goToday}
+              className="rounded-lg border border-gray-200 dark:border-zinc-700 px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+            >
+              {t("today")}
+            </button>
             <button
               onClick={() => navigate(1)}
-              className="rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
+              className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
             >
-              <ChevronRightIcon className="h-5 w-5" />
+              <ChevronRightIcon className="h-4 w-4 text-gray-600 dark:text-zinc-400" />
             </button>
           </div>
 
-          {/* Legend */}
-          <div className="ml-auto hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-200" />
-              {t("early")}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-orange-200" />
-              {t("late")}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-purple-200" />
-              {t("night")}
-            </span>
+          {/* Period tabs: Jahr | Monat | Woche | Tag */}
+          <div className="flex items-center gap-1">
+            {periodTabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActivePeriod(tab.key)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  activePeriod === tab.key
+                    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                    : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Error state */}
+        {/* ─── Calendar content ───────────────────────────────── */}
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-800 dark:text-red-300">
             {error}
           </div>
         )}
@@ -237,136 +309,48 @@ export default function TeamkalenderSeite() {
           <div className="py-20 text-center text-gray-500 dark:text-zinc-400">
             {t("loading")}
           </div>
-        ) : viewMode === "week" ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <th className="sticky left-0 z-10 bg-white dark:bg-zinc-900 border-b border-r border-gray-200 dark:border-zinc-700 px-3 py-2 text-left text-gray-600 dark:text-zinc-400 min-w-[140px]">
-                    {t("employee")}
-                  </th>
-                  {days.map((d) => (
-                    <th
-                      key={d.toISOString()}
-                      className="border-b border-gray-200 dark:border-zinc-700 px-2 py-2 text-center text-gray-600 dark:text-zinc-400 min-w-[100px]"
-                    >
-                      <div>{format(d, "EEE", { locale: dateFnsLocale })}</div>
-                      <div className="text-xs font-normal text-gray-400 dark:text-zinc-500">
-                        {format(d, "d.M.")}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map((emp) => (
-                  <tr key={emp.id} className="border-b border-gray-100">
-                    <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-700 px-3 py-2 font-medium text-gray-900 dark:text-zinc-100">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: emp.color || "#10b981" }}
-                        />
-                        {emp.firstName} {emp.lastName}
-                      </div>
-                    </td>
-                    {days.map((d) => {
-                      const dayShifts = shiftsForEmployeeDay(emp.id, d);
-                      return (
-                        <td
-                          key={d.toISOString()}
-                          className="px-1 py-1 text-center align-top"
-                        >
-                          {dayShifts.map((s) => {
-                            const cat = deriveShiftCategory(s);
-                            return (
-                              <div
-                                key={s.id}
-                                className={`mb-0.5 rounded px-1.5 py-0.5 text-xs font-medium ${CATEGORY_COLORS[cat]} ${STATUS_BORDER[s.status] ?? ""}`}
-                              >
-                                {s.startTime}–{s.endTime}
-                              </div>
-                            );
-                          })}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-                {employees.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={days.length + 1}
-                      className="py-8 text-center text-gray-500 dark:text-zinc-400"
-                    >
-                      {t("noEmployees")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
         ) : (
-          <div className="space-y-4">
-            {employees.map((emp) => (
-              <Card key={emp.id} className="overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-700">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: emp.color || "#10b981" }}
-                  />
-                  <span className="text-sm font-semibold text-gray-800 dark:text-zinc-200">
-                    {emp.firstName} {emp.lastName}
-                  </span>
-                </div>
-                <CardContent className="p-0 sm:p-0">
-                  <div className="grid grid-cols-7 text-center text-xs text-gray-500 dark:text-zinc-400 border-b border-gray-100">
-                    {DAY_HEADERS.map((dh) => (
-                      <div key={dh} className="py-1">
-                        {dh}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7">
-                    {Array.from({ length: padStart }).map((_, i) => (
-                      <div
-                        key={`pad-${i}`}
-                        className="border-t border-r border-gray-100 min-h-[48px]"
-                      />
-                    ))}
-                    {days.map((d) => {
-                      const dayShifts = shiftsForEmployeeDay(emp.id, d);
-                      return (
-                        <div
-                          key={d.toISOString()}
-                          className="border-t border-r border-gray-100 p-1 min-h-[48px]"
-                        >
-                          <div className="text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
-                            {format(d, "d")}
-                          </div>
-                          {dayShifts.map((s) => {
-                            const cat = deriveShiftCategory(s);
-                            return (
-                              <div
-                                key={s.id}
-                                className={`rounded px-1 py-0.5 text-[10px] font-medium leading-tight mb-0.5 ${CATEGORY_COLORS[cat]}`}
-                              >
-                                {s.startTime}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {employees.length === 0 && (
-              <div className="py-12 text-center text-gray-500 dark:text-zinc-400">
-                {t("noEmployees")}
-              </div>
-            )}
+          <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-[0_0_0_0.5px_rgba(0,0,0,0.04),0_2px_12px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-6 overflow-x-auto">
+            <CalendarGrid
+              currentDate={currentDate}
+              shifts={filteredShifts}
+              absences={filteredAbsences}
+              publicHolidays={filteredHolidays}
+              employees={filteredEmployees}
+              categoryLabel={categoryLabel}
+            />
+
+            {/* Legend */}
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-zinc-400 border-t border-gray-100 dark:border-zinc-800 pt-3">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-gray-200 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600" />
+                {t("shift")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-cyan-100 dark:bg-cyan-900/40 border border-cyan-300 dark:border-cyan-700" />
+                {t("vacation")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-pink-100 dark:bg-pink-900/40 border border-pink-300 dark:border-pink-700" />
+                {t("sick")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-violet-100 dark:bg-violet-900/40 border border-violet-300 dark:border-violet-700" />
+                {t("parentalLeave")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700" />
+                {t("specialLeave")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700" />
+                {t("training")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-6 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800" />
+                {t("publicHoliday")}
+              </span>
+            </div>
           </div>
         )}
       </PageContent>

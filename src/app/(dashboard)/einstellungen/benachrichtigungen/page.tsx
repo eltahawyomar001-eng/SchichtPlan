@@ -110,8 +110,8 @@ export default function BenachrichtigungenPage() {
 
       <PageContent className="max-w-3xl">
         {fetchError && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-4 sm:p-4 text-sm text-red-700">
+          <Card className="border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-950/30">
+            <CardContent className="p-4 sm:p-4 text-sm text-red-700 dark:text-red-300">
               {t("fetchError")}
             </CardContent>
           </Card>
@@ -121,21 +121,21 @@ export default function BenachrichtigungenPage() {
         {serviceStatus &&
           (!serviceStatus.email.configured ||
             !serviceStatus.push.configured) && (
-            <Card className="border-amber-200 bg-amber-50">
+            <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-amber-800">
+                <CardTitle className="text-sm font-medium text-amber-800 dark:text-amber-300">
                   {t("serviceStatus")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-2">
                 {!serviceStatus.email.configured && (
                   <div className="flex items-start gap-2">
-                    <MailIcon className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <MailIcon className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                         {t("emailNotConfigured")}
                       </p>
-                      <p className="text-xs text-amber-700 mt-0.5">
+                      <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
                         {t("emailNotConfiguredDesc")}
                       </p>
                     </div>
@@ -143,12 +143,12 @@ export default function BenachrichtigungenPage() {
                 )}
                 {!serviceStatus.push.configured && (
                   <div className="flex items-start gap-2">
-                    <BellIcon className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <BellIcon className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                         {t("pushNotConfigured")}
                       </p>
-                      <p className="text-xs text-amber-700 mt-0.5">
+                      <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
                         {t("pushNotConfiguredDesc")}
                       </p>
                     </div>
@@ -167,8 +167,8 @@ export default function BenachrichtigungenPage() {
         </Link>
 
         {/* Summary banner */}
-        <div className="rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-emerald-50 p-4 flex items-center gap-3">
-          <div className="rounded-lg bg-emerald-100 p-2">
+        <div className="rounded-xl border border-emerald-100 dark:border-emerald-800/50 bg-gradient-to-r from-emerald-50 to-emerald-50 dark:from-emerald-950/40 dark:to-emerald-900/30 p-4 flex items-center gap-3">
+          <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/60 p-2">
             <BellIcon className="h-5 w-5 text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
@@ -246,10 +246,12 @@ export default function BenachrichtigungenPage() {
         </Card>
 
         {/* Info card */}
-        <Card className="border-emerald-100">
+        <Card className="border-emerald-100 dark:border-emerald-800/50">
           <CardContent className="p-4 sm:p-4">
-            <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-4">
-              <p className="text-xs text-emerald-700">{t("emailInfo")}</p>
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 p-4">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                {t("emailInfo")}
+              </p>
             </div>
           </CardContent>
         </Card>

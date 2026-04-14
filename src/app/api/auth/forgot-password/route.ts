@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { passwordResetEmail } from "@/lib/notifications/email-i18n";
 import { forgotPasswordSchema, validateBody } from "@/lib/validations";
-import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 export const POST = withRoute(
   "/api/auth/forgot-password",
@@ -33,21 +34,26 @@ export const POST = withRoute(
 
       // Send reset email
       const resetUrl = `${process.env.NEXTAUTH_URL}/passwort-zuruecksetzen?token=${token}`;
+      const locale = await getLocaleFromCookie();
+      const copy = passwordResetEmail(locale);
 
       await sendEmail({
         to: email,
         type: "password-reset",
-        title: "Passwort zurücksetzen — Shiftfy",
-        message: `Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den folgenden Link, um ein neues Passwort zu vergeben. Dieser Link ist 1 Stunde gültig. Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.`,
+        title: copy.subject,
+        message: copy.body,
         link: resetUrl,
-        locale: "de",
+        locale,
       });
     }
 
     // Always return success (prevents email enumeration)
+    const locale2 = await getLocaleFromCookie();
     return NextResponse.json({
       message:
-        "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen gesendet.",
+        locale2 === "en"
+          ? "If an account with this email exists, a reset link has been sent."
+          : "Falls ein Konto mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen gesendet.",
     });
   },
 );

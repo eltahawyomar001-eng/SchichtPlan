@@ -62,36 +62,36 @@ describe("stripe plan config", () => {
   // ─── Pricing Logic ────────────────────────────────────────
 
   describe("pricing", () => {
-    it("basic has base price of €19/month", () => {
-      expect(PLANS.basic.basePriceMonthly).toBe(1900);
+    it("basic has no base price (pure per-user)", () => {
+      expect(PLANS.basic.basePriceMonthly).toBe(0);
     });
 
-    it("basic has per-user price of €2.50/month", () => {
-      expect(PLANS.basic.perUserMonthly).toBe(250);
+    it("basic has per-user price of €2.99/month", () => {
+      expect(PLANS.basic.perUserMonthly).toBe(299);
     });
 
-    it("professional has base price of €49/month", () => {
-      expect(PLANS.professional.basePriceMonthly).toBe(4900);
+    it("professional has no base price (pure per-user)", () => {
+      expect(PLANS.professional.basePriceMonthly).toBe(0);
     });
 
-    it("professional has per-user price of €4.50/month", () => {
-      expect(PLANS.professional.perUserMonthly).toBe(450);
+    it("professional has per-user price of €4.99/month", () => {
+      expect(PLANS.professional.perUserMonthly).toBe(499);
     });
 
-    it("enterprise has zero prices (custom-quoted)", () => {
+    it("enterprise has per-user price of €7.99/month", () => {
       expect(PLANS.enterprise.basePriceMonthly).toBe(0);
-      expect(PLANS.enterprise.perUserMonthly).toBe(0);
+      expect(PLANS.enterprise.perUserMonthly).toBe(799);
     });
 
-    it("annual base is cheaper than monthly base for paid plans", () => {
-      for (const id of ["basic", "professional"] as PlanId[]) {
-        const plan = PLANS[id];
-        expect(plan.basePriceAnnual).toBeLessThan(plan.basePriceMonthly);
+    it("all plans have zero base price (pure per-user model)", () => {
+      for (const plan of Object.values(PLANS)) {
+        expect(plan.basePriceMonthly).toBe(0);
+        expect(plan.basePriceAnnual).toBe(0);
       }
     });
 
-    it("annual per-user is cheaper than monthly per-user for paid plans", () => {
-      for (const id of ["basic", "professional"] as PlanId[]) {
+    it("annual per-user is cheaper than monthly per-user for all paid plans", () => {
+      for (const id of ["basic", "professional", "enterprise"] as PlanId[]) {
         const plan = PLANS[id];
         expect(plan.perUserAnnual).toBeLessThan(plan.perUserMonthly);
       }
@@ -102,30 +102,30 @@ describe("stripe plan config", () => {
       expect(PLANS.professional.trialDays).toBe(14);
     });
 
-    it("enterprise has no trial", () => {
-      expect(PLANS.enterprise.trialDays).toBe(0);
+    it("enterprise has 14-day trial", () => {
+      expect(PLANS.enterprise.trialDays).toBe(14);
     });
   });
 
   // ─── calculatePlanPrice ───────────────────────────────────
 
   describe("calculatePlanPrice", () => {
-    it("returns base + per-user × count for monthly", () => {
-      // €19 + 5 × €2.50 = €31.50 → 3150 cents
-      expect(calculatePlanPrice("basic", 5, "monthly")).toBe(1900 + 250 * 5);
+    it("returns per-user × count for monthly (no base fee)", () => {
+      // 5 × €2.99 = €14.95 → 1495 cents
+      expect(calculatePlanPrice("basic", 5, "monthly")).toBe(299 * 5);
     });
 
-    it("returns base + per-user × count for annual", () => {
-      // €16 + 10 × €2.10 = €37.00 → 3700 cents
-      expect(calculatePlanPrice("basic", 10, "annual")).toBe(1600 + 210 * 10);
+    it("returns per-user × count for annual", () => {
+      // 10 × €2.49 = €24.90 → 2490 cents
+      expect(calculatePlanPrice("basic", 10, "annual")).toBe(249 * 10);
     });
 
-    it("returns 0 for enterprise (custom-quoted)", () => {
-      expect(calculatePlanPrice("enterprise", 100, "monthly")).toBe(0);
+    it("returns per-user for enterprise", () => {
+      expect(calculatePlanPrice("enterprise", 100, "monthly")).toBe(799 * 100);
     });
 
-    it("returns base only when zero users", () => {
-      expect(calculatePlanPrice("professional", 0, "monthly")).toBe(4900);
+    it("returns 0 when zero users", () => {
+      expect(calculatePlanPrice("professional", 0, "monthly")).toBe(0);
     });
   });
 

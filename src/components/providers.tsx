@@ -8,10 +8,11 @@ import { UpdatePrompt } from "@/components/ui/update-prompt";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider refetchInterval={4 * 60}>
+    <SessionProvider>
       <QueryProvider>
         <ThemeProvider>
           <ServiceWorkerProvider />
@@ -19,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <ConnectivityBanner />
           <UpdatePrompt />
           <PullToRefresh />
+          <Toaster />
           {children}
         </ThemeProvider>
       </QueryProvider>

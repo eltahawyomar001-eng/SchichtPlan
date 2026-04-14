@@ -57,6 +57,24 @@ export function toIndustrialHours(minutes: number): number {
   return Math.round((minutes / 60) * 100) / 100;
 }
 
+/**
+ * Derive a stable, numeric-only Personalnummer from an opaque CUID.
+ *
+ * DATEV and German payroll systems expect an all-digit personnel number.
+ * We hash every character of the ID into a 6-digit number (100 000 – 999 999)
+ * using a simple DJB2-style hash. The result is deterministic — the same
+ * employee ID always produces the same Personalnummer.
+ */
+export function toPersonnelNumber(id: string): string {
+  let hash = 5381;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) + hash + id.charCodeAt(i)) | 0; // hash * 33 + c
+  }
+  // Map to 100000–999999 range (6-digit, no leading zero)
+  const num = 100_000 + (Math.abs(hash) % 900_000);
+  return String(num);
+}
+
 /** Format decimal hours with 2 decimals, German locale (7.5 → "7,50") */
 export function formatIndustrial(
   minutes: number,
@@ -184,7 +202,7 @@ export function validateTimeEntry(input: TimeEntryInput): ValidationError[] {
   return errors;
 }
 
-// ─── Status labels (German) ─────────────────────────────────────
+// ─── Status labels ──────────────────────────────────────────────
 
 export const STATUS_LABELS: Record<string, string> = {
   ENTWURF: "Entwurf",
@@ -194,6 +212,128 @@ export const STATUS_LABELS: Record<string, string> = {
   GEPRUEFT: "Geprüft",
   BESTAETIGT: "Bestätigt",
 };
+
+export const STATUS_LABELS_EN: Record<string, string> = {
+  ENTWURF: "Draft",
+  EINGEREICHT: "Submitted",
+  KORREKTUR: "Correction needed",
+  ZURUECKGEWIESEN: "Rejected",
+  GEPRUEFT: "Reviewed",
+  BESTAETIGT: "Confirmed",
+};
+
+/** Get the localised status label for a given DB enum value. */
+export function getStatusLabel(status: string, locale: string): string {
+  const labels = locale === "en" ? STATUS_LABELS_EN : STATUS_LABELS;
+  return labels[status] ?? status;
+}
+
+// ─── CSV export column headers (locale-aware) ───────────────────
+
+export const CSV_HEADERS_DE = {
+  employee: "Mitarbeiter",
+  location: "Standort",
+  calendarWeek: "KW",
+  date: "Datum",
+  start: "Beginn",
+  end: "Ende",
+  pauseMin: "Pause (HH:mm)",
+  grossHHmm: "Brutto (HH:mm)",
+  netHHmm: "Netto (HH:mm)",
+  industrialHours: "Industriezeit (h)",
+  status: "Status",
+  confirmedBy: "Freigabe durch",
+  confirmedAt: "Freigabe am",
+  total: "GESAMT",
+  // DATEV-specific
+  personnelNo: "Personalnummer",
+  lastName: "Nachname",
+  firstName: "Vorname",
+  pauseMinOnly: "Pause (Min)",
+  grossStd: "Brutto (Std)",
+  netStd: "Netto (Std)",
+  closed: "Abgeschlossen",
+  // download/report export
+  email: "E-Mail",
+  phone: "Telefon",
+  position: "Position",
+  hourlyRate: "Stundenlohn",
+  weeklyHours: "Wochenstunden",
+  netMin: "Netto (Min)",
+  remarks: "Bemerkung",
+  notes: "Notizen",
+  sheetEmployees: "Mitarbeiter",
+  sheetTimeEntries: "Zeiteinträge",
+  sheetShiftPlan: "Schichtplan",
+  // Arbeitszeitnachweis PDF
+  workTimeRecord: "Arbeitszeitnachweis",
+  employer: "Arbeitgeber",
+  employeeSingle: "Mitarbeiter",
+  period: "Zeitraum",
+  personnelNumber: "Personalnummer",
+  break_: "Pause",
+  workingTime: "Arbeitszeit",
+  totalHours: "Gesamtstunden",
+  targetHoursApprox: "Soll-Stunden (ca.)",
+  createdOn: "Erstellt am",
+  signatureEmployer: "Unterschrift Arbeitgeber",
+  signatureEmployee: "Unterschrift Arbeitnehmer",
+};
+
+export const CSV_HEADERS_EN: typeof CSV_HEADERS_DE = {
+  employee: "Employee",
+  location: "Location",
+  calendarWeek: "CW",
+  date: "Date",
+  start: "Start",
+  end: "End",
+  pauseMin: "Break (HH:mm)",
+  grossHHmm: "Gross (HH:mm)",
+  netHHmm: "Net (HH:mm)",
+  industrialHours: "Industrial hours (h)",
+  status: "Status",
+  confirmedBy: "Confirmed by",
+  confirmedAt: "Confirmed at",
+  total: "TOTAL",
+  // DATEV-specific
+  personnelNo: "Personnel No.",
+  lastName: "Last name",
+  firstName: "First name",
+  pauseMinOnly: "Break (min)",
+  grossStd: "Gross (hrs)",
+  netStd: "Net (hrs)",
+  closed: "Closed",
+  // download/report export
+  email: "Email",
+  phone: "Phone",
+  position: "Position",
+  hourlyRate: "Hourly rate",
+  weeklyHours: "Weekly hours",
+  netMin: "Net (min)",
+  remarks: "Remarks",
+  notes: "Notes",
+  sheetEmployees: "Employees",
+  sheetTimeEntries: "Time entries",
+  sheetShiftPlan: "Shift plan",
+  // Arbeitszeitnachweis PDF
+  workTimeRecord: "Work Time Record",
+  employer: "Employer",
+  employeeSingle: "Employee",
+  period: "Period",
+  personnelNumber: "Personnel No.",
+  break_: "Break",
+  workingTime: "Working time",
+  totalHours: "Total hours",
+  targetHoursApprox: "Target hours (approx.)",
+  createdOn: "Created on",
+  signatureEmployer: "Employer signature",
+  signatureEmployee: "Employee signature",
+};
+
+/** Get locale-aware CSV/export headers. */
+export function getExportHeaders(locale: string): typeof CSV_HEADERS_DE {
+  return locale === "en" ? CSV_HEADERS_EN : CSV_HEADERS_DE;
+}
 
 export const STATUS_COLORS: Record<string, string> = {
   ENTWURF: "bg-gray-100 text-gray-700",

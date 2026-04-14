@@ -3,11 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { toIndustrialHours } from "@/lib/time-utils";
+import {
+  toIndustrialHours,
+  getExportHeaders,
+  getStatusLabel,
+  toPersonnelNumber,
+} from "@/lib/time-utils";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import { log } from "@/lib/logger";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
 // Returns a DATEV-compatible CSV for payroll
@@ -98,7 +104,13 @@ export async function GET(req: Request) {
       /[^a-zA-Z0-9äöüÄÖÜß\-]/g,
       "_",
     );
-    const filename = `lohnexport-${safeEmployeeName}-${startDate}-${endDate}`;
+
+    // Resolve the user's chosen locale
+    const locale = await getLocaleFromCookie();
+    const allLabel = locale === "en" ? "All" : "Alle";
+    const filePrefix = locale === "en" ? "payroll-export" : "lohnexport";
+    const safeLabel = employeeId ? safeEmployeeName : allLabel;
+    const filename = `${filePrefix}-${safeLabel}-${startDate}-${endDate}`;
 
     if (format === "json") {
       // Return raw JSON for preview
@@ -107,7 +119,12 @@ export async function GET(req: Request) {
     }
 
     // Build CSV
-    const csv = buildDATEVCsv(entries, format === "datev", closedMonths);
+    const csv = buildDATEVCsv(
+      entries,
+      format === "datev",
+      closedMonths,
+      locale,
+    );
 
     // Record export against monthly quota
     await recordPdfGeneration(workspaceId);
@@ -196,23 +213,25 @@ function buildDATEVCsv(
   entries: TimeEntryWithRelations[],
   datevFormat: boolean,
   closedMonths: Set<string>,
+  locale: string,
 ): string {
-  const BOM = "\uFEFF"; // UTF-8 BOM for Excel
+  const BOM = "\uFEFF"; // UTF-8 BOM for Excel — MUST be byte 0
   // Always use semicolon — German Excel expects ";" as list separator
   const sep = ";";
+  const h = getExportHeaders(locale);
 
   const headers = [
-    "Personalnummer",
-    "Nachname",
-    "Vorname",
-    "Datum",
-    "Beginn",
-    "Ende",
-    "Pause (Min)",
-    "Brutto (Std)",
-    "Netto (Std)",
-    "Standort",
-    "Status",
+    h.personnelNo,
+    h.lastName,
+    h.firstName,
+    h.date,
+    h.start,
+    h.end,
+    h.pauseMinOnly,
+    h.grossStd,
+    h.netStd,
+    h.location,
+    h.status,
   ];
 
   const rows = entries.map((e) => {
@@ -221,10 +240,10 @@ function buildDATEVCsv(
     const isClosed = closedMonths.has(monthKey);
 
     return [
-      e.employee.id.slice(-6), // Short personnel number
+      toPersonnelNumber(e.employee.id), // Numeric-only personnel number
       e.employee.lastName,
       e.employee.firstName,
-      formatDateDE(e.date),
+      formatDateLocale(e.date, locale),
       e.startTime,
       e.endTime,
       String(e.breakMinutes),
@@ -235,22 +254,28 @@ function buildDATEVCsv(
         .toFixed(2)
         .replace(".", datevFormat ? "," : "."),
       e.location?.name || "",
-      isClosed ? "Abgeschlossen" : e.status,
+      isClosed ? h.closed : getStatusLabel(e.status, locale),
     ];
   });
 
   const csvLines = [
-    headers.map((h) => `"${h}"`).join(sep),
+    headers.map((v) => `"${v}"`).join(sep),
     ...rows.map((r) =>
       r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(sep),
     ),
   ];
 
+  // BOM must be the very first bytes so Excel recognises UTF-8
   // sep=; tells Excel to use semicolon as delimiter
-  return "sep=;\r\n" + BOM + csvLines.join("\r\n");
+  return BOM + "sep=;\r\n" + csvLines.join("\r\n");
 }
 
-function formatDateDE(date: Date): string {
+function formatDateLocale(date: Date, locale: string): string {
   const d = new Date(date);
+  if (locale === "en") {
+    // YYYY-MM-DD (ISO) for English exports
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  // DD.MM.YYYY for German exports
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 }

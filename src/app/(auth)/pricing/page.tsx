@@ -2,23 +2,23 @@ import type { Metadata } from "next";
 import PricingClient from "./PricingClient";
 
 export const metadata: Metadata = {
-  title: "Preise – Schichtplanung Software ab 0 €",
+  title: "Preise – Schichtplanung ab 2,99 € pro Nutzer",
   description:
-    "Shiftfy Preise: Kostenloser Starter-Plan für bis zu 5 Mitarbeiter. Team ab 29 €/Monat flat. Zeiterfassung, Schichtplanung, Lohnexport inklusive.",
+    "Shiftfy Preise: Einfach pro Nutzer bezahlen — keine Grundgebühr. Basic ab 2,99 €/Nutzer/Monat. Zeiterfassung, Schichtplanung, Lohnexport inklusive.",
   keywords: [
     "Schichtplanung Preise",
     "Zeiterfassung Kosten",
     "Dienstplan Software Preise",
-    "kostenlose Schichtplanung",
+    "günstige Schichtplanung",
     "Personalplanung Kosten",
   ],
   alternates: {
     canonical: "/pricing",
   },
   openGraph: {
-    title: "Shiftfy Preise – Schichtplanung ab 0 €/Monat",
+    title: "Shiftfy Preise – Schichtplanung ab 2,99 €/Nutzer/Monat",
     description:
-      "Kostenlos starten mit bis zu 5 Mitarbeitern. Team ab 29 €/Monat — egal wie viele Mitarbeiter.",
+      "Einfach pro Nutzer bezahlen — keine Grundgebühr. Basic ab 2,99 €, Professional ab 4,99 €. Schichtplanung immer inklusive.",
   },
 };
 

@@ -11,6 +11,7 @@ const badgeVariants = cva(
           "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50 dark:bg-emerald-950 dark:text-emerald-300 dark:ring-emerald-800/50",
         success:
           "bg-green-50 text-green-700 ring-1 ring-green-200/50 dark:bg-green-950 dark:text-green-300 dark:ring-green-800/50",
+        info: "bg-blue-50 text-blue-700 ring-1 ring-blue-200/50 dark:bg-blue-950 dark:text-blue-300 dark:ring-blue-800/50",
         warning:
           "bg-amber-50 text-amber-700 ring-1 ring-amber-200/50 dark:bg-amber-950 dark:text-amber-300 dark:ring-amber-800/50",
         destructive:

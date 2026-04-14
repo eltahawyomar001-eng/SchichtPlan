@@ -6,9 +6,10 @@ import { requirePlanFeature } from "@/lib/subscription";
 import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { getExportHeaders, toPersonnelNumber } from "@/lib/time-utils";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
  * GET /api/export/arbeitszeitnachweis?employeeId=...&month=2025-01
@@ -43,10 +44,18 @@ export const GET = withRoute(
 
     if (!employeeId || !month) {
       return NextResponse.json(
-        { error: "employeeId und month (YYYY-MM) sind erforderlich" },
+        {
+          error:
+            "employeeId and month (YYYY-MM) are required / employeeId und month (YYYY-MM) sind erforderlich",
+        },
         { status: 400 },
       );
     }
+
+    // Resolve locale for export labels
+    const locale = await getLocaleFromCookie();
+    const h = getExportHeaders(locale);
+    const dateFmt = locale === "en" ? "en-GB" : "de-DE";
 
     // EMPLOYEE can only export their own record
     if (isEmployee(user)) {
@@ -64,7 +73,12 @@ export const GET = withRoute(
     });
     if (!employee) {
       return NextResponse.json(
-        { error: "Mitarbeiter nicht gefunden" },
+        {
+          error:
+            locale === "en"
+              ? "Employee not found"
+              : "Mitarbeiter nicht gefunden",
+        },
         { status: 404 },
       );
     }
@@ -108,7 +122,9 @@ export const GET = withRoute(
 
     // Iterate all days of the month
     const daysInMonth = endDate.getDate();
-    const weekdayNames = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    const weekdayNamesDE = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    const weekdayNamesEN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const weekdayNames = locale === "en" ? weekdayNamesEN : weekdayNamesDE;
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, monthNum - 1, day);
@@ -116,7 +132,10 @@ export const GET = withRoute(
         timeZone: "Europe/Berlin",
       });
       const dayName = weekdayNames[date.getDay()];
-      const formattedDate = `${dayName}, ${String(day).padStart(2, "0")}.${String(monthNum).padStart(2, "0")}.${year}`;
+      const formattedDate =
+        locale === "en"
+          ? `${dayName}, ${year}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+          : `${dayName}, ${String(day).padStart(2, "0")}.${String(monthNum).padStart(2, "0")}.${year}`;
 
       const entries = entriesByDate.get(dateStr) || [];
 
@@ -173,24 +192,24 @@ export const GET = withRoute(
     // ── Generate PDF ──
     const doc = new jsPDF() as any;
     const employeeName = `${employee.firstName} ${employee.lastName}`;
-    const monthName = startDate.toLocaleDateString("de-DE", {
+    const monthName = startDate.toLocaleDateString(dateFmt, {
       month: "long",
       year: "numeric",
     });
 
     // Header
     doc.setFontSize(16);
-    doc.text("Arbeitszeitnachweis", 14, 15);
+    doc.text(h.workTimeRecord, 14, 15);
     doc.setFontSize(10);
-    doc.text(`Arbeitgeber: ${workspace?.name || "-"}`, 14, 24);
-    doc.text(`Mitarbeiter: ${employeeName}`, 14, 30);
-    doc.text(`Position: ${employee.position || "-"}`, 14, 36);
-    doc.text(`Zeitraum: ${monthName}`, 14, 42);
-    doc.text(`Personalnummer: ${employee.id.slice(0, 8)}`, 14, 48);
+    doc.text(`${h.employer}: ${workspace?.name || "-"}`, 14, 24);
+    doc.text(`${h.employeeSingle}: ${employeeName}`, 14, 30);
+    doc.text(`${h.position}: ${employee.position || "-"}`, 14, 36);
+    doc.text(`${h.period}: ${monthName}`, 14, 42);
+    doc.text(`${h.personnelNumber}: ${toPersonnelNumber(employee.id)}`, 14, 48);
 
     // Table
     autoTable(doc, {
-      head: [["Datum", "Beginn", "Ende", "Pause", "Arbeitszeit", "Bemerkung"]],
+      head: [[h.date, h.start, h.end, h.break_, h.workingTime, h.remarks]],
       body: rows,
       startY: 54,
       styles: { fontSize: 8, cellPadding: 2 },
@@ -208,7 +227,7 @@ export const GET = withRoute(
 
     doc.setFontSize(10);
     doc.text(
-      `Gesamtstunden: ${totalHours}:${String(totalMins).padStart(2, "0")} h`,
+      `${h.totalHours}: ${totalHours}:${String(totalMins).padStart(2, "0")} h`,
       14,
       finalY + 10,
     );
@@ -217,7 +236,7 @@ export const GET = withRoute(
       const expectedMonthlyHours =
         (employee.weeklyHours as number) * (daysInMonth / 7);
       doc.text(
-        `Soll-Stunden (ca.): ${expectedMonthlyHours.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h`,
+        `${h.targetHoursApprox}: ${expectedMonthlyHours.toLocaleString(dateFmt, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h`,
         14,
         finalY + 17,
       );
@@ -226,17 +245,19 @@ export const GET = withRoute(
     // Signature lines
     doc.setFontSize(8);
     doc.text(
-      `Erstellt am ${new Date().toLocaleDateString("de-DE")}`,
+      `${h.createdOn} ${new Date().toLocaleDateString(dateFmt)}`,
       14,
       finalY + 30,
     );
     doc.line(14, finalY + 48, 90, finalY + 48);
-    doc.text("Unterschrift Arbeitgeber", 14, finalY + 53);
+    doc.text(h.signatureEmployer, 14, finalY + 53);
     doc.line(110, finalY + 48, 190, finalY + 48);
-    doc.text("Unterschrift Arbeitnehmer", 110, finalY + 53);
+    doc.text(h.signatureEmployee, 110, finalY + 53);
 
     const pdfBuffer = doc.output("arraybuffer") as ArrayBuffer;
-    const filename = `Arbeitszeitnachweis_${employeeName.replace(/\s+/g, "_")}_${month}.pdf`;
+    const filenamePrefix =
+      locale === "en" ? "Work_Time_Record" : "Arbeitszeitnachweis";
+    const filename = `${filenamePrefix}_${employeeName.replace(/\s+/g, "_")}_${month}.pdf`;
 
     // Record PDF generation against monthly quota
     await recordPdfGeneration(workspaceId);

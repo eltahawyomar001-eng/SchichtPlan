@@ -78,25 +78,25 @@ export interface PlanConfig {
  * Stripe Price IDs come from env so they work across
  * test / live mode without code changes.
  *
- * Pricing model:
- *   Basic:        €19 base + €2.50 / user / month
- *   Professional: €49 base + €4.50 / user / month
- *   Enterprise:   Custom (minimum €500 / month)
+ * Pricing model (pure per-user, no base fee):
+ *   Basic:        €2.99 / user / month  (annual: €2.49)
+ *   Professional: €4.99 / user / month  (annual: €3.99)
+ *   Enterprise:   €7.99 / user / month  (annual: €6.49)
  */
 export const PLANS: Record<PlanId, PlanConfig> = {
   basic: {
     id: "basic",
     prismaKey: "BASIC",
     name: "Basic",
-    basePriceMonthly: 1900, // €19 base
-    basePriceAnnual: 1600, // €16 base (saves ~16%)
-    perUserMonthly: 250, // €2.50 per user
-    perUserAnnual: 210, // €2.10 per user (saves ~16%)
+    basePriceMonthly: 0, // no base fee
+    basePriceAnnual: 0,
+    perUserMonthly: 299, // €2.99 per user
+    perUserAnnual: 249, // €2.49 per user (saves ~17%)
     stripePriceIdMonthly: process.env.STRIPE_PRICE_BASIC_MONTHLY ?? null,
     stripePriceIdAnnual: process.env.STRIPE_PRICE_BASIC_ANNUAL ?? null,
     trialDays: 14,
     limits: {
-      maxEmployees: 10,
+      maxEmployees: 15,
       maxLocations: 1,
       storageMb: 500,
       pdfMonthlyLimit: 50,
@@ -121,16 +121,16 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     id: "professional",
     prismaKey: "PROFESSIONAL",
     name: "Professional",
-    basePriceMonthly: 4900, // €49 base
-    basePriceAnnual: 4100, // €41 base (saves ~16%)
-    perUserMonthly: 450, // €4.50 per user
-    perUserAnnual: 380, // €3.80 per user (saves ~16%)
+    basePriceMonthly: 0, // no base fee
+    basePriceAnnual: 0,
+    perUserMonthly: 499, // €4.99 per user
+    perUserAnnual: 399, // €3.99 per user (saves ~20%)
     stripePriceIdMonthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY ?? null,
     stripePriceIdAnnual: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL ?? null,
     trialDays: 14,
     limits: {
-      maxEmployees: 50,
-      maxLocations: 5,
+      maxEmployees: 100,
+      maxLocations: 10,
       storageMb: 5120, // 5 GB
       pdfMonthlyLimit: 500,
       shiftTemplates: true,
@@ -154,13 +154,13 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     id: "enterprise",
     prismaKey: "ENTERPRISE",
     name: "Enterprise",
-    basePriceMonthly: 0, // custom pricing (min €500)
+    basePriceMonthly: 0, // per-user pricing
     basePriceAnnual: 0,
-    perUserMonthly: 0,
-    perUserAnnual: 0,
-    stripePriceIdMonthly: null,
-    stripePriceIdAnnual: null,
-    trialDays: 0,
+    perUserMonthly: 799, // €7.99 per user
+    perUserAnnual: 649, // €6.49 per user (saves ~19%)
+    stripePriceIdMonthly: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY ?? null,
+    stripePriceIdAnnual: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL ?? null,
+    trialDays: 14,
     limits: {
       maxEmployees: Infinity,
       maxLocations: Infinity,

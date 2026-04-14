@@ -57,8 +57,12 @@ export default function UrlaubskontoSeite() {
     setError(null);
     try {
       const res = await fetch(`/api/vacation-balances?year=${year}`);
-      if (res.ok) setBalances(await res.json());
-      else setError(t("errorLoading"));
+      if (res.ok) {
+        const data: unknown = await res.json();
+        setBalances(Array.isArray(data) ? data : []);
+      } else {
+        setError(t("errorLoading"));
+      }
     } catch {
       setError(t("networkError"));
     } finally {

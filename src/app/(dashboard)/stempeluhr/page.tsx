@@ -84,6 +84,7 @@ export default function StempeluhrSeite() {
   const [noProfile, setNoProfile] = useState(false);
   const [arbZG, setArbZG] = useState<ArbZGInfo | null>(null);
   const [autoClockOutDone, setAutoClockOutDone] = useState(false);
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
   const autoClockOutRef = useRef(false);
 
@@ -604,7 +605,7 @@ export default function StempeluhrSeite() {
                       )}
                     </button>
                     <button
-                      onClick={() => handleClock("out")}
+                      onClick={() => setShowClockOutConfirm(true)}
                       disabled={acting}
                       className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white dark:bg-zinc-900 px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
                     >
@@ -641,7 +642,7 @@ export default function StempeluhrSeite() {
                       )}
                     </button>
                     <button
-                      onClick={() => handleClock("out")}
+                      onClick={() => setShowClockOutConfirm(true)}
                       disabled={acting}
                       className="group flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-red-200 bg-white dark:bg-zinc-900 px-6 py-3.5 text-[15px] font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 active:opacity-70 disabled:opacity-50"
                     >
@@ -871,7 +872,7 @@ export default function StempeluhrSeite() {
                   {t("startBreak")}
                 </button>
                 <button
-                  onClick={() => handleClock("out")}
+                  onClick={() => setShowClockOutConfirm(true)}
                   disabled={acting}
                   className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white dark:bg-zinc-900 px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
                 >
@@ -891,7 +892,7 @@ export default function StempeluhrSeite() {
                   {t("endBreak")}
                 </button>
                 <button
-                  onClick={() => handleClock("out")}
+                  onClick={() => setShowClockOutConfirm(true)}
                   disabled={acting}
                   className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white dark:bg-zinc-900 px-5 py-4 text-[15px] font-semibold text-red-600 active:scale-[0.97] transition-transform disabled:opacity-50"
                 >
@@ -900,6 +901,77 @@ export default function StempeluhrSeite() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Early Clock-Out Confirmation Dialog ── */}
+      {showClockOutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowClockOutConfirm(false)}
+          />
+          {/* Dialog */}
+          <div className="relative w-full max-w-md animate-in fade-in zoom-in-95 duration-200 rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+            {/* Header */}
+            <div className="flex flex-col items-center gap-3 px-6 pt-6 pb-2 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
+                <AlertTriangleIcon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                {t("earlyClockOut.title")}
+              </h3>
+            </div>
+            {/* Body */}
+            <div className="px-6 pb-2 space-y-3">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center">
+                {t("earlyClockOut.message")}
+              </p>
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 p-3">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {t("earlyClockOut.restPeriodWarning")}
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  {t("earlyClockOut.consequences")}
+                </p>
+                <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
+                    {t("earlyClockOut.consequence1")}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
+                    {t("earlyClockOut.consequence2")}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
+                    {t("earlyClockOut.consequence3")}
+                  </li>
+                </ul>
+              </div>
+            </div>
+            {/* Actions */}
+            <div className="flex gap-3 px-6 pt-4 pb-6">
+              <button
+                onClick={() => setShowClockOutConfirm(false)}
+                className="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
+              >
+                {t("earlyClockOut.cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  setShowClockOutConfirm(false);
+                  handleClock("out");
+                }}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-600/25 transition-colors hover:bg-red-700 active:scale-[0.97]"
+              >
+                {t("earlyClockOut.confirm")}
+              </button>
+            </div>
           </div>
         </div>
       )}

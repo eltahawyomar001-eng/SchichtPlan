@@ -60,19 +60,19 @@ interface Stats {
 
 const STATUS_VARIANTS: Record<
   string,
-  "default" | "success" | "destructive" | "warning" | "outline"
+  "default" | "success" | "destructive" | "warning" | "info" | "outline"
 > = {
   OFFEN: "warning",
-  IN_BEARBEITUNG: "default",
+  IN_BEARBEITUNG: "info",
   GESCHLOSSEN: "outline",
 };
 
 const PRIORITY_VARIANTS: Record<
   string,
-  "default" | "success" | "destructive" | "warning" | "outline"
+  "default" | "success" | "destructive" | "warning" | "info" | "outline"
 > = {
   NIEDRIG: "outline",
-  MITTEL: "default",
+  MITTEL: "info",
   HOCH: "warning",
   DRINGEND: "destructive",
 };

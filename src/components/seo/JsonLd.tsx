@@ -70,31 +70,46 @@ export function CombinedJsonLd() {
         offers: [
           {
             "@type": "Offer",
-            price: "19",
+            price: "2.99",
             priceCurrency: "EUR",
             name: "Basic",
             description:
-              "Ab 19 €/Monat + 2,50 € pro Nutzer — bis zu 10 Mitarbeiter, 1 Standort",
+              "Ab 2,99 €/Nutzer/Monat — bis zu 15 Mitarbeiter, 1 Standort, Schichtplanung inklusive",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: "19",
+              price: "2.99",
               priceCurrency: "EUR",
-              unitText: "Workspace/Monat",
+              unitText: "Nutzer/Monat",
               billingDuration: "P1M",
             },
           },
           {
             "@type": "Offer",
-            price: "49",
+            price: "4.99",
             priceCurrency: "EUR",
             name: "Professional",
             description:
-              "Ab 49 €/Monat + 4,50 € pro Nutzer — DATEV, API, Analysen, Priority-Support",
+              "Ab 4,99 €/Nutzer/Monat — DATEV, Auto-Scheduling, API, Analysen, Priority-Support",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: "49",
+              price: "4.99",
               priceCurrency: "EUR",
-              unitText: "Workspace/Monat",
+              unitText: "Nutzer/Monat",
+              billingDuration: "P1M",
+            },
+          },
+          {
+            "@type": "Offer",
+            price: "7.99",
+            priceCurrency: "EUR",
+            name: "Enterprise",
+            description:
+              "Ab 7,99 €/Nutzer/Monat — unbegrenzte Mitarbeiter, SSO/SAML, SLA-Garantie, persönlicher Ansprechpartner",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: "7.99",
+              priceCurrency: "EUR",
+              unitText: "Nutzer/Monat",
               billingDuration: "P1M",
             },
           },
@@ -129,7 +144,7 @@ export function CombinedJsonLd() {
             name: "Was kostet Shiftfy?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Der Basic-Plan kostet 19 €/Monat + 2,50 € pro Nutzer (ab 16 € bei jährlicher Zahlung). Der Professional-Plan kostet 49 €/Monat + 4,50 € pro Nutzer (ab 41 € jährlich). Alle Pläne enthalten eine 14-tägige kostenlose Testphase.",
+              text: "Shiftfy berechnet nur pro Nutzer — ohne Grundgebühr. Basic kostet 2,99 €/Nutzer/Monat, Professional 4,99 € und Enterprise 7,99 €. Bei jährlicher Zahlung sparst du bis zu 20 %. Alle Pläne enthalten eine 14-tägige kostenlose Testphase.",
             },
           },
           {
@@ -161,7 +176,7 @@ export function CombinedJsonLd() {
             name: "Kann ich Shiftfy kostenlos testen?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Ja, alle Pläne bieten eine 14-tägige kostenlose Testphase. Der Basic-Plan enthält Schichtplanung, Zeiterfassung und bis zu 10 Mitarbeiter. Keine Kreditkarte nötig.",
+              text: "Ja, alle Pläne bieten eine 14-tägige kostenlose Testphase. Der Basic-Plan enthält Schichtplanung, Zeiterfassung und bis zu 15 Mitarbeiter. Keine Kreditkarte nötig.",
             },
           },
           {

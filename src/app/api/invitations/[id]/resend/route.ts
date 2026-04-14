@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { invitationReminderEmail } from "@/lib/notifications/email-i18n";
 import { randomBytes } from "crypto";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
  * POST /api/invitations/[id]/resend — resend an invitation email with a fresh token
@@ -15,7 +17,7 @@ export const POST = withRoute(
     const params = await context!.params;
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+    const { user } = auth;
 
     if (!["OWNER", "ADMIN"].includes(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -52,13 +54,21 @@ export const POST = withRoute(
     const inviteLink = `/einladung/${newToken}`;
     const inviterName = user.name || user.email || "Someone";
     const workspaceName = invitation.workspace?.name || "a workspace";
+    const locale = await getLocaleFromCookie();
+    const copy = invitationReminderEmail(
+      locale,
+      inviterName,
+      workspaceName,
+      invitation.role,
+    );
 
     await sendEmail({
       to: invitation.email,
-      type: "INVITATION",
-      title: `Reminder: You've been invited to join ${workspaceName} on Shiftfy`,
-      message: `${inviterName} has reminded you about your invitation to join "${workspaceName}" as ${invitation.role.charAt(0) + invitation.role.slice(1).toLowerCase()}. Click the button below to accept. This invitation expires in 7 days.`,
+      type: "invitation",
+      title: copy.subject,
+      message: copy.body,
       link: inviteLink,
+      locale,
     });
 
     return NextResponse.json({ success: true });

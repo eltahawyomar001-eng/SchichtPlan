@@ -4,11 +4,12 @@ import {
   formatMinutesToHHmm,
   formatIndustrial,
   getCalendarWeek,
-  STATUS_LABELS,
+  getStatusLabel,
+  getExportHeaders,
 } from "@/lib/time-utils";
-import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
  * GET /api/time-entries/export?format=csv&start=...&end=...&employeeId=...
@@ -49,30 +50,36 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
 
   type EntryRow = (typeof entries)[number];
 
+  // Resolve the user's chosen locale for locale-aware export
+  const locale = await getLocaleFromCookie();
+  const h = getExportHeaders(locale);
+  const dateFmt = locale === "en" ? "en-GB" : "de-DE";
+  const cwPrefix = locale === "en" ? "CW" : "KW";
+
   // CSV header
   const sep = ";";
   const header = [
-    "Mitarbeiter",
-    "Standort",
-    "KW",
-    "Datum",
-    "Start",
-    "Ende",
-    "Pause (HH:mm)",
-    "Brutto (HH:mm)",
-    "Netto (HH:mm)",
-    "Industriezeit (h)",
-    "Status",
-    "Freigabe durch",
-    "Freigabe am",
+    h.employee,
+    h.location,
+    h.calendarWeek,
+    h.date,
+    h.start,
+    h.end,
+    h.pauseMin,
+    h.grossHHmm,
+    h.netHHmm,
+    h.industrialHours,
+    h.status,
+    h.confirmedBy,
+    h.confirmedAt,
   ]
-    .map((h) => `"${h}"`)
+    .map((v) => `"${v}"`)
     .join(sep);
 
   const rows = entries.map((e: EntryRow) => {
     const d = new Date(e.date);
     const kw = getCalendarWeek(d);
-    const datum = d.toLocaleDateString("de-DE", {
+    const datum = d.toLocaleDateString(dateFmt, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -81,7 +88,7 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
     return [
       `${e.employee.firstName} ${e.employee.lastName}`,
       e.location?.name ?? "",
-      `KW ${kw}`,
+      `${cwPrefix} ${kw}`,
       datum,
       e.startTime,
       e.endTime,
@@ -89,10 +96,10 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
       formatMinutesToHHmm(e.grossMinutes),
       formatMinutesToHHmm(e.netMinutes),
       formatIndustrial(e.netMinutes),
-      STATUS_LABELS[e.status] ?? e.status,
+      getStatusLabel(e.status, locale),
       e.confirmedBy ?? "",
       e.confirmedAt
-        ? new Date(e.confirmedAt).toLocaleDateString("de-DE", {
+        ? new Date(e.confirmedAt).toLocaleDateString(dateFmt, {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -115,7 +122,7 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
   rows.push("");
   rows.push(
     [
-      "GESAMT",
+      h.total,
       "",
       "",
       "",
@@ -133,15 +140,19 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
       .join(sep),
   );
 
-  // sep=; tells Excel to use semicolon as delimiter
-  // BOM (\uFEFF) ensures UTF-8 encoding is recognized
-  const csv = "sep=;\r\n" + "\uFEFF" + [header, ...rows].join("\r\n");
+  // BOM (\uFEFF) MUST be the very first bytes so Excel recognises UTF-8.
+  // sep=; tells Excel to use semicolon as the list separator.
+  const BOM = "\uFEFF";
+  const csv = BOM + "sep=;\r\n" + [header, ...rows].join("\r\n");
+
+  const filename =
+    locale === "en" ? "time_tracking_export.csv" : "zeiterfassung_export.csv";
 
   return new Response(csv, {
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="zeiterfassung_export.csv"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 });

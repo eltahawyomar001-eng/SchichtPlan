@@ -143,6 +143,7 @@ export default function DatenSeite() {
                 >
                   <option value="employees">{t("employees")}</option>
                   <option value="shifts">{t("shifts")}</option>
+                  <option value="time-entries">{t("workDays")}</option>
                 </select>
               </div>
               <div>
@@ -195,7 +196,7 @@ export default function DatenSeite() {
                   className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
                 >
                   <option value="shifts">{t("shifts")}</option>
-                  <option value="time-entries">{t("timeEntries")}</option>
+                  <option value="time-entries">{t("workDays")}</option>
                   <option value="employees">{t("employees")}</option>
                 </select>
               </div>

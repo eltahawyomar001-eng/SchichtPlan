@@ -5,6 +5,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { InstallPwaPrompt } from "@/components/layout/install-pwa-prompt";
 import { PlanLimitProvider } from "@/components/providers/plan-limit-provider";
+import { CommandPalette } from "@/components/ui/command-palette";
+import { OnboardingTour } from "@/components/ui/onboarding-tour";
 
 interface SidebarContextValue {
   openSidebar: () => void;
@@ -44,6 +46,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </main>
           {/* Mobile bottom tab bar — visible only on mobile */}
           <MobileBottomNav onMoreTap={openSidebar} />
+          <CommandPalette />
+          <OnboardingTour />
           <InstallPwaPrompt />
         </div>
       </PlanLimitProvider>

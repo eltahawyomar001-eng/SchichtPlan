@@ -10,8 +10,8 @@ import {
 import { syncUsageLimits } from "@/lib/subscription-guard";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
+import { paymentFailedEmail } from "@/lib/notifications/email-i18n";
 import { log } from "@/lib/logger";
-import { captureRouteError } from "@/lib/sentry";
 import { Redis } from "@upstash/redis";
 import { withRoute } from "@/lib/with-route";
 
@@ -223,20 +223,23 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
 
             const owner = await prisma.user.findFirst({
               where: { workspaceId: sub.workspaceId, role: "OWNER" },
-              select: { email: true, name: true },
+              select: { email: true, name: true, preferredLocale: true },
             });
 
             if (owner?.email) {
+              const locale = owner.preferredLocale === "en" ? "en" : "de";
+              const copy = paymentFailedEmail(
+                locale,
+                workspace?.name ??
+                  (locale === "en" ? "your workspace" : "Ihren Arbeitsbereich"),
+              );
               await sendEmail({
                 to: owner.email,
                 type: "SYSTEM",
-                title: "Zahlung fehlgeschlagen – Aktion erforderlich",
-                message:
-                  `Ihre letzte Zahlung für "${workspace?.name ?? "Ihren Arbeitsbereich"}" ` +
-                  `konnte nicht verarbeitet werden. ` +
-                  `Bitte aktualisieren Sie Ihre Zahlungsmethode in den Einstellungen, ` +
-                  `um eine Unterbrechung Ihres Abonnements zu vermeiden.`,
+                title: copy.subject,
+                message: copy.body,
                 link: "/einstellungen/abonnement",
+                locale,
               });
               log.info(
                 `[Stripe] Payment failure notification sent to ${owner.email}`,

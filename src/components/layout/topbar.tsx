@@ -14,7 +14,7 @@ import {
 import { useSidebar } from "@/components/layout/dashboard-shell";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { NotificationDropdown } from "@/components/layout/notification-dropdown";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { TimeClockPopover } from "@/components/layout/time-clock-popover";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useRouter } from "next/navigation";
 
@@ -65,7 +65,7 @@ export function Topbar({
             <div className="flex items-center justify-between mb-1">
               <div className="flex-1" />
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <ThemeToggle />
+                <TimeClockPopover />
                 <LanguageSwitcher />
                 <NotificationDropdown />
               </div>
@@ -119,6 +119,7 @@ export function Topbar({
 
           <div className="flex items-center gap-2 flex-shrink-0">
             {actions}
+            <TimeClockPopover />
             <LanguageSwitcher />
             <NotificationDropdown />
             {session?.user?.name && (

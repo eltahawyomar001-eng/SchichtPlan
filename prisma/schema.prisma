@@ -20,6 +20,7 @@ model User {
   twoFactorSecret        String?
   twoFactorRecoveryCodes String?
   dashboardFavorites     String    @default("[]") @db.Text
+  preferredLocale        String    @default("de")
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   workspaceId    String?

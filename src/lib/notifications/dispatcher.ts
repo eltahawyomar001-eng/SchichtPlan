@@ -27,6 +27,7 @@ export async function dispatchExternalNotification(params: {
     where: { id: userId },
     select: {
       email: true,
+      preferredLocale: true,
       notificationPreferences: {
         select: { channel: true, enabled: true },
       },
@@ -45,6 +46,7 @@ export async function dispatchExternalNotification(params: {
   const emailEnabled = emailPref ? emailPref.enabled : true;
 
   if (emailEnabled && user.email) {
+    const locale = user.preferredLocale === "en" ? "en" : "de";
     log.info(`[dispatcher] Sending email to ${user.email}`);
     try {
       const result = await sendEmail({
@@ -53,7 +55,7 @@ export async function dispatchExternalNotification(params: {
         title,
         message,
         link,
-        locale: "de",
+        locale,
       });
       if (result.success) {
         log.info(`[dispatcher] Email sent to ${user.email}`);

@@ -15,7 +15,6 @@ import {
   SmartphoneIcon,
   DatabaseIcon,
 } from "@/components/icons";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function PricingClient() {
   const t = useTranslations("pricing");
@@ -72,7 +71,9 @@ export default function PricingClient() {
     },
     {
       name: t("enterprise"),
-      basePrice: t("enterprisePrice"),
+      basePrice: annual
+        ? t("enterpriseAnnualBase")
+        : t("enterpriseMonthlyBase"),
       perUser: null,
       description: t("enterpriseDesc"),
       features: [
@@ -85,10 +86,10 @@ export default function PricingClient() {
         t("featureEnt7"),
         t("featureEnt8"),
       ],
-      cta: t("contactUs"),
-      href: "mailto:info@bashabsheh-vergabepartner.de",
+      cta: t("startTrial"),
+      href: `/register?plan=enterprise&billing=${annual ? "annual" : "monthly"}`,
       highlighted: false,
-      isEnterprise: true,
+      isEnterprise: false,
     },
   ];
 
@@ -108,36 +109,35 @@ export default function PricingClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50/50">
       {/* ─── Navbar ─── */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="w-7 h-7" />
-            <span className="font-bold text-base text-gray-900 dark:text-white">
+            <span className="font-bold text-base text-gray-900">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
               {tc("home")}
             </Link>
             <Link
               href="/blog"
-              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
               Blog
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
             >
               {tc("login")}
             </Link>
-            <ThemeToggle />
             <Link
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
@@ -150,9 +150,9 @@ export default function PricingClient() {
 
       {/* ─── Hero Section ─── */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 dark:from-gray-950 dark:via-gray-950 dark:to-gray-950" />
-        <div className="absolute top-32 -left-40 w-[400px] h-[400px] bg-emerald-100/30 dark:bg-emerald-900/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 right-0 w-[300px] h-[300px] bg-emerald-100/20 dark:bg-emerald-900/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30" />
+        <div className="absolute top-32 -left-40 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 right-0 w-[300px] h-[300px] bg-emerald-100/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14">
           <div className="text-center max-w-3xl mx-auto">
@@ -190,13 +190,13 @@ export default function PricingClient() {
             </div>
 
             {/* ─── Billing Toggle ─── */}
-            <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 dark:bg-gray-800 p-1">
+            <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 p-1">
               <button
                 onClick={() => setAnnual(false)}
                 className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                   !annual
-                    ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {t("billingMonthly")}
@@ -205,12 +205,12 @@ export default function PricingClient() {
                 onClick={() => setAnnual(true)}
                 className={`relative rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                   annual
-                    ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {t("billingAnnual")}
-                <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                   {t("saveBadge")}
                 </span>
               </button>
@@ -228,8 +228,8 @@ export default function PricingClient() {
                 key={plan.name}
                 className={`relative rounded-2xl border p-6 sm:p-7 flex flex-col transition-all duration-200 ${
                   plan.highlighted
-                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-white dark:bg-gray-900 shadow-xl shadow-emerald-100/60 dark:shadow-emerald-900/20 lg:-mt-3 lg:pb-10"
-                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600"
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-white shadow-xl shadow-emerald-100/60 lg:-mt-3 lg:pb-10"
+                    : "border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-gray-300"
                 }`}
               >
                 {plan.highlighted && (
@@ -261,12 +261,9 @@ export default function PricingClient() {
                         <span className="text-4xl font-extrabold text-gray-900">
                           {plan.basePrice}
                         </span>
-                        <span className="text-sm text-gray-400">
-                          /{t("perMonth")}
-                        </span>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        {t("plus")} {plan.perUser} {t("perUserMonth")} ·{" "}
+                        {t("perUserMonth")} ·{" "}
                         {annual ? t("billedAnnually") : t("billedMonthly")}
                       </p>
                     </>
@@ -289,7 +286,7 @@ export default function PricingClient() {
                   className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${
                     plan.highlighted
                       ? "bg-brand-gradient text-white hover:shadow-lg hover:shadow-emerald-200/50"
-                      : "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
                   }`}
                 >
                   {plan.cta}
@@ -300,7 +297,7 @@ export default function PricingClient() {
         </section>
 
         {/* ─── "Included in every plan" Section ─── */}
-        <section className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 py-14 sm:py-20">
+        <section className="border-t border-gray-100 bg-white py-14 sm:py-20">
           <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
@@ -312,10 +309,10 @@ export default function PricingClient() {
               {allPlansFeatures.map((feature) => (
                 <div
                   key={feature.label}
-                  className="flex flex-col items-center text-center p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm"
+                  className="flex flex-col items-center text-center p-4 rounded-2xl bg-white border border-gray-100 shadow-sm"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/40 flex items-center justify-center mb-3">
-                    <feature.Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
+                    <feature.Icon className="w-6 h-6 text-emerald-600" />
                   </div>
                   <span className="text-sm font-medium text-gray-700">
                     {feature.label}
@@ -339,9 +336,9 @@ export default function PricingClient() {
               {faqs.map((faq) => (
                 <details
                   key={faq.q}
-                  className="group rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden"
+                  className="group rounded-2xl border border-gray-200 bg-white overflow-hidden"
                 >
-                  <summary className="flex items-center justify-between cursor-pointer px-5 sm:px-6 py-4 text-left font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm sm:text-base">
+                  <summary className="flex items-center justify-between cursor-pointer px-5 sm:px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-sm sm:text-base">
                     {faq.q}
                     <ChevronRightIcon className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-90 shrink-0 ml-4" />
                   </summary>
@@ -384,7 +381,7 @@ export default function PricingClient() {
       </main>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-gray-100 dark:border-gray-800 py-10">
+      <footer className="border-t border-gray-100 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
@@ -420,9 +417,6 @@ export default function PricingClient() {
               className="hover:text-gray-600 transition-colors"
             >
               {tf("accessibility")}
-            </Link>
-            <Link href="/sla" className="hover:text-gray-600 transition-colors">
-              SLA
             </Link>
           </div>
         </div>

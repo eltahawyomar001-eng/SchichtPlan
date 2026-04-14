@@ -168,12 +168,19 @@ export default function StempeluhrSeite() {
   // ── Check GPS permission ──
   // GPS collection disabled — removed for legal compliance (§87 BetrVG)
 
-  // ── Live timer + periodic ArbZG refresh ──
+  // ── Live timer + periodic ArbZG refresh + client-side auto-checkout ──
   useEffect(() => {
     if (
       (clockState === "working" || clockState === "break") &&
       entry?.clockInAt
     ) {
+      // Previous completed minutes today (from last server fetch)
+      const prevCompletedMinutes = arbZG
+        ? arbZG.todayWorkedMinutes -
+          Math.round((Date.now() - new Date(entry.clockInAt).getTime()) / 60000)
+        : 0;
+      const maxDailyMin = arbZG?.maxDailyMinutes ?? 600; // ArbZG §3: 10h
+
       const update = () => {
         const diff = Date.now() - new Date(entry.clockInAt).getTime();
         const h = Math.floor(diff / 3600000);
@@ -182,6 +189,22 @@ export default function StempeluhrSeite() {
         setElapsed(
           `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
         );
+
+        // ArbZG §3: Client-side auto-checkout when daily limit reached.
+        // This fires immediately when the timer crosses 10h, instead of
+        // waiting for the next server poll (which can lag up to 5 minutes).
+        const currentSessionMin = Math.round(diff / 60000);
+        const totalTodayMin =
+          Math.max(0, prevCompletedMinutes) + currentSessionMin;
+        if (
+          totalTodayMin >= maxDailyMin &&
+          !autoClockOutRef.current &&
+          !acting
+        ) {
+          autoClockOutRef.current = true;
+          setAutoClockOutDone(true);
+          handleClock("out");
+        }
       };
       update();
       timerRef.current = setInterval(update, 1000);
@@ -200,9 +223,10 @@ export default function StempeluhrSeite() {
       setElapsed("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clockState, entry?.clockInAt, arbZG?.warningLevel]);
+  }, [clockState, entry?.clockInAt, arbZG?.warningLevel, acting]);
 
-  // ── ArbZG §3: Auto clock-out when daily limit exceeded ──
+  // ── ArbZG §3: Auto clock-out when server reports EXCEEDED ──
+  // (Fallback: also triggers on server-side arbZG state updates)
   useEffect(() => {
     if (
       arbZG?.warningLevel === "EXCEEDED" &&

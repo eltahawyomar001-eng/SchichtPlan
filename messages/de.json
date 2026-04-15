@@ -249,7 +249,16 @@
       "restPeriodViolation": "Ruhezeit unterschritten",
       "restPeriodDesc": "Weniger als 11 Std. zwischen Schichten",
       "yearsAnniversary": "{count} {count, plural, =1 {Jahr} other {Jahre}}",
-      "noData": "Keine Daten vorhanden"
+      "noData": "Keine Daten vorhanden",
+      "teamMembers": "Teammitglieder",
+      "roleOwner": "Inhaber",
+      "roleAdmin": "Administrator",
+      "roleManager": "Manager",
+      "roleEmployee": "Mitarbeiter",
+      "you": "Sie",
+      "manage": "Verwalten",
+      "noTeamMembers": "Keine Teammitglieder vorhanden",
+      "memberCount": "{count} {count, plural, =1 {Mitglied} other {Mitglieder}}"
     }
   },
   "onboarding": {
@@ -357,7 +366,18 @@
       "duration": "{hours}h {minutes}m",
       "dateAndTime": "Datum & Zeit",
       "assignment": "Zuweisung",
-      "additional": "Weitere Angaben"
+      "additional": "Weitere Angaben",
+      "endDate": "Bis-Datum (Mehrere Tage)",
+      "endDateHint": "Optional — leer lassen für nur einen Tag.",
+      "weekdays": "Wochentage",
+      "weekdaysHint": "Schichten werden nur an den gewählten Tagen erstellt.",
+      "dayMo": "Mo",
+      "dayTu": "Di",
+      "dayWe": "Mi",
+      "dayTh": "Do",
+      "dayFr": "Fr",
+      "daySa": "Sa",
+      "daySu": "So"
     },
     "viewDay": "Tag",
     "viewWeek": "Woche",
@@ -747,6 +767,12 @@
       "noLocation": "Kein Standort",
       "object": "Objekt",
       "noObject": "Kein Objekt",
+      "role": "Rolle",
+      "roleOwner": "Eigentümer",
+      "roleAdmin": "Administrator",
+      "roleManager": "Manager",
+      "roleEmployee": "Mitarbeiter",
+      "noLinkedUser": "Kein verknüpftes Benutzerkonto",
       "discardTitle": "Änderungen verwerfen?",
       "discardMessage": "Möchten Sie die eingegebenen Daten wirklich verwerfen? Alle nicht gespeicherten Änderungen gehen verloren.",
       "discardConfirm": "Verwerfen"

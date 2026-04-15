@@ -78,6 +78,7 @@ interface Employee {
   location?: LocationItem | null;
   departmentId?: string | null;
   department?: DepartmentItem | null;
+  user?: { id: string; role: string } | null;
 }
 
 export default function MitarbeiterPage() {
@@ -113,6 +114,7 @@ export default function MitarbeiterPage() {
     color: "#10b981",
     locationId: "",
     departmentId: "",
+    role: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -222,6 +224,7 @@ export default function MitarbeiterPage() {
       color: "#10b981",
       locationId: "",
       departmentId: "",
+      role: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -244,6 +247,7 @@ export default function MitarbeiterPage() {
       color: emp.color || "#10b981",
       locationId: emp.locationId || "",
       departmentId: emp.departmentId || "",
+      role: emp.user?.role || "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -278,10 +282,14 @@ export default function MitarbeiterPage() {
         : "/api/employees";
       const method = editingEmployee ? "PATCH" : "POST";
 
+      // Strip empty role to avoid sending it on create
+      const { role, ...rest } = formData;
+      const payload = role ? { ...rest, role } : rest;
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -300,6 +308,7 @@ export default function MitarbeiterPage() {
           color: "#10b981",
           locationId: "",
           departmentId: "",
+          role: "",
         });
         fetchEmployees();
       } else {
@@ -548,6 +557,36 @@ export default function MitarbeiterPage() {
                 </Select>
               </div>
             </div>
+
+            {/* Role — only shown when editing an employee with a linked user */}
+            {editingEmployee?.user && (
+              <div className="space-y-2">
+                <Label htmlFor="role">{t("form.role")}</Label>
+                <Select
+                  id="role"
+                  value={formData.role}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      role: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="OWNER">{t("form.roleOwner")}</option>
+                  <option value="ADMIN">{t("form.roleAdmin")}</option>
+                  <option value="MANAGER">{t("form.roleManager")}</option>
+                  <option value="EMPLOYEE">{t("form.roleEmployee")}</option>
+                </Select>
+              </div>
+            )}
+            {editingEmployee && !editingEmployee.user && (
+              <div className="space-y-2">
+                <Label>{t("form.role")}</Label>
+                <p className="text-sm text-gray-500 dark:text-zinc-400 italic">
+                  {t("form.noLinkedUser")}
+                </p>
+              </div>
+            )}
 
             {/* Location */}
             <div className="space-y-2">

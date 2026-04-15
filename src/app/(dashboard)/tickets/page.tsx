@@ -95,8 +95,15 @@ export default function TicketsPage() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterAssignedToMe, setFilterAssignedToMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [workspaceSlug, setWorkspaceSlug] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+
+  // Debounce the search input — wait 400ms after the user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -105,7 +112,7 @@ export default function TicketsPage() {
       if (filterStatus !== "all") params.set("status", filterStatus);
       if (filterCategory !== "all") params.set("category", filterCategory);
       if (filterAssignedToMe && user?.id) params.set("assignedToId", user.id);
-      if (searchQuery) params.set("search", searchQuery);
+      if (debouncedSearch) params.set("search", debouncedSearch);
 
       const res = await fetch(`/api/tickets?${params}`);
       if (res.ok) {
@@ -129,7 +136,7 @@ export default function TicketsPage() {
     filterCategory,
     filterAssignedToMe,
     user?.id,
-    searchQuery,
+    debouncedSearch,
     t,
   ]);
 

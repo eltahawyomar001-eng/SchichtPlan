@@ -52,6 +52,7 @@ export const createEmployeeSchema = z.object({
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
   isActive: z.boolean().optional(),
   departmentId: z.string().optional().nullable(),
+  role: z.enum(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
 });
 
 // ── Location ────────────────────────────────────────────────────
@@ -69,6 +70,13 @@ export const createShiftSchema = z.object({
   locationId: optionalString,
   notes: optionalString.pipe(z.string().max(1000).optional()),
   repeatWeeks: z.coerce.number().int().min(0).max(52).optional(),
+  /** Optional end-date for multi-day bulk creation */
+  endDate: dateString.optional(),
+  /** Days of week to include: 1=Mo … 7=Su (ISO weekday) */
+  selectedDays: z
+    .array(z.coerce.number().int().min(1).max(7))
+    .max(7)
+    .optional(),
 });
 
 // ── Auto-Schedule ───────────────────────────────────────────────
@@ -269,7 +277,9 @@ export const updateAbsenceStatusSchema = z.object({
   status: z.enum(["GENEHMIGT", "ABGELEHNT", "STORNIERT"], {
     message: "Ungültiger Status",
   }),
-  reviewNote: optionalString.pipe(z.string().max(2000).optional()),
+  reviewNote: optionalString
+    .nullable()
+    .pipe(z.string().max(2000).optional().nullable()),
 });
 
 // ── Month Close ─────────────────────────────────────────────────

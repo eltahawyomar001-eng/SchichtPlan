@@ -27,7 +27,6 @@ import {
   TemplateIcon,
   FolderIcon,
   TargetIcon,
-  ArchiveIcon,
   LinkIcon,
   ZapIcon,
   DatabaseIcon,
@@ -172,12 +171,6 @@ const navGroups: NavGroup[] = [
         key: "payrollExport",
         href: "/lohnexport",
         icon: FileExportIcon,
-        roles: ["OWNER", "ADMIN"],
-      },
-      {
-        key: "monthClose",
-        href: "/monatsabschluss",
-        icon: ArchiveIcon,
         roles: ["OWNER", "ADMIN"],
       },
       {

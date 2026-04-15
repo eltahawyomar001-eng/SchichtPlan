@@ -14,7 +14,6 @@ import { createAbsenceSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
-import { createAuditLog } from "@/lib/audit";
 
 // ─── GET  /api/absences ─────────────────────────────────────────
 export const GET = withRoute("/api/absences", "GET", async (req) => {
@@ -122,11 +121,13 @@ export const POST = withRoute(
 
     const absence = await prisma
       .$transaction(async (tx) => {
-        // Overlap check (inside transaction for atomicity)
+        // Overlap check — only block when an already-approved request
+        // covers the same dates. Pending requests must NOT block new
+        // submissions so employees can send multiple requests.
         const overlapping = await tx.absenceRequest.findFirst({
           where: {
             employeeId: body.employeeId,
-            status: { in: ["AUSSTEHEND", "GENEHMIGT"] },
+            status: "GENEHMIGT",
             startDate: { lte: end },
             endDate: { gte: start },
           },
@@ -160,7 +161,8 @@ export const POST = withRoute(
     if ("error" in absence) {
       return NextResponse.json(
         {
-          error: "An absence request already exists for this period",
+          error:
+            "Für diesen Zeitraum existiert bereits ein genehmigter Abwesenheitsantrag.",
         },
         { status: 409 },
       );
@@ -228,21 +230,6 @@ export const POST = withRoute(
     }).catch((err) =>
       log.error("[webhook] absence.created dispatch error", { error: err }),
     );
-
-    createAuditLog({
-      action: "CREATE",
-      entityType: "AbsenceRequest",
-      entityId: absence.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      changes: {
-        category: body.category,
-        startDate: body.startDate,
-        endDate: body.endDate,
-        employeeId: body.employeeId,
-      },
-    });
 
     return NextResponse.json({ ...result, autoApproved }, { status: 201 });
   },

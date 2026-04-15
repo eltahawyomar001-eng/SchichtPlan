@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { requirePermission } from "@/lib/authorization";
+import { requirePermission, requireAdmin } from "@/lib/authorization";
 import { createAuditLogTx } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
@@ -76,6 +76,12 @@ export async function PATCH(
 
     const body = parsed.data;
 
+    // Changing roles requires OWNER or ADMIN
+    if (body.role) {
+      const adminForbidden = requireAdmin(user);
+      if (adminForbidden) return adminForbidden;
+    }
+
     const employee = await prisma.$transaction(async (tx) => {
       const updated = await tx.employee.updateMany({
         where: { id, workspaceId },
@@ -99,6 +105,36 @@ export async function PATCH(
               : undefined,
         },
       });
+
+      // ── Update linked user's role (OWNER/ADMIN only) ──
+      if (body.role) {
+        const emp = await tx.employee.findFirst({
+          where: { id, workspaceId },
+          select: { userId: true },
+        });
+        if (emp?.userId) {
+          // Prevent changing own role or demoting the last OWNER
+          if (emp.userId === user.id) {
+            throw new Error("SELF_ROLE_CHANGE");
+          }
+          if (body.role !== "OWNER") {
+            const ownerCount = await tx.user.count({
+              where: { workspaceId, role: "OWNER" },
+            });
+            const targetUser = await tx.user.findUnique({
+              where: { id: emp.userId },
+              select: { role: true },
+            });
+            if (targetUser?.role === "OWNER" && ownerCount <= 1) {
+              throw new Error("LAST_OWNER");
+            }
+          }
+          await tx.user.update({
+            where: { id: emp.userId },
+            data: { role: body.role },
+          });
+        }
+      }
 
       // ── Audit log (atomic) ──
       await createAuditLogTx(tx, {
@@ -133,6 +169,20 @@ export async function PATCH(
       ...(warnings.length ? { warnings } : {}),
     });
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "SELF_ROLE_CHANGE") {
+        return NextResponse.json(
+          { error: "Sie können Ihre eigene Rolle nicht ändern." },
+          { status: 409 },
+        );
+      }
+      if (error.message === "LAST_OWNER") {
+        return NextResponse.json(
+          { error: "Der letzte Eigentümer kann nicht herabgestuft werden." },
+          { status: 409 },
+        );
+      }
+    }
     log.error("Error updating employee:", { error: error });
     captureRouteError(error, { route: "/api/employees/[id]", method: "PATCH" });
     return NextResponse.json({ error: "Error updating" }, { status: 500 });

@@ -249,7 +249,16 @@
       "restPeriodViolation": "Rest period violated",
       "restPeriodDesc": "Less than 11 hrs between shifts",
       "yearsAnniversary": "{count} {count, plural, =1 {year} other {years}}",
-      "noData": "No data available"
+      "noData": "No data available",
+      "teamMembers": "Team Members",
+      "roleOwner": "Owner",
+      "roleAdmin": "Administrator",
+      "roleManager": "Manager",
+      "roleEmployee": "Employee",
+      "you": "You",
+      "manage": "Manage",
+      "noTeamMembers": "No team members found",
+      "memberCount": "{count} {count, plural, =1 {member} other {members}}"
     }
   },
   "onboarding": {
@@ -357,7 +366,18 @@
       "duration": "{hours}h {minutes}m",
       "dateAndTime": "Date & Time",
       "assignment": "Assignment",
-      "additional": "Additional"
+      "additional": "Additional",
+      "endDate": "End date (multiple days)",
+      "endDateHint": "Optional — leave empty for a single day.",
+      "weekdays": "Weekdays",
+      "weekdaysHint": "Shifts will only be created on the selected days.",
+      "dayMo": "Mo",
+      "dayTu": "Tu",
+      "dayWe": "We",
+      "dayTh": "Th",
+      "dayFr": "Fr",
+      "daySa": "Sa",
+      "daySu": "Su"
     },
     "viewDay": "Day",
     "viewWeek": "Week",
@@ -747,6 +767,12 @@
       "noLocation": "No location",
       "object": "Object",
       "noObject": "No object",
+      "role": "Role",
+      "roleOwner": "Owner",
+      "roleAdmin": "Administrator",
+      "roleManager": "Manager",
+      "roleEmployee": "Employee",
+      "noLinkedUser": "No linked user account",
       "discardTitle": "Discard changes?",
       "discardMessage": "Are you sure you want to discard your changes? All unsaved data will be lost.",
       "discardConfirm": "Discard"

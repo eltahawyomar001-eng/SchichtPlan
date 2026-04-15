@@ -78,6 +78,10 @@ import {
   type LiveProject,
 } from "./_components/live-projects-card";
 import { MyTasksCard } from "./_components/my-tasks-card";
+import {
+  TeamMembersCard,
+  type TeamMember,
+} from "./_components/team-members-card";
 
 export const revalidate = 0;
 
@@ -470,6 +474,7 @@ async function ManagerDashboardContent({
     allLocationsWithEmployees,
     recentTimeEntries,
     liveProjectEntries,
+    teamMembers,
   ] = await Promise.all([
     prisma.employee.count({ where: { workspaceId, isActive: true } }),
     prisma.shift.count({ where: { workspaceId } }),
@@ -669,6 +674,17 @@ async function ManagerDashboardContent({
         project: { select: { name: true } },
       },
       orderBy: { clockInAt: "desc" },
+    }),
+    /* Widget: Team Members */
+    prisma.user.findMany({
+      where: { workspaceId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+      orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
   ]);
 
@@ -1209,6 +1225,15 @@ async function ManagerDashboardContent({
     return catMap[cat] ?? cat;
   };
 
+  /* ── Widget: Team Members ── */
+  const teamMembersList: TeamMember[] = teamMembers.map((m) => ({
+    id: m.id,
+    name: m.name || "",
+    email: m.email,
+    role: m.role,
+    isSelf: m.id === userId,
+  }));
+
   /* ══════════════════════════════════════════════════════════
    * Render
    * ══════════════════════════════════════════════════════════ */
@@ -1518,6 +1543,24 @@ async function ManagerDashboardContent({
           title={t("widgets.whoIsWhere")}
           total={totalDistEmployees}
           emptyLabel={t("widgets.noData")}
+        />
+
+        {/* Team Members */}
+        <TeamMembersCard
+          members={teamMembersList}
+          title={t("widgets.teamMembers")}
+          roleLabels={{
+            OWNER: t("widgets.roleOwner"),
+            ADMIN: t("widgets.roleAdmin"),
+            MANAGER: t("widgets.roleManager"),
+            EMPLOYEE: t("widgets.roleEmployee"),
+          }}
+          youLabel={t("widgets.you")}
+          manageLabel={t("widgets.manage")}
+          emptyLabel={t("widgets.noTeamMembers")}
+          countLabel={t("widgets.memberCount", {
+            count: teamMembersList.length,
+          })}
         />
 
         {/* Live Projects */}

@@ -44,6 +44,7 @@ export async function GET(req: Request) {
           },
           location: { select: { id: true, name: true } },
           department: { select: { id: true, name: true } },
+          user: { select: { id: true, role: true } },
         },
         orderBy: { lastName: "asc" },
         take,

@@ -93,9 +93,136 @@ export const POST = withRoute(
       locationId,
       notes,
       repeatWeeks,
+      endDate,
+      selectedDays,
     } = parsed.data;
 
-    // ── Automation: Conflict detection (only if assigned) ──
+    /* ══════════════════════════════════════════════════════════
+     * BULK MODE — create shifts across a date range
+     * Triggered when endDate is supplied.
+     * selectedDays: 1=Mo … 7=Su (ISO weekday). If omitted → Mo–Fr.
+     * ══════════════════════════════════════════════════════════ */
+    if (endDate) {
+      const rangeStart = new Date(date);
+      const rangeEnd = new Date(endDate);
+      if (rangeEnd < rangeStart) {
+        return NextResponse.json(
+          { error: "Enddatum darf nicht vor dem Startdatum liegen." },
+          { status: 400 },
+        );
+      }
+      // Max 90 days range to prevent abuse
+      const rangeDays =
+        Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86_400_000) +
+        1;
+      if (rangeDays > 90) {
+        return NextResponse.json(
+          { error: "Maximal 90 Tage auf einmal planbar." },
+          { status: 400 },
+        );
+      }
+
+      // Default to weekdays (Mo–Fr = 1–5) when no days selected
+      const days =
+        selectedDays && selectedDays.length > 0
+          ? selectedDays
+          : [1, 2, 3, 4, 5];
+
+      // Map JS getDay() (0=Su) → ISO weekday (1=Mo … 7=Su)
+      const toIso = (jsDay: number) => (jsDay === 0 ? 7 : jsDay);
+
+      const ws = await prisma.workspace?.findUnique?.({
+        where: { id: workspaceId },
+        select: { bundesland: true },
+      });
+      const bundesland = ws?.bundesland || "HE";
+
+      let created = 0;
+      let skipped = 0;
+      const conflicts: string[] = [];
+
+      const cursor = new Date(rangeStart);
+      while (cursor <= rangeEnd) {
+        const isoDay = toIso(cursor.getDay());
+        if (days.includes(isoDay)) {
+          const dateStr = cursor.toLocaleDateString("en-CA");
+
+          // Conflict check
+          if (employeeId) {
+            const c = await checkShiftConflicts({
+              employeeId,
+              date: dateStr,
+              startTime,
+              endTime,
+              workspaceId,
+            });
+            if (c.length > 0) {
+              skipped++;
+              conflicts.push(
+                `${new Date(dateStr).toLocaleDateString("de-DE")}: ${c[0].message}`,
+              );
+              cursor.setDate(cursor.getDate() + 1);
+              continue;
+            }
+          }
+
+          // Surcharges
+          const sd = new Date(dateStr);
+          const hol = isPublicHoliday(sd, bundesland);
+          const sun = isSunday(sd);
+          const night = isNightShift(startTime, endTime);
+          const surch = calculateSurcharge({
+            isNight: night,
+            isSunday: sun,
+            isHoliday: hol.isHoliday,
+          });
+
+          await prisma.shift.create({
+            data: {
+              date: sd,
+              startTime,
+              endTime,
+              notes: notes || null,
+              status: employeeId ? "SCHEDULED" : "OPEN",
+              employeeId: employeeId || null,
+              locationId: locationId || null,
+              isNightShift: night,
+              isHolidayShift: hol.isHoliday,
+              isSundayShift: sun,
+              surchargePercent: surch,
+              workspaceId,
+            },
+          });
+          created++;
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      // Audit log for bulk operation
+      await createAuditLogTx(prisma, {
+        action: "CREATE",
+        entityType: "shift",
+        entityId: "bulk",
+        userId: user.id,
+        userEmail: user.email ?? undefined,
+        workspaceId,
+        changes: {
+          bulkCreated: created,
+          bulkSkipped: skipped,
+          dateRange: `${date} → ${endDate}`,
+          selectedDays: days,
+        },
+      });
+
+      return NextResponse.json(
+        { created, skipped, conflicts },
+        { status: 201 },
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════
+     * SINGLE MODE — original single-shift creation
+     * ══════════════════════════════════════════════════════════ */
     if (employeeId) {
       const conflicts = await checkShiftConflicts({
         employeeId,

@@ -267,9 +267,9 @@ export default function JahresplanungSeite() {
             </button>
           </div>
 
-          {/* Department filter + View tabs row */}
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 w-full">
-            {departments.length > 0 && (
+          {/* Department filter */}
+          {departments.length > 0 && (
+            <div className="flex items-center justify-center w-full">
               <Select
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
@@ -282,9 +282,11 @@ export default function JahresplanungSeite() {
                   </option>
                 ))}
               </Select>
-            )}
+            </div>
+          )}
 
-            {/* View tabs — full width on mobile, auto on sm+ */}
+          {/* View tabs — full width on mobile, auto on sm+ */}
+          <div className="flex items-center justify-center w-full">
             <div className="w-full sm:w-auto inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-zinc-800 p-1">
               <button
                 onClick={() => setActiveTab("calendar")}

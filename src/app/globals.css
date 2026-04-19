@@ -762,6 +762,26 @@
 }
 
 /* Date / time / datetime-local input icons (calendar, clock pickers) */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  position: relative;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 2px;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}
 :is(.dark) input[type="date"],
 :is(.dark) input[type="time"],
 :is(.dark) input[type="datetime-local"] {

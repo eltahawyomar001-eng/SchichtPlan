@@ -15,6 +15,55 @@ import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 
+/**
+ * Sync VacationBalance used/planned/remaining from actual absence data.
+ */
+async function syncVacationBalance(
+  employeeId: string,
+  year: number,
+  workspaceId: string,
+): Promise<void> {
+  const startOfYear = new Date(year, 0, 1);
+  const endOfYear = new Date(year, 11, 31);
+
+  const absences = await prisma.absenceRequest.findMany({
+    where: {
+      employeeId,
+      workspaceId,
+      category: "URLAUB",
+      status: { in: ["GENEHMIGT", "AUSSTEHEND"] },
+      startDate: { lte: endOfYear },
+      endDate: { gte: startOfYear },
+      deletedAt: null,
+    },
+    select: { status: true, totalDays: true },
+  });
+
+  let used = 0;
+  let planned = 0;
+  for (const a of absences) {
+    if (a.status === "GENEHMIGT") used += a.totalDays;
+    else if (a.status === "AUSSTEHEND") planned += a.totalDays;
+  }
+  used = Math.round(used * 10) / 10;
+  planned = Math.round(planned * 10) / 10;
+
+  const balance = await prisma.vacationBalance.findUnique({
+    where: { employeeId_year: { employeeId, year } },
+  });
+
+  if (balance) {
+    const remaining =
+      Math.round(
+        (balance.totalEntitlement + balance.carryOver - used - planned) * 10,
+      ) / 10;
+    await prisma.vacationBalance.update({
+      where: { id: balance.id },
+      data: { used, planned, remaining },
+    });
+  }
+}
+
 // ─── GET  /api/absences ─────────────────────────────────────────
 export const GET = withRoute("/api/absences", "GET", async (req) => {
   const auth = await requireAuth();
@@ -218,6 +267,17 @@ export const POST = withRoute(
           include: { employee: true },
         })
       : absence;
+
+    // ── Sync VacationBalance for URLAUB absences ──
+    if (body.category === "URLAUB") {
+      syncVacationBalance(
+        absence.employeeId,
+        start.getFullYear(),
+        workspaceId,
+      ).catch((err) =>
+        log.error("VacationBalance sync failed", { error: err }),
+      );
+    }
 
     // ── Webhook dispatch (fire & forget) ──
     dispatchWebhook(workspaceId, "absence.created", {

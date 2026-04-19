@@ -271,7 +271,7 @@ export default function TicketsPage() {
                 placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-11 sm:ps-9"
+                className="pl-10"
               />
             </div>
             <Select

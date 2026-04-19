@@ -250,7 +250,7 @@ export default function JahresplanungSeite() {
             <Select
               value={String(year)}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="w-24 sm:w-28"
+              className="w-24 sm:w-28 text-center"
             >
               {years.map((y) => (
                 <option key={y} value={y}>
@@ -317,7 +317,7 @@ export default function JahresplanungSeite() {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 text-xs">
+        <div className="flex flex-wrap justify-center gap-3 text-xs">
           <LegendItem
             color="bg-emerald-100 border-emerald-300"
             label={t("vacationApproved")}

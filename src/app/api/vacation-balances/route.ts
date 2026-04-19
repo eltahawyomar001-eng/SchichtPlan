@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { createVacationBalanceSchema, validateBody } from "@/lib/validations";
-import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 
 /**
  * Calculate the BUrlG (Bundesurlaubsgesetz) legal minimum vacation days.
@@ -21,8 +18,48 @@ function calculateMinEntitlement(workDaysPerWeek: number): number {
 }
 
 /**
+ * Recalculate used + planned days from actual AbsenceRequests for an employee/year.
+ * - used = sum of totalDays for GENEHMIGT URLAUB absences in that year
+ * - planned = sum of totalDays for AUSSTEHEND URLAUB absences in that year
+ */
+async function recalculateFromAbsences(
+  employeeId: string,
+  year: number,
+  workspaceId: string,
+): Promise<{ used: number; planned: number }> {
+  const startOfYear = new Date(year, 0, 1);
+  const endOfYear = new Date(year, 11, 31);
+
+  const absences = await prisma.absenceRequest.findMany({
+    where: {
+      employeeId,
+      workspaceId,
+      category: "URLAUB",
+      status: { in: ["GENEHMIGT", "AUSSTEHEND"] },
+      startDate: { lte: endOfYear },
+      endDate: { gte: startOfYear },
+      deletedAt: null,
+    },
+    select: { status: true, totalDays: true },
+  });
+
+  let used = 0;
+  let planned = 0;
+  for (const a of absences) {
+    if (a.status === "GENEHMIGT") used += a.totalDays;
+    else if (a.status === "AUSSTEHEND") planned += a.totalDays;
+  }
+  return {
+    used: Math.round(used * 10) / 10,
+    planned: Math.round(planned * 10) / 10,
+  };
+}
+
+/**
  * GET /api/vacation-balances?year=2025&employeeId=xxx
  * Returns vacation balances. Managers see all, employees see own.
+ * Auto-creates VacationBalance records for employees that don't have one yet,
+ * and recalculates used/planned from actual absence data.
  */
 export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
   const auth = await requireAuth();
@@ -35,49 +72,108 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
   const { searchParams } = new URL(req.url);
   const yearParam = searchParams.get("year");
   const employeeIdParam = searchParams.get("employeeId");
-  const { take, skip } = parsePagination(req);
 
   const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
 
+  // ── Determine which employees to include ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = { workspaceId, year };
-
-  // EMPLOYEE role: can only see own balance
+  const employeeWhere: any = { workspaceId, isActive: true, deletedAt: null };
   if (user.role === "EMPLOYEE" && user.employeeId) {
-    where.employeeId = user.employeeId;
+    employeeWhere.id = user.employeeId;
   } else if (employeeIdParam) {
-    where.employeeId = employeeIdParam;
+    employeeWhere.id = employeeIdParam;
   }
 
-  const [balances, total] = await Promise.all([
-    prisma.vacationBalance.findMany({
-      where,
-      include: {
-        employee: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            workDaysPerWeek: true,
-            contractType: true,
-          },
+  // Fetch all relevant employees
+  const employees = await prisma.employee.findMany({
+    where: employeeWhere,
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      workDaysPerWeek: true,
+      contractType: true,
+    },
+    orderBy: { lastName: "asc" },
+  });
+
+  if (employees.length === 0) {
+    return NextResponse.json([]);
+  }
+
+  const employeeIds = employees.map((e) => e.id);
+
+  // Fetch existing balances for these employees & year
+  const existingBalances = await prisma.vacationBalance.findMany({
+    where: { workspaceId, year, employeeId: { in: employeeIds } },
+  });
+  const existingMap = new Map(existingBalances.map((b) => [b.employeeId, b]));
+
+  // ── Auto-create missing balances + recalculate all from absences ──
+  const results = [];
+
+  for (const emp of employees) {
+    let balance = existingMap.get(emp.id);
+    const workDays = emp.workDaysPerWeek ?? 5;
+    const legalMin = calculateMinEntitlement(workDays);
+
+    // Auto-create if missing
+    if (!balance) {
+      // Check for carry-over from previous year
+      let carryOver = 0;
+      const prevBalance = await prisma.vacationBalance.findUnique({
+        where: { employeeId_year: { employeeId: emp.id, year: year - 1 } },
+      });
+      if (prevBalance && prevBalance.remaining > 0) {
+        // §7(3) BUrlG: carry-over expires March 31 of next year
+        // We still record it — expiry can be enforced separately
+        carryOver = Math.round(prevBalance.remaining * 10) / 10;
+      }
+
+      const defaultEntitlement = Math.max(legalMin, 20); // at least 20 or legal min
+      balance = await prisma.vacationBalance.create({
+        data: {
+          employeeId: emp.id,
+          year,
+          totalEntitlement: defaultEntitlement,
+          carryOver,
+          used: 0,
+          planned: 0,
+          remaining: defaultEntitlement + carryOver,
+          workspaceId,
         },
-      },
-      orderBy: [{ employee: { lastName: "asc" } }, { year: "desc" }],
-      take,
-      skip,
-    }),
-    prisma.vacationBalance.count({ where }),
-  ]);
+      });
+    }
 
-  // Enrich response with legal minimum for each balance
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enriched = balances.map((bal: any) => ({
-    ...bal,
-    legalMinimum: calculateMinEntitlement(bal.employee.workDaysPerWeek ?? 5),
-  }));
+    // Recalculate used/planned from actual absences
+    const { used, planned } = await recalculateFromAbsences(
+      emp.id,
+      year,
+      workspaceId,
+    );
+    const remaining =
+      balance.totalEntitlement + balance.carryOver - used - planned;
 
-  return paginatedResponse(enriched, total, take, skip);
+    // Update if values differ
+    if (
+      balance.used !== used ||
+      balance.planned !== planned ||
+      balance.remaining !== remaining
+    ) {
+      balance = await prisma.vacationBalance.update({
+        where: { id: balance.id },
+        data: { used, planned, remaining: Math.round(remaining * 10) / 10 },
+      });
+    }
+
+    results.push({
+      ...balance,
+      employee: emp,
+      legalMinimum: legalMin,
+    });
+  }
+
+  return NextResponse.json(results);
 });
 
 /**
@@ -181,27 +277,6 @@ export const POST = withRoute(
         remaining: entitlement + carry - balance.used - balance.planned,
       },
     });
-
-    createAuditLog({
-      action: "CREATE",
-      entityType: "VacationBalance",
-      entityId: updated.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      changes: {
-        employeeId,
-        year,
-        totalEntitlement: entitlement,
-        carryOver: carry,
-      },
-    });
-
-    dispatchWebhook(workspaceId, "vacation_balance.created", {
-      id: updated.id,
-      employeeId,
-      year,
-    }).catch(() => {});
 
     return NextResponse.json(updated, { status: 201 });
   },

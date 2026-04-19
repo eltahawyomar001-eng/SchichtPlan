@@ -558,33 +558,31 @@ export default function MitarbeiterPage() {
               </div>
             </div>
 
-            {/* Role — only shown when editing an employee with a linked user */}
-            {editingEmployee?.user && (
+            {/* Role — shown when editing */}
+            {editingEmployee && (
               <div className="space-y-2">
                 <Label htmlFor="role">{t("form.role")}</Label>
-                <Select
-                  id="role"
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData((p) => ({
-                      ...p,
-                      role: e.target.value,
-                    }))
-                  }
-                >
-                  <option value="OWNER">{t("form.roleOwner")}</option>
-                  <option value="ADMIN">{t("form.roleAdmin")}</option>
-                  <option value="MANAGER">{t("form.roleManager")}</option>
-                  <option value="EMPLOYEE">{t("form.roleEmployee")}</option>
-                </Select>
-              </div>
-            )}
-            {editingEmployee && !editingEmployee.user && (
-              <div className="space-y-2">
-                <Label>{t("form.role")}</Label>
-                <p className="text-sm text-gray-500 dark:text-zinc-400 italic">
-                  {t("form.noLinkedUser")}
-                </p>
+                {editingEmployee.user ? (
+                  <Select
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        role: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="OWNER">{t("form.roleOwner")}</option>
+                    <option value="ADMIN">{t("form.roleAdmin")}</option>
+                    <option value="MANAGER">{t("form.roleManager")}</option>
+                    <option value="EMPLOYEE">{t("form.roleEmployee")}</option>
+                  </Select>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 italic">
+                    {t("form.noLinkedUser")}
+                  </p>
+                )}
               </div>
             )}
 
@@ -742,6 +740,23 @@ export default function MitarbeiterPage() {
                           <p className="text-sm text-gray-500 dark:text-zinc-400 truncate">
                             {employee.position}
                           </p>
+                        )}
+                        {employee.user?.role && (
+                          <Badge
+                            className={
+                              employee.user.role === "OWNER"
+                                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[10px]"
+                                : employee.user.role === "ADMIN"
+                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px]"
+                                  : employee.user.role === "MANAGER"
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[10px]"
+                                    : "bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-zinc-300 border-gray-200 dark:border-zinc-600 text-[10px]"
+                            }
+                          >
+                            {t(
+                              `form.role${employee.user.role.charAt(0) + employee.user.role.slice(1).toLowerCase()}`,
+                            )}
+                          </Badge>
                         )}
                       </div>
                     </div>

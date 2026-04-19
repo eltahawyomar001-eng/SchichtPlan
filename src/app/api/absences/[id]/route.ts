@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   cascadeAbsenceApproval,
@@ -11,26 +14,73 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateAbsenceStatusSchema, validateBody } from "@/lib/validations";
-import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
-import { createAuditLog } from "@/lib/audit";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Sync VacationBalance used/planned/remaining from actual absence data.
+ * Recalculates from scratch to avoid drift.
+ */
+async function syncVacationBalance(
+  employeeId: string,
+  year: number,
+  workspaceId: string,
+): Promise<void> {
+  const startOfYear = new Date(year, 0, 1);
+  const endOfYear = new Date(year, 11, 31);
+
+  const absences = await prisma.absenceRequest.findMany({
+    where: {
+      employeeId,
+      workspaceId,
+      category: "URLAUB",
+      status: { in: ["GENEHMIGT", "AUSSTEHEND"] },
+      startDate: { lte: endOfYear },
+      endDate: { gte: startOfYear },
+      deletedAt: null,
+    },
+    select: { status: true, totalDays: true },
+  });
+
+  let used = 0;
+  let planned = 0;
+  for (const a of absences) {
+    if (a.status === "GENEHMIGT") used += a.totalDays;
+    else if (a.status === "AUSSTEHEND") planned += a.totalDays;
+  }
+  used = Math.round(used * 10) / 10;
+  planned = Math.round(planned * 10) / 10;
+
+  const balance = await prisma.vacationBalance.findUnique({
+    where: { employeeId_year: { employeeId, year } },
+  });
+
+  if (balance) {
+    const remaining =
+      Math.round(
+        (balance.totalEntitlement + balance.carryOver - used - planned) * 10,
+      ) / 10;
+    await prisma.vacationBalance.update({
+      where: { id: balance.id },
+      data: { used, planned, remaining },
+    });
+  }
+  // If no balance record exists, the GET endpoint will auto-create it
+}
+
 // ─── PATCH  /api/absences/[id] ──────────────────────────────────
 // Used for approve / reject / cancel
-export const PATCH = withRoute(
-  "/api/absences/[id]",
-  "PATCH",
-  async (req, context) => {
-    const params = await context!.params;
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export async function PATCH(req: Request, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const { id } = params;
+    const user = session.user as SessionUser;
+    const { id } = await params;
     const parsed = validateBody(updateAbsenceStatusSchema, await req.json());
     if (!parsed.success) return parsed.response;
 
@@ -52,6 +102,8 @@ export const PATCH = withRoute(
         const forbidden = requirePermission(user, "absences", "approve");
         if (forbidden) return forbidden;
       }
+
+      // ── Idempotency: reject duplicate status transitions ──
       // If the absence is already in the requested status, return it as-is
       // to prevent duplicate signatures, notifications, and emails.
       if (existing.status === body.status) {
@@ -103,6 +155,18 @@ export const PATCH = withRoute(
 
       return result;
     });
+
+    // ── Sync VacationBalance for URLAUB absences on any status change ──
+    if (existing.category === "URLAUB" && body.status) {
+      const absenceYear = existing.startDate.getFullYear();
+      syncVacationBalance(
+        existing.employeeId,
+        absenceYear,
+        user.workspaceId!,
+      ).catch((err) =>
+        log.error("VacationBalance sync failed", { error: err }),
+      );
+    }
 
     // ── E-Signature: Record signed approval/rejection ──
     if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
@@ -186,36 +250,24 @@ export const PATCH = withRoute(
       );
     }
 
-    createAuditLog({
-      action:
-        body.status === "GENEHMIGT"
-          ? "APPROVE"
-          : body.status === "ABGELEHNT"
-            ? "REJECT"
-            : "UPDATE",
-      entityType: "AbsenceRequest",
-      entityId: id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId: user.workspaceId!,
-      changes: { status: body.status, previousStatus: existing.status },
-    });
-
     return NextResponse.json(updated);
-  },
-);
+  } catch (error) {
+    log.error("Error updating absence:", { error: error });
+    captureRouteError(error, { route: "/api/absences/[id]", method: "PATCH" });
+    return NextResponse.json({ error: "Error updating" }, { status: 500 });
+  }
+}
 
 // ─── DELETE  /api/absences/[id] ─────────────────────────────────
-export const DELETE = withRoute(
-  "/api/absences/[id]",
-  "DELETE",
-  async (req, context) => {
-    const params = await context!.params;
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+export async function DELETE(_req: Request, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const { id } = params;
+    const user = session.user as SessionUser;
+    const { id } = await params;
 
     const existing = await prisma.absenceRequest.findUnique({
       where: { id },
@@ -235,21 +287,23 @@ export const DELETE = withRoute(
       }
     }
 
-    await prisma.absenceRequest.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.absenceRequest.delete({ where: { id } });
 
-    createAuditLog({
-      action: "DELETE",
-      entityType: "AbsenceRequest",
-      entityId: id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId: user.workspaceId!,
-      changes: { category: existing.category, employeeId: existing.employeeId },
-    });
+    // ── Sync VacationBalance after deletion ──
+    if (existing.category === "URLAUB") {
+      syncVacationBalance(
+        existing.employeeId,
+        existing.startDate.getFullYear(),
+        user.workspaceId!,
+      ).catch((err) =>
+        log.error("VacationBalance sync failed", { error: err }),
+      );
+    }
 
     return NextResponse.json({ success: true });
-  },
-);
+  } catch (error) {
+    log.error("Error deleting absence:", { error: error });
+    captureRouteError(error, { route: "/api/absences/[id]", method: "DELETE" });
+    return NextResponse.json({ error: "Error deleting" }, { status: 500 });
+  }
+}

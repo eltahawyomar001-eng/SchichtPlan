@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
-  formatMinutesToHHmm,
   formatIndustrial,
   getCalendarWeek,
   getStatusLabel,
@@ -85,17 +84,20 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
       year: "numeric",
     });
 
+    // Use ="HH:mm" formula trick so Excel treats times as literal text
+    const esc = (v: string) => `=${'"'}${v}${'"'}`;
+
     return [
       `${e.employee.firstName} ${e.employee.lastName}`,
       e.location?.name ?? "",
       `${cwPrefix} ${kw}`,
       datum,
-      `\t${e.startTime}`,
-      `\t${e.endTime}`,
-      `\t${formatMinutesToHHmm(e.breakMinutes)}`,
-      `\t${formatMinutesToHHmm(e.grossMinutes)}`,
-      `\t${formatMinutesToHHmm(e.netMinutes)}`,
-      formatIndustrial(e.netMinutes),
+      esc(e.startTime),
+      esc(e.endTime),
+      e.breakMinutes,
+      formatIndustrial(e.grossMinutes, locale),
+      formatIndustrial(e.netMinutes, locale),
+      formatIndustrial(e.netMinutes, locale),
       getStatusLabel(e.status, locale),
       e.confirmedBy ?? "",
       e.confirmedAt
@@ -129,9 +131,9 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
       "",
       "",
       "",
-      `\t${formatMinutesToHHmm(totalGross)}`,
-      `\t${formatMinutesToHHmm(totalNet)}`,
-      formatIndustrial(totalNet),
+      formatIndustrial(totalGross, locale),
+      formatIndustrial(totalNet, locale),
+      formatIndustrial(totalNet, locale),
       "",
       "",
       "",

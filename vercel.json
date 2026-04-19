@@ -17,6 +17,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/automations/auto-clockout",
+      "schedule": "*/10 * * * *"
+    },
+    {
       "path": "/api/admin/data-retention",
       "schedule": "30 4 * * 0"
     }

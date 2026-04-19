@@ -354,10 +354,78 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
   }
 
   // Open (active) clock entry
-  const open = await prisma.timeEntry.findFirst({
+  let open = await prisma.timeEntry.findFirst({
     where: { employeeId, isLiveClock: true, clockOutAt: null },
     orderBy: { clockInAt: "desc" },
   });
+
+  // ── Server-side auto clock-out: close entries that exceeded 10h ──
+  // This catches cases where the cron hasn't run yet or the user was offline.
+  if (open?.clockInAt) {
+    const now = new Date();
+    const elapsedMs = now.getTime() - open.clockInAt.getTime();
+    const elapsedMinutes = Math.round(elapsedMs / 60000);
+
+    if (elapsedMinutes >= ARBZG_MAX_DAILY_MINUTES) {
+      // Cap at exactly 10h from clock-in
+      const maxMs = ARBZG_MAX_DAILY_MINUTES * 60 * 1000;
+      const cappedClockOut = new Date(open.clockInAt.getTime() + maxMs);
+      const endTimeStr = cappedClockOut.toLocaleTimeString("de-DE", {
+        timeZone: tz,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+
+      let breakMinutes = open.breakMinutes || 0;
+      let breakEnd = open.breakEnd;
+      if (open.breakStart && !open.breakEnd) {
+        const bsMin = toMinutes(open.breakStart);
+        const beMin = toMinutes(endTimeStr);
+        breakMinutes = Math.max(0, beMin - bsMin);
+        breakEnd = endTimeStr;
+      }
+
+      const dateOnly = new Date(
+        Date.UTC(
+          open.clockInAt.getFullYear(),
+          open.clockInAt.getMonth(),
+          open.clockInAt.getDate(),
+        ),
+      );
+      const todayPrevious = await getTodayWorkedMinutes(
+        employeeId,
+        dateOnly,
+        tz,
+      );
+      const capped = capWorkTimeAtLimit(
+        ARBZG_MAX_DAILY_MINUTES,
+        breakMinutes,
+        todayPrevious,
+      );
+
+      await prisma.timeEntry.update({
+        where: { id: open.id },
+        data: {
+          endTime: endTimeStr,
+          clockOutAt: cappedClockOut,
+          breakEnd,
+          breakMinutes: capped.breakMinutes,
+          grossMinutes: capped.cappedGross,
+          netMinutes: capped.cappedNet,
+          remarks:
+            "ArbZG §3: Automatisch ausgestempelt — Höchstarbeitszeit von 10h erreicht",
+        },
+      });
+
+      log.info(
+        `[clock-GET] Auto-closed stale entry ${open.id} — was open ${elapsedMinutes} min`,
+      );
+
+      // Entry is now closed — set open to null so the response shows idle state
+      open = null;
+    }
+  }
 
   // Today's completed entries for the log (use client timezone)
   const localNow = new Date(

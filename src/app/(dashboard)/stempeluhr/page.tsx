@@ -80,6 +80,11 @@ export default function StempeluhrSeite() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [elapsed, setElapsed] = useState("");
+  const [breakElapsed, setBreakElapsed] = useState("");
+  const [breakElapsedMin, setBreakElapsedMin] = useState(0);
+  const [breakStartAt, setBreakStartAt] = useState<string | null>(null);
+  const [defaultBreakMinutes, setDefaultBreakMinutes] = useState<number>(30);
+  const [lastBreakMinutes, setLastBreakMinutes] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [noProfile, setNoProfile] = useState(false);
   const [arbZG, setArbZG] = useState<ArbZGInfo | null>(null);
@@ -134,6 +139,10 @@ export default function StempeluhrSeite() {
       }
       setEntry(data.entry);
       setTodayEntries(data.todayEntries || []);
+      setBreakStartAt(data.breakStartAt ?? null);
+      if (typeof data.defaultBreakMinutes === "number") {
+        setDefaultBreakMinutes(data.defaultBreakMinutes);
+      }
       if (data.arbZG) setArbZG(data.arbZG);
       if (data.active && data.onBreak) {
         setClockState("break");
@@ -224,6 +233,47 @@ export default function StempeluhrSeite() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockState, entry?.clockInAt, arbZG?.warningLevel, acting]);
+
+  // ── Break-elapsed timer (counts UP since breakStart) ──
+  useEffect(() => {
+    if (clockState !== "break" || !breakStartAt) {
+      setBreakElapsed("");
+      setBreakElapsedMin(0);
+      return;
+    }
+    const startMs = new Date(breakStartAt).getTime();
+    const tick = () => {
+      const diff = Math.max(0, Date.now() - startMs);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setBreakElapsed(
+        h > 0
+          ? `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+          : `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
+      );
+      setBreakElapsedMin(Math.floor(diff / 60000));
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [clockState, breakStartAt]);
+
+  // ── Capture last completed break duration when transitioning break → working ──
+  const prevClockStateRef = useRef<ClockState>("idle");
+  useEffect(() => {
+    if (prevClockStateRef.current === "break" && clockState === "working") {
+      // Use the just-finished entry's breakMinutes if available, else our timer
+      const minutes = entry?.breakMinutes ?? breakElapsedMin;
+      if (minutes > 0) {
+        setLastBreakMinutes(minutes);
+        // Auto-clear after 10s
+        const t = setTimeout(() => setLastBreakMinutes(null), 10000);
+        return () => clearTimeout(t);
+      }
+    }
+    prevClockStateRef.current = clockState;
+  }, [clockState, entry?.breakMinutes, breakElapsedMin]);
 
   // ── ArbZG §3: Auto clock-out when server reports EXCEEDED ──
   // (Fallback: also triggers on server-side arbZG state updates)
@@ -486,54 +536,141 @@ export default function StempeluhrSeite() {
               {/* ── Timer display ── */}
               {clockState !== "idle" ? (
                 <div className="mb-6 text-center">
-                  {/* Digital clock digits */}
-                  <div
-                    className={`inline-flex items-center gap-1 rounded-2xl px-5 py-4 transition-all duration-500 ${
-                      clockState === "working"
-                        ? "bg-emerald-600/[0.06]"
-                        : "bg-amber-500/[0.08]"
-                    }`}
-                  >
-                    {elapsed.split(":").map((segment, i) => (
-                      <span key={i} className="flex items-center">
-                        {i > 0 && (
-                          <span
-                            className={`mx-0.5 mb-1.5 text-3xl font-light select-none ${
-                              clockState === "working"
-                                ? "text-emerald-400"
-                                : "text-amber-400"
-                            }`}
-                          >
-                            :
-                          </span>
-                        )}
-                        <span
-                          className={`inline-block min-w-[2.8rem] rounded-xl px-1 py-0.5 text-center font-mono text-4xl font-bold tabular-nums tracking-tight ${
-                            clockState === "working"
-                              ? "text-emerald-700"
-                              : "text-amber-700"
-                          } ${i === 2 ? "opacity-70 text-3xl" : ""}`}
-                        >
-                          {segment}
-                        </span>
-                      </span>
-                    ))}
-                  </div>
+                  {clockState === "break" ? (
+                    /* Break mode: show break-elapsed timer + countdown */
+                    <>
+                      <div className="inline-flex items-center gap-1 rounded-2xl px-5 py-4 transition-all duration-500 bg-amber-500/[0.08]">
+                        {(breakElapsed || "00:00")
+                          .split(":")
+                          .map((segment, i, arr) => (
+                            <span key={i} className="flex items-center">
+                              {i > 0 && (
+                                <span className="mx-0.5 mb-1.5 text-3xl font-light select-none text-amber-400">
+                                  :
+                                </span>
+                              )}
+                              <span
+                                className={`inline-block min-w-[2.8rem] rounded-xl px-1 py-0.5 text-center font-mono text-4xl font-bold tabular-nums tracking-tight text-amber-700 ${
+                                  arr.length === 3 && i === 2
+                                    ? "opacity-70 text-3xl"
+                                    : ""
+                                }`}
+                              >
+                                {segment}
+                              </span>
+                            </span>
+                          ))}
+                      </div>
 
-                  {/* Clock-in time subtitle */}
-                  {entry?.clockInAt && (
-                    <p className="mt-2.5 text-xs text-gray-400 tracking-wide">
-                      {t("active")}{" "}
-                      <span className="font-medium text-gray-500">
-                        {new Date(entry.clockInAt).toLocaleTimeString(
-                          locale === "en" ? "en-GB" : "de-DE",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
-                      </span>
-                    </p>
+                      {/* Countdown / overrun */}
+                      <div className="mt-3">
+                        {(() => {
+                          const target = defaultBreakMinutes;
+                          const remain = target - breakElapsedMin;
+                          if (remain >= 0) {
+                            return (
+                              <p className="text-sm font-medium text-amber-700">
+                                {t("breakRemaining", {
+                                  minutes: remain,
+                                  target,
+                                })}
+                              </p>
+                            );
+                          }
+                          return (
+                            <p className="text-sm font-semibold text-red-600 animate-pulse">
+                              {t("breakOverrun", {
+                                minutes: -remain,
+                                target,
+                              })}
+                            </p>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Mini progress bar */}
+                      <div className="mx-auto mt-2 h-1.5 w-48 overflow-hidden rounded-full bg-amber-100">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            breakElapsedMin > defaultBreakMinutes
+                              ? "bg-red-500"
+                              : "bg-amber-500"
+                          }`}
+                          style={{
+                            width: `${Math.min(100, (breakElapsedMin / Math.max(1, defaultBreakMinutes)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+
+                      {entry?.breakStart && (
+                        <p className="mt-2.5 text-xs text-gray-400 tracking-wide">
+                          {t("breakSince")}{" "}
+                          <span className="font-medium text-gray-500">
+                            {entry.breakStart}
+                          </span>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    /* Working mode: existing session timer */
+                    <>
+                      <div
+                        className={`inline-flex items-center gap-1 rounded-2xl px-5 py-4 transition-all duration-500 ${
+                          clockState === "working"
+                            ? "bg-emerald-600/[0.06]"
+                            : "bg-amber-500/[0.08]"
+                        }`}
+                      >
+                        {elapsed.split(":").map((segment, i) => (
+                          <span key={i} className="flex items-center">
+                            {i > 0 && (
+                              <span
+                                className={`mx-0.5 mb-1.5 text-3xl font-light select-none ${
+                                  clockState === "working"
+                                    ? "text-emerald-400"
+                                    : "text-amber-400"
+                                }`}
+                              >
+                                :
+                              </span>
+                            )}
+                            <span
+                              className={`inline-block min-w-[2.8rem] rounded-xl px-1 py-0.5 text-center font-mono text-4xl font-bold tabular-nums tracking-tight ${
+                                clockState === "working"
+                                  ? "text-emerald-700"
+                                  : "text-amber-700"
+                              } ${i === 2 ? "opacity-70 text-3xl" : ""}`}
+                            >
+                              {segment}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Last break pill (visible briefly after ending pause) */}
+                      {lastBreakMinutes !== null && (
+                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 animate-in fade-in slide-in-from-top-1 duration-300">
+                          <CheckCircleIcon className="h-3.5 w-3.5" />
+                          {t("lastBreak", { minutes: lastBreakMinutes })}
+                        </div>
+                      )}
+
+                      {/* Clock-in time subtitle */}
+                      {entry?.clockInAt && (
+                        <p className="mt-2.5 text-xs text-gray-400 tracking-wide">
+                          {t("active")}{" "}
+                          <span className="font-medium text-gray-500">
+                            {new Date(entry.clockInAt).toLocaleTimeString(
+                              locale === "en" ? "en-GB" : "de-DE",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </span>
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (

@@ -102,6 +102,7 @@ export default function EinstellungenPage() {
   const [wsName, setWsName] = useState("");
   const [wsBundesland, setWsBundesland] = useState("");
   const [wsIndustry, setWsIndustry] = useState("");
+  const [wsBreakMinutes, setWsBreakMinutes] = useState<number>(30);
   const [wsSaving, setWsSaving] = useState(false);
   const [wsMsg, setWsMsg] = useState<{
     type: "success" | "error";
@@ -170,6 +171,9 @@ export default function EinstellungenPage() {
           setWsName(data.name || "");
           setWsBundesland(data.bundesland || "");
           setWsIndustry(data.industry || "");
+          if (typeof data.defaultBreakMinutes === "number") {
+            setWsBreakMinutes(data.defaultBreakMinutes);
+          }
         }
       } catch {
         // silent
@@ -191,6 +195,7 @@ export default function EinstellungenPage() {
           name: wsName,
           bundesland: wsBundesland || null,
           industry: wsIndustry || null,
+          defaultBreakMinutes: wsBreakMinutes,
         }),
       });
       if (res.ok) {
@@ -606,6 +611,29 @@ export default function EinstellungenPage() {
                       placeholder={t("industryPlaceholder")}
                     />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="wsBreakMinutes">
+                      {t("defaultBreakMinutes")}
+                    </Label>
+                    <Input
+                      id="wsBreakMinutes"
+                      type="number"
+                      min={0}
+                      max={240}
+                      value={wsBreakMinutes}
+                      onChange={(e) =>
+                        setWsBreakMinutes(
+                          Math.max(
+                            0,
+                            Math.min(240, Number(e.target.value) || 0),
+                          ),
+                        )
+                      }
+                    />
+                    <p className="text-xs text-gray-400 dark:text-zinc-500">
+                      {t("defaultBreakMinutesHint")}
+                    </p>
+                  </div>
                   <div className="flex items-center gap-2 pt-2">
                     <Button
                       size="sm"
@@ -650,6 +678,14 @@ export default function EinstellungenPage() {
                     </span>
                     <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                       {wsIndustry || "–"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500 dark:text-zinc-400">
+                      {t("defaultBreakMinutes")}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                      {wsBreakMinutes} min
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-100">

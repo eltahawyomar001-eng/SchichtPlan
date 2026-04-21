@@ -529,12 +529,19 @@ export const updateWorkspaceSchema = z
       .enum([...VALID_BUNDESLAENDER, ""])
       .optional()
       .nullable(),
+    defaultBreakMinutes: z.coerce
+      .number()
+      .int()
+      .min(0, "Mindestens 0 Minuten")
+      .max(240, "Maximal 240 Minuten")
+      .optional(),
   })
   .refine(
     (data) =>
       data.name !== undefined ||
       data.industry !== undefined ||
-      data.bundesland !== undefined,
+      data.bundesland !== undefined ||
+      data.defaultBreakMinutes !== undefined,
     { message: "Keine Änderungen angegeben" },
   );
 

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 import { updateWorkspaceSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { requireAuth, serverError } from "@/lib/api-response";
@@ -46,6 +45,7 @@ export const GET = withRoute("/api/workspace", "GET", async (req) => {
       slug: true,
       industry: true,
       bundesland: true,
+      defaultBreakMinutes: true,
       createdAt: true,
     },
   });
@@ -91,6 +91,10 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
     }
   }
 
+  if (typeof body.defaultBreakMinutes === "number") {
+    data.defaultBreakMinutes = body.defaultBreakMinutes;
+  }
+
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
       { error: "Keine Änderungen angegeben." },
@@ -107,6 +111,7 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
       slug: true,
       industry: true,
       bundesland: true,
+      defaultBreakMinutes: true,
     },
   });
 
@@ -115,11 +120,6 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
     userId: user.id,
     changes: Object.keys(data),
   });
-
-  dispatchWebhook(workspaceId, "workspace.updated", {
-    id: workspaceId,
-    ...data,
-  }).catch(() => {});
 
   return NextResponse.json(updated);
 });

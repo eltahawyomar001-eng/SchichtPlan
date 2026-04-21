@@ -120,6 +120,9 @@ model Workspace {
   slug       String   @unique
   industry   String?
   bundesland String?
+  /// Default/target break duration in minutes shown as countdown on the punch clock.
+  /// German default per ArbZG §4: 30 min for 6–9h shifts, 45 min for >9h shifts.
+  defaultBreakMinutes Int @default(30)
   onboardingCompleted Boolean @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

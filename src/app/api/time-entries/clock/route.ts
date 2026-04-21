@@ -468,10 +468,33 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
   );
   const warningLevel = getArbZGWarningLevel(totalTodayMinutes);
 
+  // ── Workspace break settings (countdown target on the punch clock) ──
+  const ws = await prisma.workspace.findUnique({
+    where: { id: user.workspaceId! },
+    select: { defaultBreakMinutes: true },
+  });
+  const defaultBreakMinutes = ws?.defaultBreakMinutes ?? 30;
+
+  // ── Compute precise breakStartAt (HH:mm string → ISO timestamp) ──
+  // Anchored to the clock-in date; handles same-day breaks (edge case:
+  // overnight breaks bump +1 day if HH:mm < clockIn HH:mm).
+  let breakStartAt: string | null = null;
+  if (open?.breakStart && !open.breakEnd && open.clockInAt) {
+    const [bh, bm] = open.breakStart.split(":").map(Number);
+    const d = new Date(open.clockInAt);
+    d.setHours(bh, bm, 0, 0);
+    if (d.getTime() < open.clockInAt.getTime()) {
+      d.setDate(d.getDate() + 1);
+    }
+    breakStartAt = d.toISOString();
+  }
+
   return NextResponse.json({
     active: !!open,
     onBreak: open ? !!(open.breakStart && !open.breakEnd) : false,
     entry: open || null,
+    breakStartAt,
+    defaultBreakMinutes,
     todayEntries,
     noProfile: false,
     arbZG: {

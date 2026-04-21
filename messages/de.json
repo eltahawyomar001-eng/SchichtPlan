@@ -1959,6 +1959,8 @@
     "save": "Speichern",
     "saved": "Urlaubskonto gespeichert.",
     "saveError": "Fehler beim Speichern.",
+    "invalidEntitlement": "Bitte einen gültigen Urlaubsanspruch eingeben (z. B. 26 oder 26,5).",
+    "invalidCarryOver": "Bitte einen gültigen Übertrag eingeben (z. B. 0 oder 2,5).",
     "networkError": "Netzwerkfehler — bitte erneut versuchen.",
     "errorLoading": "Fehler beim Laden der Urlaubskonten.",
     "contractTypeLabel": "Vertragsart",

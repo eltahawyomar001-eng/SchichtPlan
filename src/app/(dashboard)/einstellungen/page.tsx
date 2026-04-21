@@ -35,6 +35,7 @@ import {
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();
@@ -705,15 +706,13 @@ export default function EinstellungenPage() {
                 </div>
               )}
               {wsMsg && (
-                <div
-                  className={`mt-3 rounded-lg p-3 text-sm ${
-                    wsMsg.type === "success"
-                      ? "bg-green-50 text-green-800 border border-green-200"
-                      : "bg-red-50 text-red-800 border border-red-200"
-                  }`}
+                <StatusBanner
+                  type={wsMsg.type}
+                  onDismiss={() => setWsMsg(null)}
+                  className="mt-3"
                 >
                   {wsMsg.text}
-                </div>
+                </StatusBanner>
               )}
             </CardContent>
           </Card>

@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
+import { parseDecimalInput } from "@/lib/utils";
 import {
   PlusIcon,
   EditIcon,
@@ -155,8 +156,12 @@ export default function ProjekteSeite() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          costRate: formData.costRate ? parseFloat(formData.costRate) : null,
-          billRate: formData.billRate ? parseFloat(formData.billRate) : null,
+          costRate: formData.costRate
+            ? parseDecimalInput(formData.costRate)
+            : null,
+          billRate: formData.billRate
+            ? parseDecimalInput(formData.billRate)
+            : null,
           budgetMinutes: formData.budgetMinutes
             ? parseInt(formData.budgetMinutes)
             : null,

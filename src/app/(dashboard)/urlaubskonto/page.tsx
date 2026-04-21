@@ -11,6 +11,8 @@ import { AdaptiveModal, ModalFooter } from "@/components/ui/adaptive-modal";
 import { PageContent } from "@/components/ui/page-content";
 import { EditIcon, PalmtreeIcon, AlertTriangleIcon } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
+import { parseDecimalInput } from "@/lib/utils";
+import { StatusBanner } from "@/components/ui/status-banner";
 
 interface VacationBalance {
   id: string;
@@ -90,6 +92,21 @@ export default function UrlaubskontoSeite() {
     if (!editTarget) return;
     setSaving(true);
     setSaveMsg(null);
+
+    // Accept both "26.5" (en) and "26,5" (de) decimal formats
+    const entitlement = parseDecimalInput(editEntitlement);
+    const carry = parseDecimalInput(editCarryOver);
+    if (!Number.isFinite(entitlement) || entitlement < 0) {
+      setSaveMsg({ type: "error", text: t("invalidEntitlement") });
+      setSaving(false);
+      return;
+    }
+    if (!Number.isFinite(carry) || carry < 0) {
+      setSaveMsg({ type: "error", text: t("invalidCarryOver") });
+      setSaving(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/vacation-balances", {
         method: "POST",
@@ -97,8 +114,8 @@ export default function UrlaubskontoSeite() {
         body: JSON.stringify({
           employeeId: editTarget.employee.id,
           year,
-          totalEntitlement: parseFloat(editEntitlement),
-          carryOver: parseFloat(editCarryOver),
+          totalEntitlement: entitlement,
+          carryOver: carry,
         }),
       });
       if (res.ok) {
@@ -418,15 +435,12 @@ export default function UrlaubskontoSeite() {
               />
             </div>
             {saveMsg && (
-              <div
-                className={`rounded-xl p-3 text-sm ${
-                  saveMsg.type === "success"
-                    ? "bg-green-50 text-green-800 border border-green-200"
-                    : "bg-red-50 text-red-800 border border-red-200"
-                }`}
+              <StatusBanner
+                type={saveMsg.type}
+                onDismiss={() => setSaveMsg(null)}
               >
                 {saveMsg.text}
-              </div>
+              </StatusBanner>
             )}
             <ModalFooter>
               <Button variant="outline" onClick={() => setEditTarget(null)}>

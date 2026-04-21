@@ -42,3 +42,22 @@ export function fmtNum(
     maximumFractionDigits: decimals,
   });
 }
+
+/**
+ * Parse a user-entered decimal string that may use either a comma
+ * (German locale: `26,5`) or a dot (`26.5`) as decimal separator.
+ * Thousands separators (`.` in de, `,` in en) are NOT supported here
+ * because we're parsing single form inputs, not formatted numbers.
+ *
+ * Returns NaN for unparseable / empty input — callers should validate
+ * with `Number.isFinite()` before using the result.
+ */
+export function parseDecimalInput(
+  input: string | number | null | undefined,
+): number {
+  if (input === null || input === undefined || input === "") return NaN;
+  if (typeof input === "number") return input;
+  // Replace first comma with dot; ignore any additional commas (invalid)
+  const normalized = String(input).trim().replace(",", ".");
+  return parseFloat(normalized);
+}

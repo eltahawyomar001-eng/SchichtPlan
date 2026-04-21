@@ -1959,6 +1959,8 @@
     "save": "Save",
     "saved": "Vacation balance saved.",
     "saveError": "Error saving vacation balance.",
+    "invalidEntitlement": "Please enter a valid entitlement (e.g. 26 or 26.5).",
+    "invalidCarryOver": "Please enter a valid carry-over (e.g. 0 or 2.5).",
     "networkError": "Network error — please try again.",
     "errorLoading": "Error loading vacation balances.",
     "contractTypeLabel": "Contract",

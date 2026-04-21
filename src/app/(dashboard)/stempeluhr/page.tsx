@@ -16,6 +16,7 @@ import {
   CheckCircleIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
+import { haptics } from "@/lib/haptics";
 
 interface ClockEntry {
   id: string;
@@ -85,6 +86,11 @@ export default function StempeluhrSeite() {
   const [breakStartAt, setBreakStartAt] = useState<string | null>(null);
   const [defaultBreakMinutes, setDefaultBreakMinutes] = useState<number>(30);
   const [lastBreakMinutes, setLastBreakMinutes] = useState<number | null>(null);
+  const [lastBreakRange, setLastBreakRange] = useState<{
+    from: string;
+    to: string;
+    minutes: number;
+  } | null>(null);
   const [error, setError] = useState("");
   const [noProfile, setNoProfile] = useState(false);
   const [arbZG, setArbZG] = useState<ArbZGInfo | null>(null);
@@ -92,6 +98,9 @@ export default function StempeluhrSeite() {
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
   const autoClockOutRef = useRef(false);
+  // Fire each break-notification only once per break session
+  const break5MinNotifiedRef = useRef(false);
+  const breakEndNotifiedRef = useRef(false);
 
   // ── Team state (management only) ──
   const isManager = ["OWNER", "ADMIN", "MANAGER"].includes(user?.role ?? "");
@@ -234,46 +243,121 @@ export default function StempeluhrSeite() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clockState, entry?.clockInAt, arbZG?.warningLevel, acting]);
 
-  // ── Break-elapsed timer (counts UP since breakStart) ──
+  // ── Break-countdown timer (counts DOWN from target, then overruns) ──
   useEffect(() => {
     if (clockState !== "break" || !breakStartAt) {
       setBreakElapsed("");
       setBreakElapsedMin(0);
       return;
     }
+    // Reset notification guards for a fresh break session
+    break5MinNotifiedRef.current = false;
+    breakEndNotifiedRef.current = false;
+
     const startMs = new Date(breakStartAt).getTime();
+    const targetMs = Math.max(1, defaultBreakMinutes) * 60_000;
+
+    const fireNotification = (title: string, body: string) => {
+      if (typeof window === "undefined") return;
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      try {
+        new Notification(title, {
+          body,
+          icon: "/icon-192x192.png",
+          badge: "/icon-192x192.png",
+          tag: "shiftfy-break",
+          requireInteraction: false,
+        });
+      } catch {
+        /* noop — some browsers throw when constructing */
+      }
+    };
+
     const tick = () => {
-      const diff = Math.max(0, Date.now() - startMs);
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setBreakElapsed(
-        h > 0
-          ? `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
-          : `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
-      );
-      setBreakElapsedMin(Math.floor(diff / 60000));
+      const elapsedMs = Math.max(0, Date.now() - startMs);
+      const remainingMs = targetMs - elapsedMs;
+      setBreakElapsedMin(Math.floor(elapsedMs / 60000));
+
+      if (remainingMs > 0) {
+        // Count-down display (MM:SS of time remaining)
+        const m = Math.floor(remainingMs / 60000);
+        const s = Math.floor((remainingMs % 60000) / 1000);
+        setBreakElapsed(
+          `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
+        );
+
+        // 5-minute warning (fire once when crossing the 5-min threshold)
+        const remainingSec = Math.ceil(remainingMs / 1000);
+        if (
+          remainingSec <= 300 &&
+          remainingSec > 295 &&
+          !break5MinNotifiedRef.current
+        ) {
+          break5MinNotifiedRef.current = true;
+          fireNotification(
+            t("breakEndingSoonTitle"),
+            t("breakEndingSoonBody", { minutes: 5 }),
+          );
+          haptics.medium();
+        }
+      } else {
+        // Overrun — clamp display at 00:00 (the red "X min over target" badge handles the overrun copy)
+        setBreakElapsed("00:00");
+
+        if (!breakEndNotifiedRef.current) {
+          breakEndNotifiedRef.current = true;
+          fireNotification(
+            t("breakEndedNotifTitle"),
+            t("breakEndedNotifBody", { minutes: defaultBreakMinutes }),
+          );
+          haptics.success();
+        }
+      }
     };
     tick();
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
-  }, [clockState, breakStartAt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clockState, breakStartAt, defaultBreakMinutes]);
 
   // ── Capture last completed break duration when transitioning break → working ──
   const prevClockStateRef = useRef<ClockState>("idle");
+  const breakStartHHMMRef = useRef<string | null>(null);
+  // Remember the HH:MM the user went on break (so we can show the full range when it ends)
+  useEffect(() => {
+    if (clockState === "break" && entry?.breakStart) {
+      breakStartHHMMRef.current = entry.breakStart;
+    }
+  }, [clockState, entry?.breakStart]);
+
   useEffect(() => {
     if (prevClockStateRef.current === "break" && clockState === "working") {
       // Use the just-finished entry's breakMinutes if available, else our timer
       const minutes = entry?.breakMinutes ?? breakElapsedMin;
       if (minutes > 0) {
         setLastBreakMinutes(minutes);
+
+        // Build "HH:MM–HH:MM" range for display (fallback to minutes-only if start unknown)
+        const from = breakStartHHMMRef.current ?? entry?.breakStart ?? null;
+        if (from) {
+          const now = new Date();
+          const to = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+          setLastBreakRange({ from, to, minutes });
+        } else {
+          setLastBreakRange(null);
+        }
+
         // Auto-clear after 10s
-        const t = setTimeout(() => setLastBreakMinutes(null), 10000);
-        return () => clearTimeout(t);
+        const timeoutId = setTimeout(() => {
+          setLastBreakMinutes(null);
+          setLastBreakRange(null);
+        }, 10000);
+        return () => clearTimeout(timeoutId);
       }
     }
     prevClockStateRef.current = clockState;
-  }, [clockState, entry?.breakMinutes, breakElapsedMin]);
+  }, [clockState, entry?.breakMinutes, entry?.breakStart, breakElapsedMin]);
 
   // ── ArbZG §3: Auto clock-out when server reports EXCEEDED ──
   // (Fallback: also triggers on server-side arbZG state updates)
@@ -301,6 +385,22 @@ export default function StempeluhrSeite() {
   ) {
     setActing(true);
     setError("");
+
+    // Request browser notification permission when the user starts a break.
+    // This is the natural moment of intent — we never auto-prompt on load.
+    if (
+      action === "break-start" &&
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
+      try {
+        await Notification.requestPermission();
+      } catch {
+        /* noop — user may have blocked, that's fine */
+      }
+    }
+
     try {
       const res = await fetch("/api/time-entries/clock", {
         method: "POST",
@@ -651,7 +751,9 @@ export default function StempeluhrSeite() {
                       {lastBreakMinutes !== null && (
                         <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 animate-in fade-in slide-in-from-top-1 duration-300">
                           <CheckCircleIcon className="h-3.5 w-3.5" />
-                          {t("lastBreak", { minutes: lastBreakMinutes })}
+                          {lastBreakRange
+                            ? t("lastBreakRange", lastBreakRange)
+                            : t("lastBreak", { minutes: lastBreakMinutes })}
                         </div>
                       )}
 

@@ -239,46 +239,41 @@ export const POST = withRoute(
       );
     }
 
-    const remaining = entitlement + carry;
-
-    // Upsert — create or update
-    const balance = await prisma.vacationBalance.upsert({
+    // Look up existing balance to preserve used/planned
+    const existing = await prisma.vacationBalance.findUnique({
       where: {
-        employeeId_year: {
-          employeeId,
-          year,
-        },
+        employeeId_year: { employeeId, year },
       },
-      create: {
-        employeeId,
-        year,
-        totalEntitlement: entitlement,
-        carryOver: carry,
-        used: 0,
-        planned: 0,
-        remaining,
-        workspaceId,
-      },
-      update: {
-        totalEntitlement: entitlement,
-        carryOver: carry,
-        remaining: {
-          // recalculate: entitlement + carryOver - used - planned
-          // We'll do a raw update for accuracy
-          set: undefined,
-        },
-      },
+      select: { id: true, used: true, planned: true },
     });
 
-    // Recalculate remaining after update
-    const updated = await prisma.vacationBalance.update({
-      where: { id: balance.id },
-      data: {
-        remaining: entitlement + carry - balance.used - balance.planned,
-      },
-    });
+    const used = existing?.used ?? 0;
+    const planned = existing?.planned ?? 0;
+    const remaining = entitlement + carry - used - planned;
 
-    return NextResponse.json(updated, { status: 201 });
+    const balance = existing
+      ? await prisma.vacationBalance.update({
+          where: { id: existing.id },
+          data: {
+            totalEntitlement: entitlement,
+            carryOver: carry,
+            remaining,
+          },
+        })
+      : await prisma.vacationBalance.create({
+          data: {
+            employeeId,
+            year,
+            totalEntitlement: entitlement,
+            carryOver: carry,
+            used: 0,
+            planned: 0,
+            remaining,
+            workspaceId,
+          },
+        });
+
+    return NextResponse.json(balance, { status: existing ? 200 : 201 });
   },
   { idempotent: true },
 );

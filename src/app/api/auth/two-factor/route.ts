@@ -160,8 +160,7 @@ export const POST = withRoute("/api/auth/two-factor", "POST", async (req) => {
   const hashedCodes = await hashRecoveryCodes(plainCodes);
 
   // Enable 2FA + store hashed recovery codes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (prisma.user as any).update({
+  await prisma.user.update({
     where: { id: user.id },
     data: {
       twoFactorEnabled: true,
@@ -184,8 +183,7 @@ export const DELETE = withRoute(
     if (!auth.ok) return auth.response;
     const { user } = auth;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma.user as any).update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         twoFactorEnabled: false,

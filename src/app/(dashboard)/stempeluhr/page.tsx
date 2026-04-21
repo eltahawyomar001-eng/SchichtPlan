@@ -1105,8 +1105,12 @@ export default function StempeluhrSeite() {
                                   : m.status === "break"
                                     ? t("statusBreak")
                                     : t("statusOffline")}
-                                {m.active?.startTime &&
-                                  ` · ${t("since")} ${m.active.startTime}`}
+                                {m.status === "break" && m.active?.breakStart
+                                  ? ` · ${t("since")} ${m.active.breakStart}`
+                                  : m.status === "working" &&
+                                      m.active?.startTime
+                                    ? ` · ${t("since")} ${m.active.startTime}`
+                                    : null}
                               </span>
                             </div>
                           </div>

@@ -333,13 +333,26 @@ export default function StempeluhrSeite() {
 
   useEffect(() => {
     if (prevClockStateRef.current === "break" && clockState === "working") {
-      // Use the just-finished entry's breakMinutes if available, else our timer
-      const minutes = entry?.breakMinutes ?? breakElapsedMin;
+      // Compute THIS break's duration locally from the remembered breakStart
+      // HH:MM — breakElapsedMin may have been reset by the other effect, and
+      // entry.breakMinutes is now a CUMULATIVE total across all breaks of the
+      // shift (we must not show the running total here).
+      const from = breakStartHHMMRef.current ?? entry?.breakStart ?? null;
+      let minutes = 0;
+      if (from) {
+        const [bh, bm] = from.split(":").map(Number);
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const startMin = bh * 60 + bm;
+        minutes = Math.max(0, nowMin - startMin);
+      } else {
+        minutes = breakElapsedMin;
+      }
+
       if (minutes > 0) {
         setLastBreakMinutes(minutes);
 
-        // Build "HH:MM–HH:MM" range for display (fallback to minutes-only if start unknown)
-        const from = breakStartHHMMRef.current ?? entry?.breakStart ?? null;
+        // Build "HH:MM–HH:MM" range for display
         if (from) {
           const now = new Date();
           const to = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -347,6 +360,9 @@ export default function StempeluhrSeite() {
         } else {
           setLastBreakRange(null);
         }
+
+        // Clear the remembered start so a subsequent break gets a fresh window
+        breakStartHHMMRef.current = null;
 
         // Auto-clear after 10s
         const timeoutId = setTimeout(() => {
@@ -357,7 +373,7 @@ export default function StempeluhrSeite() {
       }
     }
     prevClockStateRef.current = clockState;
-  }, [clockState, entry?.breakMinutes, entry?.breakStart, breakElapsedMin]);
+  }, [clockState, entry?.breakStart, breakElapsedMin]);
 
   // ── ArbZG §3: Auto clock-out when server reports EXCEEDED ──
   // (Fallback: also triggers on server-side arbZG state updates)

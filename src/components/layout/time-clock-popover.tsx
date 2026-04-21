@@ -57,8 +57,12 @@ function ProgressRing({
       : "stroke-gray-100 dark:stroke-zinc-800";
 
   let ringColor = "stroke-emerald-500";
-  if (state === "break") ringColor = "stroke-amber-400";
-  if (progress >= 0.9) ringColor = "stroke-red-500";
+  if (state === "break") {
+    // Keep amber for the entire break — don't flip to red on the break ring
+    ringColor = "stroke-amber-400";
+  } else if (progress >= 0.9) {
+    ringColor = "stroke-red-500";
+  }
 
   return (
     <svg
@@ -114,6 +118,12 @@ export function TimeClockPopover() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
 
+  // Break countdown state
+  const [breakStartAt, setBreakStartAt] = useState<string | null>(null);
+  const [defaultBreakMinutes, setDefaultBreakMinutes] = useState<number>(30);
+  const [breakCountdown, setBreakCountdown] = useState<string>("");
+  const [breakElapsedMin, setBreakElapsedMin] = useState<number>(0);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
@@ -135,6 +145,10 @@ export function TimeClockPopover() {
       setEntry(data.entry ?? null);
       setTodayEntries(data.todayEntries ?? []);
       if (data.arbZG) setArbZG(data.arbZG);
+      setBreakStartAt(data.breakStartAt ?? null);
+      if (typeof data.defaultBreakMinutes === "number") {
+        setDefaultBreakMinutes(data.defaultBreakMinutes);
+      }
 
       if (data.active && data.onBreak) {
         setClockState("break");
@@ -182,6 +196,35 @@ export function TimeClockPopover() {
     }
     setElapsed("00:00:00");
   }, [clockState, entry?.clockInAt]);
+
+  /* ── Break countdown (counts DOWN from defaultBreakMinutes) ── */
+  useEffect(() => {
+    if (clockState !== "break" || !breakStartAt) {
+      setBreakCountdown("");
+      setBreakElapsedMin(0);
+      return;
+    }
+    const startMs = new Date(breakStartAt).getTime();
+    const targetMs = Math.max(1, defaultBreakMinutes) * 60_000;
+
+    const tick = () => {
+      const elapsedMs = Math.max(0, Date.now() - startMs);
+      const remainingMs = targetMs - elapsedMs;
+      setBreakElapsedMin(Math.floor(elapsedMs / 60_000));
+      if (remainingMs > 0) {
+        const m = Math.floor(remainingMs / 60_000);
+        const s = Math.floor((remainingMs % 60_000) / 1_000);
+        setBreakCountdown(
+          `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
+        );
+      } else {
+        setBreakCountdown("00:00");
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 1_000);
+    return () => clearInterval(iv);
+  }, [clockState, breakStartAt, defaultBreakMinutes]);
 
   /* ── Close on outside click ── */
   useEffect(() => {
@@ -246,10 +289,21 @@ export function TimeClockPopover() {
   const todayH = Math.floor(todayTotalMinutes / 60);
   const todayM = todayTotalMinutes % 60;
 
-  // Ring progress: fraction of 10h (600 min) ArbZG max
+  // Ring progress:
+  // - During break: fraction of break target elapsed (amber ring filling up)
+  // - Otherwise: fraction of 10h ArbZG max (emerald → red near limit)
+  const breakProgress =
+    clockState === "break" && defaultBreakMinutes > 0
+      ? Math.min(1, breakElapsedMin / defaultBreakMinutes)
+      : 0;
   const workedMinutes = arbZG?.todayWorkedMinutes ?? todayTotalMinutes;
   const maxMinutes = arbZG?.maxDailyMinutes ?? 600;
-  const progress = maxMinutes > 0 ? workedMinutes / maxMinutes : 0;
+  const progress =
+    clockState === "break"
+      ? breakProgress
+      : maxMinutes > 0
+        ? workedMinutes / maxMinutes
+        : 0;
 
   /* ── Status indicator for trigger button ── */
   const statusDot =
@@ -299,7 +353,11 @@ export function TimeClockPopover() {
             {/* Timer text centred inside ring */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-zinc-100">
-                {clockState === "idle" ? "--:--:--" : elapsed}
+                {clockState === "idle"
+                  ? "--:--:--"
+                  : clockState === "break" && breakCountdown
+                    ? breakCountdown
+                    : elapsed}
               </span>
               <span className="text-xs font-medium mt-1 text-gray-500 dark:text-zinc-400">
                 {clockState === "idle"
@@ -310,6 +368,32 @@ export function TimeClockPopover() {
               </span>
             </div>
           </div>
+
+          {/* Break remaining / overrun info */}
+          {clockState === "break" && (
+            <div className="mt-2 text-center space-y-0.5">
+              {breakElapsedMin < defaultBreakMinutes ? (
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  {t("breakRemaining", {
+                    minutes: defaultBreakMinutes - breakElapsedMin,
+                    target: defaultBreakMinutes,
+                  })}
+                </p>
+              ) : (
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400 animate-pulse">
+                  {t("breakOverrun", {
+                    minutes: breakElapsedMin - defaultBreakMinutes,
+                    target: defaultBreakMinutes,
+                  })}
+                </p>
+              )}
+              {entry?.breakStart && (
+                <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                  {t("breakSince")} {entry.breakStart}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── ArbZG remaining time ── */}

@@ -77,14 +77,15 @@ export async function GET(req: Request) {
           hour12: false,
         });
 
-        // Calculate break
+        // Calculate break (breakMinutes is cumulative across all breaks in
+        // the shift — we ADD this final break delta rather than overwrite).
         let breakMinutes = entry.breakMinutes || 0;
         let breakEnd = entry.breakEnd;
         if (entry.breakStart && !entry.breakEnd) {
           // Auto-end break at the capped time
           const bsMin = toMinutes(entry.breakStart);
           const beMin = toMinutes(endTimeStr);
-          breakMinutes = Math.max(0, beMin - bsMin);
+          breakMinutes = breakMinutes + Math.max(0, beMin - bsMin);
           breakEnd = endTimeStr;
         }
 

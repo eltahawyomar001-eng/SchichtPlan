@@ -17,6 +17,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/automations/break-end-warning",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/automations/auto-clockout",
       "schedule": "*/10 * * * *"
     },

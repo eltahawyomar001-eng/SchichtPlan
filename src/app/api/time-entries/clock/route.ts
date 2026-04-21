@@ -160,13 +160,22 @@ export const POST = withRoute(
           if (!open) {
             throw new Error("NOT_CLOCKED_IN");
           }
+          // Guard: reject if a break is currently open (started but not yet ended)
           if (open.breakStart && !open.breakEnd) {
             throw new Error("BREAK_ALREADY_ACTIVE");
           }
 
+          // Supporting multiple breaks per shift:
+          // - breakMinutes is a running CUMULATIVE total (any prior completed
+          //   break minutes are already in it after the previous break-end).
+          // - Clear breakEnd so the GET /status handler recognises the new
+          //   break as active (onBreak = breakStart && !breakEnd).
           return tx.timeEntry.update({
             where: { id: open.id },
-            data: { breakStart: timeStr },
+            data: {
+              breakStart: timeStr,
+              breakEnd: null,
+            },
           });
         })
         .catch((err) => {
@@ -197,18 +206,20 @@ export const POST = withRoute(
             where: { employeeId, isLiveClock: true, clockOutAt: null },
             orderBy: { clockInAt: "desc" },
           });
-          if (!open || !open.breakStart) {
+          if (!open || !open.breakStart || open.breakEnd) {
             throw new Error("NO_ACTIVE_BREAK");
           }
 
-          // Calculate break duration in minutes
+          // Calculate this break's duration and ADD to the running total
+          // (supports multiple breaks per shift).
           const bsMin = toMinutes(open.breakStart);
           const beMin = toMinutes(timeStr);
-          const breakMinutes = Math.max(0, beMin - bsMin);
+          const thisBreakMin = Math.max(0, beMin - bsMin);
+          const totalBreakMinutes = (open.breakMinutes ?? 0) + thisBreakMin;
 
           return tx.timeEntry.update({
             where: { id: open.id },
-            data: { breakEnd: timeStr, breakMinutes },
+            data: { breakEnd: timeStr, breakMinutes: totalBreakMinutes },
           });
         })
         .catch((err) => {
@@ -239,13 +250,15 @@ export const POST = withRoute(
             throw new Error("NOT_CLOCKED_IN");
           }
 
-          // If break is still running, auto-end it now
+          // If break is still running, auto-end it now.
+          // breakMinutes is a cumulative total across all breaks of the shift,
+          // so we ADD this final break's delta rather than overwriting.
           let breakMinutes = open.breakMinutes || 0;
           let breakEnd = open.breakEnd;
           if (open.breakStart && !open.breakEnd) {
             const bsMin = toMinutes(open.breakStart);
             const beMin = toMinutes(timeStr);
-            breakMinutes = Math.max(0, beMin - bsMin);
+            breakMinutes = breakMinutes + Math.max(0, beMin - bsMin);
             breakEnd = timeStr;
           }
 
@@ -382,7 +395,7 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
       if (open.breakStart && !open.breakEnd) {
         const bsMin = toMinutes(open.breakStart);
         const beMin = toMinutes(endTimeStr);
-        breakMinutes = Math.max(0, beMin - bsMin);
+        breakMinutes = breakMinutes + Math.max(0, beMin - bsMin);
         breakEnd = endTimeStr;
       }
 

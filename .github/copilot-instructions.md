@@ -190,6 +190,27 @@ Conventional Commits enforced by Husky + commitlint: `feat(scope): message`, `fi
 - Always `ENABLE ROW LEVEL SECURITY` on new tables
 - Index naming: `TableName_columnName_idx`, FK naming: `TableName_columnName_fkey`
 
+## German Labor Law Compliance (CRITICAL)
+
+Business logic actively enforces German labor regulations — these are **not** just UI validations:
+
+- **ArbZG §3** (Arbeitszeitgesetz): Max 10h/day and 48h/week enforced in `src/lib/automations.ts`, `src/lib/auto-fill.ts`, `src/lib/auto-scheduler.ts`, and at clock-in time in `src/app/api/time-entries/clock/route.ts`.
+- **BUrlG §3** (Bundesurlaubsgesetz): Minimum vacation entitlement = `workDaysPerWeek × 4` days. Enforced in `src/app/api/vacation-balances/route.ts` — rejecting any entitlement below the legal minimum with a German error message.
+- **BUrlG §7(3)**: Vacation carry-over recorded but expires March 31 of the following year. Only auto-provision `VacationBalance` rows for the **current calendar year** — never for past/future years.
+- `VacationBalance.used` + `planned` are always recalculated from actual `AbsenceRequest` rows on every GET, not stored as a trust-me value.
+
+When modifying absence, vacation, time-entry, or scheduling code, verify compliance with these statutes is preserved.
+
+## Ticketing System
+
+Added in migration `20250630_add_ticketing_system`. Key dedicated libs:
+
+- `src/lib/ticket-number.ts` — `createTicketWithNumber()` generates sequential `#TK-XXXX` numbers (workspace-scoped, atomic).
+- `src/lib/ticket-events.ts` — `logTicketCreated()`, `logTicketUpdated()`, etc. (audit trail).
+- `src/lib/ticket-notifications.ts` — `notifyNewTicket()`, `notifyTicketAssigned()` — fire-and-forget.
+
+The tickets route (`src/app/api/tickets/`) still uses the **legacy** raw `export async function` style (not yet migrated to `withRoute`). Reference it only for legacy patterns; use `withRoute` for any new ticket sub-routes.
+
 ## Key Patterns
 
 - **Styling:** `cn()` from `src/lib/utils.ts` (clsx + tailwind-merge). Emerald green palette (#059669). Components use `cva` for variants (see `src/components/ui/button.tsx`).

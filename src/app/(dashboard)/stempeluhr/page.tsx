@@ -387,13 +387,6 @@ export default function StempeluhrSeite() {
 
         // Clear the remembered start so a subsequent break gets a fresh window
         breakStartHHMMRef.current = null;
-
-        // Auto-clear after 10s
-        const timeoutId = setTimeout(() => {
-          setLastBreakMinutes(null);
-          setLastBreakRange(null);
-        }, 10000);
-        return () => clearTimeout(timeoutId);
       }
     }
     prevClockStateRef.current = clockState;

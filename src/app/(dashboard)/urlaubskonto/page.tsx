@@ -55,6 +55,10 @@ export default function UrlaubskontoSeite() {
   const fetchBalances = useCallback(async () => {
     setLoading(true);
     setError(null);
+    // Clear stale rows immediately so the previous year's data doesn't
+    // flash while the new year is being fetched (prevents the "looks like
+    // current-year data was copied" perception bug).
+    setBalances([]);
     try {
       const res = await fetch(`/api/vacation-balances?year=${year}`);
       if (res.ok) {
@@ -144,11 +148,16 @@ export default function UrlaubskontoSeite() {
           </div>
         ) : balances.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-800/50 py-12 text-center">
-            <p className="text-sm text-gray-500 dark:text-zinc-400">
-              {t("empty")}
+            <PalmtreeIcon className="mx-auto mb-3 h-10 w-10 text-gray-300 dark:text-zinc-600" />
+            <p className="text-sm font-medium text-gray-700 dark:text-zinc-200">
+              {year < currentYear
+                ? t("emptyPast", { year })
+                : year > currentYear
+                  ? t("emptyFuture", { year })
+                  : t("empty")}
             </p>
             <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500">
-              {t("emptyHint")}
+              {year === currentYear ? t("emptyHint") : t("emptyHintOtherYear")}
             </p>
           </div>
         ) : isEmployee ? (

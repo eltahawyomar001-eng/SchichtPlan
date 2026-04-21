@@ -109,6 +109,16 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
   });
   const existingMap = new Map(existingBalances.map((b) => [b.employeeId, b]));
 
+  // ── Auto-provision policy ──
+  // We ONLY auto-create VacationBalance rows for the *current* calendar year.
+  // For past or future years we return whatever genuinely exists in the DB.
+  // This prevents silently polluting historic / future periods with 20-day
+  // placeholder records every time a user flips the year selector — which
+  // would otherwise (a) make every year look like "this year's data" and
+  // (b) leave permanent ghost rows in audit logs & exports.
+  const currentYear = new Date().getFullYear();
+  const allowAutoCreate = year === currentYear;
+
   // ── Auto-create missing balances + recalculate all from absences ──
   const results = [];
 
@@ -117,8 +127,8 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
     const workDays = emp.workDaysPerWeek ?? 5;
     const legalMin = calculateMinEntitlement(workDays);
 
-    // Auto-create if missing
-    if (!balance) {
+    // Auto-create if missing — only for the current year
+    if (!balance && allowAutoCreate) {
       // Check for carry-over from previous year
       let carryOver = 0;
       const prevBalance = await prisma.vacationBalance.findUnique({
@@ -144,6 +154,9 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
         },
       });
     }
+
+    // Skip employees with no balance for non-current years (empty state on UI)
+    if (!balance) continue;
 
     // Recalculate used/planned from actual absences
     const { used, planned } = await recalculateFromAbsences(

@@ -145,7 +145,26 @@ export function TimeClockPopover() {
       setEntry(data.entry ?? null);
       setTodayEntries(data.todayEntries ?? []);
       if (data.arbZG) setArbZG(data.arbZG);
-      setBreakStartAt(data.breakStartAt ?? null);
+
+      // Compute breakStartAt CLIENT-SIDE to avoid server UTC timezone mismatch
+      if (
+        data.entry?.breakStart &&
+        !data.entry?.breakEnd &&
+        data.entry?.clockInAt
+      ) {
+        const [bh, bm] = (data.entry.breakStart as string)
+          .split(":")
+          .map(Number);
+        const d = new Date(data.entry.clockInAt as string);
+        d.setHours(bh, bm, 0, 0);
+        if (d.getTime() < new Date(data.entry.clockInAt as string).getTime()) {
+          d.setDate(d.getDate() + 1);
+        }
+        setBreakStartAt(d.toISOString());
+      } else {
+        setBreakStartAt(null);
+      }
+
       if (typeof data.defaultBreakMinutes === "number") {
         setDefaultBreakMinutes(data.defaultBreakMinutes);
       }

@@ -148,7 +148,31 @@ export default function StempeluhrSeite() {
       }
       setEntry(data.entry);
       setTodayEntries(data.todayEntries || []);
-      setBreakStartAt(data.breakStartAt ?? null);
+
+      // Compute breakStartAt CLIENT-SIDE to avoid server timezone mismatch.
+      // breakStart is stored as "HH:MM" in the user's LOCAL timezone (generated
+      // via toLocaleTimeString on the server with the user's tz param).
+      // d.setHours() on the client also uses local timezone → they match.
+      // On Vercel (UTC), d.setHours() would produce the wrong epoch.
+      if (
+        data.entry?.breakStart &&
+        !data.entry?.breakEnd &&
+        data.entry?.clockInAt
+      ) {
+        const [bh, bm] = (data.entry.breakStart as string)
+          .split(":")
+          .map(Number);
+        const d = new Date(data.entry.clockInAt as string);
+        d.setHours(bh, bm, 0, 0);
+        // Midnight crossover: if break time is before clock-in, it's next day
+        if (d.getTime() < new Date(data.entry.clockInAt as string).getTime()) {
+          d.setDate(d.getDate() + 1);
+        }
+        setBreakStartAt(d.toISOString());
+      } else {
+        setBreakStartAt(null);
+      }
+
       if (typeof data.defaultBreakMinutes === "number") {
         setDefaultBreakMinutes(data.defaultBreakMinutes);
       }

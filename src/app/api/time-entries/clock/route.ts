@@ -488,18 +488,10 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
   });
   const defaultBreakMinutes = ws?.defaultBreakMinutes ?? 30;
 
-  // ── Compute precise breakStartAt (HH:mm string → ISO timestamp) ──
-  // Anchored to the clock-in date; handles same-day breaks (edge case:
-  // overnight breaks bump +1 day if HH:mm < clockIn HH:mm).
+  // ── Compute precise breakStartAt (HH:mm string → UTC ISO timestamp) ──
   let breakStartAt: string | null = null;
   if (open?.breakStart && !open.breakEnd && open.clockInAt) {
-    const [bh, bm] = open.breakStart.split(":").map(Number);
-    const d = new Date(open.clockInAt);
-    d.setHours(bh, bm, 0, 0);
-    if (d.getTime() < open.clockInAt.getTime()) {
-      d.setDate(d.getDate() + 1);
-    }
-    breakStartAt = d.toISOString();
+    breakStartAt = hhmmToUTC(open.breakStart, open.clockInAt, tz);
   }
 
   return NextResponse.json({
@@ -518,3 +510,54 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
     },
   });
 });
+
+/* ── Helpers ──────────────────────────────────────────────── */
+
+/**
+ * Convert a "HH:MM" wall-clock string (in a given IANA timezone) to a UTC
+ * ISO timestamp, anchored to the same calendar day as `referenceDate`.
+ *
+ * Algorithm:
+ *   1. Read the y/m/d of referenceDate in the target timezone.
+ *   2. Start with a naive UTC guess: Date.UTC(y, m, d, H, M).
+ *   3. Check what H:M that guess produces in the target timezone.
+ *   4. Correct by the difference (handles DST automatically).
+ */
+function hhmmToUTC(hhmm: string, referenceDate: Date, tz: string): string {
+  const [wantH, wantM] = hhmm.split(":").map(Number);
+
+  // Step 1: calendar date in the target timezone
+  const dateParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(referenceDate);
+  const y = parseInt(dateParts.find((p) => p.type === "year")!.value);
+  const mo = parseInt(dateParts.find((p) => p.type === "month")!.value);
+  const d = parseInt(dateParts.find((p) => p.type === "day")!.value);
+
+  // Step 2: naive UTC guess (treating HH:MM as if it were UTC)
+  const guessMs = Date.UTC(y, mo - 1, d, wantH, wantM, 0);
+
+  // Step 3: what H:M does this guess give us in `tz`?
+  const tzTimeParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(guessMs));
+  const gotH = parseInt(tzTimeParts.find((p) => p.type === "hour")!.value);
+  const gotM = parseInt(tzTimeParts.find((p) => p.type === "minute")!.value);
+
+  // Step 4: correct by the delta (in ms)
+  const diffMs = ((wantH - gotH) * 60 + (wantM - gotM)) * 60_000;
+  const result = new Date(guessMs - diffMs);
+
+  // Midnight crossover guard: if result is still before clockIn, advance 1 day
+  if (result.getTime() < referenceDate.getTime() - 60_000) {
+    result.setUTCDate(result.getUTCDate() + 1);
+  }
+
+  return result.toISOString();
+}

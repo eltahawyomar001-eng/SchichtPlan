@@ -9,6 +9,11 @@ import { requireAuth, serverError } from "@/lib/api-response";
 import { logTicketCreated } from "@/lib/ticket-events";
 import { notifyNewTicket } from "@/lib/ticket-notifications";
 import { createTicketWithNumber } from "@/lib/ticket-number";
+import {
+  recordTicketCreation,
+  requireTicketingAddon,
+  requireTicketQuota,
+} from "@/lib/ticketing-addon";
 
 // ─── GET  /api/tickets ──────────────────────────────────────────
 export async function GET(req: Request) {
@@ -19,6 +24,9 @@ export async function GET(req: Request) {
 
     const forbidden = requirePermission(user, "tickets", "read");
     if (forbidden) return forbidden;
+
+    const addonRequired = await requireTicketingAddon(workspaceId);
+    if (addonRequired) return addonRequired;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
@@ -93,6 +101,9 @@ export async function POST(req: Request) {
     const forbidden = requirePermission(user, "tickets", "create");
     if (forbidden) return forbidden;
 
+    const quotaCheck = await requireTicketQuota(workspaceId);
+    if (quotaCheck) return quotaCheck;
+
     const parsed = validateBody(createTicketSchema, await req.json());
     if (!parsed.success) return parsed.response;
 
@@ -140,6 +151,14 @@ export async function POST(req: Request) {
       userId: user.id,
       workspaceId,
     });
+
+    // Increment monthly ticket counter for add-on quota
+    recordTicketCreation(workspaceId).catch((err) =>
+      log.error("[ticketing-addon] recordTicketCreation failed", {
+        err,
+        workspaceId,
+      }),
+    );
 
     // Notify all managers/admins about the new ticket
     notifyNewTicket({

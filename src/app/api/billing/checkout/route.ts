@@ -11,8 +11,6 @@ import { log } from "@/lib/logger";
 import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { billingCheckoutSchema, validateBody } from "@/lib/validations";
-import { createAuditLog } from "@/lib/audit";
 
 /**
  * POST /api/billing/checkout
@@ -34,10 +32,9 @@ export const POST = withRoute(
     if (forbidden) return forbidden;
 
     const body = await req.json();
-    const parsed = validateBody(billingCheckoutSchema, body);
-    if (!parsed.success) return parsed.response;
-    const planId = parsed.data.plan.toLowerCase() as PlanId;
-    const billingCycle = parsed.data.billingCycle;
+    const planId = (body.plan as string)?.toLowerCase() as PlanId;
+    const billingCycle: "monthly" | "annual" =
+      body.billingCycle === "monthly" ? "monthly" : "annual";
 
     if (!planId || !PLANS[planId]) {
       return NextResponse.json(
@@ -119,9 +116,11 @@ export const POST = withRoute(
       mode: "subscription",
       payment_method_types: ["card", "sepa_debit"],
       line_items: [{ price: priceId, quantity: 1 }],
+      billing_address_collection: "required", // needed for valid DE invoice
       subscription_data: {
         trial_period_days: resolvedPlan.trialDays || undefined,
       },
+      invoice_creation: { enabled: true }, // always generate a downloadable invoice PDF
       success_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
       cancel_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=cancel`,
       client_reference_id: user.workspaceId,
@@ -131,16 +130,6 @@ export const POST = withRoute(
     });
 
     const response = NextResponse.json({ url: checkoutSession.url });
-
-    createAuditLog({
-      action: "CREATE",
-      entityType: "BillingCheckout",
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      changes: { plan: planId, billingCycle },
-    });
-
     return response;
   },
   { idempotent: true },

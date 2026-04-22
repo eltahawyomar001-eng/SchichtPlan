@@ -42,19 +42,19 @@ describe("subscription", () => {
   // ─── getWorkspacePlan ──────────────────────────────────────
 
   describe("getWorkspacePlan", () => {
-    it("returns BASIC plan when no subscription exists", async () => {
+    it("returns null when no subscription exists", async () => {
       mockSubscriptionFindUnique.mockResolvedValue(null);
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("basic");
+      expect(plan).toBeNull();
     });
 
-    it("returns BASIC when subscription is CANCELED", async () => {
+    it("returns null when subscription is CANCELED", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
         plan: "PROFESSIONAL",
         status: "CANCELED",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("basic");
+      expect(plan).toBeNull();
     });
 
     it("returns correct plan for ACTIVE subscription", async () => {
@@ -63,7 +63,7 @@ describe("subscription", () => {
         status: "ACTIVE",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("professional");
+      expect(plan?.id).toBe("professional");
     });
 
     it("returns correct plan for TRIALING subscription", async () => {
@@ -72,16 +72,16 @@ describe("subscription", () => {
         status: "TRIALING",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("basic");
+      expect(plan?.id).toBe("basic");
     });
 
-    it("falls back to BASIC for PAST_DUE status", async () => {
+    it("returns correct plan for PAST_DUE status", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
         plan: "PROFESSIONAL",
         status: "PAST_DUE",
       });
       const plan = await getWorkspacePlan("ws-1");
-      expect(plan.id).toBe("basic");
+      expect(plan?.id).toBe("professional");
     });
   });
 

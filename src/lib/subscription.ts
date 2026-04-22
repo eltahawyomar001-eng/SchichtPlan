@@ -7,8 +7,17 @@ import { PLANS, type PlanId, type PlanConfig } from "@/lib/stripe";
    ═══════════════════════════════════════════════════════════════ */
 
 /**
- * Ensure a workspace has a Subscription row.
- * Called during workspace creation or first billing interaction.
+ * Ensure a Subscription row exists for the workspace.
+ *
+ * Used by the checkout/billing routes where Stripe needs a stable record to
+ * attach a customer/session to. The created row is INCOMPLETE — it grants
+ * NO application access on its own. Access is unlocked only when Stripe
+ * confirms payment and the row is upgraded to ACTIVE/TRIALING by the
+ * webhook handler.
+ *
+ * Important: do NOT call this during user/workspace registration. New
+ * workspaces must complete checkout first; until they do, the dashboard
+ * layout redirects them to the pricing/billing page.
  */
 export async function ensureSubscription(workspaceId: string) {
   const existing = await prisma.subscription.findUnique({
@@ -19,8 +28,8 @@ export async function ensureSubscription(workspaceId: string) {
   return prisma.subscription.create({
     data: {
       workspaceId,
-      plan: "BASIC",
-      status: "ACTIVE",
+      plan: "BASIC", // placeholder — overwritten by checkout-completed webhook
+      status: "INCOMPLETE", // does NOT grant access
       seatCount: 1,
     },
   });
@@ -28,11 +37,47 @@ export async function ensureSubscription(workspaceId: string) {
 
 /**
  * Get the current subscription for a workspace.
+ *
+ * Note: A workspace without a subscription has *no* dashboard access — see
+ * hasActiveSubscription().
  */
 export async function getSubscription(workspaceId: string) {
   return prisma.subscription.findUnique({
     where: { workspaceId },
   });
+}
+
+/**
+ * Statuses that grant access to the application.
+ *
+ * - ACTIVE: paid and current
+ * - TRIALING: Stripe trial granted by checkout (we don't auto-create trials,
+ *   but Stripe-side promotional trials are honoured if the customer reaches
+ *   checkout with a Stripe coupon that includes a trial period)
+ * - PAST_DUE: keep access for the dunning grace window so the user can
+ *   update payment in the billing portal; switch to read-only banner UX
+ */
+export const ACTIVE_SUBSCRIPTION_STATUSES = [
+  "ACTIVE",
+  "TRIALING",
+  "PAST_DUE",
+] as const;
+
+/**
+ * True iff the workspace currently has a subscription that grants app access.
+ * Used by the dashboard layout to hard-gate the entire authenticated UI.
+ */
+export async function hasActiveSubscription(
+  workspaceId: string,
+): Promise<boolean> {
+  const sub = await prisma.subscription.findUnique({
+    where: { workspaceId },
+    select: { status: true },
+  });
+  if (!sub) return false;
+  return (ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(
+    sub.status,
+  );
 }
 
 /**
@@ -131,30 +176,45 @@ export async function updateSubscriptionFromStripe({
 
 /**
  * Downgrade to free when subscription is cancelled/deleted.
+ *
+ * The workspace loses dashboard access immediately (status=CANCELED), but the
+ * row is kept so the user can resubscribe and we retain the Stripe customer
+ * link for restored billing history.
  */
 export async function cancelSubscription(stripeSubscriptionId: string) {
   return prisma.subscription.update({
     where: { stripeSubscriptionId },
     data: {
-      plan: "BASIC",
       status: "CANCELED",
+      // Keep `plan` and `stripeCustomerId` so the customer can resubscribe
+      // without losing their historical context. Active access is gated by
+      // status, not by plan.
       stripePriceId: null,
       stripeSubscriptionId: null,
       cancelAtPeriodEnd: false,
+      ticketingTier: "NONE",
+      ticketingStripeSubscriptionItemId: null,
+      schichtplanungAddonActive: false,
+      schichtplanungAddonBilling: null,
+      schichtplanungStripeSubscriptionItemId: null,
     },
   });
 }
 
 /**
  * Check if a workspace can add more employees based on plan limits.
+ * Returns false when there is no active subscription — the gate is upstream
+ * (dashboard layout) but defence-in-depth here too.
  */
 export async function canAddEmployee(workspaceId: string): Promise<boolean> {
   const sub = await getSubscription(workspaceId);
-  if (!sub) return true; // No subscription = basic defaults
+  if (!sub) return false;
+  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
+    return false;
 
   const planId = sub.plan.toLowerCase() as PlanId;
   const plan = PLANS[planId];
-  if (!plan) return true;
+  if (!plan) return false;
 
   if (plan.limits.maxEmployees === Infinity) return true;
 
@@ -167,14 +227,17 @@ export async function canAddEmployee(workspaceId: string): Promise<boolean> {
 
 /**
  * Check if a workspace can add more locations based on plan limits.
+ * Returns false when there is no active subscription.
  */
 export async function canAddLocation(workspaceId: string): Promise<boolean> {
   const sub = await getSubscription(workspaceId);
-  if (!sub) return true;
+  if (!sub) return false;
+  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
+    return false;
 
   const planId = sub.plan.toLowerCase() as PlanId;
   const plan = PLANS[planId];
-  if (!plan) return true;
+  if (!plan) return false;
 
   if (plan.limits.maxLocations === Infinity) return true;
 
@@ -218,30 +281,38 @@ function mapStripeStatus(status: string): PrismaSubscriptionStatus {
 export type FeatureKey = keyof PlanConfig["limits"];
 
 /**
- * Get the plan config for a workspace. Falls back to BASIC.
+ * Get the plan config for a workspace.
+ *
+ * Returns `null` when the workspace has no active subscription. Callers MUST
+ * handle this — the previous behaviour of falling back to a free Basic plan
+ * was a major bug that let unbilled workspaces use the app.
  */
 export async function getWorkspacePlan(
   workspaceId: string,
-): Promise<PlanConfig> {
+): Promise<PlanConfig | null> {
   const sub = await getSubscription(workspaceId);
-  if (!sub) return PLANS.basic;
+  if (!sub) return null;
 
-  // Only active/trialing subscriptions unlock paid features
-  const activeStatuses = ["ACTIVE", "TRIALING"];
-  if (!activeStatuses.includes(sub.status)) return PLANS.basic;
+  if (
+    !(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status)
+  ) {
+    return null;
+  }
 
   const planId = sub.plan.toLowerCase() as PlanId;
-  return PLANS[planId] ?? PLANS.basic;
+  return PLANS[planId] ?? null;
 }
 
 /**
  * Check if a workspace has access to a boolean feature.
+ * Returns false when there is no active subscription.
  */
 export async function canUseFeature(
   workspaceId: string,
   feature: FeatureKey,
 ): Promise<boolean> {
   const plan = await getWorkspacePlan(workspaceId);
+  if (!plan) return false;
   const value = plan.limits[feature];
   if (typeof value === "boolean") return value;
   // Numeric limits always "available" — use canAddEmployee/canAddLocation
@@ -273,7 +344,8 @@ export async function requirePlanFeature(
 }
 
 /**
- * Server-side guard for employee creation. Returns 403 if limit reached.
+ * Server-side guard for employee creation. Returns 403 if limit reached or
+ * 402 if no active subscription.
  */
 export async function requireEmployeeSlot(
   workspaceId: string,
@@ -282,6 +354,16 @@ export async function requireEmployeeSlot(
   if (allowed) return null;
 
   const plan = await getWorkspacePlan(workspaceId);
+  if (!plan) {
+    return NextResponse.json(
+      {
+        error: "SUBSCRIPTION_REQUIRED",
+        message:
+          "Kein aktives Abonnement. Bitte wählen Sie einen Plan, um fortzufahren.",
+      },
+      { status: 402 },
+    );
+  }
   return NextResponse.json(
     {
       error: "PLAN_LIMIT",
@@ -294,7 +376,8 @@ export async function requireEmployeeSlot(
 }
 
 /**
- * Server-side guard for location creation. Returns 403 if limit reached.
+ * Server-side guard for location creation. Returns 403 if limit reached or
+ * 402 if no active subscription.
  */
 export async function requireLocationSlot(
   workspaceId: string,
@@ -303,6 +386,16 @@ export async function requireLocationSlot(
   if (allowed) return null;
 
   const plan = await getWorkspacePlan(workspaceId);
+  if (!plan) {
+    return NextResponse.json(
+      {
+        error: "SUBSCRIPTION_REQUIRED",
+        message:
+          "Kein aktives Abonnement. Bitte wählen Sie einen Plan, um fortzufahren.",
+      },
+      { status: 402 },
+    );
+  }
   return NextResponse.json(
     {
       error: "PLAN_LIMIT",
@@ -354,39 +447,34 @@ export async function simulateSubscription({
     periodEnd.getMonth() + (billingCycle === "annual" ? 12 : 1),
   );
 
-  // Simulate activation
-  const trialEnd =
-    planConfig.trialDays > 0
-      ? new Date(now.getTime() + planConfig.trialDays * 24 * 60 * 60 * 1000)
-      : null;
-
+  // No trial — direct activation only.
   return prisma.subscription.upsert({
     where: { workspaceId },
     update: {
       plan: planConfig.prismaKey,
-      status: trialEnd ? "TRIALING" : "ACTIVE",
+      status: "ACTIVE",
       stripeCustomerId: `sim_cus_${workspaceId.slice(0, 8)}`,
       stripeSubscriptionId: `sim_sub_${Date.now()}`,
       stripePriceId: `sim_price_${plan}_${billingCycle}`,
       seatCount: 1,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
-      trialStart: trialEnd ? now : null,
-      trialEnd,
+      trialStart: null,
+      trialEnd: null,
       cancelAtPeriodEnd: false,
     },
     create: {
       workspaceId,
       plan: planConfig.prismaKey,
-      status: trialEnd ? "TRIALING" : "ACTIVE",
+      status: "ACTIVE",
       stripeCustomerId: `sim_cus_${workspaceId.slice(0, 8)}`,
       stripeSubscriptionId: `sim_sub_${Date.now()}`,
       stripePriceId: `sim_price_${plan}_${billingCycle}`,
       seatCount: 1,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
-      trialStart: trialEnd ? now : null,
-      trialEnd,
+      trialStart: null,
+      trialEnd: null,
     },
   });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import { runBackfill } from "@/lib/auto-scheduler";
 import { backfillSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
@@ -32,6 +33,9 @@ export const POST = withRoute(
 
     const forbidden = requirePermission(user, "shifts", "update");
     if (forbidden) return forbidden;
+
+    const addonRequired = await requireSchichtplanungAddon(workspaceId);
+    if (addonRequired) return addonRequired;
 
     const planGate = await requirePlanFeature(workspaceId, "autoScheduling");
     if (planGate) return planGate;

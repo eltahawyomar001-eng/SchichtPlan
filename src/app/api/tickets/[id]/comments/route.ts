@@ -14,20 +14,19 @@ import {
   notFound,
   forbidden,
 } from "@/lib/api-response";
+import { requireTicketingAddon } from "@/lib/ticketing-addon";
 import { logCommentAdded, logStatusChanged } from "@/lib/ticket-events";
 import {
   notifyCommentAdded,
   notifyStatusChanged,
 } from "@/lib/ticket-notifications";
-import { withRoute } from "@/lib/with-route";
-import { createAuditLog } from "@/lib/audit";
 
 // ─── POST  /api/tickets/[id]/comments ──────────────────────────
-export const POST = withRoute(
-  "/api/tickets/[id]/comments",
-  "POST",
-  async (req, context) => {
-    const params = await context!.params;
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -35,7 +34,10 @@ export const POST = withRoute(
     const perm = requirePermission(user, "tickets", "update");
     if (perm) return perm;
 
-    const { id } = params;
+    const addonRequired = await requireTicketingAddon(workspaceId);
+    if (addonRequired) return addonRequired;
+
+    const { id } = await params;
 
     const parsed = validateBody(createTicketCommentSchema, await req.json());
     if (!parsed.success) return parsed.response;
@@ -73,24 +75,6 @@ export const POST = withRoute(
         author: { select: { id: true, name: true, email: true } },
       },
     });
-
-    // Track SLA: first response time (non-reporter, non-internal comment)
-    if (
-      !ticket.firstResponseAt &&
-      user.id !== ticket.createdById &&
-      !isInternal
-    ) {
-      const now = new Date();
-      const createdMs = ticket.createdAt.getTime();
-      const responseMs = now.getTime() - createdMs;
-      const responseHours = responseMs / (1000 * 60 * 60);
-      // SLA breach: >24h for BASIC tier, >8h for higher (simplified: use 24h)
-      const slaBreached = responseHours > 24;
-      await prisma.ticket.update({
-        where: { id },
-        data: { firstResponseAt: now, slaBreached },
-      });
-    }
 
     const actor = { id: user.id, name: user.name ?? "System" };
 
@@ -160,17 +144,13 @@ export const POST = withRoute(
       isInternal,
     });
 
-    createAuditLog({
-      action: "CREATE",
-      entityType: "TicketComment",
-      entityId: comment.id,
-      userId: user.id,
-      userEmail: user.email,
-      workspaceId,
-      metadata: { ticketId: id, isInternal },
-    });
-
     return NextResponse.json(comment, { status: 201 });
-  },
-  { idempotent: true },
-);
+  } catch (error) {
+    log.error("Error creating ticket comment:", { error });
+    captureRouteError(error, {
+      route: "/api/tickets/[id]/comments",
+      method: "POST",
+    });
+    return serverError("Fehler beim Erstellen des Kommentars");
+  }
+}

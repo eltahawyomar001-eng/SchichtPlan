@@ -191,23 +191,43 @@ enum ContractType {
   MIDIJOB
 }
 
+/// Ticketing add-on tiers. NONE = add-on not purchased.
+/// Limits enforced via WorkspaceUsage (tickets/month + storage bytes).
+enum TicketingAddonTier {
+  NONE
+  STARTER
+  GROWTH
+  BUSINESS
+}
+
 model Subscription {
-  id                   String             @id @default(cuid())
-  plan                 SubscriptionPlan   @default(BASIC)
-  status               SubscriptionStatus @default(ACTIVE)
-  stripeCustomerId     String?            @unique
-  stripeSubscriptionId String?            @unique
-  stripePriceId        String?
-  seatCount            Int                @default(1)
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean            @default(false)
-  trialStart           DateTime?
-  trialEnd             DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  workspaceId          String             @unique
-  workspace            Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id                                String             @id @default(cuid())
+  plan                              SubscriptionPlan   @default(BASIC)
+  status                            SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId                  String?            @unique
+  stripeSubscriptionId              String?            @unique
+  stripePriceId                     String?
+  seatCount                         Int                @default(1)
+  currentPeriodStart                DateTime?
+  currentPeriodEnd                  DateTime?
+  cancelAtPeriodEnd                 Boolean            @default(false)
+  trialStart                        DateTime?
+  trialEnd                          DateTime?
+  /// Ticketing add-on tier (NONE = not purchased)
+  ticketingTier                     TicketingAddonTier @default(NONE)
+  /// Stripe Subscription Item ID for the ticketing add-on line on the parent subscription
+  ticketingStripeSubscriptionItemId String?
+  /// Schichtplanung add-on active flag (gates the entire shift planning module on Basic/Professional plans).
+  /// Enterprise plan always has access regardless of this flag.
+  schichtplanungAddonActive         Boolean            @default(false)
+  /// Stripe Subscription Item ID for the schichtplanung add-on line on the parent subscription
+  schichtplanungStripeSubscriptionItemId String?
+  /// Billing cycle for the schichtplanung add-on: "monthly" or "annual" (null when inactive)
+  schichtplanungAddonBilling        String?
+  createdAt                         DateTime           @default(now())
+  updatedAt                         DateTime           @updatedAt
+  workspaceId                       String             @unique
+  workspace                         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
 }
@@ -229,6 +249,16 @@ model WorkspaceUsage {
   storageBytesUsed        BigInt   @default(0)
   /// Maximum storage allowed in bytes (Basic=500MB, Professional=5GB, Enterprise=unlimited)
   storageBytesLimit       BigInt   @default(524288000) // 500 MB
+  /// Tickets created in the current billing period (counts against add-on tier quota)
+  ticketsCreatedThisMonth Int      @default(0)
+  /// Maximum tickets per month from add-on (0 = no add-on, Starter=200, Growth=500, Business=1000)
+  ticketsMonthlyLimit     Int      @default(0)
+  /// Ticket attachment storage consumption in bytes (separate from main storageBytesUsed)
+  ticketStorageBytesUsed  BigInt   @default(0)
+  /// Max ticket storage from add-on (0 = no add-on, Starter=5GB, Growth=15GB, Business=40GB)
+  ticketStorageBytesLimit BigInt   @default(0)
+  /// When the ticket counters were last reset (beginning of add-on billing period)
+  ticketsResetAt          DateTime @default(now())
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workspaceId             String   @unique

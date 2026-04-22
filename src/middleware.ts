@@ -132,7 +132,13 @@ function isAllowedOrigin(origin: string | null): boolean {
  * ────────────────────────────────────────────────────────────── */
 export default withAuth(
   async function middleware(req) {
-    const res = NextResponse.next();
+    // Forward pathname as a request header so server components / layouts
+    // can read it via headers().get("x-pathname"). Used by the dashboard
+    // subscription gate to allow-list the billing page.
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-pathname", req.nextUrl.pathname);
+
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
 
     // Generate per-request IDs
     const nonce = generateNonce();
@@ -148,6 +154,10 @@ export default withAuth(
     res.headers.set("Content-Security-Policy", buildCsp(nonce));
     // Pass nonce to Next.js for inline scripts (server components)
     res.headers.set("x-nonce", nonce);
+    // Expose current pathname to server components / layouts (for subscription gate, etc.)
+    res.headers.set("x-pathname", req.nextUrl.pathname);
+    // Expose current pathname to server components / layouts (for subscription gate, etc.)
+    res.headers.set("x-pathname", req.nextUrl.pathname);
 
     // Rate limiting (Upstash Redis — serverless-safe)
     const ip =

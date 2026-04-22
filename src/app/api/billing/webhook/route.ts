@@ -8,6 +8,11 @@ import {
   cancelSubscription,
 } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
+import {
+  getTicketingTierByPriceId,
+  syncTicketingLimits,
+} from "@/lib/ticketing-addon";
+import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { paymentFailedEmail } from "@/lib/notifications/email-i18n";
@@ -157,30 +162,98 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
     /* ─── Subscription updated → sync status ─── */
     case "customer.subscription.updated": {
       const sub = event.data.object;
-      const updItem = sub.items.data[0];
-      const priceId = updItem?.price.id;
+      // Find the MAIN plan item (matches a known plan price ID),
+      // and the TICKETING add-on item (matches a known add-on price ID).
+      let mainItem = sub.items.data[0];
+      let ticketingItemId: string | null = null;
+      let ticketingTier: "NONE" | "STARTER" | "GROWTH" | "BUSINESS" = "NONE";
+      let schichtplanungItemId: string | null = null;
+      let schichtplanungBilling: "monthly" | "annual" | null = null;
+
+      for (const it of sub.items.data) {
+        const itPriceId = it.price.id;
+        const tier = getTicketingTierByPriceId(itPriceId);
+        const schichtplanung = getSchichtplanungBillingByPriceId(itPriceId);
+        if (tier) {
+          ticketingItemId = it.id;
+          ticketingTier = tier;
+        } else if (schichtplanung) {
+          schichtplanungItemId = it.id;
+          schichtplanungBilling = schichtplanung;
+        } else if (getPlanByPriceId(itPriceId)) {
+          mainItem = it;
+        }
+      }
+
+      const priceId = mainItem?.price.id;
 
       await updateSubscriptionFromStripe({
         stripeSubscriptionId: sub.id,
         stripePriceId: priceId ?? "",
         status: sub.status,
-        seatCount: updItem?.quantity ?? 1,
+        seatCount: mainItem?.quantity ?? 1,
         currentPeriodStart: new Date(
-          (updItem?.current_period_start ?? 0) * 1000,
+          (mainItem?.current_period_start ?? 0) * 1000,
         ),
-        currentPeriodEnd: new Date((updItem?.current_period_end ?? 0) * 1000),
+        currentPeriodEnd: new Date((mainItem?.current_period_end ?? 0) * 1000),
         cancelAtPeriodEnd: sub.cancel_at_period_end,
       });
 
       // Sync usage limits if the plan changed
       const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
-      if (updatedPlan) {
-        const dbSub = await prisma.subscription.findFirst({
-          where: { stripeSubscriptionId: sub.id },
-          select: { workspaceId: true },
-        });
-        if (dbSub) {
+      const dbSub = await prisma.subscription.findFirst({
+        where: { stripeSubscriptionId: sub.id },
+        select: {
+          workspaceId: true,
+          ticketingTier: true,
+          ticketingStripeSubscriptionItemId: true,
+          schichtplanungAddonActive: true,
+          schichtplanungAddonBilling: true,
+          schichtplanungStripeSubscriptionItemId: true,
+        },
+      });
+
+      if (dbSub) {
+        if (updatedPlan) {
           await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
+        }
+
+        // Ticketing add-on: sync if Stripe state differs from DB state.
+        if (
+          dbSub.ticketingTier !== ticketingTier ||
+          dbSub.ticketingStripeSubscriptionItemId !== ticketingItemId
+        ) {
+          await prisma.subscription.update({
+            where: { workspaceId: dbSub.workspaceId },
+            data: {
+              ticketingTier,
+              ticketingStripeSubscriptionItemId: ticketingItemId,
+            },
+          });
+          await syncTicketingLimits(dbSub.workspaceId, ticketingTier);
+          log.info(
+            `[Stripe] Ticketing add-on synced from webhook: workspace=${dbSub.workspaceId} → ${ticketingTier}`,
+          );
+        }
+
+        // Schichtplanung add-on: sync if Stripe state differs from DB state.
+        const newSchichtplanungActive = schichtplanungItemId !== null;
+        if (
+          dbSub.schichtplanungAddonActive !== newSchichtplanungActive ||
+          dbSub.schichtplanungAddonBilling !== schichtplanungBilling ||
+          dbSub.schichtplanungStripeSubscriptionItemId !== schichtplanungItemId
+        ) {
+          await prisma.subscription.update({
+            where: { workspaceId: dbSub.workspaceId },
+            data: {
+              schichtplanungAddonActive: newSchichtplanungActive,
+              schichtplanungAddonBilling: schichtplanungBilling,
+              schichtplanungStripeSubscriptionItemId: schichtplanungItemId,
+            },
+          });
+          log.info(
+            `[Stripe] Schichtplanung add-on synced from webhook: workspace=${dbSub.workspaceId} → active=${newSchichtplanungActive} billing=${schichtplanungBilling}`,
+          );
         }
       }
 

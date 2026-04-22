@@ -21,6 +21,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
+import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 
 export const GET = withRoute("/api/shifts", "GET", async (req) => {
   const auth = await requireAuth();
@@ -46,11 +47,6 @@ export const GET = withRoute("/api/shifts", "GET", async (req) => {
     };
   }
 
-  // EMPLOYEE can only see their own shifts
-  if (isEmployee(user) && user.employeeId) {
-    where.employeeId = user.employeeId;
-  }
-
   const { take, skip } = parsePagination(req);
 
   const [shifts, total] = await Promise.all([
@@ -67,7 +63,27 @@ export const GET = withRoute("/api/shifts", "GET", async (req) => {
     prisma.shift.count({ where }),
   ]);
 
-  return paginatedResponse(shifts, total, take, skip);
+  // GDPR (DSGVO Art. 5(1)(c) / Art. 25): EMPLOYEE role must not receive PII
+  // of colleagues. Strip employee fields for shifts not belonging to the
+  // requesting employee and replace with a synthetic `isFilled` flag so the
+  // UI can still render an "occupied" state without exposing personal data.
+  const sanitised = isEmployee(user)
+    ? shifts.map((shift) => {
+        const isOwnShift =
+          user.employeeId && shift.employeeId === user.employeeId;
+        if (!isOwnShift && shift.employee) {
+          return {
+            ...shift,
+            employee: null,
+            notes: null, // notes may contain colleague's name
+            isFilled: true,
+          };
+        }
+        return { ...shift, isFilled: !!shift.employee };
+      })
+    : shifts.map((shift) => ({ ...shift, isFilled: !!shift.employee }));
+
+  return paginatedResponse(sanitised, total, take, skip);
 });
 
 export const POST = withRoute(
@@ -81,6 +97,10 @@ export const POST = withRoute(
     // Only OWNER, ADMIN, MANAGER can create shifts
     const forbidden = requirePermission(user, "shifts", "create");
     if (forbidden) return forbidden;
+
+    // Schichtplanung add-on gate (Enterprise always allowed)
+    const addonRequired = await requireSchichtplanungAddon(workspaceId);
+    if (addonRequired) return addonRequired;
 
     const body = await req.json();
     const parsed = validateBody(createShiftSchema, body);

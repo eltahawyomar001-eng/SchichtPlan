@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
+import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import { runAutoScheduler } from "@/lib/auto-scheduler";
 import { autoScheduleSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
-import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
@@ -31,6 +31,9 @@ export const POST = withRoute(
 
     const forbidden = requirePermission(user, "shifts", "create");
     if (forbidden) return forbidden;
+
+    const addonRequired = await requireSchichtplanungAddon(workspaceId);
+    if (addonRequired) return addonRequired;
 
     const planGate = await requirePlanFeature(workspaceId, "autoScheduling");
     if (planGate) return planGate;
@@ -134,12 +137,6 @@ export const POST = withRoute(
         assigned: result.assignedCount,
         unresolved: result.unresolvedCount,
       });
-
-      dispatchWebhook(workspaceId, "shift.auto_scheduled", {
-        runId: run.id,
-        assigned: result.assignedCount,
-        unresolved: result.unresolvedCount,
-      }).catch(() => {});
     }
 
     return NextResponse.json({

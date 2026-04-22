@@ -9,14 +9,14 @@ import {
   notFound,
   forbidden,
 } from "@/lib/api-response";
-import { withRoute } from "@/lib/with-route";
+import { requireTicketingAddon } from "@/lib/ticketing-addon";
 
 // ─── GET  /api/tickets/[id]/events ─────────────────────────────
-export const GET = withRoute(
-  "/api/tickets/[id]/events",
-  "GET",
-  async (req, context) => {
-    const params = await context!.params;
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -24,7 +24,10 @@ export const GET = withRoute(
     const perm = requirePermission(user, "tickets", "read");
     if (perm) return perm;
 
-    const { id } = params;
+    const addonRequired = await requireTicketingAddon(workspaceId);
+    if (addonRequired) return addonRequired;
+
+    const { id } = await params;
 
     // Verify the ticket exists and belongs to the workspace
     const ticket = await prisma.ticket.findFirst({
@@ -49,5 +52,12 @@ export const GET = withRoute(
     });
 
     return NextResponse.json(events);
-  },
-);
+  } catch (error) {
+    log.error("Error fetching ticket events:", { error });
+    captureRouteError(error, {
+      route: "/api/tickets/[id]/events",
+      method: "GET",
+    });
+    return serverError("Fehler beim Laden der Ticket-Ereignisse");
+  }
+}

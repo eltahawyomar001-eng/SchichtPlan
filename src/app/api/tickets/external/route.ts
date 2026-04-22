@@ -7,6 +7,10 @@ import { captureRouteError } from "@/lib/sentry";
 import { serverError, badRequest, notFound } from "@/lib/api-response";
 import { logTicketCreated } from "@/lib/ticket-events";
 import { createTicketWithNumber } from "@/lib/ticket-number";
+import {
+  recordTicketCreation,
+  requireTicketQuota,
+} from "@/lib/ticketing-addon";
 
 /**
  * POST  /api/tickets/external
@@ -35,6 +39,10 @@ export async function POST(req: Request) {
     if (!workspace) {
       return notFound("Workspace nicht gefunden");
     }
+
+    // Add-on gate: workspace must have ticketing add-on with available quota.
+    const quotaCheck = await requireTicketQuota(workspace.id);
+    if (quotaCheck) return quotaCheck;
 
     const parsed = validateBody(createExternalTicketSchema, await req.json());
     if (!parsed.success) return parsed.response;
@@ -87,6 +95,14 @@ export async function POST(req: Request) {
       workspaceId: workspace.id,
       submitterName: body.name,
     });
+
+    // Increment monthly ticket counter for add-on quota
+    recordTicketCreation(workspace.id).catch((err) =>
+      log.error("[ticketing-addon] recordTicketCreation failed", {
+        err,
+        workspaceId: workspace.id,
+      }),
+    );
 
     return NextResponse.json(
       {

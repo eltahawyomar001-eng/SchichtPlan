@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 
 /**
  * POST /api/shifts/[id]/confirm
@@ -30,6 +31,9 @@ export const POST = withRoute(
     if (!workspaceId) {
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
+
+    const addonRequired = await requireSchichtplanungAddon(workspaceId);
+    if (addonRequired) return addonRequired;
 
     // Fetch shift
     const shift = await prisma.shift.findFirst({

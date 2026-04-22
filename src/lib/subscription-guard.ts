@@ -31,22 +31,27 @@ export async function ensureWorkspaceUsage(workspaceId: string) {
   });
   if (existing) return existing;
 
+  // No active subscription → create row with zero quota until checkout completes.
   const plan = await getWorkspacePlan(workspaceId);
+  const limits = plan?.limits;
   return prisma.workspaceUsage.create({
     data: {
       workspaceId,
-      userSlotsTotal:
-        plan.limits.maxEmployees === Infinity
+      userSlotsTotal: !limits
+        ? 0
+        : limits.maxEmployees === Infinity
           ? 999999
-          : plan.limits.maxEmployees,
-      pdfsMonthlyLimit:
-        plan.limits.pdfMonthlyLimit === Infinity
+          : limits.maxEmployees,
+      pdfsMonthlyLimit: !limits
+        ? 0
+        : limits.pdfMonthlyLimit === Infinity
           ? 999999
-          : plan.limits.pdfMonthlyLimit,
-      storageBytesLimit:
-        plan.limits.storageMb === Infinity
+          : limits.pdfMonthlyLimit,
+      storageBytesLimit: !limits
+        ? BigInt(0)
+        : limits.storageMb === Infinity
           ? BigInt("53687091200") // 50 GB
-          : BigInt(plan.limits.storageMb * 1024 * 1024),
+          : BigInt(limits.storageMb * 1024 * 1024),
     },
   });
 }

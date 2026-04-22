@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -51,6 +51,8 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   roles?: Role[];
+  /** Optional small label rendered next to the nav item (e.g. "Add-on"). */
+  badge?: string;
 }
 
 interface NavGroup {
@@ -319,18 +321,60 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { favorites, toggle: toggleFavorite } = useFavorites();
   const { collapsed, toggleGroup } = useCollapsedGroups();
 
+  /* Add-on status — decorates locked nav items with a small badge. */
+  const [ticketingActive, setTicketingActive] = useState<boolean | null>(null);
+  const [schichtplanungActive, setSchichtplanungActive] = useState<
+    boolean | null
+  >(null);
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    fetch("/api/billing/addons")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setTicketingActive(Boolean(data.ticketing?.active));
+          setSchichtplanungActive(Boolean(data.schichtplanung?.active));
+        }
+      })
+      .catch(() => {
+        /* fail-quiet: badge simply won't show */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
   /* Build a flat list of all visible nav items for search + favorites */
   const allVisibleItems = useMemo(() => {
     const items: NavItem[] = [];
     for (const group of navGroups) {
       for (const item of group.items) {
         if (!item.roles || (userRole && item.roles.includes(userRole))) {
-          items.push(item);
+          // Decorate ticketing/schichtplanung nav with "Add-on" badge only
+          // for roles that can actually subscribe (OWNER/ADMIN). Employees
+          // and managers should not see upsell badges.
+          const canSeeAddonBadge = userRole === "OWNER" || userRole === "ADMIN";
+          if (
+            canSeeAddonBadge &&
+            item.key === "tickets" &&
+            ticketingActive === false
+          ) {
+            items.push({ ...item, badge: t("addonBadge") });
+          } else if (
+            canSeeAddonBadge &&
+            item.key === "shiftPlan" &&
+            schichtplanungActive === false
+          ) {
+            items.push({ ...item, badge: t("addonBadge") });
+          } else {
+            items.push(item);
+          }
         }
       }
     }
     return items;
-  }, [userRole]);
+  }, [userRole, ticketingActive, schichtplanungActive, t]);
 
   /* Pinned items (favorites) */
   const pinnedItems = useMemo(
@@ -484,7 +528,21 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
                 {!isCollapsed && (
                   <div className="space-y-0.5">
-                    {filteredItems.map((item) => {
+                    {filteredItems.map((rawItem) => {
+                      // Apply add-on badge decoration (mirrors allVisibleItems logic)
+                      // Only show upsell badge to OWNER/ADMIN who can act on it.
+                      const canSeeAddonBadge2 =
+                        userRole === "OWNER" || userRole === "ADMIN";
+                      const item: NavItem =
+                        canSeeAddonBadge2 &&
+                        rawItem.key === "tickets" &&
+                        ticketingActive === false
+                          ? { ...rawItem, badge: t("addonBadge") }
+                          : canSeeAddonBadge2 &&
+                              rawItem.key === "shiftPlan" &&
+                              schichtplanungActive === false
+                            ? { ...rawItem, badge: t("addonBadge") }
+                            : rawItem;
                       const isActive =
                         pathname === item.href ||
                         pathname.startsWith(item.href + "/");
@@ -583,6 +641,11 @@ function NavLink({
           )}
         />
         <span className="truncate">{t(item.key)}</span>
+        {item.badge && (
+          <span className="ml-auto rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            {item.badge}
+          </span>
+        )}
       </Link>
 
       {/* Favorite star — shows on hover or if already favorited */}

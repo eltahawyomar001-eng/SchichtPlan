@@ -4,6 +4,7 @@ import { checkShiftConflicts } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 
 /**
  * POST /api/shifts/[id]/claim
@@ -27,6 +28,11 @@ export const POST = withRoute(
         },
         { status: 400 },
       );
+    }
+
+    if (workspaceId) {
+      const addonRequired = await requireSchichtplanungAddon(workspaceId);
+      if (addonRequired) return addonRequired;
     }
 
     const { id } = params;

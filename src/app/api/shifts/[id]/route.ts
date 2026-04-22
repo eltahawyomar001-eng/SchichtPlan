@@ -15,6 +15,7 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateShiftSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
+import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 
 export const PATCH = withRoute(
   "/api/shifts/[id]",
@@ -33,6 +34,12 @@ export const PATCH = withRoute(
     // Only OWNER, ADMIN, MANAGER can update shifts
     const forbidden = requirePermission(user, "shifts", "update");
     if (forbidden) return forbidden;
+
+    // Schichtplanung add-on gate (Enterprise always allowed)
+    if (workspaceId) {
+      const addonRequired = await requireSchichtplanungAddon(workspaceId);
+      if (addonRequired) return addonRequired;
+    }
 
     const parsed = validateBody(updateShiftSchema, await req.json());
     if (!parsed.success) return parsed.response;
@@ -208,6 +215,12 @@ export const DELETE = withRoute(
     // Only OWNER, ADMIN, MANAGER can delete shifts
     const forbidden = requirePermission(user, "shifts", "delete");
     if (forbidden) return forbidden;
+
+    // Schichtplanung add-on gate (Enterprise always allowed)
+    if (workspaceId) {
+      const addonRequired = await requireSchichtplanungAddon(workspaceId);
+      if (addonRequired) return addonRequired;
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.shift.deleteMany({

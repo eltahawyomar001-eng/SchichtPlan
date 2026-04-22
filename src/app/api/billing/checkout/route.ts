@@ -8,7 +8,6 @@ import {
 } from "@/lib/subscription";
 import type { PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
-import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 
@@ -45,14 +44,15 @@ export const POST = withRoute(
       );
     }
 
-    // ── Simulation mode: skip Stripe entirely ──
-    // Active when STRIPE_SIMULATION_MODE=true OR when Stripe price IDs are not configured
+    // ── Simulation mode: only when explicitly enabled ──
+    // Previously this also fell back to simulation when Stripe was unconfigured,
+    // which silently swallowed real-payment intent. Now simulation is opt-in only.
     const stripeUnconfigured =
       !process.env.STRIPE_SECRET_KEY ||
       process.env.STRIPE_SECRET_KEY.startsWith("sk_test_YOUR") ||
       process.env.STRIPE_SECRET_KEY === "";
 
-    if (isSimulationMode() || stripeUnconfigured) {
+    if (isSimulationMode()) {
       await simulateSubscription({
         workspaceId: user.workspaceId,
         plan: planId,
@@ -64,14 +64,29 @@ export const POST = withRoute(
       );
 
       const baseUrl =
-        (process.env.NEXTAUTH_URL ?? process.env.VERCEL_URL)
+        process.env.NEXTAUTH_URL ||
+        (process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : "http://localhost:3000";
+          : "http://localhost:3000");
 
       return NextResponse.json({
-        url: `${process.env.NEXTAUTH_URL ?? baseUrl}/einstellungen/abonnement?billing=success`,
+        url: `${baseUrl}/einstellungen/abonnement?billing=success`,
         simulation: true,
       });
+    }
+
+    if (stripeUnconfigured) {
+      log.error(
+        "[Billing] STRIPE_SECRET_KEY is missing or invalid — cannot start checkout",
+      );
+      return NextResponse.json(
+        {
+          error: "STRIPE_NOT_CONFIGURED",
+          message:
+            "Bezahlung ist derzeit nicht verfügbar. Bitte später erneut versuchen.",
+        },
+        { status: 503 },
+      );
     }
 
     // ── Real Stripe checkout ──

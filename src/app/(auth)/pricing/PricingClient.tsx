@@ -85,7 +85,7 @@ export default function PricingClient() {
         t("featureEnt8"),
       ],
       cta: t("contactSales"),
-      href: "mailto:sales@shiftfy.de?subject=Enterprise%20Plan%20Anfrage",
+      href: "mailto:info@bashabsheh-vergabepartner.de?subject=Enterprise%20Plan%20Anfrage",
       highlighted: false,
       isEnterprise: true,
     },

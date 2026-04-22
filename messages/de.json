@@ -2838,7 +2838,18 @@
       "STATUS_GEAENDERT": "hat den Status geändert",
       "ZUGEWIESEN": "hat das Ticket zugewiesen",
       "KOMMENTAR": "hat einen Kommentar hinzugefügt",
-      "GESCHLOSSEN": "hat das Ticket geschlossen"
+      "GESCHLOSSEN": "hat das Ticket geschlossen",
+      "ANGEHANGT": "hat einen Anhang hinzugefügt"
+    },
+    "attachments": {
+      "title": "Anhänge",
+      "empty": "Noch keine Anhänge",
+      "dropzoneHint": "Dateien hierher ziehen oder klicken zum Auswählen",
+      "uploading": "Wird hochgeladen…",
+      "uploadFailed": "Upload fehlgeschlagen",
+      "download": "Herunterladen",
+      "delete": "Löschen",
+      "confirmDelete": "Diesen Anhang wirklich löschen?"
     },
     "filters": {
       "allStatuses": "Alle Status",

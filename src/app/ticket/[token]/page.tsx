@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 
+interface AttachmentDTO {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: string;
+  uploaderName: string | null;
+  createdAt: string;
+}
+
 interface TicketStatus {
   ticketNumber: string;
   subject: string;
@@ -19,6 +29,7 @@ interface TicketStatus {
     authorName: string | null;
     createdAt: string;
   }[];
+  attachments: AttachmentDTO[];
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -49,28 +60,56 @@ export default function ExternalTicketStatusPage() {
   const [ticket, setTicket] = useState<TicketStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function loadTicket() {
+    try {
+      const res = await fetch(`/api/tickets/external/${params.token}`);
+      if (!res.ok) {
+        setError(
+          res.status === 404
+            ? "Ticket nicht gefunden. Bitte prüfen Sie den Link."
+            : "Fehler beim Laden des Tickets.",
+        );
+        return;
+      }
+      setTicket(await res.json());
+    } catch {
+      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchTicket() {
-      try {
-        const res = await fetch(`/api/tickets/external/${params.token}`);
-        if (!res.ok) {
-          setError(
-            res.status === 404
-              ? "Ticket nicht gefunden. Bitte prüfen Sie den Link."
-              : "Fehler beim Laden des Tickets.",
-          );
-          return;
-        }
-        setTicket(await res.json());
-      } catch {
-        setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchTicket();
+    loadTicket();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.token]);
+
+  async function handleUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const fd = new FormData();
+      for (const f of Array.from(files)) fd.append("file", f);
+      const res = await fetch(
+        `/api/tickets/external/${params.token}/attachments`,
+        { method: "POST", body: fd },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setUploadError(err?.message ?? "Upload fehlgeschlagen.");
+      } else {
+        await loadTicket();
+      }
+    } catch {
+      setUploadError("Upload fehlgeschlagen.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -192,6 +231,63 @@ export default function ExternalTicketStatusPage() {
           </p>
         </div>
 
+        {/* Attachments */}
+        <div className="rounded-lg bg-white p-6 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-500">
+            Anhänge ({ticket.attachments.length})
+          </h2>
+
+          {ticket.attachments.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {ticket.attachments.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-gray-900">
+                      {a.fileName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatBytesExt(Number(a.fileSize))}
+                      {a.uploaderName ? ` · ${a.uploaderName}` : ""}
+                    </p>
+                  </div>
+                  <a
+                    href={a.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                  >
+                    Download
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {ticket.status !== "GESCHLOSSEN" && (
+            <div className="mt-4">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:border-emerald-300">
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUpload(e.target.files)}
+                  disabled={uploading}
+                />
+                {uploading ? "Wird hochgeladen…" : "Anhang hinzufügen"}
+              </label>
+              <p className="mt-1 text-xs text-gray-400">
+                Max. 10 MB pro Datei, 3 Dateien pro Upload.
+              </p>
+              {uploadError && (
+                <p className="mt-2 text-xs text-red-600">{uploadError}</p>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Comments */}
         {ticket.comments.length > 0 && (
           <div className="rounded-lg bg-white p-6 shadow-sm">
@@ -232,4 +328,12 @@ export default function ExternalTicketStatusPage() {
       </div>
     </div>
   );
+}
+
+function formatBytesExt(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return "0 B";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }

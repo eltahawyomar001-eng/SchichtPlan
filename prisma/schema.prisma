@@ -40,6 +40,7 @@ model User {
   ticketsCreated    Ticket[]       @relation("TicketCreator")
   ticketsAssigned   Ticket[]       @relation("TicketAssignee")
   ticketComments    TicketComment[]
+  ticketAttachments TicketAttachment[]
 }
 
 model Account {
@@ -161,6 +162,7 @@ model Workspace {
   serviceReports       ServiceReport[]
   notifications        Notification[]
   tickets              Ticket[]
+  ticketAttachments    TicketAttachment[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1330,6 +1332,7 @@ enum TicketEventType {
   ZUGEWIESEN
   KOMMENTAR
   GESCHLOSSEN
+  ANGEHANGT
 }
 
 model Ticket {
@@ -1360,6 +1363,7 @@ model Ticket {
   updatedAt             DateTime        @updatedAt
   comments              TicketComment[]
   events                TicketEvent[]
+  attachments           TicketAttachment[]
   @@unique([workspaceId, ticketNumber])
   @@index([workspaceId])
   @@index([createdById])
@@ -1380,6 +1384,7 @@ model TicketComment {
   authorName String?  @db.VarChar(200) /// Display name for external comments
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  attachments TicketAttachment[]
   @@index([ticketId])
   @@index([authorId])
 }
@@ -1397,4 +1402,30 @@ model TicketEvent {
   createdAt   DateTime        @default(now())
   @@index([ticketId])
   @@index([ticketId, createdAt])
+}
+
+/// Files attached to a ticket or to a specific comment.
+/// Stored in Vercel Blob; row holds the public URL + metadata.
+/// Storage usage tracked via WorkspaceUsage.ticketStorageBytesUsed.
+model TicketAttachment {
+  id           String          @id @default(cuid())
+  ticketId     String
+  ticket       Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  /// Optional: attachment belongs to a specific comment instead of the ticket itself.
+  commentId    String?
+  comment      TicketComment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  fileName     String          @db.VarChar(500)
+  fileUrl      String          @db.Text /// Vercel Blob public URL
+  fileType     String          @db.VarChar(150) /// MIME type
+  fileSize     BigInt          /// bytes
+  uploadedById String?         /// Null for external (token-based) uploads
+  uploadedBy   User?           @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploaderName String?         @db.VarChar(200) /// Display name for external uploads
+  workspaceId  String
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
+  @@index([ticketId])
+  @@index([commentId])
+  @@index([workspaceId])
+  @@index([uploadedById])
 }

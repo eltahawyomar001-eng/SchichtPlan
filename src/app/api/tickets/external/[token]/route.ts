@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { serverError, notFound } from "@/lib/api-response";
-import { withRoute } from "@/lib/with-route";
 
 /**
  * GET  /api/tickets/external/[token]
@@ -14,12 +13,12 @@ import { withRoute } from "@/lib/with-route";
  * Only exposes: ticketNumber, subject, status, category, createdAt,
  * closedAt, and non-internal comments with authorName only.
  */
-export const GET = withRoute(
-  "/api/tickets/external/[token]",
-  "GET",
-  async (req, context) => {
-    const params = await context!.params;
-    const { token } = params;
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  try {
+    const { token } = await params;
 
     if (!token || token.length < 10) {
       return notFound("Ticket nicht gefunden");
@@ -31,6 +30,7 @@ export const GET = withRoute(
         ticketType: "EXTERN",
       },
       select: {
+        id: true,
         ticketNumber: true,
         subject: true,
         description: true,
@@ -50,6 +50,19 @@ export const GET = withRoute(
           },
           orderBy: { createdAt: "asc" },
         },
+        attachments: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            fileName: true,
+            fileUrl: true,
+            fileType: true,
+            fileSize: true,
+            uploaderName: true,
+            createdAt: true,
+            commentId: true,
+          },
+        },
       },
     });
 
@@ -57,6 +70,22 @@ export const GET = withRoute(
       return notFound("Ticket nicht gefunden");
     }
 
-    return NextResponse.json(ticket);
-  },
-);
+    // Serialize BigInt fileSize for JSON
+    const serialized = {
+      ...ticket,
+      attachments: ticket.attachments.map((a) => ({
+        ...a,
+        fileSize: a.fileSize.toString(),
+      })),
+    };
+
+    return NextResponse.json(serialized);
+  } catch (error) {
+    log.error("Error fetching external ticket:", { error });
+    captureRouteError(error, {
+      route: "/api/tickets/external/[token]",
+      method: "GET",
+    });
+    return serverError("Fehler beim Laden des Tickets");
+  }
+}

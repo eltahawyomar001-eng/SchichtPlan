@@ -140,3 +140,33 @@ export function logTicketClosed(ticketId: string, actor: EventActor): void {
     actor,
   });
 }
+
+/**
+ * Log an ANGEHANGT event when a file is attached to a ticket.
+ */
+export function logAttachmentAdded(
+  ticketId: string,
+  actor: EventActor,
+  meta: {
+    fileName: string;
+    fileSize: number | bigint;
+    fileType: string;
+    commentId?: string | null;
+  },
+): void {
+  void createTicketEvent({
+    ticketId,
+    eventType: "ANGEHANGT",
+    actor,
+    newValue: meta.fileName,
+    metadata: {
+      fileName: meta.fileName,
+      fileSize:
+        typeof meta.fileSize === "bigint"
+          ? meta.fileSize.toString()
+          : meta.fileSize,
+      fileType: meta.fileType,
+      commentId: meta.commentId ?? null,
+    },
+  });
+}

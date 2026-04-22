@@ -57,6 +57,9 @@ export async function GET(
           // Filter internal comments for employees
           ...(isEmployee(user) ? { where: { isInternal: false } } : {}),
         },
+        attachments: {
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
@@ -86,7 +89,16 @@ export async function GET(
       logTicketViewed(ticket.id, { id: user.id, name: user.name ?? "System" });
     }
 
-    return NextResponse.json(ticket);
+    // Serialize BigInt fileSize for JSON
+    const serialized = {
+      ...ticket,
+      attachments: ticket.attachments.map((a) => ({
+        ...a,
+        fileSize: a.fileSize.toString(),
+      })),
+    };
+
+    return NextResponse.json(serialized);
   } catch (error) {
     log.error("Error fetching ticket:", { error });
     captureRouteError(error, { route: "/api/tickets/[id]", method: "GET" });

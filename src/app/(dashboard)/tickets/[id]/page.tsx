@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
@@ -11,7 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { PageContent } from "@/components/ui/page-content";
-import { ArrowLeftIcon, SendIcon, ClockIcon } from "@/components/icons";
+import {
+  ArrowLeftIcon,
+  SendIcon,
+  ClockIcon,
+  PaperclipIcon,
+  TrashIcon,
+  DownloadIcon,
+} from "@/components/icons";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -43,6 +50,18 @@ interface TicketEvent {
   createdAt: string;
 }
 
+interface Attachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: string; // serialized BigInt
+  uploadedById: string | null;
+  uploaderName: string | null;
+  createdAt: string;
+  commentId: string | null;
+}
+
 interface Ticket {
   id: string;
   ticketNumber: string;
@@ -61,6 +80,7 @@ interface Ticket {
   createdAt: string;
   updatedAt: string;
   comments: Comment[];
+  attachments: Attachment[];
 }
 
 interface WorkspaceUser {
@@ -108,6 +128,10 @@ export default function TicketDetailPage() {
   const [isInternal, setIsInternal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [users, setUsers] = useState<WorkspaceUser[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   // Derived: is the current user the assignee of this ticket?
   const isAssignee = !!(user && ticket && ticket.assignedTo?.id === user.id);
@@ -188,6 +212,49 @@ export default function TicketDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
+      if (res.ok) {
+        fetchTicket();
+        fetchEvents();
+      }
+    } catch {
+      // silent
+    }
+  };
+
+  const uploadFiles = async (files: FileList | File[]) => {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const fd = new FormData();
+      for (const f of list) fd.append("file", f);
+      const res = await fetch(`/api/tickets/${id}/attachments`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setUploadError(err?.message ?? t("attachments.uploadFailed"));
+      } else {
+        fetchTicket();
+        fetchEvents();
+      }
+    } catch {
+      setUploadError(t("attachments.uploadFailed"));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!window.confirm(t("attachments.confirmDelete"))) return;
+    try {
+      const res = await fetch(
+        `/api/tickets/${id}/attachments/${attachmentId}`,
+        { method: "DELETE" },
+      );
       if (res.ok) {
         fetchTicket();
         fetchEvents();
@@ -280,6 +347,109 @@ export default function TicketDetailPage() {
                 <p className="text-sm text-gray-700 dark:text-zinc-300 whitespace-pre-wrap">
                   {ticket.description}
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* Attachments */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <PaperclipIcon className="h-4 w-4" />
+                  {t("attachments.title")} ({ticket.attachments.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {ticket.attachments.length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-zinc-500 text-center py-2">
+                    {t("attachments.empty")}
+                  </p>
+                )}
+                {ticket.attachments.map((att) => {
+                  const canDelete =
+                    canManage ||
+                    (user?.id != null && att.uploadedById === user.id);
+                  return (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-3 py-2"
+                    >
+                      <PaperclipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
+                          {att.fileName}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-zinc-500">
+                          {formatBytes(Number(att.fileSize))} ·{" "}
+                          {att.uploaderName ?? t("unknownAuthor")} ·{" "}
+                          {format(new Date(att.createdAt), "dd.MM.yyyy HH:mm", {
+                            locale: de,
+                          })}
+                        </p>
+                      </div>
+                      <a
+                        href={att.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 text-gray-500 hover:text-emerald-600"
+                        title={t("attachments.download")}
+                      >
+                        <DownloadIcon className="h-4 w-4" />
+                      </a>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAttachment(att.id)}
+                          className="p-1.5 text-gray-500 hover:text-red-600"
+                          title={t("attachments.delete")}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Dropzone */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files);
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`cursor-pointer rounded-lg border-2 border-dashed px-4 py-6 text-center text-sm transition-colors ${
+                    dragOver
+                      ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20"
+                      : "border-gray-200 dark:border-zinc-700 hover:border-emerald-300"
+                  }`}
+                >
+                  {uploading ? (
+                    <span className="text-gray-500">
+                      {t("attachments.uploading")}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-zinc-400">
+                      {t("attachments.dropzoneHint")}
+                    </span>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) uploadFiles(e.target.files);
+                    }}
+                  />
+                </div>
+                {uploadError && (
+                  <p className="text-xs text-red-600">{uploadError}</p>
+                )}
               </CardContent>
             </Card>
 
@@ -594,4 +764,12 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       </span>
     </div>
   );
+}
+
+function formatBytes(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return "0 B";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }

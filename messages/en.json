@@ -2838,7 +2838,18 @@
       "STATUS_GEAENDERT": "changed the status",
       "ZUGEWIESEN": "assigned the ticket",
       "KOMMENTAR": "added a comment",
-      "GESCHLOSSEN": "closed the ticket"
+      "GESCHLOSSEN": "closed the ticket",
+      "ANGEHANGT": "added an attachment"
+    },
+    "attachments": {
+      "title": "Attachments",
+      "empty": "No attachments yet",
+      "dropzoneHint": "Drag files here or click to select",
+      "uploading": "Uploading…",
+      "uploadFailed": "Upload failed",
+      "download": "Download",
+      "delete": "Delete",
+      "confirmDelete": "Really delete this attachment?"
     },
     "filters": {
       "allStatuses": "All Statuses",

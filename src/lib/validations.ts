@@ -144,6 +144,8 @@ export const registerSchema = z.object({
   password: password,
   workspaceName: optionalString.pipe(z.string().max(200).optional()),
   invitationToken: optionalString,
+  selectedPlan: z.enum(["basic", "professional"]).optional(),
+  selectedBilling: z.enum(["monthly", "annual"]).optional(),
   consentGiven: z.literal(true, {
     message: "Zustimmung zur Datenschutzerklärung ist erforderlich",
   }),

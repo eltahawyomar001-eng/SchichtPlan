@@ -117,9 +117,6 @@ export const POST = withRoute(
       payment_method_types: ["card", "sepa_debit"],
       line_items: [{ price: priceId, quantity: 1 }],
       billing_address_collection: "required", // needed for valid DE invoice
-      subscription_data: {
-        trial_period_days: resolvedPlan.trialDays || undefined,
-      },
       invoice_creation: { enabled: true }, // always generate a downloadable invoice PDF
       success_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
       cancel_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=cancel`,

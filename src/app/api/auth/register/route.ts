@@ -18,11 +18,17 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
     password,
     workspaceName,
     invitationToken,
+    selectedPlan,
     consentGiven,
   } = parsed.data;
 
   // Suppress unused var warning — consentGiven is validated by Zod (must be true)
   void consentGiven;
+
+  // Owners signing up with a paid plan skip email verification — Stripe Checkout
+  // requires immediate sign-in to call /api/billing/checkout, and a successful
+  // payment is itself proof of email ownership.
+  const skipVerification = !invitationToken && !!selectedPlan;
 
   // If no invitation token, workspace name is required
   if (!invitationToken && !workspaceName) {
@@ -168,22 +174,26 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
         role: "OWNER",
         workspaceId: workspace.id,
         consentGivenAt: new Date(),
+        emailVerified: skipVerification ? new Date() : null,
       },
     });
 
     return { user, workspace };
   });
 
-  // Send verification email (non-blocking)
-  sendVerificationEmail(email).catch((err) =>
-    log.error("Failed to send verification email", { error: err }),
-  );
+  // Send verification email (non-blocking) unless the user is going straight to checkout
+  if (!skipVerification) {
+    sendVerificationEmail(email).catch((err) =>
+      log.error("Failed to send verification email", { error: err }),
+    );
+  }
 
   return NextResponse.json(
     {
       message: "Konto erfolgreich erstellt.",
       userId: result.user.id,
-      requiresVerification: true,
+      requiresVerification: !skipVerification,
+      autoSignIn: skipVerification,
     },
     { status: 201 },
   );

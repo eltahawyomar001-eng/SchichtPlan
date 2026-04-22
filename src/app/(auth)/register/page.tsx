@@ -74,6 +74,16 @@ function RegisterForm() {
           password: formData.password,
           workspaceName: isInvitation ? undefined : formData.workspaceName,
           invitationToken: isInvitation ? invitationToken : undefined,
+          selectedPlan:
+            !isInvitation &&
+            (selectedPlan === "basic" || selectedPlan === "professional")
+              ? selectedPlan
+              : undefined,
+          selectedBilling:
+            !isInvitation &&
+            (selectedBilling === "monthly" || selectedBilling === "annual")
+              ? selectedBilling
+              : undefined,
           consentGiven,
         }),
       });
@@ -86,11 +96,45 @@ function RegisterForm() {
         return;
       }
 
-      // Redirect to verification page (check your email)
-      if (selectedPlan && selectedPlan !== "basic") {
-        localStorage.setItem("shiftfy_selected_plan", selectedPlan);
-        localStorage.setItem("shiftfy_selected_billing", selectedBilling);
+      // Paid-plan signup: auto sign-in and redirect to Stripe Checkout
+      if (
+        data.autoSignIn &&
+        !isInvitation &&
+        (selectedPlan === "basic" || selectedPlan === "professional")
+      ) {
+        const signInRes = await signIn("credentials", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
+        if (signInRes?.ok) {
+          try {
+            const checkoutRes = await fetch("/api/billing/checkout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                plan: selectedPlan,
+                billingCycle:
+                  selectedBilling === "monthly" ? "monthly" : "annual",
+              }),
+            });
+            const checkoutData = await checkoutRes.json();
+            if (checkoutRes.ok && checkoutData.url) {
+              window.location.href = checkoutData.url;
+              return;
+            }
+          } catch {
+            // fall through to billing page
+          }
+          router.push("/einstellungen/abonnement?required=1");
+          return;
+        }
+        // Sign-in failed — fall back to login
+        router.push("/login?registered=1");
+        return;
       }
+
+      // Invitation or no paid plan selected: standard verification flow
       router.push("/verifizierung");
     } catch {
       setError(t("genericError"));

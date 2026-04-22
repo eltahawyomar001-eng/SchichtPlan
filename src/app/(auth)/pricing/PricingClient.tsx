@@ -71,9 +71,7 @@ export default function PricingClient() {
     },
     {
       name: t("enterprise"),
-      basePrice: annual
-        ? t("enterpriseAnnualBase")
-        : t("enterpriseMonthlyBase"),
+      basePrice: t("enterpriseCustom"),
       perUser: null,
       description: t("enterpriseDesc"),
       features: [
@@ -86,10 +84,10 @@ export default function PricingClient() {
         t("featureEnt7"),
         t("featureEnt8"),
       ],
-      cta: t("startTrial"),
-      href: `/register?plan=enterprise&billing=${annual ? "annual" : "monthly"}`,
+      cta: t("contactSales"),
+      href: "mailto:sales@shiftfy.de?subject=Enterprise%20Plan%20Anfrage",
       highlighted: false,
-      isEnterprise: false,
+      isEnterprise: true,
     },
   ];
 

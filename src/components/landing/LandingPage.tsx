@@ -1090,9 +1090,7 @@ function PricingSection() {
     },
     {
       name: tp("enterprise"),
-      basePrice: annual
-        ? tp("enterpriseAnnualBase")
-        : tp("enterpriseMonthlyBase"),
+      basePrice: tp("enterpriseCustom"),
       perUser: null,
       description: tp("enterpriseDesc"),
       features: [
@@ -1105,10 +1103,10 @@ function PricingSection() {
         tp("featureEnt7"),
         tp("featureEnt8"),
       ],
-      cta: tp("startTrial"),
-      href: `/register?plan=enterprise&billing=${annual ? "annual" : "monthly"}`,
+      cta: tp("contactSales"),
+      href: "mailto:info@shiftfy.de?subject=Enterprise%20Plan%20Anfrage",
       highlighted: false,
-      isEnterprise: false,
+      isEnterprise: true,
     },
   ];
 

@@ -42,7 +42,7 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/stripe", () => ({
   getStripe: () => mockStripe,
-  getPlanByPriceId: vi.fn(() => ({ trialDays: 14 })),
+  getPlanByPriceId: vi.fn(() => ({ trialDays: 0 })),
   PLANS: {
     basic: {
       limits: { employees: 5 },

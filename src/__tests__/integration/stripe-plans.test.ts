@@ -97,13 +97,10 @@ describe("stripe plan config", () => {
       }
     });
 
-    it("basic and professional have 14-day trials", () => {
-      expect(PLANS.basic.trialDays).toBe(14);
-      expect(PLANS.professional.trialDays).toBe(14);
-    });
-
-    it("enterprise has 14-day trial", () => {
-      expect(PLANS.enterprise.trialDays).toBe(14);
+    it("no plan offers a trial period", () => {
+      expect(PLANS.basic.trialDays).toBe(0);
+      expect(PLANS.professional.trialDays).toBe(0);
+      expect(PLANS.enterprise.trialDays).toBe(0);
     });
   });
 

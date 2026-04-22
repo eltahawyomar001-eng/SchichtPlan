@@ -69,7 +69,7 @@ export interface PlanConfig {
     dedicatedSla: boolean;
     customIntegrations: boolean;
   };
-  /** 14-day trial available */
+  /** Trial period in days. Always 0 — Shiftfy does not offer trial periods. */
   trialDays: number;
 }
 

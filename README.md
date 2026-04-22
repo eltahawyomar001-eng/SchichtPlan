@@ -44,7 +44,7 @@
 
 - Stripe Billing Integration (Checkout, Portal, Webhooks)
 - 4-Stufen-Preismodell: Starter (kostenlos) → Team → Business → Enterprise
-- Per-Seat-Abrechnung mit 14-Tage-Testphase
+- Per-Seat-Abrechnung (keine Testphase, sofortiger Zugriff)
 - SEPA-Lastschrift & Kreditkarte, Steuer-ID-Erfassung
 
 ### Weitere Features
@@ -216,7 +216,7 @@ schichtplan/
 | **Business**   | €9,50/Nutzer/Monat | €7,90/Nutzer/Monat | Unbegrenzt  | Unbegrenzt | DATEV, API, Rollen, Analysen, Priorität     |
 | **Enterprise** | Individuell        | Individuell        | Unbegrenzt  | Unbegrenzt | SSO/SAML, SLA, Custom-Integrationen         |
 
-14-Tage-Testphase für Team & Business. Jährliche Zahlung spart bis zu 17%.
+Keine Testphase — sofortiger Zugriff nach Abschluss. Jährliche Zahlung spart bis zu 17 %.
 
 ---
 

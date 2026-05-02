@@ -44,6 +44,17 @@ export const POST = withRoute(
       );
     }
 
+    if (planId === "enterprise") {
+      return NextResponse.json(
+        {
+          error: "ENTERPRISE_CONTACT_SALES",
+          message:
+            "Enterprise-Pläne werden individuell konfiguriert. Bitte wenden Sie sich an info@bashabsheh-vergabepartner.de.",
+        },
+        { status: 422 },
+      );
+    }
+
     // ── Simulation mode: only when explicitly enabled ──
     // Previously this also fell back to simulation when Stripe was unconfigured,
     // which silently swallowed real-payment intent. Now simulation is opt-in only.

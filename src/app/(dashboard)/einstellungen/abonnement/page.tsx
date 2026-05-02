@@ -240,7 +240,7 @@ function BillingContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error ?? t("checkoutError"));
+        setErrorMsg(data.message ?? data.error ?? t("checkoutError"));
         return;
       }
 

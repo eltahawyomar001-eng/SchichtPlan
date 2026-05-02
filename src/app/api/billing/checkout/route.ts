@@ -159,14 +159,26 @@ export const POST = withRoute(
       );
     }
 
+    const successUrl = `${baseUrl}/einstellungen/abonnement?billing=success`;
+    const cancelUrl = `${baseUrl}/einstellungen/abonnement?billing=cancel`;
+
+    log.info("[Stripe] creating checkout session", {
+      plan: planId,
+      billingCycle,
+      priceId,
+      successUrl,
+      cancelUrl,
+      hasCustomerId: !!customerParams.customer,
+    });
+
     try {
       const checkoutSession = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card", "sepa_debit"],
         line_items: [{ price: priceId, quantity: 1 }],
-        billing_address_collection: "required", // needed for valid DE invoice
-        success_url: `${baseUrl}/einstellungen/abonnement?billing=success`,
-        cancel_url: `${baseUrl}/einstellungen/abonnement?billing=cancel`,
+        billing_address_collection: "required",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         client_reference_id: user.workspaceId,
         allow_promotion_codes: true,
         tax_id_collection: { enabled: true },
@@ -175,18 +187,28 @@ export const POST = withRoute(
 
       return NextResponse.json({ url: checkoutSession.url });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Stripe checkout failed";
+      const stripeErr = err as {
+        message?: string;
+        param?: string;
+        code?: string;
+      };
+      const message = stripeErr.message ?? "Stripe checkout failed";
       log.error("[Stripe] checkout.sessions.create failed", {
         error: message,
+        param: stripeErr.param,
+        code: stripeErr.code,
         plan: planId,
         billingCycle,
         priceId,
+        successUrl,
+        cancelUrl,
+        hasCustomerId: !!customerParams.customer,
       });
       return NextResponse.json(
         {
           error: "STRIPE_CHECKOUT_FAILED",
           message,
+          param: stripeErr.param,
         },
         { status: 502 },
       );

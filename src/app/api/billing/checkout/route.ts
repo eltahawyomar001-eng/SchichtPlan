@@ -127,22 +127,44 @@ export const POST = withRoute(
       customerParams.customer_email = user.email;
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card", "sepa_debit"],
-      line_items: [{ price: priceId, quantity: 1 }],
-      billing_address_collection: "required", // needed for valid DE invoice
-      invoice_creation: { enabled: true }, // always generate a downloadable invoice PDF
-      success_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=success`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/einstellungen/abonnement?billing=cancel`,
-      client_reference_id: user.workspaceId,
-      allow_promotion_codes: true,
-      tax_id_collection: { enabled: true },
-      ...customerParams,
-    });
+    const baseUrl =
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
 
-    const response = NextResponse.json({ url: checkoutSession.url });
-    return response;
+    try {
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        payment_method_types: ["card", "sepa_debit"],
+        line_items: [{ price: priceId, quantity: 1 }],
+        billing_address_collection: "required", // needed for valid DE invoice
+        success_url: `${baseUrl}/einstellungen/abonnement?billing=success`,
+        cancel_url: `${baseUrl}/einstellungen/abonnement?billing=cancel`,
+        client_reference_id: user.workspaceId,
+        allow_promotion_codes: true,
+        tax_id_collection: { enabled: true },
+        ...customerParams,
+      });
+
+      return NextResponse.json({ url: checkoutSession.url });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Stripe checkout failed";
+      log.error("[Stripe] checkout.sessions.create failed", {
+        error: message,
+        plan: planId,
+        billingCycle,
+        priceId,
+      });
+      return NextResponse.json(
+        {
+          error: "STRIPE_CHECKOUT_FAILED",
+          message,
+        },
+        { status: 502 },
+      );
+    }
   },
   { idempotent: true },
 );

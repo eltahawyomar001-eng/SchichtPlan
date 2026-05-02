@@ -10,6 +10,7 @@ import type { PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { prisma } from "@/lib/db";
 
 /**
  * POST /api/billing/checkout
@@ -159,20 +160,22 @@ export const POST = withRoute(
       hasCustomerId: !!customerParams.customer,
     });
 
-    try {
-      const checkoutSession = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        payment_method_types: ["card", "sepa_debit"],
-        line_items: [{ price: priceId, quantity: 1 }],
-        billing_address_collection: "required",
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        client_reference_id: user.workspaceId,
-        allow_promotion_codes: true,
-        tax_id_collection: { enabled: true },
-        ...customerParams,
-      });
+    const sessionParams = {
+      mode: "subscription" as const,
+      payment_method_types: ["card", "sepa_debit"] as ["card", "sepa_debit"],
+      line_items: [{ price: priceId, quantity: 1 }],
+      billing_address_collection: "required" as const,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      client_reference_id: user.workspaceId,
+      allow_promotion_codes: true,
+      tax_id_collection: { enabled: true },
+      ...customerParams,
+    };
 
+    try {
+      const checkoutSession =
+        await stripe.checkout.sessions.create(sessionParams);
       return NextResponse.json({ url: checkoutSession.url });
     } catch (err) {
       const stripeErr = err as {
@@ -181,6 +184,40 @@ export const POST = withRoute(
         code?: string;
       };
       const message = stripeErr.message ?? "Stripe checkout failed";
+
+      // Stale customer ID (e.g. from simulation mode) — clear it and retry with email
+      if (message.includes("No such customer") && customerParams.customer) {
+        log.warn("[Stripe] stale customerId detected, clearing and retrying", {
+          customerId: customerParams.customer,
+        });
+        await prisma.subscription.update({
+          where: { workspaceId: user.workspaceId },
+          data: { stripeCustomerId: null, stripeSubscriptionId: null },
+        });
+        const retryParams = {
+          ...sessionParams,
+          customer: undefined,
+          customer_email: user.email,
+        };
+        try {
+          const retrySession =
+            await stripe.checkout.sessions.create(retryParams);
+          return NextResponse.json({ url: retrySession.url });
+        } catch (retryErr) {
+          const retryMsg =
+            retryErr instanceof Error
+              ? retryErr.message
+              : "Stripe checkout failed";
+          log.error("[Stripe] retry after clearing customerId also failed", {
+            error: retryMsg,
+          });
+          return NextResponse.json(
+            { error: "STRIPE_CHECKOUT_FAILED", message: retryMsg },
+            { status: 502 },
+          );
+        }
+      }
+
       log.error("[Stripe] checkout.sessions.create failed", {
         error: message,
         param: stripeErr.param,
@@ -193,11 +230,7 @@ export const POST = withRoute(
         hasCustomerId: !!customerParams.customer,
       });
       return NextResponse.json(
-        {
-          error: "STRIPE_CHECKOUT_FAILED",
-          message,
-          param: stripeErr.param,
-        },
+        { error: "STRIPE_CHECKOUT_FAILED", message, param: stripeErr.param },
         { status: 502 },
       );
     }

@@ -138,11 +138,26 @@ export const POST = withRoute(
       customerParams.customer_email = user.email;
     }
 
-    const baseUrl =
+    const baseUrl = (
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000");
+        : "http://localhost:3000")
+    ).replace(/\/$/, "");
+
+    if (!baseUrl.startsWith("https://")) {
+      log.error("[Stripe] checkout aborted — baseUrl is not HTTPS", {
+        baseUrl: baseUrl.replace(/\/\/.*/, "//<hidden>"),
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_BASE_URL",
+          message:
+            "Die App-URL ist nicht korrekt konfiguriert (muss https:// beginnen). Bitte NEXTAUTH_URL in den Vercel-Umgebungsvariablen setzen.",
+        },
+        { status: 500 },
+      );
+    }
 
     try {
       const checkoutSession = await stripe.checkout.sessions.create({

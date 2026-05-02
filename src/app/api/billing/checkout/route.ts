@@ -138,26 +138,14 @@ export const POST = withRoute(
       customerParams.customer_email = user.email;
     }
 
-    const baseUrl = (
-      process.env.NEXTAUTH_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000")
-    ).replace(/\/$/, "");
-
-    if (!baseUrl.startsWith("https://")) {
-      log.error("[Stripe] checkout aborted — baseUrl is not HTTPS", {
-        baseUrl: baseUrl.replace(/\/\/.*/, "//<hidden>"),
-      });
-      return NextResponse.json(
-        {
-          error: "INVALID_BASE_URL",
-          message:
-            "Die App-URL ist nicht korrekt konfiguriert (muss https:// beginnen). Bitte NEXTAUTH_URL in den Vercel-Umgebungsvariablen setzen.",
-        },
-        { status: 500 },
-      );
-    }
+    // Derive base URL from the actual request so it's always correct on Vercel,
+    // regardless of how NEXTAUTH_URL is configured.
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
+    const host =
+      req.headers.get("x-forwarded-host") ??
+      req.headers.get("host") ??
+      new URL(req.url).host;
+    const baseUrl = `${proto}://${host}`;
 
     const successUrl = `${baseUrl}/einstellungen/abonnement?billing=success`;
     const cancelUrl = `${baseUrl}/einstellungen/abonnement?billing=cancel`;

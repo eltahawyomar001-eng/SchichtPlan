@@ -96,8 +96,8 @@ function BillingContent() {
     const portalParam = searchParams.get("portal");
     if (billingParam === "success") {
       setSuccessMsg(t("checkoutSuccess"));
-      // Re-fetch subscription to reflect the updated plan
-      fetch("/api/billing/subscription")
+      // Force reconciliation with Stripe in case the webhook hasn't landed yet
+      fetch("/api/billing/subscription?reconcile=1")
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (data) setSubscription(data);
@@ -112,9 +112,12 @@ function BillingContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const fetchSubscription = useCallback(async () => {
+  const fetchSubscription = useCallback(async (reconcile = false) => {
     try {
-      const res = await fetch("/api/billing/subscription");
+      const url = reconcile
+        ? "/api/billing/subscription?reconcile=1"
+        : "/api/billing/subscription";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setSubscription(data);
@@ -127,7 +130,9 @@ function BillingContent() {
   }, []);
 
   useEffect(() => {
-    fetchSubscription();
+    // First load reconciles with Stripe so a missed webhook never leaves
+    // the UI stuck on the previous plan after a switch.
+    fetchSubscription(true);
   }, [fetchSubscription]);
 
   // Auto-trigger checkout if user came from landing page with a plan

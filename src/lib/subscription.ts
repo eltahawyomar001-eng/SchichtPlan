@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { PLANS, type PlanId, type PlanConfig } from "@/lib/stripe";
+import {
+  PLANS,
+  getPlanByPriceId,
+  type PlanId,
+  type PlanConfig,
+} from "@/lib/stripe";
 
 /* ═══════════════════════════════════════════════════════════════
    Subscription service — database operations
@@ -161,10 +166,17 @@ export async function updateSubscriptionFromStripe({
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
 }) {
+  // Derive the plan from the priceId so the DB stays in sync when users
+  // switch plans through the Stripe Customer Portal or via subscription updates.
+  // Without this, only stripePriceId would change while `plan` (which the UI
+  // reads) silently kept showing the old tier.
+  const planConfig = stripePriceId ? getPlanByPriceId(stripePriceId) : null;
+
   return prisma.subscription.update({
     where: { stripeSubscriptionId },
     data: {
       stripePriceId,
+      ...(planConfig && { plan: planConfig.prismaKey }),
       status: mapStripeStatus(status),
       seatCount,
       currentPeriodStart,

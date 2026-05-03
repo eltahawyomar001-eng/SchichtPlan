@@ -24,7 +24,7 @@ export default async function TicketsLayout({
 
   const hasAddon = await hasTicketingAddon(user.workspaceId);
   if (!hasAddon) {
-    redirect("/einstellungen/abonnement#ticketing-addon");
+    redirect("/einstellungen/abonnement?addon=ticketing");
   }
 
   return <>{children}</>;

@@ -100,6 +100,7 @@ export const GET = withRoute(
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
       trialEnd: sub.trialEnd,
       hasStripeSubscription: !!sub.stripeSubscriptionId,
+      ticketingTier: sub.ticketingTier ?? "NONE",
       limits: planConfig?.limits ?? PLANS.basic.limits,
       simulationMode: isSimulationMode(),
       reconciled: reconcile,

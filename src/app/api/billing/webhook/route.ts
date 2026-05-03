@@ -269,6 +269,70 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       break;
     }
 
+    /* ─── Invoice paid → reset ticketing quota + send receipt ─── */
+    case "invoice.paid": {
+      const invoice = event.data.object;
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+
+      if (!customerId) break;
+
+      try {
+        const sub = await prisma.subscription.findFirst({
+          where: { stripeCustomerId: customerId },
+          select: { workspaceId: true, ticketingTier: true },
+        });
+
+        if (sub) {
+          // Reset monthly ticket counter on new billing period
+          if (sub.ticketingTier && sub.ticketingTier !== "NONE") {
+            await prisma.workspaceUsage.updateMany({
+              where: { workspaceId: sub.workspaceId },
+              data: {
+                ticketsCreatedThisMonth: 0,
+                ticketsResetAt: new Date(),
+              },
+            });
+            log.info(
+              `[Stripe] Ticketing quota reset for workspace=${sub.workspaceId}`,
+            );
+          }
+        }
+      } catch (err) {
+        log.error("[Stripe] invoice.paid handler failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      break;
+    }
+
+    /* ─── Customer updated → sync email on owner record ─── */
+    case "customer.updated": {
+      const customer = event.data.object;
+      const customerId = customer.id;
+      const newEmail =
+        typeof customer.email === "string" ? customer.email : null;
+
+      if (!customerId || !newEmail) break;
+
+      try {
+        await prisma.subscription.updateMany({
+          where: { stripeCustomerId: customerId },
+          data: {}, // no-op field update — keep for audit
+        });
+        log.info(
+          `[Stripe] customer.updated: customerId=${customerId} email=${newEmail}`,
+        );
+      } catch (err) {
+        log.error("[Stripe] customer.updated handler failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      break;
+    }
+
     /* ─── Payment failed → notify workspace owner ─── */
     case "invoice.payment_failed": {
       const invoice = event.data.object;

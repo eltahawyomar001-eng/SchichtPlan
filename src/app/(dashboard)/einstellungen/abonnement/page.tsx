@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -23,6 +23,7 @@ import {
   StarIcon,
   AlertTriangleIcon,
   BeakerIcon,
+  TicketIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 
@@ -37,6 +38,8 @@ interface SubscriptionData {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   simulationMode?: boolean;
+  ticketingTier: string;
+  hasStripeSubscription: boolean;
   limits: {
     maxEmployees: number;
     maxLocations: number;
@@ -53,13 +56,27 @@ interface SubscriptionData {
   };
 }
 
+interface PublicPlanData {
+  id: string;
+  name: string;
+  perUserMonthlyCents: number;
+  perUserAnnualCents: number;
+  limits: SubscriptionData["limits"];
+}
+
+interface TicketingTierData {
+  id: string;
+  name: string;
+  priceMonthlyCents: number;
+  ticketsPerMonth: number;
+  storageGb: number;
+}
+
 interface PlanOption {
   id: string;
   name: string;
-  basePriceMonthly: number;
-  basePriceAnnual: number;
-  perUserMonthly: number;
-  perUserAnnual: number;
+  perUserMonthlyCents: number;
+  perUserAnnualCents: number;
   description: string;
   features: string[];
   highlighted: boolean;
@@ -81,22 +98,27 @@ function BillingContent() {
   const [subscription, setSubscription] = useState<SubscriptionData | null>(
     null,
   );
+  const [publicPlans, setPublicPlans] = useState<PublicPlanData[]>([]);
+  const [ticketingTiers, setTicketingTiers] = useState<TicketingTierData[]>([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "annual",
   );
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [ticketingLoading, setTicketingLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const ticketingRef = useRef<HTMLDivElement>(null);
 
   // Check for success/cancel from Stripe redirect
   useEffect(() => {
     const billingParam = searchParams.get("billing");
     const portalParam = searchParams.get("portal");
+    const addonParam = searchParams.get("addon");
+
     if (billingParam === "success") {
       setSuccessMsg(t("checkoutSuccess"));
-      // Force reconciliation with Stripe in case the webhook hasn't landed yet
       fetch("/api/billing/subscription?reconcile=1")
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
@@ -108,6 +130,15 @@ function BillingContent() {
     if (portalParam === "sim") {
       setSuccessMsg(t("simPortalMsg"));
       window.history.replaceState({}, "", "/einstellungen/abonnement");
+    }
+    if (addonParam === "ticketing") {
+      // Scroll to ticketing section after data loads
+      setTimeout(() => {
+        ticketingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 600);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -130,10 +161,19 @@ function BillingContent() {
   }, []);
 
   useEffect(() => {
-    // First load reconciles with Stripe so a missed webhook never leaves
-    // the UI stuck on the previous plan after a switch.
     fetchSubscription(true);
   }, [fetchSubscription]);
+
+  // Load public plan pricing (source of truth for displayed prices)
+  useEffect(() => {
+    fetch("/api/public/plans")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.plans) setPublicPlans(data.plans);
+        if (data?.ticketingTiers) setTicketingTiers(data.ticketingTiers);
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-trigger checkout if user came from landing page with a plan
   useEffect(() => {
@@ -145,11 +185,9 @@ function BillingContent() {
     ) {
       localStorage.removeItem("shiftfy_selected_plan");
       localStorage.removeItem("shiftfy_selected_billing");
-      // Apply the stored billing cycle
       if (storedBilling === "monthly" || storedBilling === "annual") {
         setBillingCycle(storedBilling);
       }
-      // Small delay to let subscription data load first
       const timer = setTimeout(() => {
         handleCheckout(storedPlan);
       }, 500);
@@ -158,15 +196,20 @@ function BillingContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Plan options
+  // Build plan options — prices come from /api/public/plans so they match stripe.ts
+  const getPlanPrices = (planId: string) => {
+    const p = publicPlans.find((pl) => pl.id === planId);
+    return {
+      perUserMonthlyCents: p?.perUserMonthlyCents ?? 0,
+      perUserAnnualCents: p?.perUserAnnualCents ?? 0,
+    };
+  };
+
   const plans: PlanOption[] = [
     {
       id: "basic",
       name: t("planBasic"),
-      basePriceMonthly: 19,
-      basePriceAnnual: 16,
-      perUserMonthly: 2.5,
-      perUserAnnual: 2.1,
+      ...getPlanPrices("basic"),
       description: t("planBasicDesc"),
       features: [
         t("featureEmployees10"),
@@ -183,10 +226,7 @@ function BillingContent() {
     {
       id: "professional",
       name: t("planProfessional"),
-      basePriceMonthly: 49,
-      basePriceAnnual: 41,
-      perUserMonthly: 4.5,
-      perUserAnnual: 3.8,
+      ...getPlanPrices("professional"),
       description: t("planProfessionalDesc"),
       features: [
         t("featureEmployees50"),
@@ -206,10 +246,8 @@ function BillingContent() {
     {
       id: "enterprise",
       name: t("planEnterprise"),
-      basePriceMonthly: 0,
-      basePriceAnnual: 0,
-      perUserMonthly: 0,
-      perUserAnnual: 0,
+      perUserMonthlyCents: 0,
+      perUserAnnualCents: 0,
       description: t("planEnterpriseDesc"),
       features: [
         t("featureUnlimitedAll"),
@@ -225,6 +263,7 @@ function BillingContent() {
   ];
 
   const currentPlan = subscription?.plan?.toLowerCase() ?? "basic";
+  const isRequired = searchParams.get("required") === "1";
 
   const handleCheckout = async (planId: string) => {
     if (!user) return;
@@ -286,11 +325,55 @@ function BillingContent() {
     }
   };
 
-  const formatPrice = (price: number) =>
+  const handleTicketingChange = async (tier: string) => {
+    const isCanceling = tier === "NONE";
+    const currentTier = subscription?.ticketingTier ?? "NONE";
+
+    if (tier !== "NONE" && currentTier !== "NONE" && currentTier !== tier) {
+      const tierName =
+        ticketingTiers.find((tt) => tt.id === tier)?.name ?? tier;
+      if (!window.confirm(t("ticketingAddonConfirmChange", { tier: tierName })))
+        return;
+    }
+    if (isCanceling) {
+      if (!window.confirm(t("ticketingAddonConfirmCancel"))) return;
+    }
+
+    setTicketingLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/billing/addons/ticketing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error ?? t("ticketingAddonError"));
+        return;
+      }
+      await fetchSubscription(false);
+      if (isCanceling) {
+        setSuccessMsg(t("ticketingAddonCancel"));
+      } else if (tier !== currentTier) {
+        setSuccessMsg(t("ticketingAddonSubscribe"));
+      }
+    } catch {
+      setErrorMsg(t("ticketingAddonError"));
+    } finally {
+      setTicketingLoading(false);
+    }
+  };
+
+  const formatCents = (cents: number) =>
     new Intl.NumberFormat(locale === "en" ? "en-GB" : "de-DE", {
       style: "currency",
       currency: "EUR",
-    }).format(price);
+      minimumFractionDigits: 2,
+    }).format(cents / 100);
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : "de-DE");
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; variant: string }> = {
@@ -343,6 +426,21 @@ function BillingContent() {
     <div>
       <Topbar title={t("title")} description={t("description")} />
       <PageContent>
+        {/* Subscription required banner (redirected from dashboard gate) */}
+        {isRequired && (
+          <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-300 px-4 py-4 text-sm text-amber-900">
+            <AlertTriangleIcon className="h-5 w-5 shrink-0 mt-0.5 text-amber-600" />
+            <div>
+              <p className="font-semibold text-base">
+                {t("subscriptionRequiredTitle")}
+              </p>
+              <p className="mt-0.5 text-amber-800">
+                {t("subscriptionRequiredDescription")}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Success message */}
         {successMsg && (
           <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-medium text-emerald-700">
@@ -373,6 +471,33 @@ function BillingContent() {
               <p className="font-semibold">{t("sandboxBanner")}</p>
               <p className="mt-0.5 text-amber-700">{t("sandboxBannerDesc")}</p>
             </div>
+          </div>
+        )}
+
+        {/* Cancel-at-period-end warning */}
+        {subscription?.cancelAtPeriodEnd && subscription.currentPeriodEnd && (
+          <div className="flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-4 text-sm text-red-800">
+            <AlertTriangleIcon className="h-5 w-5 shrink-0 mt-0.5 text-red-500" />
+            <div className="flex-1">
+              <p className="font-semibold">
+                {t("cancelScheduledWarning", {
+                  date: formatDate(subscription.currentPeriodEnd),
+                })}
+              </p>
+              <p className="mt-0.5 text-red-700">
+                {t("resumeSubscriptionDesc")}
+              </p>
+            </div>
+            <button
+              onClick={handlePortal}
+              disabled={portalLoading}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition-colors"
+            >
+              {portalLoading ? (
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+              ) : null}
+              {t("resumeSubscription")}
+            </button>
           </div>
         )}
 
@@ -426,21 +551,14 @@ function BillingContent() {
                 </p>
                 <p className="mt-1 text-lg font-bold text-gray-900">
                   {subscription?.currentPeriodEnd
-                    ? new Date(
-                        subscription.currentPeriodEnd,
-                      ).toLocaleDateString(locale === "en" ? "en-GB" : "de-DE")
+                    ? formatDate(subscription.currentPeriodEnd)
                     : "—"}
                 </p>
-                {subscription?.cancelAtPeriodEnd && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {t("cancelsAtEnd")}
-                  </p>
-                )}
               </div>
             </div>
 
             {/* Manage Subscription Button */}
-            {currentPlan !== "basic" && (
+            {subscription?.hasStripeSubscription && (
               <div className="mt-6">
                 <button
                   onClick={handlePortal}
@@ -498,14 +616,10 @@ function BillingContent() {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {plans.map((plan) => {
             const isCurrentPlan = currentPlan === plan.id;
-            const basePrice =
+            const perUserCents =
               billingCycle === "annual"
-                ? plan.basePriceAnnual
-                : plan.basePriceMonthly;
-            const perUser =
-              billingCycle === "annual"
-                ? plan.perUserAnnual
-                : plan.perUserMonthly;
+                ? plan.perUserAnnualCents
+                : plan.perUserMonthlyCents;
 
             return (
               <div
@@ -540,14 +654,16 @@ function BillingContent() {
                     <>
                       <div className="flex flex-wrap items-baseline gap-1">
                         <span className="text-3xl font-extrabold text-gray-900">
-                          {formatPrice(basePrice)}
+                          {perUserCents > 0 ? formatCents(perUserCents) : "—"}
                         </span>
                         <span className="text-sm text-gray-400 break-words">
-                          /{t("perMonth")}
+                          {t("perUserMonth")}
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        + {formatPrice(perUser)} {t("perUserMonth")}
+                        {billingCycle === "annual"
+                          ? t("billedAnnually")
+                          : t("billedMonthly")}
                       </p>
                     </>
                   )}
@@ -609,6 +725,105 @@ function BillingContent() {
           })}
         </div>
 
+        {/* ─── Ticketing Add-on Section ─── */}
+        {ticketingTiers.length > 0 && (
+          <div ref={ticketingRef} id="ticketing-addon" className="scroll-mt-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-violet-50 p-2.5">
+                    <TicketIcon className="h-5 w-5 text-violet-600" />
+                  </div>
+                  <div>
+                    <CardTitle>{t("ticketingAddonSectionTitle")}</CardTitle>
+                    <CardDescription>
+                      {t("ticketingAddonSectionDesc")}
+                    </CardDescription>
+                  </div>
+                  {subscription?.ticketingTier &&
+                    subscription.ticketingTier !== "NONE" && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
+                        {t("ticketingAddonActiveTier")}:{" "}
+                        {subscription.ticketingTier}
+                      </span>
+                    )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  {ticketingTiers.map((tier) => {
+                    const isCurrent = subscription?.ticketingTier === tier.id;
+                    return (
+                      <div
+                        key={tier.id}
+                        className={`rounded-xl border p-4 flex flex-col gap-3 transition-shadow ${
+                          isCurrent
+                            ? "border-violet-400 bg-violet-50/40 shadow-sm"
+                            : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:shadow-sm"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-sm text-gray-900">
+                              {tier.name}
+                            </p>
+                            <p className="text-2xl font-extrabold text-gray-900 mt-1">
+                              {formatCents(tier.priceMonthlyCents)}
+                              <span className="text-sm font-normal text-gray-400">
+                                {t("billingAddonPerMonth")}
+                              </span>
+                            </p>
+                          </div>
+                          {isCurrent && (
+                            <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-bold text-white shrink-0">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-1 text-xs text-gray-600">
+                          <li>
+                            {t("ticketingAddonTickets", {
+                              count: tier.ticketsPerMonth,
+                            })}
+                          </li>
+                          <li>
+                            {t("ticketingAddonStorageLabel", {
+                              gb: tier.storageGb,
+                            })}
+                          </li>
+                        </ul>
+                        {isCurrent ? (
+                          <button
+                            onClick={() => handleTicketingChange("NONE")}
+                            disabled={ticketingLoading}
+                            className="mt-auto text-xs font-semibold text-red-600 hover:text-red-800 disabled:opacity-60 transition-colors"
+                          >
+                            {t("ticketingAddonCancelShort")}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleTicketingChange(tier.id)}
+                            disabled={ticketingLoading}
+                            className="mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60 transition-colors"
+                          >
+                            {ticketingLoading ? (
+                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-violet-400 border-t-transparent" />
+                            ) : null}
+                            {subscription?.ticketingTier &&
+                            subscription.ticketingTier !== "NONE"
+                              ? t("ticketingAddonChange")
+                              : t("ticketingAddonActivate")}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* ─── Payment Info ─── */}
         <Card>
           <CardContent className="p-5 sm:p-6">
@@ -627,7 +842,6 @@ function BillingContent() {
                 </div>
               </div>
               <div className="flex items-center gap-4 text-gray-400">
-                {/* Payment method icons */}
                 <svg
                   className="h-8 w-auto"
                   viewBox="0 0 48 32"

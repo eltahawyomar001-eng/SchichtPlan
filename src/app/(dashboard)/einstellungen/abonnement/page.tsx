@@ -25,6 +25,7 @@ import {
   BeakerIcon,
   TicketIcon,
 } from "@/components/icons";
+import { SchichtplanungAddonCard } from "@/components/billing/schichtplanung-addon-card";
 import type { SessionUser } from "@/lib/types";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -110,6 +111,7 @@ function BillingContent() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const ticketingRef = useRef<HTMLDivElement>(null);
+  const schichtplanungRef = useRef<HTMLDivElement>(null);
 
   // Check for success/cancel from Stripe redirect
   useEffect(() => {
@@ -132,9 +134,16 @@ function BillingContent() {
       window.history.replaceState({}, "", "/einstellungen/abonnement");
     }
     if (addonParam === "ticketing") {
-      // Scroll to ticketing section after data loads
       setTimeout(() => {
         ticketingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 600);
+    }
+    if (addonParam === "schichtplanung") {
+      setTimeout(() => {
+        schichtplanungRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
@@ -823,6 +832,15 @@ function BillingContent() {
             </Card>
           </div>
         )}
+
+        {/* ─── Schichtplanung Add-on Section ─── */}
+        <div
+          ref={schichtplanungRef}
+          id="schichtplanung-addon"
+          className="scroll-mt-6"
+        >
+          <SchichtplanungAddonCard />
+        </div>
 
         {/* ─── Payment Info ─── */}
         <Card>

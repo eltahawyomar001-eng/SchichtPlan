@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PLANS, PLAN_ORDER } from "@/lib/stripe";
 import { TICKETING_ADDON } from "@/lib/ticketing-addon";
+import { SCHICHTPLANUNG_ADDON } from "@/lib/schichtplanung-addon";
 
 /**
  * GET /api/public/plans
@@ -32,5 +33,11 @@ export const GET = async () => {
     storageGb: TICKETING_ADDON[tier].storageGb,
   }));
 
-  return NextResponse.json({ plans, ticketingTiers });
+  const schichtplanung = {
+    perUserMonthlyCents: SCHICHTPLANUNG_ADDON.perUserMonthlyCents,
+    perUserAnnualCents: SCHICHTPLANUNG_ADDON.perUserAnnualCents,
+    name: SCHICHTPLANUNG_ADDON.name,
+  };
+
+  return NextResponse.json({ plans, ticketingTiers, schichtplanung });
 };

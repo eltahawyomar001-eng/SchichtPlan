@@ -1,24 +1,26 @@
 /**
  * Schichtplanung — Shift planning module gating.
  *
- * As of the 2026-04 product update, shift planning is INCLUDED in every paid
- * plan (Basic, Professional, Enterprise). The previous per-user add-on pricing
- * has been retired. The pricing constants and Stripe price ID helpers below
- * are kept for backward compatibility with existing webhook + admin-billing
- * routes, but `hasSchichtplanungAddon` now returns true for any workspace with
- * an active subscription.
+ * Schichtplanung is a paid per-user add-on billed on top of the base plan.
+ * Enterprise workspaces get it included at no extra charge.
+ *
+ * Pricing (set via env vars for Stripe test/live flexibility):
+ *   Monthly: €1.50 / user / month  (STRIPE_SCHICHTPLANUNG_MONTHLY_PRICE_ID)
+ *   Annual:  €14.40 / user / year  (STRIPE_SCHICHTPLANUNG_ANNUAL_PRICE_ID)
+ *            ≈ €1.20 / user / month — ~20% savings vs monthly
  */
 
 import { NextResponse } from "next/server";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { prisma } from "@/lib/db";
+import { ACTIVE_SUBSCRIPTION_STATUSES } from "@/lib/subscription";
 
 /* ═══════════════════════════════════════════════════════════════
-   Pricing config (DEPRECATED — kept for legacy webhook code paths)
+   Pricing config
    ═══════════════════════════════════════════════════════════════ */
 
 export const SCHICHTPLANUNG_ADDON = {
-  perUserMonthlyCents: 0,
-  perUserAnnualCents: 0,
+  perUserMonthlyCents: 150, // €1.50 / user / month
+  perUserAnnualCents: 1440, // €14.40 / user / year (€1.20/mo equivalent)
   name: "Schichtplanung",
   stripePriceIdMonthlyEnv: "STRIPE_SCHICHTPLANUNG_MONTHLY_PRICE_ID",
   stripePriceIdAnnualEnv: "STRIPE_SCHICHTPLANUNG_ANNUAL_PRICE_ID",
@@ -52,12 +54,21 @@ export function getSchichtplanungBillingByPriceId(
 
 /**
  * True if the workspace has access to the shift planning module.
- * Shift planning is included in all paid plans.
+ * - Enterprise: always granted (included in plan)
+ * - Basic / Professional: requires the schichtplanung add-on to be active
  */
 export async function hasSchichtplanungAddon(
   workspaceId: string,
 ): Promise<boolean> {
-  return hasActiveSubscription(workspaceId);
+  const sub = await prisma.subscription.findUnique({
+    where: { workspaceId },
+    select: { status: true, plan: true, schichtplanungAddonActive: true },
+  });
+  if (!sub) return false;
+  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
+    return false;
+  if (sub.plan === "ENTERPRISE") return true;
+  return sub.schichtplanungAddonActive;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -66,7 +77,8 @@ export async function hasSchichtplanungAddon(
 
 /**
  * Hard guard for write operations on /api/shifts/*.
- * Returns 402 only if the workspace has no active subscription at all.
+ * Returns 402 ADDON_REQUIRED when the workspace hasn't subscribed to
+ * Schichtplanung (or has no active plan at all).
  */
 export async function requireSchichtplanungAddon(
   workspaceId: string,
@@ -75,11 +87,13 @@ export async function requireSchichtplanungAddon(
 
   return NextResponse.json(
     {
-      error: "SUBSCRIPTION_REQUIRED",
-      code: "SUBSCRIPTION_REQUIRED",
+      error: "ADDON_REQUIRED",
+      code: "SCHICHTPLANUNG_ADDON_REQUIRED",
       message:
-        "Für die Schichtplanung ist ein aktives Abonnement erforderlich.",
+        "Das Schichtplanungs-Modul ist ein kostenpflichtiges Add-on. Bitte aktivieren Sie es in den Abrechnungseinstellungen.",
+      addon: "schichtplanung",
       upgradeRequired: true,
+      upgradeUrl: "/einstellungen/abonnement?addon=schichtplanung",
     },
     { status: 402 },
   );

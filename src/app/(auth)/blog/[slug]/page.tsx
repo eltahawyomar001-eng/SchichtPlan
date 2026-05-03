@@ -270,10 +270,10 @@ export default async function BlogPostPage({ params }: Props) {
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
             {post.title}
           </h1>
-          <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
             {post.content[0]}
           </p>
         </div>
@@ -298,10 +298,10 @@ export default async function BlogPostPage({ params }: Props) {
                       {numberMatch[1]}
                     </span>
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-2">
+                      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                         {numberMatch[2]}
                       </h2>
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                         {numberMatch[3]}
                       </p>
                     </div>
@@ -309,17 +309,17 @@ export default async function BlogPostPage({ params }: Props) {
                 </div>
               ) : headerMatch ? (
                 <div key={i} className="pt-8 first:pt-0">
-                  <h2 className="text-lg font-bold text-gray-900 mb-2">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                     {headerMatch[1]}
                   </h2>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                     {headerMatch[2]}
                   </p>
                 </div>
               ) : (
                 <p
                   key={i}
-                  className="pt-6 first:pt-0 text-gray-600 leading-relaxed"
+                  className="pt-6 first:pt-0 text-gray-600 dark:text-gray-400 leading-relaxed"
                 >
                   {paragraph}
                 </p>
@@ -351,7 +351,7 @@ export default async function BlogPostPage({ params }: Props) {
         {/* Related Articles */}
         {relatedPosts.length > 0 && (
           <section className="mt-14 pt-10 border-t border-gray-200 dark:border-gray-800">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               {t("relatedArticles")}
             </h2>
             <div className="grid sm:grid-cols-3 gap-5">
@@ -370,7 +370,7 @@ export default async function BlogPostPage({ params }: Props) {
                     <article className="h-full rounded-xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 hover:shadow-lg hover:border-emerald-200/60 dark:hover:border-emerald-700/60 transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/50 flex items-center justify-center">
-                          <related.Icon className="w-4 h-4 text-emerald-600" />
+                          <related.Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${rStyle.bg} ${rStyle.text}`}
@@ -381,7 +381,7 @@ export default async function BlogPostPage({ params }: Props) {
                           {related.category}
                         </span>
                       </div>
-                      <h3 className="font-bold text-gray-900 group-hover:text-emerald-600 transition-colors leading-snug text-sm">
+                      <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-snug text-sm">
                         {related.title}
                       </h3>
                       <p className="mt-2 text-xs text-gray-400">
@@ -402,7 +402,7 @@ export default async function BlogPostPage({ params }: Props) {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {t("ctaTitle")}
           </h2>
-          <p className="mt-3 text-gray-600 max-w-lg mx-auto">
+          <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
             {t("ctaSubtitle")}
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -414,7 +414,7 @@ export default async function BlogPostPage({ params }: Props) {
             </Link>
             <Link
               href="/pricing"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-3"
+              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-4 py-3"
             >
               {tc("viewPricing")}
             </Link>
@@ -422,7 +422,7 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </section>
 
-      <footer className="border-t border-gray-100 dark:border-gray-800 py-10">
+      <footer className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
@@ -430,38 +430,44 @@ export default async function BlogPostPage({ params }: Props) {
               Shiftfy
             </span>
           </div>
-          <p className="text-sm text-gray-400 text-center">
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center">
             © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400 dark:text-gray-500">
             <Link
               href="/datenschutz"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("privacy")}
             </Link>
             <Link
               href="/impressum"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("imprint")}
             </Link>
-            <Link href="/agb" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/agb"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
               {tf("terms")}
             </Link>
             <Link
               href="/widerruf"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("revocation")}
             </Link>
             <Link
               href="/barrierefreiheit"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("accessibility")}
             </Link>
-            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/sla"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
               SLA
             </Link>
           </div>

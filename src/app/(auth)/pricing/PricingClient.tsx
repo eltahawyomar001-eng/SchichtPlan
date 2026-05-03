@@ -153,32 +153,32 @@ export default function PricingClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
       {/* ─── Navbar ─── */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <ShiftfyMark className="w-7 h-7" />
-            <span className="font-bold text-base text-gray-900">
+            <span className="font-bold text-base text-gray-900 dark:text-white">
               Shift<span className="text-gradient">fy</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {tc("home")}
             </Link>
             <Link
               href="/blog"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               Blog
             </Link>
             <Link
               href="/login"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden sm:inline-flex"
             >
               {tc("login")}
             </Link>
@@ -194,24 +194,24 @@ export default function PricingClient() {
 
       {/* ─── Hero Section ─── */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30" />
-        <div className="absolute top-32 -left-40 w-[400px] h-[400px] bg-emerald-100/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 right-0 w-[300px] h-[300px] bg-emerald-100/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 dark:from-emerald-950/40 dark:via-gray-950 dark:to-emerald-950/20" />
+        <div className="absolute top-32 -left-40 w-[400px] h-[400px] bg-emerald-100/30 dark:bg-emerald-900/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 right-0 w-[300px] h-[300px] bg-emerald-100/20 dark:bg-emerald-900/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14">
           <div className="text-center max-w-3xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-5">
               <div className="h-1 w-8 rounded-full bg-brand-gradient" />
-              <span className="text-sm font-semibold text-emerald-600 uppercase tracking-wider">
+              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                 {tc("pricing")}
               </span>
               <div className="h-1 w-8 rounded-full bg-brand-gradient" />
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
               {t("title")}
             </h1>
-            <p className="mt-4 text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
               {t("subtitle")}
             </p>
 
@@ -225,22 +225,22 @@ export default function PricingClient() {
               ].map((badge) => (
                 <div
                   key={badge}
-                  className="flex items-center gap-1.5 text-sm font-medium text-gray-600"
+                  className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300"
                 >
-                  <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <CheckCircleIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   {badge}
                 </div>
               ))}
             </div>
 
             {/* ─── Billing Toggle ─── */}
-            <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 p-1">
+            <div className="mt-8 inline-flex items-center gap-3 rounded-full bg-gray-100 dark:bg-gray-800 p-1">
               <button
                 onClick={() => setAnnual(false)}
                 className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                   !annual
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
               >
                 {t("billingMonthly")}
@@ -249,8 +249,8 @@ export default function PricingClient() {
                 onClick={() => setAnnual(true)}
                 className={`relative rounded-full px-5 py-2 text-sm font-semibold transition-all ${
                   annual
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
               >
                 {t("billingAnnual")}
@@ -280,8 +280,8 @@ export default function PricingClient() {
                 key={plan.name}
                 className={`relative rounded-2xl border p-6 sm:p-7 flex flex-col transition-all duration-200 ${
                   plan.highlighted
-                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-white shadow-xl shadow-emerald-100/60 lg:-mt-3 lg:pb-10"
-                    : "border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-gray-300"
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-white dark:bg-gray-800 shadow-xl shadow-emerald-100/60 dark:shadow-emerald-900/30 lg:-mt-3 lg:pb-10"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 shadow-sm hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600"
                 }`}
               >
                 {plan.highlighted && (
@@ -290,8 +290,10 @@ export default function PricingClient() {
                   </span>
                 )}
 
-                <h2 className="text-xl font-bold text-gray-900">{plan.name}</h2>
-                <p className="mt-1 text-sm text-gray-500 min-h-[40px]">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {plan.name}
+                </h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 min-h-[40px]">
                   {plan.description}
                 </p>
 
@@ -299,22 +301,22 @@ export default function PricingClient() {
                   {plan.isEnterprise ? (
                     <>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-extrabold text-gray-900">
+                        <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
                           {plan.basePrice}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         {t("enterprisePriceNote")}
                       </p>
                     </>
                   ) : (
                     <>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-extrabold text-gray-900">
+                        <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
                           {plan.basePrice}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         {t("perUserMonth")} ·{" "}
                         {annual ? t("billedAnnually") : t("billedMonthly")}
                       </p>
@@ -322,13 +324,15 @@ export default function PricingClient() {
                   )}
                 </div>
 
-                <div className="mt-6 h-px bg-gray-100" />
+                <div className="mt-6 h-px bg-gray-100 dark:bg-gray-700" />
 
                 <ul className="mt-5 space-y-3 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{f}</span>
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {f}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -338,7 +342,7 @@ export default function PricingClient() {
                   className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${
                     plan.highlighted
                       ? "bg-brand-gradient text-white hover:shadow-lg hover:shadow-emerald-200/50"
-                      : "border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+                      : "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
                   }`}
                 >
                   {plan.cta}
@@ -432,10 +436,10 @@ export default function PricingClient() {
         </section>
 
         {/* ─── "Included in every plan" Section ─── */}
-        <section className="border-t border-gray-100 bg-white py-14 sm:py-20">
+        <section className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 py-14 sm:py-20">
           <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
                 {t("allPlansInclude")}
               </h2>
             </div>
@@ -444,12 +448,12 @@ export default function PricingClient() {
               {allPlansFeatures.map((feature) => (
                 <div
                   key={feature.label}
-                  className="flex flex-col items-center text-center p-4 rounded-2xl bg-white border border-gray-100 shadow-sm"
+                  className="flex flex-col items-center text-center p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
-                    <feature.Icon className="w-6 h-6 text-emerald-600" />
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center mb-3">
+                    <feature.Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {feature.label}
                   </span>
                 </div>
@@ -459,10 +463,10 @@ export default function PricingClient() {
         </section>
 
         {/* ─── Pricing FAQ ─── */}
-        <section className="py-14 sm:py-20">
+        <section className="py-14 sm:py-20 bg-gray-50/50 dark:bg-gray-950">
           <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
                 {t("pricingFaqTitle")}
               </h2>
             </div>
@@ -471,13 +475,13 @@ export default function PricingClient() {
               {faqs.map((faq) => (
                 <details
                   key={faq.q}
-                  className="group rounded-2xl border border-gray-200 bg-white overflow-hidden"
+                  className="group rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
                 >
-                  <summary className="flex items-center justify-between cursor-pointer px-5 sm:px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                  <summary className="flex items-center justify-between cursor-pointer px-5 sm:px-6 py-4 text-left font-semibold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base">
                     {faq.q}
-                    <ChevronRightIcon className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-90 shrink-0 ml-4" />
+                    <ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform group-open:rotate-90 shrink-0 ml-4" />
                   </summary>
-                  <div className="px-5 sm:px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                  <div className="px-5 sm:px-6 pb-5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                     {faq.a}
                   </div>
                 </details>
@@ -487,7 +491,7 @@ export default function PricingClient() {
         </section>
 
         {/* ─── CTA Section ─── */}
-        <section className="pb-16 sm:pb-24">
+        <section className="pb-16 sm:pb-24 bg-gray-50/50 dark:bg-gray-950">
           <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
             <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-600 to-emerald-700 p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
               <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full pointer-events-none" />
@@ -516,40 +520,45 @@ export default function PricingClient() {
       </main>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-gray-100 py-10">
+      <footer className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
-            <span className="font-bold text-sm text-gray-900">Shiftfy</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-white">
+              Shiftfy
+            </span>
           </div>
-          <p className="text-sm text-gray-400 text-center">
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center">
             © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400 dark:text-gray-500">
             <Link
               href="/datenschutz"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("privacy")}
             </Link>
             <Link
               href="/impressum"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("imprint")}
             </Link>
-            <Link href="/agb" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/agb"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
               {tf("terms")}
             </Link>
             <Link
               href="/widerruf"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("revocation")}
             </Link>
             <Link
               href="/barrierefreiheit"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("accessibility")}
             </Link>

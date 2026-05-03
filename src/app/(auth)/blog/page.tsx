@@ -134,14 +134,14 @@ export default async function BlogPage() {
         <div className="relative max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-10 sm:pt-16 sm:pb-14">
           <div className="flex items-center gap-2 mb-4">
             <div className="h-1 w-8 rounded-full bg-brand-gradient" />
-            <span className="text-sm font-semibold text-emerald-600 uppercase tracking-wider">
+            <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               Blog
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight max-w-2xl">
             {t("title")}
           </h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-xl leading-relaxed">
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-xl leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
@@ -168,7 +168,7 @@ export default async function BlogPage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {t("ctaTitle")}
           </h2>
-          <p className="mt-3 text-gray-600 max-w-lg mx-auto">
+          <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
             {t("ctaSubtitle")}
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -180,7 +180,7 @@ export default async function BlogPage() {
             </Link>
             <Link
               href="/pricing"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-3"
+              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-4 py-3"
             >
               {tc("viewPricing")}
             </Link>
@@ -188,7 +188,7 @@ export default async function BlogPage() {
         </div>
       </section>
 
-      <footer className="border-t border-gray-100 dark:border-gray-800 py-10">
+      <footer className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 py-10">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
           <div className="flex items-center gap-2">
             <ShiftfyMark className="w-6 h-6" />
@@ -196,38 +196,44 @@ export default async function BlogPage() {
               Shiftfy
             </span>
           </div>
-          <p className="text-sm text-gray-400 text-center">
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center">
             © {new Date().getFullYear()} Shiftfy. {tf("copyright")}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400 dark:text-gray-500">
             <Link
               href="/datenschutz"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("privacy")}
             </Link>
             <Link
               href="/impressum"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("imprint")}
             </Link>
-            <Link href="/agb" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/agb"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
               {tf("terms")}
             </Link>
             <Link
               href="/widerruf"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("revocation")}
             </Link>
             <Link
               href="/barrierefreiheit"
-              className="hover:text-gray-600 transition-colors"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               {tf("accessibility")}
             </Link>
-            <Link href="/sla" className="hover:text-gray-600 transition-colors">
+            <Link
+              href="/sla"
+              className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
               SLA
             </Link>
           </div>

@@ -295,7 +295,7 @@ function HeroSection() {
             <div className="mt-2 text-center lg:text-left">
               <Link
                 href="/ersparnisrechner"
-                className="text-xs text-gray-400 hover:text-emerald-600 transition-colors underline underline-offset-2"
+                className="text-xs text-gray-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors underline underline-offset-2"
               >
                 {t("heroRoiCalcLink")}
               </Link>

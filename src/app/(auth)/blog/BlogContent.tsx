@@ -123,8 +123,8 @@ export default function BlogContent({
           onClick={() => setActiveCategory(null)}
           className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all border ${
             activeCategory === null
-              ? "bg-gray-900 text-white border-gray-900"
-              : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white"
+              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500"
           }`}
         >
           {strings.filterAll} ({posts.length})
@@ -147,7 +147,7 @@ export default function BlogContent({
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all border ${
                 activeCategory === catKey
                   ? `${style.bg} ${style.text} border-transparent`
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500"
               }`}
             >
               {catLabel} ({count})

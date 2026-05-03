@@ -265,7 +265,7 @@ export default function PricingClient() {
         <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-6 pb-2">
           <Link
             href="/ersparnisrechner"
-            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
           >
             <span>💡</span>
             <span>{t("roiCalcBanner")}</span>
@@ -350,7 +350,7 @@ export default function PricingClient() {
 
         {/* ─── No Setup Fees Callout ─── */}
         <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-4 text-center">
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
             ✓ {t("noSetupFees")}
           </p>
         </div>
@@ -358,22 +358,22 @@ export default function PricingClient() {
         {/* ─── Plan Comparison Table ─── */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 pb-16 sm:pb-20">
           <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
               {t("compareTitle")}
             </h2>
           </div>
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="py-4 px-5 text-left font-semibold text-gray-500 w-1/2" />
-                  <th className="py-4 px-4 text-center font-bold text-gray-900">
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="py-4 px-5 text-left font-semibold text-gray-500 dark:text-gray-400 w-1/2" />
+                  <th className="py-4 px-4 text-center font-bold text-gray-900 dark:text-white">
                     {t("compareBasic")}
                   </th>
-                  <th className="py-4 px-4 text-center font-bold text-emerald-600">
+                  <th className="py-4 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
                     {t("comparePro")}
                   </th>
-                  <th className="py-4 px-4 text-center font-bold text-gray-900">
+                  <th className="py-4 px-4 text-center font-bold text-gray-900 dark:text-white">
                     {t("compareEnterprise")}
                   </th>
                 </tr>
@@ -382,30 +382,46 @@ export default function PricingClient() {
                 {compareRows.map((row, i) => (
                   <tr
                     key={row.feature}
-                    className={i % 2 === 0 ? "bg-gray-50/50" : "bg-white"}
+                    className={
+                      i % 2 === 0
+                        ? "bg-gray-50/50 dark:bg-gray-800/50"
+                        : "bg-white dark:bg-gray-900"
+                    }
                   >
-                    <td className="py-3 px-5 font-medium text-gray-700">
+                    <td className="py-3 px-5 font-medium text-gray-700 dark:text-gray-200">
                       {row.feature}
                     </td>
                     <td className="py-3 px-4 text-center text-base">
                       {row.basic ? (
-                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                          ✓
+                        </span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">
+                          —
+                        </span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-center text-base">
                       {row.pro ? (
-                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                          ✓
+                        </span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">
+                          —
+                        </span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-center text-base">
                       {row.enterprise ? (
-                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                          ✓
+                        </span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300 dark:text-gray-600">
+                          —
+                        </span>
                       )}
                     </td>
                   </tr>

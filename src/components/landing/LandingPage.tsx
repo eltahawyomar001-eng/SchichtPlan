@@ -68,7 +68,6 @@ export function LandingPage() {
 
       <main id="main-content">
         <HeroSection />
-        <SocialProofSection />
         <FeatureTabsSection />
         <BenefitsSection />
         <AppShowcaseSection />

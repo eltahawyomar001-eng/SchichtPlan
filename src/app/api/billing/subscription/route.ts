@@ -7,6 +7,8 @@ import {
 } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
 import { getStripe, getPlanByPriceId, PLANS, type PlanId } from "@/lib/stripe";
+import { getTicketingTierByPriceId } from "@/lib/ticketing-addon";
+import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
@@ -17,9 +19,11 @@ import { requireAuth } from "@/lib/api-response";
  * Returns the current workspace subscription status and plan limits.
  *
  * If ?reconcile=1 is passed and the workspace has a Stripe subscription,
- * the DB is force-synced with the live Stripe state. This is a safety net
- * for missed/delayed webhooks — it guarantees the UI never displays a
- * stale plan after the user has changed it in Stripe.
+ * the DB is force-synced with the live Stripe state unconditionally —
+ * status, period dates, seatCount, cancelAtPeriodEnd, and plan are all
+ * written from live Stripe data. This is the authoritative sync path
+ * and runs on every billing page load to keep the UI current without
+ * depending solely on webhook delivery.
  */
 export const GET = withRoute(
   "/api/billing/subscription",
@@ -32,53 +36,61 @@ export const GET = withRoute(
     let sub = await getSubscription(user.workspaceId);
     if (!sub) sub = await ensureSubscription(user.workspaceId);
 
-    const reconcile =
+    const shouldReconcile =
       new URL(req.url).searchParams.get("reconcile") === "1" &&
       !isSimulationMode() &&
       !!sub.stripeSubscriptionId &&
       !!process.env.STRIPE_SECRET_KEY;
 
-    if (reconcile && sub.stripeSubscriptionId) {
+    if (shouldReconcile && sub.stripeSubscriptionId) {
       try {
         const stripe = getStripe();
         const liveSub = await stripe.subscriptions.retrieve(
           sub.stripeSubscriptionId,
         );
+
+        // Find the main plan item — exclude ticketing and schichtplanung addon items.
+        // Falls back to first item if no plan item is identifiable (e.g. env vars
+        // not yet configured), which is still better than using a stale DB value.
         const mainItem =
-          liveSub.items.data.find((it) => getPlanByPriceId(it.price.id)) ??
-          liveSub.items.data[0];
+          liveSub.items.data.find(
+            (it) =>
+              !getTicketingTierByPriceId(it.price.id) &&
+              !getSchichtplanungBillingByPriceId(it.price.id),
+          ) ?? liveSub.items.data[0];
+
         const livePriceId = mainItem?.price.id ?? "";
         const livePlan = livePriceId ? getPlanByPriceId(livePriceId) : null;
-        const drifted =
-          (livePriceId && livePriceId !== sub.stripePriceId) ||
-          (livePlan && livePlan.prismaKey !== sub.plan);
 
-        if (drifted) {
-          log.warn("[Billing] reconciling drifted subscription", {
-            workspaceId: user.workspaceId,
-            dbPlan: sub.plan,
-            dbPriceId: sub.stripePriceId,
-            livePriceId,
-            livePlan: livePlan?.prismaKey,
-          });
-          await updateSubscriptionFromStripe({
-            stripeSubscriptionId: sub.stripeSubscriptionId,
-            stripePriceId: livePriceId,
-            status: liveSub.status,
-            seatCount: mainItem?.quantity ?? sub.seatCount,
-            currentPeriodStart: new Date(
-              (mainItem?.current_period_start ?? 0) * 1000,
-            ),
-            currentPeriodEnd: new Date(
-              (mainItem?.current_period_end ?? 0) * 1000,
-            ),
-            cancelAtPeriodEnd: liveSub.cancel_at_period_end,
-          });
-          if (livePlan) {
-            await syncUsageLimits(user.workspaceId, livePlan.id as PlanId);
-          }
-          sub = await getSubscription(user.workspaceId);
+        if (!livePlan && livePriceId) {
+          log.warn(
+            "[Billing] reconcile: live priceId not found in PLANS config — plan field will not be updated. Check STRIPE_PRICE_* env vars.",
+            { workspaceId: user.workspaceId, livePriceId },
+          );
         }
+
+        // Always sync all fields unconditionally — period dates, status,
+        // seatCount, and cancelAtPeriodEnd change without plan changes
+        // (e.g. on invoice renewal, payment method updates, etc.).
+        await updateSubscriptionFromStripe({
+          stripeSubscriptionId: sub.stripeSubscriptionId,
+          stripePriceId: livePriceId,
+          status: liveSub.status,
+          seatCount: mainItem?.quantity ?? sub.seatCount,
+          currentPeriodStart: new Date(
+            (mainItem?.current_period_start ?? 0) * 1000,
+          ),
+          currentPeriodEnd: new Date(
+            (mainItem?.current_period_end ?? 0) * 1000,
+          ),
+          cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+        });
+
+        if (livePlan) {
+          await syncUsageLimits(user.workspaceId, livePlan.id as PlanId);
+        }
+
+        sub = await getSubscription(user.workspaceId);
       } catch (err) {
         log.error("[Billing] reconcile failed", {
           error: err instanceof Error ? err.message : String(err),
@@ -101,9 +113,11 @@ export const GET = withRoute(
       trialEnd: sub.trialEnd,
       hasStripeSubscription: !!sub.stripeSubscriptionId,
       ticketingTier: sub.ticketingTier ?? "NONE",
+      schichtplanungAddonActive: sub.schichtplanungAddonActive,
+      schichtplanungAddonBilling: sub.schichtplanungAddonBilling,
       limits: planConfig?.limits ?? PLANS.basic.limits,
       simulationMode: isSimulationMode(),
-      reconciled: reconcile,
+      reconciled: shouldReconcile,
     });
   },
 );

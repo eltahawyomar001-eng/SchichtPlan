@@ -77,11 +77,7 @@ export const POST = withRoute(
       !process.env.STRIPE_SECRET_KEY ||
       process.env.STRIPE_SECRET_KEY.startsWith("sk_test_YOUR");
 
-    if (
-      isSimulationMode() ||
-      stripeUnconfigured ||
-      !subscription.stripeSubscriptionId
-    ) {
+    if (isSimulationMode() || stripeUnconfigured) {
       await prisma.subscription.update({
         where: { workspaceId },
         data: {
@@ -95,6 +91,18 @@ export const POST = withRoute(
         `[Billing:Simulate] Ticketing add-on ${currentTier} → ${newTier} for workspace=${workspaceId}`,
       );
       return NextResponse.json({ tier: newTier, simulation: true });
+    }
+
+    // Stripe is configured — require an active base subscription
+    if (!subscription.stripeSubscriptionId) {
+      return NextResponse.json(
+        {
+          error: "NO_BASE_SUBSCRIPTION",
+          message:
+            "Bitte schließen Sie zuerst ein Basisabonnement ab, bevor Sie Add-ons hinzufügen.",
+        },
+        { status: 400 },
+      );
     }
 
     // ── Real Stripe: manage subscription item ──

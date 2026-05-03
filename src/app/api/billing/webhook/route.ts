@@ -269,7 +269,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       break;
     }
 
-    /* ─── Invoice paid → reset ticketing quota + send receipt ─── */
+    /* ─── Invoice paid → sync period dates + reset ticketing quota ─── */
     case "invoice.paid": {
       const invoice = event.data.object;
       const customerId =
@@ -282,10 +282,54 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       try {
         const sub = await prisma.subscription.findFirst({
           where: { stripeCustomerId: customerId },
-          select: { workspaceId: true, ticketingTier: true },
+          select: {
+            workspaceId: true,
+            ticketingTier: true,
+            stripeSubscriptionId: true,
+            seatCount: true,
+          },
         });
 
         if (sub) {
+          // Sync period dates from live subscription so renewal date is always current.
+          // This is the canonical place to update currentPeriodEnd — every billing
+          // cycle fires invoice.paid before customer.subscription.updated arrives.
+          if (sub.stripeSubscriptionId) {
+            try {
+              const liveSub = await stripe.subscriptions.retrieve(
+                sub.stripeSubscriptionId,
+              );
+              const mainItem =
+                liveSub.items.data.find(
+                  (it) =>
+                    !getTicketingTierByPriceId(it.price.id) &&
+                    !getSchichtplanungBillingByPriceId(it.price.id),
+                ) ?? liveSub.items.data[0];
+
+              await updateSubscriptionFromStripe({
+                stripeSubscriptionId: liveSub.id,
+                stripePriceId: mainItem?.price.id ?? "",
+                status: liveSub.status,
+                seatCount: mainItem?.quantity ?? sub.seatCount,
+                currentPeriodStart: new Date(
+                  (mainItem?.current_period_start ?? 0) * 1000,
+                ),
+                currentPeriodEnd: new Date(
+                  (mainItem?.current_period_end ?? 0) * 1000,
+                ),
+                cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+              });
+              log.info(
+                `[Stripe] Period dates synced on invoice.paid for workspace=${sub.workspaceId}`,
+              );
+            } catch (syncErr) {
+              log.warn("[Stripe] Failed to sync period on invoice.paid", {
+                error:
+                  syncErr instanceof Error ? syncErr.message : String(syncErr),
+              });
+            }
+          }
+
           // Reset monthly ticket counter on new billing period
           if (sub.ticketingTier && sub.ticketingTier !== "NONE") {
             await prisma.workspaceUsage.updateMany({

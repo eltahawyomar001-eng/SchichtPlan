@@ -106,6 +106,7 @@ function BillingContent() {
     "annual",
   );
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [ticketingLoading, setTicketingLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -121,6 +122,16 @@ function BillingContent() {
 
     if (billingParam === "success") {
       setSuccessMsg(t("checkoutSuccess"));
+      fetch("/api/billing/subscription?reconcile=1")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) setSubscription(data);
+        })
+        .catch(() => {});
+      window.history.replaceState({}, "", "/einstellungen/abonnement");
+    }
+    if (portalParam === "success") {
+      setSuccessMsg(t("portalReturnSuccess"));
       fetch("/api/billing/subscription?reconcile=1")
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
@@ -306,6 +317,42 @@ function BillingContent() {
       setErrorMsg(t("checkoutError"));
     } finally {
       setCheckoutLoading(null);
+    }
+  };
+
+  const handleUpgrade = async (planId: string) => {
+    if (!user) return;
+    setUpgradeLoading(planId);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      const res = await fetch("/api/billing/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId, billingCycle }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.message ?? data.error ?? t("upgradeError"));
+        return;
+      }
+
+      setSuccessMsg(t("upgradeSuccess"));
+      // Use the freshly-returned subscription data from the upgrade response,
+      // then do a full reconcile to confirm
+      if (data.subscription) setSubscription(data.subscription);
+      fetch("/api/billing/subscription?reconcile=1")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) setSubscription(d);
+        })
+        .catch(() => {});
+    } catch {
+      setErrorMsg(t("upgradeError"));
+    } finally {
+      setUpgradeLoading(null);
     }
   };
 
@@ -710,7 +757,30 @@ function BillingContent() {
                       <StarIcon className="h-4 w-4" />
                       {t("contactSales")}
                     </a>
+                  ) : subscription?.hasStripeSubscription ? (
+                    // Existing subscriber — switch plan directly via upgrade endpoint
+                    <button
+                      onClick={() => handleUpgrade(plan.id)}
+                      disabled={
+                        upgradeLoading !== null || checkoutLoading !== null
+                      }
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
+                        plan.highlighted
+                          ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-200/50 hover:shadow-xl hover:brightness-110"
+                          : "border border-gray-200 dark:border-zinc-700 text-gray-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:shadow-md"
+                      }`}
+                    >
+                      {upgradeLoading === plan.id ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        <ArrowRightIcon className="h-4 w-4" />
+                      )}
+                      {upgradeLoading === plan.id
+                        ? t("upgradingPlan")
+                        : t("upgradePlan")}
+                    </button>
                   ) : (
+                    // No active subscription yet — go through checkout
                     <button
                       onClick={() => handleCheckout(plan.id)}
                       disabled={checkoutLoading !== null}
@@ -725,7 +795,7 @@ function BillingContent() {
                       ) : (
                         <ArrowRightIcon className="h-4 w-4" />
                       )}
-                      {t("switchPlan")}
+                      {t("subscribeToPlan")}
                     </button>
                   )}
                 </div>

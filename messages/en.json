@@ -1241,7 +1241,14 @@
     "ticketingAddonConfirmCancel": "Cancel ticketing add-on? Access will be disabled immediately.",
     "billedAnnually": "billed annually",
     "billedMonthly": "billed monthly",
-    "billingAddonPerMonth": "/month"
+    "billingAddonPerMonth": "/month",
+    "upgradePlan": "Switch to this plan",
+    "upgradingPlan": "Switching plan...",
+    "upgradeSuccess": "Plan switched successfully!",
+    "subscribeToPlan": "Subscribe",
+    "portalReturnSuccess": "Changes have been synchronized from Stripe.",
+    "noBaseSubscription": "Please subscribe to a base plan first.",
+    "upgradeError": "Plan switch failed. Please try again."
   },
   "roles": {
     "title": "Roles and Permissions",

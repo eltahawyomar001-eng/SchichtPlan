@@ -1241,7 +1241,14 @@
     "ticketingAddonConfirmCancel": "Ticketing Add-on wirklich kündigen? Der Zugang wird sofort deaktiviert.",
     "billedAnnually": "jährlich abgerechnet",
     "billedMonthly": "monatlich abgerechnet",
-    "billingAddonPerMonth": "/Monat"
+    "billingAddonPerMonth": "/Monat",
+    "upgradePlan": "Zu diesem Plan wechseln",
+    "upgradingPlan": "Plan wird gewechselt...",
+    "upgradeSuccess": "Plan erfolgreich gewechselt!",
+    "subscribeToPlan": "Abonnieren",
+    "portalReturnSuccess": "Änderungen wurden von Stripe synchronisiert.",
+    "noBaseSubscription": "Bitte abonnieren Sie zuerst einen Basisplan.",
+    "upgradeError": "Plan-Wechsel fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
   "roles": {
     "title": "Rollen und Berechtigungen",

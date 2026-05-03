@@ -5,13 +5,18 @@ import { requireAuth } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
 import { prisma } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
-import { isSimulationMode } from "@/lib/subscription";
+import {
+  isSimulationMode,
+  linkSubscriptionByCustomer,
+} from "@/lib/subscription";
 import { log } from "@/lib/logger";
 import {
   TICKETING_ADDON,
   getTicketingStripePriceId,
+  getTicketingTierByPriceId,
   syncTicketingLimits,
 } from "@/lib/ticketing-addon";
+import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
 import { TicketingAddonTier } from "@prisma/client";
 
 /**
@@ -93,8 +98,55 @@ export const POST = withRoute(
       return NextResponse.json({ tier: newTier, simulation: true });
     }
 
-    // Stripe is configured — require an active base subscription
-    if (!subscription.stripeSubscriptionId) {
+    // ── Real Stripe: manage subscription item ──
+    const stripe = getStripe();
+    let stripeSubId = subscription.stripeSubscriptionId;
+
+    // Auto-link fallback: webhook may have been missed during checkout.
+    // If we have a customerId but no subscriptionId, query Stripe and link it.
+    if (!stripeSubId && subscription.stripeCustomerId) {
+      try {
+        const stripeSubs = await stripe.subscriptions.list({
+          customer: subscription.stripeCustomerId,
+          status: "active",
+          limit: 1,
+          expand: ["data.items"],
+        });
+        if (stripeSubs.data.length > 0) {
+          const liveSub = stripeSubs.data[0];
+          const mainItem =
+            liveSub.items.data.find(
+              (it) =>
+                !getTicketingTierByPriceId(it.price.id) &&
+                !getSchichtplanungBillingByPriceId(it.price.id),
+            ) ?? liveSub.items.data[0];
+          const linked = await linkSubscriptionByCustomer({
+            stripeCustomerId: subscription.stripeCustomerId,
+            stripeSubscriptionId: liveSub.id,
+            stripePriceId: mainItem?.price.id ?? "",
+            status: liveSub.status,
+            seatCount: mainItem?.quantity ?? subscription.seatCount,
+            currentPeriodStart: new Date(
+              (mainItem?.current_period_start ?? 0) * 1000,
+            ),
+            currentPeriodEnd: new Date(
+              (mainItem?.current_period_end ?? 0) * 1000,
+            ),
+            cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+          });
+          if (linked > 0) {
+            stripeSubId = liveSub.id;
+            log.info(
+              `[Billing:Addon] auto-linked stripeSubscriptionId=${liveSub.id} for ws=${workspaceId}`,
+            );
+          }
+        }
+      } catch (err) {
+        log.error("[Billing:Addon] auto-link failed", { err, workspaceId });
+      }
+    }
+
+    if (!stripeSubId) {
       return NextResponse.json(
         {
           error: "NO_BASE_SUBSCRIPTION",
@@ -104,10 +156,6 @@ export const POST = withRoute(
         { status: 400 },
       );
     }
-
-    // ── Real Stripe: manage subscription item ──
-    const stripe = getStripe();
-    const stripeSubId = subscription.stripeSubscriptionId;
     let newItemId: string | null =
       subscription.ticketingStripeSubscriptionItemId;
 

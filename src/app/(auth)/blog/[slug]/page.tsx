@@ -282,11 +282,16 @@ export default async function BlogPostPage({ params }: Props) {
       {/* Article Content */}
       <main className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-10 sm:py-14">
         <article className="space-y-0">
-          {post.content.slice(1).map((paragraph, i) => {
-            const numberMatch = paragraph.match(/^(\d+)\.\s+(.+?):\s+(.*)/);
+          {(() => {
+            const body = post.content.slice(1);
+            const midpoint = Math.floor(body.length / 2);
+            return body.map((paragraph, i) => {
+              const numberMatch = paragraph.match(/^(\d+)\.\s+(.+?):\s+(.*)/);
+              const headerMatch = !numberMatch
+                ? paragraph.match(/^(.+?):\s+(.*)/)
+                : null;
 
-            if (numberMatch) {
-              return (
+              const node = numberMatch ? (
                 <div key={i} className="pt-8 first:pt-0">
                   <div className="flex items-start gap-4">
                     <span className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-sm font-bold flex items-center justify-center mt-0.5">
@@ -302,13 +307,7 @@ export default async function BlogPostPage({ params }: Props) {
                     </div>
                   </div>
                 </div>
-              );
-            }
-
-            const headerMatch = paragraph.match(/^(.+?):\s+(.*)/);
-
-            if (headerMatch) {
-              return (
+              ) : headerMatch ? (
                 <div key={i} className="pt-8 first:pt-0">
                   <h2 className="text-lg font-bold text-gray-900 mb-2">
                     {headerMatch[1]}
@@ -317,18 +316,36 @@ export default async function BlogPostPage({ params }: Props) {
                     {headerMatch[2]}
                   </p>
                 </div>
+              ) : (
+                <p
+                  key={i}
+                  className="pt-6 first:pt-0 text-gray-600 leading-relaxed"
+                >
+                  {paragraph}
+                </p>
               );
-            }
 
-            return (
-              <p
-                key={i}
-                className="pt-6 first:pt-0 text-gray-600 leading-relaxed"
-              >
-                {paragraph}
-              </p>
-            );
-          })}
+              if (i === midpoint && body.length >= 4) {
+                return (
+                  <div key={`group-${i}`}>
+                    {node}
+                    <aside className="my-10 rounded-2xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 p-6 sm:p-8 text-center">
+                      <p className="font-bold text-gray-900 dark:text-white mb-3 text-base sm:text-lg">
+                        {t("midArticleCtaTitle")}
+                      </p>
+                      <Link
+                        href="/register"
+                        className="inline-flex items-center gap-2 bg-brand-gradient text-white font-semibold px-5 py-2.5 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
+                      >
+                        {t("midArticleCtaButton")} →
+                      </Link>
+                    </aside>
+                  </div>
+                );
+              }
+              return node;
+            });
+          })()}
         </article>
 
         {/* Related Articles */}

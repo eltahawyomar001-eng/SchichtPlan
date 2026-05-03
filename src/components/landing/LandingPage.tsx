@@ -68,6 +68,7 @@ export function LandingPage() {
 
       <main id="main-content">
         <HeroSection />
+        <SocialProofSection />
         <FeatureTabsSection />
         <BenefitsSection />
         <AppShowcaseSection />
@@ -291,6 +292,14 @@ function HeroSection() {
             <p className="mt-3 text-sm text-gray-400 text-center lg:text-left">
               {t("heroCtaSubNote")}
             </p>
+            <div className="mt-2 text-center lg:text-left">
+              <Link
+                href="/ersparnisrechner"
+                className="text-xs text-gray-400 hover:text-emerald-600 transition-colors underline underline-offset-2"
+              >
+                {t("heroRoiCalcLink")}
+              </Link>
+            </div>
           </div>
 
           {/* Right: App mockup */}

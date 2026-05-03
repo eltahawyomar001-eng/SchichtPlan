@@ -104,6 +104,52 @@ export default function PricingClient() {
     { q: t("pricingFaq1Q"), a: t("pricingFaq1A") },
     { q: t("pricingFaq2Q"), a: t("pricingFaq2A") },
     { q: t("pricingFaq3Q"), a: t("pricingFaq3A") },
+    { q: t("pricingFaq4Q"), a: t("pricingFaq4A") },
+    { q: t("pricingFaq5Q"), a: t("pricingFaq5A") },
+    { q: t("pricingFaq6Q"), a: t("pricingFaq6A") },
+  ];
+
+  const compareRows: {
+    feature: string;
+    basic: boolean;
+    pro: boolean;
+    enterprise: boolean;
+  }[] = [
+    { feature: t("compareFeature1"), basic: true, pro: true, enterprise: true },
+    { feature: t("compareFeature2"), basic: true, pro: true, enterprise: true },
+    { feature: t("compareFeature3"), basic: true, pro: true, enterprise: true },
+    { feature: t("compareFeature4"), basic: true, pro: true, enterprise: true },
+    { feature: t("compareFeature5"), basic: true, pro: true, enterprise: true },
+    {
+      feature: t("compareFeature6"),
+      basic: false,
+      pro: true,
+      enterprise: true,
+    },
+    {
+      feature: t("compareFeature7"),
+      basic: false,
+      pro: true,
+      enterprise: true,
+    },
+    {
+      feature: t("compareFeature8"),
+      basic: false,
+      pro: true,
+      enterprise: true,
+    },
+    {
+      feature: t("compareFeature9"),
+      basic: false,
+      pro: false,
+      enterprise: true,
+    },
+    {
+      feature: t("compareFeature10"),
+      basic: false,
+      pro: false,
+      enterprise: true,
+    },
   ];
 
   return (
@@ -215,8 +261,19 @@ export default function PricingClient() {
       </header>
 
       <main>
+        {/* ─── ROI Calculator Callout ─── */}
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-6 pb-2">
+          <Link
+            href="/ersparnisrechner"
+            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+          >
+            <span>💡</span>
+            <span>{t("roiCalcBanner")}</span>
+          </Link>
+        </div>
+
         {/* ─── Plan Cards ─── */}
-        <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-16 sm:pb-20 -mt-2">
+        <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-8 sm:pb-12 -mt-2">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:items-start">
             {plans.map((plan) => (
               <div
@@ -288,6 +345,73 @@ export default function PricingClient() {
                 </Link>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ─── No Setup Fees Callout ─── */}
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-4 text-center">
+          <p className="text-sm text-gray-500 font-medium">
+            ✓ {t("noSetupFees")}
+          </p>
+        </div>
+
+        {/* ─── Plan Comparison Table ─── */}
+        <section className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 pb-16 sm:pb-20">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              {t("compareTitle")}
+            </h2>
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="py-4 px-5 text-left font-semibold text-gray-500 w-1/2" />
+                  <th className="py-4 px-4 text-center font-bold text-gray-900">
+                    {t("compareBasic")}
+                  </th>
+                  <th className="py-4 px-4 text-center font-bold text-emerald-600">
+                    {t("comparePro")}
+                  </th>
+                  <th className="py-4 px-4 text-center font-bold text-gray-900">
+                    {t("compareEnterprise")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {compareRows.map((row, i) => (
+                  <tr
+                    key={row.feature}
+                    className={i % 2 === 0 ? "bg-gray-50/50" : "bg-white"}
+                  >
+                    <td className="py-3 px-5 font-medium text-gray-700">
+                      {row.feature}
+                    </td>
+                    <td className="py-3 px-4 text-center text-base">
+                      {row.basic ? (
+                        <span className="text-emerald-600 font-bold">✓</span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center text-base">
+                      {row.pro ? (
+                        <span className="text-emerald-600 font-bold">✓</span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center text-base">
+                      {row.enterprise ? (
+                        <span className="text-emerald-600 font-bold">✓</span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 

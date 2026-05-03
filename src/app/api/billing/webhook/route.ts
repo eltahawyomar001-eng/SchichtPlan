@@ -5,6 +5,7 @@ import type { PlanId } from "@/lib/stripe";
 import {
   activateSubscription,
   updateSubscriptionFromStripe,
+  linkSubscriptionByCustomer,
   cancelSubscription,
 } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
@@ -186,9 +187,10 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       }
 
       const priceId = mainItem?.price.id;
+      const stripeCustomerId =
+        typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
 
-      await updateSubscriptionFromStripe({
-        stripeSubscriptionId: sub.id,
+      const subscriptionPayload = {
         stripePriceId: priceId ?? "",
         status: sub.status,
         seatCount: mainItem?.quantity ?? 1,
@@ -197,12 +199,52 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
         ),
         currentPeriodEnd: new Date((mainItem?.current_period_end ?? 0) * 1000),
         cancelAtPeriodEnd: sub.cancel_at_period_end,
-      });
+      };
+
+      // Primary path: update by subscriptionId.
+      // Fallback: if the checkout.session.completed webhook was missed, the DB
+      // row has stripeSubscriptionId=null so the primary update finds nothing
+      // (Prisma P2025). In that case look up by stripeCustomerId and link.
+      try {
+        await updateSubscriptionFromStripe({
+          stripeSubscriptionId: sub.id,
+          ...subscriptionPayload,
+        });
+      } catch (err: unknown) {
+        const isPrismaNotFound =
+          err instanceof Error &&
+          "code" in err &&
+          (err as { code?: string }).code === "P2025";
+
+        if (!isPrismaNotFound) throw err;
+
+        if (stripeCustomerId) {
+          const linked = await linkSubscriptionByCustomer({
+            stripeCustomerId,
+            stripeSubscriptionId: sub.id,
+            ...subscriptionPayload,
+          });
+          if (linked > 0) {
+            log.info(
+              `[Stripe] Auto-linked subscription ${sub.id} via customerId=${stripeCustomerId}`,
+            );
+          } else {
+            log.warn(
+              `[Stripe] customer.subscription.updated: no DB record for sub=${sub.id} or customer=${stripeCustomerId}`,
+            );
+          }
+        }
+      }
 
       // Sync usage limits if the plan changed
       const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
       const dbSub = await prisma.subscription.findFirst({
-        where: { stripeSubscriptionId: sub.id },
+        where: {
+          OR: [
+            { stripeSubscriptionId: sub.id },
+            ...(stripeCustomerId ? [{ stripeCustomerId }] : []),
+          ],
+        },
         select: {
           workspaceId: true,
           ticketingTier: true,

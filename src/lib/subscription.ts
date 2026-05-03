@@ -148,6 +148,7 @@ export async function activateSubscription({
 
 /**
  * Update subscription when Stripe sends subscription.updated event.
+ * Looks up by stripeSubscriptionId — throws Prisma P2025 if no record found.
  */
 export async function updateSubscriptionFromStripe({
   stripeSubscriptionId,
@@ -166,10 +167,6 @@ export async function updateSubscriptionFromStripe({
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
 }) {
-  // Derive the plan from the priceId so the DB stays in sync when users
-  // switch plans through the Stripe Customer Portal or via subscription updates.
-  // Without this, only stripePriceId would change while `plan` (which the UI
-  // reads) silently kept showing the old tier.
   const planConfig = stripePriceId ? getPlanByPriceId(stripePriceId) : null;
 
   return prisma.subscription.update({
@@ -184,6 +181,54 @@ export async function updateSubscriptionFromStripe({
       cancelAtPeriodEnd,
     },
   });
+}
+
+/**
+ * Link a Stripe subscription to an existing DB record found by stripeCustomerId,
+ * then update all subscription fields.
+ *
+ * Used when a webhook arrives for a subscription that hasn't been recorded
+ * yet (e.g. checkout.session.completed webhook was missed but a later
+ * customer.subscription.updated arrived). Also used by the reconcile endpoint
+ * when stripeSubscriptionId is null but stripeCustomerId is set.
+ *
+ * Returns the number of rows updated (0 = no matching customer found).
+ */
+export async function linkSubscriptionByCustomer({
+  stripeCustomerId,
+  stripeSubscriptionId,
+  stripePriceId,
+  status,
+  seatCount,
+  currentPeriodStart,
+  currentPeriodEnd,
+  cancelAtPeriodEnd,
+}: {
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+  stripePriceId: string;
+  status: string;
+  seatCount: number;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+}): Promise<number> {
+  const planConfig = stripePriceId ? getPlanByPriceId(stripePriceId) : null;
+
+  const result = await prisma.subscription.updateMany({
+    where: { stripeCustomerId },
+    data: {
+      stripeSubscriptionId,
+      stripePriceId,
+      ...(planConfig && { plan: planConfig.prismaKey }),
+      status: mapStripeStatus(status),
+      seatCount,
+      currentPeriodStart,
+      currentPeriodEnd,
+      cancelAtPeriodEnd,
+    },
+  });
+  return result.count;
 }
 
 /**

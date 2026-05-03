@@ -4,6 +4,7 @@ import {
   ensureSubscription,
   isSimulationMode,
   updateSubscriptionFromStripe,
+  linkSubscriptionByCustomer,
 } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
 import { getStripe, getPlanByPriceId, PLANS, type PlanId } from "@/lib/stripe";
@@ -36,11 +37,71 @@ export const GET = withRoute(
     let sub = await getSubscription(user.workspaceId);
     if (!sub) sub = await ensureSubscription(user.workspaceId);
 
-    const shouldReconcile =
+    const wantsReconcile =
       new URL(req.url).searchParams.get("reconcile") === "1" &&
       !isSimulationMode() &&
-      !!sub.stripeSubscriptionId &&
       !!process.env.STRIPE_SECRET_KEY;
+
+    // Phase 1 — Auto-link: if stripeSubscriptionId is missing but stripeCustomerId
+    // is present, the checkout.session.completed webhook was missed. Find the
+    // customer's active subscription in Stripe and link it to the DB now so that
+    // future reconciles and webhook lookups can work correctly.
+    if (wantsReconcile && !sub.stripeSubscriptionId && sub.stripeCustomerId) {
+      try {
+        const stripe = getStripe();
+        const stripeSubs = await stripe.subscriptions.list({
+          customer: sub.stripeCustomerId,
+          status: "active",
+          limit: 1,
+          expand: ["data.items"],
+        });
+
+        if (stripeSubs.data.length > 0) {
+          const liveSub = stripeSubs.data[0];
+          const mainItem =
+            liveSub.items.data.find(
+              (it) =>
+                !getTicketingTierByPriceId(it.price.id) &&
+                !getSchichtplanungBillingByPriceId(it.price.id),
+            ) ?? liveSub.items.data[0];
+
+          const linked = await linkSubscriptionByCustomer({
+            stripeCustomerId: sub.stripeCustomerId,
+            stripeSubscriptionId: liveSub.id,
+            stripePriceId: mainItem?.price.id ?? "",
+            status: liveSub.status,
+            seatCount: mainItem?.quantity ?? sub.seatCount,
+            currentPeriodStart: new Date(
+              (mainItem?.current_period_start ?? 0) * 1000,
+            ),
+            currentPeriodEnd: new Date(
+              (mainItem?.current_period_end ?? 0) * 1000,
+            ),
+            cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+          });
+
+          if (linked > 0) {
+            log.info(
+              `[Billing] Auto-linked Stripe subscription ${liveSub.id} to workspace=${user.workspaceId}`,
+            );
+            const livePlan = mainItem?.price.id
+              ? getPlanByPriceId(mainItem.price.id)
+              : null;
+            if (livePlan) {
+              await syncUsageLimits(user.workspaceId, livePlan.id as PlanId);
+            }
+            sub = (await getSubscription(user.workspaceId))!;
+          }
+        }
+      } catch (err) {
+        log.error("[Billing] auto-link subscription failed", {
+          error: err instanceof Error ? err.message : String(err),
+          workspaceId: user.workspaceId,
+        });
+      }
+    }
+
+    const shouldReconcile = wantsReconcile && !!sub.stripeSubscriptionId;
 
     if (shouldReconcile && sub.stripeSubscriptionId) {
       try {

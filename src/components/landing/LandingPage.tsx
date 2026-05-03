@@ -72,6 +72,7 @@ export function LandingPage() {
         <BenefitsSection />
         <AppShowcaseSection />
         <TrustSection />
+        <RoiCalculatorSection />
         <PricingSection />
         <FAQSection />
         <CTAFooter />
@@ -1491,6 +1492,51 @@ function AppShowcaseSection() {
               {b}
             </span>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RoiCalculatorSection() {
+  const t = useTranslations("landing");
+
+  const stats = [
+    { value: t("roiSectionStat1Value"), label: t("roiSectionStat1Label") },
+    { value: t("roiSectionStat2Value"), label: t("roiSectionStat2Label") },
+    { value: t("roiSectionStat3Value"), label: t("roiSectionStat3Label") },
+  ];
+
+  return (
+    <section className="py-16 sm:py-24 bg-emerald-600">
+      <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
+          {t("roiSectionTitle")}
+        </h2>
+        <p className="mt-4 text-emerald-100 text-lg max-w-2xl mx-auto">
+          {t("roiSectionSubtitle")}
+        </p>
+
+        <div className="mt-10 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+          {stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-3xl sm:text-4xl font-extrabold text-white">
+                {s.value}
+              </div>
+              <div className="mt-1 text-sm text-emerald-200">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10">
+          <Link
+            href="/ersparnisrechner"
+            className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-full text-base hover:shadow-xl transition-all"
+          >
+            {t("roiSectionCta")}
+            <ArrowRightIcon className="w-5 h-5" />
+          </Link>
+          <p className="mt-3 text-xs text-emerald-200">{t("heroCtaSubNote")}</p>
         </div>
       </div>
     </section>

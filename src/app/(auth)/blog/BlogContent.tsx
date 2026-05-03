@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { type SVGProps } from "react";
+import {
+  ClipboardIcon,
+  ScaleIcon,
+  UsersIcon,
+  ClockIcon,
+} from "@/components/icons";
 
 interface Post {
   slug: string;
   title: string;
   excerpt: string;
-  date: string;
   readTime: string;
   category: string;
   categoryKey: string;
-  Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;
   formattedDate: string;
 }
 
@@ -56,6 +59,17 @@ const CATEGORY_STYLES: Record<
   },
 };
 
+// Icon resolved client-side — avoids passing non-serializable functions from RSC
+const CATEGORY_ICONS: Record<
+  string,
+  React.ComponentType<React.SVGProps<SVGSVGElement>>
+> = {
+  categoryPlanning: ClipboardIcon,
+  categoryLaw: ScaleIcon,
+  categoryHR: UsersIcon,
+  categoryTech: ClockIcon,
+};
+
 function CategoryBadge({
   category,
   categoryKey,
@@ -79,6 +93,8 @@ function CategoryBadge({
   );
 }
 
+const chevronPath = "M9 5l7 7-7 7";
+
 export default function BlogContent({
   posts,
   strings,
@@ -95,8 +111,6 @@ export default function BlogContent({
 
   const featured = filtered[0];
   const rest = filtered.slice(1);
-
-  const chevronPath = "M9 5l7 7-7 7";
 
   return (
     <>
@@ -148,11 +162,17 @@ export default function BlogContent({
           <Link href={`/blog/${featured.slug}`} className="group block -mt-2">
             <article className="relative rounded-2xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 dark:hover:border-emerald-700/60 transition-all duration-300">
               <div className="grid md:grid-cols-5">
-                <div
-                  className={`md:col-span-2 bg-gradient-to-br ${CATEGORY_STYLES[featured.categoryKey]?.iconBg ?? "from-emerald-500 to-emerald-600"} flex items-center justify-center p-10 sm:p-14`}
-                >
-                  <featured.Icon className="w-16 h-16 sm:w-20 sm:h-20 text-white drop-shadow-sm" />
-                </div>
+                {(() => {
+                  const FeaturedIcon =
+                    CATEGORY_ICONS[featured.categoryKey] ?? ClipboardIcon;
+                  return (
+                    <div
+                      className={`md:col-span-2 bg-gradient-to-br ${CATEGORY_STYLES[featured.categoryKey]?.iconBg ?? "from-emerald-500 to-emerald-600"} flex items-center justify-center p-10 sm:p-14`}
+                    >
+                      <FeaturedIcon className="w-16 h-16 sm:w-20 sm:h-20 text-white drop-shadow-sm" />
+                    </div>
+                  );
+                })()}
                 <div className="md:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <CategoryBadge
@@ -207,6 +227,8 @@ export default function BlogContent({
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
               {rest.map((post) => {
                 const catStyle = CATEGORY_STYLES[post.categoryKey];
+                const PostIcon =
+                  CATEGORY_ICONS[post.categoryKey] ?? ClipboardIcon;
                 return (
                   <Link
                     key={post.slug}
@@ -218,7 +240,7 @@ export default function BlogContent({
                         <div
                           className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${catStyle?.iconBg ?? "from-gray-500 to-gray-600"} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}
                         >
-                          <post.Icon className="w-8 h-8 text-white" />
+                          <PostIcon className="w-8 h-8 text-white" />
                         </div>
                       </div>
                       <div className="p-5 sm:p-6 flex flex-col flex-1">

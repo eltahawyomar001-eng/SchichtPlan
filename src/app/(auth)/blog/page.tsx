@@ -1,14 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { type SVGProps } from "react";
 import { getTranslations, getLocale } from "next-intl/server";
-import {
-  ShiftfyMark,
-  ClipboardIcon,
-  ScaleIcon,
-  UsersIcon,
-  ClockIcon,
-} from "@/components/icons";
+import { ShiftfyMark } from "@/components/icons";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import BlogContent from "./BlogContent";
 
@@ -41,7 +34,6 @@ interface BlogPost {
   date: string;
   readTime: string;
   categoryKey: string;
-  Icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;
 }
 
 const postDefs: BlogPost[] = [
@@ -52,7 +44,6 @@ const postDefs: BlogPost[] = [
     date: "2026-01-15",
     readTime: "5 min",
     categoryKey: "categoryPlanning",
-    Icon: ClipboardIcon,
   },
   {
     slug: "arbeitszeitgesetz-2025",
@@ -61,7 +52,6 @@ const postDefs: BlogPost[] = [
     date: "2026-01-10",
     readTime: "7 min",
     categoryKey: "categoryLaw",
-    Icon: ScaleIcon,
   },
   {
     slug: "mitarbeiterbindung-schichtarbeit",
@@ -70,7 +60,6 @@ const postDefs: BlogPost[] = [
     date: "2026-01-05",
     readTime: "6 min",
     categoryKey: "categoryHR",
-    Icon: UsersIcon,
   },
   {
     slug: "digitale-stempeluhr-vorteile",
@@ -79,7 +68,6 @@ const postDefs: BlogPost[] = [
     date: "2026-06-20",
     readTime: "4 min",
     categoryKey: "categoryTech",
-    Icon: ClockIcon,
   },
 ];
 
@@ -90,7 +78,9 @@ export default async function BlogPage() {
   const locale = await getLocale();
 
   const posts = postDefs.map((p) => ({
-    ...p,
+    slug: p.slug,
+    readTime: p.readTime,
+    categoryKey: p.categoryKey,
     title: t(p.titleKey as Parameters<typeof t>[0]),
     excerpt: t(p.excerptKey as Parameters<typeof t>[0]),
     category: t(p.categoryKey as Parameters<typeof t>[0]),

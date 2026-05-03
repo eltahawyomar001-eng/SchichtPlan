@@ -330,7 +330,12 @@
     "skipSetup": "Einrichtung ueberspringen",
     "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "networkError": "Netzwerkfehler. Bitte pruefen Sie Ihre Verbindung.",
-    "footerText": "Sie koennen diese Einstellungen jederzeit aendern."
+    "footerText": "Sie koennen diese Einstellungen jederzeit aendern.",
+    "activatingTitle": "Konto wird aktiviert...",
+    "activatingDesc": "Wir verarbeiten Ihre Zahlung. Das dauert in der Regel nur wenige Sekunden.",
+    "activatingTimeoutTitle": "Das dauert laenger als erwartet",
+    "activatingTimeoutDesc": "Ihr Konto konnte nicht automatisch aktiviert werden. Bitte pruefen Sie Ihre Abrechnungsseite.",
+    "goToBilling": "Zur Abrechnung"
   },
   "shiftPlan": {
     "title": "Schichtplan",

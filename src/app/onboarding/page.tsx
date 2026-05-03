@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -510,12 +510,127 @@ function CompleteStep() {
   );
 }
 
+/* ─── Subscription activation gate ──────────────────────────── */
+
+type SubGate = "checking" | "active" | "waiting" | "timeout";
+
+const ACTIVE_STATUSES = ["ACTIVE", "TRIALING", "PAST_DUE"];
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLLS = 10;
+
+function ActivatingScreen({ state }: { state: SubGate }) {
+  const t = useTranslations("onboardingWizard");
+  const router = useRouter();
+
+  if (state === "checking") {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (state === "timeout") {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950 mx-auto mb-5">
+            <svg
+              className="h-8 w-8 text-amber-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+            {t("activatingTimeoutTitle")}
+          </h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
+            {t("activatingTimeoutDesc")}
+          </p>
+          <button
+            onClick={() => router.push("/einstellungen/abonnement?required=1")}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+          >
+            {t("goToBilling")}
+            <ArrowRightIcon className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // "waiting"
+  return (
+    <div className="flex flex-1 items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 mx-auto mb-5">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+          {t("activatingTitle")}
+        </h2>
+        <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
+          {t("activatingDesc")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Wizard ────────────────────────────────────────────── */
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  const [subGate, setSubGate] = useState<SubGate>("checking");
+  const pollCountRef = useRef(0);
   const t = useTranslations("onboardingWizard");
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    async function checkSub() {
+      try {
+        const res = await fetch("/api/billing/subscription?reconcile=1");
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (data.simulationMode || ACTIVE_STATUSES.includes(data.status)) {
+          setSubGate("active");
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    }
+
+    checkSub().then((active) => {
+      if (active) return;
+      setSubGate("waiting");
+      intervalId = setInterval(async () => {
+        pollCountRef.current += 1;
+        if (pollCountRef.current >= MAX_POLLS) {
+          clearInterval(intervalId!);
+          setSubGate("timeout");
+          return;
+        }
+        const resolved = await checkSub();
+        if (resolved && intervalId) clearInterval(intervalId);
+      }, POLL_INTERVAL_MS);
+    });
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
 
   const stepLabels = [
     t("stepStart"),
@@ -545,33 +660,45 @@ export default function OnboardingPage() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <button
-            onClick={() => {
-              fetch("/api/onboarding/complete", { method: "POST" }).catch(
-                () => {},
-              );
-              router.push("/dashboard");
-              router.refresh();
-            }}
-            className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
-          >
-            {t("skipSetup")}
-          </button>
+          {subGate === "active" && (
+            <button
+              onClick={() => {
+                fetch("/api/onboarding/complete", { method: "POST" }).catch(
+                  () => {},
+                );
+                router.push("/dashboard");
+                router.refresh();
+              }}
+              className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              {t("skipSetup")}
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Progress */}
-      <div className="py-4 sm:py-6 border-b border-gray-50 dark:border-zinc-800/50">
-        <StepIndicator current={currentStep} labels={stepLabels} />
-      </div>
+      {subGate !== "active" ? (
+        <ActivatingScreen state={subGate} />
+      ) : (
+        <>
+          {/* Progress */}
+          <div className="py-4 sm:py-6 border-b border-gray-50 dark:border-zinc-800/50">
+            <StepIndicator current={currentStep} labels={stepLabels} />
+          </div>
 
-      {/* Content */}
-      <div className="flex-1 flex items-start sm:items-center justify-center py-6 sm:py-10 overflow-y-auto">
-        {currentStep === 0 && <WelcomeStep onNext={goNext} />}
-        {currentStep === 1 && <LocationStep onNext={goNext} onBack={goBack} />}
-        {currentStep === 2 && <EmployeeStep onNext={goNext} onBack={goBack} />}
-        {currentStep === 3 && <CompleteStep />}
-      </div>
+          {/* Content */}
+          <div className="flex-1 flex items-start sm:items-center justify-center py-6 sm:py-10 overflow-y-auto">
+            {currentStep === 0 && <WelcomeStep onNext={goNext} />}
+            {currentStep === 1 && (
+              <LocationStep onNext={goNext} onBack={goBack} />
+            )}
+            {currentStep === 2 && (
+              <EmployeeStep onNext={goNext} onBack={goBack} />
+            )}
+            {currentStep === 3 && <CompleteStep />}
+          </div>
+        </>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-gray-50 dark:border-zinc-800/50 px-4 py-3 text-center pb-[max(0.75rem,env(safe-area-inset-bottom))]">

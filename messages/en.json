@@ -330,7 +330,12 @@
     "skipSetup": "Skip setup",
     "genericError": "Something went wrong. Please try again.",
     "networkError": "Network error. Please check your connection.",
-    "footerText": "You can change these settings at any time."
+    "footerText": "You can change these settings at any time.",
+    "activatingTitle": "Activating your account...",
+    "activatingDesc": "We're processing your payment. This usually takes a few seconds.",
+    "activatingTimeoutTitle": "This is taking longer than expected",
+    "activatingTimeoutDesc": "Your account could not be activated automatically. Please check your billing page.",
+    "goToBilling": "Go to Billing"
   },
   "shiftPlan": {
     "title": "Shift Plan",

@@ -9,21 +9,16 @@ import {
   calcBreakMinutes,
   calcNetMinutes,
 } from "@/lib/time-utils";
-import { log } from "@/lib/logger";
 import { updateTimeEntrySchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 // ─── GET  /api/time-entries/:id ─────────────────────────────────
 export const GET = withRoute(
   "/api/time-entries/[id]",
   "GET",
-  async (req, context) => {
+  async (_req, context) => {
     const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -144,6 +139,13 @@ export const PATCH = withRoute(
     );
     const netMinutes = calcNetMinutes(grossMinutes, breakMins);
 
+    // "" (No location selected) must become null — passing "" as a FK violates
+    // the constraint and causes a 500. Only fall back to existing when omitted.
+    const newLocationId =
+      body.locationId === undefined
+        ? existing.locationId
+        : body.locationId || null;
+
     const isEmployeeUser = isEmployee(user);
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -158,7 +160,7 @@ export const PATCH = withRoute(
           grossMinutes,
           netMinutes,
           remarks: body.remarks ?? existing.remarks,
-          locationId: body.locationId ?? existing.locationId,
+          locationId: newLocationId,
           date: body.date ? new Date(body.date) : existing.date,
           // Employee edits go directly to EINGEREICHT so a manager must
           // review and confirm before the corrected times count as valid.

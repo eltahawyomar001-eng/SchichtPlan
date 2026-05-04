@@ -540,7 +540,9 @@
       "remarks": "Remarks",
       "remarksPlaceholder": "Optional: activity, project, etc.",
       "saving": "Saving…",
-      "update": "Update"
+      "update": "Update",
+      "submitForReview": "Submit for review",
+      "editApprovalNote": "Your change will be automatically submitted for review. An administrator must approve the correction before it takes effect."
     },
     "table": {
       "date": "Date",

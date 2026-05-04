@@ -540,7 +540,9 @@
       "remarks": "Bemerkung",
       "remarksPlaceholder": "Optional: Tätigkeit, Projekt usw.",
       "saving": "Wird gespeichert…",
-      "update": "Aktualisieren"
+      "update": "Aktualisieren",
+      "submitForReview": "Zur Prüfung einreichen",
+      "editApprovalNote": "Ihre Änderung wird automatisch zur Prüfung eingereicht. Ein Administrator muss die Korrektur bestätigen, bevor sie wirksam wird."
     },
     "table": {
       "date": "Datum",

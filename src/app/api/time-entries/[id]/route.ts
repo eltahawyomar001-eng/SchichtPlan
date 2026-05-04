@@ -144,6 +144,8 @@ export const PATCH = withRoute(
     );
     const netMinutes = calcNetMinutes(grossMinutes, breakMins);
 
+    const isEmployeeUser = isEmployee(user);
+
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.timeEntry.update({
         where: { id },
@@ -158,16 +160,33 @@ export const PATCH = withRoute(
           remarks: body.remarks ?? existing.remarks,
           locationId: body.locationId ?? existing.locationId,
           date: body.date ? new Date(body.date) : existing.date,
+          // Employee edits go directly to EINGEREICHT so a manager must
+          // review and confirm before the corrected times count as valid.
+          ...(isEmployeeUser
+            ? { status: "EINGEREICHT", submittedAt: new Date() }
+            : {}),
         },
         include: { employee: true, location: true },
       });
 
-      // Audit log (atomic)
+      // Audit log for field changes (atomic)
       if (Object.keys(changedFields).length > 0) {
         await tx.timeEntryAudit.create({
           data: {
             action: "EDITED",
             changes: JSON.stringify(changedFields),
+            performedBy: user.id,
+            timeEntryId: id,
+          },
+        });
+      }
+
+      // Audit log for auto-submit (employee only)
+      if (isEmployeeUser) {
+        await tx.timeEntryAudit.create({
+          data: {
+            action: "SUBMITTED",
+            comment: "Automatisch zur Prüfung eingereicht nach Bearbeitung",
             performedBy: user.id,
             timeEntryId: id,
           },
@@ -200,7 +219,7 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "/api/time-entries/[id]",
   "DELETE",
-  async (req, context) => {
+  async (_req, context) => {
     const params = await context!.params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {

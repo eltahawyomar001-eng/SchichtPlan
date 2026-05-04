@@ -1258,6 +1258,13 @@
     "schichtplanungAddonActivated": "Shift Planning Add-on activated successfully!",
     "schichtplanungAddonDeactivated": "Shift Planning Add-on has been deactivated."
   },
+  "addon": {
+    "ticketsName": "Ticketing",
+    "schichtplanungName": "Shift Planning",
+    "lockedTitle": "{feature} is not active",
+    "lockedDescription": "This feature is part of a paid add-on that isn't currently active for your workspace.",
+    "contactAdmin": "Please contact your administrator to request access."
+  },
   "roles": {
     "title": "Roles and Permissions",
     "description": "Manage roles and their access rights",
@@ -2883,6 +2890,11 @@
     "sendComment": "Send",
     "internalNote": "Internal note",
     "createError": "Failed to create ticket",
+    "deleteTicket": "Delete ticket",
+    "deleteConfirmTitle": "Delete this ticket?",
+    "deleteConfirmDescription": "This action cannot be undone. All comments, attachments and history will be permanently removed.",
+    "deleteSuccess": "Ticket deleted successfully.",
+    "deleteError": "Failed to delete ticket.",
     "auditTrail": "Activity",
     "statuses": {
       "OFFEN": "Open",

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasSchichtplanungAddon } from "@/lib/schichtplanung-addon";
+import { isAdmin } from "@/lib/authorization";
+import { AddonLocked } from "@/components/billing/addon-locked";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -9,8 +11,10 @@ import type { SessionUser } from "@/lib/types";
  * workspace has the Schichtplanung add-on active (or is on the Enterprise plan,
  * which includes it at no extra charge).
  *
- * Workspaces without the add-on are redirected to the billing page anchored
- * to the schichtplanung add-on section, where they can subscribe.
+ * Behaviour when the add-on is missing:
+ * - OWNER / ADMIN: redirected to the billing page so they can subscribe.
+ * - MANAGER / EMPLOYEE: shown a locked-feature view (they cannot manage
+ *   subscriptions, so the billing page would just bounce them).
  */
 export default async function SchichtplanLayout({
   children,
@@ -25,7 +29,10 @@ export default async function SchichtplanLayout({
 
   const hasAddon = await hasSchichtplanungAddon(user.workspaceId);
   if (!hasAddon) {
-    redirect("/einstellungen/abonnement?addon=schichtplanung");
+    if (isAdmin(user)) {
+      redirect("/einstellungen/abonnement?addon=schichtplanung");
+    }
+    return <AddonLocked feature="schichtplanung" />;
   }
 
   return <>{children}</>;

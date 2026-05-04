@@ -273,3 +273,48 @@ export async function PATCH(
     return serverError("Fehler beim Aktualisieren des Tickets");
   }
 }
+
+// ─── DELETE  /api/tickets/[id] ─────────────────────────────────
+// Permission: tickets.delete is restricted to OWNER and ADMIN
+// (see permissionMatrix in /lib/authorization.ts).
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user, workspaceId } = auth;
+
+    const perm = requirePermission(user, "tickets", "delete");
+    if (perm) return perm;
+
+    const addonRequired = await requireTicketingAddon(workspaceId);
+    if (addonRequired) return addonRequired;
+
+    const { id } = await params;
+
+    const existing = await prisma.ticket.findFirst({
+      where: { id, workspaceId },
+      select: { id: true, ticketNumber: true },
+    });
+    if (!existing) return notFound("Ticket nicht gefunden");
+
+    // Cascade delete: relies on Prisma onDelete: Cascade for comments,
+    // attachments and events. Falls back to a transaction if the schema
+    // does not have cascade configured.
+    await prisma.ticket.delete({ where: { id } });
+
+    log.info("Ticket deleted", {
+      ticketId: id,
+      ticketNumber: existing.ticketNumber,
+      userId: user.id,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    log.error("Error deleting ticket:", { error });
+    captureRouteError(error, { route: "/api/tickets/[id]", method: "DELETE" });
+    return serverError("Fehler beim Löschen des Tickets");
+  }
+}

@@ -22,7 +22,7 @@ import {
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
-import { isManagement } from "@/lib/authorization";
+import { can, isManagement } from "@/lib/authorization";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -120,6 +120,7 @@ export default function TicketDetailPage() {
   const { data: session } = useSession();
   const user = session?.user as SessionUser | undefined;
   const canManage = user ? isManagement(user) : false;
+  const canDeleteTicket = user ? can(user, "tickets", "delete") : false;
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [events, setEvents] = useState<TicketEvent[]>([]);
@@ -132,6 +133,9 @@ export default function TicketDetailPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Derived: is the current user the assignee of this ticket?
   const isAssignee = !!(user && ticket && ticket.assignedTo?.id === user.id);
@@ -248,6 +252,25 @@ export default function TicketDetailPage() {
     }
   };
 
+  const handleDeleteTicket = async () => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/tickets/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setDeleteError(err?.message ?? t("deleteError"));
+        return;
+      }
+      router.push("/tickets");
+    } catch {
+      setDeleteError(t("deleteError"));
+    } finally {
+      setDeleteLoading(false);
+      setConfirmDelete(false);
+    }
+  };
+
   const handleDeleteAttachment = async (attachmentId: string) => {
     if (!window.confirm(t("attachments.confirmDelete"))) return;
     try {
@@ -332,7 +355,56 @@ export default function TicketDetailPage() {
               </Badge>
             </div>
           </div>
+
+          {canDeleteTicket && !confirmDelete && (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex items-center gap-2 self-start rounded-lg border border-red-200 dark:border-red-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+            >
+              <TrashIcon className="h-4 w-4" />
+              {t("deleteTicket")}
+            </button>
+          )}
         </div>
+
+        {/* Inline delete confirmation */}
+        {confirmDelete && (
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-4">
+            <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+              {t("deleteConfirmTitle")}
+            </p>
+            <p className="mt-1 text-xs text-red-700 dark:text-red-400">
+              {t("deleteConfirmDescription")}
+            </p>
+            {deleteError && (
+              <p className="mt-2 text-xs text-red-700 dark:text-red-300">
+                {deleteError}
+              </p>
+            )}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={handleDeleteTicket}
+                disabled={deleteLoading}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
+              >
+                {deleteLoading && (
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                )}
+                {t("deleteTicket")}
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmDelete(false);
+                  setDeleteError(null);
+                }}
+                disabled={deleteLoading}
+                className="rounded-lg border border-red-200 dark:border-red-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-60 transition-colors"
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Main Content Grid ──────────────────────── */}
         <div className="grid gap-6 lg:grid-cols-3">

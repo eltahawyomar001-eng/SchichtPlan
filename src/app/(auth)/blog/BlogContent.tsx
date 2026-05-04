@@ -115,7 +115,7 @@ export default function BlogContent({
   return (
     <>
       {/* Category Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-8 -mt-2">
+      <div className="flex flex-wrap items-center gap-2 pt-8 mb-8">
         <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-1">
           {strings.filterLabel}
         </span>
@@ -159,7 +159,7 @@ export default function BlogContent({
       {featured ? (
         <>
           {/* Featured Article */}
-          <Link href={`/blog/${featured.slug}`} className="group block -mt-2">
+          <Link href={`/blog/${featured.slug}`} className="group block">
             <article className="relative rounded-2xl border border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-200/60 dark:hover:border-emerald-700/60 transition-all duration-300">
               <div className="grid md:grid-cols-5">
                 {(() => {

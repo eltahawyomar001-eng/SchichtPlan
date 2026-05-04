@@ -2,14 +2,18 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasTicketingAddon } from "@/lib/ticketing-addon";
+import { isAdmin } from "@/lib/authorization";
+import { AddonLocked } from "@/components/billing/addon-locked";
 import type { SessionUser } from "@/lib/types";
 
 /**
  * Tickets section gate. The ticket UI is only available when the workspace
  * has purchased the Ticketing add-on (see /lib/ticketing-addon.ts).
  *
- * Workspaces without the add-on are redirected to the billing page anchored
- * to the ticketing add-on section, where they can subscribe.
+ * Behaviour when the add-on is missing:
+ * - OWNER / ADMIN: redirected to the billing page so they can subscribe.
+ * - MANAGER / EMPLOYEE: shown a locked-feature view (they cannot manage
+ *   subscriptions, so the billing page would just bounce them).
  */
 export default async function TicketsLayout({
   children,
@@ -24,7 +28,10 @@ export default async function TicketsLayout({
 
   const hasAddon = await hasTicketingAddon(user.workspaceId);
   if (!hasAddon) {
-    redirect("/einstellungen/abonnement?addon=ticketing");
+    if (isAdmin(user)) {
+      redirect("/einstellungen/abonnement?addon=ticketing");
+    }
+    return <AddonLocked feature="tickets" />;
   }
 
   return <>{children}</>;

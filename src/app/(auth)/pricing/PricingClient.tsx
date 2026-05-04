@@ -262,7 +262,7 @@ export default function PricingClient() {
 
       <main>
         {/* ─── ROI Calculator Callout ─── */}
-        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-6 pb-2">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 sm:pt-12">
           <Link
             href="/ersparnisrechner"
             className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
@@ -273,7 +273,7 @@ export default function PricingClient() {
         </div>
 
         {/* ─── Plan Cards ─── */}
-        <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-8 sm:pb-12 -mt-2">
+        <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 sm:pt-12 pb-8 sm:pb-12">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:items-start">
             {plans.map((plan) => (
               <div

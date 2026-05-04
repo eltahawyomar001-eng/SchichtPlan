@@ -1248,7 +1248,15 @@
     "subscribeToPlan": "Abonnieren",
     "portalReturnSuccess": "Änderungen wurden von Stripe synchronisiert.",
     "noBaseSubscription": "Bitte abonnieren Sie zuerst einen Basisplan.",
-    "upgradeError": "Plan-Wechsel fehlgeschlagen. Bitte versuchen Sie es erneut."
+    "upgradeError": "Plan-Wechsel fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "addonAutoCharge": "Wird automatisch Ihrer hinterlegten Zahlungsmethode belastet — keine Weiterleitung zu Stripe erforderlich.",
+    "confirmAction": "Bestätigen",
+    "cancelAction": "Abbrechen",
+    "ticketingAddonActivated": "Ticketing Add-on erfolgreich aktiviert!",
+    "ticketingAddonCanceled": "Ticketing Add-on wurde deaktiviert.",
+    "ticketingAddonTierChanged": "Tarif erfolgreich gewechselt!",
+    "schichtplanungAddonActivated": "Schichtplanung Add-on erfolgreich aktiviert!",
+    "schichtplanungAddonDeactivated": "Schichtplanung Add-on wurde deaktiviert."
   },
   "roles": {
     "title": "Rollen und Berechtigungen",

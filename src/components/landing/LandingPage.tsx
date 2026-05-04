@@ -1508,22 +1508,27 @@ function RoiCalculatorSection() {
   ];
 
   return (
-    <section className="py-16 sm:py-24 bg-emerald-600">
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-white to-gray-50 dark:from-zinc-950 dark:to-zinc-900">
       <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight">
           {t("roiSectionTitle")}
         </h2>
-        <p className="mt-4 text-emerald-100 text-lg max-w-2xl mx-auto">
+        <p className="mt-4 text-gray-500 dark:text-zinc-400 text-lg max-w-2xl mx-auto">
           {t("roiSectionSubtitle")}
         </p>
 
-        <div className="mt-10 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+        <div className="mt-10 grid grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto">
           {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-3xl sm:text-4xl font-extrabold text-white">
+            <div
+              key={s.label}
+              className="rounded-3xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 text-center shadow-sm"
+            >
+              <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400">
                 {s.value}
               </div>
-              <div className="mt-1 text-sm text-emerald-200">{s.label}</div>
+              <div className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
@@ -1531,12 +1536,14 @@ function RoiCalculatorSection() {
         <div className="mt-10">
           <Link
             href="/ersparnisrechner"
-            className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-full text-base hover:shadow-xl transition-all"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold px-8 py-4 rounded-full text-base hover:shadow-xl hover:brightness-110 transition-all"
           >
             {t("roiSectionCta")}
             <ArrowRightIcon className="w-5 h-5" />
           </Link>
-          <p className="mt-3 text-xs text-emerald-200">{t("heroCtaSubNote")}</p>
+          <p className="mt-3 text-xs text-gray-400 dark:text-zinc-500">
+            {t("heroCtaSubNote")}
+          </p>
         </div>
       </div>
     </section>

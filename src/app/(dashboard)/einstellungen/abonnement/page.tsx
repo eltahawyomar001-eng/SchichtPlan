@@ -85,6 +85,34 @@ interface PlanOption {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Fallback tiers (used when /api/public/plans fails to load)
+   ═══════════════════════════════════════════════════════════════ */
+
+const FALLBACK_TICKETING_TIERS: TicketingTierData[] = [
+  {
+    id: "STARTER",
+    name: "Ticketing Starter",
+    priceMonthlyCents: 1899,
+    ticketsPerMonth: 200,
+    storageGb: 5,
+  },
+  {
+    id: "GROWTH",
+    name: "Ticketing Growth",
+    priceMonthlyCents: 3399,
+    ticketsPerMonth: 500,
+    storageGb: 15,
+  },
+  {
+    id: "BUSINESS",
+    name: "Ticketing Business",
+    priceMonthlyCents: 5599,
+    ticketsPerMonth: 1000,
+    storageGb: 40,
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════════
    Main page
    ═══════════════════════════════════════════════════════════════ */
 
@@ -109,6 +137,12 @@ function BillingContent() {
   const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [ticketingLoading, setTicketingLoading] = useState(false);
+  const [ticketingPendingTier, setTicketingPendingTier] = useState<
+    string | null
+  >(null);
+  const [ticketingSuccessMsg, setTicketingSuccessMsg] = useState<string | null>(
+    null,
+  );
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const ticketingRef = useRef<HTMLDivElement>(null);
@@ -385,17 +419,9 @@ function BillingContent() {
     const isCanceling = tier === "NONE";
     const currentTier = subscription?.ticketingTier ?? "NONE";
 
-    if (tier !== "NONE" && currentTier !== "NONE" && currentTier !== tier) {
-      const tierName =
-        ticketingTiers.find((tt) => tt.id === tier)?.name ?? tier;
-      if (!window.confirm(t("ticketingAddonConfirmChange", { tier: tierName })))
-        return;
-    }
-    if (isCanceling) {
-      if (!window.confirm(t("ticketingAddonConfirmCancel"))) return;
-    }
-
     setTicketingLoading(true);
+    setTicketingPendingTier(null);
+    setTicketingSuccessMsg(null);
     setErrorMsg(null);
     try {
       const res = await fetch("/api/billing/addons/ticketing", {
@@ -405,14 +431,16 @@ function BillingContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error ?? t("ticketingAddonError"));
+        setErrorMsg(data.message ?? data.error ?? t("ticketingAddonError"));
         return;
       }
       await fetchSubscription(false);
       if (isCanceling) {
-        setSuccessMsg(t("ticketingAddonCancel"));
-      } else if (tier !== currentTier) {
-        setSuccessMsg(t("ticketingAddonSubscribe"));
+        setTicketingSuccessMsg(t("ticketingAddonCanceled"));
+      } else if (currentTier !== "NONE") {
+        setTicketingSuccessMsg(t("ticketingAddonTierChanged"));
+      } else {
+        setTicketingSuccessMsg(t("ticketingAddonActivated"));
       }
     } catch {
       setErrorMsg(t("ticketingAddonError"));
@@ -805,103 +833,186 @@ function BillingContent() {
         </div>
 
         {/* ─── Ticketing Add-on Section ─── */}
-        {ticketingTiers.length > 0 && (
-          <div ref={ticketingRef} id="ticketing-addon" className="scroll-mt-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-violet-50 p-2.5">
-                    <TicketIcon className="h-5 w-5 text-violet-600" />
+        {(() => {
+          const displayTiers =
+            ticketingTiers.length > 0
+              ? ticketingTiers
+              : FALLBACK_TICKETING_TIERS;
+          const pendingTierData = displayTiers.find(
+            (t) => t.id === ticketingPendingTier,
+          );
+          return (
+            <div
+              ref={ticketingRef}
+              id="ticketing-addon"
+              className="scroll-mt-6"
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 p-2.5">
+                      <TicketIcon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div>
+                      <CardTitle>{t("ticketingAddonSectionTitle")}</CardTitle>
+                      <CardDescription>
+                        {t("ticketingAddonSectionDesc")}
+                      </CardDescription>
+                    </div>
+                    {subscription?.ticketingTier &&
+                      subscription.ticketingTier !== "NONE" && (
+                        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-violet-100 dark:bg-violet-950/50 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+                          <CheckCircleIcon className="h-3 w-3" />
+                          {t("ticketingAddonActiveTier")}:{" "}
+                          {subscription.ticketingTier}
+                        </span>
+                      )}
                   </div>
-                  <div>
-                    <CardTitle>{t("ticketingAddonSectionTitle")}</CardTitle>
-                    <CardDescription>
-                      {t("ticketingAddonSectionDesc")}
-                    </CardDescription>
-                  </div>
-                  {subscription?.ticketingTier &&
-                    subscription.ticketingTier !== "NONE" && (
-                      <span className="ml-auto inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
-                        {t("ticketingAddonActiveTier")}:{" "}
-                        {subscription.ticketingTier}
-                      </span>
-                    )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {ticketingTiers.map((tier) => {
-                    const isCurrent = subscription?.ticketingTier === tier.id;
-                    return (
-                      <div
-                        key={tier.id}
-                        className={`rounded-xl border p-4 flex flex-col gap-3 transition-shadow ${
-                          isCurrent
-                            ? "border-violet-400 bg-violet-50/40 shadow-sm"
-                            : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:shadow-sm"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-sm text-gray-900">
-                              {tier.name}
-                            </p>
-                            <p className="text-2xl font-extrabold text-gray-900 mt-1">
-                              {formatCents(tier.priceMonthlyCents)}
-                              <span className="text-sm font-normal text-gray-400">
-                                {t("billingAddonPerMonth")}
+                </CardHeader>
+                <CardContent>
+                  {/* Per-section success message */}
+                  {ticketingSuccessMsg && (
+                    <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      <CheckCircleIcon className="h-4 w-4 shrink-0" />
+                      {ticketingSuccessMsg}
+                    </div>
+                  )}
+
+                  {/* Auto-charge info */}
+                  <p className="mb-4 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <ShieldCheckIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    {t("addonAutoCharge")}
+                  </p>
+
+                  {/* Inline confirmation panel */}
+                  {ticketingPendingTier !== null && (
+                    <div className="mb-5 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-4">
+                      {ticketingPendingTier === "NONE" ? (
+                        <>
+                          <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            {t("ticketingAddonConfirmCancel")}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            {t("ticketingAddonConfirmChange", {
+                              tier:
+                                pendingTierData?.name ?? ticketingPendingTier,
+                            })}
+                          </p>
+                          <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                            {pendingTierData
+                              ? formatCents(pendingTierData.priceMonthlyCents)
+                              : ""}
+                            {t("billingAddonPerMonth")}
+                          </p>
+                        </>
+                      )}
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() =>
+                            handleTicketingChange(ticketingPendingTier)
+                          }
+                          disabled={ticketingLoading}
+                          className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60 transition-colors"
+                        >
+                          {ticketingLoading && (
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          )}
+                          {t("confirmAction")}
+                        </button>
+                        <button
+                          onClick={() => setTicketingPendingTier(null)}
+                          disabled={ticketingLoading}
+                          className="rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 disabled:opacity-60 transition-colors"
+                        >
+                          {t("cancelAction")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {displayTiers.map((tier) => {
+                      const isCurrent = subscription?.ticketingTier === tier.id;
+                      const isPending = ticketingPendingTier === tier.id;
+                      return (
+                        <div
+                          key={tier.id}
+                          className={`rounded-xl border p-4 flex flex-col gap-3 transition-all ${
+                            isCurrent
+                              ? "border-violet-400 dark:border-violet-600 bg-violet-50/40 dark:bg-violet-950/20 shadow-sm"
+                              : isPending
+                                ? "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/10"
+                                : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:shadow-sm"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                                {tier.name}
+                              </p>
+                              <p className="text-2xl font-extrabold text-gray-900 dark:text-white mt-1">
+                                {formatCents(tier.priceMonthlyCents)}
+                                <span className="text-sm font-normal text-gray-400">
+                                  {t("billingAddonPerMonth")}
+                                </span>
+                              </p>
+                            </div>
+                            {isCurrent && (
+                              <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-bold text-white shrink-0">
+                                ✓
                               </span>
-                            </p>
+                            )}
                           </div>
-                          {isCurrent && (
-                            <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-bold text-white shrink-0">
-                              ✓
-                            </span>
+                          <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                            <li>
+                              {t("ticketingAddonTickets", {
+                                count: tier.ticketsPerMonth,
+                              })}
+                            </li>
+                            <li>
+                              {t("ticketingAddonStorageLabel", {
+                                gb: tier.storageGb,
+                              })}
+                            </li>
+                          </ul>
+                          {isCurrent ? (
+                            <button
+                              onClick={() => setTicketingPendingTier("NONE")}
+                              disabled={
+                                ticketingLoading ||
+                                ticketingPendingTier !== null
+                              }
+                              className="mt-auto text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 disabled:opacity-60 transition-colors"
+                            >
+                              {t("ticketingAddonCancelShort")}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setTicketingPendingTier(tier.id)}
+                              disabled={
+                                ticketingLoading ||
+                                ticketingPendingTier !== null
+                              }
+                              className="mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-950/30 px-3 py-2 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-950/50 disabled:opacity-60 transition-colors"
+                            >
+                              {subscription?.ticketingTier &&
+                              subscription.ticketingTier !== "NONE"
+                                ? t("ticketingAddonChange")
+                                : t("ticketingAddonActivate")}
+                            </button>
                           )}
                         </div>
-                        <ul className="space-y-1 text-xs text-gray-600">
-                          <li>
-                            {t("ticketingAddonTickets", {
-                              count: tier.ticketsPerMonth,
-                            })}
-                          </li>
-                          <li>
-                            {t("ticketingAddonStorageLabel", {
-                              gb: tier.storageGb,
-                            })}
-                          </li>
-                        </ul>
-                        {isCurrent ? (
-                          <button
-                            onClick={() => handleTicketingChange("NONE")}
-                            disabled={ticketingLoading}
-                            className="mt-auto text-xs font-semibold text-red-600 hover:text-red-800 disabled:opacity-60 transition-colors"
-                          >
-                            {t("ticketingAddonCancelShort")}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleTicketingChange(tier.id)}
-                            disabled={ticketingLoading}
-                            className="mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60 transition-colors"
-                          >
-                            {ticketingLoading ? (
-                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-violet-400 border-t-transparent" />
-                            ) : null}
-                            {subscription?.ticketingTier &&
-                            subscription.ticketingTier !== "NONE"
-                              ? t("ticketingAddonChange")
-                              : t("ticketingAddonActivate")}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          );
+        })()}
 
         {/* ─── Schichtplanung Add-on Section ─── */}
         <div

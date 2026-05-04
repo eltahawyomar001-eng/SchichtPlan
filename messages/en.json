@@ -1248,7 +1248,15 @@
     "subscribeToPlan": "Subscribe",
     "portalReturnSuccess": "Changes have been synchronized from Stripe.",
     "noBaseSubscription": "Please subscribe to a base plan first.",
-    "upgradeError": "Plan switch failed. Please try again."
+    "upgradeError": "Plan switch failed. Please try again.",
+    "addonAutoCharge": "Charged automatically to your saved payment method — no Stripe redirect required.",
+    "confirmAction": "Confirm",
+    "cancelAction": "Cancel",
+    "ticketingAddonActivated": "Ticketing Add-on activated successfully!",
+    "ticketingAddonCanceled": "Ticketing Add-on has been deactivated.",
+    "ticketingAddonTierChanged": "Tier switched successfully!",
+    "schichtplanungAddonActivated": "Shift Planning Add-on activated successfully!",
+    "schichtplanungAddonDeactivated": "Shift Planning Add-on has been deactivated."
   },
   "roles": {
     "title": "Roles and Permissions",

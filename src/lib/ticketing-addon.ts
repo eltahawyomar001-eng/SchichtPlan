@@ -56,7 +56,7 @@ export const TICKETING_ADDON: Record<
     ticketsPerMonth: 200,
     storageBytes: BigInt(5) * GB,
     storageGb: 5,
-    stripePriceIdEnv: "STRIPE_TICKETING_STARTER_PRICE_ID",
+    stripePriceIdEnv: "STRIPE_PRICE_TICKETING_STARTER_MONTHLY",
   },
   GROWTH: {
     id: "GROWTH",
@@ -65,7 +65,7 @@ export const TICKETING_ADDON: Record<
     ticketsPerMonth: 500,
     storageBytes: BigInt(15) * GB,
     storageGb: 15,
-    stripePriceIdEnv: "STRIPE_TICKETING_GROWTH_PRICE_ID",
+    stripePriceIdEnv: "STRIPE_PRICE_TICKETING_PRO_MONTHLY",
   },
   BUSINESS: {
     id: "BUSINESS",
@@ -74,7 +74,7 @@ export const TICKETING_ADDON: Record<
     ticketsPerMonth: 1000,
     storageBytes: BigInt(40) * GB,
     storageGb: 40,
-    stripePriceIdEnv: "STRIPE_TICKETING_BUSINESS_PRICE_ID",
+    stripePriceIdEnv: "STRIPE_PRICE_TICKETING_BUSINESS_MONTHLY",
   },
 };
 

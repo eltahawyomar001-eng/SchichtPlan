@@ -5,8 +5,8 @@
  * Enterprise workspaces get it included at no extra charge.
  *
  * Pricing (set via env vars for Stripe test/live flexibility):
- *   Monthly: €1.50 / user / month  (STRIPE_SCHICHTPLANUNG_MONTHLY_PRICE_ID)
- *   Annual:  €14.40 / user / year  (STRIPE_SCHICHTPLANUNG_ANNUAL_PRICE_ID)
+ *   Monthly: €1.50 / user / month  (STRIPE_PRICE_SCHICHTPLANUNG_MONTHLY)
+ *   Annual:  €14.40 / user / year  (STRIPE_PRICE_SCHICHTPLANUNG_ANNUAL)
  *            ≈ €1.20 / user / month — ~20% savings vs monthly
  */
 
@@ -22,8 +22,8 @@ export const SCHICHTPLANUNG_ADDON = {
   perUserMonthlyCents: 150, // €1.50 / user / month
   perUserAnnualCents: 1440, // €14.40 / user / year (€1.20/mo equivalent)
   name: "Schichtplanung",
-  stripePriceIdMonthlyEnv: "STRIPE_SCHICHTPLANUNG_MONTHLY_PRICE_ID",
-  stripePriceIdAnnualEnv: "STRIPE_SCHICHTPLANUNG_ANNUAL_PRICE_ID",
+  stripePriceIdMonthlyEnv: "STRIPE_PRICE_SCHICHTPLANUNG_MONTHLY",
+  stripePriceIdAnnualEnv: "STRIPE_PRICE_SCHICHTPLANUNG_ANNUAL",
 } as const;
 
 export type SchichtplanungBilling = "monthly" | "annual";

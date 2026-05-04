@@ -137,46 +137,80 @@ export const POST = withRoute(
     let stripeSubId = subscription.stripeSubscriptionId;
 
     // Auto-link fallback: webhook may have been missed during checkout.
-    // If we have a customerId but no subscriptionId, query Stripe and link it.
-    if (!stripeSubId && subscription.stripeCustomerId) {
+    // Resolves stripeSubscriptionId from Stripe if it is null in DB.
+    if (!stripeSubId) {
       try {
-        const stripeSubs = await stripe.subscriptions.list({
-          customer: subscription.stripeCustomerId,
-          status: "active",
-          limit: 1,
-          expand: ["data.items"],
-        });
-        if (stripeSubs.data.length > 0) {
-          const liveSub = stripeSubs.data[0];
-          const mainItem =
-            liveSub.items.data.find(
-              (it) =>
-                !getTicketingTierByPriceId(it.price.id) &&
-                !getSchichtplanungBillingByPriceId(it.price.id),
-            ) ?? liveSub.items.data[0];
-          const linked = await linkSubscriptionByCustomer({
-            stripeCustomerId: subscription.stripeCustomerId,
-            stripeSubscriptionId: liveSub.id,
-            stripePriceId: mainItem?.price.id ?? "",
-            status: liveSub.status,
-            seatCount: mainItem?.quantity ?? subscription.seatCount,
-            currentPeriodStart: new Date(
-              (mainItem?.current_period_start ?? 0) * 1000,
-            ),
-            currentPeriodEnd: new Date(
-              (mainItem?.current_period_end ?? 0) * 1000,
-            ),
-            cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+        // Step 1: prefer lookup by stripeCustomerId already in DB.
+        // Step 2: if no customerId, search Stripe by the user's email (handles
+        //         accounts that were seeded via simulation mode and switched to live).
+        let customerId = subscription.stripeCustomerId;
+        if (!customerId && user.email) {
+          const customers = await stripe.customers.list({
+            email: user.email,
+            limit: 1,
           });
-          if (linked > 0) {
-            stripeSubId = liveSub.id;
+          if (customers.data.length > 0) {
+            customerId = customers.data[0].id;
+            // Persist so future calls skip this lookup.
+            await prisma.subscription.update({
+              where: { workspaceId },
+              data: { stripeCustomerId: customerId },
+            });
             log.info(
-              `[Billing:Addon] auto-linked stripeSubscriptionId=${liveSub.id} for ws=${workspaceId}`,
+              `[Billing:Addon] resolved stripeCustomerId=${customerId} via email for ws=${workspaceId}`,
             );
           }
         }
+
+        if (customerId) {
+          // No status filter — Stripe returns all non-canceled subs by default
+          // (active AND trialing both grant dashboard access).
+          const stripeSubs = await stripe.subscriptions.list({
+            customer: customerId,
+            limit: 5,
+            expand: ["data.items"],
+          });
+          // Prefer active, then trialing, then any other non-canceled status.
+          stripeSubs.data.sort((a, b) => {
+            const rank = (s: string) =>
+              s === "active" ? 0 : s === "trialing" ? 1 : 2;
+            return rank(a.status) - rank(b.status);
+          });
+          if (stripeSubs.data.length > 0) {
+            const liveSub = stripeSubs.data[0];
+            const mainItem =
+              liveSub.items.data.find(
+                (it) =>
+                  !getTicketingTierByPriceId(it.price.id) &&
+                  !getSchichtplanungBillingByPriceId(it.price.id),
+              ) ?? liveSub.items.data[0];
+            const linked = await linkSubscriptionByCustomer({
+              stripeCustomerId: customerId,
+              stripeSubscriptionId: liveSub.id,
+              stripePriceId: mainItem?.price.id ?? "",
+              status: liveSub.status,
+              seatCount: mainItem?.quantity ?? subscription.seatCount,
+              currentPeriodStart: new Date(
+                (mainItem?.current_period_start ?? 0) * 1000,
+              ),
+              currentPeriodEnd: new Date(
+                (mainItem?.current_period_end ?? 0) * 1000,
+              ),
+              cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+            });
+            if (linked > 0) {
+              stripeSubId = liveSub.id;
+              log.info(
+                `[Billing:Addon] auto-linked stripeSubscriptionId=${liveSub.id} for ws=${workspaceId}`,
+              );
+            }
+          }
+        }
       } catch (err) {
-        log.error("[Billing:Addon] auto-link failed", { err, workspaceId });
+        log.error("[Billing:Addon:Schichtplanung] auto-link failed", {
+          err,
+          workspaceId,
+        });
       }
     }
 

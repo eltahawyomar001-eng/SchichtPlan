@@ -49,11 +49,16 @@ export const GET = withRoute(
     if (wantsReconcile && !sub.stripeSubscriptionId && sub.stripeCustomerId) {
       try {
         const stripe = getStripe();
+        // No status filter — returns all non-canceled subs (active + trialing).
         const stripeSubs = await stripe.subscriptions.list({
           customer: sub.stripeCustomerId,
-          status: "active",
-          limit: 1,
+          limit: 5,
           expand: ["data.items"],
+        });
+        stripeSubs.data.sort((a, b) => {
+          const rank = (s: string) =>
+            s === "active" ? 0 : s === "trialing" ? 1 : 2;
+          return rank(a.status) - rank(b.status);
         });
 
         if (stripeSubs.data.length > 0) {

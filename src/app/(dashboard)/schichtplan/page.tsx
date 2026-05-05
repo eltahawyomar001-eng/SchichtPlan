@@ -77,6 +77,15 @@ interface Location {
   name: string;
 }
 
+interface ShiftTemplate {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  color: string | null;
+  locationId: string | null;
+}
+
 interface Shift {
   id: string;
   date: string;
@@ -101,6 +110,7 @@ export default function SchichtplanPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +120,10 @@ export default function SchichtplanPage() {
   const [bundesland, setBundesland] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"week" | "month" | "day">("week");
+  const [holidayConfirmed, setHolidayConfirmed] = useState(false);
+  const [pendingHolidayName, setPendingHolidayName] = useState<string | null>(
+    null,
+  );
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [detailShift, setDetailShift] = useState<Shift | null>(null);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
@@ -247,26 +261,43 @@ export default function SchichtplanPage() {
       const startStr = format(fetchStart, "yyyy-MM-dd");
       const endStr = format(fetchEnd, "yyyy-MM-dd");
 
-      const [shiftsRes, employeesRes, locationsRes, workspaceRes] =
-        await Promise.all([
-          fetch(`/api/shifts?start=${startStr}&end=${endStr}`),
-          fetch("/api/employees"),
-          fetch("/api/locations"),
-          fetch("/api/workspace"),
-        ]);
+      const [
+        shiftsRes,
+        employeesRes,
+        locationsRes,
+        workspaceRes,
+        templatesRes,
+      ] = await Promise.all([
+        fetch(`/api/shifts?start=${startStr}&end=${endStr}`),
+        fetch("/api/employees"),
+        fetch("/api/locations"),
+        fetch("/api/workspace"),
+        fetch("/api/shift-templates"),
+      ]);
 
-      const [shiftsJson, employeesJson, locationsJson, workspaceJson] =
-        await Promise.all([
-          shiftsRes.json(),
-          employeesRes.json(),
-          locationsRes.json(),
-          workspaceRes.ok ? workspaceRes.json() : null,
-        ]);
+      const [
+        shiftsJson,
+        employeesJson,
+        locationsJson,
+        workspaceJson,
+        templatesJson,
+      ] = await Promise.all([
+        shiftsRes.json(),
+        employeesRes.json(),
+        locationsRes.json(),
+        workspaceRes.ok ? workspaceRes.json() : null,
+        templatesRes.ok ? templatesRes.json() : [],
+      ]);
 
       // API returns paginated { data, pagination } — extract the data array
       setShifts(shiftsJson.data ?? shiftsJson);
       setEmployees(employeesJson.data ?? employeesJson);
       setLocations(locationsJson.data ?? locationsJson);
+      setShiftTemplates(
+        Array.isArray(templatesJson)
+          ? templatesJson
+          : (templatesJson.data ?? []),
+      );
       if (workspaceJson?.bundesland) {
         setBundesland(workspaceJson.bundesland);
       }
@@ -350,6 +381,22 @@ export default function SchichtplanPage() {
     e.preventDefault();
     if (!timeValidation.valid) return;
     setFormError(null);
+
+    // Holiday guard — only for new single-day shifts
+    if (
+      !editingShift &&
+      formData.date &&
+      !formData.endDate &&
+      !holidayConfirmed
+    ) {
+      const holidayName = getHolidayName(new Date(formData.date + "T12:00:00"));
+      if (holidayName) {
+        setPendingHolidayName(holidayName);
+        return;
+      }
+    }
+    setPendingHolidayName(null);
+
     try {
       const url = editingShift
         ? `/api/shifts/${editingShift.id}`
@@ -380,6 +427,8 @@ export default function SchichtplanPage() {
         setShowForm(false);
         setEditingShift(null);
         setFormError(null);
+        setHolidayConfirmed(false);
+        setPendingHolidayName(null);
         setFormData({
           date: "",
           startTime: "08:00",
@@ -1294,7 +1343,11 @@ export default function SchichtplanPage() {
         {/* Add/Edit Shift Modal (management only) */}
         <AdaptiveModal
           open={!!(canManage && showForm)}
-          onClose={() => setShowForm(false)}
+          onClose={() => {
+            setShowForm(false);
+            setHolidayConfirmed(false);
+            setPendingHolidayName(null);
+          }}
           title={editingShift ? t("form.editTitle") : t("form.title")}
           size="md"
           footer={
@@ -1326,6 +1379,45 @@ export default function SchichtplanPage() {
           }
         >
           <form id="shift-form" onSubmit={handleSubmit} className="space-y-5">
+            {/* ── Shift Templates ── */}
+            {!editingShift && shiftTemplates.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                  {t("form.templates")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {shiftTemplates.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() =>
+                        setFormData((p) => ({
+                          ...p,
+                          startTime: tpl.startTime,
+                          endTime: tpl.endTime,
+                          ...(tpl.locationId
+                            ? { locationId: tpl.locationId }
+                            : {}),
+                        }))
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                    >
+                      {tpl.color && (
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: tpl.color }}
+                        />
+                      )}
+                      {tpl.name}
+                      <span className="text-xs text-gray-400 dark:text-zinc-500">
+                        {tpl.startTime}–{tpl.endTime}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ── Section: Date & Time ── */}
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
@@ -1345,7 +1437,9 @@ export default function SchichtplanPage() {
                     id="date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setHolidayConfirmed(false);
+                      setPendingHolidayName(null);
                       setFormData((p) => ({
                         ...p,
                         date: e.target.value,
@@ -1354,8 +1448,8 @@ export default function SchichtplanPage() {
                           p.endDate && p.endDate < e.target.value
                             ? ""
                             : p.endDate,
-                      }))
-                    }
+                      }));
+                    }}
                     required
                     className="mt-1.5"
                   />
@@ -1594,6 +1688,33 @@ export default function SchichtplanPage() {
                 </div>
               )}
             </fieldset>
+
+            {/* ── Public holiday warning ── */}
+            {pendingHolidayName && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 p-3.5 space-y-2">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {t("form.holidayWarning", { name: pendingHolidayName })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHolidayConfirmed(true);
+                    setPendingHolidayName(null);
+                    document
+                      .getElementById("shift-form")
+                      ?.dispatchEvent(
+                        new Event("submit", {
+                          bubbles: true,
+                          cancelable: true,
+                        }),
+                      );
+                  }}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  {t("form.holidayConfirm")}
+                </button>
+              </div>
+            )}
 
             {formError && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-800">

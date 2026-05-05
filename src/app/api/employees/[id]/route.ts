@@ -95,6 +95,7 @@ export async function PATCH(
           weeklyHours: body.weeklyHours ?? null,
           workDaysPerWeek: body.workDaysPerWeek ?? undefined,
           contractType: body.contractType || undefined,
+          flexibleWork: body.flexibleWork,
           color: body.color,
           isActive: body.isActive,
           locationId:

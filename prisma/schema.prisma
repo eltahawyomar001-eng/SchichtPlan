@@ -279,6 +279,7 @@ model Employee {
   weeklyHours  Float?
   workDaysPerWeek Float @default(5)
   contractType ContractType @default(VOLLZEIT)
+  flexibleWork Boolean  @default(false)
   color        String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())

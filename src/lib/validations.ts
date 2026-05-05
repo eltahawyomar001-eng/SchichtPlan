@@ -44,6 +44,7 @@ export const createEmployeeSchema = z.object({
     .max(7, "Max. 7 Tage/Woche")
     .optional(),
   contractType: contractTypeEnum,
+  flexibleWork: z.boolean().optional(),
   color: optionalString,
   locationId: z.string().optional().nullable(),
   departmentId: z.string().optional().nullable(),
@@ -51,6 +52,7 @@ export const createEmployeeSchema = z.object({
 
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
   isActive: z.boolean().optional(),
+  flexibleWork: z.boolean().optional(),
   departmentId: z.string().optional().nullable(),
   role: z.enum(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
 });

@@ -58,46 +58,59 @@ export const POST = withRoute(
 
     // ── Clock In ──
     if (action === "in") {
-      // ArbZG §5: Check 11-hour rest period since last clock-out
-      const restCheck = await checkRestPeriod(employeeId, now);
-      if (!restCheck.allowed) {
-        const lastClockOutStr = restCheck.lastClockOut.toLocaleTimeString(
-          "de-DE",
-          { timeZone: tz, hour: "2-digit", minute: "2-digit" },
-        );
-        const nextAllowedStr = restCheck.nextAllowedAt.toLocaleTimeString(
-          "de-DE",
-          {
-            timeZone: tz,
-            hour: "2-digit",
-            minute: "2-digit",
-          },
-        );
-        const remainHours = Math.floor(restCheck.remainingMinutes / 60);
-        const remainMins = restCheck.remainingMinutes % 60;
-        return NextResponse.json(
-          {
-            error: "REST_PERIOD_VIOLATION",
-            message: `ArbZG §5: Zwischen zwei Arbeitszeiten müssen mindestens 11 Stunden Ruhezeit liegen. Letzte Ausstempelung war um ${lastClockOutStr} Uhr. Nächster Arbeitsbeginn möglich ab ${nextAllowedStr} Uhr (noch ${remainHours}h ${remainMins}min).`,
-            remainingMinutes: restCheck.remainingMinutes,
-            nextAllowedAt: restCheck.nextAllowedAt.toISOString(),
-            lastClockOut: restCheck.lastClockOut.toISOString(),
-          },
-          { status: 403 },
-        );
-      }
+      // Fetch employee to check flexible work mode
+      const employee = await prisma.employee.findFirst({
+        where: { id: employeeId, workspaceId },
+        select: { flexibleWork: true },
+      });
+      const isFlexible = employee?.flexibleWork ?? false;
 
-      // ArbZG §3: Check if 10-hour daily limit is already reached
-      const dailyCheck = await checkMaxDailyWorkTime(employeeId, dateOnly, tz);
-      if (!dailyCheck.allowed) {
-        return NextResponse.json(
-          {
-            error: "MAX_DAILY_HOURS_REACHED",
-            message: `ArbZG §3: Tägliche Höchstarbeitszeit von 10 Stunden bereits erreicht (${Math.floor(dailyCheck.todayWorkedMinutes / 60)}h ${dailyCheck.todayWorkedMinutes % 60}min gearbeitet).`,
-            todayWorkedMinutes: dailyCheck.todayWorkedMinutes,
-          },
-          { status: 403 },
+      if (!isFlexible) {
+        // ArbZG §5: Check 11-hour rest period since last clock-out
+        const restCheck = await checkRestPeriod(employeeId, now);
+        if (!restCheck.allowed) {
+          const lastClockOutStr = restCheck.lastClockOut.toLocaleTimeString(
+            "de-DE",
+            { timeZone: tz, hour: "2-digit", minute: "2-digit" },
+          );
+          const nextAllowedStr = restCheck.nextAllowedAt.toLocaleTimeString(
+            "de-DE",
+            {
+              timeZone: tz,
+              hour: "2-digit",
+              minute: "2-digit",
+            },
+          );
+          const remainHours = Math.floor(restCheck.remainingMinutes / 60);
+          const remainMins = restCheck.remainingMinutes % 60;
+          return NextResponse.json(
+            {
+              error: "REST_PERIOD_VIOLATION",
+              message: `ArbZG §5: Zwischen zwei Arbeitszeiten müssen mindestens 11 Stunden Ruhezeit liegen. Letzte Ausstempelung war um ${lastClockOutStr} Uhr. Nächster Arbeitsbeginn möglich ab ${nextAllowedStr} Uhr (noch ${remainHours}h ${remainMins}min).`,
+              remainingMinutes: restCheck.remainingMinutes,
+              nextAllowedAt: restCheck.nextAllowedAt.toISOString(),
+              lastClockOut: restCheck.lastClockOut.toISOString(),
+            },
+            { status: 403 },
+          );
+        }
+
+        // ArbZG §3: Check if 10-hour daily limit is already reached
+        const dailyCheck = await checkMaxDailyWorkTime(
+          employeeId,
+          dateOnly,
+          tz,
         );
+        if (!dailyCheck.allowed) {
+          return NextResponse.json(
+            {
+              error: "MAX_DAILY_HOURS_REACHED",
+              message: `ArbZG §3: Tägliche Höchstarbeitszeit von 10 Stunden bereits erreicht (${Math.floor(dailyCheck.todayWorkedMinutes / 60)}h ${dailyCheck.todayWorkedMinutes % 60}min gearbeitet).`,
+              todayWorkedMinutes: dailyCheck.todayWorkedMinutes,
+            },
+            { status: 403 },
+          );
+        }
       }
 
       // Use a serializable transaction to prevent race conditions

@@ -388,7 +388,10 @@
       "dayTh": "Th",
       "dayFr": "Fr",
       "daySa": "Sa",
-      "daySu": "Su"
+      "daySu": "Su",
+      "templates": "Shift templates",
+      "holidayWarning": "This day is a public holiday ({name}). Create shift anyway?",
+      "holidayConfirm": "Yes, create holiday shift"
     },
     "viewDay": "Day",
     "viewWeek": "Week",
@@ -776,6 +779,8 @@
       "contractTeilzeit": "Part-time",
       "contractMinijob": "Mini-job",
       "contractMidijob": "Midi-job",
+      "flexibleWork": "Flexible working hours",
+      "flexibleWorkDesc": "No rest period or maximum working time restrictions when clocking in/out",
       "color": "Color",
       "location": "Location",
       "noLocation": "No location",
@@ -2195,7 +2200,18 @@
     "clockOutConfirmNext": "Next clock-in possible from approx. {time}",
     "clockOutConfirmWorked": "Worked so far: {hours}h {minutes}min",
     "clockOutConfirmButton": "Clock out now",
-    "clockOutCancelButton": "Keep working"
+    "clockOutCancelButton": "Keep working",
+    "earlyClockOut": {
+      "title": "Clock out early?",
+      "message": "You are about to clock out before your scheduled shift ends. Please review the labor law information below.",
+      "restPeriodWarning": "The mandatory 11-hour rest period (ArbZG §5) begins now. Clocking out early may delay your next clock-in time.",
+      "consequences": "Possible consequences",
+      "consequence1": "The rest period starts immediately — your next clock-in will be delayed accordingly.",
+      "consequence2": "Your working time will only be recorded up to this moment.",
+      "consequence3": "If you have questions, please contact your supervisor.",
+      "cancel": "Cancel",
+      "confirm": "Clock out anyway"
+    }
   },
   "projects": {
     "title": "Projects",

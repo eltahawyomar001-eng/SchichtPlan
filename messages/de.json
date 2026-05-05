@@ -388,7 +388,10 @@
       "dayTh": "Do",
       "dayFr": "Fr",
       "daySa": "Sa",
-      "daySu": "So"
+      "daySu": "So",
+      "templates": "Schichtvorlagen",
+      "holidayWarning": "Dieser Tag ist ein gesetzlicher Feiertag ({name}). Schicht trotzdem erstellen?",
+      "holidayConfirm": "Ja, Feiertag-Schicht erstellen"
     },
     "viewDay": "Tag",
     "viewWeek": "Woche",
@@ -776,6 +779,8 @@
       "contractTeilzeit": "Teilzeit",
       "contractMinijob": "Minijob",
       "contractMidijob": "Midijob",
+      "flexibleWork": "Flexible Arbeitszeit",
+      "flexibleWorkDesc": "Keine Ruhezeit- oder Höchstarbeitszeitbeschränkungen beim Stempeln",
       "color": "Farbe",
       "location": "Standort",
       "noLocation": "Kein Standort",
@@ -2195,7 +2200,18 @@
     "clockOutConfirmNext": "Nächste Anmeldung möglich ab ca. {time} Uhr",
     "clockOutConfirmWorked": "Bisher gearbeitet: {hours}h {minutes}min",
     "clockOutConfirmButton": "Jetzt ausstempeln",
-    "clockOutCancelButton": "Weiterarbeiten"
+    "clockOutCancelButton": "Weiterarbeiten",
+    "earlyClockOut": {
+      "title": "Früh ausstempeln?",
+      "message": "Sie sind dabei, vor dem Ende Ihrer geplanten Schicht auszustempeln. Bitte beachten Sie die arbeitsrechtlichen Hinweise.",
+      "restPeriodWarning": "Die gesetzliche Ruhezeit von 11 Stunden (ArbZG §5) beginnt jetzt. Frühes Ausstempeln kann Ihre nächste Einstempelzeit verschieben.",
+      "consequences": "Mögliche Auswirkungen",
+      "consequence1": "Die Ruhezeit beginnt sofort – Ihre nächste Einstempelzeit wird entsprechend verzögert.",
+      "consequence2": "Ihre Arbeitszeit wird nur bis zu diesem Moment erfasst.",
+      "consequence3": "Bei Fragen wenden Sie sich an Ihre Vorgesetzte bzw. Ihren Vorgesetzten.",
+      "cancel": "Abbrechen",
+      "confirm": "Trotzdem ausstempeln"
+    }
   },
   "projects": {
     "title": "Projekte",

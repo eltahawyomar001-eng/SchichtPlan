@@ -71,6 +71,7 @@ interface Employee {
   weeklyHours: number | null;
   workDaysPerWeek: number;
   contractType: string;
+  flexibleWork: boolean;
   color: string | null;
   isActive: boolean;
   employeeSkills?: EmployeeSkill[];
@@ -111,6 +112,7 @@ export default function MitarbeiterPage() {
     weeklyHours: "",
     workDaysPerWeek: "5",
     contractType: "VOLLZEIT",
+    flexibleWork: false,
     color: "#10b981",
     locationId: "",
     departmentId: "",
@@ -221,6 +223,7 @@ export default function MitarbeiterPage() {
       weeklyHours: "",
       workDaysPerWeek: "5",
       contractType: "VOLLZEIT",
+      flexibleWork: false,
       color: "#10b981",
       locationId: "",
       departmentId: "",
@@ -244,6 +247,7 @@ export default function MitarbeiterPage() {
       weeklyHours: emp.weeklyHours?.toString() || "",
       workDaysPerWeek: emp.workDaysPerWeek?.toString() || "5",
       contractType: emp.contractType || "VOLLZEIT",
+      flexibleWork: emp.flexibleWork ?? false,
       color: emp.color || "#10b981",
       locationId: emp.locationId || "",
       departmentId: emp.departmentId || "",
@@ -305,6 +309,7 @@ export default function MitarbeiterPage() {
           weeklyHours: "",
           workDaysPerWeek: "5",
           contractType: "VOLLZEIT",
+          flexibleWork: false,
           color: "#10b981",
           locationId: "",
           departmentId: "",
@@ -556,6 +561,40 @@ export default function MitarbeiterPage() {
                   <option value="MIDIJOB">{t("form.contractMidijob")}</option>
                 </Select>
               </div>
+            </div>
+
+            {/* Flexible work mode */}
+            <div className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                  {t("form.flexibleWork")}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
+                  {t("form.flexibleWorkDesc")}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={formData.flexibleWork}
+                onClick={() =>
+                  setFormData((p) => ({
+                    ...p,
+                    flexibleWork: !p.flexibleWork,
+                  }))
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  formData.flexibleWork
+                    ? "bg-emerald-500"
+                    : "bg-gray-200 dark:bg-zinc-600"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
+                    formData.flexibleWork ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
 
             {/* Role — shown when editing */}

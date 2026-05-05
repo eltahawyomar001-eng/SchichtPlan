@@ -92,6 +92,9 @@ export default function StempeluhrSeite() {
     minutes: number;
   } | null>(null);
   const [error, setError] = useState("");
+  const [restPeriodWarning, setRestPeriodWarning] = useState<string | null>(
+    null,
+  );
   const [noProfile, setNoProfile] = useState(false);
   const [arbZG, setArbZG] = useState<ArbZGInfo | null>(null);
   const [autoClockOutDone, setAutoClockOutDone] = useState(false);
@@ -415,9 +418,11 @@ export default function StempeluhrSeite() {
   // ── Perform action ──
   async function handleClock(
     action: "in" | "out" | "break-start" | "break-end",
+    bypassRestPeriod = false,
   ) {
     setActing(true);
     setError("");
+    setRestPeriodWarning(null);
 
     // Request browser notification permission when the user starts a break.
     // This is the natural moment of intent — we never auto-prompt on load.
@@ -441,20 +446,29 @@ export default function StempeluhrSeite() {
         body: JSON.stringify({
           action,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          bypassRestPeriod: bypassRestPeriod || undefined,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
         const errorKey = data.error as string;
+
+        // Soft warnings — show a confirmation banner instead of a hard error
+        if (
+          errorKey === "REST_PERIOD_VIOLATION" ||
+          errorKey === "MAX_DAILY_HOURS_REACHED"
+        ) {
+          setRestPeriodWarning(data.message || t("errorRestPeriod"));
+          return;
+        }
+
         const errorMessages: Record<string, string> = {
           ALREADY_CLOCKED_IN: t("errorAlreadyClockedIn"),
           NOT_CLOCKED_IN: t("errorNotClockedIn"),
           BREAK_ALREADY_ACTIVE: t("errorBreakActive"),
           NO_ACTIVE_BREAK: t("errorNoBreak"),
           NO_EMPLOYEE_PROFILE: t("errorNoProfile"),
-          REST_PERIOD_VIOLATION: data.message || t("errorRestPeriod"),
-          MAX_DAILY_HOURS_REACHED: data.message || t("errorMaxHours"),
         };
         setError(errorMessages[errorKey] || data.message || t("errorGeneric"));
         return;
@@ -567,6 +581,33 @@ export default function StempeluhrSeite() {
             <div className="flex items-center gap-2 rounded-[14px] bg-red-50 dark:bg-red-950/40 px-4 py-3 text-[15px] font-medium text-red-700 dark:text-red-300">
               <AlertTriangleIcon className="h-5 w-5 shrink-0" />
               {error}
+            </div>
+          )}
+
+          {/* ── Rest-period warning — allows override ── */}
+          {restPeriodWarning && (
+            <div className="rounded-[14px] border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangleIcon className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <p className="text-[14px] font-medium text-amber-800 dark:text-amber-300">
+                  {restPeriodWarning}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setRestPeriodWarning(null)}
+                  className="flex-1 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+                >
+                  {t("earlyClockOut.cancel")}
+                </button>
+                <button
+                  onClick={() => handleClock("in", true)}
+                  disabled={acting}
+                  className="flex-1 rounded-xl bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-60"
+                >
+                  {t("clockIn")}
+                </button>
+              </div>
             </div>
           )}
 

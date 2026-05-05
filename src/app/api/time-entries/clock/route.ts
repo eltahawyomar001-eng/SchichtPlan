@@ -41,7 +41,7 @@ export const POST = withRoute(
     const parsed = validateBody(clockActionSchema, await req.json());
     if (!parsed.success) return parsed.response;
 
-    const { action, timezone } = parsed.data;
+    const { action, timezone, bypassRestPeriod } = parsed.data;
     const now = new Date();
     const tz = timezone || "Europe/Berlin";
     const timeStr = now.toLocaleTimeString("de-DE", {
@@ -65,8 +65,10 @@ export const POST = withRoute(
       });
       const isFlexible = employee?.flexibleWork ?? false;
 
-      if (!isFlexible) {
-        // ArbZG §5: Check 11-hour rest period since last clock-out
+      // Skip ArbZG checks for flexible employees or when the user explicitly confirmed
+      if (!isFlexible && !bypassRestPeriod) {
+        // ArbZG §5: warn but do NOT hard-block — return 200 with a warning flag
+        // so the UI can show a confirmation prompt before the second attempt.
         const restCheck = await checkRestPeriod(employeeId, now);
         if (!restCheck.allowed) {
           const lastClockOutStr = restCheck.lastClockOut.toLocaleTimeString(
@@ -75,11 +77,7 @@ export const POST = withRoute(
           );
           const nextAllowedStr = restCheck.nextAllowedAt.toLocaleTimeString(
             "de-DE",
-            {
-              timeZone: tz,
-              hour: "2-digit",
-              minute: "2-digit",
-            },
+            { timeZone: tz, hour: "2-digit", minute: "2-digit" },
           );
           const remainHours = Math.floor(restCheck.remainingMinutes / 60);
           const remainMins = restCheck.remainingMinutes % 60;
@@ -91,11 +89,11 @@ export const POST = withRoute(
               nextAllowedAt: restCheck.nextAllowedAt.toISOString(),
               lastClockOut: restCheck.lastClockOut.toISOString(),
             },
-            { status: 403 },
+            { status: 409 },
           );
         }
 
-        // ArbZG §3: Check if 10-hour daily limit is already reached
+        // ArbZG §3: 10-hour daily limit — also a soft warning
         const dailyCheck = await checkMaxDailyWorkTime(
           employeeId,
           dateOnly,
@@ -108,7 +106,7 @@ export const POST = withRoute(
               message: `ArbZG §3: Tägliche Höchstarbeitszeit von 10 Stunden bereits erreicht (${Math.floor(dailyCheck.todayWorkedMinutes / 60)}h ${dailyCheck.todayWorkedMinutes % 60}min gearbeitet).`,
               todayWorkedMinutes: dailyCheck.todayWorkedMinutes,
             },
-            { status: 403 },
+            { status: 409 },
           );
         }
       }

@@ -233,6 +233,7 @@ export const clockActionSchema = z.object({
     message: "Ungültige Aktion",
   }),
   timezone: optionalString.pipe(z.string().max(100).optional()),
+  bypassRestPeriod: z.boolean().optional(),
 });
 
 // ── Time Entry Status Update ────────────────────────────────────

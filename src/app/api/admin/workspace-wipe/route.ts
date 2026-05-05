@@ -96,7 +96,6 @@ export const DELETE = withRoute(
     //    - Notifications, NotificationPreferences, PushSubscriptions
     //    - AutomationSettings, AutomationRules, WebhookEndpoints
     //    - Clients, Projects, ServiceReports
-    //    - ChatChannels → ChatMessages → ChatReactions, ChatAttachments
     //    - ESignatures, AuditLogs, ExportJobs
     //    - MonthClose records
     //    - StaffingRequirements, AutoScheduleRuns, AutoFillLogs, ManagerAlerts

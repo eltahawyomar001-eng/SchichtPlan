@@ -170,6 +170,19 @@ export const GET = withRoute(
     const planId = sub.plan.toLowerCase() as PlanId;
     const planConfig = PLANS[planId];
 
+    // Detect the billing cycle from the stored price ID so the UI can
+    // pre-select the correct toggle instead of always defaulting to annual.
+    const annualPriceIds = [
+      process.env.STRIPE_PRICE_BASIC_ANNUAL,
+      process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
+    ].filter(Boolean);
+    const detectedCycle: "monthly" | "annual" =
+      sub.stripePriceId && annualPriceIds.includes(sub.stripePriceId)
+        ? "annual"
+        : sub.stripePriceId
+          ? "monthly"
+          : "annual"; // default when no price ID (trial / sim)
+
     return NextResponse.json({
       plan: sub.plan,
       status: sub.status,
@@ -178,6 +191,7 @@ export const GET = withRoute(
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
       trialEnd: sub.trialEnd,
       hasStripeSubscription: !!sub.stripeSubscriptionId,
+      billingCycle: detectedCycle,
       ticketingTier: sub.ticketingTier ?? "NONE",
       schichtplanungAddonActive: sub.schichtplanungAddonActive,
       schichtplanungAddonBilling: sub.schichtplanungAddonBilling,

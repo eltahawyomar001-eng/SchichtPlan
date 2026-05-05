@@ -35,7 +35,6 @@ import { dispatchWebhook } from "@/lib/webhooks";
  * | Session                  | 30 days         | Art. 6(1)(b) — expired sessions      |
  * | AuditLog                 | 365 days        | Art. 6(1)(f) — security              |
  * | ESignature               | 3650 days       | §147 AO / eIDAS — 10 years          |
- * | ChatMessage              | 365 days        | No legal requirement                 |
  * | ExportJob                | 90 days         | No legal requirement                 |
  * | ServiceVisitAuditLog     | 3650 days       | §147 AO — tax/commercial records     |
  * | TimeEntryAudit           | 3650 days       | §147 AO — payroll records            |
@@ -250,17 +249,6 @@ async function executeRetention(dryRun = false): Promise<RetentionResult[]> {
       { createdAt: { lt: daysAgo(365) } },
       (w) => prisma.auditLog.count(w ? { where: w } : undefined),
       (a) => prisma.auditLog.deleteMany(a),
-      dryRun,
-    ),
-  );
-
-  // 12. ChatMessage — 365 days (cascade deletes reactions/attachments)
-  results.push(
-    await safeDelete(
-      "ChatMessage",
-      { createdAt: { lt: daysAgo(365) } },
-      (w) => prisma.chatMessage.count(w ? { where: w } : undefined),
-      (a) => prisma.chatMessage.deleteMany(a),
       dryRun,
     ),
   );

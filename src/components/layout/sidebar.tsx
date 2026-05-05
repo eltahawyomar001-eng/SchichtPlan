@@ -34,7 +34,6 @@ import {
   CalendarRangeIcon,
   CreditCardIcon,
   ShieldCheckIcon,
-  MessageCircleIcon,
   FileCheckIcon,
   TicketIcon,
   SearchIcon,
@@ -74,11 +73,6 @@ const navGroups: NavGroup[] = [
         key: "serviceProof",
         href: "/leistungsnachweis",
         icon: FileCheckIcon,
-      },
-      {
-        key: "teamChat",
-        href: "/nachrichten",
-        icon: MessageCircleIcon,
       },
       {
         key: "tickets",

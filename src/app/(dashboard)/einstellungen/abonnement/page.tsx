@@ -206,6 +206,10 @@ function BillingContent() {
       if (res.ok) {
         const data = await res.json();
         setSubscription(data);
+        // Sync the billing-cycle toggle to reflect the actual subscription
+        if (data.billingCycle === "monthly" || data.billingCycle === "annual") {
+          setBillingCycle(data.billingCycle);
+        }
       }
     } catch {
       // silent

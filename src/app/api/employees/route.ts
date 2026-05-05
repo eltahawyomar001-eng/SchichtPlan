@@ -11,6 +11,10 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
 import { requireAuth, serverError } from "@/lib/api-response";
+import { sendEmail } from "@/lib/notifications/email";
+import { invitationEmail } from "@/lib/notifications/email-i18n";
+import { getLocaleFromCookie } from "@/i18n/locale";
+import { randomBytes } from "crypto";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
@@ -142,6 +146,71 @@ export async function POST(req: Request) {
       email,
       position: position || "",
     });
+
+    // ── Invitation email (fire & forget) ──
+    // When an email is provided for the new employee and the address isn't
+    // already a workspace member or pending invite, automatically send an
+    // invitation so they can register and get linked to this employee record.
+    if (email) {
+      (async () => {
+        try {
+          const alreadyMember = await prisma.user.findFirst({
+            where: { email, workspaceId },
+            select: { id: true },
+          });
+          const pendingInvite = alreadyMember
+            ? null
+            : await prisma.invitation.findFirst({
+                where: { email, workspaceId, status: "PENDING" },
+                select: { id: true },
+              });
+
+          if (!alreadyMember && !pendingInvite) {
+            const token = randomBytes(32).toString("hex");
+            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            const workspace = await prisma.workspace.findUnique({
+              where: { id: workspaceId },
+              select: { name: true },
+            });
+            await prisma.invitation.create({
+              data: {
+                token,
+                email,
+                role: "EMPLOYEE",
+                status: "PENDING",
+                expiresAt,
+                workspaceId,
+                invitedById: user.id,
+              },
+            });
+            const locale = await getLocaleFromCookie();
+            const inviterName = user.name || user.email || "Ihr Arbeitgeber";
+            const workspaceName = workspace?.name || "Shiftfy";
+            const copy = invitationEmail(
+              locale,
+              inviterName,
+              workspaceName,
+              "EMPLOYEE",
+            );
+            await sendEmail({
+              to: email,
+              type: "invitation",
+              title: copy.subject,
+              message: copy.body,
+              link: `/einladung/${token}`,
+              locale,
+            });
+            log.info(
+              `[Employees] Invitation sent to ${email} for workspace ${workspaceId}`,
+            );
+          }
+        } catch (err) {
+          log.error("[Employees] Failed to send invitation email", {
+            error: err,
+          });
+        }
+      })();
+    }
 
     // ── Webhook dispatch (fire & forget) ──
     dispatchWebhook(workspaceId, "employee.created", {

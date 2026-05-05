@@ -96,30 +96,6 @@ function ClockFilled({ className }: { className?: string }) {
   );
 }
 
-function ChatOutline({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-      strokeWidth={1.8}
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M7.9 20A9 9 0 104 16.1L2 22z" />
-    </svg>
-  );
-}
-
-function ChatFilled({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.82.487 3.53 1.338 5.002L1.08 22.32a.75.75 0 00.92.92l5.318-2.258A9.956 9.956 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
-    </svg>
-  );
-}
-
 function EllipsisOutline({ className }: { className?: string }) {
   return (
     <svg
@@ -175,12 +151,6 @@ const tabs: NavTab[] = [
     href: "/stempeluhr",
     outline: ClockOutline,
     filled: ClockFilled,
-  },
-  {
-    key: "teamChat",
-    href: "/nachrichten",
-    outline: ChatOutline,
-    filled: ChatFilled,
   },
 ];
 

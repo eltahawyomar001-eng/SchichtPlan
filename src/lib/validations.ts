@@ -395,27 +395,6 @@ export const updateClientSchema = createClientSchema.partial().extend({
   isActive: z.boolean().optional(),
 });
 
-// ── Chat Channel ────────────────────────────────────────────────
-export const createChatChannelSchema = z.object({
-  name: requiredString.max(200, "Maximal 200 Zeichen"),
-  description: optionalString.pipe(z.string().max(1000).optional()),
-  type: z.enum(["GROUP", "DIRECT", "ANNOUNCEMENT"]).optional(),
-  memberIds: z.array(z.string()).optional(),
-  locationId: optionalString.nullable(),
-  departmentId: optionalString.nullable(),
-});
-
-// ── Chat Message ────────────────────────────────────────────────
-export const createChatMessageSchema = z.object({
-  content: requiredString.max(5000, "Maximal 5000 Zeichen"),
-  parentId: optionalString.nullable(),
-});
-
-// ── Chat Members (add) ──────────────────────────────────────────
-export const addChatMembersSchema = z.object({
-  userIds: z.array(z.string().min(1)).min(1, "Mindestens ein Benutzer"),
-});
-
 // ── Push Subscription ───────────────────────────────────────────
 export const createPushSubscriptionSchema = z.object({
   endpoint: requiredString.url("Ungültige Endpoint-URL"),
@@ -715,22 +694,6 @@ export const updateShiftSwapSchema = z.object({
   targetId: optionalString.nullable(),
   targetShiftId: optionalString.nullable(),
   reviewNote: optionalString.pipe(z.string().max(2000).optional()),
-});
-
-// ── Chat Channel (update) ───────────────────────────────────────
-export const updateChatChannelSchema = z.object({
-  name: optionalString.pipe(z.string().max(200).optional()),
-  description: optionalString.pipe(z.string().max(1000).optional()),
-});
-
-// ── Chat Message (update) ───────────────────────────────────────
-export const updateChatMessageSchema = z.object({
-  content: requiredString.max(5000, "Maximal 5000 Zeichen"),
-});
-
-// ── Chat Reaction ───────────────────────────────────────────────
-export const chatReactionSchema = z.object({
-  emoji: requiredString.max(10, "Maximal 10 Zeichen"),
 });
 
 // ── Automation Rule (update) ────────────────────────────────────

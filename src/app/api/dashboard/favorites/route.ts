@@ -19,7 +19,6 @@ const VALID_PAGE_KEYS = new Set([
   "shiftSwap",
   "punchClock",
   "serviceProof",
-  "teamChat",
   "tickets",
   "teamCalendar",
   "annualPlanning",

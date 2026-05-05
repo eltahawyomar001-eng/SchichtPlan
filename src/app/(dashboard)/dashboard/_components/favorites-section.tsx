@@ -10,7 +10,6 @@ import {
   SwapIcon,
   TargetIcon,
   FileCheckIcon,
-  MessageCircleIcon,
   TicketIcon,
   CalendarUsersIcon,
   CalendarRangeIcon,
@@ -98,14 +97,6 @@ const PAGE_REGISTRY: Record<string, PageInfo> = {
     bg: "bg-gradient-to-br from-teal-50 to-teal-100",
     hoverBorder: "hover:border-teal-200",
     hoverBg: "hover:bg-teal-50/30",
-  },
-  teamChat: {
-    icon: MessageCircleIcon,
-    href: "/nachrichten",
-    color: "text-violet-600",
-    bg: "bg-gradient-to-br from-violet-50 to-violet-100",
-    hoverBorder: "hover:border-violet-200",
-    hoverBg: "hover:bg-violet-50/30",
   },
   tickets: {
     icon: TicketIcon,

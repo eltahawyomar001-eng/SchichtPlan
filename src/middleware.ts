@@ -30,7 +30,7 @@ function buildCsp(nonce: string): string {
     // Use 'unsafe-inline' only for styles — no nonce, so it is respected by all browsers
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://apps.rokt.com",
     "connect-src 'self' https://*.supabase.co https://*.resend.com https://*.sentry.io https://*.stripe.com https://vercel.live wss://ws-us3.pusher.com https://vitals.vercel-insights.com",
     // Allow Vercel Live toolbar iframe in non-production
     `frame-src 'self' https://vercel.live`,

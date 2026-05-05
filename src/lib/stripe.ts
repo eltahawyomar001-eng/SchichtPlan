@@ -60,7 +60,6 @@ export interface PlanConfig {
     datevOnlineUpload: boolean;
     autoScheduling: boolean;
     eSignatures: boolean;
-    teamChat: boolean;
     apiWebhooks: boolean;
     customRoles: boolean;
     analytics: boolean;
@@ -107,7 +106,6 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       datevOnlineUpload: false,
       autoScheduling: false,
       eSignatures: false,
-      teamChat: true,
       apiWebhooks: false,
       customRoles: false,
       analytics: false,
@@ -140,7 +138,6 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       datevOnlineUpload: true,
       autoScheduling: true,
       eSignatures: true,
-      teamChat: true,
       apiWebhooks: true,
       customRoles: true,
       analytics: true,
@@ -173,7 +170,6 @@ export const PLANS: Record<PlanId, PlanConfig> = {
       datevOnlineUpload: true,
       autoScheduling: true,
       eSignatures: true,
-      teamChat: true,
       apiWebhooks: true,
       customRoles: true,
       analytics: true,

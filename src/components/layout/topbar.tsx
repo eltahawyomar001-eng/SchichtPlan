@@ -22,7 +22,7 @@ interface TopbarProps {
   title: string;
   description?: string;
   actions?: React.ReactNode;
-  /** Hide the iOS mobile header (for pages like nachrichten that have custom chrome) */
+  /** Hide the iOS mobile header (for pages with custom chrome) */
   hideMobile?: boolean;
 }
 

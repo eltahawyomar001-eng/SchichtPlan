@@ -40,7 +40,6 @@ import {
   CalendarRangeIcon,
   CreditCardIcon,
   ShieldCheckIcon,
-  MessageCircleIcon,
   FileCheckIcon,
   TicketIcon,
 } from "@/components/icons";
@@ -137,14 +136,6 @@ export function CommandPalette() {
         icon: FileCheckIcon,
         group: "Navigation",
         keywords: ["leistung", "nachweis", "service", "proof"],
-      },
-      {
-        id: "teamChat",
-        label: t("teamChat"),
-        href: "/nachrichten",
-        icon: MessageCircleIcon,
-        group: "Navigation",
-        keywords: ["chat", "nachricht", "message", "kommunikation"],
       },
       {
         id: "tickets",

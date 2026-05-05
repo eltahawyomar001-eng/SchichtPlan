@@ -114,6 +114,9 @@ export function TimeClockPopover() {
   const [elapsed, setElapsed] = useState("00:00:00");
   const [acting, setActing] = useState(false);
   const [error, setError] = useState("");
+  const [restPeriodWarning, setRestPeriodWarning] = useState<string | null>(
+    null,
+  );
   const [noProfile, setNoProfile] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
@@ -265,9 +268,11 @@ export function TimeClockPopover() {
   /* ── Perform clock action ── */
   async function handleClock(
     action: "in" | "out" | "break-start" | "break-end",
+    bypassRestPeriod = false,
   ) {
     setActing(true);
     setError("");
+    setRestPeriodWarning(null);
     try {
       const res = await fetch("/api/time-entries/clock", {
         method: "POST",
@@ -275,19 +280,27 @@ export function TimeClockPopover() {
         body: JSON.stringify({
           action,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          bypassRestPeriod: bypassRestPeriod || undefined,
         }),
       });
       if (!res.ok) {
         const data = await res.json();
         const errorKey = data.error as string;
+
+        if (
+          errorKey === "REST_PERIOD_VIOLATION" ||
+          errorKey === "MAX_DAILY_HOURS_REACHED"
+        ) {
+          setRestPeriodWarning(data.message || t("errorRestPeriod"));
+          return;
+        }
+
         const errorMessages: Record<string, string> = {
           ALREADY_CLOCKED_IN: t("errorAlreadyClockedIn"),
           NOT_CLOCKED_IN: t("errorNotClockedIn"),
           BREAK_ALREADY_ACTIVE: t("errorBreakActive"),
           NO_ACTIVE_BREAK: t("errorNoBreak"),
           NO_EMPLOYEE_PROFILE: t("errorNoProfile"),
-          REST_PERIOD_VIOLATION: data.message || t("errorRestPeriod"),
-          MAX_DAILY_HOURS_REACHED: data.message || t("errorMaxHours"),
         };
         setError(errorMessages[errorKey] || data.message || t("errorGeneric"));
         return;
@@ -538,6 +551,33 @@ export function TimeClockPopover() {
                 className="flex-1 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50 transition-colors"
               >
                 {acting ? <Spinner /> : t("clockOutConfirmButton")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Rest-period warning — allows override ── */}
+        {restPeriodWarning && (
+          <div className="mt-3 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30 p-3 space-y-2.5">
+            <div className="flex items-start gap-2">
+              <AlertTriangleIcon className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300 leading-relaxed">
+                {restPeriodWarning}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRestPeriodWarning(null)}
+                className="flex-1 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+              >
+                {t("earlyClockOut.cancel")}
+              </button>
+              <button
+                onClick={() => handleClock("in", true)}
+                disabled={acting}
+                className="flex-1 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-60"
+              >
+                {t("clockIn")}
               </button>
             </div>
           </div>

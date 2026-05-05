@@ -367,6 +367,7 @@
       "notes": "Notes",
       "notesPlaceholder": "Optional notes…",
       "submit": "Create shift",
+      "submitBulk": "{count, plural, =1 {Create 1 shift} other {Create # shifts}}",
       "update": "Update shift",
       "repeatWeeks": "Repeat (weeks)",
       "repeatWeeksHint": "0 = no repeat. Specifies how many weeks the shift is repeated for.",

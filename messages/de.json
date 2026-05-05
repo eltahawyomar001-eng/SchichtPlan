@@ -367,6 +367,7 @@
       "notes": "Notizen",
       "notesPlaceholder": "Optionale Notizen…",
       "submit": "Schicht erstellen",
+      "submitBulk": "{count, plural, =1 {1 Schicht erstellen} other {# Schichten erstellen}}",
       "update": "Schicht aktualisieren",
       "repeatWeeks": "Wiederholen (Wochen)",
       "repeatWeeksHint": "0 = keine Wiederholung. Gibt an, über wie viele Wochen die Schicht wiederholt wird.",

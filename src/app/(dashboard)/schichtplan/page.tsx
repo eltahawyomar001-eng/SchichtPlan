@@ -123,6 +123,8 @@ export default function SchichtplanPage() {
     locationId: "",
     notes: "",
     repeatWeeks: 0,
+    endDate: "",
+    selectedDays: [1, 2, 3, 4, 5] as number[],
   });
 
   // Auto-schedule state
@@ -290,6 +292,8 @@ export default function SchichtplanPage() {
       locationId: "",
       notes: "",
       repeatWeeks: 0,
+      endDate: "",
+      selectedDays: [1, 2, 3, 4, 5],
     });
     setFormError(null);
     setShowForm(true);
@@ -305,6 +309,8 @@ export default function SchichtplanPage() {
       locationId: shift.location?.id || "",
       notes: shift.notes || "",
       repeatWeeks: 0,
+      endDate: "",
+      selectedDays: [1, 2, 3, 4, 5],
     });
     setFormError(null);
     setShowForm(true);
@@ -324,6 +330,22 @@ export default function SchichtplanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.startTime, formData.endTime]);
 
+  // Computed: how many shifts the bulk range will create
+  const bulkShiftCount = useMemo(() => {
+    if (!formData.endDate || !formData.date) return 0;
+    const start = new Date(formData.date);
+    const end = new Date(formData.endDate);
+    if (end < start || formData.selectedDays.length === 0) return 0;
+    let count = 0;
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      const isoDay = cursor.getDay() === 0 ? 7 : cursor.getDay();
+      if (formData.selectedDays.includes(isoDay)) count++;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return count;
+  }, [formData.date, formData.endDate, formData.selectedDays]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!timeValidation.valid) return;
@@ -333,9 +355,20 @@ export default function SchichtplanPage() {
         ? `/api/shifts/${editingShift.id}`
         : "/api/shifts";
       const method = editingShift ? "PATCH" : "POST";
+      const isBulk = !editingShift && !!formData.endDate;
       const payload = editingShift
-        ? { ...formData, repeatWeeks: undefined }
-        : formData;
+        ? {
+            ...formData,
+            repeatWeeks: undefined,
+            endDate: undefined,
+            selectedDays: undefined,
+          }
+        : {
+            ...formData,
+            endDate: formData.endDate || undefined,
+            selectedDays: isBulk ? formData.selectedDays : undefined,
+            repeatWeeks: isBulk ? 0 : formData.repeatWeeks,
+          };
 
       const res = await fetch(url, {
         method,
@@ -355,6 +388,8 @@ export default function SchichtplanPage() {
           locationId: "",
           notes: "",
           repeatWeeks: 0,
+          endDate: "",
+          selectedDays: [1, 2, 3, 4, 5],
         });
         fetchData();
       } else {
@@ -1276,9 +1311,16 @@ export default function SchichtplanPage() {
                 type="submit"
                 form="shift-form"
                 className="flex-1 sm:flex-none"
-                disabled={!timeValidation.valid}
+                disabled={
+                  !timeValidation.valid ||
+                  (!editingShift && !!formData.endDate && bulkShiftCount === 0)
+                }
               >
-                {editingShift ? t("form.update") : t("form.submit")}
+                {editingShift
+                  ? t("form.update")
+                  : formData.endDate && bulkShiftCount > 0
+                    ? t("form.submitBulk", { count: bulkShiftCount })
+                    : t("form.submit")}
               </Button>
             </ModalFooter>
           }
@@ -1293,19 +1335,96 @@ export default function SchichtplanPage() {
                 </span>
               </div>
 
-              <div>
-                <Label htmlFor="date">{t("form.date")}</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, date: e.target.value }))
-                  }
-                  required
-                  className="mt-1.5"
-                />
+              {/* Von / Bis date range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="date">
+                    {editingShift ? t("form.date") : t("form.dateFrom")}
+                  </Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        date: e.target.value,
+                        // If endDate is before new startDate, clear it
+                        endDate:
+                          p.endDate && p.endDate < e.target.value
+                            ? ""
+                            : p.endDate,
+                      }))
+                    }
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+                {!editingShift && (
+                  <div>
+                    <Label htmlFor="endDate">{t("form.dateTo")}</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={formData.endDate}
+                      min={formData.date}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, endDate: e.target.value }))
+                      }
+                      className="mt-1.5"
+                    />
+                  </div>
+                )}
               </div>
+
+              {/* Weekday picker — only visible in bulk mode */}
+              {!editingShift && formData.endDate && (
+                <div>
+                  <Label>{t("form.weekdays")}</Label>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {([1, 2, 3, 4, 5, 6, 7] as const).map((day) => {
+                      const labelKey = (
+                        [
+                          "dayMo",
+                          "dayTu",
+                          "dayWe",
+                          "dayTh",
+                          "dayFr",
+                          "daySa",
+                          "daySu",
+                        ] as const
+                      )[day - 1];
+                      const isSelected = formData.selectedDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() =>
+                            setFormData((p) => ({
+                              ...p,
+                              selectedDays: isSelected
+                                ? p.selectedDays.filter((d) => d !== day)
+                                : [...p.selectedDays, day].sort(
+                                    (a, b) => a - b,
+                                  ),
+                            }))
+                          }
+                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                            isSelected
+                              ? "bg-emerald-500 text-white shadow-sm"
+                              : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700"
+                          }`}
+                        >
+                          {t(`form.${labelKey}`)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-xs text-gray-400 dark:text-zinc-500">
+                    {t("form.weekdaysHint")}
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1451,8 +1570,8 @@ export default function SchichtplanPage() {
                 />
               </div>
 
-              {/* Repeat weeks (only for new shifts) */}
-              {!editingShift && (
+              {/* Repeat weeks — hidden in bulk (date-range) mode */}
+              {!editingShift && !formData.endDate && (
                 <div>
                   <Label htmlFor="repeatWeeks">{t("form.repeatWeeks")}</Label>
                   <Input

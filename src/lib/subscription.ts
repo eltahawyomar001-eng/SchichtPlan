@@ -71,18 +71,62 @@ export const ACTIVE_SUBSCRIPTION_STATUSES = [
 /**
  * True iff the workspace currently has a subscription that grants app access.
  * Used by the dashboard layout to hard-gate the entire authenticated UI.
+ * For TRIALING accounts, also checks that trialEnd has not passed.
  */
 export async function hasActiveSubscription(
   workspaceId: string,
 ): Promise<boolean> {
+  return (await getSubscriptionState(workspaceId)) === "active";
+}
+
+export type SubscriptionState = "active" | "trial_expired" | "inactive";
+
+/**
+ * Returns a fine-grained access state for the workspace:
+ *   "active"        — has a valid paid or in-trial subscription
+ *   "trial_expired" — was TRIALING but trialEnd has passed with no upgrade
+ *   "inactive"      — no subscription, INCOMPLETE, CANCELED, etc.
+ *
+ * Used by the dashboard layout to route users to the right paywall screen.
+ */
+export async function getSubscriptionState(
+  workspaceId: string,
+): Promise<SubscriptionState> {
   const sub = await prisma.subscription.findUnique({
     where: { workspaceId },
-    select: { status: true },
+    select: { status: true, trialEnd: true },
   });
-  if (!sub) return false;
-  return (ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(
-    sub.status,
-  );
+  if (!sub) return "inactive";
+  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
+    return "inactive";
+  if (sub.status === "TRIALING" && sub.trialEnd && sub.trialEnd < new Date())
+    return "trial_expired";
+  return "active";
+}
+
+/**
+ * Create a 7-day trial subscription for a newly registered workspace.
+ * Called inside the registration transaction right after workspace creation.
+ */
+export async function initializeTrial(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tx: any,
+  workspaceId: string,
+) {
+  const now = new Date();
+  const trialEnd = new Date(now);
+  trialEnd.setDate(trialEnd.getDate() + 7);
+
+  return tx.subscription.create({
+    data: {
+      workspaceId,
+      plan: "BASIC",
+      status: "TRIALING",
+      seatCount: 1,
+      trialStart: now,
+      trialEnd,
+    },
+  });
 }
 
 /**

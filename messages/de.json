@@ -2991,5 +2991,13 @@
     "description": "Dieser Workspace hat kein aktives Abonnement. Bitte warten Sie, bis Ihr Administrator ein Abonnement abgeschlossen hat.",
     "contactAdmin": "Wenden Sie sich an Ihren Workspace-Administrator, um Zugang zu erhalten.",
     "signOut": "Abmelden"
+  },
+  "trialExpired": {
+    "title": "Ihre Testphase ist abgelaufen",
+    "description": "Ihr kostenloses 7-Tage-Testzeitraum ist beendet. Wählen Sie jetzt einen Plan, um weiterhin auf Shiftfy zuzugreifen.",
+    "ctaHint": "Jetzt Abonnement buchen und sofort wieder loslegen.",
+    "ctaButton": "Jetzt buchen",
+    "contactAdmin": "Ihr Workspace-Administrator muss ein Abonnement abschließen, damit Sie weiterhin Zugang haben.",
+    "signOut": "Abmelden"
   }
 }

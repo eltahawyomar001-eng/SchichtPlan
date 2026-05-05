@@ -2991,5 +2991,13 @@
     "description": "This workspace does not have an active subscription. Please wait for your administrator to complete the setup.",
     "contactAdmin": "Contact your workspace administrator to get access.",
     "signOut": "Sign out"
+  },
+  "trialExpired": {
+    "title": "Your trial has expired",
+    "description": "Your free 7-day trial has ended. Choose a plan now to continue using Shiftfy.",
+    "ctaHint": "Subscribe now and get back to work immediately.",
+    "ctaButton": "Subscribe now",
+    "contactAdmin": "Your workspace administrator needs to purchase a subscription for you to regain access.",
+    "signOut": "Sign out"
   }
 }

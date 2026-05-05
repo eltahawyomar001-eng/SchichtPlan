@@ -6,6 +6,7 @@ import { sendVerificationEmail } from "@/lib/verification";
 import { registerSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { initializeTrial } from "@/lib/subscription";
 
 export const POST = withRoute("/api/auth/register", "POST", async (req) => {
   const body = await req.json();
@@ -177,6 +178,9 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
         emailVerified: skipVerification ? new Date() : null,
       },
     });
+
+    // Start the 7-day trial immediately — no checkout required to enter the app.
+    await initializeTrial(tx, workspace.id);
 
     return { user, workspace };
   });

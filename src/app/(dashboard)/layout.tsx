@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { hasActiveSubscription } from "@/lib/subscription";
+import { getSubscriptionState } from "@/lib/subscription";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -15,6 +15,7 @@ const SUBSCRIPTION_ALLOWLIST = [
   "/einstellungen/abonnement",
   "/einstellungen/profil",
   "/workspace-inaktiv",
+  "/testphase-abgelaufen",
 ];
 
 export default async function DashboardLayout({
@@ -52,8 +53,11 @@ export default async function DashboardLayout({
     );
 
     if (!isAllowlisted) {
-      const active = await hasActiveSubscription(user.workspaceId);
-      if (!active) {
+      const state = await getSubscriptionState(user.workspaceId);
+      if (state !== "active") {
+        if (state === "trial_expired") {
+          redirect("/testphase-abgelaufen");
+        }
         if (user.role === "OWNER" || user.role === "ADMIN") {
           redirect("/einstellungen/abonnement?required=1");
         }

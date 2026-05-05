@@ -218,19 +218,20 @@ export const POST = withRoute(
         }
 
         if (subscription.ticketingStripeSubscriptionItemId) {
-          // Upgrade/downgrade existing item with proration
+          // Upgrade/downgrade existing item — prorate at cycle end
           const updated = await stripe.subscriptionItems.update(
             subscription.ticketingStripeSubscriptionItemId,
             { price: priceId, proration_behavior: "create_prorations" },
           );
           newItemId = updated.id;
         } else {
-          // Add new add-on item to existing subscription
+          // New add-on: charge immediately, fail fast if payment is incomplete
           const created = await stripe.subscriptionItems.create({
             subscription: stripeSubId,
             price: priceId,
             quantity: 1,
-            proration_behavior: "create_prorations",
+            proration_behavior: "always_invoice",
+            payment_behavior: "error_if_incomplete",
           });
           newItemId = created.id;
         }

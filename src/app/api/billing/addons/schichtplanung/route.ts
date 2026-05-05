@@ -254,7 +254,7 @@ export const POST = withRoute(
         }
 
         if (subscription.schichtplanungStripeSubscriptionItemId) {
-          // Switch billing cycle / refresh quantity
+          // Switch billing cycle / refresh quantity — prorate at cycle end
           const updated = await stripe.subscriptionItems.update(
             subscription.schichtplanungStripeSubscriptionItemId,
             {
@@ -265,12 +265,13 @@ export const POST = withRoute(
           );
           newItemId = updated.id;
         } else {
-          // New subscription item
+          // New add-on: charge immediately, fail fast if payment is incomplete
           const created = await stripe.subscriptionItems.create({
             subscription: stripeSubId,
             price: priceId,
             quantity,
-            proration_behavior: "create_prorations",
+            proration_behavior: "always_invoice",
+            payment_behavior: "error_if_incomplete",
           });
           newItemId = created.id;
         }

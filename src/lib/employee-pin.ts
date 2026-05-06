@@ -44,6 +44,14 @@ export async function sendPinEmail({
   rawPin: string;
   workspaceName: string;
 }): Promise<void> {
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    "https://app.shiftfy.de"
+  )
+    .trim()
+    .replace(/\/+$/, "");
+
   const result = await sendEmail({
     to,
     type: "pin_assigned",
@@ -59,6 +67,7 @@ export async function sendPinEmail({
       `Bitte teilen Sie Ihre PIN nicht mit Kolleginnen und Kollegen, ` +
       `da sie Ihnen persönlich zugeordnet ist.\n\n` +
       `Bei Problemen wenden Sie sich an Ihren Vorgesetzten.`,
+    link: `${appUrl}/stempeluhr`,
   });
   if (!result.success) {
     log.warn("[employee-pin] PIN email not sent", { to, error: result.error });

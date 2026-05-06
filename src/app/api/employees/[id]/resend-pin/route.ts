@@ -12,6 +12,7 @@ import { log } from "@/lib/logger";
  *
  * Generates a fresh 4-digit PIN for the employee, saves the hash, and sends
  * the plain PIN by email. Requires ADMIN or OWNER.
+ * Enforces the workspace email quota before sending.
  */
 export async function POST(
   _req: Request,
@@ -38,6 +39,24 @@ export async function POST(
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
 
+  // ── Email quota check ──
+  if (employee.email) {
+    const usage = await prisma.workspaceUsage.findUnique({
+      where: { workspaceId },
+      select: { emailsSentThisMonth: true, emailsMonthlyLimit: true },
+    });
+    if (
+      usage &&
+      usage.emailsMonthlyLimit !== -1 &&
+      usage.emailsSentThisMonth >= usage.emailsMonthlyLimit
+    ) {
+      return NextResponse.json(
+        { error: "EMAIL_LIMIT_REACHED" },
+        { status: 429 },
+      );
+    }
+  }
+
   try {
     const rawPin = await generateUniquePin(workspaceId);
     const pHash = hashPin(workspaceId, rawPin);
@@ -57,6 +76,12 @@ export async function POST(
         firstName: employee.firstName,
         rawPin,
         workspaceName: ws?.name ?? "",
+      });
+
+      // ── Increment email counter ──
+      await prisma.workspaceUsage.updateMany({
+        where: { workspaceId },
+        data: { emailsSentThisMonth: { increment: 1 } },
       });
     }
 

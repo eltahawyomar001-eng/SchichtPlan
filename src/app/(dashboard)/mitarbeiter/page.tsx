@@ -74,6 +74,7 @@ interface Employee {
   flexibleWork: boolean;
   color: string | null;
   isActive: boolean;
+  pinHash: string | null;
   employeeSkills?: EmployeeSkill[];
   locationId?: string | null;
   location?: LocationItem | null;
@@ -85,6 +86,7 @@ interface Employee {
 export default function MitarbeiterPage() {
   const t = useTranslations("employeesPage");
   const tc = useTranslations("common");
+  const tq = useTranslations("qrStation");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { handlePlanLimit } = usePlanLimit();
@@ -120,6 +122,8 @@ export default function MitarbeiterPage() {
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
+  const [pinSendingId, setPinSendingId] = useState<string | null>(null);
+  const [pinSentId, setPinSentId] = useState<string | null>(null);
 
   /** Check whether the form has been modified compared to its initial state */
   const isFormDirty = useCallback(() => {
@@ -926,7 +930,57 @@ export default function MitarbeiterPage() {
                       )}
                   </div>
 
-                  <div className="mt-4 flex justify-end gap-2">
+                  {/* ── PIN status + Send PIN ── */}
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <Badge
+                      variant={employee.pinHash ? "success" : "outline"}
+                      className="text-xs"
+                    >
+                      {employee.pinHash ? tq("pinAssigned") : tq("noPin")}
+                    </Badge>
+                    {employee.email && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={
+                          pinSendingId === employee.id ||
+                          pinSentId === employee.id
+                        }
+                        onClick={async () => {
+                          setPinSendingId(employee.id);
+                          try {
+                            const res = await fetch(
+                              `/api/employees/${employee.id}/resend-pin`,
+                              { method: "POST" },
+                            );
+                            if (res.status === 429) {
+                              alert(tq("emailLimitReached"));
+                            } else {
+                              setPinSentId(employee.id);
+                              setTimeout(
+                                () =>
+                                  setPinSentId((id) =>
+                                    id === employee.id ? null : id,
+                                  ),
+                                4000,
+                              );
+                            }
+                          } finally {
+                            setPinSendingId(null);
+                          }
+                        }}
+                        className="text-xs h-7 px-2.5"
+                      >
+                        {pinSentId === employee.id
+                          ? tq("pinSent") + " ✓"
+                          : pinSendingId === employee.id
+                            ? "..."
+                            : tq("sendPin")}
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex justify-end gap-2">
                     <Button
                       variant="ghost"
                       size="sm"

@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import {
+  AlertTriangleIcon,
+  ShieldCheckIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ArrowLeftIcon,
+} from "@/components/icons";
 
 type Stage =
   | "loading"
@@ -27,9 +35,18 @@ interface PunchResult {
 
 const AUTO_RESET_MS = 3_500;
 
+function Spinner({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-block rounded-full border-2 border-current border-t-transparent animate-spin ${className}`}
+    />
+  );
+}
+
 function FastPunchContent() {
   const params = useSearchParams();
   const token = params.get("t") ?? "";
+  const t = useTranslations("qrStation");
 
   const [workspaceName, setWorkspaceName] = useState("");
   const [stage, setStage] = useState<Stage>("loading");
@@ -42,13 +59,11 @@ function FastPunchContent() {
   const [result, setResult] = useState<PunchResult | null>(null);
   const [countdown, setCountdown] = useState(AUTO_RESET_MS / 1000);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Keep verified PIN in a ref so the punch request can re-verify it server-side
   const verifiedPinRef = useRef("");
 
-  // Validate token and load workspace name
   const loadWorkspace = useCallback(async () => {
     if (!token) {
-      setTokenError("Kein QR-Code erkannt. Bitte erneut scannen.");
+      setTokenError(t("noQrCode"));
       setStage("token-error");
       return;
     }
@@ -57,12 +72,12 @@ function FastPunchContent() {
         `/api/qr-clock/employees?t=${encodeURIComponent(token)}`,
       );
       if (res.status === 401) {
-        setTokenError("QR-Code abgelaufen. Bitte erneut scannen.");
+        setTokenError(t("expiredCode"));
         setStage("token-error");
         return;
       }
       if (!res.ok) {
-        setTokenError("Fehler beim Laden. Bitte erneut scannen.");
+        setTokenError(t("loadError"));
         setStage("token-error");
         return;
       }
@@ -70,17 +85,16 @@ function FastPunchContent() {
       setWorkspaceName(data.workspaceName);
       setStage("pin");
     } catch {
-      setTokenError("Netzwerkfehler. Bitte erneut scannen.");
+      setTokenError(t("networkError"));
       setStage("token-error");
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadWorkspace();
   }, [loadWorkspace]);
 
-  // Auto-identify when 4 digits are entered
   const identify = useCallback(
     async (enteredPin: string) => {
       try {
@@ -91,15 +105,14 @@ function FastPunchContent() {
         });
 
         if (res.status === 401) {
-          setTokenError("QR-Code abgelaufen. Bitte erneut scannen.");
+          setTokenError(t("expiredCode"));
           setStage("token-error");
           return;
         }
 
         if (!res.ok) {
-          // Wrong PIN
           setShake(true);
-          setPinError("PIN ungültig. Bitte erneut versuchen.");
+          setPinError(t("pinInvalid"));
           setTimeout(() => {
             setShake(false);
             setPin("");
@@ -111,12 +124,12 @@ function FastPunchContent() {
         }
 
         const data: Employee = await res.json();
-        verifiedPinRef.current = enteredPin; // keep for punch re-verification
+        verifiedPinRef.current = enteredPin;
         setEmployee(data);
         setPin("");
         setStage("identified");
       } catch {
-        setPinError("Netzwerkfehler. Bitte erneut versuchen.");
+        setPinError(t("networkErrorRetry"));
         setStage("pin-error");
         setTimeout(() => {
           setPin("");
@@ -125,7 +138,7 @@ function FastPunchContent() {
         }, 1200);
       }
     },
-    [token],
+    [token, t],
   );
 
   const punch = useCallback(
@@ -137,25 +150,21 @@ function FastPunchContent() {
         const res = await fetch("/api/qr-clock/punch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token,
-            pin: verifiedPinRef.current,
-            action,
-          }),
+          body: JSON.stringify({ token, pin: verifiedPinRef.current, action }),
         });
         if (!res.ok) {
           const data = await res.json();
           if (data.error === "INVALID_OR_EXPIRED_TOKEN") {
-            setTokenError("QR-Code abgelaufen. Bitte erneut scannen.");
+            setTokenError(t("expiredCode"));
             setStage("token-error");
           } else if (data.error === "ALREADY_CLOCKED_IN") {
-            setPunchError("Bereits eingestempelt.");
+            setPunchError(t("alreadyClockedIn"));
             setStage("identified");
           } else if (data.error === "NOT_CLOCKED_IN") {
-            setPunchError("Nicht eingestempelt.");
+            setPunchError(t("notClockedIn"));
             setStage("identified");
           } else {
-            setPunchError("Fehler. Bitte erneut versuchen.");
+            setPunchError(t("generalError"));
             setStage("identified");
           }
           return;
@@ -169,14 +178,13 @@ function FastPunchContent() {
         });
         setStage("success");
       } catch {
-        setPunchError("Netzwerkfehler.");
+        setPunchError(t("networkErrorPunch"));
         setStage("identified");
       }
     },
-    [employee, token],
+    [employee, token, t],
   );
 
-  // Auto-reset from success screen
   useEffect(() => {
     if (stage !== "success") return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -206,7 +214,7 @@ function FastPunchContent() {
     const next = (pin + d).slice(0, 4);
     setPin(next);
     if (next.length === 4) {
-      setStage("pin-error"); // prevent double-press while identifying
+      setStage("pin-error");
       identify(next);
     }
   };
@@ -220,14 +228,14 @@ function FastPunchContent() {
   // ── Token error ──
   if (stage === "token-error") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
-        <div className="text-center space-y-4 max-w-sm w-full">
-          <p className="text-5xl">⚠️</p>
-          <p className="text-xl font-bold text-gray-900">Code ungültig</p>
-          <p className="text-gray-600">{tokenError}</p>
-          <p className="text-sm text-gray-400">
-            Bitte einen neuen QR-Code scannen.
-          </p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-50">
+        <div className="text-center space-y-4 max-w-xs w-full">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+            <AlertTriangleIcon className="h-8 w-8 text-amber-600" />
+          </div>
+          <p className="text-xl font-bold text-gray-900">{t("invalidCode")}</p>
+          <p className="text-gray-500 text-sm leading-relaxed">{tokenError}</p>
+          <p className="text-xs text-gray-400">{t("scanAgain")}</p>
         </div>
       </div>
     );
@@ -237,44 +245,45 @@ function FastPunchContent() {
   if (stage === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="h-10 w-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+        <Spinner className="h-8 w-8 text-emerald-500" />
       </div>
     );
   }
 
-  // ── Success screen (auto-resets) ──
+  // ── Success screen ──
   if (stage === "success" && result) {
     const isIn = result.action === "in";
-    const hours = result.netMinutes ? Math.floor(result.netMinutes / 60) : null;
-    const mins = result.netMinutes ? result.netMinutes % 60 : null;
+    const hours =
+      result.netMinutes != null ? Math.floor(result.netMinutes / 60) : null;
+    const mins = result.netMinutes != null ? result.netMinutes % 60 : null;
 
     return (
       <div
-        className={`min-h-screen flex flex-col items-center justify-center p-6 ${
+        className={`min-h-screen flex flex-col items-center justify-center p-8 ${
           isIn ? "bg-emerald-500" : "bg-red-500"
         }`}
       >
-        <div className="text-center space-y-4 max-w-sm w-full">
-          <div className="text-9xl font-black text-white">✓</div>
+        <div className="text-center space-y-5 max-w-xs w-full">
+          <CheckCircleIcon className="mx-auto h-24 w-24 text-white" />
           <div className="space-y-1">
             <p className="text-3xl font-bold text-white">
-              {isIn ? "Eingestempelt!" : "Ausgestempelt!"}
+              {isIn ? t("clockedIn") : t("clockedOut")}
             </p>
-            <p className="text-xl text-white/80 font-medium">
+            <p className="text-lg text-white/80 font-medium">
               {result.employeeName}
             </p>
             <p className="text-3xl font-mono font-bold text-white">
               {result.time} Uhr
             </p>
             {!isIn && hours !== null && mins !== null && (
-              <p className="text-base text-white/70">
-                Netto: {hours}h {mins}min
+              <p className="text-sm text-white/70">
+                {t("netTime", { hours, mins })}
               </p>
             )}
           </div>
-          {/* Countdown bar */}
-          <div className="mt-6 space-y-1">
-            <div className="h-1.5 w-full rounded-full bg-white/30 overflow-hidden">
+
+          <div className="space-y-2 pt-2">
+            <div className="h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
               <div
                 className="h-full rounded-full bg-white transition-all duration-1000"
                 style={{
@@ -283,9 +292,10 @@ function FastPunchContent() {
               />
             </div>
             <p className="text-xs text-white/60">
-              Wird in {countdown}s zurückgesetzt
+              {t("resetsIn", { seconds: countdown })}
             </p>
           </div>
+
           <button
             onClick={() => {
               if (countdownRef.current) clearInterval(countdownRef.current);
@@ -296,37 +306,39 @@ function FastPunchContent() {
               setPunchError("");
               setStage("pin");
             }}
-            className="mt-2 w-full py-4 rounded-2xl bg-white text-gray-900 text-xl font-bold active:scale-95 transition-transform shadow-lg"
+            className="w-full py-4 rounded-2xl bg-white text-gray-900 text-xl font-bold active:scale-95 transition-transform shadow-lg"
           >
-            Fertig
+            {t("done")}
           </button>
         </div>
       </div>
     );
   }
 
-  // ── Identified: show employee name + IN/OUT ──
+  // ── Identified: IN / OUT ──
   if (stage === "identified" || stage === "punching") {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <div className="bg-white border-b border-gray-200 px-4 py-3 text-center">
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+        <header className="bg-white border-b border-gray-100 px-6 py-4 text-center shadow-sm">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
             {workspaceName}
           </p>
-          <p className="text-base font-semibold text-gray-900">Stempeluhr</p>
-        </div>
+          <p className="text-sm font-semibold text-gray-700 mt-0.5">
+            {t("punchStation")}
+          </p>
+        </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6 max-w-sm mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-8 max-w-sm mx-auto w-full">
           <div className="text-center">
-            <p className="text-gray-500 text-sm">Guten Tag,</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-gray-400 text-sm mb-1">{t("welcome")}</p>
+            <p className="text-3xl font-bold text-gray-900">
               {employee?.firstName}!
             </p>
           </div>
 
           {punchError && (
-            <div className="w-full rounded-xl bg-red-50 border border-red-200 p-3 text-center">
-              <p className="text-sm text-red-700 font-medium">{punchError}</p>
+            <div className="w-full rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-center">
+              <p className="text-sm text-red-600 font-medium">{punchError}</p>
             </div>
           )}
 
@@ -334,23 +346,23 @@ function FastPunchContent() {
             <button
               onClick={() => punch("in")}
               disabled={stage === "punching"}
-              className="w-full py-10 rounded-3xl bg-emerald-500 active:bg-emerald-600 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-emerald-500/30 text-white text-4xl font-black"
+              className="w-full py-10 rounded-3xl bg-emerald-500 active:bg-emerald-600 disabled:opacity-60 active:scale-95 transition-all shadow-xl shadow-emerald-500/25 text-white text-4xl font-black tracking-wider"
             >
               {stage === "punching" ? (
-                <span className="block h-8 w-8 rounded-full border-4 border-white border-t-transparent animate-spin mx-auto" />
+                <Spinner className="h-8 w-8 mx-auto border-white border-t-transparent" />
               ) : (
-                "REIN"
+                t("clockIn")
               )}
             </button>
             <button
               onClick={() => punch("out")}
               disabled={stage === "punching"}
-              className="w-full py-10 rounded-3xl bg-red-500 active:bg-red-600 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-red-500/30 text-white text-4xl font-black"
+              className="w-full py-10 rounded-3xl bg-red-500 active:bg-red-600 disabled:opacity-60 active:scale-95 transition-all shadow-xl shadow-red-500/25 text-white text-4xl font-black tracking-wider"
             >
               {stage === "punching" ? (
-                <span className="block h-8 w-8 rounded-full border-4 border-white border-t-transparent animate-spin mx-auto" />
+                <Spinner className="h-8 w-8 mx-auto border-white border-t-transparent" />
               ) : (
-                "RAUS"
+                t("clockOut")
               )}
             </button>
           </div>
@@ -363,9 +375,10 @@ function FastPunchContent() {
               setPunchError("");
               setStage("pin");
             }}
-            className="text-sm text-gray-400 mt-2"
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
-            ← Andere PIN eingeben
+            <ArrowLeftIcon className="h-3.5 w-3.5" />
+            {t("changePin")}
           </button>
         </div>
       </div>
@@ -377,29 +390,31 @@ function FastPunchContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 text-center">
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-          {workspaceName || "Stempelstation"}
+      <header className="bg-white border-b border-gray-100 px-6 py-4 text-center shadow-sm">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+          {workspaceName || t("punchStation")}
         </p>
-        <p className="text-base font-semibold text-gray-900">
-          Workspace verifiziert ✓
-        </p>
-      </div>
+        <div className="flex items-center justify-center gap-1.5 mt-0.5">
+          <ShieldCheckIcon className="h-3.5 w-3.5 text-emerald-500" />
+          <p className="text-sm font-semibold text-gray-700">
+            {t("workspaceVerified")}
+          </p>
+        </div>
+      </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6 max-w-sm mx-auto w-full">
-        <p className="text-gray-600 text-center text-sm font-medium">
-          Bitte geben Sie Ihre 4-stellige PIN ein
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 gap-8 max-w-sm mx-auto w-full">
+        <p className="text-gray-500 text-center text-sm font-medium">
+          {t("enterPin")}
         </p>
 
         {/* PIN dots */}
         <div
-          className={`flex gap-4 transition-transform ${shake ? "animate-[shake_0.4s_ease]" : ""}`}
+          className={`flex gap-5 ${shake ? "animate-[shake_0.4s_ease]" : ""}`}
         >
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`h-5 w-5 rounded-full border-2 transition-all ${
+              className={`h-4 w-4 rounded-full border-2 transition-all duration-150 ${
                 i < pin.length
                   ? "bg-gray-900 border-gray-900 scale-110"
                   : "bg-transparent border-gray-300"
@@ -409,44 +424,44 @@ function FastPunchContent() {
         </div>
 
         {pinError && (
-          <p className="text-sm text-red-600 font-medium text-center">
+          <p className="text-sm text-red-500 font-medium text-center -mt-4">
             {pinError}
           </p>
         )}
 
         {/* Numpad */}
-        <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+        <div className="grid grid-cols-3 gap-3 w-full max-w-[280px]">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
             <button
               key={d}
               onClick={() => pressDigit(d)}
               disabled={!isPinStage || pin.length >= 4}
-              className="h-16 rounded-2xl bg-white border border-gray-200 text-2xl font-bold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40"
+              className="h-[72px] rounded-2xl bg-white border border-gray-200 text-2xl font-semibold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40 select-none"
             >
               {d}
             </button>
           ))}
-          {/* Bottom row: delete, 0, blank */}
           <button
             onClick={deleteDigit}
             disabled={!isPinStage || pin.length === 0}
-            className="h-16 rounded-2xl bg-white border border-gray-200 text-xl font-bold text-gray-500 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-30"
+            className="h-[72px] rounded-2xl bg-white border border-gray-200 flex items-center justify-center active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-30 select-none"
           >
-            ⌫
+            <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
           </button>
           <button
             onClick={() => pressDigit("0")}
             disabled={!isPinStage || pin.length >= 4}
-            className="h-16 rounded-2xl bg-white border border-gray-200 text-2xl font-bold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40"
+            className="h-[72px] rounded-2xl bg-white border border-gray-200 text-2xl font-semibold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40 select-none"
           >
             0
           </button>
-          <div /> {/* empty cell */}
+          <div />
         </div>
 
-        <p className="text-xs text-gray-400 text-center">
-          🔒 Kein GPS · Kein Tracking
-        </p>
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <ShieldCheckIcon className="h-3.5 w-3.5" />
+          <span>{t("noGps")}</span>
+        </div>
       </div>
     </div>
   );
@@ -457,7 +472,7 @@ export default function StempelPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="h-10 w-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+          <Spinner className="h-8 w-8 text-emerald-500" />
         </div>
       }
     >

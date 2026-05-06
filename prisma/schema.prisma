@@ -257,6 +257,12 @@ model WorkspaceUsage {
   ticketStorageBytesLimit BigInt   @default(0)
   /// When the ticket counters were last reset (beginning of add-on billing period)
   ticketsResetAt          DateTime @default(now())
+  /// Transactional emails sent this billing period (PIN assignments, notifications)
+  emailsSentThisMonth     Int      @default(0)
+  /// Maximum emails allowed per billing period (Basic=100, Professional=500, Enterprise=unlimited=-1)
+  emailsMonthlyLimit      Int      @default(100)
+  /// When the email counter was last reset (beginning of billing period)
+  emailsResetAt           DateTime @default(now())
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workspaceId             String   @unique

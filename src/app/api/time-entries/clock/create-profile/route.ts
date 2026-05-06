@@ -43,12 +43,36 @@ export async function POST() {
       return apiSuccess({ employeeId: existingLink.id });
     }
 
-    // Create the employee and link to this user in a transaction
+    // Create the employee and link to this user in a transaction.
+    // Guard against @@unique([email, workspaceId]) violations: if an unlinked
+    // employee with the same email already exists, link it instead of creating.
     const employee = await prisma.$transaction(async (tx) => {
       if (!user.email) {
         throw new Error("User email is required for employee profile creation");
       }
-      const created = await tx.employee.create({
+
+      const byEmail = await tx.employee.findFirst({
+        where: {
+          email: { equals: user.email, mode: "insensitive" },
+          workspaceId,
+        },
+      });
+
+      if (byEmail) {
+        if (byEmail.userId === user.id) {
+          return byEmail; // already linked, session token was stale
+        }
+        if (!byEmail.userId) {
+          return tx.employee.update({
+            where: { id: byEmail.id },
+            data: { userId: user.id },
+          });
+        }
+        // Linked to a different user — shouldn't happen in normal flow
+        throw new Error("EMAIL_ALREADY_LINKED_TO_ANOTHER_USER");
+      }
+
+      return tx.employee.create({
         data: {
           firstName: user.name?.split(" ")[0] || "Mitarbeiter",
           lastName: user.name?.split(" ").slice(1).join(" ") || "",
@@ -58,7 +82,6 @@ export async function POST() {
           isActive: true,
         },
       });
-      return created;
     });
 
     // Invalidate JWT cache so the session refreshes with the new employeeId

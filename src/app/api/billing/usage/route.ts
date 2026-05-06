@@ -64,6 +64,11 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
         used: usage.ticketsCreatedThisMonth,
         limit: usage.ticketsMonthlyLimit > 0 ? usage.ticketsMonthlyLimit : null,
       },
+      emailsThisMonth: {
+        used: usage.emailsSentThisMonth,
+        limit:
+          usage.emailsMonthlyLimit === -1 ? null : usage.emailsMonthlyLimit,
+      },
     });
   } catch (err) {
     log.error("[Billing] usage snapshot failed", {

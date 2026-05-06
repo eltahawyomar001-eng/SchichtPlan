@@ -7,6 +7,7 @@ import {
   updateSubscriptionFromStripe,
   isSimulationMode,
   simulateSubscription,
+  linkSubscriptionByCustomer,
 } from "@/lib/subscription";
 import { syncUsageLimits } from "@/lib/subscription-guard";
 import { getTicketingTierByPriceId } from "@/lib/ticketing-addon";
@@ -14,6 +15,7 @@ import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { prisma } from "@/lib/db";
 
 /**
  * POST /api/billing/upgrade
@@ -92,7 +94,78 @@ export const POST = withRoute(
       });
     }
 
-    if (!sub.stripeSubscriptionId) {
+    const stripe = getStripe();
+    let stripeSubId = sub.stripeSubscriptionId;
+
+    // Auto-link fallback: if stripeSubscriptionId is missing, try to resolve it
+    // from Stripe using the stored customer ID or the user's email address.
+    if (!stripeSubId) {
+      try {
+        let customerId = sub.stripeCustomerId;
+        if (!customerId && user.email) {
+          const customers = await stripe.customers.list({
+            email: user.email,
+            limit: 1,
+          });
+          if (customers.data.length > 0) {
+            customerId = customers.data[0].id;
+            await prisma.subscription.update({
+              where: { workspaceId },
+              data: { stripeCustomerId: customerId },
+            });
+            log.info(
+              `[Billing:Upgrade] resolved stripeCustomerId=${customerId} via email for ws=${workspaceId}`,
+            );
+          }
+        }
+
+        if (customerId) {
+          const stripeSubs = await stripe.subscriptions.list({
+            customer: customerId,
+            limit: 5,
+            expand: ["data.items"],
+          });
+          stripeSubs.data.sort((a, b) => {
+            const rank = (s: string) =>
+              s === "active" ? 0 : s === "trialing" ? 1 : 2;
+            return rank(a.status) - rank(b.status);
+          });
+          if (stripeSubs.data.length > 0) {
+            const liveSub = stripeSubs.data[0];
+            const mainItem =
+              liveSub.items.data.find(
+                (it) =>
+                  !getTicketingTierByPriceId(it.price.id) &&
+                  !getSchichtplanungBillingByPriceId(it.price.id),
+              ) ?? liveSub.items.data[0];
+            const linked = await linkSubscriptionByCustomer({
+              stripeCustomerId: customerId,
+              stripeSubscriptionId: liveSub.id,
+              stripePriceId: mainItem?.price.id ?? "",
+              status: liveSub.status,
+              seatCount: mainItem?.quantity ?? sub.seatCount,
+              currentPeriodStart: new Date(
+                (mainItem?.current_period_start ?? 0) * 1000,
+              ),
+              currentPeriodEnd: new Date(
+                (mainItem?.current_period_end ?? 0) * 1000,
+              ),
+              cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+            });
+            if (linked > 0) {
+              stripeSubId = liveSub.id;
+              log.info(
+                `[Billing:Upgrade] auto-linked stripeSubscriptionId=${liveSub.id} for ws=${workspaceId}`,
+              );
+            }
+          }
+        }
+      } catch (err) {
+        log.error("[Billing:Upgrade] auto-link failed", { err, workspaceId });
+      }
+    }
+
+    if (!stripeSubId) {
       return NextResponse.json(
         {
           error: "NO_STRIPE_SUBSCRIPTION",
@@ -121,13 +194,9 @@ export const POST = withRoute(
       );
     }
 
-    const stripe = getStripe();
-
     try {
       // Retrieve live subscription to find the current main plan item
-      const liveSub = await stripe.subscriptions.retrieve(
-        sub.stripeSubscriptionId,
-      );
+      const liveSub = await stripe.subscriptions.retrieve(stripeSubId);
 
       const mainItem =
         liveSub.items.data.find(
@@ -154,9 +223,7 @@ export const POST = withRoute(
       });
 
       // Refresh subscription to get the new period dates
-      const refreshedSub = await stripe.subscriptions.retrieve(
-        sub.stripeSubscriptionId,
-      );
+      const refreshedSub = await stripe.subscriptions.retrieve(stripeSubId);
 
       const refreshedMainItem =
         refreshedSub.items.data.find((it) => it.id === updatedItem.id) ??
@@ -169,7 +236,7 @@ export const POST = withRoute(
 
       // Sync DB immediately — no webhook round-trip needed
       await updateSubscriptionFromStripe({
-        stripeSubscriptionId: sub.stripeSubscriptionId,
+        stripeSubscriptionId: stripeSubId,
         stripePriceId: newPriceId,
         status: refreshedSub.status,
         seatCount: refreshedMainItem?.quantity ?? sub.seatCount,

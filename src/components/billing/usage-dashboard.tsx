@@ -21,6 +21,7 @@ interface UsageData {
   storageMb: UsageMetric;
   pdfsThisMonth: UsageMetric;
   ticketsThisMonth: UsageMetric;
+  emailsThisMonth: UsageMetric;
 }
 
 function pct(used: number, limit: number | null): number {
@@ -160,6 +161,14 @@ export function UsageDashboard() {
               label={t("usageTickets")}
               used={data.ticketsThisMonth.used}
               limit={data.ticketsThisMonth.limit}
+              t={t}
+            />
+          )}
+          {data.emailsThisMonth?.limit !== null && (
+            <MetricRow
+              label={t("usageEmails")}
+              used={data.emailsThisMonth?.used ?? 0}
+              limit={data.emailsThisMonth?.limit ?? null}
               t={t}
             />
           )}

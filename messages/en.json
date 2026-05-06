@@ -750,6 +750,7 @@
     "deleteConfirm": "Are you sure you want to delete this employee?",
     "deleteConfirmTitle": "Delete Employee",
     "deleteConfirmMessage": "Are you sure you want to delete this employee? All associated shifts will also be deleted.",
+    "limitReached": "Your plan allows a maximum of {limit} employees. You are using {used}. Upgrade to add more.",
     "saveError": "Error saving employee",
     "networkError": "Network error — please try again",
     "noEmployees": "No employees yet",
@@ -876,6 +877,7 @@
     "deleteConfirmTitle": "Delete Location",
     "deleteConfirmMessage": "Are you sure you want to delete this location? This action cannot be undone.",
     "searchPlaceholder": "Search locations…",
+    "limitReached": "Your plan allows a maximum of {limit} location(s). You are using {used}. Upgrade to add more.",
     "saveError": "Error saving location",
     "networkError": "Network error — please try again",
     "noLocations": "No locations yet",
@@ -1275,7 +1277,8 @@
     "usageLocations": "Locations",
     "usageStorage": "Storage",
     "usagePdfs": "PDFs (this month)",
-    "usageTickets": "Tickets (this month)"
+    "usageTickets": "Tickets (this month)",
+    "usageEmails": "Emails (this month)"
   },
   "addon": {
     "ticketsName": "Ticketing",

@@ -124,6 +124,7 @@ export default function MitarbeiterPage() {
   const initialFormDataRef = useRef(formData);
   const [pinSendingId, setPinSendingId] = useState<string | null>(null);
   const [pinSentId, setPinSentId] = useState<string | null>(null);
+  const [employeeLimit, setEmployeeLimit] = useState<number | null>(null);
 
   /** Check whether the form has been modified compared to its initial state */
   const isFormDirty = useCallback(() => {
@@ -209,6 +210,12 @@ export default function MitarbeiterPage() {
     fetchLocations();
     fetchDepartments();
     fetchTeamStatus();
+    fetch("/api/billing/usage")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.employees?.limit != null) setEmployeeLimit(d.employees.limit);
+      })
+      .catch(() => {});
   }, [fetchEmployees, fetchLocations, fetchDepartments, fetchTeamStatus]);
 
   // Auto-open edit form when navigated from detail page with ?edit=<id>
@@ -380,13 +387,28 @@ export default function MitarbeiterPage() {
       .includes(search.toLowerCase()),
   );
 
+  const isAtEmployeeLimit =
+    employeeLimit !== null && employees.length >= employeeLimit;
+
   return (
     <div>
       <Topbar
         title={t("title")}
         description={t("description")}
         actions={
-          <Button size="sm" onClick={openCreateForm}>
+          <Button
+            size="sm"
+            onClick={openCreateForm}
+            disabled={isAtEmployeeLimit}
+            title={
+              isAtEmployeeLimit
+                ? t("limitReached", {
+                    used: employees.length,
+                    limit: employeeLimit,
+                  })
+                : undefined
+            }
+          >
             <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("newEmployee")}</span>
             <span className="sm:hidden">{tc("new")}</span>
@@ -395,6 +417,16 @@ export default function MitarbeiterPage() {
       />
 
       <PageContent>
+        {/* Plan limit warning */}
+        {isAtEmployeeLimit && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            {t("limitReached", {
+              used: employees.length,
+              limit: employeeLimit,
+            })}
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">

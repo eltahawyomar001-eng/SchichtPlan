@@ -32,6 +32,7 @@ export default function StandortePage() {
   const tc = useTranslations("common");
   const { handlePlanLimit } = usePlanLimit();
   const [locations, setLocations] = useState<Location[]>([]);
+  const [locationLimit, setLocationLimit] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,12 @@ export default function StandortePage() {
 
   useEffect(() => {
     fetchLocations();
+    fetch("/api/billing/usage")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.locations?.limit != null) setLocationLimit(d.locations.limit);
+      })
+      .catch(() => {});
   }, []);
 
   const fetchLocations = async () => {
@@ -125,13 +132,27 @@ export default function StandortePage() {
       .includes(search.toLowerCase()),
   );
 
+  const isAtLimit = locationLimit !== null && locations.length >= locationLimit;
+
   return (
     <div>
       <Topbar
         title={t("title")}
         description={t("description")}
         actions={
-          <Button size="sm" onClick={openCreateForm}>
+          <Button
+            size="sm"
+            onClick={openCreateForm}
+            disabled={isAtLimit}
+            title={
+              isAtLimit
+                ? t("limitReached", {
+                    used: locations.length,
+                    limit: locationLimit,
+                  })
+                : undefined
+            }
+          >
             <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">{t("newLocation")}</span>
             <span className="sm:hidden">{tc("new")}</span>
@@ -140,6 +161,16 @@ export default function StandortePage() {
       />
 
       <PageContent>
+        {/* Plan limit warning */}
+        {isAtLimit && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            {t("limitReached", {
+              used: locations.length,
+              limit: locationLimit,
+            })}
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">

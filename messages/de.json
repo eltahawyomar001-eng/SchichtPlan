@@ -750,6 +750,7 @@
     "deleteConfirm": "Soll dieser Mitarbeiter wirklich gelöscht werden?",
     "deleteConfirmTitle": "Mitarbeiter löschen",
     "deleteConfirmMessage": "Möchten Sie diesen Mitarbeiter wirklich löschen? Alle zugehörigen Schichten werden ebenfalls gelöscht.",
+    "limitReached": "Ihr Plan erlaubt maximal {limit} Mitarbeiter. Sie nutzen bereits {used}. Upgraden Sie, um weitere hinzuzufügen.",
     "saveError": "Fehler beim Speichern",
     "networkError": "Netzwerkfehler — bitte erneut versuchen",
     "noEmployees": "Noch keine Mitarbeiter",
@@ -876,6 +877,7 @@
     "deleteConfirmTitle": "Standort löschen",
     "deleteConfirmMessage": "Möchten Sie diesen Standort wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "searchPlaceholder": "Standort suchen…",
+    "limitReached": "Ihr Plan erlaubt maximal {limit} Standort(e). Sie nutzen bereits {used}. Upgraden Sie, um weitere Standorte hinzuzufügen.",
     "saveError": "Fehler beim Speichern",
     "networkError": "Netzwerkfehler — bitte erneut versuchen",
     "noLocations": "Noch keine Standorte",
@@ -1275,7 +1277,8 @@
     "usageLocations": "Standorte",
     "usageStorage": "Speicher",
     "usagePdfs": "PDFs (diesen Monat)",
-    "usageTickets": "Tickets (diesen Monat)"
+    "usageTickets": "Tickets (diesen Monat)",
+    "usageEmails": "E-Mails (diesen Monat)"
   },
   "addon": {
     "ticketsName": "Ticketsystem",

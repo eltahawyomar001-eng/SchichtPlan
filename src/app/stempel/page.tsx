@@ -1,41 +1,55 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+
+type Stage =
+  | "loading"
+  | "token-error"
+  | "pin"
+  | "pin-error"
+  | "identified"
+  | "punching"
+  | "success";
 
 interface Employee {
-  id: string;
+  employeeId: string;
+  employeeName: string;
   firstName: string;
-  lastName: string;
-  color: string | null;
-  position: string | null;
 }
+
+interface PunchResult {
+  action: "in" | "out";
+  employeeName: string;
+  time: string;
+  netMinutes?: number;
+}
+
+const AUTO_RESET_MS = 3_500;
 
 function FastPunchContent() {
   const params = useSearchParams();
   const token = params.get("t") ?? "";
 
   const [workspaceName, setWorkspaceName] = useState("");
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
+  const [stage, setStage] = useState<Stage>("loading");
   const [tokenError, setTokenError] = useState("");
-  const [punching, setPunching] = useState(false);
-  const [result, setResult] = useState<{
-    action: "in" | "out";
-    employeeName: string;
-    time: string;
-    netMinutes?: number;
-  } | null>(null);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [shake, setShake] = useState(false);
+  const [employee, setEmployee] = useState<Employee | null>(null);
   const [punchError, setPunchError] = useState("");
+  const [result, setResult] = useState<PunchResult | null>(null);
+  const [countdown, setCountdown] = useState(AUTO_RESET_MS / 1000);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Keep verified PIN in a ref so the punch request can re-verify it server-side
+  const verifiedPinRef = useRef("");
 
-  const fetchEmployees = useCallback(async () => {
+  // Validate token and load workspace name
+  const loadWorkspace = useCallback(async () => {
     if (!token) {
-      setTokenError("Kein gültiger QR-Code. Bitte den Code erneut scannen.");
-      setLoading(false);
+      setTokenError("Kein QR-Code erkannt. Bitte erneut scannen.");
+      setStage("token-error");
       return;
     }
     try {
@@ -43,33 +57,81 @@ function FastPunchContent() {
         `/api/qr-clock/employees?t=${encodeURIComponent(token)}`,
       );
       if (res.status === 401) {
-        setTokenError("QR-Code abgelaufen. Bitte den Code erneut scannen.");
-        setLoading(false);
+        setTokenError("QR-Code abgelaufen. Bitte erneut scannen.");
+        setStage("token-error");
         return;
       }
       if (!res.ok) {
         setTokenError("Fehler beim Laden. Bitte erneut scannen.");
-        setLoading(false);
+        setStage("token-error");
         return;
       }
       const data = await res.json();
       setWorkspaceName(data.workspaceName);
-      setEmployees(data.employees);
+      setStage("pin");
     } catch {
       setTokenError("Netzwerkfehler. Bitte erneut scannen.");
-    } finally {
-      setLoading(false);
+      setStage("token-error");
     }
   }, [token]);
 
   useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadWorkspace();
+  }, [loadWorkspace]);
+
+  // Auto-identify when 4 digits are entered
+  const identify = useCallback(
+    async (enteredPin: string) => {
+      try {
+        const res = await fetch("/api/qr-clock/identify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, pin: enteredPin }),
+        });
+
+        if (res.status === 401) {
+          setTokenError("QR-Code abgelaufen. Bitte erneut scannen.");
+          setStage("token-error");
+          return;
+        }
+
+        if (!res.ok) {
+          // Wrong PIN
+          setShake(true);
+          setPinError("PIN ungültig. Bitte erneut versuchen.");
+          setTimeout(() => {
+            setShake(false);
+            setPin("");
+            setPinError("");
+            setStage("pin");
+          }, 800);
+          setStage("pin-error");
+          return;
+        }
+
+        const data: Employee = await res.json();
+        verifiedPinRef.current = enteredPin; // keep for punch re-verification
+        setEmployee(data);
+        setPin("");
+        setStage("identified");
+      } catch {
+        setPinError("Netzwerkfehler. Bitte erneut versuchen.");
+        setStage("pin-error");
+        setTimeout(() => {
+          setPin("");
+          setPinError("");
+          setStage("pin");
+        }, 1200);
+      }
+    },
+    [token],
+  );
 
   const punch = useCallback(
     async (action: "in" | "out") => {
-      if (!selectedEmployee || !token) return;
-      setPunching(true);
+      if (!employee) return;
+      setStage("punching");
       setPunchError("");
       try {
         const res = await fetch("/api/qr-clock/punch", {
@@ -77,40 +139,111 @@ function FastPunchContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             token,
-            employeeId: selectedEmployee.id,
+            pin: verifiedPinRef.current,
             action,
           }),
         });
-        const data = await res.json();
         if (!res.ok) {
+          const data = await res.json();
           if (data.error === "INVALID_OR_EXPIRED_TOKEN") {
-            setPunchError("QR-Code abgelaufen. Bitte erneut scannen.");
+            setTokenError("QR-Code abgelaufen. Bitte erneut scannen.");
+            setStage("token-error");
           } else if (data.error === "ALREADY_CLOCKED_IN") {
-            setPunchError("Sie sind bereits eingestempelt.");
+            setPunchError("Bereits eingestempelt.");
+            setStage("identified");
           } else if (data.error === "NOT_CLOCKED_IN") {
-            setPunchError("Sie sind nicht eingestempelt.");
+            setPunchError("Nicht eingestempelt.");
+            setStage("identified");
           } else {
-            setPunchError("Fehler. Bitte versuchen Sie es erneut.");
+            setPunchError("Fehler. Bitte erneut versuchen.");
+            setStage("identified");
           }
           return;
         }
+        const data = await res.json();
         setResult({
           action: data.action,
           employeeName: data.employeeName,
           time: data.time,
           netMinutes: data.netMinutes,
         });
+        setStage("success");
       } catch {
-        setPunchError("Netzwerkfehler. Bitte erneut versuchen.");
-      } finally {
-        setPunching(false);
+        setPunchError("Netzwerkfehler.");
+        setStage("identified");
       }
     },
-    [selectedEmployee, token],
+    [employee, token],
   );
 
-  // ── Success screen ──
-  if (result) {
+  // Auto-reset from success screen
+  useEffect(() => {
+    if (stage !== "success") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCountdown(AUTO_RESET_MS / 1000);
+    countdownRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(countdownRef.current!);
+          verifiedPinRef.current = "";
+          setResult(null);
+          setEmployee(null);
+          setPin("");
+          setPunchError("");
+          setStage("pin");
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [stage]);
+
+  const pressDigit = (d: string) => {
+    if (stage !== "pin") return;
+    const next = (pin + d).slice(0, 4);
+    setPin(next);
+    if (next.length === 4) {
+      setStage("pin-error"); // prevent double-press while identifying
+      identify(next);
+    }
+  };
+
+  const deleteDigit = () => {
+    if (stage !== "pin") return;
+    setPin((p) => p.slice(0, -1));
+    setPinError("");
+  };
+
+  // ── Token error ──
+  if (stage === "token-error") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+        <div className="text-center space-y-4 max-w-sm w-full">
+          <p className="text-5xl">⚠️</p>
+          <p className="text-xl font-bold text-gray-900">Code ungültig</p>
+          <p className="text-gray-600">{tokenError}</p>
+          <p className="text-sm text-gray-400">
+            Bitte einen neuen QR-Code scannen.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading ──
+  if (stage === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="h-10 w-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Success screen (auto-resets) ──
+  if (stage === "success" && result) {
     const isIn = result.action === "in";
     const hours = result.netMinutes ? Math.floor(result.netMinutes / 60) : null;
     const mins = result.netMinutes ? result.netMinutes % 60 : null;
@@ -139,13 +272,31 @@ function FastPunchContent() {
               </p>
             )}
           </div>
+          {/* Countdown bar */}
+          <div className="mt-6 space-y-1">
+            <div className="h-1.5 w-full rounded-full bg-white/30 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-white transition-all duration-1000"
+                style={{
+                  width: `${(countdown / (AUTO_RESET_MS / 1000)) * 100}%`,
+                }}
+              />
+            </div>
+            <p className="text-xs text-white/60">
+              Wird in {countdown}s zurückgesetzt
+            </p>
+          </div>
           <button
             onClick={() => {
+              if (countdownRef.current) clearInterval(countdownRef.current);
+              verifiedPinRef.current = "";
               setResult(null);
-              setSelectedEmployee(null);
+              setEmployee(null);
+              setPin("");
               setPunchError("");
+              setStage("pin");
             }}
-            className="mt-8 w-full py-5 rounded-2xl bg-white text-gray-900 text-xl font-bold active:scale-95 transition-transform shadow-lg"
+            className="mt-2 w-full py-4 rounded-2xl bg-white text-gray-900 text-xl font-bold active:scale-95 transition-transform shadow-lg"
           >
             Fertig
           </button>
@@ -154,150 +305,148 @@ function FastPunchContent() {
     );
   }
 
-  // ── Token error screen ──
-  if (tokenError) {
+  // ── Identified: show employee name + IN/OUT ──
+  if (stage === "identified" || stage === "punching") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-950">
-        <div className="text-center space-y-4 max-w-sm w-full">
-          <p className="text-5xl">⚠️</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
-            Code ungültig
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <div className="bg-white border-b border-gray-200 px-4 py-3 text-center">
+          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+            {workspaceName}
           </p>
-          <p className="text-gray-600 dark:text-gray-400">{tokenError}</p>
-          <p className="text-sm text-gray-400">
-            Bitte einen neuen QR-Code scannen.
-          </p>
+          <p className="text-base font-semibold text-gray-900">Stempeluhr</p>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6 max-w-sm mx-auto w-full">
+          <div className="text-center">
+            <p className="text-gray-500 text-sm">Guten Tag,</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {employee?.firstName}!
+            </p>
+          </div>
+
+          {punchError && (
+            <div className="w-full rounded-xl bg-red-50 border border-red-200 p-3 text-center">
+              <p className="text-sm text-red-700 font-medium">{punchError}</p>
+            </div>
+          )}
+
+          <div className="w-full flex flex-col gap-4">
+            <button
+              onClick={() => punch("in")}
+              disabled={stage === "punching"}
+              className="w-full py-10 rounded-3xl bg-emerald-500 active:bg-emerald-600 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-emerald-500/30 text-white text-4xl font-black"
+            >
+              {stage === "punching" ? (
+                <span className="block h-8 w-8 rounded-full border-4 border-white border-t-transparent animate-spin mx-auto" />
+              ) : (
+                "REIN"
+              )}
+            </button>
+            <button
+              onClick={() => punch("out")}
+              disabled={stage === "punching"}
+              className="w-full py-10 rounded-3xl bg-red-500 active:bg-red-600 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-red-500/30 text-white text-4xl font-black"
+            >
+              {stage === "punching" ? (
+                <span className="block h-8 w-8 rounded-full border-4 border-white border-t-transparent animate-spin mx-auto" />
+              ) : (
+                "RAUS"
+              )}
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              verifiedPinRef.current = "";
+              setEmployee(null);
+              setPin("");
+              setPunchError("");
+              setStage("pin");
+            }}
+            className="text-sm text-gray-400 mt-2"
+          >
+            ← Andere PIN eingeben
+          </button>
         </div>
       </div>
     );
   }
 
-  // ── Loading ──
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="h-10 w-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-      </div>
-    );
-  }
+  // ── PIN keypad ──
+  const isPinStage = stage === "pin" || stage === "pin-error";
 
-  // ── Punch screen ──
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 text-center">
-        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">
-          {workspaceName}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 text-center">
+        <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+          {workspaceName || "Stempelstation"}
         </p>
-        <p className="text-base font-semibold text-gray-900 dark:text-white">
-          Stempeluhr
+        <p className="text-base font-semibold text-gray-900">
+          Workspace verifiziert ✓
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col p-4 gap-4 max-w-md mx-auto w-full">
-        {/* Employee selector */}
-        {!selectedEmployee ? (
-          <div className="flex-1 flex flex-col gap-3">
-            <p className="text-center text-gray-700 dark:text-gray-300 font-medium text-lg mt-4">
-              Wer stempelt?
-            </p>
-            <div className="space-y-2">
-              {employees.map((emp) => (
-                <button
-                  key={emp.id}
-                  onClick={() => setSelectedEmployee(emp)}
-                  className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-left active:scale-95 transition-transform shadow-sm"
-                >
-                  <span
-                    className="h-10 w-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-sm"
-                    style={{ backgroundColor: emp.color || "#6b7280" }}
-                  >
-                    {emp.firstName[0]}
-                    {emp.lastName[0]}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {emp.firstName} {emp.lastName}
-                    </p>
-                    {emp.position && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {emp.position}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col gap-4">
-            {/* Selected employee header */}
-            <div className="flex items-center gap-3 mt-2">
-              <button
-                onClick={() => {
-                  setSelectedEmployee(null);
-                  setPunchError("");
-                }}
-                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                ← Wechseln
-              </button>
-              <div className="flex items-center gap-2 flex-1">
-                <span
-                  className="h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-xs"
-                  style={{
-                    backgroundColor: selectedEmployee.color || "#6b7280",
-                  }}
-                >
-                  {selectedEmployee.firstName[0]}
-                  {selectedEmployee.lastName[0]}
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {selectedEmployee.firstName} {selectedEmployee.lastName}
-                </span>
-              </div>
-            </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6 max-w-sm mx-auto w-full">
+        <p className="text-gray-600 text-center text-sm font-medium">
+          Bitte geben Sie Ihre 4-stellige PIN ein
+        </p>
 
-            {punchError && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 p-3 text-center">
-                <p className="text-sm text-red-700 dark:text-red-300 font-medium">
-                  {punchError}
-                </p>
-              </div>
-            )}
+        {/* PIN dots */}
+        <div
+          className={`flex gap-4 transition-transform ${shake ? "animate-[shake_0.4s_ease]" : ""}`}
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`h-5 w-5 rounded-full border-2 transition-all ${
+                i < pin.length
+                  ? "bg-gray-900 border-gray-900 scale-110"
+                  : "bg-transparent border-gray-300"
+              }`}
+            />
+          ))}
+        </div>
 
-            {/* Giant IN / OUT buttons */}
-            <div className="flex-1 flex flex-col gap-4 justify-center">
-              <button
-                onClick={() => punch("in")}
-                disabled={punching}
-                className="w-full py-10 rounded-3xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-emerald-500/30 text-white text-4xl font-black tracking-wide"
-              >
-                {punching ? (
-                  <span className="block h-8 w-8 rounded-full border-4 border-white border-t-transparent animate-spin mx-auto" />
-                ) : (
-                  "REIN"
-                )}
-              </button>
-
-              <button
-                onClick={() => punch("out")}
-                disabled={punching}
-                className="w-full py-10 rounded-3xl bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-red-500/30 text-white text-4xl font-black tracking-wide"
-              >
-                {punching ? (
-                  <span className="block h-8 w-8 rounded-full border-4 border-white border-t-transparent animate-spin mx-auto" />
-                ) : (
-                  "RAUS"
-                )}
-              </button>
-            </div>
-
-            <p className="text-center text-xs text-gray-400 dark:text-gray-600 pb-2">
-              Kein GPS. Kein Tracking.
-            </p>
-          </div>
+        {pinError && (
+          <p className="text-sm text-red-600 font-medium text-center">
+            {pinError}
+          </p>
         )}
+
+        {/* Numpad */}
+        <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+            <button
+              key={d}
+              onClick={() => pressDigit(d)}
+              disabled={!isPinStage || pin.length >= 4}
+              className="h-16 rounded-2xl bg-white border border-gray-200 text-2xl font-bold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40"
+            >
+              {d}
+            </button>
+          ))}
+          {/* Bottom row: delete, 0, blank */}
+          <button
+            onClick={deleteDigit}
+            disabled={!isPinStage || pin.length === 0}
+            className="h-16 rounded-2xl bg-white border border-gray-200 text-xl font-bold text-gray-500 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-30"
+          >
+            ⌫
+          </button>
+          <button
+            onClick={() => pressDigit("0")}
+            disabled={!isPinStage || pin.length >= 4}
+            className="h-16 rounded-2xl bg-white border border-gray-200 text-2xl font-bold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40"
+          >
+            0
+          </button>
+          <div /> {/* empty cell */}
+        </div>
+
+        <p className="text-xs text-gray-400 text-center">
+          🔒 Kein GPS · Kein Tracking
+        </p>
       </div>
     </div>
   );
@@ -307,7 +456,7 @@ export default function StempelPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="h-10 w-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
         </div>
       }

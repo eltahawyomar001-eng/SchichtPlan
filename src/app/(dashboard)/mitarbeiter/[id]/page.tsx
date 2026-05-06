@@ -122,6 +122,8 @@ export default function EmployeeDetailPage({
   const [emp, setEmp] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pinSending, setPinSending] = useState(false);
+  const [pinSent, setPinSent] = useState(false);
 
   const fetchEmployee = useCallback(async () => {
     try {
@@ -182,6 +184,25 @@ export default function EmployeeDetailPage({
             >
               <ChevronLeftIcon className="h-4 w-4" />
               {t("back")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pinSending || pinSent}
+              onClick={async () => {
+                setPinSending(true);
+                try {
+                  await fetch(`/api/employees/${emp.id}/resend-pin`, {
+                    method: "POST",
+                  });
+                  setPinSent(true);
+                  setTimeout(() => setPinSent(false), 4000);
+                } finally {
+                  setPinSending(false);
+                }
+              }}
+            >
+              {pinSent ? "PIN gesendet ✓" : pinSending ? "..." : "PIN senden"}
             </Button>
             <Button
               size="sm"

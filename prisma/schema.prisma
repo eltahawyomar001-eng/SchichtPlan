@@ -303,7 +303,9 @@ model Employee {
   serviceVisits      ServiceVisit[]
   locationId  String?
   location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  pinHash     String?
   @@unique([email, workspaceId])
+  @@unique([workspaceId, pinHash])
   @@index([locationId])
 }
 

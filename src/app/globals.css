@@ -2020,3 +2020,23 @@ body {
   background-color: #030712 !important;
   color: #6b7280 !important;
 }
+
+/* ── PIN keypad shake animation (wrong PIN) ───────────────── */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(6px);
+  }
+}

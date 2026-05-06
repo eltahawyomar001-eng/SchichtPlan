@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withRoute } from "@/lib/with-route";
 import { verifyQrToken } from "@/lib/qr-token";
+import { hashPin } from "@/lib/employee-pin";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { capWorkTimeAtLimit, getTodayWorkedMinutes } from "@/lib/automations";
@@ -8,30 +9,30 @@ import { capWorkTimeAtLimit, getTodayWorkedMinutes } from "@/lib/automations";
 /**
  * POST /api/qr-clock/punch
  *
- * Public endpoint (no session required).
- * Body: { token: string; employeeId: string; action: "in" | "out" }
+ * Public endpoint. Verifies QR token + 4-digit PIN, then clocks the matching
+ * employee in or out. No employee list is ever returned — identity is confirmed
+ * solely via the PIN, preventing buddy-punching.
  *
- * Validates the short-lived QR token, then records a clock-in or clock-out
- * for the given employee. Intentionally simpler than the full punch-clock:
- *   - No break tracking (use the dashboard for that)
- *   - No ArbZG soft-block — just a hard cap at clock-out
- *   - Timezone always "Europe/Berlin" (station is on-premises)
+ * Body: { token: string; pin: string; action: "in" | "out" }
  */
 export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
-  let body: { token?: string; employeeId?: string; action?: string };
+  let body: { token?: string; pin?: string; action?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
   }
 
-  const { token, employeeId, action } = body ?? {};
+  const { token, pin, action } = body ?? {};
 
-  if (!token || !employeeId || !action) {
+  if (!token || !pin || !action) {
     return NextResponse.json({ error: "MISSING_FIELDS" }, { status: 400 });
   }
   if (action !== "in" && action !== "out") {
     return NextResponse.json({ error: "INVALID_ACTION" }, { status: 400 });
+  }
+  if (!/^\d{4}$/.test(pin)) {
+    return NextResponse.json({ error: "INVALID_PIN_FORMAT" }, { status: 400 });
   }
 
   const workspaceId = verifyQrToken(token);
@@ -42,15 +43,17 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
     );
   }
 
-  // Verify employee belongs to this workspace
+  const pinHash = hashPin(workspaceId, pin);
   const employee = await prisma.employee.findFirst({
-    where: { id: employeeId, workspaceId, isActive: true, deletedAt: null },
+    where: { workspaceId, pinHash, isActive: true, deletedAt: null },
     select: { id: true, firstName: true, lastName: true },
   });
+
   if (!employee) {
-    return NextResponse.json({ error: "EMPLOYEE_NOT_FOUND" }, { status: 404 });
+    return NextResponse.json({ error: "INVALID_PIN" }, { status: 404 });
   }
 
+  const employeeId = employee.id;
   const tz = "Europe/Berlin";
   const now = new Date();
   const timeStr = now.toLocaleTimeString("de-DE", {
@@ -96,8 +99,7 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
         { status: 201 },
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg === "ALREADY_CLOCKED_IN") {
+      if (err instanceof Error && err.message === "ALREADY_CLOCKED_IN") {
         return NextResponse.json(
           { error: "ALREADY_CLOCKED_IN" },
           { status: 409 },

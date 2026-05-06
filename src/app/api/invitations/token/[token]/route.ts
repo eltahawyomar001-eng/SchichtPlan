@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 
 /**
  * GET /api/invitations/token/[token] — get invitation details (public, no auth required)
@@ -66,7 +67,7 @@ export const POST = withRoute(
     const params = await context!.params;
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+    const { user } = auth;
 
     const { token } = params;
 
@@ -157,6 +158,41 @@ export const POST = withRoute(
         });
       }
     });
+
+    // ── PIN generation (fire & forget) ──
+    (async () => {
+      try {
+        const emp = await prisma.employee.findFirst({
+          where: {
+            email: { equals: user.email!, mode: "insensitive" },
+            workspaceId: invitation.workspaceId,
+            pinHash: null,
+          },
+          select: { id: true, firstName: true },
+        });
+        if (emp) {
+          const rawPin = await generateUniquePin(invitation.workspaceId);
+          const pHash = hashPin(invitation.workspaceId, rawPin);
+          await prisma.employee.update({
+            where: { id: emp.id },
+            data: { pinHash: pHash },
+          });
+          const ws = await prisma.workspace.findUnique({
+            where: { id: invitation.workspaceId },
+            select: { name: true },
+          });
+          await sendPinEmail({
+            to: user.email!,
+            firstName: emp.firstName,
+            rawPin,
+            workspaceName: ws?.name ?? "",
+          });
+        }
+      } catch (err) {
+        // Non-fatal — employee can still punch via admin assignment
+        console.error("[invitations] PIN generation failed", err);
+      }
+    })();
 
     return NextResponse.json({
       success: true,

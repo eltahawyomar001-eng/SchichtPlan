@@ -15,6 +15,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import { invitationEmail } from "@/lib/notifications/email-i18n";
 import { getLocaleFromCookie } from "@/i18n/locale";
 import { randomBytes } from "crypto";
+import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
@@ -137,6 +138,32 @@ export async function POST(req: Request) {
 
       return created;
     });
+
+    // ── PIN generation (fire & forget) ──
+    (async () => {
+      try {
+        const rawPin = await generateUniquePin(workspaceId);
+        const pHash = hashPin(workspaceId, rawPin);
+        await prisma.employee.update({
+          where: { id: employee.id },
+          data: { pinHash: pHash },
+        });
+        if (email) {
+          const ws = await prisma.workspace.findUnique({
+            where: { id: workspaceId },
+            select: { name: true },
+          });
+          await sendPinEmail({
+            to: email,
+            firstName,
+            rawPin,
+            workspaceName: ws?.name ?? "",
+          });
+        }
+      } catch (err) {
+        log.error("[Employees] PIN generation failed", { error: err });
+      }
+    })();
 
     // ── Automation: Execute custom rules ──
     executeCustomRules("employee.created", workspaceId, {

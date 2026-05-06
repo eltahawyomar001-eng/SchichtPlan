@@ -7,6 +7,7 @@ import { registerSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { initializeTrial } from "@/lib/subscription";
+import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 
 export const POST = withRoute("/api/auth/register", "POST", async (req) => {
   const body = await req.json();
@@ -142,6 +143,40 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
       return { user };
     });
 
+    // ── PIN generation (fire & forget) ──
+    (async () => {
+      try {
+        const emp = await prisma.employee.findFirst({
+          where: {
+            email: { equals: email, mode: "insensitive" },
+            workspaceId: invitation.workspaceId,
+            pinHash: null,
+          },
+          select: { id: true, firstName: true },
+        });
+        if (emp) {
+          const rawPin = await generateUniquePin(invitation.workspaceId);
+          const pHash = hashPin(invitation.workspaceId, rawPin);
+          await prisma.employee.update({
+            where: { id: emp.id },
+            data: { pinHash: pHash },
+          });
+          const ws = await prisma.workspace.findUnique({
+            where: { id: invitation.workspaceId },
+            select: { name: true },
+          });
+          await sendPinEmail({
+            to: email,
+            firstName: emp.firstName,
+            rawPin,
+            workspaceName: ws?.name ?? "",
+          });
+        }
+      } catch (err) {
+        log.error("[register] PIN generation failed (invited)", { error: err });
+      }
+    })();
+
     // Send verification email (non-blocking)
     sendVerificationEmail(email).catch((err) =>
       log.error("Failed to send verification email", { error: err }),
@@ -198,6 +233,36 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
 
     return { user, workspace };
   });
+
+  // ── PIN generation for owner employee (fire & forget) ──
+  (async () => {
+    try {
+      const emp = await prisma.employee.findFirst({
+        where: {
+          email: { equals: email, mode: "insensitive" },
+          workspaceId: result.workspace.id,
+          pinHash: null,
+        },
+        select: { id: true, firstName: true },
+      });
+      if (emp) {
+        const rawPin = await generateUniquePin(result.workspace.id);
+        const pHash = hashPin(result.workspace.id, rawPin);
+        await prisma.employee.update({
+          where: { id: emp.id },
+          data: { pinHash: pHash },
+        });
+        await sendPinEmail({
+          to: email,
+          firstName: emp.firstName,
+          rawPin,
+          workspaceName: result.workspace.name,
+        });
+      }
+    } catch (err) {
+      log.error("[register] PIN generation failed (owner)", { error: err });
+    }
+  })();
 
   // Send verification email (non-blocking) unless the user is going straight to checkout
   if (!skipVerification) {

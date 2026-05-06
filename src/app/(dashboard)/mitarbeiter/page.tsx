@@ -125,6 +125,9 @@ export default function MitarbeiterPage() {
   const [pinSendingId, setPinSendingId] = useState<string | null>(null);
   const [pinSentId, setPinSentId] = useState<string | null>(null);
   const [employeeLimit, setEmployeeLimit] = useState<number | null>(null);
+  const [unpinnedCount, setUnpinnedCount] = useState(0);
+  const [backfillRunning, setBackfillRunning] = useState(false);
+  const [backfillResult, setBackfillResult] = useState<string | null>(null);
 
   /** Check whether the form has been modified compared to its initial state */
   const isFormDirty = useCallback(() => {
@@ -156,13 +159,39 @@ export default function MitarbeiterPage() {
     try {
       const res = await fetch("/api/employees");
       const data = await res.json();
-      setEmployees(data.data ?? data);
+      const list: Employee[] = data.data ?? data;
+      setEmployees(list);
+      setUnpinnedCount(list.filter((e) => !e.pinHash && e.isActive).length);
     } catch {
       setError(tc("loadError"));
     } finally {
       setLoading(false);
     }
   }, [tc]);
+
+  const runBackfill = useCallback(async () => {
+    setBackfillRunning(true);
+    setBackfillResult(null);
+    try {
+      const res = await fetch("/api/admin/backfill-pins", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setBackfillResult(
+          tq("backfillDone", {
+            assigned: data.assigned,
+            emailed: data.emailed,
+          }),
+        );
+        fetchEmployees();
+      } else {
+        setBackfillResult(data.error ?? tq("backfillError"));
+      }
+    } catch {
+      setBackfillResult(tq("backfillError"));
+    } finally {
+      setBackfillRunning(false);
+    }
+  }, [tq, fetchEmployees]);
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -424,6 +453,27 @@ export default function MitarbeiterPage() {
               used: employees.length,
               limit: employeeLimit,
             })}
+          </div>
+        )}
+
+        {/* PIN backfill banner — shown when active employees have no PIN */}
+        {unpinnedCount > 0 && (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <span>{tq("backfillBanner", { count: unpinnedCount })}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              {backfillResult && (
+                <span className="text-xs text-blue-600">{backfillResult}</span>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={runBackfill}
+                disabled={backfillRunning}
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                {backfillRunning ? tq("backfillRunning") : tq("backfillRun")}
+              </Button>
+            </div>
           </div>
         )}
 

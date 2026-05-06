@@ -3044,6 +3044,11 @@
     "pinSent": "PIN gesendet",
     "pinAssigned": "PIN vergeben",
     "noPin": "Kein PIN",
-    "emailLimitReached": "E-Mail-Limit erreicht. Upgraden Sie Ihren Plan, um weitere Benachrichtigungen zu senden."
+    "emailLimitReached": "E-Mail-Limit erreicht. Upgraden Sie Ihren Plan, um weitere Benachrichtigungen zu senden.",
+    "backfillBanner": "{count} Mitarbeiter haben noch keine Stempeluhr-PIN.",
+    "backfillRun": "PINs jetzt vergeben",
+    "backfillRunning": "Wird vergeben…",
+    "backfillDone": "{assigned} PINs vergeben, {emailed} per E-Mail versendet.",
+    "backfillError": "Fehler beim Vergeben der PINs."
   }
 }

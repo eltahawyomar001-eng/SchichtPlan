@@ -3044,6 +3044,11 @@
     "pinSent": "PIN sent",
     "pinAssigned": "PIN assigned",
     "noPin": "No PIN",
-    "emailLimitReached": "Email limit reached. Upgrade your plan to send more notifications."
+    "emailLimitReached": "Email limit reached. Upgrade your plan to send more notifications.",
+    "backfillBanner": "{count} employee(s) have no time-clock PIN yet.",
+    "backfillRun": "Assign PINs now",
+    "backfillRunning": "Assigning…",
+    "backfillDone": "{assigned} PINs assigned, {emailed} sent by email.",
+    "backfillError": "Failed to assign PINs."
   }
 }

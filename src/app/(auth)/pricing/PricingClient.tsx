@@ -165,14 +165,20 @@ export default function PricingClient() {
           </Link>
           <div className="flex items-center gap-4">
             <Link
-              href="/"
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden sm:inline-flex"
+              href="/#features"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden md:inline-flex"
             >
-              {tc("home")}
+              {tc("features")}
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hidden md:inline-flex"
+            >
+              {tc("pricing")}
             </Link>
             <Link
               href="/blog"
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden sm:inline-flex"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden md:inline-flex"
             >
               Blog
             </Link>

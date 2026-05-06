@@ -369,6 +369,10 @@ export default withAuth(
           return true;
         // External ticket endpoints are public
         if (pathname.startsWith("/api/tickets/external")) return true;
+        // QR attendance station: public token-gated endpoints (no session needed)
+        if (pathname.startsWith("/api/qr-clock")) return true;
+        // QR fast-punch page: public mobile page (employee scans QR code)
+        if (pathname.startsWith("/stempel")) return true;
         // Everything else requires auth
         return !!token;
       },
@@ -460,5 +464,9 @@ export const config = {
     // Onboarding wizard (protected, outside dashboard group)
     "/onboarding",
     "/api/onboarding/:path*",
+    // QR attendance system (public, token-gated — security headers still apply)
+    "/api/qr-clock/:path*",
+    "/stempel",
+    "/stempel/:path*",
   ],
 };

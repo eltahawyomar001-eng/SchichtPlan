@@ -93,3 +93,4 @@ export { PauseIcon } from "./PauseIcon";
 export { ArrowDownIcon } from "./ArrowDownIcon";
 export { ArrowUpIcon } from "./ArrowUpIcon";
 export { ChevronUpIcon } from "./ChevronUpIcon";
+export { QrCodeIcon } from "./QrCodeIcon";

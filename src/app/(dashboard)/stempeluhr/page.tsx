@@ -14,6 +14,7 @@ import {
   PlayIcon,
   LogOutIcon,
   CheckCircleIcon,
+  QrCodeIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { haptics } from "@/lib/haptics";
@@ -1040,6 +1041,22 @@ export default function StempeluhrSeite() {
         </div>
 
         {/* ── Team Overview (management only) ── */}
+        {isManager && (
+          <Link
+            href="/stempeluhr/qr"
+            className="mx-auto mt-4 max-w-md flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors"
+          >
+            <QrCodeIcon className="h-5 w-5 shrink-0 text-emerald-600" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">QR-Stempelstation öffnen</p>
+              <p className="text-xs opacity-75">
+                Für Mitarbeiter ohne App — QR-Code scannen &amp; stempeln
+              </p>
+            </div>
+            <span className="text-emerald-600 text-lg">→</span>
+          </Link>
+        )}
+
         {isManager && (
           <div className="mx-auto mt-6 max-w-4xl">
             <div className="rounded-2xl bg-white dark:bg-zinc-900 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">

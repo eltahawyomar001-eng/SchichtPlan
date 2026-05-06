@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, NextIntlClientProvider } from "next-intl";
 import {
   AlertTriangleIcon,
   ShieldCheckIcon,
@@ -10,6 +10,13 @@ import {
   ChevronLeftIcon,
   ArrowLeftIcon,
 } from "@/components/icons";
+import enMessages from "../../../messages/en.json";
+import deMessages from "../../../messages/de.json";
+
+// Both locale bundles are inlined so the stempel page can respect
+// ?lang=en/de from the QR URL even when the scanning device has no
+// locale cookie (employees on personal phones).
+const ALL_MESSAGES = { en: enMessages, de: deMessages } as const;
 
 type Stage =
   | "loading"
@@ -273,7 +280,7 @@ function FastPunchContent() {
               {result.employeeName}
             </p>
             <p className="text-3xl font-mono font-bold text-white">
-              {result.time} Uhr
+              {t("timeAt", { time: result.time })}
             </p>
             {!isIn && hours !== null && mins !== null && (
               <p className="text-sm text-white/70">
@@ -467,16 +474,36 @@ function FastPunchContent() {
   );
 }
 
+/**
+ * Reads the ?lang param and wraps FastPunchContent in a locale-specific
+ * NextIntlClientProvider when it differs from the server-side cookie locale.
+ * This ensures employees scanning the QR code on their own phones (no cookie)
+ * see the station in the workspace language rather than defaulting to German.
+ */
+function LocaleWrapper({ children }: { children: React.ReactNode }) {
+  const params = useSearchParams();
+  const lang = params.get("lang");
+  if (lang === "en" || lang === "de") {
+    return (
+      <NextIntlClientProvider locale={lang} messages={ALL_MESSAGES[lang]}>
+        {children}
+      </NextIntlClientProvider>
+    );
+  }
+  return <>{children}</>;
+}
+
 export default function StempelPage() {
+  const fallback = (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Spinner className="h-8 w-8 text-emerald-500" />
+    </div>
+  );
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <Spinner className="h-8 w-8 text-emerald-500" />
-        </div>
-      }
-    >
-      <FastPunchContent />
+    <Suspense fallback={fallback}>
+      <LocaleWrapper>
+        <FastPunchContent />
+      </LocaleWrapper>
     </Suspense>
   );
 }

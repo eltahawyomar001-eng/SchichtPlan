@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 
 const STORAGE_KEY = "shiftfy_station_key";
 const STORAGE_WORKSPACE = "shiftfy_station_workspace";
@@ -19,6 +20,8 @@ interface PunchNotification {
 function StationContent() {
   const params = useSearchParams();
   const setupToken = params.get("setup");
+  const t = useTranslations("station");
+  const locale = useLocale();
 
   // Station auth state
   const [stationKey, setStationKey] = useState<string | null>(null);
@@ -51,11 +54,12 @@ function StationContent() {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Live clock ticker
+  // Live clock ticker — 24-hour format regardless of locale (kiosk context)
   useEffect(() => {
+    const clockLocale = locale === "de" ? "de-DE" : "en-GB";
     const tick = () => {
       setCurrentTime(
-        new Date().toLocaleTimeString("de-DE", {
+        new Date().toLocaleTimeString(clockLocale, {
           timeZone: "Europe/Berlin",
           hour: "2-digit",
           minute: "2-digit",
@@ -67,53 +71,54 @@ function StationContent() {
     return () => {
       if (clockRef.current) clearInterval(clockRef.current);
     };
-  }, []);
+  }, [locale]);
 
-  // QR fetch & auto-refresh
-  const fetchQr = useCallback(async (key: string) => {
-    setQrError("");
-    try {
-      const res = await fetch(
-        `/api/station/qr-token?key=${encodeURIComponent(key)}`,
-      );
-      if (res.status === 401) {
-        setAuthError(
-          "Station-Sitzung abgelaufen. Bitte einen neuen Setup-Link anfordern.",
+  // QR fetch & auto-refresh — includes ?lang so the stempel page inherits locale
+  const fetchQr = useCallback(
+    async (key: string) => {
+      setQrError("");
+      try {
+        const res = await fetch(
+          `/api/station/qr-token?key=${encodeURIComponent(key)}`,
         );
-        setAuthState("error");
-        localStorage.removeItem(STORAGE_KEY);
-        return;
+        if (res.status === 401) {
+          setAuthError(t("sessionExpired"));
+          setAuthState("error");
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+        if (!res.ok) throw new Error("fetch_failed");
+
+        const { token, expiresAt: exp } = await res.json();
+        setExpiresAt(exp);
+        setSecondsLeft(Math.round((exp - Date.now()) / 1000));
+
+        // Embed locale so employees scanning on their phones see the correct language
+        const origin = window.location.origin;
+        const punchUrl = `${origin}/stempel?t=${token}&lang=${locale}`;
+        const QRCode = (await import("qrcode")).default;
+        const dataUrl = await QRCode.toDataURL(punchUrl, {
+          width: 360,
+          margin: 2,
+          color: { dark: "#111827", light: "#FFFFFF" },
+        });
+        setQrDataUrl(dataUrl);
+
+        // Schedule next refresh
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        const delay = exp - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
+        refreshTimerRef.current = setTimeout(
+          () => fetchQr(key),
+          Math.max(delay, 1000),
+        );
+      } catch {
+        setQrError(t("qrLoadError"));
+        // Retry in 10s
+        refreshTimerRef.current = setTimeout(() => fetchQr(key), 10_000);
       }
-      if (!res.ok) throw new Error("fetch_failed");
-
-      const { token, expiresAt: exp } = await res.json();
-      setExpiresAt(exp);
-      setSecondsLeft(Math.round((exp - Date.now()) / 1000));
-
-      // Build punch URL and generate QR
-      const origin = window.location.origin;
-      const punchUrl = `${origin}/stempel?t=${token}`;
-      const QRCode = (await import("qrcode")).default;
-      const dataUrl = await QRCode.toDataURL(punchUrl, {
-        width: 360,
-        margin: 2,
-        color: { dark: "#111827", light: "#FFFFFF" },
-      });
-      setQrDataUrl(dataUrl);
-
-      // Schedule next refresh
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-      const delay = exp - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
-      refreshTimerRef.current = setTimeout(
-        () => fetchQr(key),
-        Math.max(delay, 1000),
-      );
-    } catch {
-      setQrError("QR-Code konnte nicht geladen werden.");
-      // Retry in 10s
-      refreshTimerRef.current = setTimeout(() => fetchQr(key), 10_000);
-    }
-  }, []);
+    },
+    [t, locale],
+  );
 
   // Countdown ticker (depends on expiresAt)
   useEffect(() => {
@@ -151,7 +156,7 @@ function StationContent() {
         if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
         notifTimerRef.current = setTimeout(() => {
           setShowNotif(false);
-          setTimeout(() => setNotification(null), 500); // wait for fade-out
+          setTimeout(() => setNotification(null), 500);
         }, NOTIF_DURATION_MS);
       } catch {
         // Silent — polling is best-effort
@@ -160,37 +165,40 @@ function StationContent() {
   }, []);
 
   // Authorize device: exchange setup token for station key
-  const authorize = useCallback(async (token: string) => {
-    setAuthState("authorizing");
-    try {
-      const res = await fetch("/api/station/authorize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ setupToken: token }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setAuthError(
-          data.error === "INVALID_OR_EXPIRED_TOKEN"
-            ? "Setup-Link abgelaufen oder ungültig. Bitte einen neuen Link anfordern."
-            : "Autorisierung fehlgeschlagen. Bitte erneut versuchen.",
-        );
-        setAuthState("error");
-        return;
-      }
-      localStorage.setItem(STORAGE_KEY, data.stationKey);
-      localStorage.setItem(STORAGE_WORKSPACE, data.workspaceName);
-      setStationKey(data.stationKey);
-      setWorkspaceName(data.workspaceName);
-      setAuthState("ready");
+  const authorize = useCallback(
+    async (token: string) => {
+      setAuthState("authorizing");
+      try {
+        const res = await fetch("/api/station/authorize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ setupToken: token }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setAuthError(
+            data.error === "INVALID_OR_EXPIRED_TOKEN"
+              ? t("setupLinkInvalid")
+              : t("authorizationFailed"),
+          );
+          setAuthState("error");
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, data.stationKey);
+        localStorage.setItem(STORAGE_WORKSPACE, data.workspaceName);
+        setStationKey(data.stationKey);
+        setWorkspaceName(data.workspaceName);
+        setAuthState("ready");
 
-      // Remove setup token from URL without reload
-      window.history.replaceState({}, "", "/station");
-    } catch {
-      setAuthError("Netzwerkfehler. Bitte erneut versuchen.");
-      setAuthState("error");
-    }
-  }, []);
+        // Remove setup token from URL without reload
+        window.history.replaceState({}, "", "/station");
+      } catch {
+        setAuthError(t("networkError"));
+        setAuthState("error");
+      }
+    },
+    [t],
+  );
 
   // Bootstrap: read localStorage or process setup token
   useEffect(() => {
@@ -198,7 +206,6 @@ function StationContent() {
     const storedWorkspace = localStorage.getItem(STORAGE_WORKSPACE);
 
     if (setupToken) {
-      // New device authorization flow
       authorize(setupToken);
     } else if (storedKey) {
       setStationKey(storedKey);
@@ -206,9 +213,9 @@ function StationContent() {
       setAuthState("ready");
     } else {
       setAuthState("error");
-      setAuthError("Dieses Gerät ist nicht autorisiert.");
+      setAuthError(t("notAuthorizedHint"));
     }
-  }, [setupToken, authorize]);
+  }, [setupToken, authorize, t]);
 
   // Start QR + polling once key is ready
   useEffect(() => {
@@ -227,33 +234,44 @@ function StationContent() {
     : (secondsLeft / 60) * 100;
   const urgent = secondsLeft <= 10;
 
-  // ── Not authorized ──
+  // ── Loading / Authorizing ──
   if (authState === "loading" || authState === "authorizing") {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
           <p className="text-white/60 text-sm">
-            {authState === "authorizing"
-              ? "Gerät wird autorisiert…"
-              : "Wird geladen…"}
+            {authState === "authorizing" ? t("authorizing") : t("loading")}
           </p>
         </div>
       </div>
     );
   }
 
+  // ── Not authorized ──
   if (authState === "error") {
     return (
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-6 p-8 text-center">
-        <div className="text-5xl">🔒</div>
+        <div className="h-16 w-16 rounded-full bg-red-500/20 flex items-center justify-center">
+          <svg
+            className="h-8 w-8 text-red-400"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
+          </svg>
+        </div>
         <div className="space-y-2">
-          <p className="text-white text-xl font-bold">Nicht autorisiert</p>
+          <p className="text-white text-xl font-bold">{t("notAuthorized")}</p>
           <p className="text-white/60 text-sm max-w-sm">{authError}</p>
         </div>
-        <p className="text-white/40 text-xs">
-          Admin: Einstellungen → Stempeluhr → Station-Link generieren
-        </p>
+        <p className="text-white/40 text-xs">{t("adminHint")}</p>
       </div>
     );
   }
@@ -265,7 +283,7 @@ function StationContent() {
       <div className="flex items-center justify-between px-6 py-4">
         <div>
           <p className="text-white/40 text-xs uppercase tracking-widest font-medium">
-            Stempelstation
+            {t("punchStation")}
           </p>
           <p className="text-white font-semibold text-lg leading-tight">
             {workspaceName}
@@ -279,14 +297,15 @@ function StationContent() {
       {/* Main QR area */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 pb-4">
         <p className="text-white/70 text-lg font-medium">
-          📱 Handy-Kamera öffnen &amp; scannen
+          {t("scanInstruction")}
         </p>
 
         <div className="relative">
           {qrDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={qrDataUrl}
-              alt="QR-Code zum Stempeln"
+              alt={t("qrAlt")}
               className={`rounded-3xl shadow-2xl transition-opacity duration-500 ${
                 urgent ? "opacity-60" : "opacity-100"
               }`}
@@ -299,7 +318,7 @@ function StationContent() {
                 onClick={() => stationKey && fetchQr(stationKey)}
                 className="text-emerald-400 text-sm font-medium hover:underline"
               >
-                Erneut versuchen
+                {t("retry")}
               </button>
             </div>
           ) : (
@@ -317,7 +336,7 @@ function StationContent() {
         {/* Countdown bar */}
         <div className="w-80 space-y-2">
           <div className="flex justify-between text-xs">
-            <span className="text-white/40">Code gültig noch</span>
+            <span className="text-white/40">{t("codeValidFor")}</span>
             <span
               className={`font-bold tabular-nums ${
                 urgent ? "text-orange-400" : "text-white/60"
@@ -334,15 +353,13 @@ function StationContent() {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-white/30 text-xs text-center">
-            Erneuert sich automatisch
-          </p>
+          <p className="text-white/30 text-xs text-center">{t("autoRenews")}</p>
         </div>
       </div>
 
       {/* Footer */}
       <div className="text-center pb-6">
-        <p className="text-white/20 text-xs">🔒 Kein GPS · Kein Tracking</p>
+        <p className="text-white/20 text-xs">{t("noGps")}</p>
       </div>
 
       {/* Punch success overlay */}
@@ -353,17 +370,29 @@ function StationContent() {
       >
         {notification && (
           <div className="text-center space-y-4 px-8">
-            <div className="text-8xl font-black text-white">✓</div>
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white/20">
+              <svg
+                className="h-14 w-14 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
             <p className="text-4xl font-bold text-white">
-              {notification.action === "in"
-                ? "Eingestempelt!"
-                : "Ausgestempelt!"}
+              {notification.action === "in" ? t("clockedIn") : t("clockedOut")}
             </p>
             <p className="text-2xl text-white/80 font-medium">
               {notification.employeeName}
             </p>
             <p className="text-3xl font-mono font-bold text-white">
-              {notification.time} Uhr
+              {t("timeAt", { time: notification.time })}
             </p>
           </div>
         )}

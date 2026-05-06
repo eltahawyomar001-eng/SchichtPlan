@@ -3049,6 +3049,29 @@
     "backfillRun": "PINs jetzt vergeben",
     "backfillRunning": "Wird vergeben…",
     "backfillDone": "{assigned} PINs vergeben, {emailed} per E-Mail versendet.",
-    "backfillError": "Fehler beim Vergeben der PINs."
+    "backfillError": "Fehler beim Vergeben der PINs.",
+    "timeAt": "{time} Uhr"
+  },
+  "station": {
+    "punchStation": "Stempelstation",
+    "scanInstruction": "Handy-Kamera öffnen & scannen",
+    "codeValidFor": "Code gültig noch",
+    "autoRenews": "Erneuert sich automatisch",
+    "noGps": "Kein GPS · Kein Tracking",
+    "clockedIn": "Eingestempelt!",
+    "clockedOut": "Ausgestempelt!",
+    "timeAt": "{time} Uhr",
+    "loading": "Wird geladen…",
+    "authorizing": "Gerät wird autorisiert…",
+    "notAuthorized": "Nicht autorisiert",
+    "notAuthorizedHint": "Dieses Gerät ist nicht autorisiert.",
+    "sessionExpired": "Station-Sitzung abgelaufen. Bitte einen neuen Setup-Link anfordern.",
+    "setupLinkInvalid": "Setup-Link abgelaufen oder ungültig. Bitte einen neuen Link anfordern.",
+    "authorizationFailed": "Autorisierung fehlgeschlagen. Bitte erneut versuchen.",
+    "networkError": "Netzwerkfehler. Bitte erneut versuchen.",
+    "qrLoadError": "QR-Code konnte nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "adminHint": "Admin: Einstellungen → Stempeluhr → Station-Link generieren",
+    "qrAlt": "QR-Code zum Stempeln"
   }
 }

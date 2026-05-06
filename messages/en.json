@@ -3049,6 +3049,29 @@
     "backfillRun": "Assign PINs now",
     "backfillRunning": "Assigning…",
     "backfillDone": "{assigned} PINs assigned, {emailed} sent by email.",
-    "backfillError": "Failed to assign PINs."
+    "backfillError": "Failed to assign PINs.",
+    "timeAt": "{time}"
+  },
+  "station": {
+    "punchStation": "Time Clock Station",
+    "scanInstruction": "Open camera & scan",
+    "codeValidFor": "Code valid for",
+    "autoRenews": "Renews automatically",
+    "noGps": "No GPS · No Tracking",
+    "clockedIn": "Clocked in!",
+    "clockedOut": "Clocked out!",
+    "timeAt": "{time}",
+    "loading": "Loading…",
+    "authorizing": "Authorizing device…",
+    "notAuthorized": "Not authorized",
+    "notAuthorizedHint": "This device is not authorized.",
+    "sessionExpired": "Station session expired. Please request a new setup link.",
+    "setupLinkInvalid": "Setup link expired or invalid. Please request a new link.",
+    "authorizationFailed": "Authorization failed. Please try again.",
+    "networkError": "Network error. Please try again.",
+    "qrLoadError": "Could not load QR code.",
+    "retry": "Try again",
+    "adminHint": "Admin: Settings → Time Clock → Generate Station Link",
+    "qrAlt": "QR code for time clock"
   }
 }

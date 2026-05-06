@@ -194,12 +194,22 @@ export const POST = withRoute(
 
     try {
       if (newTier === "NONE") {
-        // Cancel the add-on item
+        // Cancel the add-on item — tolerate items that Stripe already removed
+        // (race between this call and a webhook).
         if (subscription.ticketingStripeSubscriptionItemId) {
-          await stripe.subscriptionItems.del(
-            subscription.ticketingStripeSubscriptionItemId,
-            { proration_behavior: "create_prorations" },
-          );
+          try {
+            await stripe.subscriptionItems.del(
+              subscription.ticketingStripeSubscriptionItemId,
+              { proration_behavior: "create_prorations" },
+            );
+          } catch (delErr) {
+            const code = (delErr as { code?: string })?.code;
+            if (code !== "resource_missing") throw delErr;
+            log.warn(
+              "[Stripe] Ticketing item already gone in Stripe, treating as canceled",
+              { itemId: subscription.ticketingStripeSubscriptionItemId },
+            );
+          }
         }
         newItemId = null;
       } else {
@@ -210,22 +220,38 @@ export const POST = withRoute(
           );
           return NextResponse.json(
             {
-              error:
+              error: "PRICE_NOT_CONFIGURED",
+              message:
                 "Ticketing-Tier-Preis nicht konfiguriert. Bitte Support kontaktieren.",
             },
             { status: 500 },
           );
         }
 
-        if (subscription.ticketingStripeSubscriptionItemId) {
-          // Upgrade/downgrade existing item — prorate at cycle end
+        // If we *think* there's an item but Stripe lost it, fall back to create.
+        let existingItemId = subscription.ticketingStripeSubscriptionItemId;
+        if (existingItemId) {
+          try {
+            await stripe.subscriptionItems.retrieve(existingItemId);
+          } catch (lookupErr) {
+            const code = (lookupErr as { code?: string })?.code;
+            if (code === "resource_missing") {
+              log.warn(
+                "[Stripe] DB references stale ticketing item, will recreate",
+                { staleId: existingItemId, workspaceId },
+              );
+              existingItemId = null;
+            }
+          }
+        }
+
+        if (existingItemId) {
           const updated = await stripe.subscriptionItems.update(
-            subscription.ticketingStripeSubscriptionItemId,
+            existingItemId,
             { price: priceId, proration_behavior: "create_prorations" },
           );
           newItemId = updated.id;
         } else {
-          // New add-on: charge immediately, fail fast if payment is incomplete
           const created = await stripe.subscriptionItems.create({
             subscription: stripeSubId,
             price: priceId,
@@ -237,9 +263,34 @@ export const POST = withRoute(
         }
       }
     } catch (err) {
-      log.error("[Stripe] Failed to update ticketing add-on item", { err });
+      const code = (err as { code?: string })?.code;
+      const declineCode = (err as { decline_code?: string })?.decline_code;
+      log.error("[Stripe] Failed to update ticketing add-on item", {
+        err,
+        code,
+        declineCode,
+        workspaceId,
+      });
+      if (
+        code === "subscription_payment_intent_requires_action" ||
+        code === "card_declined" ||
+        code === "missing" ||
+        declineCode
+      ) {
+        return NextResponse.json(
+          {
+            error: "PAYMENT_REQUIRED",
+            message:
+              "Zahlung konnte nicht verarbeitet werden. Bitte Zahlungsmethode im Kundenportal aktualisieren.",
+          },
+          { status: 402 },
+        );
+      }
       return NextResponse.json(
-        { error: "Fehler bei der Stripe-Aktualisierung" },
+        {
+          error: "STRIPE_UPDATE_FAILED",
+          message: "Fehler bei der Stripe-Aktualisierung",
+        },
         { status: 502 },
       );
     }

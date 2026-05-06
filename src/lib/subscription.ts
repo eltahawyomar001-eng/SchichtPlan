@@ -212,17 +212,23 @@ export async function updateSubscriptionFromStripe({
   cancelAtPeriodEnd: boolean;
 }) {
   const planConfig = stripePriceId ? getPlanByPriceId(stripePriceId) : null;
+  const mappedStatus = mapStripeStatus(status);
 
   return prisma.subscription.update({
     where: { stripeSubscriptionId },
     data: {
       stripePriceId,
       ...(planConfig && { plan: planConfig.prismaKey }),
-      status: mapStripeStatus(status),
+      status: mappedStatus,
       seatCount,
       currentPeriodStart,
       currentPeriodEnd,
       cancelAtPeriodEnd,
+      // When Stripe says the subscription is fully active, clear the local
+      // trial state so the UI's "Test phase" badge can't linger after payment.
+      ...(mappedStatus === "ACTIVE"
+        ? { trialStart: null, trialEnd: null }
+        : {}),
     },
   });
 }
@@ -258,6 +264,7 @@ export async function linkSubscriptionByCustomer({
   cancelAtPeriodEnd: boolean;
 }): Promise<number> {
   const planConfig = stripePriceId ? getPlanByPriceId(stripePriceId) : null;
+  const mappedStatus = mapStripeStatus(status);
 
   const result = await prisma.subscription.updateMany({
     where: { stripeCustomerId },
@@ -265,11 +272,14 @@ export async function linkSubscriptionByCustomer({
       stripeSubscriptionId,
       stripePriceId,
       ...(planConfig && { plan: planConfig.prismaKey }),
-      status: mapStripeStatus(status),
+      status: mappedStatus,
       seatCount,
       currentPeriodStart,
       currentPeriodEnd,
       cancelAtPeriodEnd,
+      ...(mappedStatus === "ACTIVE"
+        ? { trialStart: null, trialEnd: null }
+        : {}),
     },
   });
   return result.count;

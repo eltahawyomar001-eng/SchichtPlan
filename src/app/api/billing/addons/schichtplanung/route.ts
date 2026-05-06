@@ -230,12 +230,23 @@ export const POST = withRoute(
 
     try {
       if (!newActive) {
-        // Cancel
+        // Cancel — tolerate items Stripe already removed (webhook race).
         if (subscription.schichtplanungStripeSubscriptionItemId) {
-          await stripe.subscriptionItems.del(
-            subscription.schichtplanungStripeSubscriptionItemId,
-            { proration_behavior: "create_prorations" },
-          );
+          try {
+            await stripe.subscriptionItems.del(
+              subscription.schichtplanungStripeSubscriptionItemId,
+              { proration_behavior: "create_prorations" },
+            );
+          } catch (delErr) {
+            const code = (delErr as { code?: string })?.code;
+            if (code !== "resource_missing") throw delErr;
+            log.warn(
+              "[Stripe] Schichtplanung item already gone in Stripe, treating as canceled",
+              {
+                itemId: subscription.schichtplanungStripeSubscriptionItemId,
+              },
+            );
+          }
         }
         newItemId = null;
       } else {
@@ -246,17 +257,35 @@ export const POST = withRoute(
           );
           return NextResponse.json(
             {
-              error:
+              error: "PRICE_NOT_CONFIGURED",
+              message:
                 "Schichtplanung-Preis nicht konfiguriert. Bitte Support kontaktieren.",
             },
             { status: 500 },
           );
         }
 
-        if (subscription.schichtplanungStripeSubscriptionItemId) {
-          // Switch billing cycle / refresh quantity — prorate at cycle end
+        // If we *think* there's an item but Stripe lost it, fall back to create.
+        let existingItemId =
+          subscription.schichtplanungStripeSubscriptionItemId;
+        if (existingItemId) {
+          try {
+            await stripe.subscriptionItems.retrieve(existingItemId);
+          } catch (lookupErr) {
+            const code = (lookupErr as { code?: string })?.code;
+            if (code === "resource_missing") {
+              log.warn(
+                "[Stripe] DB references stale schichtplanung item, will recreate",
+                { staleId: existingItemId, workspaceId },
+              );
+              existingItemId = null;
+            }
+          }
+        }
+
+        if (existingItemId) {
           const updated = await stripe.subscriptionItems.update(
-            subscription.schichtplanungStripeSubscriptionItemId,
+            existingItemId,
             {
               price: priceId,
               quantity,
@@ -265,7 +294,6 @@ export const POST = withRoute(
           );
           newItemId = updated.id;
         } else {
-          // New add-on: charge immediately, fail fast if payment is incomplete
           const created = await stripe.subscriptionItems.create({
             subscription: stripeSubId,
             price: priceId,
@@ -277,11 +305,34 @@ export const POST = withRoute(
         }
       }
     } catch (err) {
+      const code = (err as { code?: string })?.code;
+      const declineCode = (err as { decline_code?: string })?.decline_code;
       log.error("[Stripe] Failed to update schichtplanung add-on item", {
         err,
+        code,
+        declineCode,
+        workspaceId,
       });
+      if (
+        code === "subscription_payment_intent_requires_action" ||
+        code === "card_declined" ||
+        code === "missing" ||
+        declineCode
+      ) {
+        return NextResponse.json(
+          {
+            error: "PAYMENT_REQUIRED",
+            message:
+              "Zahlung konnte nicht verarbeitet werden. Bitte Zahlungsmethode im Kundenportal aktualisieren.",
+          },
+          { status: 402 },
+        );
+      }
       return NextResponse.json(
-        { error: "Fehler bei der Stripe-Aktualisierung" },
+        {
+          error: "STRIPE_UPDATE_FAILED",
+          message: "Fehler bei der Stripe-Aktualisierung",
+        },
         { status: 502 },
       );
     }

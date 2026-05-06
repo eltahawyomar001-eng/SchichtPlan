@@ -339,7 +339,9 @@ function BillingContent() {
       STRIPE_NOT_CONFIGURED: t("checkoutError"),
       STRIPE_CHECKOUT_FAILED: t("checkoutError"),
       STRIPE_UPGRADE_FAILED: t("errorStripeFailed"),
+      STRIPE_UPDATE_FAILED: t("errorStripeFailed"),
       PRICE_NOT_CONFIGURED: t("errorPriceNotConfigured"),
+      PAYMENT_REQUIRED: t("errorPaymentRequired"),
     };
     if (code && codeMap[code]) return codeMap[code];
     // Unknown error: fall back to translation rather than potentially

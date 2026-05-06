@@ -26,6 +26,7 @@ import {
   TicketIcon,
 } from "@/components/icons";
 import { SchichtplanungAddonCard } from "@/components/billing/schichtplanung-addon-card";
+import { UsageDashboard } from "@/components/billing/usage-dashboard";
 import type { SessionUser } from "@/lib/types";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -676,7 +677,7 @@ function BillingContent() {
               </div>
             </div>
 
-            {/* Manage Subscription Button */}
+            {/* Manage Subscription Button (placeholder retained below) */}
             {subscription?.hasStripeSubscription && (
               <div className="mt-6">
                 <button
@@ -698,6 +699,9 @@ function BillingContent() {
             )}
           </CardContent>
         </Card>
+
+        {/* ─── Usage & Limits Dashboard ─── */}
+        <UsageDashboard />
 
         {/* ─── Billing Cycle Toggle ─── */}
         <div className="flex flex-col items-center gap-3">

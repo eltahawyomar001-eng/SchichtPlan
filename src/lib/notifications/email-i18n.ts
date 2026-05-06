@@ -120,3 +120,56 @@ export function paymentFailedEmail(locale: string, workspaceName: string) {
       `any interruption to your subscription.`,
   };
 }
+
+// ─── Subscription created ───────────────────────────────────────
+
+export function subscriptionCreatedEmail(
+  locale: string,
+  workspaceName: string,
+  planName: string,
+) {
+  if (locale === "de") {
+    return {
+      subject: `Willkommen bei Shiftfy ${planName} – Abonnement aktiv`,
+      body:
+        `Ihr ${planName}-Abonnement für „${workspaceName}" ist aktiv. ` +
+        `Vielen Dank für Ihr Vertrauen! Sie können nun den vollen Funktionsumfang nutzen. ` +
+        `Rechnungen finden Sie jederzeit im Kundenportal — eine Quittung wurde Ihnen separat von Stripe zugesandt.`,
+    };
+  }
+  return {
+    subject: `Welcome to Shiftfy ${planName} – your subscription is active`,
+    body:
+      `Your ${planName} subscription for "${workspaceName}" is active. ` +
+      `Thank you! You now have full access to the platform. ` +
+      `Invoices are always available in the billing portal — a receipt has been sent separately by Stripe.`,
+  };
+}
+
+// ─── Invoice paid (renewal) ─────────────────────────────────────
+
+export function invoicePaidEmail(
+  locale: string,
+  workspaceName: string,
+  amountFormatted: string,
+  nextBillingDate: string | null,
+) {
+  if (locale === "de") {
+    return {
+      subject: `Zahlungsbestätigung für „${workspaceName}" – ${amountFormatted}`,
+      body:
+        `Wir haben Ihre Zahlung von ${amountFormatted} für „${workspaceName}" erhalten. Vielen Dank! ` +
+        (nextBillingDate
+          ? `Die nächste Abrechnung erfolgt am ${nextBillingDate}. `
+          : "") +
+        `Die offizielle Rechnung finden Sie als PDF im Kundenportal — Stripe sendet zusätzlich eine Quittung an die hinterlegte Adresse.`,
+    };
+  }
+  return {
+    subject: `Payment confirmed for "${workspaceName}" – ${amountFormatted}`,
+    body:
+      `We received your payment of ${amountFormatted} for "${workspaceName}". Thank you! ` +
+      (nextBillingDate ? `Next billing date: ${nextBillingDate}. ` : "") +
+      `Your official invoice is available as a PDF in the billing portal — Stripe also sends a receipt to your billing email.`,
+  };
+}

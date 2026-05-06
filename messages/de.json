@@ -1268,7 +1268,14 @@
     "errorEnterpriseContactSales": "Enterprise-Pläne werden individuell konfiguriert. Bitte wenden Sie sich an unseren Vertrieb.",
     "errorPaymentRequired": "Es ist keine Zahlungsmethode hinterlegt. Bitte fügen Sie eine hinzu, um fortzufahren.",
     "errorStripeFailed": "Die Aktualisierung bei Stripe ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
-    "errorPriceNotConfigured": "Plan-Preis wurde nicht konfiguriert. Bitte kontaktieren Sie den Support."
+    "errorPriceNotConfigured": "Plan-Preis wurde nicht konfiguriert. Bitte kontaktieren Sie den Support.",
+    "usageTitle": "Verbrauch & Limits",
+    "usageDescription": "Wie viel Sie vom aktuellen Plan nutzen — wird nach jedem Vorgang aktualisiert.",
+    "usageEmployees": "Mitarbeiter",
+    "usageLocations": "Standorte",
+    "usageStorage": "Speicher",
+    "usagePdfs": "PDFs (diesen Monat)",
+    "usageTickets": "Tickets (diesen Monat)"
   },
   "addon": {
     "ticketsName": "Ticketsystem",

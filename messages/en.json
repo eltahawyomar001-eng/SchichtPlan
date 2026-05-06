@@ -1268,7 +1268,14 @@
     "errorEnterpriseContactSales": "Enterprise plans are configured individually. Please contact our sales team.",
     "errorPaymentRequired": "No payment method on file. Please add one to continue.",
     "errorStripeFailed": "The update at Stripe failed. Please try again.",
-    "errorPriceNotConfigured": "Plan price is not configured. Please contact support."
+    "errorPriceNotConfigured": "Plan price is not configured. Please contact support.",
+    "usageTitle": "Usage & limits",
+    "usageDescription": "How much of your current plan you've used — refreshes after every action.",
+    "usageEmployees": "Employees",
+    "usageLocations": "Locations",
+    "usageStorage": "Storage",
+    "usagePdfs": "PDFs (this month)",
+    "usageTickets": "Tickets (this month)"
   },
   "addon": {
     "ticketsName": "Ticketing",

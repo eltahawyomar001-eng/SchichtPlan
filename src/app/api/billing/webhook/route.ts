@@ -16,7 +16,11 @@ import {
 import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
-import { paymentFailedEmail } from "@/lib/notifications/email-i18n";
+import {
+  paymentFailedEmail,
+  subscriptionCreatedEmail,
+  invoicePaidEmail,
+} from "@/lib/notifications/email-i18n";
 import { log } from "@/lib/logger";
 import { Redis } from "@upstash/redis";
 import { withRoute } from "@/lib/with-route";
@@ -157,6 +161,49 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       log.info(
         `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
       );
+
+      // Welcome email — fire-and-forget so a Resend hiccup never breaks the
+      // webhook ack (Stripe will retry on non-2xx).
+      void (async () => {
+        try {
+          const workspace = await prisma.workspace.findUnique({
+            where: { id: workspaceId },
+            select: { name: true },
+          });
+          const owner = await prisma.user.findFirst({
+            where: { workspaceId, role: "OWNER" },
+            select: { email: true, preferredLocale: true },
+          });
+          if (owner?.email) {
+            const locale = owner.preferredLocale === "en" ? "en" : "de";
+            const planName =
+              plan?.id === "professional"
+                ? "Professional"
+                : plan?.id === "enterprise"
+                  ? "Enterprise"
+                  : "Basic";
+            const copy = subscriptionCreatedEmail(
+              locale,
+              workspace?.name ??
+                (locale === "en" ? "your workspace" : "Ihren Arbeitsbereich"),
+              planName,
+            );
+            await sendEmail({
+              to: owner.email,
+              type: "SYSTEM",
+              title: copy.subject,
+              message: copy.body,
+              link: "/einstellungen/abonnement",
+              locale,
+            });
+          }
+        } catch (err) {
+          log.error("[Stripe] subscription-created email failed", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      })();
+
       break;
     }
 
@@ -384,6 +431,63 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             log.info(
               `[Stripe] Ticketing quota reset for workspace=${sub.workspaceId}`,
             );
+          }
+
+          // Renewal/payment confirmation email. Skip the very first invoice —
+          // the welcome email from checkout.session.completed already covers
+          // initial activation. We treat billing_reason === "subscription_cycle"
+          // (or "subscription_update" for upgrades) as renewals.
+          const billingReason = invoice.billing_reason ?? "";
+          const isRenewal =
+            billingReason === "subscription_cycle" ||
+            billingReason === "subscription_update";
+          if (isRenewal && invoice.amount_paid && invoice.amount_paid > 0) {
+            void (async () => {
+              try {
+                const workspace = await prisma.workspace.findUnique({
+                  where: { id: sub.workspaceId },
+                  select: { name: true },
+                });
+                const owner = await prisma.user.findFirst({
+                  where: { workspaceId: sub.workspaceId, role: "OWNER" },
+                  select: { email: true, preferredLocale: true },
+                });
+                if (owner?.email) {
+                  const locale = owner.preferredLocale === "en" ? "en" : "de";
+                  const currency = (invoice.currency ?? "eur").toUpperCase();
+                  const amountFormatted = new Intl.NumberFormat(
+                    locale === "en" ? "en-GB" : "de-DE",
+                    { style: "currency", currency },
+                  ).format((invoice.amount_paid ?? 0) / 100);
+                  const nextDate = invoice.lines?.data?.[0]?.period?.end
+                    ? new Date(
+                        invoice.lines.data[0].period.end * 1000,
+                      ).toLocaleDateString(locale === "en" ? "en-GB" : "de-DE")
+                    : null;
+                  const copy = invoicePaidEmail(
+                    locale,
+                    workspace?.name ??
+                      (locale === "en"
+                        ? "your workspace"
+                        : "Ihren Arbeitsbereich"),
+                    amountFormatted,
+                    nextDate,
+                  );
+                  await sendEmail({
+                    to: owner.email,
+                    type: "SYSTEM",
+                    title: copy.subject,
+                    message: copy.body,
+                    link: "/einstellungen/abonnement",
+                    locale,
+                  });
+                }
+              } catch (err) {
+                log.error("[Stripe] invoice-paid email failed", {
+                  error: err instanceof Error ? err.message : String(err),
+                });
+              }
+            })();
           }
         }
       } catch (err) {

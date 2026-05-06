@@ -15,7 +15,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 export const metadata: Metadata = {
   title: "Schichtplanung Software – Dienstplan online erstellen | Shiftfy",
   description:
-    "Schichtplanung Software: Dienstplan online erstellen, Schichten automatisch planen, Schichttausch per Klick. Kostenlos starten. Ideal für Gastronomie, Sicherheitsdienste, Einzelhandel & Pflege.",
+    "Schichtplanung Software: Dienstplan online erstellen, Schichten automatisch planen, Schichttausch per Klick. 7 Tage testen. Ideal für Gastronomie, Sicherheitsdienste, Einzelhandel & Pflege.",
   keywords: [
     "Schichtplanung",
     "Schichtplanung Software",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "Dienstplan erstellen",
     "Schichtplaner",
     "Personalplanung Software",
-    "Schichtplanung kostenlos",
+    "Schichtplanung Testphase",
     "Einsatzplanung",
     "Schichtplan App",
     "automatische Schichtplanung",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Schichtplanung Software – Dienstplan online erstellen | Shiftfy",
     description:
-      "Dienstplan online erstellen mit automatischer Konflikterkennung. Kostenlos starten, DSGVO-konform.",
+      "Dienstplan online erstellen mit automatischer Konflikterkennung. 7 Tage testen, DSGVO-konform.",
     url: "https://www.shiftfy.de/schichtplanung-software",
   },
 };
@@ -138,7 +138,7 @@ export default function SchichtplanungPage() {
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              7 Tage testen
             </Link>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function SchichtplanungPage() {
                 href="/register"
                 className="bg-brand-gradient text-white font-bold px-8 py-3.5 rounded-full hover:shadow-xl hover:shadow-emerald-200/50 transition-all flex items-center gap-2"
               >
-                Kostenlos starten
+                7 Tage testen
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
               <Link
@@ -181,7 +181,7 @@ export default function SchichtplanungPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-gray-400">
-              Kostenloser Starter-Plan · Keine Kreditkarte · DSGVO-konform
+              7 Tage Testphase · Jederzeit kündbar · DSGVO-konform
             </p>
           </div>
         </div>
@@ -294,9 +294,8 @@ export default function SchichtplanungPage() {
                 <strong>Für wen eignet sich Shiftfy?</strong> Für alle
                 Unternehmen mit Schichtarbeit: Gastronomie, Sicherheitsdienste,
                 Einzelhandel, Produktion, Pflege, Gebäudereinigung und weitere
-                Dienstleistungsbranchen. Der kostenlose Starter-Plan eignet sich
-                für Teams bis 5 Mitarbeiter, die bezahlten Pläne für wachsende
-                Teams ohne Mitarbeiter-Limit.
+                Dienstleistungsbranchen. Jedes Konto startet mit einer 7-tägigen
+                Testphase, danach ab 2,99 €/Nutzer/Monat.
               </p>
             </div>
           </div>
@@ -312,15 +311,15 @@ export default function SchichtplanungPage() {
                   Schichtplanung jetzt digitalisieren
                 </h2>
                 <p className="mt-4 text-emerald-200 text-lg max-w-xl mx-auto">
-                  Kostenlos starten mit bis zu 5 Mitarbeitern — keine
-                  Kreditkarte, kein Risiko.
+                  7 Tage testen — danach ab 2,99 €/Nutzer/Monat. Jederzeit
+                  kündbar.
                 </p>
                 <div className="mt-8">
                   <Link
                     href="/register"
                     className="bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all inline-flex items-center gap-2"
                   >
-                    Kostenlos starten
+                    7 Tage testen
                     <ArrowRightIcon className="w-5 h-5" />
                   </Link>
                 </div>

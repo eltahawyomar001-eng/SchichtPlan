@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title:
     "Zeiterfassung Software – Digitale Arbeitszeiterfassung für Teams | Shiftfy",
   description:
-    "Zeiterfassung Software für Unternehmen: Stempeluhr-App, GPS-Verifizierung, automatische Pausenberechnung nach ArbZG. DSGVO-konform, kostenlos starten. Ideal für Gastronomie, Sicherheitsdienste & Dienstleister.",
+    "Zeiterfassung Software für Unternehmen: Stempeluhr-App, GPS-Verifizierung, automatische Pausenberechnung nach ArbZG. DSGVO-konform, 7 Tage testen. Ideal für Gastronomie, Sicherheitsdienste & Dienstleister.",
   keywords: [
     "Zeiterfassung",
     "Zeiterfassung Software",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "Zeiterfassung Mitarbeiter",
     "Stempeluhr App",
     "Stempeluhr digital",
-    "Zeiterfassung kostenlos",
+    "Zeiterfassung Testphase",
     "Zeiterfassung DSGVO",
     "Zeiterfassung Pflicht",
     "Arbeitszeit erfassen",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Zeiterfassung Software – Arbeitszeiten digital erfassen | Shiftfy",
     description:
-      "Kostenlose Zeiterfassung mit Stempeluhr, GPS & Lohnexport. DSGVO-konform, made in Germany.",
+      "Digitale Zeiterfassung mit Stempeluhr, GPS & Lohnexport. DSGVO-konform, made in Germany. 7 Tage testen.",
     url: "https://www.shiftfy.de/zeiterfassung-software",
   },
 };
@@ -135,7 +135,7 @@ export default function ZeiterfassungPage() {
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              Kostenlos starten
+              7 Tage testen
             </Link>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function ZeiterfassungPage() {
                 href="/register"
                 className="bg-brand-gradient text-white font-bold px-8 py-3.5 rounded-full hover:shadow-xl hover:shadow-emerald-200/50 transition-all flex items-center gap-2"
               >
-                Kostenlos starten
+                7 Tage testen
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
               <Link
@@ -178,7 +178,7 @@ export default function ZeiterfassungPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-gray-400">
-              Kostenloser Starter-Plan · Keine Kreditkarte · DSGVO-konform
+              7 Tage Testphase · Jederzeit kündbar · DSGVO-konform
             </p>
           </div>
         </div>
@@ -306,15 +306,15 @@ export default function ZeiterfassungPage() {
                   Zeiterfassung jetzt digitalisieren
                 </h2>
                 <p className="mt-4 text-emerald-200 text-lg max-w-xl mx-auto">
-                  Kostenlos starten mit bis zu 5 Mitarbeitern — keine
-                  Kreditkarte, kein Risiko, DSGVO-konform.
+                  7 Tage testen — danach ab 2,99 €/Nutzer/Monat. Jederzeit
+                  kündbar, DSGVO-konform.
                 </p>
                 <div className="mt-8">
                   <Link
                     href="/register"
                     className="bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all inline-flex items-center gap-2"
                   >
-                    Kostenlos starten
+                    7 Tage testen
                     <ArrowRightIcon className="w-5 h-5" />
                   </Link>
                 </div>

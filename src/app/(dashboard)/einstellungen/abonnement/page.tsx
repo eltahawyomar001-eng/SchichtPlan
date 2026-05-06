@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Topbar } from "@/components/layout/topbar";
 import {
@@ -120,6 +120,7 @@ function BillingContent() {
   const { data: session } = useSession();
   const t = useTranslations("billing");
   const locale = useLocale();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const user = session?.user as SessionUser | undefined;
@@ -323,6 +324,28 @@ function BillingContent() {
   const currentPlan = subscription?.plan?.toLowerCase() ?? "basic";
   const isRequired = searchParams.get("required") === "1";
 
+  // Map server-side error codes to localized fallbacks so German-only API
+  // messages don't leak into the English UI.
+  const localizeErr = (
+    data: { error?: string; message?: string } | null | undefined,
+    fallbackKey: "checkoutError" | "upgradeError" | "ticketingAddonError",
+  ): string => {
+    const code = data?.error;
+    const codeMap: Record<string, string> = {
+      ENTERPRISE_CONTACT_SALES: t("errorEnterpriseContactSales"),
+      NO_BASE_SUBSCRIPTION: t("noBaseSubscription"),
+      NO_STRIPE_SUBSCRIPTION: t("noBaseSubscription"),
+      STRIPE_NOT_CONFIGURED: t("checkoutError"),
+      STRIPE_CHECKOUT_FAILED: t("checkoutError"),
+      STRIPE_UPGRADE_FAILED: t("errorStripeFailed"),
+      PRICE_NOT_CONFIGURED: t("errorPriceNotConfigured"),
+    };
+    if (code && codeMap[code]) return codeMap[code];
+    // Unknown error: fall back to translation rather than potentially
+    // German server message.
+    return t(fallbackKey);
+  };
+
   const handleCheckout = async (planId: string) => {
     if (!user) return;
     setCheckoutLoading(planId);
@@ -342,7 +365,7 @@ function BillingContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.message ?? data.error ?? t("checkoutError"));
+        setErrorMsg(localizeErr(data, "checkoutError"));
         return;
       }
 
@@ -373,20 +396,28 @@ function BillingContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.message ?? data.error ?? t("upgradeError"));
+        setErrorMsg(localizeErr(data, "upgradeError"));
         return;
       }
 
+      // Reload the enriched subscription shape from the GET endpoint so the
+      // UI has `limits`, `billingCycle`, etc. The raw Prisma row in
+      // `data.subscription` is missing those and would crash render.
+      try {
+        const reconciled = await fetch("/api/billing/subscription?reconcile=1");
+        if (reconciled.ok) {
+          const d = await reconciled.json();
+          setSubscription(d);
+          if (d.billingCycle === "monthly" || d.billingCycle === "annual") {
+            setBillingCycle(d.billingCycle);
+          }
+        }
+      } catch {
+        // non-fatal — server-state refresh below will recover
+      }
       setSuccessMsg(t("upgradeSuccess"));
-      // Use the freshly-returned subscription data from the upgrade response,
-      // then do a full reconcile to confirm
-      if (data.subscription) setSubscription(data.subscription);
-      fetch("/api/billing/subscription?reconcile=1")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d) setSubscription(d);
-        })
-        .catch(() => {});
+      // Refresh server components so any guards/usage widgets reflect new plan.
+      router.refresh();
     } catch {
       setErrorMsg(t("upgradeError"));
     } finally {
@@ -435,7 +466,7 @@ function BillingContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.message ?? data.error ?? t("ticketingAddonError"));
+        setErrorMsg(localizeErr(data, "ticketingAddonError"));
         return;
       }
       await fetchSubscription(false);
@@ -627,10 +658,10 @@ function BillingContent() {
                   {t("employees")}
                 </p>
                 <p className="mt-1 text-lg font-bold text-gray-900">
-                  {subscription?.limits.maxEmployees === Infinity ||
-                  (subscription?.limits.maxEmployees ?? 0) > 10000
+                  {subscription?.limits?.maxEmployees === Infinity ||
+                  (subscription?.limits?.maxEmployees ?? 0) > 10000
                     ? t("unlimited")
-                    : (subscription?.limits.maxEmployees ?? 5)}
+                    : (subscription?.limits?.maxEmployees ?? 5)}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">

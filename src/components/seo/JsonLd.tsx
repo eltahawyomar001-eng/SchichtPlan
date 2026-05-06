@@ -144,7 +144,7 @@ export function CombinedJsonLd() {
             name: "Was kostet Shiftfy?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Shiftfy berechnet nur pro Nutzer — ohne Grundgebühr. Basic kostet 2,99 €/Nutzer/Monat, Professional 4,99 € und Enterprise 7,99 €. Bei jährlicher Zahlung sparst du bis zu 20 %. Alle Pläne enthalten eine 14-tägige kostenlose Testphase.",
+              text: "Shiftfy berechnet nur pro Nutzer — ohne Grundgebühr. Basic kostet 2,99 €/Nutzer/Monat, Professional 4,99 € und Enterprise 7,99 €. Bei jährlicher Zahlung sparst du bis zu 20 %. Jedes neue Konto startet mit einer 7-tägigen Testphase, danach läuft der gewählte Plan.",
             },
           },
           {
@@ -173,10 +173,10 @@ export function CombinedJsonLd() {
           },
           {
             "@type": "Question",
-            name: "Kann ich Shiftfy kostenlos testen?",
+            name: "Kann ich Shiftfy testen?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Ja, alle Pläne bieten eine 14-tägige kostenlose Testphase. Der Basic-Plan enthält Schichtplanung, Zeiterfassung und bis zu 15 Mitarbeiter. Keine Kreditkarte nötig.",
+              text: "Ja, jedes neue Konto erhält eine 7-tägige Testphase mit vollem Funktionsumfang. Nach Ablauf wird der gewählte Plan automatisch abgerechnet — jederzeit kündbar.",
             },
           },
           {

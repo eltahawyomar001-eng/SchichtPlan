@@ -179,6 +179,20 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
       },
     });
 
+    // Auto-create an Employee profile for the owner so they can use the
+    // punch-clock immediately without a manual setup step.
+    const nameParts = name.trim().split(/\s+/);
+    await tx.employee.create({
+      data: {
+        firstName: nameParts[0] || name,
+        lastName: nameParts.slice(1).join(" ") || "",
+        email,
+        userId: user.id,
+        workspaceId: workspace.id,
+        isActive: true,
+      },
+    });
+
     // Start the 7-day trial immediately — no checkout required to enter the app.
     await initializeTrial(tx, workspace.id);
 

@@ -49,6 +49,7 @@ export default function TeamkalenderSeite() {
   const [departments, setDepartments] = useState<CalendarDepartment[]>([]);
   const [projects, setProjects] = useState<CalendarProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
@@ -105,6 +106,42 @@ export default function TeamkalenderSeite() {
 
   function goToday() {
     setCurrentDate(new Date());
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    await fetchData();
+    setSyncing(false);
+  }
+
+  function handleExport() {
+    const rows = ["Type,Employee,Date,Start,End,Details"];
+    for (const s of filteredShifts) {
+      const name = s.employee
+        ? `${s.employee.firstName} ${s.employee.lastName}`
+        : "";
+      rows.push(
+        `Shift,"${name}",${s.date},${s.startTime},${s.endTime},"${s.status}"`,
+      );
+    }
+    for (const a of filteredAbsences) {
+      const name = `${a.employee.firstName} ${a.employee.lastName}`;
+      rows.push(
+        `Absence,"${name}",${a.startDate},,,"${a.category} (${a.totalDays}d)"`,
+      );
+    }
+    for (const h of filteredHolidays) {
+      rows.push(`Holiday,"",${h.date},,,"${h.name}"`);
+    }
+    const blob = new Blob([rows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kalender-${format(currentDate, "yyyy-MM")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // Apply filters
@@ -214,12 +251,21 @@ export default function TeamkalenderSeite() {
       <PageContent className="space-y-5">
         {/* ─── Top action buttons ─────────────────────────────── */}
         <div className="flex justify-end gap-3">
-          <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+          >
             <DownloadIcon className="h-4 w-4" />
             {t("exportCalendar")}
           </button>
-          <button className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors">
-            <RefreshIcon className="h-4 w-4" />
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+          >
+            <RefreshIcon
+              className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`}
+            />
             {t("syncCalendar")}
           </button>
         </div>

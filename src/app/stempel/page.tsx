@@ -118,37 +118,23 @@ function FastPunchContent() {
     return (
       <div
         className={`min-h-screen flex flex-col items-center justify-center p-6 ${
-          isIn
-            ? "bg-emerald-50 dark:bg-emerald-950"
-            : "bg-red-50 dark:bg-red-950"
+          isIn ? "bg-emerald-500" : "bg-red-500"
         }`}
       >
         <div className="text-center space-y-4 max-w-sm w-full">
-          <div
-            className={`text-8xl font-black tracking-tight ${
-              isIn ? "text-emerald-600" : "text-red-600"
-            }`}
-          >
-            {isIn ? "✓" : "✓"}
-          </div>
+          <div className="text-9xl font-black text-white">✓</div>
           <div className="space-y-1">
-            <p
-              className={`text-3xl font-bold ${
-                isIn
-                  ? "text-emerald-800 dark:text-emerald-200"
-                  : "text-red-800 dark:text-red-200"
-              }`}
-            >
+            <p className="text-3xl font-bold text-white">
               {isIn ? "Eingestempelt!" : "Ausgestempelt!"}
             </p>
-            <p className="text-lg text-gray-700 dark:text-gray-300 font-medium">
+            <p className="text-xl text-white/80 font-medium">
               {result.employeeName}
             </p>
-            <p className="text-2xl font-mono font-bold text-gray-900 dark:text-white">
+            <p className="text-3xl font-mono font-bold text-white">
               {result.time} Uhr
             </p>
             {!isIn && hours !== null && mins !== null && (
-              <p className="text-base text-gray-600 dark:text-gray-400">
+              <p className="text-base text-white/70">
                 Netto: {hours}h {mins}min
               </p>
             )}
@@ -159,7 +145,7 @@ function FastPunchContent() {
               setSelectedEmployee(null);
               setPunchError("");
             }}
-            className="mt-6 w-full py-4 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-lg font-bold active:scale-95 transition-transform"
+            className="mt-8 w-full py-5 rounded-2xl bg-white text-gray-900 text-xl font-bold active:scale-95 transition-transform shadow-lg"
           >
             Fertig
           </button>

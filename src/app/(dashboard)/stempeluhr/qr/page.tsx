@@ -17,6 +17,9 @@ export default function QrStationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [punchUrl, setPunchUrl] = useState("");
+  const [stationLink, setStationLink] = useState("");
+  const [stationLinkCopied, setStationLinkCopied] = useState(false);
+  const [stationLinkLoading, setStationLinkLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const refreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -188,10 +191,80 @@ export default function QrStationPage() {
             Kein GPS. Kein Tracking. Nur physische Anwesenheit.
           </p>
 
+          {/* Launch Station Card */}
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Dedizierte Stempelstation
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Tablet oder Laptop am Eingang autorisieren — ohne Admin-Login
+                  auf dem Gerät.
+                </p>
+              </div>
+              {stationLink ? (
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                    <p className="text-xs font-mono text-gray-600 dark:text-gray-300 break-all">
+                      {stationLink}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(stationLink);
+                        setStationLinkCopied(true);
+                        setTimeout(() => setStationLinkCopied(false), 2000);
+                      }}
+                      className="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors"
+                    >
+                      {stationLinkCopied ? "✓ Kopiert!" : "Link kopieren"}
+                    </button>
+                    <a
+                      href={stationLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold text-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      Öffnen
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-400 text-center">
+                    Link ist 24 Stunden gültig
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={async () => {
+                    setStationLinkLoading(true);
+                    try {
+                      const res = await fetch("/api/station/setup-link");
+                      if (res.ok) {
+                        const data = await res.json();
+                        setStationLink(data.setupUrl);
+                      }
+                    } finally {
+                      setStationLinkLoading(false);
+                    }
+                  }}
+                  disabled={stationLinkLoading}
+                  className="w-full py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold disabled:opacity-50 hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                >
+                  {stationLinkLoading
+                    ? "Wird generiert…"
+                    : "Station-Link generieren"}
+                </button>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Debug URL (small, inconspicuous) */}
           {punchUrl && (
             <details className="text-xs text-gray-300 dark:text-gray-700">
-              <summary className="cursor-pointer">Link (für Tests)</summary>
+              <summary className="cursor-pointer">
+                Direkt-Link (für Tests)
+              </summary>
               <a
                 href={punchUrl}
                 target="_blank"

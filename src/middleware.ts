@@ -373,6 +373,12 @@ export default withAuth(
         if (pathname.startsWith("/api/qr-clock")) return true;
         // QR fast-punch page: public mobile page (employee scans QR code)
         if (pathname.startsWith("/stempel")) return true;
+        // Station display page: public kiosk (auth handled via localStorage station key)
+        if (pathname.startsWith("/station")) return true;
+        // Station public API: authorize + qr-token + recent-punch (setup-link stays protected)
+        if (pathname === "/api/station/authorize") return true;
+        if (pathname === "/api/station/qr-token") return true;
+        if (pathname === "/api/station/recent-punch") return true;
         // Everything else requires auth
         return !!token;
       },
@@ -468,5 +474,9 @@ export const config = {
     "/api/qr-clock/:path*",
     "/stempel",
     "/stempel/:path*",
+    // Decentralized station display (public kiosk page + its API)
+    "/station",
+    "/station/:path*",
+    "/api/station/:path*",
   ],
 };

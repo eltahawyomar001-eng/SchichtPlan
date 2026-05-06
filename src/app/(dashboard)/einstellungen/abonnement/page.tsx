@@ -27,6 +27,7 @@ import {
 } from "@/components/icons";
 import { SchichtplanungAddonCard } from "@/components/billing/schichtplanung-addon-card";
 import { UsageDashboard } from "@/components/billing/usage-dashboard";
+import { WorkspaceBillingInfo } from "@/components/billing/workspace-billing-info";
 import type { SessionUser } from "@/lib/types";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -704,6 +705,9 @@ function BillingContent() {
 
         {/* ─── Usage & Limits Dashboard ─── */}
         <UsageDashboard />
+
+        {/* ─── Company Billing Info (WorkspaceCustomer) ─── */}
+        <WorkspaceBillingInfo />
 
         {/* ─── Billing Cycle Toggle ─── */}
         <div className="flex flex-col items-center gap-3">

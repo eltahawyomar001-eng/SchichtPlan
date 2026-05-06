@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { getSubscriptionState } from "@/lib/subscription";
+import { getSubscriptionState, getHardBlockState } from "@/lib/subscription";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -16,6 +16,16 @@ const SUBSCRIPTION_ALLOWLIST = [
   "/einstellungen/profil",
   "/workspace-inaktiv",
   "/testphase-abgelaufen",
+];
+
+/**
+ * Paths that remain accessible even during a hard-block (30 days over limit).
+ * Billing and profile pages allow the admin to resolve the situation.
+ */
+const HARD_BLOCK_ALLOWLIST = [
+  "/einstellungen/abonnement",
+  "/einstellungen/profil",
+  "/hard-block",
 ];
 
 export default async function DashboardLayout({
@@ -62,6 +72,17 @@ export default async function DashboardLayout({
           redirect("/einstellungen/abonnement?required=1");
         }
         redirect("/workspace-inaktiv");
+      }
+
+      // Hard-block: 30 days over seat limit → block all admin features.
+      // Punch clock (/stempel, /api/qr-clock/*) lives outside the dashboard
+      // group so employees can still clock in/out (§ 16 ArbZG compliance).
+      const isHardBlockAllowlisted = HARD_BLOCK_ALLOWLIST.some((p) =>
+        pathname.startsWith(p),
+      );
+      if (!isHardBlockAllowlisted) {
+        const hardBlocked = await getHardBlockState(user.workspaceId);
+        if (hardBlocked) redirect("/hard-block");
       }
     }
   }

@@ -1278,7 +1278,18 @@
     "usageStorage": "Storage",
     "usagePdfs": "PDFs (this month)",
     "usageTickets": "Tickets (this month)",
-    "usageEmails": "Emails (this month)"
+    "usageEmails": "Emails (this month)",
+    "companyInfoTitle": "Company billing info",
+    "companyInfoDesc": "VAT ID and address details are printed on your invoices (GoBD-compliant). Any admin can update this — it belongs to the company, not an individual.",
+    "companyName": "Company name",
+    "vatId": "VAT ID (USt-IdNr.)",
+    "billingEmail": "Billing email",
+    "billingAddress": "Street address",
+    "billingCity": "City",
+    "billingPostalCode": "Postal code",
+    "saving": "Saving…",
+    "saveCompanyInfo": "Save",
+    "savedCompanyInfo": "Saved"
   },
   "addon": {
     "ticketsName": "Ticketing",
@@ -3014,6 +3025,15 @@
     "contactAdmin": "Your workspace administrator needs to purchase a subscription for you to regain access.",
     "signOut": "Sign out"
   },
+  "hardBlock": {
+    "title": "Account locked",
+    "description": "Your workspace has exceeded its plan limit for more than 30 days. All admin features are currently locked.",
+    "punchClockNote": "Employees can still clock in and out — time tracking remains active to keep you compliant with § 16 ArbZG.",
+    "ctaHint": "Upgrade your plan or remove excess employees to restore full access.",
+    "ctaButton": "Manage subscription",
+    "contactAdmin": "Please ask your workspace administrator to upgrade the plan.",
+    "signOut": "Sign out"
+  },
   "qrStation": {
     "workspaceVerified": "Workspace verified",
     "punchStation": "Time Clock",
@@ -3050,7 +3070,8 @@
     "backfillRunning": "Assigning…",
     "backfillDone": "{assigned} PINs assigned, {emailed} sent by email.",
     "backfillError": "Failed to assign PINs.",
-    "timeAt": "{time}"
+    "timeAt": "{time}",
+    "dataRetentionHint": "Your data is stored for 2 years in accordance with § 16 ArbZG."
   },
   "station": {
     "punchStation": "Time Clock Station",

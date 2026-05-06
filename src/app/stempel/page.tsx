@@ -469,6 +469,9 @@ function FastPunchContent() {
           <ShieldCheckIcon className="h-3.5 w-3.5" />
           <span>{t("noGps")}</span>
         </div>
+        <p className="text-[11px] text-gray-300 text-center max-w-[260px] leading-snug">
+          {t("dataRetentionHint")}
+        </p>
       </div>
     </div>
   );

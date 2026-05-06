@@ -152,11 +152,28 @@ export async function checkUserSlot(workspaceId: string): Promise<{
 /**
  * Hard-limit guard for user creation. Returns 403 NextResponse with
  * upgrade prompt data, or null if allowed.
+ * Also stamps overLimitSince on first breach so the 30-day hard-block
+ * clock starts ticking.
  */
 export async function requireUserSlot(
   workspaceId: string,
 ): Promise<NextResponse | null> {
   const { allowed, current, limit } = await checkUserSlot(workspaceId);
+
+  if (!allowed) {
+    // Start the hard-block clock on first breach (don't overwrite existing timestamp)
+    await prisma.subscription.updateMany({
+      where: { workspaceId, overLimitSince: null },
+      data: { overLimitSince: new Date() },
+    });
+  } else {
+    // Workspace came back under limit — clear the clock
+    await prisma.subscription.updateMany({
+      where: { workspaceId, overLimitSince: { not: null } },
+      data: { overLimitSince: null },
+    });
+  }
+
   if (allowed) return null;
 
   log.warn("[subscription-guard] User slot limit reached", {

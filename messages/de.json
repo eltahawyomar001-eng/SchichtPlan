@@ -1278,7 +1278,18 @@
     "usageStorage": "Speicher",
     "usagePdfs": "PDFs (diesen Monat)",
     "usageTickets": "Tickets (diesen Monat)",
-    "usageEmails": "E-Mails (diesen Monat)"
+    "usageEmails": "E-Mails (diesen Monat)",
+    "companyInfoTitle": "Firmendaten für Rechnungen",
+    "companyInfoDesc": "USt-IdNr. und Adresse werden auf Ihren Rechnungen ausgewiesen (GoBD-konform). Jeder Admin kann diese Daten pflegen – sie gehören zum Unternehmen, nicht zu einer Person.",
+    "companyName": "Firmenname",
+    "vatId": "USt-IdNr.",
+    "billingEmail": "Rechnungs-E-Mail",
+    "billingAddress": "Straße und Hausnummer",
+    "billingCity": "Stadt",
+    "billingPostalCode": "PLZ",
+    "saving": "Wird gespeichert…",
+    "saveCompanyInfo": "Speichern",
+    "savedCompanyInfo": "Gespeichert"
   },
   "addon": {
     "ticketsName": "Ticketsystem",
@@ -3014,6 +3025,15 @@
     "contactAdmin": "Ihr Workspace-Administrator muss ein Abonnement abschließen, damit Sie weiterhin Zugang haben.",
     "signOut": "Abmelden"
   },
+  "hardBlock": {
+    "title": "Konto gesperrt",
+    "description": "Ihr Workspace überschreitet seit mehr als 30 Tagen das Nutzerlimit Ihres Tarifs. Alle Admin-Funktionen sind derzeit gesperrt.",
+    "punchClockNote": "Mitarbeiter können weiterhin ein- und ausstempeln – die Zeiterfassung bleibt aktiv, damit Sie gemäß § 16 ArbZG konform bleiben.",
+    "ctaHint": "Upgraden Sie Ihren Tarif oder entfernen Sie überzählige Mitarbeiter, um den vollen Zugriff wiederherzustellen.",
+    "ctaButton": "Abonnement verwalten",
+    "contactAdmin": "Bitte bitten Sie Ihren Workspace-Administrator, den Tarif zu upgraden.",
+    "signOut": "Abmelden"
+  },
   "qrStation": {
     "workspaceVerified": "Workspace verifiziert",
     "punchStation": "Stempeluhr",
@@ -3050,7 +3070,8 @@
     "backfillRunning": "Wird vergeben…",
     "backfillDone": "{assigned} PINs vergeben, {emailed} per E-Mail versendet.",
     "backfillError": "Fehler beim Vergeben der PINs.",
-    "timeAt": "{time} Uhr"
+    "timeAt": "{time} Uhr",
+    "dataRetentionHint": "Ihre Daten werden gemäß § 16 ArbZG für 2 Jahre gespeichert."
   },
   "station": {
     "punchStation": "Stempelstation",

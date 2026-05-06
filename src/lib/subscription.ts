@@ -105,6 +105,22 @@ export async function getSubscriptionState(
 }
 
 /**
+ * Hard-block: returns true if the workspace has been over its seat limit for
+ * more than 30 days. Punch-clock endpoints are intentionally excluded from
+ * this gate (§ 16 ArbZG requires time tracking to remain functional).
+ */
+export async function getHardBlockState(workspaceId: string): Promise<boolean> {
+  const sub = await prisma.subscription.findUnique({
+    where: { workspaceId },
+    select: { overLimitSince: true },
+  });
+  if (!sub?.overLimitSince) return false;
+  const daysSince =
+    (Date.now() - sub.overLimitSince.getTime()) / (1000 * 60 * 60 * 24);
+  return daysSince >= 30;
+}
+
+/**
  * Create a 7-day trial subscription for a newly registered workspace.
  * Called inside the registration transaction right after workspace creation.
  */

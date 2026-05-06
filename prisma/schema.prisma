@@ -159,6 +159,8 @@ model Workspace {
   notifications        Notification[]
   tickets              Ticket[]
   ticketAttachments    TicketAttachment[]
+  workspaceCustomer    WorkspaceCustomer?
+  invoices             Invoice[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -222,12 +224,50 @@ model Subscription {
   schichtplanungStripeSubscriptionItemId String?
   /// Billing cycle for the schichtplanung add-on: "monthly" or "annual" (null when inactive)
   schichtplanungAddonBilling        String?
+  /// Set when seat count exceeds plan limit; hard-block activates 30 days after this date.
+  overLimitSince                    DateTime?
   createdAt                         DateTime           @default(now())
   updatedAt                         DateTime           @updatedAt
   workspaceId                       String             @unique
   workspace                         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+}
+
+/// Company-level billing identity — VAT ID, billing address, and contact email
+/// decoupled from any individual user. Multiple admins can manage billing.
+model WorkspaceCustomer {
+  id              String   @id @default(cuid())
+  workspaceId     String   @unique
+  companyName     String?
+  vatId           String?
+  billingEmail    String?
+  billingAddress  String?
+  billingCity     String?
+  billingPostalCode String?
+  billingCountry  String   @default("DE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// GoBD § 147 — invoices must be retained for 10 years.
+/// Populated by the invoice.paid Stripe webhook.
+model Invoice {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  stripeInvoiceId String   @unique
+  invoiceNumber   String?
+  issuedAt        DateTime
+  amount          Int
+  vatAmount       Int?
+  currency        String   @default("eur")
+  pdfUrl          String?
+  hostedUrl       String?
+  emailSentAt     DateTime?
+  createdAt       DateTime @default(now())
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
 }
 
 /// Tracks metered usage per workspace for subscription guardrails.

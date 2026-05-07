@@ -3104,5 +3104,27 @@
     "adminHint": "Admin: Settings → Time Clock → Generate Station Link",
     "qrAlt": "QR code for time clock",
     "offline": "No internet – QR code cannot be renewed"
+  },
+  "feedback": {
+    "trigger": "Give feedback",
+    "title": "Send feedback",
+    "close": "Close",
+    "categoryLabel": "Category",
+    "categories": {
+      "BUG": "Report a bug",
+      "FEATURE": "Feature request",
+      "QUESTION": "Question",
+      "OTHER": "Other"
+    },
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "Brief summary",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Describe the issue or your request in as much detail as possible.",
+    "cancel": "Cancel",
+    "submit": "Send",
+    "submitting": "Sending…",
+    "successMessage": "Thank you for your feedback!",
+    "errorGeneric": "Could not send feedback. Please try again.",
+    "errorNetwork": "Network error. Please try again."
   }
 }

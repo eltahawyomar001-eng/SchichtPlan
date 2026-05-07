@@ -3104,5 +3104,27 @@
     "adminHint": "Admin: Einstellungen → Stempeluhr → Station-Link generieren",
     "qrAlt": "QR-Code zum Stempeln",
     "offline": "Kein Internet – QR-Code kann nicht erneuert werden"
+  },
+  "feedback": {
+    "trigger": "Feedback geben",
+    "title": "Feedback senden",
+    "close": "Schließen",
+    "categoryLabel": "Kategorie",
+    "categories": {
+      "BUG": "Fehler melden",
+      "FEATURE": "Funktionswunsch",
+      "QUESTION": "Frage",
+      "OTHER": "Sonstiges"
+    },
+    "subjectLabel": "Betreff",
+    "subjectPlaceholder": "Kurze Zusammenfassung",
+    "messageLabel": "Nachricht",
+    "messagePlaceholder": "Beschreiben Sie das Problem oder Ihren Wunsch so detailliert wie möglich.",
+    "cancel": "Abbrechen",
+    "submit": "Senden",
+    "submitting": "Senden …",
+    "successMessage": "Vielen Dank für Ihr Feedback!",
+    "errorGeneric": "Feedback konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "errorNetwork": "Netzwerkfehler. Bitte erneut versuchen."
   }
 }

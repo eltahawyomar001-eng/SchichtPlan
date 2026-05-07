@@ -2,19 +2,16 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { XIcon } from "@/components/icons";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 
 type Category = "BUG" | "FEATURE" | "QUESTION" | "OTHER";
 
-const CATEGORIES: { value: Category; label: string }[] = [
-  { value: "BUG", label: "Fehler melden" },
-  { value: "FEATURE", label: "Funktionswunsch" },
-  { value: "QUESTION", label: "Frage" },
-  { value: "OTHER", label: "Sonstiges" },
-];
+const CATEGORY_VALUES: Category[] = ["BUG", "FEATURE", "QUESTION", "OTHER"];
 
 export function FeedbackWidget() {
+  const t = useTranslations("feedback");
   const pathname = usePathname();
   const keyboardInset = useKeyboardInset();
   const [open, setOpen] = useState(false);
@@ -37,9 +34,7 @@ export function FeedbackWidget() {
         body: JSON.stringify({ category, subject, message, url: pathname }),
       });
       if (!res.ok) {
-        setError(
-          "Feedback konnte nicht gesendet werden. Bitte erneut versuchen.",
-        );
+        setError(t("errorGeneric"));
         return;
       }
       setSubmitted(true);
@@ -51,7 +46,7 @@ export function FeedbackWidget() {
         setCategory("BUG");
       }, 1800);
     } catch {
-      setError("Netzwerkfehler. Bitte erneut versuchen.");
+      setError(t("errorNetwork"));
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +56,7 @@ export function FeedbackWidget() {
     <>
       <button
         type="button"
-        aria-label="Feedback geben"
+        aria-label={t("trigger")}
         onClick={() => setOpen(true)}
         className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 lg:bottom-6 lg:right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 hover:shadow-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       >
@@ -100,11 +95,11 @@ export function FeedbackWidget() {
                 id="feedback-title"
                 className="text-base font-semibold text-gray-900 dark:text-white"
               >
-                Feedback senden
+                {t("title")}
               </h2>
               <button
                 type="button"
-                aria-label="Schließen"
+                aria-label={t("close")}
                 onClick={() => setOpen(false)}
                 className="rounded-md p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
@@ -130,28 +125,28 @@ export function FeedbackWidget() {
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Vielen Dank für Ihr Feedback!
+                  {t("successMessage")}
                 </p>
               </div>
             ) : (
               <form onSubmit={submit} className="px-5 py-4 space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1.5">
-                    Kategorie
+                    {t("categoryLabel")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {CATEGORIES.map((c) => (
+                    {CATEGORY_VALUES.map((value) => (
                       <button
-                        key={c.value}
+                        key={value}
                         type="button"
-                        onClick={() => setCategory(c.value)}
+                        onClick={() => setCategory(value)}
                         className={`rounded-lg px-3 py-2 text-xs font-medium border transition-colors ${
-                          category === c.value
+                          category === value
                             ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
                             : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:border-gray-300"
                         }`}
                       >
-                        {c.label}
+                        {t(`categories.${value}`)}
                       </button>
                     ))}
                   </div>
@@ -162,7 +157,7 @@ export function FeedbackWidget() {
                     htmlFor="fb-subject"
                     className="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
                   >
-                    Betreff
+                    {t("subjectLabel")}
                   </label>
                   <input
                     id="fb-subject"
@@ -173,7 +168,7 @@ export function FeedbackWidget() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     className="block w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    placeholder="Kurze Zusammenfassung"
+                    placeholder={t("subjectPlaceholder")}
                   />
                 </div>
 
@@ -182,7 +177,7 @@ export function FeedbackWidget() {
                     htmlFor="fb-message"
                     className="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
                   >
-                    Nachricht
+                    {t("messageLabel")}
                   </label>
                   <textarea
                     id="fb-message"
@@ -193,7 +188,7 @@ export function FeedbackWidget() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className="block w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
-                    placeholder="Beschreiben Sie das Problem oder Ihren Wunsch so detailliert wie möglich."
+                    placeholder={t("messagePlaceholder")}
                   />
                 </div>
 
@@ -212,14 +207,14 @@ export function FeedbackWidget() {
                     onClick={() => setOpen(false)}
                     className="flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
                   >
-                    Abbrechen
+                    {t("cancel")}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
                     className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
                   >
-                    {submitting ? "Senden …" : "Senden"}
+                    {submitting ? t("submitting") : t("submit")}
                   </button>
                 </div>
               </form>

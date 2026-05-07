@@ -53,7 +53,7 @@ export async function sendMonthlyBillingEmail(
     }),
     prisma.subscription.findUnique({
       where: { workspaceId },
-      select: { stripeCustomerId: true },
+      select: { stripeCustomerId: true, currentPeriodStart: true },
     }),
     prisma.user.findFirst({
       where: { workspaceId, role: "OWNER" },
@@ -67,39 +67,73 @@ export async function sendMonthlyBillingEmail(
     return { status: "no_stripe" };
   }
 
-  // ── 3. Fetch current-month paid invoices from Stripe ──────────
+  // ── 3. Fetch paid invoices from Stripe ────────────────────────
+  // We do NOT filter by calendar month — subscription billing cycles rarely
+  // align with the 1st of the month (e.g. a subscription started April 15
+  // creates its May invoice on April 15, not May 1). Instead we use the
+  // current billing period start from our DB as the lower bound, falling
+  // back to 60 days ago so new workspaces still see their first invoice.
   const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const periodStart =
+    subscription.currentPeriodStart ??
+    new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
   const stripe = getStripe();
   let invoices: Array<{
     number: string | null;
     amount: string;
+    issuedDate: string;
     hostedUrl: string | null;
   }> = [];
+
+  const dateFmt = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const numberFmt = new Intl.NumberFormat(locale === "en" ? "en-GB" : "de-DE", {
+    style: "currency",
+    currency: "EUR",
+  });
 
   try {
     const result = await stripe.invoices.list({
       customer: subscription.stripeCustomerId,
-      created: { gte: Math.floor(firstOfMonth.getTime() / 1000) },
-      limit: 20,
+      created: { gte: Math.floor(periodStart.getTime() / 1000) },
+      limit: 10,
     });
-
-    const numberFmt = new Intl.NumberFormat(
-      locale === "en" ? "en-GB" : "de-DE",
-      { style: "currency", currency: "EUR" },
-    );
 
     invoices = result.data
       .filter((inv) => inv.status === "paid")
       .map((inv) => ({
         number: typeof inv.number === "string" ? inv.number : null,
         amount: numberFmt.format((inv.amount_paid ?? 0) / 100),
+        issuedDate: dateFmt.format(new Date((inv.created ?? 0) * 1000)),
         hostedUrl:
           typeof inv.hosted_invoice_url === "string"
             ? inv.hosted_invoice_url
             : null,
       }));
+
+    // Safety net: if the period-based filter returns nothing (e.g. billing
+    // cycle predates our DB record), fall back to the last 5 paid invoices.
+    if (invoices.length === 0) {
+      const fallback = await stripe.invoices.list({
+        customer: subscription.stripeCustomerId,
+        limit: 5,
+      });
+      invoices = fallback.data
+        .filter((inv) => inv.status === "paid")
+        .map((inv) => ({
+          number: typeof inv.number === "string" ? inv.number : null,
+          amount: numberFmt.format((inv.amount_paid ?? 0) / 100),
+          issuedDate: dateFmt.format(new Date((inv.created ?? 0) * 1000)),
+          hostedUrl:
+            typeof inv.hosted_invoice_url === "string"
+              ? inv.hosted_invoice_url
+              : null,
+        }));
+    }
   } catch (err) {
     log.error("[billing-audit-email] Stripe invoice fetch failed", { err });
   }

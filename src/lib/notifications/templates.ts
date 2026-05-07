@@ -248,7 +248,7 @@ export function buildEmailHtml(params: {
           <!-- ═══ Message body ═══ -->
           <tr>
             <td style="padding:0 40px 8px;">
-              <p style="margin:0;font-size:16px;line-height:1.65;color:#374151;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;font-size:16px;line-height:1.65;color:#111827;font-family:Arial,Helvetica,sans-serif;">
                 ${message}
               </p>
             </td>

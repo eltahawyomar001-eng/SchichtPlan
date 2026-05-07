@@ -190,10 +190,15 @@ export function WorkspaceBillingInfo() {
           </div>
         </div>
         <div className="flex flex-col gap-2.5 pt-2">
-          <div>
-            <Button onClick={save} disabled={saving}>
+          <div className="flex flex-col gap-1.5">
+            <Button onClick={save} disabled={saving} className="w-fit">
               {saving ? t("saving") : t("saveCompanyInfo")}
             </Button>
+            {billingEmail && !emailStatus && (
+              <p className="text-xs text-gray-400 leading-snug max-w-sm">
+                {t("billingEmailSaveHint")}
+              </p>
+            )}
           </div>
           <StatusBanner status={emailStatus} email={billingEmail} t={t} />
         </div>

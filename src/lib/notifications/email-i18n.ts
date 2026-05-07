@@ -155,6 +155,7 @@ export function billingAuditEmail(
   invoices: Array<{
     number: string | null;
     amount: string;
+    issuedDate: string;
     hostedUrl: string | null;
   }>,
 ) {
@@ -165,29 +166,30 @@ export function billingAuditEmail(
         .map((inv) => {
           const label =
             inv.number ?? (locale === "de" ? "Rechnung" : "Invoice");
+          const detail = `${label} &ndash; ${inv.amount} (${inv.issuedDate})`;
           return inv.hostedUrl
-            ? `<a href="${inv.hostedUrl}" style="color:#059669;text-decoration:underline;">${label} &ndash; ${inv.amount}</a>`
-            : `${label} &ndash; ${inv.amount}`;
+            ? `<a href="${inv.hostedUrl}" style="color:#059669;text-decoration:underline;">${detail}</a>`
+            : detail;
         })
         .join("<br>")
     : locale === "de"
-      ? "Für diesen Monat liegen noch keine Rechnungen vor."
-      : "No invoices have been generated for this month yet.";
+      ? "Für den aktuellen Abrechnungszeitraum liegen noch keine bezahlten Rechnungen vor."
+      : "No paid invoices found for the current billing period yet.";
 
   if (locale === "de") {
     return {
       subject: `Firmendaten gespeichert – Rechnungen ${monthLabel}`,
       body: hasInvoices
-        ? `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert. Hier sind Ihre Rechnungen für ${monthLabel}:<br><br>${invoiceLines}`
-        : `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert. ${invoiceLines}`,
+        ? `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert. Zur Dokumentation finden Sie nachfolgend Ihre Rechnungen für den aktuellen Abrechnungszeitraum:<br><br>${invoiceLines}`
+        : `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert.<br><br>${invoiceLines}`,
     };
   }
 
   return {
-    subject: `Billing info updated – Invoices for ${monthLabel}`,
+    subject: `Billing info updated – ${monthLabel} invoices`,
     body: hasInvoices
-      ? `Your billing information for "${workspaceName}" has been saved. Here are your invoices for ${monthLabel}:<br><br>${invoiceLines}`
-      : `Your billing information for "${workspaceName}" has been saved. ${invoiceLines}`,
+      ? `Your billing information for "${workspaceName}" has been saved. For your records, here are your invoices for the current billing period:<br><br>${invoiceLines}`
+      : `Your billing information for "${workspaceName}" has been saved.<br><br>${invoiceLines}`,
   };
 }
 

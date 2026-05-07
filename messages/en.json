@@ -1290,10 +1290,11 @@
     "saving": "Saving…",
     "saveCompanyInfo": "Save",
     "savedCompanyInfo": "Saved",
+    "billingEmailSaveHint": "Saving will send a billing confirmation with your current invoices to your billing email (counts toward your monthly email limit).",
     "auditEmailSent": "Saved. Billing confirmation sent to {email}.",
-    "auditEmailNoInvoices": "Saved. Confirmation sent — no invoices for this month yet.",
-    "auditEmailQuotaExceeded": "Saved, but the billing confirmation could not be sent — monthly email limit reached.",
-    "auditEmailNoEmail": "Saved. Add a billing email to receive monthly invoice confirmations.",
+    "auditEmailNoInvoices": "Saved. Confirmation sent — no paid invoices found for the current billing period yet.",
+    "auditEmailQuotaExceeded": "Saved, but the confirmation email could not be sent — monthly email limit reached.",
+    "auditEmailNoEmail": "Saved. Add a billing email to automatically receive invoice confirmations.",
     "auditEmailError": "Saved, but the confirmation email could not be delivered."
   },
   "addon": {

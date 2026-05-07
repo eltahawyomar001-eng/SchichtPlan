@@ -1289,7 +1289,12 @@
     "billingPostalCode": "PLZ",
     "saving": "Wird gespeichert…",
     "saveCompanyInfo": "Speichern",
-    "savedCompanyInfo": "Gespeichert"
+    "savedCompanyInfo": "Gespeichert",
+    "auditEmailSent": "Gespeichert. Rechnungsbestätigung an {email} versendet.",
+    "auditEmailNoInvoices": "Gespeichert. Bestätigung versendet – für diesen Monat liegen noch keine Rechnungen vor.",
+    "auditEmailQuotaExceeded": "Gespeichert, aber die Bestätigungs-E-Mail konnte nicht versendet werden – monatliches E-Mail-Limit erreicht.",
+    "auditEmailNoEmail": "Gespeichert. Fügen Sie eine Rechnungs-E-Mail hinzu, um monatliche Rechnungsbestätigungen zu erhalten.",
+    "auditEmailError": "Gespeichert, aber die Bestätigungs-E-Mail konnte nicht zugestellt werden."
   },
   "addon": {
     "ticketsName": "Ticketsystem",

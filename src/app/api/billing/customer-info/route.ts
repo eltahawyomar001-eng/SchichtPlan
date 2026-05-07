@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendMonthlyBillingEmail } from "@/lib/billing-audit-email";
 import type { SessionUser } from "@/lib/types";
 
 const updateSchema = z.object({
@@ -56,11 +57,27 @@ export async function PUT(req: Request) {
   }
 
   const data = parsed.data;
+  const workspaceId = user.workspaceId;
+
   const record = await prisma.workspaceCustomer.upsert({
-    where: { workspaceId: user.workspaceId },
+    where: { workspaceId },
     update: { ...data, updatedAt: new Date() },
-    create: { workspaceId: user.workspaceId, ...data },
+    create: { workspaceId, ...data },
   });
 
-  return NextResponse.json(record);
+  // Determine which billing email to send the audit confirmation to.
+  // Use the just-saved value if provided; fall back to the persisted record.
+  const billingEmail =
+    (typeof data.billingEmail === "string" && data.billingEmail) ||
+    record.billingEmail ||
+    null;
+
+  let emailStatus: string = "no_email";
+
+  if (billingEmail) {
+    const result = await sendMonthlyBillingEmail(workspaceId, billingEmail);
+    emailStatus = result.status;
+  }
+
+  return NextResponse.json({ ...record, emailStatus });
 }

@@ -1289,7 +1289,12 @@
     "billingPostalCode": "Postal code",
     "saving": "Saving…",
     "saveCompanyInfo": "Save",
-    "savedCompanyInfo": "Saved"
+    "savedCompanyInfo": "Saved",
+    "auditEmailSent": "Saved. Billing confirmation sent to {email}.",
+    "auditEmailNoInvoices": "Saved. Confirmation sent — no invoices for this month yet.",
+    "auditEmailQuotaExceeded": "Saved, but the billing confirmation could not be sent — monthly email limit reached.",
+    "auditEmailNoEmail": "Saved. Add a billing email to receive monthly invoice confirmations.",
+    "auditEmailError": "Saved, but the confirmation email could not be delivered."
   },
   "addon": {
     "ticketsName": "Ticketing",

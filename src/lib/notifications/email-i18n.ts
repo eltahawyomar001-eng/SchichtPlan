@@ -146,6 +146,51 @@ export function subscriptionCreatedEmail(
   };
 }
 
+// ─── Billing audit (on-save invoice confirmation) ───────────────
+
+export function billingAuditEmail(
+  locale: string,
+  workspaceName: string,
+  monthLabel: string,
+  invoices: Array<{
+    number: string | null;
+    amount: string;
+    hostedUrl: string | null;
+  }>,
+) {
+  const hasInvoices = invoices.length > 0;
+
+  const invoiceLines = hasInvoices
+    ? invoices
+        .map((inv) => {
+          const label =
+            inv.number ?? (locale === "de" ? "Rechnung" : "Invoice");
+          return inv.hostedUrl
+            ? `<a href="${inv.hostedUrl}" style="color:#059669;text-decoration:underline;">${label} &ndash; ${inv.amount}</a>`
+            : `${label} &ndash; ${inv.amount}`;
+        })
+        .join("<br>")
+    : locale === "de"
+      ? "Für diesen Monat liegen noch keine Rechnungen vor."
+      : "No invoices have been generated for this month yet.";
+
+  if (locale === "de") {
+    return {
+      subject: `Firmendaten gespeichert – Rechnungen ${monthLabel}`,
+      body: hasInvoices
+        ? `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert. Hier sind Ihre Rechnungen für ${monthLabel}:<br><br>${invoiceLines}`
+        : `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert. ${invoiceLines}`,
+    };
+  }
+
+  return {
+    subject: `Billing info updated – Invoices for ${monthLabel}`,
+    body: hasInvoices
+      ? `Your billing information for "${workspaceName}" has been saved. Here are your invoices for ${monthLabel}:<br><br>${invoiceLines}`
+      : `Your billing information for "${workspaceName}" has been saved. ${invoiceLines}`,
+  };
+}
+
 // ─── Invoice paid (renewal) ─────────────────────────────────────
 
 export function invoicePaidEmail(

@@ -94,7 +94,7 @@ export const GET = withRoute(
 
     if (visit.status !== "ABGESCHLOSSEN") {
       return NextResponse.json(
-        { error: "PDF kann nur für abgeschlossene Einsätze erstellt werden" },
+        { error: "PDF can only be generated for completed visits" },
         { status: 400 },
       );
     }

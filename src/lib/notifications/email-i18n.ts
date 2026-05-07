@@ -158,6 +158,13 @@ export function billingAuditEmail(
     issuedDate: string;
     hostedUrl: string | null;
   }>,
+  customer?: {
+    companyName?: string | null;
+    vatId?: string | null;
+    billingAddress?: string | null;
+    billingCity?: string | null;
+    billingPostalCode?: string | null;
+  },
 ) {
   const hasInvoices = invoices.length > 0;
 
@@ -176,20 +183,41 @@ export function billingAuditEmail(
       ? "Für den aktuellen Abrechnungszeitraum liegen noch keine bezahlten Rechnungen vor."
       : "No paid invoices found for the current billing period yet.";
 
+  // Build company details block (GoBD: recipient identity on confirmation)
+  const companyLines: string[] = [];
+  if (customer?.companyName) companyLines.push(customer.companyName);
+  if (customer?.vatId)
+    companyLines.push(
+      locale === "de"
+        ? `USt-IdNr.: ${customer.vatId}`
+        : `VAT ID: ${customer.vatId}`,
+    );
+  if (customer?.billingAddress) companyLines.push(customer.billingAddress);
+  if (customer?.billingPostalCode || customer?.billingCity)
+    companyLines.push(
+      [customer.billingPostalCode, customer.billingCity]
+        .filter(Boolean)
+        .join(" "),
+    );
+  const companyBlock =
+    companyLines.length > 0
+      ? `<br><br><strong>${locale === "de" ? "Rechnungsadresse" : "Billing address"}:</strong><br>${companyLines.join("<br>")}`
+      : "";
+
   if (locale === "de") {
     return {
       subject: `Firmendaten gespeichert – Rechnungen ${monthLabel}`,
       body: hasInvoices
-        ? `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert. Zur Dokumentation finden Sie nachfolgend Ihre Rechnungen für den aktuellen Abrechnungszeitraum:<br><br>${invoiceLines}`
-        : `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert.<br><br>${invoiceLines}`,
+        ? `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert.${companyBlock}<br><br>Zur Dokumentation finden Sie nachfolgend Ihre Rechnungen für den aktuellen Abrechnungszeitraum:<br><br>${invoiceLines}`
+        : `Ihre Firmendaten für „${workspaceName}" wurden erfolgreich aktualisiert.${companyBlock}<br><br>${invoiceLines}`,
     };
   }
 
   return {
     subject: `Billing info updated – ${monthLabel} invoices`,
     body: hasInvoices
-      ? `Your billing information for "${workspaceName}" has been saved. For your records, here are your invoices for the current billing period:<br><br>${invoiceLines}`
-      : `Your billing information for "${workspaceName}" has been saved.<br><br>${invoiceLines}`,
+      ? `Your billing information for "${workspaceName}" has been saved.${companyBlock}<br><br>For your records, here are your invoices for the current billing period:<br><br>${invoiceLines}`
+      : `Your billing information for "${workspaceName}" has been saved.${companyBlock}<br><br>${invoiceLines}`,
   };
 }
 

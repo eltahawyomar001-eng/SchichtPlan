@@ -13,8 +13,8 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
-export function formatTime(time: string): string {
-  return time.replace(":", ":") + " Uhr";
+export function formatTime(time: string, locale?: string): string {
+  return locale === "en" ? time : time + " Uhr";
 }
 
 export function getInitials(firstName: string, lastName: string): string {

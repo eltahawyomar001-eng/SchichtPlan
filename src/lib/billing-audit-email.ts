@@ -46,7 +46,7 @@ export async function sendMonthlyBillingEmail(
   }
 
   // ── 2. Load workspace + owner locale + Stripe customer ────────
-  const [workspace, subscription, owner] = await Promise.all([
+  const [workspace, subscription, owner, customer] = await Promise.all([
     prisma.workspace.findUnique({
       where: { id: workspaceId },
       select: { name: true },
@@ -58,6 +58,16 @@ export async function sendMonthlyBillingEmail(
     prisma.user.findFirst({
       where: { workspaceId, role: "OWNER" },
       select: { preferredLocale: true },
+    }),
+    prisma.workspaceCustomer.findUnique({
+      where: { workspaceId },
+      select: {
+        companyName: true,
+        vatId: true,
+        billingAddress: true,
+        billingCity: true,
+        billingPostalCode: true,
+      },
     }),
   ]);
 
@@ -149,6 +159,7 @@ export async function sendMonthlyBillingEmail(
     workspace?.name ?? workspaceId,
     monthLabel,
     invoices,
+    customer ?? undefined,
   );
 
   const result = await sendEmail({

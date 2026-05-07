@@ -494,6 +494,27 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
           // Must be synchronous: if this fails, Stripe will retry the webhook
           // (preventing silent data loss for compliance-critical records).
           try {
+            // Fetch recipient identity (frozen snapshot of WorkspaceCustomer at invoice time)
+            const wc = await prisma.workspaceCustomer.findUnique({
+              where: { workspaceId: sub.workspaceId },
+              select: {
+                companyName: true,
+                vatId: true,
+                billingAddress: true,
+                billingCity: true,
+                billingPostalCode: true,
+              },
+            });
+
+            const recipientAddress = [
+              wc?.billingAddress,
+              [wc?.billingPostalCode, wc?.billingCity]
+                .filter(Boolean)
+                .join(" "),
+            ]
+              .filter(Boolean)
+              .join(", ");
+
             await prisma.invoice.upsert({
               where: { stripeInvoiceId: invoice.id },
               update: {},
@@ -518,6 +539,12 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                   typeof invoice.hosted_invoice_url === "string"
                     ? invoice.hosted_invoice_url
                     : null,
+                issuerName: "Shiftfy GmbH",
+                issuerVatId: process.env.SHIFTFY_VAT_ID ?? null,
+                issuerAddress: process.env.SHIFTFY_ADDRESS ?? null,
+                recipientName: wc?.companyName ?? null,
+                recipientVatId: wc?.vatId ?? null,
+                recipientAddress: recipientAddress || null,
               },
             });
             log.info(`[Stripe] GoBD invoice recorded: ${invoice.id}`);

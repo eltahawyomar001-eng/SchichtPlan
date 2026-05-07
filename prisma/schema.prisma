@@ -266,6 +266,14 @@ model Invoice {
   hostedUrl       String?
   emailSentAt     DateTime?
   createdAt       DateTime @default(now())
+  // GoBD § 147: denormalized issuer identity (frozen at invoice time)
+  issuerName      String?
+  issuerVatId     String?
+  issuerAddress   String?
+  // GoBD § 147: denormalized recipient identity (frozen at invoice time)
+  recipientName   String?
+  recipientVatId  String?
+  recipientAddress String?
   workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   @@index([workspaceId])
 }

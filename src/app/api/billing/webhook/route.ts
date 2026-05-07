@@ -491,41 +491,42 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
           }
 
           // GoBD § 147 — persist invoice metadata for 10-year retention
-          void (async () => {
-            try {
-              await prisma.invoice.upsert({
-                where: { stripeInvoiceId: invoice.id },
-                update: {},
-                create: {
-                  workspaceId: sub.workspaceId,
-                  stripeInvoiceId: invoice.id,
-                  invoiceNumber:
-                    typeof invoice.number === "string" ? invoice.number : null,
-                  issuedAt: new Date((invoice.created ?? 0) * 1000),
-                  amount: invoice.amount_paid ?? 0,
-                  vatAmount:
-                    invoice.total_taxes?.reduce(
-                      (s, t) => s + (t.amount ?? 0),
-                      0,
-                    ) ?? null,
-                  currency: invoice.currency ?? "eur",
-                  pdfUrl:
-                    typeof invoice.invoice_pdf === "string"
-                      ? invoice.invoice_pdf
-                      : null,
-                  hostedUrl:
-                    typeof invoice.hosted_invoice_url === "string"
-                      ? invoice.hosted_invoice_url
-                      : null,
-                },
-              });
-              log.info(`[Stripe] GoBD invoice recorded: ${invoice.id}`);
-            } catch (err) {
-              log.error("[Stripe] GoBD invoice record failed", {
-                error: err instanceof Error ? err.message : String(err),
-              });
-            }
-          })();
+          // Must be synchronous: if this fails, Stripe will retry the webhook
+          // (preventing silent data loss for compliance-critical records).
+          try {
+            await prisma.invoice.upsert({
+              where: { stripeInvoiceId: invoice.id },
+              update: {},
+              create: {
+                workspaceId: sub.workspaceId,
+                stripeInvoiceId: invoice.id,
+                invoiceNumber:
+                  typeof invoice.number === "string" ? invoice.number : null,
+                issuedAt: new Date((invoice.created ?? 0) * 1000),
+                amount: invoice.amount_paid ?? 0,
+                vatAmount:
+                  invoice.total_taxes?.reduce(
+                    (s, t) => s + (t.amount ?? 0),
+                    0,
+                  ) ?? null,
+                currency: invoice.currency ?? "eur",
+                pdfUrl:
+                  typeof invoice.invoice_pdf === "string"
+                    ? invoice.invoice_pdf
+                    : null,
+                hostedUrl:
+                  typeof invoice.hosted_invoice_url === "string"
+                    ? invoice.hosted_invoice_url
+                    : null,
+              },
+            });
+            log.info(`[Stripe] GoBD invoice recorded: ${invoice.id}`);
+          } catch (err) {
+            log.error("[Stripe] GoBD invoice record failed", {
+              error: err instanceof Error ? err.message : String(err),
+            });
+            throw err;
+          }
         }
       } catch (err) {
         log.error("[Stripe] invoice.paid handler failed", {

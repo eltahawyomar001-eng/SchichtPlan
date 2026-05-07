@@ -443,7 +443,7 @@ model Shift {
   employeeId  String?
   employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId  String?
-  location    Location? @relation(fields: [locationId], references: [id])
+  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   swapsFrom   ShiftSwapRequest[] @relation("SwapFromShift")
@@ -527,7 +527,7 @@ model TimeEntry {
   employeeId   String
   employee     Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId   String?
-  location     Location?       @relation(fields: [locationId], references: [id])
+  location     Location?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
   shiftId      String?
   projectId    String?
   project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
@@ -678,9 +678,9 @@ model ShiftSwapRequest {
   status        SwapStatus @default(ANGEFRAGT)
   reason        String?    @db.Text
   shiftId       String
-  shift         Shift      @relation("SwapFromShift", fields: [shiftId], references: [id])
+  shift         Shift      @relation("SwapFromShift", fields: [shiftId], references: [id], onDelete: Cascade)
   targetShiftId String?
-  targetShift   Shift?     @relation("SwapToShift", fields: [targetShiftId], references: [id])
+  targetShift   Shift?     @relation("SwapToShift", fields: [targetShiftId], references: [id], onDelete: SetNull)
   requesterId   String
   requester     Employee   @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   targetId      String?

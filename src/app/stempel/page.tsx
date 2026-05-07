@@ -443,7 +443,8 @@ function FastPunchContent() {
               key={d}
               onClick={() => pressDigit(d)}
               disabled={!isPinStage || pin.length >= 4}
-              className="h-[72px] rounded-2xl bg-white border border-gray-200 text-2xl font-semibold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40 select-none"
+              aria-label={d}
+              className="h-[72px] rounded-2xl bg-white border border-gray-200 text-2xl font-semibold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40 select-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:outline-none"
             >
               {d}
             </button>
@@ -451,14 +452,16 @@ function FastPunchContent() {
           <button
             onClick={deleteDigit}
             disabled={!isPinStage || pin.length === 0}
-            className="h-[72px] rounded-2xl bg-white border border-gray-200 flex items-center justify-center active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-30 select-none"
+            aria-label="Backspace"
+            className="h-[72px] rounded-2xl bg-white border border-gray-200 flex items-center justify-center active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-30 select-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:outline-none"
           >
             <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
           </button>
           <button
             onClick={() => pressDigit("0")}
             disabled={!isPinStage || pin.length >= 4}
-            className="h-[72px] rounded-2xl bg-white border border-gray-200 text-2xl font-semibold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40 select-none"
+            aria-label="0"
+            className="h-[72px] rounded-2xl bg-white border border-gray-200 text-2xl font-semibold text-gray-900 active:bg-gray-100 active:scale-95 transition-all shadow-sm disabled:opacity-40 select-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:outline-none"
           >
             0
           </button>

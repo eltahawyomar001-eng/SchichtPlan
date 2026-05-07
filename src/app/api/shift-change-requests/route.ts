@@ -117,11 +117,7 @@ export const POST = withRoute(
     // Employee can only request changes for their own shifts
     if (isEmployee(user) && shift.employeeId !== linkedEmployee.id) {
       return NextResponse.json(
-        {
-          error: "Forbidden",
-          message:
-            "Sie können nur Änderungen für Ihre eigenen Schichten anfragen.",
-        },
+        { error: "ONLY_OWN_SHIFT_CHANGES" },
         { status: 403 },
       );
     }

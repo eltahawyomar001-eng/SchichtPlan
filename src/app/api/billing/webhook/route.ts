@@ -515,14 +515,26 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
               .filter(Boolean)
               .join(", ");
 
+            // Atomically increment workspace invoice counter (GoBD § 147 — continuous sequence)
+            const year = new Date().getFullYear();
+            const seq = await prisma.$transaction(async (tx) => {
+              const updated = await tx.invoiceSequence.upsert({
+                where: { workspaceId: sub.workspaceId },
+                update: { lastNumber: { increment: 1 } },
+                create: { workspaceId: sub.workspaceId, lastNumber: 1 },
+                select: { lastNumber: true },
+              });
+              return updated.lastNumber;
+            });
+            const shiftfyInvoiceNumber = `${year}-${String(seq).padStart(6, "0")}`;
+
             await prisma.invoice.upsert({
               where: { stripeInvoiceId: invoice.id },
               update: {},
               create: {
                 workspaceId: sub.workspaceId,
                 stripeInvoiceId: invoice.id,
-                invoiceNumber:
-                  typeof invoice.number === "string" ? invoice.number : null,
+                invoiceNumber: shiftfyInvoiceNumber,
                 issuedAt: new Date((invoice.created ?? 0) * 1000),
                 amount: invoice.amount_paid ?? 0,
                 vatAmount:

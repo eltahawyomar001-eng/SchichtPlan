@@ -65,10 +65,7 @@ export const POST = withRoute(
       });
       if (!linkedEmployee || body.employeeId !== linkedEmployee.id) {
         return NextResponse.json(
-          {
-            error: "Forbidden",
-            message: "Sie können nur Ihre eigene Verfügbarkeit verwalten.",
-          },
+          { error: "ONLY_OWN_AVAILABILITY" },
           { status: 403 },
         );
       }

@@ -246,6 +246,11 @@ function BillingContent() {
 
     if (billingParam === "success") {
       setSuccessMsg(t("checkoutSuccess"));
+      // Trigger a server-side Stripe sync so features unlock immediately
+      // without waiting for the webhook (FIX C-4).
+      fetch("/api/billing/sync", { method: "POST" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => {});
       fetch("/api/billing/subscription?reconcile=1")
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {

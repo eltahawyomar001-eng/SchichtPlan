@@ -149,7 +149,7 @@ export const POST = withRoute(
     if (action === "submit" && user.role === "EMPLOYEE") {
       if (!user.employeeId || entry.employeeId !== user.employeeId) {
         return NextResponse.json(
-          { error: "Sie können nur eigene Zeiteinträge einreichen." },
+          { error: "ONLY_OWN_ENTRIES" },
           { status: 403 },
         );
       }

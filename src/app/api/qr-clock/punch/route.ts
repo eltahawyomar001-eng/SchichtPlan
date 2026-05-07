@@ -161,7 +161,7 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
       }
 
       const diffMs = now.getTime() - open.clockInAt!.getTime();
-      const grossMinutes = Math.round(diffMs / 60000);
+      const grossMinutes = Math.floor(diffMs / 60000);
 
       const todayPrevious = await getTodayWorkedMinutes(
         employeeId,

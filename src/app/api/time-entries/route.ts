@@ -85,10 +85,7 @@ export const POST = withRoute(
       });
       if (!linkedEmployee || body.employeeId !== linkedEmployee.id) {
         return NextResponse.json(
-          {
-            error: "Forbidden",
-            message: "Sie können nur eigene Zeiteinträge erstellen.",
-          },
+          { error: "ONLY_OWN_ENTRIES" },
           { status: 403 },
         );
       }

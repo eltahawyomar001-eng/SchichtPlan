@@ -48,10 +48,7 @@ export const POST = withRoute(
     // Employee can only confirm their own shift
     if (user.role === "EMPLOYEE" && user.employeeId) {
       if (shift.employeeId !== user.employeeId) {
-        return NextResponse.json(
-          { error: "Sie können nur eigene Schichten bestätigen." },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: "ONLY_OWN_SHIFTS" }, { status: 403 });
       }
     }
 

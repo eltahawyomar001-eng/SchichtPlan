@@ -139,10 +139,7 @@ export const POST = withRoute(
     if (isEmployee(user) && user.employeeId) {
       if (body.employeeId !== user.employeeId) {
         return NextResponse.json(
-          {
-            error: "Forbidden",
-            message: "Sie können nur eigene Abwesenheitsanträge erstellen.",
-          },
+          { error: "ONLY_OWN_ABSENCES" },
           { status: 403 },
         );
       }

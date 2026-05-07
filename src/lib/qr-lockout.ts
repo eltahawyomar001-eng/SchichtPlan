@@ -194,9 +194,12 @@ export async function consumePunch(
     const result = await redis.set(key, "1", { nx: true, ex: safeTtl });
     return result !== null;
   } catch (err) {
-    log.error("[qr-lockout] consumePunch Redis error, allowing through", {
-      err,
-    });
-    return true; // fail-open: availability > replay prevention on outage
+    log.warn(
+      "[qr-lockout] consumePunch Redis unavailable — rejecting to prevent replay",
+      {
+        err,
+      },
+    );
+    return false; // fail-closed: replay prevention > availability on Redis outage
   }
 }

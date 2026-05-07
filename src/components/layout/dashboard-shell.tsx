@@ -9,6 +9,8 @@ import { CommandPalette } from "@/components/ui/command-palette";
 import { OnboardingTour } from "@/components/ui/onboarding-tour";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
 import { TrialBanner } from "@/components/layout/trial-banner";
+import { FeedbackWidget } from "@/components/layout/feedback-widget";
+import { TosAcceptanceModal } from "@/components/layout/tos-acceptance-modal";
 
 interface SidebarContextValue {
   openSidebar: () => void;
@@ -53,6 +55,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <CommandPalette />
           <OnboardingTour />
           <InstallPwaPrompt />
+          <FeedbackWidget />
+          <TosAcceptanceModal />
         </div>
       </PlanLimitProvider>
     </SidebarContext.Provider>

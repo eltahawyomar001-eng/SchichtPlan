@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShiftfyMark } from "@/components/icons";
+import { CURRENT_TOS_VERSION, formatLegalDateDe } from "@/lib/legal-version";
 
 export const metadata: Metadata = {
   title: "AGB – Allgemeine Geschäftsbedingungen",
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default function AGBPage() {
-  const effectiveDate = "24.02.2026";
+  const effectiveDate = formatLegalDateDe(CURRENT_TOS_VERSION);
+  const tosVersion = CURRENT_TOS_VERSION;
 
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950">
@@ -63,7 +65,7 @@ export default function AGBPage() {
           Allgemeine Geschäftsbedingungen (AGB)
         </h1>
         <p className="text-xs text-gray-400 dark:text-zinc-500 mb-8">
-          Stand: {effectiveDate}
+          Stand: {effectiveDate} · Version {tosVersion}
         </p>
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-6 text-sm text-gray-700 dark:text-zinc-300 leading-relaxed">

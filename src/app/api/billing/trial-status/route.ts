@@ -9,11 +9,21 @@ export const GET = withRoute("/api/billing/trial-status", "GET", async () => {
   const { workspaceId } = auth;
 
   const sub = await getSubscription(workspaceId);
+  const isPastDue = sub?.status === "PAST_DUE";
+
   if (!sub || sub.status !== "TRIALING" || !sub.trialEnd) {
-    return NextResponse.json({ isTrialing: false, daysLeft: 0 });
+    return NextResponse.json({
+      isTrialing: false,
+      daysLeft: 0,
+      isPastDue,
+    });
   }
 
   const msLeft = sub.trialEnd.getTime() - Date.now();
   const daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
-  return NextResponse.json({ isTrialing: true, daysLeft });
+  return NextResponse.json({
+    isTrialing: true,
+    daysLeft,
+    isPastDue,
+  });
 });

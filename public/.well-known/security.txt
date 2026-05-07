@@ -1,0 +1,10 @@
+# Shiftfy security disclosure policy (RFC 9116)
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:security@bashabsheh-vergabepartner.de
+Contact: mailto:info@bashabsheh-vergabepartner.de
+Expires: 2027-05-07T23:59:59.000Z
+Preferred-Languages: de, en
+Canonical: https://shiftfy.de/.well-known/security.txt
+Policy: https://shiftfy.de/datenschutz
+Acknowledgments: https://shiftfy.de/changelog

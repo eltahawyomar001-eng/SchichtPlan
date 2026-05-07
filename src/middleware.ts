@@ -100,6 +100,34 @@ const importLimiter = redis
     })
   : undefined;
 
+/**
+ * Expensive endpoints — strict limit (10 req / 60s).
+ * Covers GDPR exports, account deletion, feedback submission, and any
+ * payroll/full-history reports that hold a DB connection > 1s. Stops a single
+ * client from monopolising the connection pool.
+ */
+const expensiveLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "60 s"),
+      prefix: "ratelimit:expensive",
+    })
+  : undefined;
+
+/** Pathname prefixes that go through the expensive-endpoint limiter. */
+const EXPENSIVE_PREFIXES = [
+  "/api/account/export",
+  "/api/account/accept-tos",
+  "/api/feedback",
+  "/api/payroll",
+  "/api/export",
+  "/api/time-entries/export",
+];
+
+function isExpensivePath(pathname: string): boolean {
+  return EXPENSIVE_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 /** Maximum JSON request body size (1 MB) */
 const MAX_JSON_BODY_BYTES = 1_048_576; // 1 MB
 /** Maximum file upload body size (10 MB — import route has its own 5 MB check) */
@@ -350,6 +378,59 @@ export default withAuth(
               JSON.stringify({
                 error:
                   "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        }
+      }
+    }
+
+    // Expensive endpoints — strict limit (10 req / 60s)
+    if (isExpensivePath(pathname)) {
+      if (expensiveLimiter) {
+        try {
+          const result = await expensiveLimiter.limit(ip);
+          res.headers.set("X-RateLimit-Limit", "10");
+          res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+          res.headers.set(
+            "X-RateLimit-Reset",
+            String(Math.ceil(result.reset / 1000)),
+          );
+          if (!result.success) {
+            return new NextResponse(
+              JSON.stringify({
+                error:
+                  "Zu viele Anfragen für diesen Endpunkt. Bitte versuchen Sie es später erneut.",
+                code: "RATE_LIMITED",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Retry-After": String(
+                    Math.ceil((result.reset - Date.now()) / 1000),
+                  ),
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        } catch {
+          const count = memLimitIncr(`expensive:${ip}`, 60_000);
+          if (count > 10) {
+            return new NextResponse(
+              JSON.stringify({
+                error: "Zu viele Anfragen für diesen Endpunkt.",
+                code: "RATE_LIMITED",
               }),
               {
                 status: 429,

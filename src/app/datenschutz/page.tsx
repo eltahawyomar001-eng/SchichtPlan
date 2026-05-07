@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ShiftfyMark } from "@/components/icons";
 import ThemeToggle from "@/components/ui/theme-toggle";
+import { CURRENT_TOS_VERSION, formatLegalDateDe } from "@/lib/legal-version";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung",
@@ -63,12 +64,8 @@ export default function DatenschutzPage() {
           Datenschutzerklärung
         </h1>
         <p className="text-sm text-gray-500 dark:text-zinc-400 mb-8">
-          Stand:{" "}
-          {new Date().toLocaleDateString("de-DE", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          Stand: {formatLegalDateDe(CURRENT_TOS_VERSION)} · Version{" "}
+          {CURRENT_TOS_VERSION}
         </p>
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-6 text-sm text-gray-700 dark:text-zinc-300 leading-relaxed">

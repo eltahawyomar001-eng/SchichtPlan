@@ -4,29 +4,54 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { XIcon } from "@/components/icons";
 
-const DISMISS_KEY = "trial_banner_dismissed_v1";
+const TRIAL_DISMISS_KEY = "trial_banner_dismissed_v1";
+
+interface BillingState {
+  isTrialing: boolean;
+  daysLeft: number;
+  isPastDue: boolean;
+}
 
 export function TrialBanner() {
-  const [daysLeft, setDaysLeft] = useState<number | null>(null);
-  const [dismissed, setDismissed] = useState(true);
+  const [state, setState] = useState<BillingState | null>(null);
+  const [trialDismissed, setTrialDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return Boolean(window.sessionStorage.getItem(TRIAL_DISMISS_KEY));
+  });
 
   useEffect(() => {
-    if (sessionStorage.getItem(DISMISS_KEY)) return;
-
     fetch("/api/billing/trial-status")
       .then((r) => r.json())
-      .then((data: { isTrialing: boolean; daysLeft: number }) => {
-        if (data.isTrialing) {
-          setDaysLeft(data.daysLeft);
-          setDismissed(false);
-        }
-      })
+      .then((data: BillingState) => setState(data))
       .catch(() => {});
   }, []);
 
-  if (dismissed || daysLeft === null) return null;
+  if (!state) return null;
 
-  const urgency = daysLeft <= 2;
+  // PAST_DUE banner is non-dismissable — payment must be fixed.
+  if (state.isPastDue) {
+    return (
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-red-600 text-white"
+      >
+        <span>
+          Ihre letzte Zahlung ist fehlgeschlagen.{" "}
+          <Link
+            href="/einstellungen/abonnement"
+            className="underline underline-offset-2 font-semibold hover:opacity-90 transition-opacity"
+          >
+            Zahlungsmethode aktualisieren
+          </Link>
+        </span>
+      </div>
+    );
+  }
+
+  if (!state.isTrialing || trialDismissed) return null;
+
+  const urgency = state.daysLeft <= 2;
 
   return (
     <div
@@ -37,11 +62,11 @@ export function TrialBanner() {
       }`}
     >
       <span>
-        {daysLeft === 0
+        {state.daysLeft === 0
           ? "Ihr Testzeitraum endet heute."
-          : daysLeft === 1
+          : state.daysLeft === 1
             ? "Noch 1 Tag Testzeitraum übrig."
-            : `Noch ${daysLeft} Tage Testzeitraum übrig.`}{" "}
+            : `Noch ${state.daysLeft} Tage Testzeitraum übrig.`}{" "}
         <Link
           href="/einstellungen/abonnement"
           className="underline underline-offset-2 hover:opacity-80 transition-opacity"
@@ -53,8 +78,8 @@ export function TrialBanner() {
         type="button"
         aria-label="Banner schließen"
         onClick={() => {
-          sessionStorage.setItem(DISMISS_KEY, "1");
-          setDismissed(true);
+          sessionStorage.setItem(TRIAL_DISMISS_KEY, "1");
+          setTrialDismissed(true);
         }}
         className="flex-shrink-0 rounded p-0.5 opacity-80 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >

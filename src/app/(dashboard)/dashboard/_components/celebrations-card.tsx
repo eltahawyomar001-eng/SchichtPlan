@@ -42,7 +42,16 @@ export function CelebrationsCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">{title}</CardTitle>
-          {entries.length > 0 && <span className="text-lg">🎉</span>}
+          {entries.length > 0 && (
+            <svg
+              className="h-5 w-5 text-purple-400"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M12 2a1 1 0 01.894.553l2.382 4.827 5.327.774a1 1 0 01.554 1.706l-3.855 3.757.91 5.307a1 1 0 01-1.451 1.054L12 17.347l-4.761 2.503a1 1 0 01-1.451-1.054l.91-5.307L2.843 9.86a1 1 0 01.554-1.706l5.327-.774L10.106 2.553A1 1 0 0112 2z" />
+            </svg>
+          )}
         </div>
       </CardHeader>
       <CardContent>

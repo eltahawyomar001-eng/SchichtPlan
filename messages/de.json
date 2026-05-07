@@ -867,7 +867,10 @@
       "UNBEZAHLT": "Unbezahlt",
       "FORTBILDUNG": "Fortbildung",
       "SONSTIGES": "Sonstiges"
-    }
+    },
+    "sendPin": "PIN senden",
+    "pinSending": "…",
+    "pinSent": "PIN gesendet"
   },
   "locationsPage": {
     "title": "Standorte",
@@ -3099,6 +3102,7 @@
     "qrLoadError": "QR-Code konnte nicht geladen werden.",
     "retry": "Erneut versuchen",
     "adminHint": "Admin: Einstellungen → Stempeluhr → Station-Link generieren",
-    "qrAlt": "QR-Code zum Stempeln"
+    "qrAlt": "QR-Code zum Stempeln",
+    "offline": "Kein Internet – QR-Code kann nicht erneuert werden"
   }
 }

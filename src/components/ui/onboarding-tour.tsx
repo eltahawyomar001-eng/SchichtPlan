@@ -21,7 +21,7 @@ const STORAGE_KEY = "shiftfy-tour-completed";
 const TOUR_STEPS: TourStep[] = [
   {
     target: null,
-    title: "Willkommen bei Shiftfy! 👋",
+    title: "Willkommen bei Shiftfy!",
     description:
       "Wir zeigen dir in wenigen Schritten die wichtigsten Bereiche. Du kannst die Tour jederzeit überspringen.",
     placement: "center",
@@ -63,7 +63,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     target: null,
-    title: "Du bist startklar! 🚀",
+    title: "Du bist startklar!",
     description:
       "Lege als Nächstes deine Mitarbeiter an und erstelle deinen ersten Schichtplan. Bei Fragen findest du Hilfe in den Einstellungen.",
     placement: "center",

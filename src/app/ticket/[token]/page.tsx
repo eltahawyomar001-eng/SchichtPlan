@@ -113,10 +113,12 @@ export default function ExternalTicketStatusPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
-          <p className="mt-4 text-gray-500">Ticket wird geladen…</p>
+          <p className="mt-4 text-gray-500 dark:text-zinc-400">
+            Ticket wird geladen…
+          </p>
         </div>
       </div>
     );
@@ -124,8 +126,8 @@ export default function ExternalTicketStatusPage() {
 
   if (error || !ticket) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-sm">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4">
+        <div className="w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <svg
               className="h-6 w-6 text-red-600"
@@ -141,7 +143,7 @@ export default function ExternalTicketStatusPage() {
               />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
             {error ?? "Ticket nicht gefunden"}
           </h2>
         </div>
@@ -155,14 +157,16 @@ export default function ExternalTicketStatusPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 px-4 py-12">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* Header */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
+        <div className="rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500">{ticket.ticketNumber}</p>
-              <h1 className="mt-1 text-xl font-semibold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-zinc-400">
+                {ticket.ticketNumber}
+              </p>
+              <h1 className="mt-1 text-xl font-semibold text-gray-900 dark:text-zinc-100">
                 {ticket.subject}
               </h1>
             </div>
@@ -175,14 +179,18 @@ export default function ExternalTicketStatusPage() {
 
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Kategorie</span>
-              <p className="font-medium text-gray-900">
+              <span className="text-gray-500 dark:text-zinc-400">
+                Kategorie
+              </span>
+              <p className="font-medium text-gray-900 dark:text-zinc-100">
                 {CATEGORY_LABELS[ticket.category] ?? ticket.category}
               </p>
             </div>
             <div>
-              <span className="text-gray-500">Eingereicht am</span>
-              <p className="font-medium text-gray-900">
+              <span className="text-gray-500 dark:text-zinc-400">
+                Eingereicht am
+              </span>
+              <p className="font-medium text-gray-900 dark:text-zinc-100">
                 {new Date(ticket.createdAt).toLocaleDateString("de-DE", {
                   day: "2-digit",
                   month: "2-digit",
@@ -194,22 +202,30 @@ export default function ExternalTicketStatusPage() {
             </div>
             {ticket.externalSubmitterName && (
               <div>
-                <span className="text-gray-500">Einreicher</span>
-                <p className="font-medium text-gray-900">
+                <span className="text-gray-500 dark:text-zinc-400">
+                  Einreicher
+                </span>
+                <p className="font-medium text-gray-900 dark:text-zinc-100">
                   {ticket.externalSubmitterName}
                 </p>
               </div>
             )}
             {ticket.location && (
               <div>
-                <span className="text-gray-500">Standort</span>
-                <p className="font-medium text-gray-900">{ticket.location}</p>
+                <span className="text-gray-500 dark:text-zinc-400">
+                  Standort
+                </span>
+                <p className="font-medium text-gray-900 dark:text-zinc-100">
+                  {ticket.location}
+                </p>
               </div>
             )}
             {ticket.closedAt && (
               <div>
-                <span className="text-gray-500">Geschlossen am</span>
-                <p className="font-medium text-gray-900">
+                <span className="text-gray-500 dark:text-zinc-400">
+                  Geschlossen am
+                </span>
+                <p className="font-medium text-gray-900 dark:text-zinc-100">
                   {new Date(ticket.closedAt).toLocaleDateString("de-DE", {
                     day: "2-digit",
                     month: "2-digit",
@@ -224,16 +240,18 @@ export default function ExternalTicketStatusPage() {
         </div>
 
         {/* Description */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-medium text-gray-500">Beschreibung</h2>
-          <p className="mt-2 whitespace-pre-wrap text-gray-900">
+        <div className="rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+            Beschreibung
+          </h2>
+          <p className="mt-2 whitespace-pre-wrap text-gray-900 dark:text-zinc-100">
             {ticket.description}
           </p>
         </div>
 
         {/* Attachments */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-medium text-gray-500">
+        <div className="rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-500 dark:text-zinc-400">
             Anhänge ({ticket.attachments.length})
           </h2>
 
@@ -242,10 +260,10 @@ export default function ExternalTicketStatusPage() {
               {ticket.attachments.map((a) => (
                 <li
                   key={a.id}
-                  className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-sm"
+                  className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-gray-50 dark:bg-zinc-950 px-3 py-2 text-sm"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-gray-900">
+                    <p className="truncate font-medium text-gray-900 dark:text-zinc-100">
                       {a.fileName}
                     </p>
                     <p className="text-xs text-gray-500">
@@ -268,7 +286,7 @@ export default function ExternalTicketStatusPage() {
 
           {ticket.status !== "GESCHLOSSEN" && (
             <div className="mt-4">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:border-emerald-300">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-700 dark:text-zinc-200 hover:border-emerald-300">
                 <input
                   type="file"
                   multiple
@@ -290,17 +308,17 @@ export default function ExternalTicketStatusPage() {
 
         {/* Comments */}
         {ticket.comments.length > 0 && (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-medium text-gray-500">
+          <div className="rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-sm">
+            <h2 className="text-sm font-medium text-gray-500 dark:text-zinc-400">
               Antworten ({ticket.comments.length})
             </h2>
             <div className="mt-4 space-y-4">
               {ticket.comments.map((comment) => (
                 <div
                   key={comment.id}
-                  className="rounded-lg border border-gray-100 bg-gray-50 p-4"
+                  className="rounded-lg border border-gray-100 bg-gray-50 dark:bg-zinc-950 p-4"
                 >
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-zinc-400">
                     <span>{comment.authorName ?? "Mitarbeiter"}</span>
                     <span>
                       {new Date(comment.createdAt).toLocaleDateString("de-DE", {

@@ -48,6 +48,20 @@ function StationContent() {
 
   const lastPunchIdRef = useRef<string | null>(null);
   const sinceRef = useRef(new Date().toISOString());
+
+  // Network connectivity
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const up = () => setIsOnline(true);
+    const down = () => setIsOnline(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => {
+      window.removeEventListener("online", up);
+      window.removeEventListener("offline", down);
+    };
+  }, []);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -356,6 +370,26 @@ function StationContent() {
           <p className="text-white/30 text-xs text-center">{t("autoRenews")}</p>
         </div>
       </div>
+
+      {/* Offline banner */}
+      {!isOnline && (
+        <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-2 bg-red-600 py-2 px-4">
+          <svg
+            className="h-4 w-4 text-white flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6.343 17.657a9 9 0 010-12.728M8.464 15.536a5 5 0 010-7.072M12 12h.01"
+            />
+          </svg>
+          <p className="text-white text-sm font-semibold">{t("offline")}</p>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="text-center pb-6">

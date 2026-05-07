@@ -867,7 +867,10 @@
       "UNBEZAHLT": "Unpaid",
       "FORTBILDUNG": "Training",
       "SONSTIGES": "Other"
-    }
+    },
+    "sendPin": "Send PIN",
+    "pinSending": "…",
+    "pinSent": "PIN sent"
   },
   "locationsPage": {
     "title": "Locations",
@@ -3099,6 +3102,7 @@
     "qrLoadError": "Could not load QR code.",
     "retry": "Try again",
     "adminHint": "Admin: Settings → Time Clock → Generate Station Link",
-    "qrAlt": "QR code for time clock"
+    "qrAlt": "QR code for time clock",
+    "offline": "No internet – QR code cannot be renewed"
   }
 }

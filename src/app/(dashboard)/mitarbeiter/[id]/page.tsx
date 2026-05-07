@@ -202,7 +202,11 @@ export default function EmployeeDetailPage({
                 }
               }}
             >
-              {pinSent ? "PIN gesendet ✓" : pinSending ? "..." : "PIN senden"}
+              {pinSent
+                ? t("pinSent")
+                : pinSending
+                  ? t("pinSending")
+                  : t("sendPin")}
             </Button>
             <Button
               size="sm"

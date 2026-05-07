@@ -288,7 +288,7 @@ function StationContent() {
 
   // ── Ready: QR display ──
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col select-none">
+    <div className="kiosk-lock min-h-screen bg-gray-950 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4">
         <div>

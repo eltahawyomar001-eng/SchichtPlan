@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { XIcon } from "@/components/icons";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 
 type Category = "BUG" | "FEATURE" | "QUESTION" | "OTHER";
 
@@ -15,6 +16,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 
 export function FeedbackWidget() {
   const pathname = usePathname();
+  const keyboardInset = useKeyboardInset();
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -79,7 +81,14 @@ export function FeedbackWidget() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40"
+          style={
+            keyboardInset > 0
+              ? { paddingBottom: keyboardInset + 16 }
+              : undefined
+          }
+        >
           <div
             role="dialog"
             aria-modal="true"

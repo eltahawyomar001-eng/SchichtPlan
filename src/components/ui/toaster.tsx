@@ -20,8 +20,8 @@ export function Toaster() {
   return (
     <SonnerToaster
       theme={theme as "light" | "dark" | "system"}
-      position="bottom-right"
-      offset={16}
+      position="top-center"
+      offset="calc(env(safe-area-inset-top) + 8px)"
       gap={8}
       expand={false}
       richColors

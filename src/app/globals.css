@@ -1455,6 +1455,17 @@ body {
   border-width: 0;
 }
 
+/* ─── Kiosk Lockdown ─────────────────────────────────────── */
+
+/* Applied to station page root — unconditional, not gated by display-mode
+   so it works in Safari bookmark mode and non-installed PWA contexts too. */
+.kiosk-lock {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
 /* ─── PWA Standalone Mode ────────────────────────────────── */
 
 /* Prevent pull-to-refresh in standalone PWA mode */
@@ -1472,6 +1483,8 @@ body {
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    /* Prevent iOS long-press context menu in installed PWA */
+    -webkit-touch-callout: none;
   }
 }
 

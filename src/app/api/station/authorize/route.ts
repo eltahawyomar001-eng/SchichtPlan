@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { withRoute } from "@/lib/with-route";
 import {
   verifyStationSetupToken,
@@ -46,6 +47,19 @@ export const POST = withRoute("/api/station/authorize", "POST", async (req) => {
 
   const { token: stationKey, expiresAt } =
     generateStationAccessToken(workspaceId);
+
+  // Record session for revocation support
+  const sessionKeyHash = crypto
+    .createHash("sha256")
+    .update(stationKey)
+    .digest("hex");
+  await prisma.stationSession
+    .create({
+      data: { workspaceId, sessionKeyHash, deviceName: "Stempelstation" },
+    })
+    .catch(() => {
+      /* non-fatal — session tracking best-effort */
+    });
 
   const isSecure = process.env.NODE_ENV === "production";
   const maxAge = 30 * 24 * 60 * 60; // 30 days — matches token TTL

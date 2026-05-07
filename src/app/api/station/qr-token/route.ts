@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { cookies } from "next/headers";
 import { withRoute } from "@/lib/with-route";
 import { verifyStationAccessToken } from "@/lib/station-token";
 import { generateQrToken } from "@/lib/qr-token";
+import { prisma } from "@/lib/db";
 
 /**
  * GET /api/station/qr-token
@@ -25,6 +27,23 @@ export const GET = withRoute("/api/station/qr-token", "GET", async () => {
       { status: 401 },
     );
   }
+
+  // Check if this session has been revoked
+  const sessionKeyHash = crypto.createHash("sha256").update(key).digest("hex");
+  const session = await prisma.stationSession.findUnique({
+    where: { sessionKeyHash },
+    select: { revokedAt: true },
+  });
+  if (session?.revokedAt) {
+    return NextResponse.json({ error: "SESSION_REVOKED" }, { status: 401 });
+  }
+  // Update lastSeenAt (best-effort, non-blocking)
+  prisma.stationSession
+    .update({
+      where: { sessionKeyHash },
+      data: { lastSeenAt: new Date() },
+    })
+    .catch(() => {});
 
   const { token, expiresAt } = generateQrToken(workspaceId);
   return NextResponse.json({ token, expiresAt });

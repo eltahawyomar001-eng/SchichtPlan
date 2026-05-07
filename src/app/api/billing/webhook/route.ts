@@ -528,6 +528,19 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             });
             const shiftfyInvoiceNumber = `${year}-${String(seq).padStart(6, "0")}`;
 
+            // Fetch the issuer identity active at invoice time (versioned for GoBD)
+            const invoiceDate = new Date((invoice.created ?? 0) * 1000);
+            const issuerProfile = await prisma.issuerProfile.findFirst({
+              where: { validFrom: { lte: invoiceDate } },
+              orderBy: { validFrom: "desc" },
+            });
+            const issuerName =
+              issuerProfile?.name ?? process.env.SHIFTFY_NAME ?? "Shiftfy GmbH";
+            const issuerVatId =
+              issuerProfile?.vatId ?? process.env.SHIFTFY_VAT_ID ?? null;
+            const issuerAddress =
+              issuerProfile?.address ?? process.env.SHIFTFY_ADDRESS ?? null;
+
             await prisma.invoice.upsert({
               where: { stripeInvoiceId: invoice.id },
               update: {},
@@ -551,9 +564,9 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                   typeof invoice.hosted_invoice_url === "string"
                     ? invoice.hosted_invoice_url
                     : null,
-                issuerName: "Shiftfy GmbH",
-                issuerVatId: process.env.SHIFTFY_VAT_ID ?? null,
-                issuerAddress: process.env.SHIFTFY_ADDRESS ?? null,
+                issuerName,
+                issuerVatId,
+                issuerAddress,
                 recipientName: wc?.companyName ?? null,
                 recipientVatId: wc?.vatId ?? null,
                 recipientAddress: recipientAddress || null,

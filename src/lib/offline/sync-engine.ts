@@ -345,6 +345,11 @@ export async function syncPendingMutations(): Promise<SyncResult> {
         type: mutation.type,
         error: `Max retries (${MAX_RETRIES}) exceeded: ${mutation.lastError}`,
       });
+      // Surface permanent failure to the UI — this data was never saved
+      dispatchSyncEvent("sync-failed-permanent", {
+        mutationId: mutation.id,
+        type: mutation.type,
+      });
       continue;
     }
 
@@ -485,7 +490,8 @@ type SyncEventType =
   | "mutation-synced"
   | "sync-start"
   | "sync-progress"
-  | "sync-complete";
+  | "sync-complete"
+  | "sync-failed-permanent";
 
 function dispatchSyncEvent(type: SyncEventType, detail: unknown): void {
   if (typeof window === "undefined") return;

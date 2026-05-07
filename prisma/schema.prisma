@@ -166,6 +166,8 @@ model Workspace {
   workspaceCustomer    WorkspaceCustomer?
   invoices             Invoice[]
   feedback             Feedback[]
+  invoiceSequence      InvoiceSequence?
+  stationSessions      StationSession[]
 }
 
 /// In-app bug reports / feature requests submitted via the dashboard widget.
@@ -1421,4 +1423,42 @@ model TicketAttachment {
   @@index([commentId])
   @@index([workspaceId])
   @@index([uploadedById])
+}
+
+/// GoBD § 147 — per-workspace monotonic invoice counter.
+/// One row per workspace; incremented atomically inside a transaction so
+/// numbers are continuous and gap-free even under concurrent webhook delivery.
+model InvoiceSequence {
+  workspaceId String    @id
+  lastNumber  Int       @default(0)
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// Tracks active station tablet sessions so managers can revoke access
+/// without waiting for the 30-day cookie to expire.
+model StationSession {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  sessionKeyHash String    @unique  /// SHA-256 of the raw station_key cookie value
+  deviceName     String    @default("Unbekanntes Gerät")
+  issuedAt       DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+  revokedAt      DateTime?
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  @@index([workspaceId])
+  @@index([sessionKeyHash])
+}
+
+/// Versioned snapshot of our company identity for GoBD-compliant invoicing.
+/// Add a new row (with validFrom = today) whenever address or VAT-ID changes;
+/// the webhook picks the row whose validFrom ≤ invoice date.
+model IssuerProfile {
+  id        String    @id @default(cuid())
+  name      String
+  vatId     String?
+  address   String?
+  validFrom DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  @@index([validFrom])
 }

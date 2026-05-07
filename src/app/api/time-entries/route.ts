@@ -117,6 +117,25 @@ export const POST = withRoute(
       }
     }
 
+    // ArbZG § 3: enforce 10-hour daily net cap on manual entries for employees
+    // Managers can override via the approval workflow; employees cannot self-report >10h
+    if (user.role === "EMPLOYEE") {
+      const dayTotal = existingEntries.reduce(
+        (sum, e) => sum + (e.netMinutes ?? 0),
+        0,
+      );
+      const newNet = calcNetMinutes(
+        calcGrossMinutes(body.startTime, body.endTime),
+        calcBreakMinutes(body.breakStart, body.breakEnd, body.breakMinutes),
+      );
+      if (dayTotal + newNet > 600) {
+        return NextResponse.json(
+          { error: "DAILY_LIMIT_EXCEEDED", limitMinutes: 600 },
+          { status: 422 },
+        );
+      }
+    }
+
     // Calculate durations
     const grossMinutes = calcGrossMinutes(body.startTime, body.endTime);
     const rawBreakMins = calcBreakMinutes(

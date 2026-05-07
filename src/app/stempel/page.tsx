@@ -76,7 +76,7 @@ function FastPunchContent() {
     }
     try {
       const res = await fetch(
-        `/api/qr-clock/employees?t=${encodeURIComponent(token)}`,
+        `/api/qr-clock/workspace?t=${encodeURIComponent(token)}`,
       );
       if (res.status === 401) {
         setTokenError(t("expiredCode"));

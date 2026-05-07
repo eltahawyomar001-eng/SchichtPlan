@@ -4,6 +4,21 @@ import { requireAuth } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
 import { log } from "@/lib/logger";
+import { sendEmail } from "@/lib/notifications/email";
+
+const TECHNICAL_INBOX =
+  process.env.FEEDBACK_EMAIL_TECHNICAL ?? "omarragehfulda@gmail.com";
+const PRODUCT_INBOX =
+  process.env.FEEDBACK_EMAIL_PRODUCT ?? "info@bashabsheh-vergabepartner.de";
+
+const TECHNICAL_CATEGORIES = new Set(["BUG", "QUESTION"]);
+
+const CATEGORY_LABELS: Record<string, string> = {
+  BUG: "Fehler",
+  FEATURE: "Funktionswunsch",
+  QUESTION: "Frage",
+  OTHER: "Sonstiges",
+};
 
 const bodySchema = z.object({
   category: z.enum(["BUG", "FEATURE", "QUESTION", "OTHER"]),
@@ -49,6 +64,20 @@ export const POST = withRoute("/api/feedback", "POST", async (req) => {
     userId: user.id,
     category: parsed.data.category,
   });
+
+  const categoryLabel =
+    CATEGORY_LABELS[parsed.data.category] ?? parsed.data.category;
+  const inbox = TECHNICAL_CATEGORIES.has(parsed.data.category)
+    ? TECHNICAL_INBOX
+    : PRODUCT_INBOX;
+  const pageNote = parsed.data.url ? `\n\nSeite: ${parsed.data.url}` : "";
+
+  sendEmail({
+    to: inbox,
+    type: "feedback",
+    title: `[${categoryLabel}] ${parsed.data.subject}`,
+    message: `${parsed.data.message}${pageNote}\n\nWorkspace: ${workspaceId}\nUser: ${user.id}`,
+  }).catch((err) => log.error("[Feedback] email delivery failed", { err }));
 
   return NextResponse.json({ success: true });
 });

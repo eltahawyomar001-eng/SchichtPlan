@@ -3,6 +3,11 @@ import { withRoute } from "@/lib/with-route";
 import { verifyQrToken } from "@/lib/qr-token";
 import { hashPin } from "@/lib/employee-pin";
 import { prisma } from "@/lib/db";
+import {
+  checkPinLockout,
+  recordPinFailure,
+  tokenSignature,
+} from "@/lib/qr-lockout";
 
 /**
  * POST /api/qr-clock/identify
@@ -32,11 +37,21 @@ export const POST = withRoute("/api/qr-clock/identify", "POST", async (req) => {
     return NextResponse.json({ error: "INVALID_PIN_FORMAT" }, { status: 400 });
   }
 
-  const workspaceId = verifyQrToken(token);
-  if (!workspaceId) {
+  const verified = verifyQrToken(token);
+  if (!verified) {
     return NextResponse.json(
       { error: "INVALID_OR_EXPIRED_TOKEN" },
       { status: 401 },
+    );
+  }
+  const { workspaceId } = verified;
+
+  const tokenSig = tokenSignature(token);
+  const lockoutSec = await checkPinLockout(workspaceId, tokenSig);
+  if (lockoutSec > 0) {
+    return NextResponse.json(
+      { error: "PIN_LOCKED", retryAfter: lockoutSec },
+      { status: 429 },
     );
   }
 
@@ -47,6 +62,7 @@ export const POST = withRoute("/api/qr-clock/identify", "POST", async (req) => {
   });
 
   if (!employee) {
+    await recordPinFailure(workspaceId, tokenSig);
     return NextResponse.json({ error: "INVALID_PIN" }, { status: 404 });
   }
 

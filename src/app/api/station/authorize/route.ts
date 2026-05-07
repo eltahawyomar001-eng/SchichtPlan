@@ -46,9 +46,22 @@ export const POST = withRoute("/api/station/authorize", "POST", async (req) => {
 
   const { token: stationKey, expiresAt } =
     generateStationAccessToken(workspaceId);
-  return NextResponse.json({
-    stationKey,
-    expiresAt,
-    workspaceName: workspace.name,
-  });
+
+  const isSecure = process.env.NODE_ENV === "production";
+  const maxAge = 30 * 24 * 60 * 60; // 30 days — matches token TTL
+  const cookieDirectives = [
+    `station_key=${stationKey}`,
+    `HttpOnly`,
+    isSecure ? "Secure" : "",
+    "SameSite=Strict",
+    `Max-Age=${maxAge}`,
+    "Path=/api/station",
+  ]
+    .filter(Boolean)
+    .join("; ");
+
+  return NextResponse.json(
+    { expiresAt, workspaceName: workspace.name },
+    { headers: { "Set-Cookie": cookieDirectives } },
+  );
 });

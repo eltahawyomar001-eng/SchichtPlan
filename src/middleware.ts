@@ -12,10 +12,9 @@ const isDev = process.env.NODE_ENV === "development";
 const staticHeaders: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy":
-    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=(), serial=()",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Cross-Origin-Opener-Policy": "same-origin",
   "X-API-Version": "1",
@@ -25,8 +24,8 @@ const staticHeaders: Record<string, string> = {
 function buildCsp(nonce: string): string {
   return [
     "default-src 'self'",
-    // 'unsafe-inline' is ignored by modern browsers when nonce is present (backward compat for older browsers)
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://vercel.live`,
+    // 'strict-dynamic' propagates trust from nonce to dynamically loaded scripts; 'unsafe-inline' removed
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://vercel.live`,
     // Use 'unsafe-inline' only for styles — no nonce, so it is respected by all browsers
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
@@ -105,6 +104,36 @@ const importLimiter = redis
 const MAX_JSON_BODY_BYTES = 1_048_576; // 1 MB
 /** Maximum file upload body size (10 MB — import route has its own 5 MB check) */
 const MAX_UPLOAD_BODY_BYTES = 10_485_760; // 10 MB
+
+/* ──────────────────────────────────────────────────────────────
+ * In-process LRU fallback counters (M-2)
+ *
+ * Used when Redis is unavailable. Per-instance only — does not
+ * share state across Edge worker instances in production. Provides
+ * meaningful protection in development and during brief Redis outages
+ * on single-instance deployments (e.g. Railway, Fly.io).
+ * ────────────────────────────────────────────────────────────── */
+interface FallbackEntry {
+  count: number;
+  resetAt: number;
+}
+const MEM_LIMIT_MAX = 2000;
+const memLimitStore = new Map<string, FallbackEntry>();
+
+function memLimitIncr(key: string, windowMs: number): number {
+  const now = Date.now();
+  const entry = memLimitStore.get(key);
+  if (!entry || now > entry.resetAt) {
+    if (memLimitStore.size >= MEM_LIMIT_MAX) {
+      const oldest = memLimitStore.keys().next().value;
+      if (oldest) memLimitStore.delete(oldest);
+    }
+    memLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    return 1;
+  }
+  entry.count += 1;
+  return entry.count;
+}
 
 /* ──────────────────────────────────────────────────────────────
  * CORS configuration for API routes
@@ -261,7 +290,24 @@ export default withAuth(
             );
           }
         } catch {
-          // Redis unavailable — degrade gracefully
+          // Redis unavailable — in-process fallback (5 req / 60s)
+          const count = memLimitIncr(`import:${ip}`, 60_000);
+          if (count > 5) {
+            return new NextResponse(
+              JSON.stringify({
+                error: "Zu viele Import-Anfragen.",
+                code: "RATE_LIMITED",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
         }
       }
     }
@@ -297,8 +343,24 @@ export default withAuth(
             );
           }
         } catch {
-          // Redis unavailable — degrade gracefully, allow request through.
-          // Rate limiting is a best-effort defense; availability > enforcement.
+          // Redis unavailable — in-process fallback (10 req / 60s)
+          const count = memLimitIncr(`auth:${ip}`, 60_000);
+          if (count > 10) {
+            return new NextResponse(
+              JSON.stringify({
+                error:
+                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
         }
       }
     }
@@ -338,8 +400,24 @@ export default withAuth(
             );
           }
         } catch {
-          // Redis unavailable — degrade gracefully, allow request through.
-          // Rate limiting is a best-effort defense; availability > enforcement.
+          // Redis unavailable — in-process fallback (60 req / 60s)
+          const count = memLimitIncr(`api:${ip}`, 60_000);
+          if (count > 60) {
+            return new NextResponse(
+              JSON.stringify({
+                error:
+                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
         }
       }
     }
@@ -369,6 +447,9 @@ export default withAuth(
           return true;
         // External ticket endpoints are public
         if (pathname.startsWith("/api/tickets/external")) return true;
+        // One-time PIN reveal link (employee opens from email)
+        if (pathname.startsWith("/pin-reveal")) return true;
+        if (pathname.startsWith("/api/pin-reveal")) return true;
         // QR attendance station: public token-gated endpoints (no session needed)
         if (pathname.startsWith("/api/qr-clock")) return true;
         // QR fast-punch page: public mobile page (employee scans QR code)
@@ -478,5 +559,8 @@ export const config = {
     "/station",
     "/station/:path*",
     "/api/station/:path*",
+    // One-time PIN reveal (public, employee email link)
+    "/pin-reveal",
+    "/api/pin-reveal",
   ],
 };

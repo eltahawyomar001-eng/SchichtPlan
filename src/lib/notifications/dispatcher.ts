@@ -1,7 +1,12 @@
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "./email";
 import { sendPushNotification } from "./push";
 import { log } from "@/lib/logger";
+
+function pseudoEmail(email: string): string {
+  return crypto.createHash("sha256").update(email).digest("hex").slice(0, 8);
+}
 
 /**
  * Dispatch an email + push notification for a user.
@@ -47,7 +52,9 @@ export async function dispatchExternalNotification(params: {
 
   if (emailEnabled && user.email) {
     const locale = user.preferredLocale === "en" ? "en" : "de";
-    log.info(`[dispatcher] Sending email to ${user.email}`);
+    log.info(`[dispatcher] Sending email`, {
+      emailHash: pseudoEmail(user.email),
+    });
     try {
       const result = await sendEmail({
         to: user.email,
@@ -58,14 +65,20 @@ export async function dispatchExternalNotification(params: {
         locale,
       });
       if (result.success) {
-        log.info(`[dispatcher] Email sent to ${user.email}`);
+        log.info(`[dispatcher] Email sent`, {
+          emailHash: pseudoEmail(user.email),
+        });
       } else {
-        log.error(
-          `[dispatcher] Email failed for ${user.email}: ${result.error}`,
-        );
+        log.error(`[dispatcher] Email failed`, {
+          emailHash: pseudoEmail(user.email),
+          error: result.error,
+        });
       }
     } catch (err) {
-      log.error(`[dispatcher] Email failed for ${user.email}`, { error: err });
+      log.error(`[dispatcher] Email failed`, {
+        emailHash: pseudoEmail(user.email),
+        error: err,
+      });
     }
   }
 

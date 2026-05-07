@@ -1,6 +1,13 @@
 import crypto from "crypto";
 
-const SECRET = process.env.NEXTAUTH_SECRET ?? "dev-fallback-secret";
+function getSecret(): string {
+  const s = process.env.STATION_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!s)
+    throw new Error(
+      "[station-token] STATION_SECRET or NEXTAUTH_SECRET must be set",
+    );
+  return s;
+}
 
 interface StationSetupPayload {
   workspaceId: string;
@@ -17,7 +24,7 @@ interface StationAccessPayload {
 function sign(payload: object): string {
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = crypto
-    .createHmac("sha256", SECRET)
+    .createHmac("sha256", getSecret())
     .update(data)
     .digest("base64url");
   return `${data}.${sig}`;
@@ -33,7 +40,7 @@ function verify<T extends { type: string; exp: number }>(
     const data = token.slice(0, dot);
     const sig = token.slice(dot + 1);
     const expectedSig = crypto
-      .createHmac("sha256", SECRET)
+      .createHmac("sha256", getSecret())
       .update(data)
       .digest("base64url");
     if (expectedSig !== sig) return null;

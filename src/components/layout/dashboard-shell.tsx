@@ -7,6 +7,7 @@ import { InstallPwaPrompt } from "@/components/layout/install-pwa-prompt";
 import { PlanLimitProvider } from "@/components/providers/plan-limit-provider";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { OnboardingTour } from "@/components/ui/onboarding-tour";
+import { useIdleTimeout } from "@/hooks/use-idle-timeout";
 
 interface SidebarContextValue {
   openSidebar: () => void;
@@ -22,6 +23,7 @@ export function useSidebar() {
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useIdleTimeout();
 
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);

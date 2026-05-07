@@ -1,25 +1,27 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { withRoute } from "@/lib/with-route";
 import { verifyStationAccessToken } from "@/lib/station-token";
 import { prisma } from "@/lib/db";
 
 /**
- * GET /api/station/recent-punch?key={stationKey}&since={isoTimestamp}
+ * GET /api/station/recent-punch?since={isoTimestamp}
  *
  * Public endpoint polled by the station tablet every 3 seconds.
+ * Authentication: httpOnly `station_key` cookie (set by /api/station/authorize).
  * Returns the most recent clock-in or clock-out event after `since`.
- * The station shows a 5-second success overlay when a new punch is detected.
  */
 export const GET = withRoute(
   "/api/station/recent-punch",
   "GET",
   async (req) => {
+    const cookieStore = await cookies();
+    const key = cookieStore.get("station_key")?.value;
     const { searchParams } = new URL(req.url);
-    const key = searchParams.get("key");
     const since = searchParams.get("since");
 
     if (!key) {
-      return NextResponse.json({ error: "MISSING_KEY" }, { status: 400 });
+      return NextResponse.json({ error: "MISSING_KEY" }, { status: 401 });
     }
 
     const workspaceId = verifyStationAccessToken(key);
@@ -46,7 +48,7 @@ export const GET = withRoute(
         id: true,
         clockInAt: true,
         clockOutAt: true,
-        employee: { select: { firstName: true, lastName: true } },
+        employee: { select: { firstName: true } },
       },
     });
 
@@ -66,7 +68,7 @@ export const GET = withRoute(
       punch: {
         id: recent.id,
         action,
-        employeeName: `${recent.employee.firstName} ${recent.employee.lastName}`,
+        employeeName: recent.employee.firstName,
         time,
       },
     });

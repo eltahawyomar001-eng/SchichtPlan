@@ -5,6 +5,13 @@ import { hashPin } from "@/lib/employee-pin";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { capWorkTimeAtLimit, getTodayWorkedMinutes } from "@/lib/automations";
+import {
+  checkPinLockout,
+  recordPinFailure,
+  clearPinAttempts,
+  consumePunch,
+  tokenSignature,
+} from "@/lib/qr-lockout";
 
 /**
  * POST /api/qr-clock/punch
@@ -35,11 +42,22 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
     return NextResponse.json({ error: "INVALID_PIN_FORMAT" }, { status: 400 });
   }
 
-  const workspaceId = verifyQrToken(token);
-  if (!workspaceId) {
+  const verified = verifyQrToken(token);
+  if (!verified) {
     return NextResponse.json(
       { error: "INVALID_OR_EXPIRED_TOKEN" },
       { status: 401 },
+    );
+  }
+  const { workspaceId, exp } = verified;
+
+  // C-1: Reject if too many wrong PINs for this token window
+  const tokenSig = tokenSignature(token);
+  const lockoutSec = await checkPinLockout(workspaceId, tokenSig);
+  if (lockoutSec > 0) {
+    return NextResponse.json(
+      { error: "PIN_LOCKED", retryAfter: lockoutSec },
+      { status: 429 },
     );
   }
 
@@ -50,7 +68,20 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
   });
 
   if (!employee) {
+    await recordPinFailure(workspaceId, tokenSig);
     return NextResponse.json({ error: "INVALID_PIN" }, { status: 404 });
+  }
+
+  // C-2: Each (employee, action) pair may only punch once per token window
+  const tokenTtlSec = Math.ceil((exp - Date.now()) / 1000);
+  const firstUse = await consumePunch(
+    employee.id,
+    action,
+    tokenSig,
+    tokenTtlSec,
+  );
+  if (!firstUse) {
+    return NextResponse.json({ error: "TOKEN_ALREADY_USED" }, { status: 409 });
   }
 
   const employeeId = employee.id;
@@ -89,6 +120,7 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
         });
       });
 
+      await clearPinAttempts(workspaceId, tokenSig);
       return NextResponse.json(
         {
           action: "in",
@@ -168,6 +200,7 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
     return NextResponse.json({ error: entry.error }, { status: entry.status });
   }
 
+  await clearPinAttempts(workspaceId, tokenSig);
   return NextResponse.json({
     action: "out",
     employeeName: `${employee.firstName} ${employee.lastName}`,

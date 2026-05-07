@@ -16,13 +16,14 @@ export const GET = withRoute("/api/qr-clock/employees", "GET", async (req) => {
     return NextResponse.json({ error: "MISSING_TOKEN" }, { status: 400 });
   }
 
-  const workspaceId = verifyQrToken(token);
-  if (!workspaceId) {
+  const verified = verifyQrToken(token);
+  if (!verified) {
     return NextResponse.json(
       { error: "INVALID_OR_EXPIRED_TOKEN" },
       { status: 401 },
     );
   }
+  const { workspaceId } = verified;
 
   const employees = await prisma.employee.findMany({
     where: { workspaceId, isActive: true, deletedAt: null },

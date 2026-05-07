@@ -2,8 +2,14 @@ import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { log } from "@/lib/logger";
+import { createPinRevealToken } from "@/lib/pin-reveal";
 
-const SECRET = process.env.NEXTAUTH_SECRET ?? "dev-fallback-secret";
+function getSecret(): string {
+  const s = process.env.PIN_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!s)
+    throw new Error("[employee-pin] PIN_SECRET or NEXTAUTH_SECRET must be set");
+  return s;
+}
 
 /**
  * HMAC-SHA256 keyed with (SECRET + workspaceId) so:
@@ -13,7 +19,7 @@ const SECRET = process.env.NEXTAUTH_SECRET ?? "dev-fallback-secret";
  */
 export function hashPin(workspaceId: string, rawPin: string): string {
   return crypto
-    .createHmac("sha256", `${SECRET}:pin:${workspaceId}`)
+    .createHmac("sha256", `${getSecret()}:pin:${workspaceId}`)
     .update(rawPin)
     .digest("hex");
 }
@@ -32,7 +38,10 @@ export async function generateUniquePin(workspaceId: string): Promise<string> {
   throw new Error("PIN_GENERATION_EXHAUSTED");
 }
 
-/** Send the employee their PIN via email. Fire-and-forget safe. */
+/**
+ * Send the employee a one-time secure link to reveal their PIN.
+ * The raw PIN is never included in the email body (H-2).
+ */
 export async function sendPinEmail({
   to,
   firstName,
@@ -52,14 +61,19 @@ export async function sendPinEmail({
     .trim()
     .replace(/\/+$/, "");
 
+  const revealToken = await createPinRevealToken(rawPin);
+  const revealLink = `${appUrl}/pin-reveal?token=${revealToken}`;
+
   const result = await sendEmail({
     to,
     type: "pin_assigned",
     title: `Ihre Stempeluhr-PIN – ${workspaceName}`,
     message:
       `Guten Tag ${firstName},\n\n` +
-      `Ihre persönliche 4-stellige PIN für die QR-Stempelstation lautet:\n\n` +
-      `        ${rawPin}\n\n` +
+      `Für die QR-Stempelstation von ${workspaceName} wurde Ihnen eine persönliche ` +
+      `4-stellige PIN zugewiesen.\n\n` +
+      `Klicken Sie auf den folgenden Link, um Ihre PIN einmalig anzuzeigen ` +
+      `(gültig 15 Minuten):\n\n` +
       `So nutzen Sie die Stempelstation:\n` +
       `1. Scannen Sie den QR-Code am Eingang mit Ihrer Handykamera.\n` +
       `2. Geben Sie Ihre 4-stellige PIN ein.\n` +
@@ -67,9 +81,9 @@ export async function sendPinEmail({
       `Bitte teilen Sie Ihre PIN nicht mit Kolleginnen und Kollegen, ` +
       `da sie Ihnen persönlich zugeordnet ist.\n\n` +
       `Bei Problemen wenden Sie sich an Ihren Vorgesetzten.`,
-    link: `${appUrl}/stempeluhr`,
+    link: revealLink,
   });
   if (!result.success) {
-    log.warn("[employee-pin] PIN email not sent", { to, error: result.error });
+    log.warn("[employee-pin] PIN email not sent", { error: result.error });
   }
 }

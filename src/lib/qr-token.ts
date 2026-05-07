@@ -1,7 +1,15 @@
 import crypto from "crypto";
 
-const SECRET = process.env.NEXTAUTH_SECRET ?? "dev-fallback-secret";
 const TTL_MS = 60_000; // 60 seconds
+
+function getSecret(): string {
+  const s = process.env.QR_TOKEN_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!s)
+    throw new Error(
+      "[qr-token] QR_TOKEN_SECRET or NEXTAUTH_SECRET must be set",
+    );
+  return s;
+}
 
 interface QrPayload {
   workspaceId: string;
@@ -19,14 +27,16 @@ export function generateQrToken(workspaceId: string): {
   const data = JSON.stringify(payload);
   const dataB64 = Buffer.from(data).toString("base64url");
   const sig = crypto
-    .createHmac("sha256", SECRET)
+    .createHmac("sha256", getSecret())
     .update(dataB64)
     .digest("base64url");
   return { token: `${dataB64}.${sig}`, expiresAt: exp };
 }
 
-/** Verify token signature and expiry. Returns workspaceId or null. */
-export function verifyQrToken(token: string): string | null {
+/** Verify token signature and expiry. Returns { workspaceId, exp } or null. */
+export function verifyQrToken(
+  token: string,
+): { workspaceId: string; exp: number } | null {
   try {
     const dot = token.indexOf(".");
     if (dot < 0) return null;
@@ -34,7 +44,7 @@ export function verifyQrToken(token: string): string | null {
     const sig = token.slice(dot + 1);
 
     const expectedSig = crypto
-      .createHmac("sha256", SECRET)
+      .createHmac("sha256", getSecret())
       .update(dataB64)
       .digest("base64url");
     if (expectedSig !== sig) return null;
@@ -45,7 +55,7 @@ export function verifyQrToken(token: string): string | null {
     if (payload.type !== "qr_clock") return null;
     if (payload.exp < Date.now()) return null; // expired
 
-    return payload.workspaceId;
+    return { workspaceId: payload.workspaceId, exp: payload.exp };
   } catch {
     return null;
   }

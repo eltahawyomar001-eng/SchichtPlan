@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 
-const STORAGE_KEY = "shiftfy_station_key";
 const STORAGE_WORKSPACE = "shiftfy_station_workspace";
 const REFRESH_BEFORE_EXPIRY_MS = 5_000;
 const POLL_MS = 3_000;
@@ -23,8 +22,7 @@ function StationContent() {
   const t = useTranslations("station");
   const locale = useLocale();
 
-  // Station auth state
-  const [stationKey, setStationKey] = useState<string | null>(null);
+  // Station auth state (key is stored in httpOnly cookie — never in client state)
   const [workspaceName, setWorkspaceName] = useState("");
   const [authState, setAuthState] = useState<
     "loading" | "authorizing" | "ready" | "error"
@@ -87,52 +85,43 @@ function StationContent() {
     };
   }, [locale]);
 
-  // QR fetch & auto-refresh — includes ?lang so the stempel page inherits locale
-  const fetchQr = useCallback(
-    async (key: string) => {
-      setQrError("");
-      try {
-        const res = await fetch(
-          `/api/station/qr-token?key=${encodeURIComponent(key)}`,
-        );
-        if (res.status === 401) {
-          setAuthError(t("sessionExpired"));
-          setAuthState("error");
-          localStorage.removeItem(STORAGE_KEY);
-          return;
-        }
-        if (!res.ok) throw new Error("fetch_failed");
-
-        const { token, expiresAt: exp } = await res.json();
-        setExpiresAt(exp);
-        setSecondsLeft(Math.round((exp - Date.now()) / 1000));
-
-        // Embed locale so employees scanning on their phones see the correct language
-        const origin = window.location.origin;
-        const punchUrl = `${origin}/stempel?t=${token}&lang=${locale}`;
-        const QRCode = (await import("qrcode")).default;
-        const dataUrl = await QRCode.toDataURL(punchUrl, {
-          width: 360,
-          margin: 2,
-          color: { dark: "#111827", light: "#FFFFFF" },
-        });
-        setQrDataUrl(dataUrl);
-
-        // Schedule next refresh
-        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-        const delay = exp - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
-        refreshTimerRef.current = setTimeout(
-          () => fetchQr(key),
-          Math.max(delay, 1000),
-        );
-      } catch {
-        setQrError(t("qrLoadError"));
-        // Retry in 10s
-        refreshTimerRef.current = setTimeout(() => fetchQr(key), 10_000);
+  // QR fetch & auto-refresh — cookie sent automatically, no key param needed
+  const fetchQr = useCallback(async () => {
+    setQrError("");
+    try {
+      const res = await fetch("/api/station/qr-token");
+      if (res.status === 401) {
+        setAuthError(t("sessionExpired"));
+        setAuthState("error");
+        return;
       }
-    },
-    [t, locale],
-  );
+      if (!res.ok) throw new Error("fetch_failed");
+
+      const { token, expiresAt: exp } = await res.json();
+      setExpiresAt(exp);
+      setSecondsLeft(Math.round((exp - Date.now()) / 1000));
+
+      // Embed locale so employees scanning on their phones see the correct language
+      const origin = window.location.origin;
+      const punchUrl = `${origin}/stempel?t=${token}&lang=${locale}`;
+      const QRCode = (await import("qrcode")).default;
+      const dataUrl = await QRCode.toDataURL(punchUrl, {
+        width: 360,
+        margin: 2,
+        color: { dark: "#111827", light: "#FFFFFF" },
+      });
+      setQrDataUrl(dataUrl);
+
+      // Schedule next refresh
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      const delay = exp - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
+      refreshTimerRef.current = setTimeout(fetchQr, Math.max(delay, 1000));
+    } catch {
+      setQrError(t("qrLoadError"));
+      // Retry in 10s
+      refreshTimerRef.current = setTimeout(fetchQr, 10_000);
+    }
+  }, [t, locale]);
 
   // Countdown ticker (depends on expiresAt)
   useEffect(() => {
@@ -148,13 +137,13 @@ function StationContent() {
     };
   }, [expiresAt]);
 
-  // Poll for recent punches (station feedback overlay)
-  const startPolling = useCallback((key: string) => {
+  // Poll for recent punches — cookie sent automatically
+  const startPolling = useCallback(() => {
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     pollTimerRef.current = setInterval(async () => {
       try {
         const res = await fetch(
-          `/api/station/recent-punch?key=${encodeURIComponent(key)}&since=${encodeURIComponent(sinceRef.current)}`,
+          `/api/station/recent-punch?since=${encodeURIComponent(sinceRef.current)}`,
         );
         if (!res.ok) return;
         const data = await res.json();
@@ -178,7 +167,7 @@ function StationContent() {
     }, POLL_MS);
   }, []);
 
-  // Authorize device: exchange setup token for station key
+  // Authorize device: exchange setup token for httpOnly station_key cookie
   const authorize = useCallback(
     async (token: string) => {
       setAuthState("authorizing");
@@ -198,9 +187,8 @@ function StationContent() {
           setAuthState("error");
           return;
         }
-        localStorage.setItem(STORAGE_KEY, data.stationKey);
+        // Cookie is set by the server (httpOnly) — store only non-sensitive workspace name
         localStorage.setItem(STORAGE_WORKSPACE, data.workspaceName);
-        setStationKey(data.stationKey);
         setWorkspaceName(data.workspaceName);
         setAuthState("ready");
 
@@ -214,34 +202,42 @@ function StationContent() {
     [t],
   );
 
-  // Bootstrap: read localStorage or process setup token
+  // Bootstrap: probe cookie validity via qr-token, or run setup-token flow
   useEffect(() => {
-    const storedKey = localStorage.getItem(STORAGE_KEY);
     const storedWorkspace = localStorage.getItem(STORAGE_WORKSPACE);
 
     if (setupToken) {
       authorize(setupToken);
-    } else if (storedKey) {
-      setStationKey(storedKey);
-      setWorkspaceName(storedWorkspace ?? "");
-      setAuthState("ready");
     } else {
-      setAuthState("error");
-      setAuthError(t("notAuthorizedHint"));
+      // Probe whether the httpOnly cookie is still valid
+      fetch("/api/station/qr-token")
+        .then((res) => {
+          if (res.ok) {
+            setWorkspaceName(storedWorkspace ?? "");
+            setAuthState("ready");
+          } else {
+            setAuthState("error");
+            setAuthError(t("notAuthorizedHint"));
+          }
+        })
+        .catch(() => {
+          setAuthState("error");
+          setAuthError(t("networkError"));
+        });
     }
   }, [setupToken, authorize, t]);
 
-  // Start QR + polling once key is ready
+  // Start QR + polling once authorized
   useEffect(() => {
-    if (authState !== "ready" || !stationKey) return;
-    fetchQr(stationKey);
-    startPolling(stationKey);
+    if (authState !== "ready") return;
+    fetchQr();
+    startPolling();
     return () => {
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
     };
-  }, [authState, stationKey, fetchQr, startPolling]);
+  }, [authState, fetchQr, startPolling]);
 
   const progress = expiresAt
     ? Math.max(0, ((expiresAt - Date.now()) / 60_000) * 100)
@@ -329,7 +325,7 @@ function StationContent() {
             <div className="h-80 w-80 rounded-3xl bg-gray-800 border border-gray-700 flex flex-col items-center justify-center gap-3 text-center p-6">
               <p className="text-white/50 text-sm">{qrError}</p>
               <button
-                onClick={() => stationKey && fetchQr(stationKey)}
+                onClick={() => fetchQr()}
                 className="text-emerald-400 text-sm font-medium hover:underline"
               >
                 {t("retry")}

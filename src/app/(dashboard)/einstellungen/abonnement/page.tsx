@@ -114,6 +114,93 @@ const FALLBACK_TICKETING_TIERS: TicketingTierData[] = [
   },
 ];
 
+/* ─── Invoice list ─── */
+
+interface InvoiceRow {
+  id: string;
+  invoiceNumber: string | null;
+  issuedAt: string;
+  amount: number;
+  vatAmount: number | null;
+  currency: string;
+  pdfUrl: string | null;
+  hostedUrl: string | null;
+}
+
+function InvoiceList() {
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/billing/invoices")
+      .then((r) => r.json())
+      .then((d) => setInvoices(d.invoices ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return null;
+  if (invoices.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 sm:p-6">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        Rechnungen
+      </h3>
+      <ul className="divide-y divide-gray-100 dark:divide-zinc-800">
+        {invoices.map((inv) => {
+          const date = new Date(inv.issuedAt).toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+          const gross = (inv.amount / 100).toLocaleString("de-DE", {
+            style: "currency",
+            currency: inv.currency.toUpperCase(),
+          });
+          return (
+            <li
+              key={inv.id}
+              className="flex items-center justify-between gap-4 py-3 text-sm"
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {inv.invoiceNumber ?? date}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-zinc-400">
+                  {date} · {gross}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {inv.pdfUrl && (
+                  <a
+                    href={inv.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    PDF
+                  </a>
+                )}
+                {inv.hostedUrl && (
+                  <a
+                    href={inv.hostedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    Öffnen
+                  </a>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Main page
    ═══════════════════════════════════════════════════════════════ */
@@ -1159,6 +1246,9 @@ function BillingContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* ─── Invoice History ─── */}
+        <InvoiceList />
 
         {/* ─── FAQ Hints ─── */}
         <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 p-5 sm:p-6">

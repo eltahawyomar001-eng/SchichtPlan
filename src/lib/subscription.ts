@@ -414,6 +414,27 @@ export type FeatureKey = keyof PlanConfig["limits"];
  * handle this — the previous behaviour of falling back to a free Basic plan
  * was a major bug that let unbilled workspaces use the app.
  */
+/**
+ * Hard limits applied while a workspace is TRIALING.
+ * Keeps Resend/Supabase/Vercel costs near zero during the free week.
+ */
+const TRIAL_LIMIT_OVERRIDES: Partial<PlanConfig["limits"]> = {
+  maxEmployees: 5,
+  maxLocations: 1,
+  storageMb: 50,
+  pdfMonthlyLimit: 3,
+  datevExport: false,
+  datevOnlineUpload: false,
+  autoScheduling: false,
+  eSignatures: false,
+  apiWebhooks: false,
+  analytics: false,
+  prioritySupport: false,
+  ssoSaml: false,
+  dedicatedSla: false,
+  customIntegrations: false,
+};
+
 export async function getWorkspacePlan(
   workspaceId: string,
 ): Promise<PlanConfig | null> {
@@ -427,7 +448,14 @@ export async function getWorkspacePlan(
   }
 
   const planId = sub.plan.toLowerCase() as PlanId;
-  return PLANS[planId] ?? null;
+  const plan = PLANS[planId] ?? null;
+  if (!plan) return null;
+
+  if (sub.status === "TRIALING") {
+    return { ...plan, limits: { ...plan.limits, ...TRIAL_LIMIT_OVERRIDES } };
+  }
+
+  return plan;
 }
 
 /**
@@ -463,7 +491,7 @@ export async function requirePlanFeature(
   return NextResponse.json(
     {
       error: "PLAN_LIMIT",
-      message: `Your current plan does not include this feature. Please upgrade to access it.`,
+      message: `Ihr aktueller Plan enthält diese Funktion nicht. Bitte upgraden Sie Ihren Plan, um darauf zuzugreifen.`,
       feature,
     },
     { status: 403 },
@@ -494,7 +522,7 @@ export async function requireEmployeeSlot(
   return NextResponse.json(
     {
       error: "PLAN_LIMIT",
-      message: `You have reached the maximum of ${plan.limits.maxEmployees} employees on your current plan. Please upgrade to add more.`,
+      message: `Sie haben das Maximum von ${plan.limits.maxEmployees} Mitarbeitern Ihres aktuellen Plans erreicht. Bitte upgraden Sie, um weitere hinzuzufügen.`,
       feature: "maxEmployees",
       limit: plan.limits.maxEmployees,
     },
@@ -526,7 +554,7 @@ export async function requireLocationSlot(
   return NextResponse.json(
     {
       error: "PLAN_LIMIT",
-      message: `You have reached the maximum of ${plan.limits.maxLocations} locations on your current plan. Please upgrade to add more.`,
+      message: `Sie haben das Maximum von ${plan.limits.maxLocations} Standorten Ihres aktuellen Plans erreicht. Bitte upgraden Sie, um weitere hinzuzufügen.`,
       feature: "maxLocations",
       limit: plan.limits.maxLocations,
     },
@@ -574,34 +602,38 @@ export async function simulateSubscription({
     periodEnd.getMonth() + (billingCycle === "annual" ? 12 : 1),
   );
 
-  // No trial — direct activation only.
+  const hasTrial = planConfig.trialDays > 0;
+  const trialEnd = hasTrial
+    ? new Date(now.getTime() + planConfig.trialDays * 24 * 60 * 60 * 1000)
+    : null;
+
   return prisma.subscription.upsert({
     where: { workspaceId },
     update: {
       plan: planConfig.prismaKey,
-      status: "ACTIVE",
+      status: hasTrial ? "TRIALING" : "ACTIVE",
       stripeCustomerId: `sim_cus_${workspaceId.slice(0, 8)}`,
       stripeSubscriptionId: `sim_sub_${Date.now()}`,
       stripePriceId: `sim_price_${plan}_${billingCycle}`,
       seatCount: 1,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
-      trialStart: null,
-      trialEnd: null,
+      trialStart: hasTrial ? now : null,
+      trialEnd,
       cancelAtPeriodEnd: false,
     },
     create: {
       workspaceId,
       plan: planConfig.prismaKey,
-      status: "ACTIVE",
+      status: hasTrial ? "TRIALING" : "ACTIVE",
       stripeCustomerId: `sim_cus_${workspaceId.slice(0, 8)}`,
       stripeSubscriptionId: `sim_sub_${Date.now()}`,
       stripePriceId: `sim_price_${plan}_${billingCycle}`,
       seatCount: 1,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
-      trialStart: null,
-      trialEnd: null,
+      trialStart: hasTrial ? now : null,
+      trialEnd,
     },
   });
 }

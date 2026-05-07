@@ -1188,6 +1188,9 @@ export default function StempeluhrSeite() {
             </div>
           </div>
         )}
+
+        {/* ── QR Punch Audit Log (management only) ── */}
+        {isManager && <PunchAuditLog />}
       </PageContent>
 
       {/* ── Mobile Sticky Bottom Action Bar ── */}
@@ -1331,6 +1334,133 @@ export default function StempeluhrSeite() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface PunchLogEntry {
+  id: string;
+  clockInAt: string | null;
+  clockOutAt: string | null;
+  date: string;
+  employee: { firstName: string; lastName: string };
+}
+
+function PunchAuditLog() {
+  const [entries, setEntries] = useState<PunchLogEntry[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  function load() {
+    if (loading) return;
+    setLoading(true);
+    fetch("/api/time-entries/punch-log?limit=50")
+      .then((r) => r.json())
+      .then((d) => setEntries(d.entries ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
+
+  function toggle() {
+    if (!open && entries.length === 0) load();
+    setOpen((v) => !v);
+  }
+
+  const fmt = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "–";
+
+  return (
+    <div className="mx-auto mt-6 max-w-4xl">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex w-full items-center justify-between rounded-2xl bg-white dark:bg-zinc-900 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <svg
+            className="h-4 w-4 text-emerald-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"
+            />
+          </svg>
+          QR-Stempelprotokoll
+        </span>
+        <span className="text-gray-400">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="mt-2 rounded-2xl bg-white dark:bg-zinc-900 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.08)] overflow-hidden">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : entries.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-400">
+              Noch keine QR-Stempelungen vorhanden.
+            </p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-zinc-800 text-xs text-gray-500 dark:text-zinc-400">
+                  <th className="px-5 py-3 text-left font-medium">
+                    Mitarbeiter
+                  </th>
+                  <th className="px-5 py-3 text-left font-medium">Datum</th>
+                  <th className="px-5 py-3 text-left font-medium">
+                    Eingestempelt
+                  </th>
+                  <th className="px-5 py-3 text-left font-medium">
+                    Ausgestempelt
+                  </th>
+                  <th className="px-5 py-3 text-left font-medium">Quelle</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                {entries.map((e) => (
+                  <tr
+                    key={e.id}
+                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                      {e.employee.firstName} {e.employee.lastName}
+                    </td>
+                    <td className="px-5 py-3 text-gray-600 dark:text-zinc-400">
+                      {new Date(e.date).toLocaleDateString("de-DE", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-5 py-3 text-gray-600 dark:text-zinc-400">
+                      {fmt(e.clockInAt)}
+                    </td>
+                    <td className="px-5 py-3 text-gray-600 dark:text-zinc-400">
+                      {fmt(e.clockOutAt)}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                        QR-Station
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>

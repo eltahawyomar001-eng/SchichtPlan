@@ -4,6 +4,19 @@ import { sendEmail } from "./email";
 import { sendPushNotification } from "./push";
 import { log } from "@/lib/logger";
 
+async function isWorkspaceTrialing(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { workspaceId: true },
+  });
+  if (!user?.workspaceId) return false;
+  const sub = await prisma.subscription.findUnique({
+    where: { workspaceId: user.workspaceId },
+    select: { status: true },
+  });
+  return sub?.status === "TRIALING";
+}
+
 function pseudoEmail(email: string): string {
   return crypto.createHash("sha256").update(email).digest("hex").slice(0, 8);
 }
@@ -49,8 +62,12 @@ export async function dispatchExternalNotification(params: {
     (p) => p.channel === "EMAIL",
   );
   const emailEnabled = emailPref ? emailPref.enabled : true;
+  const trialing = await isWorkspaceTrialing(userId);
+  if (trialing) {
+    log.info(`[dispatcher] Skipping email during trial`, { type });
+  }
 
-  if (emailEnabled && user.email) {
+  if (emailEnabled && user.email && !trialing) {
     const locale = user.preferredLocale === "en" ? "en" : "de";
     log.info(`[dispatcher] Sending email`, {
       emailHash: pseudoEmail(user.email),

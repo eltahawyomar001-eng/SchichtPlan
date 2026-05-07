@@ -8,6 +8,7 @@ import { PlanLimitProvider } from "@/components/providers/plan-limit-provider";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { OnboardingTour } from "@/components/ui/onboarding-tour";
 import { useIdleTimeout } from "@/hooks/use-idle-timeout";
+import { TrialBanner } from "@/components/layout/trial-banner";
 
 interface SidebarContextValue {
   openSidebar: () => void;
@@ -39,6 +40,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           >
             Zum Inhalt springen
           </a>
+          <TrialBanner />
           <Sidebar open={sidebarOpen} onClose={closeSidebar} />
           <main
             id="main-content"

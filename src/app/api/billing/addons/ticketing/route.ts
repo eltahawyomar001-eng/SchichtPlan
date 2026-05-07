@@ -53,7 +53,7 @@ export const POST = withRoute(
     const parsed = bodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid tier value", details: parsed.error.flatten() },
+        { error: "Ungültiger Tier-Wert.", details: parsed.error.flatten() },
         { status: 400 },
       );
     }

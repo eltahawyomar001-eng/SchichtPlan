@@ -39,7 +39,8 @@ export const POST = withRoute(
     if (!planId || !PLANS[planId]) {
       return NextResponse.json(
         {
-          error: "Invalid plan. Must be basic, professional, or enterprise.",
+          error:
+            "Ungültiger Plan. Muss basic, professional oder enterprise sein.",
         },
         { status: 400 },
       );
@@ -115,7 +116,10 @@ export const POST = withRoute(
         `[Stripe] No price ID configured for plan=${planId} cycle=${billingCycle}`,
       );
       return NextResponse.json(
-        { error: "Plan price not configured. Please contact support." },
+        {
+          error:
+            "Planpreis nicht konfiguriert. Bitte wenden Sie sich an den Support.",
+        },
         { status: 500 },
       );
     }
@@ -124,7 +128,7 @@ export const POST = withRoute(
     const resolvedPlan = getPlanByPriceId(priceId);
     if (!resolvedPlan) {
       return NextResponse.json(
-        { error: "Invalid price configuration" },
+        { error: "Ungültige Preiskonfiguration." },
         { status: 400 },
       );
     }
@@ -170,6 +174,9 @@ export const POST = withRoute(
       client_reference_id: user.workspaceId,
       allow_promotion_codes: true,
       tax_id_collection: { enabled: true },
+      ...(planConfig.trialDays > 0
+        ? { subscription_data: { trial_period_days: planConfig.trialDays } }
+        : {}),
       ...customerParams,
     };
 

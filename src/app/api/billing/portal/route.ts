@@ -6,6 +6,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
+import { prisma } from "@/lib/db";
 
 /**
  * POST /api/billing/portal
@@ -33,12 +34,40 @@ export const POST = withRoute(
       });
     }
 
+    const stripe = getStripe();
     const sub = await getSubscription(user.workspaceId);
 
-    // Simulation-mode customer IDs don't exist in live Stripe — treat as absent.
-    const customerId = sub?.stripeCustomerId?.startsWith("sim_")
-      ? null
-      : sub?.stripeCustomerId;
+    // Resolve the real Stripe customer ID. Simulation-mode IDs (sim_cus_xxx) and
+    // missing IDs both trigger an email-based lookup so workspaces that missed the
+    // checkout webhook can still access the portal.
+    let customerId =
+      sub?.stripeCustomerId && !sub.stripeCustomerId.startsWith("sim_")
+        ? sub.stripeCustomerId
+        : null;
+
+    if (!customerId && user.email) {
+      try {
+        const customers = await stripe.customers.list({
+          email: user.email,
+          limit: 1,
+        });
+        if (customers.data.length > 0) {
+          customerId = customers.data[0].id;
+          await prisma.subscription.update({
+            where: { workspaceId },
+            data: { stripeCustomerId: customerId },
+          });
+          log.info(
+            `[Billing:Portal] resolved stripeCustomerId=${customerId} via email for ws=${workspaceId}`,
+          );
+        }
+      } catch (err) {
+        log.error("[Billing:Portal] email-based customer lookup failed", {
+          err,
+          workspaceId,
+        });
+      }
+    }
 
     if (!customerId) {
       return NextResponse.json(
@@ -46,8 +75,6 @@ export const POST = withRoute(
         { status: 404 },
       );
     }
-
-    const stripe = getStripe();
 
     // Derive base URL from the actual request so it works on Vercel regardless
     // of how NEXTAUTH_URL is configured.

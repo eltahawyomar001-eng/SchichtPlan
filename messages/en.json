@@ -103,7 +103,8 @@
     "sidebarSearch": "Search navigation…",
     "favAdd": "Add to favorites",
     "favRemove": "Remove from favorites",
-    "addonBadge": "Add-on"
+    "addonBadge": "Add-on",
+    "favorites": "Favorites"
   },
   "dashboard": {
     "title": "Dashboard",

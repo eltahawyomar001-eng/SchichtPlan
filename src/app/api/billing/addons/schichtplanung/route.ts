@@ -135,15 +135,20 @@ export const POST = withRoute(
     // ── Real Stripe: manage subscription item ──
     const stripe = getStripe();
     let stripeSubId = subscription.stripeSubscriptionId;
+    // Simulation IDs (sim_sub_xxx) don't exist in live Stripe — treat as absent
+    // so the auto-link fallback below can resolve the real subscription.
+    if (stripeSubId?.startsWith("sim_")) stripeSubId = null;
 
     // Auto-link fallback: webhook may have been missed during checkout.
     // Resolves stripeSubscriptionId from Stripe if it is null in DB.
     if (!stripeSubId) {
       try {
         // Step 1: prefer lookup by stripeCustomerId already in DB.
-        // Step 2: if no customerId, search Stripe by the user's email (handles
-        //         accounts that were seeded via simulation mode and switched to live).
-        let customerId = subscription.stripeCustomerId;
+        // Step 2: if no customerId (or it's a sim_ placeholder), search Stripe by
+        //         the user's email (handles accounts seeded in simulation mode).
+        let customerId = subscription.stripeCustomerId?.startsWith("sim_")
+          ? null
+          : subscription.stripeCustomerId;
         if (!customerId && user.email) {
           const customers = await stripe.customers.list({
             email: user.email,
@@ -299,7 +304,7 @@ export const POST = withRoute(
             price: priceId,
             quantity,
             proration_behavior: "always_invoice",
-            payment_behavior: "error_if_incomplete",
+            payment_behavior: "default_incomplete",
           });
           newItemId = created.id;
         }

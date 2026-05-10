@@ -5,6 +5,7 @@ import { getSubscription, isSimulationMode } from "@/lib/subscription";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
+import { log } from "@/lib/logger";
 
 /**
  * POST /api/billing/portal
@@ -33,9 +34,15 @@ export const POST = withRoute(
     }
 
     const sub = await getSubscription(user.workspaceId);
-    if (!sub?.stripeCustomerId) {
+
+    // Simulation-mode customer IDs don't exist in live Stripe — treat as absent.
+    const customerId = sub?.stripeCustomerId?.startsWith("sim_")
+      ? null
+      : sub?.stripeCustomerId;
+
+    if (!customerId) {
       return NextResponse.json(
-        { error: "No active subscription found" },
+        { error: "NO_STRIPE_CUSTOMER" },
         { status: 404 },
       );
     }
@@ -51,10 +58,23 @@ export const POST = withRoute(
       new URL(req.url).host;
     const baseUrl = `${proto}://${host}`;
 
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: sub.stripeCustomerId,
-      return_url: `${baseUrl}/einstellungen/abonnement?portal=success`,
-    });
+    let portalSession: { url: string };
+    try {
+      portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${baseUrl}/einstellungen/abonnement?portal=success`,
+      });
+    } catch (err) {
+      log.error("[Billing:Portal] Stripe portal session creation failed", {
+        err,
+        workspaceId,
+        customerId,
+      });
+      return NextResponse.json(
+        { error: "PORTAL_UNAVAILABLE" },
+        { status: 503 },
+      );
+    }
 
     createAuditLog({
       action: "CREATE",

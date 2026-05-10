@@ -13,6 +13,7 @@ import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { prisma } from "@/lib/db";
 
 /**
  * GET /api/billing/subscription
@@ -42,60 +43,89 @@ export const GET = withRoute(
       !isSimulationMode() &&
       !!process.env.STRIPE_SECRET_KEY;
 
-    // Phase 1 — Auto-link: if stripeSubscriptionId is missing but stripeCustomerId
-    // is present, the checkout.session.completed webhook was missed. Find the
-    // customer's active subscription in Stripe and link it to the DB now so that
-    // future reconciles and webhook lookups can work correctly.
-    if (wantsReconcile && !sub.stripeSubscriptionId && sub.stripeCustomerId) {
+    // sim_ IDs were written during simulation mode and don't exist in live Stripe.
+    // Treat them as absent so auto-link and reconcile use real Stripe lookups.
+    const hasRealSubId =
+      !!sub.stripeSubscriptionId &&
+      !sub.stripeSubscriptionId.startsWith("sim_");
+    const hasRealCustomerId =
+      !!sub.stripeCustomerId && !sub.stripeCustomerId.startsWith("sim_");
+
+    // Phase 1 — Auto-link: resolve a missing or sim_ subscription ID.
+    // If stripeCustomerId is also sim_/null, fall back to an email-based
+    // Stripe customer lookup (handles workspaces that were seeded via
+    // simulation mode before live Stripe was connected).
+    if (wantsReconcile && !hasRealSubId) {
       try {
         const stripe = getStripe();
-        // No status filter — returns all non-canceled subs (active + trialing).
-        const stripeSubs = await stripe.subscriptions.list({
-          customer: sub.stripeCustomerId,
-          limit: 5,
-          expand: ["data.items"],
-        });
-        stripeSubs.data.sort((a, b) => {
-          const rank = (s: string) =>
-            s === "active" ? 0 : s === "trialing" ? 1 : 2;
-          return rank(a.status) - rank(b.status);
-        });
+        let customerId = hasRealCustomerId ? sub.stripeCustomerId : null;
 
-        if (stripeSubs.data.length > 0) {
-          const liveSub = stripeSubs.data[0];
-          const mainItem =
-            liveSub.items.data.find(
-              (it) =>
-                !getTicketingTierByPriceId(it.price.id) &&
-                !getSchichtplanungBillingByPriceId(it.price.id),
-            ) ?? liveSub.items.data[0];
+        if (!customerId && user.email) {
+          const customers = await stripe.customers.list({
+            email: user.email,
+            limit: 1,
+          });
+          if (customers.data.length > 0) {
+            customerId = customers.data[0].id;
+            await prisma.subscription.update({
+              where: { workspaceId: user.workspaceId },
+              data: { stripeCustomerId: customerId },
+            });
+            log.info(
+              `[Billing] resolved stripeCustomerId=${customerId} via email for ws=${user.workspaceId}`,
+            );
+          }
+        }
 
-          const linked = await linkSubscriptionByCustomer({
-            stripeCustomerId: sub.stripeCustomerId,
-            stripeSubscriptionId: liveSub.id,
-            stripePriceId: mainItem?.price.id ?? "",
-            status: liveSub.status,
-            seatCount: mainItem?.quantity ?? sub.seatCount,
-            currentPeriodStart: new Date(
-              (mainItem?.current_period_start ?? 0) * 1000,
-            ),
-            currentPeriodEnd: new Date(
-              (mainItem?.current_period_end ?? 0) * 1000,
-            ),
-            cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+        if (customerId) {
+          // No status filter — returns all non-canceled subs (active + trialing).
+          const stripeSubs = await stripe.subscriptions.list({
+            customer: customerId,
+            limit: 5,
+            expand: ["data.items"],
+          });
+          stripeSubs.data.sort((a, b) => {
+            const rank = (s: string) =>
+              s === "active" ? 0 : s === "trialing" ? 1 : 2;
+            return rank(a.status) - rank(b.status);
           });
 
-          if (linked > 0) {
-            log.info(
-              `[Billing] Auto-linked Stripe subscription ${liveSub.id} to workspace=${user.workspaceId}`,
-            );
-            const livePlan = mainItem?.price.id
-              ? getPlanByPriceId(mainItem.price.id)
-              : null;
-            if (livePlan) {
-              await syncUsageLimits(user.workspaceId, livePlan.id as PlanId);
+          if (stripeSubs.data.length > 0) {
+            const liveSub = stripeSubs.data[0];
+            const mainItem =
+              liveSub.items.data.find(
+                (it) =>
+                  !getTicketingTierByPriceId(it.price.id) &&
+                  !getSchichtplanungBillingByPriceId(it.price.id),
+              ) ?? liveSub.items.data[0];
+
+            const linked = await linkSubscriptionByCustomer({
+              stripeCustomerId: customerId,
+              stripeSubscriptionId: liveSub.id,
+              stripePriceId: mainItem?.price.id ?? "",
+              status: liveSub.status,
+              seatCount: mainItem?.quantity ?? sub.seatCount,
+              currentPeriodStart: new Date(
+                (mainItem?.current_period_start ?? 0) * 1000,
+              ),
+              currentPeriodEnd: new Date(
+                (mainItem?.current_period_end ?? 0) * 1000,
+              ),
+              cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+            });
+
+            if (linked > 0) {
+              log.info(
+                `[Billing] Auto-linked Stripe subscription ${liveSub.id} to workspace=${user.workspaceId}`,
+              );
+              const livePlan = mainItem?.price.id
+                ? getPlanByPriceId(mainItem.price.id)
+                : null;
+              if (livePlan) {
+                await syncUsageLimits(user.workspaceId, livePlan.id as PlanId);
+              }
+              sub = (await getSubscription(user.workspaceId))!;
             }
-            sub = (await getSubscription(user.workspaceId))!;
           }
         }
       } catch (err) {
@@ -106,14 +136,18 @@ export const GET = withRoute(
       }
     }
 
-    const shouldReconcile = wantsReconcile && !!sub.stripeSubscriptionId;
+    // Recompute after possible auto-link above.
+    const resolvedSubId =
+      sub.stripeSubscriptionId && !sub.stripeSubscriptionId.startsWith("sim_")
+        ? sub.stripeSubscriptionId
+        : null;
 
-    if (shouldReconcile && sub.stripeSubscriptionId) {
+    const shouldReconcile = wantsReconcile && !!resolvedSubId;
+
+    if (shouldReconcile && resolvedSubId) {
       try {
         const stripe = getStripe();
-        const liveSub = await stripe.subscriptions.retrieve(
-          sub.stripeSubscriptionId,
-        );
+        const liveSub = await stripe.subscriptions.retrieve(resolvedSubId);
 
         // Find the main plan item — exclude ticketing and schichtplanung addon items.
         // Falls back to first item if no plan item is identifiable (e.g. env vars
@@ -139,7 +173,7 @@ export const GET = withRoute(
         // seatCount, and cancelAtPeriodEnd change without plan changes
         // (e.g. on invoice renewal, payment method updates, etc.).
         await updateSubscriptionFromStripe({
-          stripeSubscriptionId: sub.stripeSubscriptionId,
+          stripeSubscriptionId: resolvedSubId,
           stripePriceId: livePriceId,
           status: liveSub.status,
           seatCount: mainItem?.quantity ?? sub.seatCount,
@@ -190,13 +224,16 @@ export const GET = withRoute(
       currentPeriodEnd: sub.currentPeriodEnd,
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
       trialEnd: sub.trialEnd,
-      hasStripeSubscription: !!sub.stripeSubscriptionId,
+      hasStripeSubscription: !!resolvedSubId,
       billingCycle: detectedCycle,
       ticketingTier: sub.ticketingTier ?? "NONE",
       schichtplanungAddonActive: sub.schichtplanungAddonActive,
       schichtplanungAddonBilling: sub.schichtplanungAddonBilling,
       limits: planConfig?.limits ?? PLANS.basic.limits,
-      simulationMode: isSimulationMode(),
+      simulationMode:
+        isSimulationMode() ||
+        !!sub.stripeSubscriptionId?.startsWith("sim_") ||
+        !!sub.stripeCustomerId?.startsWith("sim_"),
       reconciled: shouldReconcile,
     });
   },

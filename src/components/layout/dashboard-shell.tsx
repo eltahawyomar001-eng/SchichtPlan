@@ -48,7 +48,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Sidebar open={sidebarOpen} onClose={closeSidebar} />
           <main
             id="main-content"
-            className="lg:pl-64 min-h-[100dvh] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] overflow-x-hidden"
+            // --sidebar-width is published by the Sidebar on document root.
+            // Falls back to 16rem (the original w-64 default).
+            className="lg:pl-[var(--sidebar-width,16rem)] min-h-[100dvh] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] overflow-x-hidden"
           >
             {children}
           </main>

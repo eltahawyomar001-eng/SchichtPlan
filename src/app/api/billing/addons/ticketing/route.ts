@@ -313,10 +313,20 @@ export const POST = withRoute(
       `[Stripe] Ticketing add-on ${currentTier} → ${newTier} for workspace=${workspaceId}`,
     );
 
+    // TICKETING_ADDON[tier].storageBytes is a bigint — JSON.stringify chokes
+    // on bigints, which previously caused a 500 *after* the DB write committed.
+    const serializableTierConfig =
+      newTier === "NONE"
+        ? null
+        : {
+            ...TICKETING_ADDON[newTier],
+            storageBytes: TICKETING_ADDON[newTier].storageBytes.toString(),
+          };
+
     return NextResponse.json({
       tier: newTier,
       stripeSubscriptionItemId: newItemId,
-      tierConfig: newTier === "NONE" ? null : TICKETING_ADDON[newTier],
+      tierConfig: serializableTierConfig,
     });
   },
   { idempotent: true },

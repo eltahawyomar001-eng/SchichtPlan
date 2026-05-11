@@ -287,6 +287,25 @@ export const updateAbsenceStatusSchema = z.object({
     .pipe(z.string().max(2000).optional().nullable()),
 });
 
+// ── Absence Edit (PATCH) — employee edits own pending request ──
+export const editAbsenceSchema = z.object({
+  category: z
+    .enum([
+      "URLAUB",
+      "KRANK",
+      "UNBEZAHLT",
+      "SONDERURLAUB",
+      "ELTERNZEIT",
+      "FORTBILDUNG",
+      "SONSTIGES",
+    ])
+    .optional(),
+  startDate: dateString.optional(),
+  endDate: dateString.optional(),
+  halfDayStart: z.boolean().optional(),
+  halfDayEnd: z.boolean().optional(),
+});
+
 // ── Month Close ─────────────────────────────────────────────────
 export const monthCloseSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),

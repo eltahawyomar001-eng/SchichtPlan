@@ -98,6 +98,12 @@ export default function TicketsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [workspaceSlug, setWorkspaceSlug] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  // Avoid hydration mismatch (React #418): block reads window.location.origin
+  // which only exists client-side. Render the public-link section only after mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Debounce the search input — wait 400ms after the user stops typing
   useEffect(() => {
@@ -139,6 +145,47 @@ export default function TicketsPage() {
     debouncedSearch,
     t,
   ]);
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) =>
+      prev.size === tickets.length
+        ? new Set()
+        : new Set(tickets.map((t) => t.id)),
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0 || bulkDeleting) return;
+    if (!confirm(t("bulkDelete.confirm", { count: selectedIds.size }))) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const results = await Promise.allSettled(
+        ids.map((id) => fetch(`/api/tickets/${id}`, { method: "DELETE" })),
+      );
+      const failed = results.filter(
+        (r) =>
+          r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok),
+      ).length;
+      if (failed > 0) {
+        setFetchError(t("bulkDelete.partialError", { failed }));
+      }
+      setSelectedIds(new Set());
+      fetchTickets();
+      fetchStats();
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const fetchStats = useCallback(async () => {
     try {
@@ -205,15 +252,15 @@ export default function TicketsPage() {
         )}
 
         {/* ── Public Ticket Link (Admins) ────────────────── */}
-        {canManage && workspaceSlug && (
+        {/* Gated on `mounted` because the URL string depends on window.location.origin,
+            which differs between SSR ("") and CSR (full URL) and triggers hydration #418. */}
+        {mounted && canManage && workspaceSlug && (
           <div className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-2.5">
             <LinkIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm text-emerald-800 dark:text-emerald-300 truncate flex-1">
               {t("externalLink.label")}:{" "}
               <code className="rounded bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 text-xs font-mono text-emerald-700 dark:text-emerald-300">
-                {typeof window !== "undefined"
-                  ? `${window.location.origin}/ticket/neu/${workspaceSlug}`
-                  : `/ticket/neu/${workspaceSlug}`}
+                {`${window.location.origin}/ticket/neu/${workspaceSlug}`}
               </code>
             </span>
             <Button
@@ -322,6 +369,48 @@ export default function TicketsPage() {
           </Button>
         </div>
 
+        {/* ── Bulk Selection Bar (managers only) ──────────── */}
+        {canManage && tickets.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm">
+            <input
+              type="checkbox"
+              checked={
+                selectedIds.size > 0 && selectedIds.size === tickets.length
+              }
+              ref={(el) => {
+                if (el)
+                  el.indeterminate =
+                    selectedIds.size > 0 && selectedIds.size < tickets.length;
+              }}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+              aria-label={t("bulkDelete.selectAll")}
+            />
+            {selectedIds.size > 0 ? (
+              <>
+                <span className="text-gray-700 dark:text-zinc-300">
+                  {t("bulkDelete.selected", { count: selectedIds.size })}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto border-red-300 text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                >
+                  {bulkDeleting
+                    ? t("bulkDelete.deleting")
+                    : t("bulkDelete.deleteAction")}
+                </Button>
+              </>
+            ) : (
+              <span className="text-gray-500 dark:text-zinc-400">
+                {t("bulkDelete.hint")}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* ── Ticket List ────────────────────────────────── */}
         {loading ? (
           <div className="space-y-3">
@@ -357,11 +446,21 @@ export default function TicketsPage() {
             {tickets.map((ticket) => (
               <Card
                 key={ticket.id}
-                className="cursor-pointer transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.995]"
+                className={`cursor-pointer transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.995] ${selectedIds.has(ticket.id) ? "border-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/20" : ""}`}
                 onClick={() => router.push(`/tickets/${ticket.id}`)}
               >
                 <CardContent className="p-4 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
+                    {canManage && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(ticket.id)}
+                        onChange={() => toggleSelected(ticket.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        aria-label={t("bulkDelete.selectOne")}
+                      />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono text-gray-400">

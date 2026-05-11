@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getSubscriptionState, getHardBlockState } from "@/lib/subscription";
+import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -65,11 +66,28 @@ export default async function DashboardLayout({
     if (!isAllowlisted) {
       const state = await getSubscriptionState(user.workspaceId);
       if (state !== "active") {
-        if (state === "trial_expired") {
+        // Legacy workspaces — created before live Stripe integration — have no
+        // real customer/subscription IDs. Owners should be sent to billing setup
+        // directly, never to the dead-end "trial expired" screen.
+        const sub = await prisma.subscription.findUnique({
+          where: { workspaceId: user.workspaceId },
+          select: { stripeCustomerId: true, stripeSubscriptionId: true },
+        });
+        const isLegacyWorkspace =
+          !sub ||
+          ((!sub.stripeCustomerId || sub.stripeCustomerId.startsWith("sim_")) &&
+            (!sub.stripeSubscriptionId ||
+              sub.stripeSubscriptionId.startsWith("sim_")));
+
+        if (state === "trial_expired" && !isLegacyWorkspace) {
           redirect("/testphase-abgelaufen");
         }
         if (user.role === "OWNER" || user.role === "ADMIN") {
-          redirect("/einstellungen/abonnement?required=1");
+          redirect(
+            isLegacyWorkspace
+              ? "/einstellungen/abonnement?legacy=1"
+              : "/einstellungen/abonnement?required=1",
+          );
         }
         redirect("/workspace-inaktiv");
       }

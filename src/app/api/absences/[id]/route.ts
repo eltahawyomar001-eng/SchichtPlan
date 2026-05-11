@@ -13,7 +13,11 @@ import { createESignature, getClientIp } from "@/lib/e-signature";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
-import { updateAbsenceStatusSchema, validateBody } from "@/lib/validations";
+import {
+  updateAbsenceStatusSchema,
+  editAbsenceSchema,
+  validateBody,
+} from "@/lib/validations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -81,10 +85,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const user = session.user as SessionUser;
     const { id } = await params;
-    const parsed = validateBody(updateAbsenceStatusSchema, await req.json());
-    if (!parsed.success) return parsed.response;
-
-    const body = parsed.data;
+    const rawBody = await req.json();
 
     const existing = await prisma.absenceRequest.findUnique({
       where: { id },
@@ -93,6 +94,87 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     if (!existing || existing.workspaceId !== user.workspaceId) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    // ── Branch: field edits (no `status` key) — employee editing own pending ──
+    if (!("status" in rawBody)) {
+      const editParsed = validateBody(editAbsenceSchema, rawBody);
+      if (!editParsed.success) return editParsed.response;
+      const edits = editParsed.data;
+
+      // Only the request owner (or management) can edit, and only while pending.
+      if (existing.status !== "AUSSTEHEND") {
+        return NextResponse.json(
+          { error: "ONLY_PENDING_CAN_BE_EDITED" },
+          { status: 409 },
+        );
+      }
+      if (isEmployee(user)) {
+        const linkedEmployee = await prisma.employee.findFirst({
+          where: { workspaceId: user.workspaceId, email: user.email },
+        });
+        if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+
+      const newStart = edits.startDate
+        ? new Date(edits.startDate)
+        : existing.startDate;
+      const newEnd = edits.endDate ? new Date(edits.endDate) : existing.endDate;
+      if (newEnd < newStart) {
+        return NextResponse.json(
+          { error: "END_BEFORE_START" },
+          { status: 400 },
+        );
+      }
+
+      // Recompute totalDays (count weekdays, subtract halves)
+      let totalDays = 0;
+      const cursor = new Date(newStart);
+      while (cursor <= newEnd) {
+        const day = cursor.getDay();
+        if (day !== 0 && day !== 6) totalDays++;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      const halfDayStart = edits.halfDayStart ?? existing.halfDayStart;
+      const halfDayEnd = edits.halfDayEnd ?? existing.halfDayEnd;
+      if (halfDayStart) totalDays -= 0.5;
+      if (halfDayEnd) totalDays -= 0.5;
+
+      const updated = await prisma.absenceRequest.update({
+        where: { id },
+        data: {
+          ...(edits.category && { category: edits.category }),
+          startDate: newStart,
+          endDate: newEnd,
+          halfDayStart,
+          halfDayEnd,
+          totalDays,
+        },
+        include: { employee: true },
+      });
+
+      // Sync vacation balance for URLAUB
+      if (
+        existing.category === "URLAUB" ||
+        (edits.category && edits.category === "URLAUB")
+      ) {
+        syncVacationBalance(
+          existing.employeeId,
+          newStart.getFullYear(),
+          user.workspaceId!,
+        ).catch((err) =>
+          log.error("VacationBalance sync failed", { error: err }),
+        );
+      }
+
+      return NextResponse.json(updated);
+    }
+
+    const parsed = validateBody(updateAbsenceStatusSchema, rawBody);
+    if (!parsed.success) return parsed.response;
+
+    const body = parsed.data;
 
     const data: Record<string, unknown> = {};
 
@@ -128,13 +210,23 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         );
       }
 
-      // Cancel (STORNIERT) — employee can cancel own, management can cancel any
-      if (body.status === "STORNIERT" && isEmployee(user)) {
-        const linkedEmployee = await prisma.employee.findFirst({
-          where: { workspaceId: user.workspaceId, email: user.email },
-        });
-        if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // Cancel (STORNIERT) — employee can cancel own, management can cancel any.
+      // Only AUSSTEHEND requests can be canceled: once approved/rejected the
+      // record is locked (audit trail / vacation balance integrity).
+      if (body.status === "STORNIERT") {
+        if (existing.status !== "AUSSTEHEND") {
+          return NextResponse.json(
+            { error: "ONLY_PENDING_CAN_BE_CANCELLED" },
+            { status: 409 },
+          );
+        }
+        if (isEmployee(user)) {
+          const linkedEmployee = await prisma.employee.findFirst({
+            where: { workspaceId: user.workspaceId, email: user.email },
+          });
+          if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          }
         }
       }
 

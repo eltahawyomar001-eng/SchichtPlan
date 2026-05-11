@@ -600,8 +600,13 @@
       "category": "Kategorie",
       "startDate": "Startdatum",
       "endDate": "Enddatum",
-      "submit": "Antrag einreichen"
-    }
+      "submit": "Antrag einreichen",
+      "save": "Speichern"
+    },
+    "edit": "Bearbeiten",
+    "withdraw": "Zurückziehen",
+    "cancelConfirm": "Antrag wirklich zurückziehen?",
+    "editRequest": "Antrag bearbeiten"
   },
   "availability": {
     "title": "Verfügbarkeiten",
@@ -3044,6 +3049,16 @@
       "label": "Öffentlicher Ticket-Link",
       "copy": "Link kopieren",
       "copied": "Kopiert!"
+    },
+    "bulkDelete": {
+      "selectAll": "Alle auswählen",
+      "selectOne": "Auswählen",
+      "selected": "{count} ausgewählt",
+      "hint": "Auswählen, um mehrere zu löschen",
+      "deleteAction": "Auswahl löschen",
+      "deleting": "Lösche…",
+      "confirm": "{count} Ticket(s) wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "partialError": "{failed} Ticket(s) konnten nicht gelöscht werden."
     }
   },
   "workspaceInactive": {

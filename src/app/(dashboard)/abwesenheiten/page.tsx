@@ -115,6 +115,16 @@ export default function AbwesenheitenPage() {
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>(
     {},
   );
+  const [editingAbsence, setEditingAbsence] = useState<AbsenceRequest | null>(
+    null,
+  );
+  const [editForm, setEditForm] = useState({
+    category: "URLAUB",
+    startDate: "",
+    endDate: "",
+    halfDayStart: false,
+    halfDayEnd: false,
+  });
 
   // ── Fetch data ──────────────────────────────────────────────
 
@@ -181,6 +191,42 @@ export default function AbwesenheitenPage() {
       }
     } catch {
       setLoadError(tc("errorOccurred"));
+    }
+  }
+
+  function openEdit(absence: AbsenceRequest) {
+    setEditingAbsence(absence);
+    setEditForm({
+      category: absence.category,
+      startDate: absence.startDate.slice(0, 10),
+      endDate: absence.endDate.slice(0, 10),
+      halfDayStart: absence.halfDayStart,
+      halfDayEnd: absence.halfDayEnd,
+    });
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingAbsence) return;
+    const id = editingAbsence.id;
+    setActionLoading((prev) => ({ ...prev, [id]: true }));
+    try {
+      const res = await fetch(`/api/absences/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setLoadError(data.error || tc("errorOccurred"));
+      } else {
+        setEditingAbsence(null);
+        fetchAbsences();
+      }
+    } catch {
+      setLoadError(tc("errorOccurred"));
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [id]: false }));
     }
   }
 
@@ -447,6 +493,38 @@ export default function AbwesenheitenPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Actions (own pending request — employee or manager owner) */}
+                      {!canManage &&
+                        absence.status === "AUSSTEHEND" &&
+                        absence.employee.id === user?.employeeId && (
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!!actionLoading[absence.id]}
+                              onClick={() => openEdit(absence)}
+                            >
+                              <span className="text-xs">{t("edit")}</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!!actionLoading[absence.id]}
+                              onClick={() => {
+                                if (confirm(t("cancelConfirm"))) {
+                                  handleStatusChange(absence.id, "STORNIERT");
+                                }
+                              }}
+                              className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40"
+                            >
+                              <XIcon className="h-4 w-4" />
+                              <span className="hidden sm:inline text-xs">
+                                {t("withdraw")}
+                              </span>
+                            </Button>
+                          </div>
+                        )}
                     </div>
                   );
                 })}
@@ -573,6 +651,111 @@ export default function AbwesenheitenPage() {
                     {tc("cancel")}
                   </Button>
                   <Button type="submit">{t("form.submit")}</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Edit Absence Modal (employee own pending) ─────────── */}
+      {editingAbsence && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
+          <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{t("editRequest")}</CardTitle>
+                <button
+                  onClick={() => setEditingAbsence(null)}
+                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                >
+                  <XIcon className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <Label>{t("form.category")}</Label>
+                  <Select
+                    value={editForm.category}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, category: e.target.value })
+                    }
+                  >
+                    {CATEGORY_KEYS.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {t(`categories.${cat.value}`)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label>{t("form.startDate")}</Label>
+                    <Input
+                      type="date"
+                      value={editForm.startDate}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, startDate: e.target.value })
+                      }
+                      required
+                    />
+                    <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                      <input
+                        type="checkbox"
+                        checked={editForm.halfDayStart}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            halfDayStart: e.target.checked,
+                          })
+                        }
+                        className="rounded"
+                      />
+                      {t("halfDay")}
+                    </label>
+                  </div>
+                  <div>
+                    <Label>{t("form.endDate")}</Label>
+                    <Input
+                      type="date"
+                      value={editForm.endDate}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, endDate: e.target.value })
+                      }
+                      required
+                    />
+                    <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                      <input
+                        type="checkbox"
+                        checked={editForm.halfDayEnd}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            halfDayEnd: e.target.checked,
+                          })
+                        }
+                        className="rounded"
+                      />
+                      {t("halfDay")}
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingAbsence(null)}
+                  >
+                    {tc("cancel")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={!!actionLoading[editingAbsence.id]}
+                  >
+                    {t("form.save")}
+                  </Button>
                 </div>
               </form>
             </CardContent>

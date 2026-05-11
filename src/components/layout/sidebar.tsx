@@ -227,6 +227,10 @@ interface SidebarProps {
 
 const FAVORITES_KEY = "shiftfy-sidebar-favorites";
 const COLLAPSED_KEY = "shiftfy-sidebar-collapsed";
+const WIDTH_KEY = "shiftfy-sidebar-width";
+const MIN_WIDTH = 200;
+const MAX_WIDTH = 400;
+const DEFAULT_WIDTH = 256; // matches the original w-64 (16rem)
 
 function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -315,6 +319,43 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { favorites, toggle: toggleFavorite } = useFavorites();
   const { collapsed, toggleGroup } = useCollapsedGroups();
 
+  // Resizable sidebar (desktop only). Width persists to localStorage and is
+  // published as a CSS var so the dashboard shell can match its main padding.
+  const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
+  const [resizing, setResizing] = useState(false);
+  useEffect(() => {
+    const raw = window.localStorage.getItem(WIDTH_KEY);
+    const parsed = raw ? parseInt(raw, 10) : NaN;
+    if (!isNaN(parsed)) {
+      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, parsed)));
+    }
+  }, []);
+  useEffect(() => {
+    document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+  }, [width]);
+  useEffect(() => {
+    if (!resizing) return;
+    const onMove = (e: MouseEvent) => {
+      const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, e.clientX));
+      setWidth(next);
+    };
+    const onUp = () => {
+      setResizing(false);
+      window.localStorage.setItem(WIDTH_KEY, String(width));
+    };
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resizing]);
+
   /* Add-on status — decorates locked nav items with a small badge. */
   const [ticketingActive, setTicketingActive] = useState<boolean | null>(null);
   const [schichtplanungActive, setSchichtplanungActive] = useState<
@@ -392,13 +433,36 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <aside
         role="navigation"
         aria-label="Hauptnavigation"
+        style={{
+          // Mobile uses fixed w-64; desktop uses dynamic width via CSS var.
+          // Inline `width` only applies on lg: via the className override.
+          ["--sb-w" as string]: `${width}px`,
+        }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white dark:bg-zinc-900 transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex w-64 lg:w-[var(--sb-w,16rem)] flex-col bg-white dark:bg-zinc-900",
+          !resizing && "transition-transform duration-300 ease-in-out",
           "border-r border-gray-100 dark:border-zinc-800 shadow-[1px_0_8px_rgba(0,0,0,0.04)]",
           "lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
+        {/* Desktop resize handle — drag to resize, double-click to reset */}
+        <div
+          role="separator"
+          aria-label="Sidebar resize"
+          aria-orientation="vertical"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setResizing(true);
+          }}
+          onDoubleClick={() => {
+            setWidth(DEFAULT_WIDTH);
+            window.localStorage.setItem(WIDTH_KEY, String(DEFAULT_WIDTH));
+          }}
+          className="hidden lg:block absolute top-0 right-0 h-full w-1.5 -mr-0.5 cursor-col-resize group z-10"
+        >
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-emerald-400 transition-colors" />
+        </div>
         {/* Logo */}
         <div className="flex items-center justify-between px-5 flex-shrink-0 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-2.5">

@@ -143,6 +143,14 @@ export const POST = withRoute(
       customerParams.customer_email = user.email;
     }
 
+    // Per-seat billing — charge for every active employee already in the
+    // workspace. Legacy workspaces moving from free/trial must not skip
+    // paying for existing employees. Minimum of 1 seat.
+    const activeEmployeeCount = await prisma.employee.count({
+      where: { workspaceId: user.workspaceId, isActive: true },
+    });
+    const initialSeatCount = Math.max(1, activeEmployeeCount);
+
     // Derive base URL from the actual request so it's always correct on Vercel,
     // regardless of how NEXTAUTH_URL is configured.
     const proto = req.headers.get("x-forwarded-proto") ?? "https";
@@ -167,7 +175,7 @@ export const POST = withRoute(
     const sessionParams = {
       mode: "subscription" as const,
       payment_method_types: ["card", "sepa_debit"] as ["card", "sepa_debit"],
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: initialSeatCount }],
       billing_address_collection: "required" as const,
       success_url: successUrl,
       cancel_url: cancelUrl,

@@ -94,13 +94,31 @@ export async function getSubscriptionState(
 ): Promise<SubscriptionState> {
   const sub = await prisma.subscription.findUnique({
     where: { workspaceId },
-    select: { status: true, trialEnd: true },
+    select: {
+      status: true,
+      trialEnd: true,
+      stripeSubscriptionId: true,
+      currentPeriodEnd: true,
+    },
   });
   if (!sub) return "inactive";
   if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
     return "inactive";
-  if (sub.status === "TRIALING" && sub.trialEnd && sub.trialEnd < new Date())
+
+  if (sub.status === "TRIALING" && sub.trialEnd && sub.trialEnd < new Date()) {
+    // Webhook-miss safeguard: when a Stripe subscription exists and the
+    // current period is still in the future, the user has paid — Stripe just
+    // hasn't delivered the trial→active transition webhook yet. Treat as
+    // active so paying Basic/Pro customers never see a false trial_expired
+    // screen. The next /api/billing/subscription?reconcile=1 call will sync
+    // the status from live Stripe.
+    const hasRealStripeSub =
+      sub.stripeSubscriptionId && !sub.stripeSubscriptionId.startsWith("sim_");
+    const periodStillValid =
+      sub.currentPeriodEnd && sub.currentPeriodEnd > new Date();
+    if (hasRealStripeSub && periodStillValid) return "active";
     return "trial_expired";
+  }
   return "active";
 }
 

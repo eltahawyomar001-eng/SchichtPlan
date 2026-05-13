@@ -9,6 +9,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateEmployeeSchema, validateBody } from "@/lib/validations";
+import { reconcileSeatsFromEmployees } from "@/lib/billing-seats";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
@@ -165,6 +166,12 @@ export async function PATCH(
         log.error("[webhook] employee.updated dispatch error", { error: err }),
     );
 
+    // ── Pay-as-you-grow: re-sync seats when activation toggles ──
+    // Only billing-relevant edits (activate/deactivate) need to hit Stripe.
+    if (body.isActive !== undefined) {
+      await reconcileSeatsFromEmployees(workspaceId!);
+    }
+
     return NextResponse.json({
       ...employee,
       ...(warnings.length ? { warnings } : {}),
@@ -223,6 +230,12 @@ export async function DELETE(
         workspaceId: workspaceId!,
       });
     });
+
+    // ── Pay-as-you-grow: drop Stripe seat quantity ──
+    // Awaited so the customer is credited a pro-rata refund immediately.
+    // Fails silently for sim-mode / unbilled workspaces. Helper clamps to a
+    // minimum of 1 seat so the subscription never collapses to zero.
+    await reconcileSeatsFromEmployees(workspaceId!);
 
     return NextResponse.json({ message: "Employee deleted" });
   } catch (error) {

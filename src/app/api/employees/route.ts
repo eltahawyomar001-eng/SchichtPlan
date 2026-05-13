@@ -16,6 +16,7 @@ import { invitationEmail } from "@/lib/notifications/email-i18n";
 import { getLocaleFromCookie } from "@/i18n/locale";
 import { randomBytes } from "crypto";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
+import { reconcileSeatsFromEmployees } from "@/lib/billing-seats";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
@@ -249,6 +250,13 @@ export async function POST(req: Request) {
     }).catch((err) =>
       log.error("[webhook] employee.created dispatch error", { error: err }),
     );
+
+    // ── Pay-as-you-grow: bump Stripe seat quantity ──
+    // Awaited so the customer is billed in lockstep with the create. Fails
+    // silently for sim-mode / unbilled workspaces — never blocks employee
+    // creation on a Stripe outage (the next create or admin reconcile will
+    // catch up since the helper computes seats from the live DB count).
+    await reconcileSeatsFromEmployees(workspaceId);
 
     const warnings: string[] = [];
     if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {

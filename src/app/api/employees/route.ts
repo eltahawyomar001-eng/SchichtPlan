@@ -256,7 +256,7 @@ export async function POST(req: Request) {
     // silently for sim-mode / unbilled workspaces — never blocks employee
     // creation on a Stripe outage (the next create or admin reconcile will
     // catch up since the helper computes seats from the live DB count).
-    await reconcileSeatsFromEmployees(workspaceId);
+    await reconcileSeatsFromEmployees(workspaceId, "add");
 
     const warnings: string[] = [];
     if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {

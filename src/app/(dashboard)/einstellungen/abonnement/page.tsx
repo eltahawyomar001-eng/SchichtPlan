@@ -238,6 +238,16 @@ function BillingContent() {
   const ticketingRef = useRef<HTMLDivElement>(null);
   const schichtplanungRef = useRef<HTMLDivElement>(null);
 
+  // ── Seat-quantity drift detection (Stripe ↔ employee count) ──
+  const [seatDrift, setSeatDrift] = useState<{
+    employeeCount: number;
+    stripeQuantity: number | null;
+    inSync: boolean;
+    reason?: string;
+  } | null>(null);
+  const [seatSyncLoading, setSeatSyncLoading] = useState(false);
+  const [seatSyncMsg, setSeatSyncMsg] = useState<string | null>(null);
+
   // Check for success/cancel from Stripe redirect
   useEffect(() => {
     const billingParam = searchParams.get("billing");
@@ -316,6 +326,21 @@ function BillingContent() {
   useEffect(() => {
     fetchSubscription(true);
   }, [fetchSubscription]);
+
+  // ── Drift check: compare live Stripe quantity vs active employee count ──
+  // Only meaningful for workspaces with a real (non-sim) Stripe subscription.
+  const fetchSeatDrift = useCallback(async () => {
+    try {
+      const res = await fetch("/api/billing/seats/reconcile");
+      if (res.ok) setSeatDrift(await res.json());
+    } catch {
+      // silent — drift card just won't render
+    }
+  }, []);
+
+  useEffect(() => {
+    if (subscription?.hasStripeSubscription) fetchSeatDrift();
+  }, [subscription?.hasStripeSubscription, fetchSeatDrift]);
 
   // Load public plan pricing (source of truth for displayed prices)
   useEffect(() => {
@@ -543,6 +568,35 @@ function BillingContent() {
       setErrorMsg(t("checkoutError"));
     } finally {
       setPortalLoading(false);
+    }
+  };
+
+  const handleForceSync = async () => {
+    setSeatSyncLoading(true);
+    setSeatSyncMsg(null);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/billing/seats/reconcile", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(t("forceSyncError"));
+        return;
+      }
+      if (data.changed) {
+        setSeatSyncMsg(
+          t("forceSyncUpdated", { before: data.before, after: data.after }),
+        );
+      } else {
+        setSeatSyncMsg(t("forceSyncAlreadyInSync"));
+      }
+      await fetchSeatDrift();
+      await fetchSubscription(true);
+    } catch {
+      setErrorMsg(t("forceSyncError"));
+    } finally {
+      setSeatSyncLoading(false);
     }
   };
 
@@ -789,6 +843,61 @@ function BillingContent() {
                 </button>
                 <p className="mt-2 text-xs text-gray-400">
                   {t("manageSubscriptionDesc")}
+                </p>
+              </div>
+            )}
+
+            {/* ─── Seat-quantity sync (Stripe ↔ employee count) ─── */}
+            {subscription?.hasStripeSubscription && seatDrift && (
+              <div
+                className={`mt-6 rounded-xl border p-4 ${
+                  seatDrift.inSync
+                    ? "border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-950/30"
+                    : "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30"
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p
+                      className={`text-sm font-semibold ${
+                        seatDrift.inSync
+                          ? "text-emerald-800 dark:text-emerald-200"
+                          : "text-amber-900 dark:text-amber-200"
+                      }`}
+                    >
+                      {seatDrift.inSync
+                        ? t("seatSyncInSyncTitle")
+                        : t("seatSyncDriftTitle")}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-zinc-400">
+                      {t("seatSyncStatus", {
+                        employees: seatDrift.employeeCount,
+                        seats: seatDrift.stripeQuantity ?? 0,
+                      })}
+                    </p>
+                    {seatSyncMsg && (
+                      <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                        {seatSyncMsg}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleForceSync}
+                    disabled={seatSyncLoading}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-all disabled:opacity-60 ${
+                      seatDrift.inSync
+                        ? "border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                        : "bg-amber-600 text-white hover:bg-amber-700"
+                    }`}
+                  >
+                    {seatSyncLoading && (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    )}
+                    {t("forceSyncButton")}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-zinc-500">
+                  {t("forceSyncDesc")}
                 </p>
               </div>
             )}

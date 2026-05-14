@@ -169,7 +169,10 @@ export async function PATCH(
     // ── Pay-as-you-grow: re-sync seats when activation toggles ──
     // Only billing-relevant edits (activate/deactivate) need to hit Stripe.
     if (body.isActive !== undefined) {
-      await reconcileSeatsFromEmployees(workspaceId!);
+      await reconcileSeatsFromEmployees(
+        workspaceId!,
+        body.isActive ? "add" : "remove",
+      );
     }
 
     return NextResponse.json({
@@ -232,10 +235,11 @@ export async function DELETE(
     });
 
     // ── Pay-as-you-grow: drop Stripe seat quantity ──
-    // Awaited so the customer is credited a pro-rata refund immediately.
-    // Fails silently for sim-mode / unbilled workspaces. Helper clamps to a
-    // minimum of 1 seat so the subscription never collapses to zero.
-    await reconcileSeatsFromEmployees(workspaceId!);
+    // Credit is applied to the customer's NEXT invoice (create_prorations)
+    // rather than issuing an immediate credit invoice. Fails silently for
+    // sim-mode / unbilled workspaces. Helper clamps to a minimum of 1 seat
+    // so the subscription never collapses to zero.
+    await reconcileSeatsFromEmployees(workspaceId!, "remove");
 
     return NextResponse.json({ message: "Employee deleted" });
   } catch (error) {

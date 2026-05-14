@@ -561,8 +561,8 @@ function StatCard({
       badge: "bg-blue-500 dark:bg-blue-500 text-white",
     },
     gray: {
-      card: "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 dark:bg-zinc-800/60",
-      badge: "bg-gray-50 dark:bg-zinc-800/500 dark:bg-zinc-500 text-white",
+      card: "border-gray-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-800/60",
+      badge: "bg-gray-600 dark:bg-zinc-500 text-white",
     },
   };
 

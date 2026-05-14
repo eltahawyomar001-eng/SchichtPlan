@@ -105,30 +105,27 @@ export async function syncUsageLimits(workspaceId: string, planId: PlanId) {
    ═══════════════════════════════════════════════════════════════ */
 
 /**
- * Count all occupied user slots for billing purposes.
+ * Count all occupied user slots for plan-limit + billing purposes.
  *
- * Only employees **linked to a User account** (userId != null) count toward
- * the plan limit — this means the employee has accepted an invitation and
- * registered. Unlinked employee records (created by admins for shift
- * planning but without a real user login) are NOT billed.
+ * Every active employee row counts — including admin-created records that
+ * aren't linked to a User account yet. This matches the per-seat billing
+ * model (each active employee is a Stripe seat) and the displayed usage
+ * dashboard, so what the customer sees is what gates them and what they're
+ * charged for.
  *
- * Pending invitations also reserve a slot so that an admin cannot invite
- * more people than the plan allows.
+ * Pending invitations also reserve a slot so the admin cannot invite more
+ * people than the plan allows.
  */
 export async function countOccupiedSlots(workspaceId: string): Promise<number> {
-  const [linkedEmployees, pendingInvitations] = await Promise.all([
+  const [activeEmployees, pendingInvitations] = await Promise.all([
     prisma.employee.count({
-      where: {
-        workspaceId,
-        isActive: true,
-        userId: { not: null }, // only registered users count
-      },
+      where: { workspaceId, isActive: true },
     }),
     prisma.invitation.count({
       where: { workspaceId, status: "PENDING" },
     }),
   ]);
-  return linkedEmployees + pendingInvitations;
+  return activeEmployees + pendingInvitations;
 }
 
 /**

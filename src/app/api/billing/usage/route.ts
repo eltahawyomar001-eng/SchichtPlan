@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
-import {
-  ensureWorkspaceUsage,
-  countOccupiedSlots,
-} from "@/lib/subscription-guard";
+import { ensureWorkspaceUsage } from "@/lib/subscription-guard";
 import { getWorkspacePlan } from "@/lib/subscription";
 import { log } from "@/lib/logger";
 
@@ -25,12 +22,19 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
   const { workspaceId } = auth;
 
   try {
-    const [usage, plan, locationCount, occupiedSlots] = await Promise.all([
-      ensureWorkspaceUsage(workspaceId),
-      getWorkspacePlan(workspaceId),
-      prisma.location.count({ where: { workspaceId } }),
-      countOccupiedSlots(workspaceId),
-    ]);
+    // Pull the live source-of-truth counts every request — no cache, no stale
+    // metadata. The displayed counts must match what the customer sees in the
+    // employees/locations lists and what they're billed for.
+    const [usage, plan, locationCount, activeEmployees, pendingInvitations] =
+      await Promise.all([
+        ensureWorkspaceUsage(workspaceId),
+        getWorkspacePlan(workspaceId),
+        prisma.location.count({ where: { workspaceId } }),
+        prisma.employee.count({ where: { workspaceId, isActive: true } }),
+        prisma.invitation.count({
+          where: { workspaceId, status: "PENDING" },
+        }),
+      ]);
 
     const unlimited = (n: number) => (n >= 999999 ? null : n);
     const maxLocations =
@@ -45,7 +49,10 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
 
     return NextResponse.json({
       employees: {
-        used: occupiedSlots,
+        // Active employees + pending invitations — matches the gating logic
+        // in subscription-guard so what users see here is what they'll be
+        // blocked by at the limit.
+        used: activeEmployees + pendingInvitations,
         limit: unlimited(usage.userSlotsTotal),
       },
       locations: {

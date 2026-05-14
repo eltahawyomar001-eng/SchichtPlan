@@ -356,6 +356,7 @@ export default function MitarbeiterPage() {
           role: "",
         });
         fetchEmployees();
+        window.dispatchEvent(new Event("shiftfy:usage-changed"));
       } else {
         // Intercept plan-limit errors with upgrade modal
         const isPlanLimit = await handlePlanLimit(res);
@@ -392,6 +393,7 @@ export default function MitarbeiterPage() {
       await fetch(`/api/employees/${deleteTarget}`, { method: "DELETE" });
       setDeleteTarget(null);
       fetchEmployees();
+      window.dispatchEvent(new Event("shiftfy:usage-changed"));
     } catch {
       setError(tc("errorOccurred"));
     }
@@ -405,6 +407,7 @@ export default function MitarbeiterPage() {
         body: JSON.stringify({ ...emp, isActive: !emp.isActive }),
       });
       fetchEmployees();
+      window.dispatchEvent(new Event("shiftfy:usage-changed"));
     } catch {
       setError(tc("errorOccurred"));
     }

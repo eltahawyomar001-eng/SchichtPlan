@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -85,27 +85,50 @@ function MetricRow({
   );
 }
 
+/**
+ * Custom event name fired by employee/location/invitation CRUD pages to
+ * tell every mounted UsageDashboard to re-fetch. Use:
+ *   window.dispatchEvent(new Event(USAGE_CHANGED_EVENT));
+ * after a successful CRUD response.
+ */
+export const USAGE_CHANGED_EVENT = "shiftfy:usage-changed";
+
 export function UsageDashboard() {
   const t = useTranslations("billing");
   const [data, setData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/billing/usage")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: UsageData | null) => {
-        if (cancelled) return;
-        setData(d);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+  const load = useCallback(async () => {
+    try {
+      // cache: "no-store" — usage counts must reflect the live DB on every
+      // fetch, never a stale CDN/SW cache.
+      const res = await fetch("/api/billing/usage", { cache: "no-store" });
+      const d = res.ok ? ((await res.json()) as UsageData) : null;
+      setData(d);
+    } catch {
+      // leave previous data on transient error
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+
+    // Refresh whenever the tab regains focus (covers most "I added an
+    // employee in another tab, come back to billing" cases).
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+
+    // Refresh on broadcast from CRUD pages in the same tab.
+    const onUsageChanged = () => load();
+    window.addEventListener(USAGE_CHANGED_EVENT, onUsageChanged);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(USAGE_CHANGED_EVENT, onUsageChanged);
+    };
+  }, [load]);
 
   if (loading) {
     return (

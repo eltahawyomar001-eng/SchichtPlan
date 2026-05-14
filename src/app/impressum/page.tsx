@@ -74,8 +74,6 @@ export default function ImpressumPage() {
               Inhaber: Mohammad Bashabsheh
             </p>
             <p className="mt-2">
-              c/o VirtualOfficeBerlin
-              <br />
               Kolonnenstraße 8
               <br />
               10827 Berlin

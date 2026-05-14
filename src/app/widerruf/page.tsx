@@ -100,8 +100,6 @@ export default function WiderrufPage() {
               <br />
               Mohammad Bashabsheh
               <br />
-              c/o VirtualOfficeBerlin
-              <br />
               Kolonnenstraße 8, 10827 Berlin, Deutschland
               <br />
               E-Mail: info@bashabsheh-vergabepartner.de

@@ -101,6 +101,7 @@ export default function StandortePage() {
         setEditingLocation(null);
         setFormData({ name: "", address: "" });
         fetchLocations();
+        window.dispatchEvent(new Event("shiftfy:usage-changed"));
       } else {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
@@ -121,6 +122,7 @@ export default function StandortePage() {
       await fetch(`/api/locations/${deleteTarget}`, { method: "DELETE" });
       setDeleteTarget(null);
       fetchLocations();
+      window.dispatchEvent(new Event("shiftfy:usage-changed"));
     } catch {
       setError(tc("errorOccurred"));
     }

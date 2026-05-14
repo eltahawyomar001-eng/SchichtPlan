@@ -230,7 +230,7 @@ export default function QrStationPage() {
                       Öffnen
                     </a>
                   </div>
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 text-center">
                     Link ist 24 Stunden gültig
                   </p>
                 </div>
@@ -249,7 +249,7 @@ export default function QrStationPage() {
                     }
                   }}
                   disabled={stationLinkLoading}
-                  className="w-full py-2.5 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold disabled:opacity-50 hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                 >
                   {stationLinkLoading
                     ? "Wird generiert…"
@@ -261,7 +261,7 @@ export default function QrStationPage() {
 
           {/* Debug URL (small, inconspicuous) */}
           {punchUrl && (
-            <details className="text-xs text-gray-300 dark:text-gray-700">
+            <details className="text-xs text-gray-500 dark:text-zinc-400">
               <summary className="cursor-pointer">
                 Direkt-Link (für Tests)
               </summary>
@@ -269,7 +269,7 @@ export default function QrStationPage() {
                 href={punchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all hover:underline text-gray-400"
+                className="break-all hover:underline text-gray-600 dark:text-zinc-300"
               >
                 {punchUrl}
               </a>

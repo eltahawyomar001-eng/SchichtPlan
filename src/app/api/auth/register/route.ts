@@ -54,20 +54,28 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
 
   let claimingExistingUser = false;
   if (existingUser) {
-    const oauthAccountCount = await prisma.account.count({
+    const oauthAccounts = await prisma.account.findMany({
       where: { userId: existingUser.id },
+      select: { provider: true },
     });
     const isPlaceholder =
-      !existingUser.hashedPassword && oauthAccountCount === 0;
+      !existingUser.hashedPassword && oauthAccounts.length === 0;
 
     if (invitationToken && isPlaceholder) {
       claimingExistingUser = true; // continue to invitation flow below
     } else {
+      // Tailor the hint to how the existing account was originally created
+      // so we don't tell an OAuth-only user to "reset their password" when
+      // they never set one.
+      const provider = oauthAccounts[0]?.provider;
+      const message = provider
+        ? `Diese E-Mail ist bereits mit ${provider === "google" ? "Google" : provider} verknüpft. Bitte melden Sie sich über „${provider === "google" ? "Weiter mit Google" : provider}“ an.`
+        : "Ein Konto mit dieser E-Mail existiert bereits. Bitte melden Sie sich an oder nutzen Sie „Passwort vergessen“, falls Sie Ihr Passwort vergessen haben.";
       return NextResponse.json(
         {
           error: "EMAIL_ALREADY_EXISTS",
-          message:
-            "Ein Konto mit dieser E-Mail existiert bereits. Falls Sie das Passwort vergessen haben, nutzen Sie bitte „Passwort vergessen“.",
+          message,
+          ...(provider ? { provider } : {}),
         },
         { status: 409 },
       );

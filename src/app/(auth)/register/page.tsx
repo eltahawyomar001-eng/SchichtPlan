@@ -91,7 +91,9 @@ function RegisterForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || t("registrationFailed"));
+        // Prefer the human-readable `message` field over the machine `error`
+        // code so users never see strings like "EMAIL_ALREADY_EXISTS".
+        setError(data.message || data.error || t("registrationFailed"));
         setLoading(false);
         return;
       }

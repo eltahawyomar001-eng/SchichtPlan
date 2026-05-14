@@ -15,8 +15,12 @@ interface UsageMetric {
   limit: number | null;
 }
 
+interface EmployeeUsageMetric extends UsageMetric {
+  pendingInvitations?: number;
+}
+
 interface UsageData {
-  employees: UsageMetric;
+  employees: EmployeeUsageMetric;
   locations: UsageMetric;
   storageMb: UsageMetric;
   pdfsThisMonth: UsageMetric;
@@ -44,12 +48,14 @@ function MetricRow({
   used,
   limit,
   unit,
+  hint,
   t,
 }: {
   label: string;
   used: number;
   limit: number | null;
   unit?: string;
+  hint?: string;
   t: (k: string) => string;
 }) {
   const percent = pct(used, limit);
@@ -81,6 +87,9 @@ function MetricRow({
           }}
         />
       </div>
+      {hint && (
+        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">{hint}</p>
+      )}
     </div>
   );
 }
@@ -158,6 +167,13 @@ export function UsageDashboard() {
             label={t("usageEmployees")}
             used={data.employees.used}
             limit={data.employees.limit}
+            hint={
+              data.employees.pendingInvitations
+                ? t("usagePendingInvitations", {
+                    count: data.employees.pendingInvitations,
+                  })
+                : undefined
+            }
             t={t}
           />
           <MetricRow

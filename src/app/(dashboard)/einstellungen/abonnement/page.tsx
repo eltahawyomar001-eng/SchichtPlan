@@ -593,6 +593,9 @@ function BillingContent() {
       }
       await fetchSeatDrift();
       await fetchSubscription(true);
+      // Tell the Usage & Limits card to re-fetch so all three views (sync
+      // box, usage bar, seats card) snap to the same number immediately.
+      window.dispatchEvent(new Event("shiftfy:usage-changed"));
     } catch {
       setErrorMsg(t("forceSyncError"));
     } finally {

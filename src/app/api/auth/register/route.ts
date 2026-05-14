@@ -40,16 +40,38 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
     );
   }
 
-  // Check if user already exists
+  // Check if user already exists.
+  // Two legitimate scenarios for an existing row:
+  //  (1) Truly active account — has password OR linked OAuth Account row.
+  //      → registration is blocked (you cannot take over someone's account).
+  //  (2) Placeholder / "ghost" row — no password AND no OAuth accounts.
+  //      → an invitation-token-bearing user may CLAIM it, setting the
+  //        password and joining the inviting workspace. Without a valid
+  //        token, still blocked — placeholder rows must not be hijacked.
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
 
+  let claimingExistingUser = false;
   if (existingUser) {
-    return NextResponse.json(
-      { error: "Ein Konto mit dieser E-Mail existiert bereits." },
-      { status: 409 },
-    );
+    const oauthAccountCount = await prisma.account.count({
+      where: { userId: existingUser.id },
+    });
+    const isPlaceholder =
+      !existingUser.hashedPassword && oauthAccountCount === 0;
+
+    if (invitationToken && isPlaceholder) {
+      claimingExistingUser = true; // continue to invitation flow below
+    } else {
+      return NextResponse.json(
+        {
+          error: "EMAIL_ALREADY_EXISTS",
+          message:
+            "Ein Konto mit dieser E-Mail existiert bereits. Falls Sie das Passwort vergessen haben, nutzen Sie bitte „Passwort vergessen“.",
+        },
+        { status: 409 },
+      );
+    }
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -92,19 +114,34 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
       );
     }
 
-    // Create user in existing workspace + accept invitation
+    // Create user in existing workspace + accept invitation.
+    // If a placeholder User row exists for this email (no password, no OAuth),
+    // claim it in place — set the password, move them into the inviting
+    // workspace, and adopt the role from the invitation.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.$transaction(async (tx: any) => {
-      const user = await tx.user.create({
-        data: {
-          name,
-          email,
-          hashedPassword,
-          role: invitation.role,
-          workspaceId: invitation.workspaceId,
-          consentGivenAt: new Date(),
-        },
-      });
+      const user =
+        claimingExistingUser && existingUser
+          ? await tx.user.update({
+              where: { id: existingUser.id },
+              data: {
+                name,
+                hashedPassword,
+                role: invitation.role,
+                workspaceId: invitation.workspaceId,
+                consentGivenAt: new Date(),
+              },
+            })
+          : await tx.user.create({
+              data: {
+                name,
+                email,
+                hashedPassword,
+                role: invitation.role,
+                workspaceId: invitation.workspaceId,
+                consentGivenAt: new Date(),
+              },
+            });
 
       await tx.invitation.update({
         where: { id: invitation.id },

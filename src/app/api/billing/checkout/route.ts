@@ -136,6 +136,50 @@ export const POST = withRoute(
     // Ensure subscription row exists
     const sub = await ensureSubscription(user.workspaceId);
 
+    // ── Hard duplicate guard ──
+    // If the workspace already has an ACTIVE/TRIALING/PAST_DUE Stripe sub,
+    // refuse to start another checkout — issuing a second sub on the same
+    // customer is exactly how customers end up with two parallel invoices.
+    // Owners who want a different plan must use the Stripe customer portal
+    // (manage subscription) to upgrade in place.
+    if (sub.stripeCustomerId && !sub.stripeCustomerId.startsWith("sim_")) {
+      try {
+        const existing = await stripe.subscriptions.list({
+          customer: sub.stripeCustomerId,
+          status: "all",
+          limit: 5,
+        });
+        const live = existing.data.find((s) =>
+          ["active", "trialing", "past_due"].includes(s.status),
+        );
+        if (live) {
+          log.warn(
+            "[Stripe] Refusing duplicate checkout — customer already has an active subscription",
+            {
+              workspaceId: user.workspaceId,
+              existingSubscriptionId: live.id,
+              status: live.status,
+            },
+          );
+          return NextResponse.json(
+            {
+              error: "ALREADY_SUBSCRIBED",
+              message:
+                "Sie haben bereits ein aktives Abonnement. Bitte verwalten Sie Ihren Plan über das Kundenportal.",
+              existingSubscriptionId: live.id,
+            },
+            { status: 409 },
+          );
+        }
+      } catch (err) {
+        // Stripe lookup failed — log but don't block (idempotency key below
+        // still protects against the double-click case).
+        log.warn("[Stripe] duplicate-subscription pre-check failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     const customerParams: Record<string, string> = {};
     if (sub.stripeCustomerId) {
       customerParams.customer = sub.stripeCustomerId;
@@ -188,9 +232,18 @@ export const POST = withRoute(
       ...customerParams,
     };
 
+    // Deterministic idempotency key: same workspace + plan + cycle within a
+    // 24-hour bucket = same checkout session. A rapid double-click on the
+    // Subscribe button now produces the same session URL, so Stripe will
+    // never create two parallel subscriptions for the same intent.
+    const dayBucket = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    const stripeIdempotencyKey = `checkout:${user.workspaceId}:${planId}:${billingCycle}:${dayBucket}`;
+
     try {
-      const checkoutSession =
-        await stripe.checkout.sessions.create(sessionParams);
+      const checkoutSession = await stripe.checkout.sessions.create(
+        sessionParams,
+        { idempotencyKey: stripeIdempotencyKey },
+      );
       return NextResponse.json({ url: checkoutSession.url });
     } catch (err) {
       const stripeErr = err as {
@@ -215,8 +268,10 @@ export const POST = withRoute(
           customer_email: user.email,
         };
         try {
-          const retrySession =
-            await stripe.checkout.sessions.create(retryParams);
+          const retrySession = await stripe.checkout.sessions.create(
+            retryParams,
+            { idempotencyKey: `${stripeIdempotencyKey}:retry` },
+          );
           return NextResponse.json({ url: retrySession.url });
         } catch (retryErr) {
           const retryMsg =

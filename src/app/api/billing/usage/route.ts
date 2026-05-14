@@ -23,8 +23,12 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
 
   try {
     // Pull the live source-of-truth counts every request — no cache, no stale
-    // metadata. The displayed counts must match what the customer sees in the
-    // employees/locations lists and what they're billed for.
+    // metadata. The displayed "employees" count MUST equal the active-employee
+    // count, which is also exactly what Stripe bills as the seat quantity
+    // and what the seat-drift card reports. Pending invitations are tracked
+    // separately and shown alongside, but never folded into the main number,
+    // so the three views (usage bar / seat-sync card / Stripe invoice) all
+    // read the same value.
     const [usage, plan, locationCount, activeEmployees, pendingInvitations] =
       await Promise.all([
         ensureWorkspaceUsage(workspaceId),
@@ -49,10 +53,8 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
 
     return NextResponse.json({
       employees: {
-        // Active employees + pending invitations — matches the gating logic
-        // in subscription-guard so what users see here is what they'll be
-        // blocked by at the limit.
-        used: activeEmployees + pendingInvitations,
+        used: activeEmployees,
+        pendingInvitations,
         limit: unlimited(usage.userSlotsTotal),
       },
       locations: {

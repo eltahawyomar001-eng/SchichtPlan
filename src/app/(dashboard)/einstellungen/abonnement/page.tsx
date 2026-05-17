@@ -396,7 +396,6 @@ function BillingContent() {
         t("featureTemplates"),
         t("featureAbsences"),
         t("featureCsvPdfExport"),
-        t("featureTeamChat"),
       ],
       highlighted: false,
       isEnterprise: false,
@@ -556,7 +555,7 @@ function BillingContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error ?? t("checkoutError"));
+        setErrorMsg(data.message ?? data.error ?? t("checkoutError"));
         return;
       }
       if (data.url) {

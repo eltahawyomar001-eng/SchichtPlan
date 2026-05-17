@@ -449,7 +449,7 @@ export default function SchichtplanPage() {
           );
           setFormError(messages.join("\n"));
         } else {
-          setFormError(data.error || t("saveError"));
+          setFormError(data.message || data.error || t("saveError"));
         }
       }
     } catch (error) {
@@ -575,7 +575,7 @@ export default function SchichtplanPage() {
           fetchData(); // Refresh grid
         }
       } else {
-        setAutoScheduleError(data.error || tc("errorOccurred"));
+        setAutoScheduleError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setAutoScheduleError(tc("errorOccurred"));
@@ -1700,14 +1700,12 @@ export default function SchichtplanPage() {
                   onClick={() => {
                     setHolidayConfirmed(true);
                     setPendingHolidayName(null);
-                    document
-                      .getElementById("shift-form")
-                      ?.dispatchEvent(
-                        new Event("submit", {
-                          bubbles: true,
-                          cancelable: true,
-                        }),
-                      );
+                    document.getElementById("shift-form")?.dispatchEvent(
+                      new Event("submit", {
+                        bubbles: true,
+                        cancelable: true,
+                      }),
+                    );
                   }}
                   className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
                 >

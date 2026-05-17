@@ -184,7 +184,7 @@ export default function MitarbeiterPage() {
         );
         fetchEmployees();
       } else {
-        setBackfillResult(data.error ?? tq("backfillError"));
+        setBackfillResult(data.message ?? data.error ?? tq("backfillError"));
       }
     } catch {
       setBackfillResult(tq("backfillError"));
@@ -376,7 +376,7 @@ export default function MitarbeiterPage() {
             .join(", ");
           setFormError(fieldErrors);
         } else {
-          setFormError(data.error || t("saveError"));
+          setFormError(data.message || data.error || t("saveError"));
         }
       }
     } catch (error) {

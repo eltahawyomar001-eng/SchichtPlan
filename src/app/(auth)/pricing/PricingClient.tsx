@@ -36,7 +36,6 @@ export default function PricingClient() {
         t("featureBasic4"),
         t("featureBasic5"),
         t("featureBasic6"),
-        t("featureBasic7"),
       ],
       cta: t("startTrial"),
       href: `/register?plan=basic&billing=${annual ? "annual" : "monthly"}`,

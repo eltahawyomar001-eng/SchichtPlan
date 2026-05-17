@@ -153,7 +153,7 @@ export default function QualifikationenSeite() {
         fetchSkills();
       } else {
         const data = await res.json();
-        setFormError(data.error || tc("errorOccurred"));
+        setFormError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setFormError(tc("errorOccurred"));
@@ -172,7 +172,7 @@ export default function QualifikationenSeite() {
         fetchSkills();
       } else {
         const data = await res.json();
-        setError(data.error || tc("errorOccurred"));
+        setError(data.message || data.error || tc("errorOccurred"));
         setDeleteTarget(null);
       }
     } catch {

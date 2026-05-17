@@ -176,7 +176,7 @@ export default function ProjekteSeite() {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
         const data = await res.json();
-        setFormError(data.error || tc("errorOccurred"));
+        setFormError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setFormError(tc("errorOccurred"));

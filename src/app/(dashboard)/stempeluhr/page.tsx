@@ -142,7 +142,7 @@ export default function StempeluhrSeite() {
       );
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || t("errorGeneric"));
+        setError(data.message || data.error || t("errorGeneric"));
         return;
       }
       const data = await res.json();
@@ -524,7 +524,9 @@ export default function StempeluhrSeite() {
                           window.location.reload();
                         } else {
                           const data = await res.json();
-                          setError(data.error || t("errorGeneric"));
+                          setError(
+                            data.message || data.error || t("errorGeneric"),
+                          );
                         }
                       } catch {
                         setError(t("errorNetwork"));

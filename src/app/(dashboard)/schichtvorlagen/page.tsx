@@ -132,7 +132,7 @@ export default function SchichtvorlagenSeite() {
         const isPlanLimit = await handlePlanLimit(res);
         if (!isPlanLimit) {
           const data = await res.json();
-          setFormError(data.error || tc("errorOccurred"));
+          setFormError(data.message || data.error || tc("errorOccurred"));
         }
       }
     } catch {
@@ -153,7 +153,7 @@ export default function SchichtvorlagenSeite() {
         fetchData();
       } else {
         const data = await res.json();
-        setError(data.error || tc("errorOccurred"));
+        setError(data.message || data.error || tc("errorOccurred"));
         setDeleteTarget(null);
       }
     } catch {

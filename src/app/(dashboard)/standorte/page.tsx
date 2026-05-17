@@ -107,7 +107,7 @@ export default function StandortePage() {
         if (isPlanLimit) return;
 
         const data = await res.json();
-        setFormError(data.error || t("saveError"));
+        setFormError(data.message || data.error || t("saveError"));
       }
     } catch {
       setFormError(t("networkError"));

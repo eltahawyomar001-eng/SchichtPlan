@@ -173,7 +173,7 @@ function LocationStep({ onNext, onBack }: StepProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || t("genericError"));
+        setError(data.message || data.error || t("genericError"));
         setLoading(false);
         return;
       }
@@ -301,7 +301,7 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || t("genericError"));
+        setError(data.message || data.error || t("genericError"));
         setLoading(false);
         return;
       }

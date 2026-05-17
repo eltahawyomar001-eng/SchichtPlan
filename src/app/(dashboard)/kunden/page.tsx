@@ -155,7 +155,7 @@ export default function KundenSeite() {
         closeForm();
       } else {
         const data = await res.json().catch(() => ({}));
-        setFormError(data.error || tc("errorOccurred"));
+        setFormError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setFormError(tc("networkError"));
@@ -176,7 +176,7 @@ export default function KundenSeite() {
         setClients((prev) => prev.filter((c) => c.id !== deleteTarget));
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || tc("errorOccurred"));
+        setError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setError(tc("networkError"));

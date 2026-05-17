@@ -875,11 +875,7 @@ function RegisterForm() {
 
           {/* Feature chips */}
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            {[
-              t("featureDragDrop"),
-              t("featureRealtime"),
-              t("featureTeamComm"),
-            ].map((f) => (
+            {[t("featureDragDrop"), t("featureRealtime")].map((f) => (
               <span
                 key={f}
                 className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2 text-xs font-medium text-white backdrop-blur-sm"

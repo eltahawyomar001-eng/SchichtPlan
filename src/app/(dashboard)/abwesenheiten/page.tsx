@@ -187,7 +187,7 @@ export default function AbwesenheitenPage() {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
         const data = await res.json();
-        setLoadError(data.error || tc("errorOccurred"));
+        setLoadError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setLoadError(tc("errorOccurred"));
@@ -218,7 +218,7 @@ export default function AbwesenheitenPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setLoadError(data.error || tc("errorOccurred"));
+        setLoadError(data.message || data.error || tc("errorOccurred"));
       } else {
         setEditingAbsence(null);
         fetchAbsences();
@@ -241,7 +241,7 @@ export default function AbwesenheitenPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setLoadError(data.error || tc("errorOccurred"));
+        setLoadError(data.message || data.error || tc("errorOccurred"));
       }
       setReviewNotes((prev) => {
         const next = { ...prev };

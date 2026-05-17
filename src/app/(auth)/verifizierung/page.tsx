@@ -46,7 +46,7 @@ function VerifizierungContent() {
           setTimeout(() => router.push("/login?verified=true"), 3000);
         } else {
           setStatus("error");
-          setErrorMsg(data.error || t("genericError"));
+          setErrorMsg(data.message || data.error || t("genericError"));
         }
       } catch {
         setStatus("error");

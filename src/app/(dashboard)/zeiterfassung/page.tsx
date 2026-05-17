@@ -246,7 +246,7 @@ export default function ZeiterfassungPage() {
             data.errors.map((err: { message: string }) => err.message),
           );
         } else {
-          setFormErrors([data.error || t("saveError")]);
+          setFormErrors([data.message || data.error || t("saveError")]);
         }
         return;
       }
@@ -281,7 +281,7 @@ export default function ZeiterfassungPage() {
         setActionComment("");
       } else {
         const data = await res.json();
-        setLoadError(data.error || tc("errorOccurred"));
+        setLoadError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setLoadError(tc("errorOccurred"));

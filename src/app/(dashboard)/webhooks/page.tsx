@@ -104,7 +104,7 @@ export default function WebhooksSeite() {
         const isPlanLimit = await handlePlanLimit(res);
         if (!isPlanLimit) {
           const data = await res.json();
-          setError(data.error || tc("errorOccurred"));
+          setError(data.message || data.error || tc("errorOccurred"));
         }
       }
     } catch {

@@ -1064,7 +1064,6 @@ function PricingSection() {
         tp("featureBasic4"),
         tp("featureBasic5"),
         tp("featureBasic6"),
-        tp("featureBasic7"),
       ],
       cta: tp("startTrial"),
       href: `/register?plan=basic&billing=${annual ? "annual" : "monthly"}`,

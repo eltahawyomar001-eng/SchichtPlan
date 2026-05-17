@@ -76,7 +76,7 @@ function ResetPasswordForm() {
         setSuccess(true);
         setTimeout(() => router.push("/login"), 3000);
       } else {
-        setError(data.error || t("genericError"));
+        setError(data.message || data.error || t("genericError"));
       }
     } catch {
       setError(t("genericError"));

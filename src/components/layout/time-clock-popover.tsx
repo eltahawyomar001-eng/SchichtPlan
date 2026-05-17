@@ -323,7 +323,7 @@ export function TimeClockPopover() {
           NO_ACTIVE_BREAK: t("errorNoBreak"),
           NO_EMPLOYEE_PROFILE: t("errorNoProfile"),
         };
-        setError(errorMessages[errorKey] || t("errorGeneric"));
+        setError(errorMessages[errorKey] || data.message || t("errorGeneric"));
         return;
       }
       await fetchStatus();

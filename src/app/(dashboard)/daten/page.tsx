@@ -60,7 +60,7 @@ export default function DatenSeite() {
       } else {
         setImportMsg({
           type: "error",
-          text: data.error || t("importError"),
+          text: data.message || data.error || t("importError"),
         });
       }
     } catch {
@@ -104,7 +104,7 @@ export default function DatenSeite() {
           const data = await res.json().catch(() => ({}));
           setExportMsg({
             type: "error",
-            text: data.error || t("exportError"),
+            text: data.message || data.error || t("exportError"),
           });
         }
       }

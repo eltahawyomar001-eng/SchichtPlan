@@ -262,9 +262,7 @@ export default function DatenschutzPage() {
                     <td className="px-3 py-1.5">Keine gesetzl. Pflicht</td>
                   </tr>
                   <tr>
-                    <td className="px-3 py-1.5">
-                      Audit-Logs, Chat-Nachrichten
-                    </td>
+                    <td className="px-3 py-1.5">Audit-Logs</td>
                     <td className="px-3 py-1.5">365 Tage</td>
                     <td className="px-3 py-1.5">
                       Art. 6(1)(f) — berecht. Interesse

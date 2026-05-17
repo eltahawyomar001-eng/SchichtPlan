@@ -204,7 +204,10 @@ export default function EinstellungenPage() {
         setWsMsg({ type: "success", text: t("workspaceUpdated") });
       } else {
         const data = await res.json();
-        setWsMsg({ type: "error", text: data.error || t("saveError") });
+        setWsMsg({
+          type: "error",
+          text: data.message || data.error || t("saveError"),
+        });
       }
     } catch {
       setWsMsg({ type: "error", text: t("networkError") });
@@ -228,7 +231,10 @@ export default function EinstellungenPage() {
         await updateSession({ name: profileName });
       } else {
         const data = await res.json();
-        setProfileMsg({ type: "error", text: data.error || t("saveError") });
+        setProfileMsg({
+          type: "error",
+          text: data.message || data.error || t("saveError"),
+        });
       }
     } catch {
       setProfileMsg({ type: "error", text: t("networkError") });
@@ -272,7 +278,8 @@ export default function EinstellungenPage() {
         };
         setPwMsg({
           type: "error",
-          text: errMap[data.code] || data.error || t("saveError"),
+          text:
+            errMap[data.code] || data.message || data.error || t("saveError"),
         });
       }
     } catch {
@@ -344,7 +351,7 @@ export default function EinstellungenPage() {
         const data = await res.json().catch(() => ({}));
         setTwoFAMsg({
           type: "error",
-          text: data.error || t("twoFASetupError"),
+          text: data.message || data.error || t("twoFASetupError"),
         });
       }
     } catch {
@@ -392,7 +399,7 @@ export default function EinstellungenPage() {
         const data = await res.json().catch(() => ({}));
         setTwoFAMsg({
           type: "error",
-          text: data.error || t("networkError"),
+          text: data.message || data.error || t("networkError"),
         });
       }
     } catch {

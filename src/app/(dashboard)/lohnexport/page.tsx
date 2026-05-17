@@ -158,7 +158,7 @@ export default function LohnexportPage() {
         const isPlanLimit = await handlePlanLimit(res);
         if (!isPlanLimit) {
           const data = await res.json().catch(() => ({}));
-          setLoadError(data.error || tc("errorOccurred"));
+          setLoadError(data.message || data.error || tc("errorOccurred"));
         }
       }
     } catch {

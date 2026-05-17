@@ -54,7 +54,7 @@ export default function EinladungPage() {
           setInvitation(data);
         } else {
           const data = await res.json();
-          setError(data.error || "INVALID_TOKEN");
+          setError(data.message || data.error || "INVALID_TOKEN");
         }
       } catch {
         setError("NETWORK_ERROR");
@@ -85,7 +85,7 @@ export default function EinladungPage() {
           router.push("/dashboard");
         }, 2000);
       } else {
-        setError(data.error || "ACCEPT_FAILED");
+        setError(data.message || data.error || "ACCEPT_FAILED");
       }
     } catch {
       setError("NETWORK_ERROR");
@@ -161,7 +161,8 @@ export default function EinladungPage() {
             {t("errorTitle")}
           </h1>
           <p className="mt-2 text-sm text-gray-500">
-            {errorMessages[error] || t("errorGeneric")}
+            {(error ? errorMessages[error] || error : null) ||
+              t("errorGeneric")}
           </p>
           <div className="mt-6 flex flex-col gap-3">
             <Link
@@ -262,7 +263,8 @@ export default function EinladungPage() {
         {error && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm font-medium text-red-800">
-              {errorMessages[error] || t("errorGeneric")}
+              {(error ? errorMessages[error] || error : null) ||
+                t("errorGeneric")}
             </p>
             {error === "ALREADY_IN_WORKSPACE" && (
               <p className="mt-1 text-xs text-red-600">

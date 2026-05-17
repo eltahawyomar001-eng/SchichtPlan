@@ -75,7 +75,7 @@ export default function NewTicketPage() {
         router.push(`/tickets/${ticket.id}`);
       } else {
         const data = await res.json();
-        setError(data.error ?? t("createError"));
+        setError(data.message ?? data.error ?? t("createError"));
       }
     } catch {
       setError(t("createError"));

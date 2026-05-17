@@ -14,6 +14,7 @@ import {
   recordFailedAttempt,
   clearFailedAttempts,
 } from "@/lib/login-lockout";
+import { initializeTrial } from "@/lib/subscription";
 
 /** Workspace shape that includes the onboardingCompleted field.
  *  Used for casting until moduleResolution:bundler fully resolves
@@ -195,7 +196,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   events: {
-    // After PrismaAdapter creates a new OAuth user, auto-create a workspace
+    // After PrismaAdapter creates a new OAuth user, bootstrap workspace + employee + trial
     async createUser({ user }) {
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
@@ -211,12 +212,30 @@ export const authOptions: NextAuthOptions = {
             .replace(/^-|-$/g, "") +
           "-" +
           user.id.slice(-6);
-        const workspace = await prisma.workspace.create({
-          data: { name: `${displayName}'s Workspace`, slug },
-        });
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { workspaceId: workspace.id, role: "OWNER" },
+
+        await prisma.$transaction(async (tx) => {
+          const workspace = await tx.workspace.create({
+            data: { name: `${displayName}'s Workspace`, slug },
+          });
+          await tx.user.update({
+            where: { id: user.id },
+            data: { workspaceId: workspace.id, role: "OWNER" },
+          });
+
+          // Auto-create Employee profile so punch-clock works immediately
+          const nameParts = (dbUser.name || "").trim().split(/\s+/);
+          await tx.employee.create({
+            data: {
+              firstName: nameParts[0] || displayName,
+              lastName: nameParts.slice(1).join(" ") || "",
+              email: dbUser.email ?? "",
+              userId: user.id,
+              workspaceId: workspace.id,
+              isActive: true,
+            },
+          });
+
+          await initializeTrial(tx, workspace.id);
         });
       }
     },

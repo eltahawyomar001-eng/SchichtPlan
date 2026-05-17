@@ -181,7 +181,7 @@ export default function AutomatisierungSeite() {
         fetchRules();
       } else {
         const data = await res.json();
-        setLoadError(data.error || tc("errorOccurred"));
+        setLoadError(data.message || data.error || tc("errorOccurred"));
       }
     } catch {
       setLoadError(tc("errorOccurred"));

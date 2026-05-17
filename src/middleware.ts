@@ -625,7 +625,6 @@ export const config = {
     "/api/e-signatures/:path*",
     "/api/workspace/:path*",
     "/api/annual-planning/:path*",
-    "/api/chat/:path*",
     "/api/tickets/:path*",
     // Ticket management pages (protected dashboard)
     "/tickets/:path*",

@@ -82,7 +82,7 @@ export default function MonatsabschlussSeite() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || tc("errorOccurred"));
+        setError(data.message || data.error || tc("errorOccurred"));
       }
       fetchRecords();
     } catch {

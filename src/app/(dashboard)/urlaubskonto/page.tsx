@@ -124,7 +124,10 @@ export default function UrlaubskontoSeite() {
         fetchBalances();
       } else {
         const data = await res.json();
-        setSaveMsg({ type: "error", text: data.error || t("saveError") });
+        setSaveMsg({
+          type: "error",
+          text: data.message || data.error || t("saveError"),
+        });
       }
     } catch {
       setSaveMsg({ type: "error", text: t("networkError") });

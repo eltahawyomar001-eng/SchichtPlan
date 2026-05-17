@@ -153,7 +153,7 @@ export default function TeamPage() {
         };
         setInviteMsg({
           type: "error",
-          text: errorMap[data.error] || t("errorInviteFailed"),
+          text: data.message || errorMap[data.error] || t("errorInviteFailed"),
         });
       }
     } catch {

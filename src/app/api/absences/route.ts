@@ -14,6 +14,7 @@ import { createAbsenceSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
+import { classifyAbsenceForWorkspace } from "@/lib/absence-days";
 
 /**
  * Sync VacationBalance used/planned/remaining from actual absence data.
@@ -154,16 +155,23 @@ export const POST = withRoute(
       );
     }
 
-    // Calculate total working days (simple: count weekdays)
-    let totalDays = 0;
-    const current = new Date(start);
-    while (current <= end) {
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) totalDays++;
-      current.setDate(current.getDate() + 1);
-    }
-    if (body.halfDayStart) totalDays -= 0.5;
-    if (body.halfDayEnd) totalDays -= 0.5;
+    // Holiday-aware classification — statutory public holidays are NEVER
+    // deducted from the employee's vacation balance, even when they fall on
+    // a normal working day. See src/lib/absence-days.ts for the algorithm.
+    const employeeForBundesland = await prisma.employee.findUnique({
+      where: { id: body.employeeId },
+      select: { locationId: true },
+    });
+    const classification = await classifyAbsenceForWorkspace({
+      workspaceId,
+      employeeId: body.employeeId,
+      locationId: employeeForBundesland?.locationId ?? null,
+      startDate: start,
+      endDate: end,
+      halfDayStart: body.halfDayStart ?? false,
+      halfDayEnd: body.halfDayEnd ?? false,
+    });
+    const totalDays = classification.deductibleDays;
 
     const absence = await prisma
       .$transaction(async (tx) => {

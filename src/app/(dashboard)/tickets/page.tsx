@@ -312,7 +312,9 @@ export default function TicketsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2">
             <div className="relative flex-1 max-w-xs">
-              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 sm:left-3" />
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400 dark:text-zinc-500">
+                <SearchIcon className="h-4 w-4" />
+              </span>
               <Input
                 type="text"
                 placeholder={t("searchPlaceholder")}

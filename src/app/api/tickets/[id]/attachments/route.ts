@@ -22,6 +22,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isEmployee, requirePermission } from "@/lib/authorization";
+
+// Force Node.js runtime so multipart streaming works with files >4 MB.
+// Default Next.js App Router body limit is too small for our 25 MB/file ceiling.
+export const runtime = "nodejs";
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import {
@@ -124,8 +130,16 @@ export async function POST(
       );
     }
 
-    // Validate each file before any side-effects
+    // Validate each file before any side-effects. Collect per-file results so
+    // the UI can show which file failed (and why) instead of just "Upload
+    // fehlgeschlagen".
     let totalBytes = 0;
+    const rejections: Array<{
+      fileName: string;
+      code: string;
+      message: string;
+    }> = [];
+    const validFiles: File[] = [];
     for (const file of files) {
       const v = validateFile({
         name: file.name,
@@ -133,12 +147,28 @@ export async function POST(
         size: file.size,
       });
       if (!v.ok) {
-        return NextResponse.json(
-          { error: v.code, message: v.message },
-          { status: 400 },
-        );
+        rejections.push({
+          fileName: file.name,
+          code: v.code ?? "INVALID_FILE",
+          message: v.message ?? "Datei abgelehnt.",
+        });
+        continue;
       }
+      validFiles.push(file);
       totalBytes += file.size;
+    }
+
+    if (validFiles.length === 0) {
+      return NextResponse.json(
+        {
+          error: "ALL_FILES_REJECTED",
+          message:
+            rejections[0]?.message ??
+            "Keine der Dateien konnte hochgeladen werden.",
+          rejections,
+        },
+        { status: 400 },
+      );
     }
 
     // Quota check (single shot for the whole batch)
@@ -161,7 +191,7 @@ export async function POST(
     const uploadedUrls: string[] = []; // for rollback if DB fails
 
     try {
-      for (const file of files) {
+      for (const file of validFiles) {
         const arrayBuf = await file.arrayBuffer();
         const blob = await uploadToBlob({
           workspaceId,
@@ -219,14 +249,38 @@ export async function POST(
       throw err;
     }
 
-    return NextResponse.json({ data: created }, { status: 201 });
+    return NextResponse.json(
+      { data: created, rejections: rejections.length ? rejections : undefined },
+      { status: 201 },
+    );
   } catch (error) {
     log.error("[ticket attachments POST] failed", { error });
     captureRouteError(error, {
       route: "/api/tickets/[id]/attachments",
       method: "POST",
     });
-    return serverError("Anhang konnte nicht hochgeladen werden");
+    // Surface Vercel Blob misconfiguration explicitly so ops can spot it.
+    const msg = error instanceof Error ? error.message : String(error);
+    if (
+      msg.toLowerCase().includes("token") ||
+      msg.toLowerCase().includes("blob_read_write_token")
+    ) {
+      return NextResponse.json(
+        {
+          error: "STORAGE_NOT_CONFIGURED",
+          message:
+            "Datei-Upload ist derzeit nicht konfiguriert. Bitte Administrator kontaktieren.",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      {
+        error: "ATTACHMENT_UPLOAD_FAILED",
+        message: `Anhang konnte nicht hochgeladen werden: ${msg.slice(0, 200)}`,
+      },
+      { status: 500 },
+    );
   }
 }
 

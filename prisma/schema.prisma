@@ -3,45 +3,45 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String    @unique
-  phone          String?
-  emailVerified  DateTime?
-  hashedPassword String?
-  image          String?
-  role           Role      @default(OWNER)
-  consentGivenAt DateTime?
-  twoFactorEnabled       Boolean  @default(false)
-  twoFactorSecret        String?
-  twoFactorRecoveryCodes String?
-  dashboardFavorites     String    @default("[]") @db.Text
-  preferredLocale        String    @default("de")
+  id                      String                   @id @default(cuid())
+  name                    String?
+  email                   String                   @unique
+  phone                   String?
+  emailVerified           DateTime?
+  hashedPassword          String?
+  image                   String?
+  role                    Role                     @default(OWNER)
+  consentGivenAt          DateTime?
+  twoFactorEnabled        Boolean                  @default(false)
+  twoFactorSecret         String?
+  twoFactorRecoveryCodes  String?
+  dashboardFavorites      String                   @default("[]") @db.Text
+  preferredLocale         String                   @default("de")
   // GDPR/legal: track which AGB/Datenschutz version the user accepted and when
-  tosVersion             String?
-  tosAcceptedAt          DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  workspaceId    String?
-  workspace      Workspace? @relation(fields: [workspaceId], references: [id])
-  accounts       Account[]
-  sessions       Session[]
+  tosVersion              String?
+  tosAcceptedAt           DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  workspaceId             String?
+  workspace               Workspace?               @relation(fields: [workspaceId], references: [id])
+  accounts                Account[]
+  sessions                Session[]
   notificationPreferences NotificationPreference[]
-  invitationsSent Invitation[]
-  employee       Employee?
-  pushSubscriptions PushSubscription[]
-  autoScheduleRuns AutoScheduleRun[]
-  icalTokens      ICalToken[]
-  notifications   Notification[]
-  ticketsCreated    Ticket[]       @relation("TicketCreator")
-  ticketsAssigned   Ticket[]       @relation("TicketAssignee")
-  ticketComments    TicketComment[]
-  ticketAttachments TicketAttachment[]
-  feedback          Feedback[]
+  invitationsSent         Invitation[]
+  employee                Employee?
+  pushSubscriptions       PushSubscription[]
+  autoScheduleRuns        AutoScheduleRun[]
+  icalTokens              ICalToken[]
+  notifications           Notification[]
+  ticketsCreated          Ticket[]                 @relation("TicketCreator")
+  ticketsAssigned         Ticket[]                 @relation("TicketAssignee")
+  ticketComments          TicketComment[]
+  ticketAttachments       TicketAttachment[]
+  feedback                Feedback[]
 }
 
 model Account {
@@ -57,7 +57,8 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
 
@@ -73,6 +74,7 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+
   @@unique([identifier, token])
 }
 
@@ -82,6 +84,7 @@ model PasswordResetToken {
   email     String
   expires   DateTime
   createdAt DateTime @default(now())
+
   @@index([email])
 }
 
@@ -112,48 +115,49 @@ model Invitation {
   workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   invitedById String
   invitedBy   User             @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([email, workspaceId])
 }
 
 model Workspace {
-  id         String   @id @default(cuid())
-  name       String
-  slug       String   @unique
-  industry   String?
-  bundesland String?
+  id                   String                @id @default(cuid())
+  name                 String
+  slug                 String                @unique
+  industry             String?
+  bundesland           String?
   /// Default/target break duration in minutes shown as countdown on the punch clock.
   /// German default per ArbZG §4: 30 min for 6–9h shifts, 45 min for >9h shifts.
-  defaultBreakMinutes Int @default(30)
-  onboardingCompleted Boolean @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  members    User[]
-  employees  Employee[]
-  shifts     Shift[]
-  locations  Location[]
-  departments Department[]
-  timeEntries TimeEntry[]
-  absenceRequests AbsenceRequest[]
-  availabilities  Availability[]
-  shiftSwaps      ShiftSwapRequest[]
-  shiftChangeRequests ShiftChangeRequest[]
-  timeAccounts    TimeAccount[]
-  automationSettings AutomationSetting[]
-  invitations Invitation[]
-  vacationBalances VacationBalance[]
-  skills      Skill[]
-  shiftTemplates ShiftTemplate[]
-  clients     Client[]
-  projects    Project[]
-  monthCloses MonthClose[]
-  exportJobs  ExportJob[]
-  webhookEndpoints WebhookEndpoint[]
-  automationRules AutomationRule[]
-  auditLogs       AuditLog[]
-  eSignatures     ESignature[]
-  subscription    Subscription?
-  usage           WorkspaceUsage?
+  defaultBreakMinutes  Int                   @default(30)
+  onboardingCompleted  Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  members              User[]
+  employees            Employee[]
+  shifts               Shift[]
+  locations            Location[]
+  departments          Department[]
+  timeEntries          TimeEntry[]
+  absenceRequests      AbsenceRequest[]
+  availabilities       Availability[]
+  shiftSwaps           ShiftSwapRequest[]
+  shiftChangeRequests  ShiftChangeRequest[]
+  timeAccounts         TimeAccount[]
+  automationSettings   AutomationSetting[]
+  invitations          Invitation[]
+  vacationBalances     VacationBalance[]
+  skills               Skill[]
+  shiftTemplates       ShiftTemplate[]
+  clients              Client[]
+  projects             Project[]
+  monthCloses          MonthClose[]
+  exportJobs           ExportJob[]
+  webhookEndpoints     WebhookEndpoint[]
+  automationRules      AutomationRule[]
+  auditLogs            AuditLog[]
+  eSignatures          ESignature[]
+  subscription         Subscription?
+  usage                WorkspaceUsage?
   staffingRequirements StaffingRequirement[]
   autoScheduleRuns     AutoScheduleRun[]
   autoFillLogs         AutoFillLog[]
@@ -163,6 +167,7 @@ model Workspace {
   notifications        Notification[]
   tickets              Ticket[]
   ticketAttachments    TicketAttachment[]
+  ticketCategoryDefs   TicketCategoryDef[]
   workspaceCustomer    WorkspaceCustomer?
   invoices             Invoice[]
   feedback             Feedback[]
@@ -172,20 +177,21 @@ model Workspace {
 
 /// In-app bug reports / feature requests submitted via the dashboard widget.
 model Feedback {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   workspaceId String
   userId      String
   /// "BUG" | "FEATURE" | "QUESTION" | "OTHER"
   category    String
   subject     String
-  message     String   @db.Text
+  message     String    @db.Text
   url         String?
   userAgent   String?
   /// "OPEN" | "TRIAGED" | "RESOLVED"
-  status      String   @default("OPEN")
-  createdAt   DateTime @default(now())
+  status      String    @default("OPEN")
+  createdAt   DateTime  @default(now())
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([status, createdAt(sort: Desc)])
 }
@@ -228,35 +234,36 @@ enum TicketingAddonTier {
 }
 
 model Subscription {
-  id                                String             @id @default(cuid())
-  plan                              SubscriptionPlan   @default(BASIC)
-  status                            SubscriptionStatus @default(ACTIVE)
-  stripeCustomerId                  String?            @unique
-  stripeSubscriptionId              String?            @unique
-  stripePriceId                     String?
-  seatCount                         Int                @default(1)
-  currentPeriodStart                DateTime?
-  currentPeriodEnd                  DateTime?
-  cancelAtPeriodEnd                 Boolean            @default(false)
-  trialStart                        DateTime?
-  trialEnd                          DateTime?
+  id                                     String             @id @default(cuid())
+  plan                                   SubscriptionPlan   @default(BASIC)
+  status                                 SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId                       String?            @unique
+  stripeSubscriptionId                   String?            @unique
+  stripePriceId                          String?
+  seatCount                              Int                @default(1)
+  currentPeriodStart                     DateTime?
+  currentPeriodEnd                       DateTime?
+  cancelAtPeriodEnd                      Boolean            @default(false)
+  trialStart                             DateTime?
+  trialEnd                               DateTime?
   /// Ticketing add-on tier (NONE = not purchased)
-  ticketingTier                     TicketingAddonTier @default(NONE)
+  ticketingTier                          TicketingAddonTier @default(NONE)
   /// Stripe Subscription Item ID for the ticketing add-on line on the parent subscription
-  ticketingStripeSubscriptionItemId String?
+  ticketingStripeSubscriptionItemId      String?
   /// Schichtplanung add-on active flag (gates the entire shift planning module on Basic/Professional plans).
   /// Enterprise plan always has access regardless of this flag.
-  schichtplanungAddonActive         Boolean            @default(false)
+  schichtplanungAddonActive              Boolean            @default(false)
   /// Stripe Subscription Item ID for the schichtplanung add-on line on the parent subscription
   schichtplanungStripeSubscriptionItemId String?
   /// Billing cycle for the schichtplanung add-on: "monthly" or "annual" (null when inactive)
-  schichtplanungAddonBilling        String?
+  schichtplanungAddonBilling             String?
   /// Set when seat count exceeds plan limit; hard-block activates 30 days after this date.
-  overLimitSince                    DateTime?
-  createdAt                         DateTime           @default(now())
-  updatedAt                         DateTime           @updatedAt
-  workspaceId                       String             @unique
-  workspace                         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  overLimitSince                         DateTime?
+  createdAt                              DateTime           @default(now())
+  updatedAt                              DateTime           @updatedAt
+  workspaceId                            String             @unique
+  workspace                              Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
 }
@@ -264,44 +271,45 @@ model Subscription {
 /// Company-level billing identity — VAT ID, billing address, and contact email
 /// decoupled from any individual user. Multiple admins can manage billing.
 model WorkspaceCustomer {
-  id              String   @id @default(cuid())
-  workspaceId     String   @unique
-  companyName     String?
-  vatId           String?
-  billingEmail    String?
-  billingAddress  String?
-  billingCity     String?
+  id                String    @id @default(cuid())
+  workspaceId       String    @unique
+  companyName       String?
+  vatId             String?
+  billingEmail      String?
+  billingAddress    String?
+  billingCity       String?
   billingPostalCode String?
-  billingCountry  String   @default("DE")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  billingCountry    String    @default("DE")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
 /// GoBD § 147 — invoices must be retained for 10 years.
 /// Populated by the invoice.paid Stripe webhook.
 model Invoice {
-  id              String   @id @default(cuid())
-  workspaceId     String
-  stripeInvoiceId String   @unique
-  invoiceNumber   String?
-  issuedAt        DateTime
-  amount          Int
-  vatAmount       Int?
-  currency        String   @default("eur")
-  pdfUrl          String?
-  hostedUrl       String?
-  emailSentAt     DateTime?
-  createdAt       DateTime @default(now())
+  id               String    @id @default(cuid())
+  workspaceId      String
+  stripeInvoiceId  String    @unique
+  invoiceNumber    String?
+  issuedAt         DateTime
+  amount           Int
+  vatAmount        Int?
+  currency         String    @default("eur")
+  pdfUrl           String?
+  hostedUrl        String?
+  emailSentAt      DateTime?
+  createdAt        DateTime  @default(now())
   // GoBD § 147: denormalized issuer identity (frozen at invoice time)
-  issuerName      String?
-  issuerVatId     String?
-  issuerAddress   String?
+  issuerName       String?
+  issuerVatId      String?
+  issuerAddress    String?
   // GoBD § 147: denormalized recipient identity (frozen at invoice time)
-  recipientName   String?
-  recipientVatId  String?
+  recipientName    String?
+  recipientVatId   String?
   recipientAddress String?
-  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
@@ -309,82 +317,84 @@ model Invoice {
 /// Prevents tier-creep by enforcing hard limits on user slots,
 /// PDF generation quotas, and storage consumption.
 model WorkspaceUsage {
-  id                      String   @id @default(cuid())
+  id                      String    @id @default(cuid())
   /// Max user slots granted by the current plan (e.g. 10 for Basic)
-  userSlotsTotal          Int      @default(10)
+  userSlotsTotal          Int       @default(10)
   /// Number of PDFs generated in the current billing period
-  pdfsGeneratedThisMonth  Int      @default(0)
+  pdfsGeneratedThisMonth  Int       @default(0)
   /// Maximum PDFs allowed per billing period (Basic=50, Professional=500, Enterprise=unlimited)
-  pdfsMonthlyLimit        Int      @default(50)
+  pdfsMonthlyLimit        Int       @default(50)
   /// When the PDF counter was last reset (beginning of billing period)
-  pdfsResetAt             DateTime @default(now())
+  pdfsResetAt             DateTime  @default(now())
   /// Current signature/file storage consumption in bytes
-  storageBytesUsed        BigInt   @default(0)
+  storageBytesUsed        BigInt    @default(0)
   /// Maximum storage allowed in bytes (Basic=500MB, Professional=5GB, Enterprise=unlimited)
-  storageBytesLimit       BigInt   @default(524288000) // 500 MB
+  storageBytesLimit       BigInt    @default(524288000) // 500 MB
   /// Tickets created in the current billing period (counts against add-on tier quota)
-  ticketsCreatedThisMonth Int      @default(0)
+  ticketsCreatedThisMonth Int       @default(0)
   /// Maximum tickets per month from add-on (0 = no add-on, Starter=200, Growth=500, Business=1000)
-  ticketsMonthlyLimit     Int      @default(0)
+  ticketsMonthlyLimit     Int       @default(0)
   /// Ticket attachment storage consumption in bytes (separate from main storageBytesUsed)
-  ticketStorageBytesUsed  BigInt   @default(0)
+  ticketStorageBytesUsed  BigInt    @default(0)
   /// Max ticket storage from add-on (0 = no add-on, Starter=5GB, Growth=15GB, Business=40GB)
-  ticketStorageBytesLimit BigInt   @default(0)
+  ticketStorageBytesLimit BigInt    @default(0)
   /// When the ticket counters were last reset (beginning of add-on billing period)
-  ticketsResetAt          DateTime @default(now())
+  ticketsResetAt          DateTime  @default(now())
   /// Transactional emails sent this billing period (PIN assignments, notifications)
-  emailsSentThisMonth     Int      @default(0)
+  emailsSentThisMonth     Int       @default(0)
   /// Maximum emails allowed per billing period (Basic=100, Professional=500, Enterprise=unlimited=-1)
-  emailsMonthlyLimit      Int      @default(100)
+  emailsMonthlyLimit      Int       @default(100)
   /// When the email counter was last reset (beginning of billing period)
-  emailsResetAt           DateTime @default(now())
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  workspaceId             String   @unique
+  emailsResetAt           DateTime  @default(now())
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  workspaceId             String    @unique
   workspace               Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
 model Employee {
-  id           String   @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String?
-  phone        String?
-  position     String?
-  hourlyRate   Float?
-  weeklyHours  Float?
-  workDaysPerWeek Float @default(5)
-  contractType ContractType @default(VOLLZEIT)
-  flexibleWork Boolean  @default(false)
-  color        String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
-  workspaceId  String
-  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  userId       String?  @unique
-  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  shifts       Shift[]
-  timeEntries  TimeEntry[]
-  absenceRequests AbsenceRequest[]
-  availabilities  Availability[]
-  swapsRequested  ShiftSwapRequest[] @relation("SwapRequester")
-  swapsOffered    ShiftSwapRequest[] @relation("SwapTarget")
-  changeRequests  ShiftChangeRequest[]
-  timeAccount     TimeAccount?
-  vacationBalances VacationBalance[]
-  employeeSkills  EmployeeSkill[]
-  projectMembers  ProjectMember[]
-  autoFillsVacated   AutoFillLog[] @relation("AutoFillVacated")
-  autoFillsAssigned  AutoFillLog[] @relation("AutoFillAssigned")
-  serviceVisits      ServiceVisit[]
-  locationId  String?
-  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  pinHash     String?
+  id                String               @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  position          String?
+  hourlyRate        Float?
+  weeklyHours       Float?
+  workDaysPerWeek   Float                @default(5)
+  contractType      ContractType         @default(VOLLZEIT)
+  flexibleWork      Boolean              @default(false)
+  color             String?
+  isActive          Boolean              @default(true)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  deletedAt         DateTime?
+  workspaceId       String
+  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId            String?              @unique
+  user              User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  departmentId      String?
+  department        Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  shifts            Shift[]
+  timeEntries       TimeEntry[]
+  absenceRequests   AbsenceRequest[]
+  availabilities    Availability[]
+  swapsRequested    ShiftSwapRequest[]   @relation("SwapRequester")
+  swapsOffered      ShiftSwapRequest[]   @relation("SwapTarget")
+  changeRequests    ShiftChangeRequest[]
+  timeAccount       TimeAccount?
+  vacationBalances  VacationBalance[]
+  employeeSkills    EmployeeSkill[]
+  projectMembers    ProjectMember[]
+  autoFillsVacated  AutoFillLog[]        @relation("AutoFillVacated")
+  autoFillsAssigned AutoFillLog[]        @relation("AutoFillAssigned")
+  serviceVisits     ServiceVisit[]
+  locationId        String?
+  location          Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  pinHash           String?
+
   @@unique([email, workspaceId])
   @@unique([workspaceId, pinHash])
   @@index([locationId])
@@ -392,46 +402,51 @@ model Employee {
 }
 
 model Location {
-  id        String   @id @default(cuid())
-  name      String
-  address   String?
-  createdAt DateTime @default(now())
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  shifts      Shift[]
-  timeEntries TimeEntry[]
-  departments Department[]
-  shiftTemplates ShiftTemplate[]
+  id                   String                @id @default(cuid())
+  name                 String
+  address              String?
+  /// 2-letter Bundesland code (BE, BY, NW, …). Used by the holiday-aware
+  /// vacation calculator. Falls back to Workspace.bundesland when null.
+  bundesland           String?
+  createdAt            DateTime              @default(now())
+  workspaceId          String
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shifts               Shift[]
+  timeEntries          TimeEntry[]
+  departments          Department[]
+  shiftTemplates       ShiftTemplate[]
   staffingRequirements StaffingRequirement[]
   autoScheduleRuns     AutoScheduleRun[]
-  serviceVisits ServiceVisit[]
-  employees   Employee[]
+  serviceVisits        ServiceVisit[]
+  employees            Employee[]
 }
 
 model Department {
-  id        String   @id @default(cuid())
-  name      String
-  color     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  locationId  String?
-  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  employees   Employee[]
+  id                   String                @id @default(cuid())
+  name                 String
+  color                String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  locationId           String?
+  location             Location?             @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  workspaceId          String
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employees            Employee[]
   staffingRequirements StaffingRequirement[]
+
   @@index([workspaceId])
 }
 
 model Skill {
-  id        String   @id @default(cuid())
-  name      String
-  category  String?
-  createdAt DateTime @default(now())
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  employeeSkills EmployeeSkill[]
+  id                   String                @id @default(cuid())
+  name                 String
+  category             String?
+  createdAt            DateTime              @default(now())
+  workspaceId          String
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeSkills       EmployeeSkill[]
   staffingRequirements StaffingRequirement[]
+
   @@unique([name, workspaceId])
   @@index([workspaceId])
 }
@@ -444,48 +459,51 @@ model EmployeeSkill {
   employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   skillId    String
   skill      Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
   @@unique([employeeId, skillId])
 }
 
 model ShiftTemplate {
-  id        String   @id @default(cuid())
-  name      String
-  startTime String
-  endTime   String
-  color     String?
-  locationId String?
-  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  startTime   String
+  endTime     String
+  color       String?
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
 model Shift {
-  id        String      @id @default(cuid())
-  date      DateTime    @db.Date
-  startTime String
-  endTime   String
-  notes     String?
-  status    ShiftStatus @default(SCHEDULED)
-  isNightShift   Boolean @default(false)
-  isHolidayShift Boolean @default(false)
-  isSundayShift  Boolean @default(false)
-  surchargePercent Float @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  deletedAt DateTime?
-  employeeId  String?
-  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  locationId  String?
-  location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  swapsFrom   ShiftSwapRequest[] @relation("SwapFromShift")
-  swapsTo     ShiftSwapRequest[] @relation("SwapToShift")
-  changeRequests ShiftChangeRequest[]
-  autoFillLogs  AutoFillLog[]
+  id               String               @id @default(cuid())
+  date             DateTime             @db.Date
+  startTime        String
+  endTime          String
+  notes            String?
+  status           ShiftStatus          @default(SCHEDULED)
+  isNightShift     Boolean              @default(false)
+  isHolidayShift   Boolean              @default(false)
+  isSundayShift    Boolean              @default(false)
+  surchargePercent Float                @default(0)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  deletedAt        DateTime?
+  employeeId       String?
+  employee         Employee?            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  locationId       String?
+  location         Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  workspaceId      String
+  workspace        Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  swapsFrom        ShiftSwapRequest[]   @relation("SwapFromShift")
+  swapsTo          ShiftSwapRequest[]   @relation("SwapToShift")
+  changeRequests   ShiftChangeRequest[]
+  autoFillLogs     AutoFillLog[]
+
   @@index([workspaceId, date])
   @@index([employeeId, date])
 }
@@ -507,25 +525,27 @@ model PublicHoliday {
   bundesland String
   isNational Boolean  @default(false)
   createdAt  DateTime @default(now())
+
   @@unique([date, bundesland])
   @@index([date])
   @@index([bundesland])
 }
 
 model VacationBalance {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   year             Int
-  totalEntitlement Float    @default(20)
-  carryOver        Float    @default(0)
-  used             Float    @default(0)
-  planned          Float    @default(0)
-  remaining        Float    @default(20)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  totalEntitlement Float     @default(20)
+  carryOver        Float     @default(0)
+  used             Float     @default(0)
+  planned          Float     @default(0)
+  remaining        Float     @default(20)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   employeeId       String
-  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId      String
   workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@unique([employeeId, year])
   @@index([workspaceId])
 }
@@ -540,36 +560,37 @@ enum TimeEntryStatus {
 }
 
 model TimeEntry {
-  id           String          @id @default(cuid())
-  date         DateTime        @db.Date
+  id           String           @id @default(cuid())
+  date         DateTime         @db.Date
   startTime    String
   endTime      String
   breakStart   String?
   breakEnd     String?
-  breakMinutes Int             @default(0)
-  grossMinutes Int             @default(0)
-  netMinutes   Int             @default(0)
+  breakMinutes Int              @default(0)
+  grossMinutes Int              @default(0)
+  netMinutes   Int              @default(0)
   remarks      String?
-  status       TimeEntryStatus @default(ENTWURF)
+  status       TimeEntryStatus  @default(ENTWURF)
   submittedAt  DateTime?
   confirmedAt  DateTime?
   confirmedBy  String?
   clockInAt    DateTime?
   clockOutAt   DateTime?
-  isLiveClock  Boolean         @default(false)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  isLiveClock  Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   deletedAt    DateTime?
   employeeId   String
-  employee     Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee     Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   locationId   String?
-  location     Location?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  location     Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
   shiftId      String?
   projectId    String?
-  project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project      Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
   workspaceId  String
-  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   auditLog     TimeEntryAudit[]
+
   @@index([workspaceId, date])
   @@index([employeeId, date])
   @@index([status])
@@ -577,29 +598,31 @@ model TimeEntry {
 }
 
 model TimeEntryAudit {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   action      String
-  changes     String?  @db.Text
+  changes     String?   @db.Text
   comment     String?
   performedBy String
-  performedAt DateTime @default(now())
+  performedAt DateTime  @default(now())
   timeEntryId String
   timeEntry   TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
   @@index([timeEntryId])
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  type      String
-  title     String
-  message   String   @db.Text
-  read      Boolean  @default(false)
-  link      String?
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  type        String
+  title       String
+  message     String    @db.Text
+  read        Boolean   @default(false)
+  link        String?
+  createdAt   DateTime  @default(now())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([userId, read, createdAt])
   @@index([workspaceId])
 }
@@ -622,24 +645,25 @@ enum AbsenceCategory {
 }
 
 model AbsenceRequest {
-  id          String              @id @default(cuid())
-  category    AbsenceCategory
-  startDate   DateTime            @db.Date
-  endDate     DateTime            @db.Date
-  halfDayStart Boolean            @default(false)
-  halfDayEnd   Boolean            @default(false)
-  totalDays   Float               @default(0)
-  status      AbsenceRequestStatus @default(AUSSTEHEND)
-  reviewedBy  String?
-  reviewedAt  DateTime?
-  reviewNote  String?             @db.Text
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  deletedAt   DateTime?
-  employeeId  String
-  employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  workspaceId String
-  workspace   Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id           String               @id @default(cuid())
+  category     AbsenceCategory
+  startDate    DateTime             @db.Date
+  endDate      DateTime             @db.Date
+  halfDayStart Boolean              @default(false)
+  halfDayEnd   Boolean              @default(false)
+  totalDays    Float                @default(0)
+  status       AbsenceRequestStatus @default(AUSSTEHEND)
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  reviewNote   String?              @db.Text
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  deletedAt    DateTime?
+  employeeId   String
+  employee     Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  workspace    Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId, status])
   @@index([employeeId, startDate])
 }
@@ -665,6 +689,7 @@ model Availability {
   employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId, employeeId])
   @@index([employeeId, weekday])
 }
@@ -677,24 +702,25 @@ enum ChangeRequestStatus {
 }
 
 model ShiftChangeRequest {
-  id            String              @id @default(cuid())
-  status        ChangeRequestStatus @default(AUSSTEHEND)
-  reason        String?             @db.Text
-  shiftId       String
-  shift         Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  newDate       DateTime?           @db.Date
-  newStartTime  String?
-  newEndTime    String?
-  newNotes      String?             @db.Text
-  requesterId   String
-  requester     Employee            @relation(fields: [requesterId], references: [id], onDelete: Cascade)
-  reviewedBy    String?
-  reviewedAt    DateTime?
-  reviewNote    String?             @db.Text
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  workspaceId   String
-  workspace     Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id           String              @id @default(cuid())
+  status       ChangeRequestStatus @default(AUSSTEHEND)
+  reason       String?             @db.Text
+  shiftId      String
+  shift        Shift               @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  newDate      DateTime?           @db.Date
+  newStartTime String?
+  newEndTime   String?
+  newNotes     String?             @db.Text
+  requesterId  String
+  requester    Employee            @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  reviewNote   String?             @db.Text
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  workspaceId  String
+  workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId, status])
   @@index([requesterId])
   @@index([shiftId])
@@ -728,25 +754,27 @@ model ShiftSwapRequest {
   updatedAt     DateTime   @updatedAt
   workspaceId   String
   workspace     Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId, status])
   @@index([requesterId])
   @@index([targetId])
 }
 
 model TimeAccount {
-  id              String   @id @default(cuid())
-  contractHours   Float    @default(40)
-  carryoverMinutes Int     @default(0)
-  currentBalance  Int      @default(0)
-  lastCalculated  DateTime @default(now())
-  periodStart     DateTime @db.Date
-  periodEnd       DateTime? @db.Date
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  employeeId      String   @unique
-  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  workspaceId     String
-  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  contractHours    Float     @default(40)
+  carryoverMinutes Int       @default(0)
+  currentBalance   Int       @default(0)
+  lastCalculated   DateTime  @default(now())
+  periodStart      DateTime  @db.Date
+  periodEnd        DateTime? @db.Date
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  employeeId       String    @unique
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workspaceId      String
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
@@ -761,20 +789,22 @@ model NotificationPreference {
   enabled   Boolean             @default(false)
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, channel])
   @@index([userId])
 }
 
 model AutomationSetting {
-  id        String   @id @default(cuid())
-  key       String
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  key         String
+  enabled     Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@unique([workspaceId, key])
   @@index([workspaceId])
 }
@@ -791,6 +821,7 @@ model PushSubscription {
   createdAt DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, endpoint])
   @@index([userId])
 }
@@ -800,18 +831,19 @@ model PushSubscription {
 // ═══════════════════════════════════════════════════════════════
 
 model Client {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  address   String?  @db.Text
-  notes     String?  @db.Text
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?   @db.Text
+  notes       String?   @db.Text
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   projects    Project[]
+
   @@index([workspaceId])
 }
 
@@ -823,23 +855,24 @@ enum ProjectStatus {
 }
 
 model Project {
-  id           String        @id @default(cuid())
-  name         String
-  description  String?       @db.Text
-  status       ProjectStatus @default(AKTIV)
-  costRate     Float?
-  billRate     Float?
+  id            String          @id @default(cuid())
+  name          String
+  description   String?         @db.Text
+  status        ProjectStatus   @default(AKTIV)
+  costRate      Float?
+  billRate      Float?
   budgetMinutes Int?
-  startDate    DateTime?     @db.Date
-  endDate      DateTime?     @db.Date
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  clientId     String?
-  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  workspaceId  String
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  members      ProjectMember[]
-  timeEntries  TimeEntry[]
+  startDate     DateTime?       @db.Date
+  endDate       DateTime?       @db.Date
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  clientId      String?
+  client        Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members       ProjectMember[]
+  timeEntries   TimeEntry[]
+
   @@index([workspaceId])
   @@index([clientId])
 }
@@ -852,6 +885,7 @@ model ProjectMember {
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   projectId  String
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@unique([employeeId, projectId])
 }
 
@@ -866,36 +900,38 @@ enum MonthCloseStatus {
 }
 
 model MonthClose {
-  id          String          @id @default(cuid())
+  id          String           @id @default(cuid())
   year        Int
   month       Int
   status      MonthCloseStatus @default(OPEN)
   lockedBy    String?
   lockedAt    DateTime?
   exportedAt  DateTime?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   workspaceId String
-  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   exportJobs  ExportJob[]
+
   @@unique([workspaceId, year, month])
   @@index([workspaceId])
 }
 
 model ExportJob {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   format       String
   fileName     String
-  fileUrl      String?  @db.Text
-  status       String   @default("PENDING")
-  errorMessage String?  @db.Text
-  createdAt    DateTime @default(now())
+  fileUrl      String?     @db.Text
+  status       String      @default("PENDING")
+  errorMessage String?     @db.Text
+  createdAt    DateTime    @default(now())
   completedAt  DateTime?
   monthCloseId String?
   monthClose   MonthClose? @relation(fields: [monthCloseId], references: [id], onDelete: SetNull)
   projectId    String?
   workspaceId  String
-  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
@@ -904,15 +940,16 @@ model ExportJob {
 // ═══════════════════════════════════════════════════════════════
 
 model WebhookEndpoint {
-  id        String   @id @default(cuid())
-  url       String   @db.Text
-  secret    String
-  events    String[]
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  url         String    @db.Text
+  secret      String
+  events      String[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
@@ -921,18 +958,19 @@ model WebhookEndpoint {
 // ═══════════════════════════════════════════════════════════════
 
 model AutomationRule {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  trigger     String
-  conditions  String   @db.Text
-  actions     String   @db.Text
-  isActive    Boolean  @default(true)
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  trigger       String
+  conditions    String    @db.Text
+  actions       String    @db.Text
+  isActive      Boolean   @default(true)
   lastTriggered DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
 }
 
@@ -941,21 +979,22 @@ model AutomationRule {
 // ═══════════════════════════════════════════════════════════════
 
 model ESignature {
-  id            String   @id @default(cuid())
-  action        String   // e.g. "absence.approve", "time-entry.confirm"
-  entityType    String   // e.g. "AbsenceRequest", "TimeEntry"
-  entityId      String   // ID of the signed entity
-  signedBy      String   // User ID who signed
-  signerName    String   // Full name at time of signing (denormalized)
-  signerEmail   String   // Email at time of signing (denormalized)
-  signerRole    String   // Role at time of signing
-  signatureHash String   // SHA-256 hash of action+entity+timestamp+signer
-  ipAddress     String?  // IP address of the signer
-  userAgent     String?  // Browser user-agent string
-  statement     String   @db.Text // The consent statement the user agreed to
-  signedAt      DateTime @default(now())
+  id            String    @id @default(cuid())
+  action        String // e.g. "absence.approve", "time-entry.confirm"
+  entityType    String // e.g. "AbsenceRequest", "TimeEntry"
+  entityId      String // ID of the signed entity
+  signedBy      String // User ID who signed
+  signerName    String // Full name at time of signing (denormalized)
+  signerEmail   String // Email at time of signing (denormalized)
+  signerRole    String // Role at time of signing
+  signatureHash String // SHA-256 hash of action+entity+timestamp+signer
+  ipAddress     String? // IP address of the signer
+  userAgent     String? // Browser user-agent string
+  statement     String    @db.Text // The consent statement the user agreed to
+  signedAt      DateTime  @default(now())
   workspaceId   String
   workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId, signedAt])
   @@index([entityType, entityId])
   @@index([signedBy])
@@ -978,10 +1017,10 @@ enum AuditAction {
 model AuditLog {
   id          String      @id @default(cuid())
   action      AuditAction
-  entityType  String      // e.g. "shift", "employee", "absence"
-  entityId    String?     // ID of the affected entity
-  userId      String?     // User who performed the action
-  userEmail   String?     // Denormalized for readability
+  entityType  String // e.g. "shift", "employee", "absence"
+  entityId    String? // ID of the affected entity
+  userId      String? // User who performed the action
+  userEmail   String? // Denormalized for readability
   changes     String?     @db.Text // JSON diff of changed fields
   metadata    String?     @db.Text // Additional context (IP, user-agent, etc.)
   createdAt   DateTime    @default(now())
@@ -1006,52 +1045,54 @@ enum AutoScheduleStatus {
 }
 
 model StaffingRequirement {
-  id             String    @id @default(cuid())
-  name           String
-  weekday        Int       // 0=Mon, 6=Sun (ISO weekday)
-  startTime      String    // HH:mm
-  endTime        String    // HH:mm
-  minEmployees   Int       @default(1)
-  maxEmployees   Int?
+  id              String      @id @default(cuid())
+  name            String
+  weekday         Int // 0=Mon, 6=Sun (ISO weekday)
+  startTime       String // HH:mm
+  endTime         String // HH:mm
+  minEmployees    Int         @default(1)
+  maxEmployees    Int?
   requiredSkillId String?
-  requiredSkill   Skill?   @relation(fields: [requiredSkillId], references: [id], onDelete: SetNull)
-  locationId     String?
-  location       Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  departmentId   String?
-  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  isActive       Boolean   @default(true)
-  validFrom      DateTime? @db.Date
-  validUntil     DateTime? @db.Date
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  workspaceId    String
-  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  requiredSkill   Skill?      @relation(fields: [requiredSkillId], references: [id], onDelete: SetNull)
+  locationId      String?
+  location        Location?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  isActive        Boolean     @default(true)
+  validFrom       DateTime?   @db.Date
+  validUntil      DateTime?   @db.Date
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  workspaceId     String
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([locationId])
   @@index([weekday])
 }
 
 model AutoScheduleRun {
-  id              String             @id @default(cuid())
-  status          AutoScheduleStatus @default(PREVIEW)
-  startDate       DateTime           @db.Date
-  endDate         DateTime           @db.Date
-  locationId      String?
-  location        Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  totalOpenShifts Int                @default(0)
-  assignedCount   Int                @default(0)
-  unresolvedCount Int                @default(0)
+  id                String             @id @default(cuid())
+  status            AutoScheduleStatus @default(PREVIEW)
+  startDate         DateTime           @db.Date
+  endDate           DateTime           @db.Date
+  locationId        String?
+  location          Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  totalOpenShifts   Int                @default(0)
+  assignedCount     Int                @default(0)
+  unresolvedCount   Int                @default(0)
   totalCostEstimate Float?
   fairnessScore     Float?
-  assignments       Json             @default("[]")
-  unresolvedShifts  Json             @default("[]")
-  configSnapshot    Json             @default("{}")
-  createdAt         DateTime         @default(now())
+  assignments       Json               @default("[]")
+  unresolvedShifts  Json               @default("[]")
+  configSnapshot    Json               @default("{}")
+  createdAt         DateTime           @default(now())
   appliedAt         DateTime?
   userId            String
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId       String
-  workspace         Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([userId])
   @@index([status])
@@ -1063,10 +1104,10 @@ model AutoScheduleRun {
 // ═══════════════════════════════════════════════════════════════
 
 enum AutoFillStatus {
-  PENDING     // Searching for replacement
-  ASSIGNED    // Replacement found and assigned
-  FAILED      // No eligible candidate found
-  DECLINED    // Assigned employee declined
+  PENDING // Searching for replacement
+  ASSIGNED // Replacement found and assigned
+  FAILED // No eligible candidate found
+  DECLINED // Assigned employee declined
 }
 
 enum AlertSeverity {
@@ -1078,30 +1119,31 @@ enum AlertSeverity {
 /// Log of every auto-fill attempt (successful or not).
 /// Provides full audit trail for compliance & labour-law documentation.
 model AutoFillLog {
-  id                    String         @id @default(cuid())
-  status                AutoFillStatus @default(PENDING)
+  id                   String         @id @default(cuid())
+  status               AutoFillStatus @default(PENDING)
   /// The shift that needs coverage
-  shiftId               String
-  shift                 Shift          @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  shiftId              String
+  shift                Shift          @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   /// Employee whose absence / swap vacated the shift
-  vacatedByEmployeeId   String?
-  vacatedByEmployee     Employee?      @relation("AutoFillVacated", fields: [vacatedByEmployeeId], references: [id], onDelete: SetNull)
+  vacatedByEmployeeId  String?
+  vacatedByEmployee    Employee?      @relation("AutoFillVacated", fields: [vacatedByEmployeeId], references: [id], onDelete: SetNull)
   /// Employee who was auto-assigned as replacement
-  assignedToEmployeeId  String?
-  assignedToEmployee    Employee?      @relation("AutoFillAssigned", fields: [assignedToEmployeeId], references: [id], onDelete: SetNull)
+  assignedToEmployeeId String?
+  assignedToEmployee   Employee?      @relation("AutoFillAssigned", fields: [assignedToEmployeeId], references: [id], onDelete: SetNull)
   /// Human-readable reason ("Absence approved for Max Müller")
-  reason                String
+  reason               String
   /// JSON array of compliance checks performed
-  complianceChecks      Json           @default("[]")
+  complianceChecks     Json           @default("[]")
   /// True when shift is < 4 days away (§ 12 TzBfG notice period)
-  isEmergency           Boolean        @default(false)
+  isEmergency          Boolean        @default(false)
   /// How many eligible candidates were evaluated
-  candidatesEvaluated   Int            @default(0)
+  candidatesEvaluated  Int            @default(0)
   /// Why no one was available (when status = FAILED)
-  failureReason         String?
-  createdAt             DateTime       @default(now())
-  workspaceId           String
-  workspace             Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  failureReason        String?
+  createdAt            DateTime       @default(now())
+  workspaceId          String
+  workspace            Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([shiftId])
   @@index([status])
@@ -1112,19 +1154,20 @@ model AutoFillLog {
 /// or requires human intervention.
 model ManagerAlert {
   id             String        @id @default(cuid())
-  type           String        // e.g. "NO_REPLACEMENT", "EMERGENCY_SHIFT", "COMPLIANCE_RISK"
+  type           String // e.g. "NO_REPLACEMENT", "EMERGENCY_SHIFT", "COMPLIANCE_RISK"
   title          String
   message        String
   severity       AlertSeverity @default(WARNING)
   acknowledged   Boolean       @default(false)
   acknowledgedAt DateTime?
-  acknowledgedBy String?       // userId who ack'd
+  acknowledgedBy String? // userId who ack'd
   /// Optional link to the relevant resource
   link           String?
-  metadata       Json?         // extra context (shiftId, employeeId, etc.)
+  metadata       Json? // extra context (shiftId, employeeId, etc.)
   createdAt      DateTime      @default(now())
   workspaceId    String
   workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([severity])
   @@index([acknowledged])
@@ -1136,46 +1179,47 @@ model ManagerAlert {
 // ═══════════════════════════════════════════════════════════════
 
 enum VisitStatus {
-  GEPLANT        // Scheduled, not yet started
-  EINGECHECKT    // Employee checked in at location
-  ABGESCHLOSSEN  // Visit completed with signature
-  STORNIERT      // Cancelled
+  GEPLANT // Scheduled, not yet started
+  EINGECHECKT // Employee checked in at location
+  ABGESCHLOSSEN // Visit completed with signature
+  STORNIERT // Cancelled
 }
 
 enum ServiceReportStatus {
-  ENTWURF      // Draft — visits still open
-  ERSTELLT     // Generated — PDF created
-  VERSENDET    // Sent to client
+  ENTWURF // Draft — visits still open
+  ERSTELLT // Generated — PDF created
+  VERSENDET // Sent to client
 }
 
 /// A single service visit to a client location (e.g. cleaning Filiale #42).
 /// Captures full audit trail: timestamps, signature.
 model ServiceVisit {
-  id                String      @id @default(cuid())
-  status            VisitStatus @default(GEPLANT)
-  scheduledDate     DateTime    @db.Date
+  id             String                 @id @default(cuid())
+  status         VisitStatus            @default(GEPLANT)
+  scheduledDate  DateTime               @db.Date
   /// Check-in timestamp
-  checkInAt         DateTime?
+  checkInAt      DateTime?
   /// Check-out timestamp
-  checkOutAt        DateTime?
+  checkOutAt     DateTime?
   /// Notes from the employee
-  notes             String?     @db.Text
+  notes          String?                @db.Text
   /// Signature collected at this visit
-  signature         VisitSignature?
+  signature      VisitSignature?
   /// Revisionssicher audit trail
-  visitAuditLogs    ServiceVisitAuditLog[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  visitAuditLogs ServiceVisitAuditLog[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   /// Relations
-  employeeId        String
-  employee          Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  locationId        String
-  location          Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  workspaceId       String
-  workspace         Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  reportId          String?
-  report            ServiceReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
-  deletedAt         DateTime?
+  employeeId     String
+  employee       Employee               @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  locationId     String
+  location       Location               @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  workspaceId    String
+  workspace      Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  reportId       String?
+  report         ServiceReport?         @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  deletedAt      DateTime?
+
   @@index([workspaceId, scheduledDate])
   @@index([employeeId, scheduledDate])
   @@index([locationId])
@@ -1186,18 +1230,19 @@ model ServiceVisit {
 /// Digital signature captured on-device from the site manager.
 /// Cryptographically paired with timestamp via signatureHash.
 model VisitSignature {
-  id              String   @id @default(cuid())
+  id            String       @id @default(cuid())
   /// Base64-encoded PNG of the drawn signature
-  signatureData   String   @db.Text
+  signatureData String       @db.Text
   /// SHA-256 hash binding: visitId + signerName + timestamp
-  signatureHash   String
+  signatureHash String
   /// Identity of the person who signed (e.g. Filialleiter name)
-  signerName      String
-  signerRole      String?  // e.g. "Filialleiter", "Objektleiter"
-  signedAt        DateTime @default(now())
+  signerName    String
+  signerRole    String? // e.g. "Filialleiter", "Objektleiter"
+  signedAt      DateTime     @default(now())
   /// 1:1 relation to the visit
-  visitId         String   @unique
-  visit           ServiceVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  visitId       String       @unique
+  visit         ServiceVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
   @@index([visitId])
 }
 
@@ -1219,6 +1264,7 @@ model ServiceReport {
   workspaceId     String
   workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   visits          ServiceVisit[]
+
   @@index([workspaceId])
   @@index([status])
   @@index([periodStart, periodEnd])
@@ -1242,14 +1288,14 @@ model ServiceVisitAuditLog {
   id              String              @id @default(cuid())
   eventType       VisitAuditEventType
   /// Server-authoritative timestamp (NOT device clock)
-  serverTimestamp  DateTime            @default(now())
+  serverTimestamp DateTime            @default(now())
   /// Client-reported timestamp (for drift detection)
-  clientTimestamp  DateTime?
+  clientTimestamp DateTime?
   /// Device fingerprint
-  deviceId        String?             // navigator.userAgent hash or generated UUID
+  deviceId        String? // navigator.userAgent hash or generated UUID
   userAgent       String?             @db.Text
   /// Signature data (only for SIGNATURE_CAPTURED events)
-  signatureData   String?             @db.Text   // base64 PNG
+  signatureData   String?             @db.Text // base64 PNG
   /// SHA-256 checksum: eventType|visitId|serverTimestamp|deviceId
   /// Used to verify record has not been tampered with
   checksum        String
@@ -1262,6 +1308,7 @@ model ServiceVisitAuditLog {
   visit           ServiceVisit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
   userId          String?
   workspaceId     String
+
   @@index([visitId, serverTimestamp])
   @@index([workspaceId, serverTimestamp])
   @@index([eventType])
@@ -1283,6 +1330,7 @@ model ICalToken {
   rotatedAt   DateTime? // Last time the token was automatically rotated
   expiresAt   DateTime? // Hard expiry — requests after this date are rejected
   createdAt   DateTime  @default(now())
+
   @@index([userId])
   @@index([token])
 }
@@ -1331,34 +1379,42 @@ enum TicketEventType {
 }
 
 model Ticket {
-  id                    String          @id @default(cuid())
-  ticketNumber          String          /// Human-readable e.g. TK-2025-0042 (unique per workspace)
-  ticketType            TicketType      @default(INTERN)
-  subject               String          @db.VarChar(200)
-  description           String          @db.Text
+  id                    String             @id @default(cuid())
+  ticketNumber          String /// Human-readable e.g. TK-2025-0042 (unique per workspace)
+  ticketType            TicketType         @default(INTERN)
+  subject               String             @db.VarChar(200)
+  description           String             @db.Text
   category              TicketCategory
-  priority              TicketPriority  @default(MITTEL)
-  status                TicketStatus    @default(OFFEN)
-  location              String?         @db.VarChar(200) /// Free-text location (NOT GPS)
-  externalSubmitterName String?         @db.VarChar(200)
-  externalToken         String?         @unique /// UUID token for external access link
-  createdById           String?         /// Null for external tickets
-  createdBy             User?           @relation("TicketCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  /// Per-workspace custom category. New tickets reference this; the
+  /// enum field above stays populated as a legacy compatibility shim.
+  categoryDefId         String?
+  categoryDef           TicketCategoryDef? @relation(fields: [categoryDefId], references: [id], onDelete: SetNull)
+  priority              TicketPriority     @default(MITTEL)
+  status                TicketStatus       @default(OFFEN)
+  location              String?            @db.VarChar(200) /// Free-text location (NOT GPS)
+  /// Optional sub-object / specific address within the location
+  /// (e.g. building wing, apartment number, customer site).
+  objectAddress         String?            @db.VarChar(300)
+  externalSubmitterName String?            @db.VarChar(200)
+  externalToken         String?            @unique /// UUID token for external access link
+  createdById           String? /// Null for external tickets
+  createdBy             User?              @relation("TicketCreator", fields: [createdById], references: [id], onDelete: Cascade)
   assignedToId          String?
-  assignedTo            User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo            User?              @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   workspaceId           String
-  workspace             Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  firstViewedAt         DateTime?       /// When a processor first opened the ticket
-  firstViewedById       String?         /// Who first viewed the ticket
-  firstResponseAt       DateTime?       /// When first non-reporter responded
-  resolvedAt            DateTime?       /// When ticket was resolved/closed
-  slaBreached           Boolean         @default(false) /// Whether SLA was breached
+  workspace             Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  firstViewedAt         DateTime? /// When a processor first opened the ticket
+  firstViewedById       String? /// Who first viewed the ticket
+  firstResponseAt       DateTime? /// When first non-reporter responded
+  resolvedAt            DateTime? /// When ticket was resolved/closed
+  slaBreached           Boolean            @default(false) /// Whether SLA was breached
   closedAt              DateTime?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   comments              TicketComment[]
   events                TicketEvent[]
   attachments           TicketAttachment[]
+
   @@unique([workspaceId, ticketNumber])
   @@index([workspaceId])
   @@index([createdById])
@@ -1366,35 +1422,62 @@ model Ticket {
   @@index([status])
   @@index([externalToken])
   @@index([workspaceId, status])
+  @@index([categoryDefId])
+}
+
+/// Per-workspace ticket category. Replaces the global TicketCategory enum
+/// going forward; the enum is kept on Ticket as a legacy compatibility
+/// shim for historical rows.
+model TicketCategoryDef {
+  id          String          @id @default(cuid())
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String          @db.VarChar(80) /// Display label
+  slug        String          @db.VarChar(80) /// Stable kebab-case key
+  color       String?         @db.VarChar(20) /// Optional hex/tailwind tag color
+  sortOrder   Int             @default(0)
+  isActive    Boolean         @default(true)
+  /// If seeded from a legacy enum value, store the enum name so we can
+  /// resolve historical Ticket.category → TicketCategoryDef without a
+  /// destructive migration.
+  legacyEnum  TicketCategory?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  tickets     Ticket[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, isActive, sortOrder])
 }
 
 model TicketComment {
-  id         String   @id @default(cuid())
-  content    String   @db.Text
-  isInternal Boolean  @default(false) /// Only visible to management
-  ticketId   String
-  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId   String?  /// Null for external commenters
-  author     User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorName String?  @db.VarChar(200) /// Display name for external comments
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String             @id @default(cuid())
+  content     String             @db.Text
+  isInternal  Boolean            @default(false) /// Only visible to management
+  ticketId    String
+  ticket      Ticket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId    String? /// Null for external commenters
+  author      User?              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorName  String?            @db.VarChar(200) /// Display name for external comments
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   attachments TicketAttachment[]
+
   @@index([ticketId])
   @@index([authorId])
 }
 
 model TicketEvent {
-  id          String          @id @default(cuid())
-  ticketId    String
-  ticket      Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  eventType   TicketEventType
-  actorId     String?         /// Null for system or external events
-  actorName   String?         @db.VarChar(200) /// Display name
-  oldValue    String?         @db.VarChar(500)
-  newValue    String?         @db.VarChar(500)
-  metadata    String?         @db.Text /// JSON for extra context
-  createdAt   DateTime        @default(now())
+  id        String          @id @default(cuid())
+  ticketId  String
+  ticket    Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  eventType TicketEventType
+  actorId   String? /// Null for system or external events
+  actorName String?         @db.VarChar(200) /// Display name
+  oldValue  String?         @db.VarChar(500)
+  newValue  String?         @db.VarChar(500)
+  metadata  String?         @db.Text /// JSON for extra context
+  createdAt DateTime        @default(now())
+
   @@index([ticketId])
   @@index([ticketId, createdAt])
 }
@@ -1403,22 +1486,23 @@ model TicketEvent {
 /// Stored in Vercel Blob; row holds the public URL + metadata.
 /// Storage usage tracked via WorkspaceUsage.ticketStorageBytesUsed.
 model TicketAttachment {
-  id           String          @id @default(cuid())
+  id           String         @id @default(cuid())
   ticketId     String
-  ticket       Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticket       Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   /// Optional: attachment belongs to a specific comment instead of the ticket itself.
   commentId    String?
-  comment      TicketComment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  fileName     String          @db.VarChar(500)
-  fileUrl      String          @db.Text /// Vercel Blob public URL
-  fileType     String          @db.VarChar(150) /// MIME type
-  fileSize     BigInt          /// bytes
-  uploadedById String?         /// Null for external (token-based) uploads
-  uploadedBy   User?           @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  uploaderName String?         @db.VarChar(200) /// Display name for external uploads
+  comment      TicketComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  fileName     String         @db.VarChar(500)
+  fileUrl      String         @db.Text /// Vercel Blob public URL
+  fileType     String         @db.VarChar(150) /// MIME type
+  fileSize     BigInt /// bytes
+  uploadedById String? /// Null for external (token-based) uploads
+  uploadedBy   User?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploaderName String?        @db.VarChar(200) /// Display name for external uploads
   workspaceId  String
-  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  createdAt    DateTime        @default(now())
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+
   @@index([ticketId])
   @@index([commentId])
   @@index([workspaceId])
@@ -1440,12 +1524,13 @@ model InvoiceSequence {
 model StationSession {
   id             String    @id @default(cuid())
   workspaceId    String
-  sessionKeyHash String    @unique  /// SHA-256 of the raw station_key cookie value
+  sessionKeyHash String    @unique /// SHA-256 of the raw station_key cookie value
   deviceName     String    @default("Unbekanntes Gerät")
   issuedAt       DateTime  @default(now())
   lastSeenAt     DateTime  @default(now())
   revokedAt      DateTime?
   workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([workspaceId])
   @@index([sessionKeyHash])
 }
@@ -1454,11 +1539,12 @@ model StationSession {
 /// Add a new row (with validFrom = today) whenever address or VAT-ID changes;
 /// the webhook picks the row whose validFrom ≤ invoice date.
 model IssuerProfile {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   vatId     String?
   address   String?
-  validFrom DateTime  @default(now())
-  createdAt DateTime  @default(now())
+  validFrom DateTime @default(now())
+  createdAt DateTime @default(now())
+
   @@index([validFrom])
 }

@@ -103,6 +103,54 @@ export default function AbwesenheitenPage() {
     halfDayEnd: false,
   });
 
+  type DayKind = "WORK" | "WEEKEND" | "HOLIDAY" | "VACATION";
+  interface PreviewState {
+    breakdown: Array<{ date: string; kind: DayKind; holidayName?: string }>;
+    deductibleDays: number;
+    holidayCount: number;
+    bundesland: string;
+  }
+  const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Re-run the holiday-aware classifier whenever the date range, half-day
+  // flags, or selected employee change. Debounced so quick typing doesn't
+  // spam the API.
+  useEffect(() => {
+    const { employeeId, startDate, endDate, halfDayStart, halfDayEnd } =
+      formData;
+    if (!employeeId || !startDate || !endDate || startDate > endDate) {
+      setPreview(null);
+      return;
+    }
+    setPreviewLoading(true);
+    const handle = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/absences/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            employeeId,
+            startDate,
+            endDate,
+            halfDayStart,
+            halfDayEnd,
+          }),
+        });
+        if (res.ok) {
+          setPreview(await res.json());
+        } else {
+          setPreview(null);
+        }
+      } catch {
+        setPreview(null);
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [formData]);
+
   // Auto-fill employeeId for EMPLOYEE role
   const openForm = useCallback(() => {
     if (!canManage && user?.employeeId) {
@@ -641,6 +689,53 @@ export default function AbwesenheitenPage() {
                     </label>
                   </div>
                 </div>
+
+                {/* ── Holiday-aware day-count preview ── */}
+                {(formData.startDate || formData.endDate) && (
+                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 text-sm">
+                    {previewLoading && !preview && (
+                      <p className="text-gray-600 dark:text-zinc-400">
+                        {t("preview.loading")}
+                      </p>
+                    )}
+                    {preview && (
+                      <>
+                        <div className="flex flex-wrap items-baseline gap-3">
+                          <span className="text-base font-semibold text-emerald-700 dark:text-emerald-300">
+                            {t("preview.deductible", {
+                              count: preview.deductibleDays,
+                            })}
+                          </span>
+                          {preview.holidayCount > 0 && (
+                            <span className="text-xs text-emerald-700 dark:text-emerald-400">
+                              {t("preview.holidaysExcluded", {
+                                count: preview.holidayCount,
+                              })}
+                            </span>
+                          )}
+                          <span className="ml-auto text-xs text-gray-500 dark:text-zinc-500">
+                            {t("preview.bundesland", {
+                              code: preview.bundesland,
+                            })}
+                          </span>
+                        </div>
+                        {preview.breakdown.some(
+                          (d) => d.kind === "HOLIDAY",
+                        ) && (
+                          <ul className="mt-2 space-y-0.5 text-xs text-gray-600 dark:text-zinc-400">
+                            {preview.breakdown
+                              .filter((d) => d.kind === "HOLIDAY")
+                              .map((d) => (
+                                <li key={d.date}>
+                                  • {d.date} — {d.holidayName}
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-2">
                   <Button

@@ -31,6 +31,7 @@ import {
   UsersIcon,
   DownloadIcon,
   TrashIcon,
+  TicketIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
@@ -766,6 +767,31 @@ export default function EinstellungenPage() {
             </CardContent>
           </Card>
         </Link>
+
+        {/* Ticket Categories Card — admin only */}
+        {["OWNER", "ADMIN"].includes(rawRole) && (
+          <Link
+            href="/einstellungen/tickets/kategorien"
+            className="block group"
+          >
+            <Card className="transition-colors group-hover:border-emerald-200 dark:group-hover:border-emerald-800 group-hover:bg-emerald-50/30 dark:group-hover:bg-emerald-950/20">
+              <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/40 transition-colors">
+                  <TicketIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-gray-900 dark:text-zinc-100">
+                    {t("ticketCategories")}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
+                    {t("ticketCategoriesDesc")}
+                  </p>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        )}
 
         {/* Team Management Card */}
         {["OWNER", "ADMIN"].includes(rawRole) && (

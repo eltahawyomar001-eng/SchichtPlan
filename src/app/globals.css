@@ -1011,15 +1011,29 @@ body {
   }
 }
 
-/* Base card — border styling for light and dark mode */
+/* Base card — border styling for light and dark mode.
+   Dark variant uses a neutral zinc separator (visible but not noisy) with
+   a deep-green accent on hover for interactive surfaces. Replaces the
+   previous emerald-at-40% border which read as "neon" against #0a0a0a. */
 .card-base {
   border: 1px solid #e5e7eb; /* gray-200 */
   box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.04); /* ring effect */
 }
 
 :is(.dark) .card-base {
-  border: 1px solid rgba(16, 185, 129, 0.4); /* emerald-500 at 40% */
-  box-shadow: none;
+  /* zinc-700 at 60% — sits above the #0a0a0a body bg with clear separation
+     without competing with content. */
+  border: 1px solid rgba(63, 63, 70, 0.7);
+  background-color: #18181b; /* zinc-900 — deliberate elevation over page */
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.02) inset,
+    /* subtle top highlight for depth */ 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Hover state on cards that wrap a <Link group> — deep green accent. */
+:is(.dark) .group:hover .card-base,
+:is(.dark) .card-base:hover {
+  border-color: rgb(6, 95, 70); /* emerald-800 — muted, professional */
 }
 
 /* Elevated card — premium hover-lift with refined shadow (hover-capable devices only) */
@@ -1032,8 +1046,9 @@ body {
 }
 
 :is(.dark) .card-elevated {
-  border: 1px solid rgba(16, 185, 129, 0.4); /* emerald-500 at 40% */
-  box-shadow: none;
+  border: 1px solid rgba(63, 63, 70, 0.7); /* zinc-700/60 */
+  background-color: #18181b;
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
 }
 
 @media (hover: hover) {

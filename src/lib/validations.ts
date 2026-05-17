@@ -857,12 +857,23 @@ export const createTicketSchema = z.object({
   category: z.enum(TICKET_CATEGORIES, {
     message: "Ungültige Kategorie",
   }),
+  /// New: per-tenant category reference (FK). Optional during the
+  /// migration window — when absent, the legacy `category` enum is used.
+  categoryDefId: z.string().cuid().optional().nullable(),
   priority: z
     .enum(TICKET_PRIORITIES, {
       message: "Ungültige Priorität",
     })
     .optional(),
   location: ticketLocation,
+  /// Optional sub-object / address within the location.
+  objectAddress: z
+    .string()
+    .max(300, "Adresse darf maximal 300 Zeichen lang sein")
+    .optional()
+    .or(z.literal("")),
+  /// Optional initial assignee — any user in the workspace.
+  assignedToId: z.string().cuid().optional().nullable(),
 });
 
 export const updateTicketSchema = z.object({

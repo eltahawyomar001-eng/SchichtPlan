@@ -43,8 +43,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           >
             Zum Inhalt springen
           </a>
-          <TrialBanner />
-          <OfflineSyncBanner />
+          {/* Top banners — offset by sidebar width on desktop so the
+              fixed sidebar doesn't clip the start of the banner text. */}
+          <div className="lg:pl-[var(--sidebar-width,16rem)]">
+            <TrialBanner />
+            <OfflineSyncBanner />
+          </div>
           <Sidebar open={sidebarOpen} onClose={closeSidebar} />
           <main
             id="main-content"

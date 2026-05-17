@@ -237,10 +237,31 @@ export default function TicketDetailPage() {
         method: "POST",
         body: fd,
       });
+      const data: {
+        message?: string;
+        error?: string;
+        rejections?: Array<{ fileName: string; message: string }>;
+      } = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        setUploadError(err?.message ?? t("attachments.uploadFailed"));
+        // Show per-file rejection list if backend supplied one, else the
+        // top-level message (preferred over `data.error` machine codes).
+        const lines =
+          data.rejections && data.rejections.length > 0
+            ? data.rejections
+                .map((r) => `${r.fileName || "Datei"}: ${r.message}`)
+                .join("\n")
+            : null;
+        setUploadError(
+          lines ?? data.message ?? data.error ?? t("attachments.uploadFailed"),
+        );
       } else {
+        if (data.rejections && data.rejections.length > 0) {
+          setUploadError(
+            data.rejections
+              .map((r) => `${r.fileName || "Datei"}: ${r.message}`)
+              .join("\n"),
+          );
+        }
         fetchTicket();
         fetchEvents();
       }
@@ -513,6 +534,7 @@ export default function TicketDetailPage() {
                     ref={fileInputRef}
                     type="file"
                     multiple
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.txt,.md,.json,.xml,.rtf,.odt,.ods,.ppt,.pptx,.zip,.7z,.rar,.tar,.gz"
                     className="hidden"
                     onChange={(e) => {
                       if (e.target.files) uploadFiles(e.target.files);
@@ -520,7 +542,9 @@ export default function TicketDetailPage() {
                   />
                 </div>
                 {uploadError && (
-                  <p className="text-xs text-red-600">{uploadError}</p>
+                  <p className="whitespace-pre-line text-xs text-red-600 dark:text-red-400">
+                    {uploadError}
+                  </p>
                 )}
               </CardContent>
             </Card>

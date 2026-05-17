@@ -30,6 +30,10 @@ import {
   deleteBlob,
 } from "@/lib/ticket-attachments";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 const MAX_EXTERNAL_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_EXTERNAL_FILES_PER_REQUEST = 3;
 

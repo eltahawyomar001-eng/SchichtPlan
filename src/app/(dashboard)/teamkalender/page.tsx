@@ -190,33 +190,17 @@ export default function TeamkalenderSeite() {
   }
 
   function handleExport() {
-    const rows = ["Type,Employee,Date,Start,End,Details"];
-    for (const s of filteredShifts) {
-      const name = s.employee
-        ? `${s.employee.firstName} ${s.employee.lastName}`
-        : "";
-      rows.push(
-        `Shift,"${name}",${s.date},${s.startTime},${s.endTime},"${s.status}"`,
-      );
-    }
-    for (const a of filteredAbsences) {
-      const name = `${a.employee.firstName} ${a.employee.lastName}`;
-      rows.push(
-        `Absence,"${name}",${a.startDate},,,"${a.category} (${a.totalDays}d)"`,
-      );
-    }
-    for (const h of filteredHolidays) {
-      rows.push(`Holiday,"",${h.date},,,"${h.name}"`);
-    }
-    const blob = new Blob([rows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
+    // Server-side CSV: locale-aware headers, BOM, sep=; hint, translated
+    // enums, DD.MM.YYYY dates, em-dash for missing times. The browser just
+    // navigates to the URL and downloads the file as-is — no Blob assembly,
+    // no Excel "Text to Columns" wizard needed.
+    const params = new URLSearchParams({
+      from: format(dateRange.start, "yyyy-MM-dd"),
+      to: format(dateRange.end, "yyyy-MM-dd"),
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `kalender-${format(currentDate, "yyyy-MM")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (selectedEmployee) params.set("employeeId", selectedEmployee);
+    if (selectedDepartment) params.set("departmentId", selectedDepartment);
+    window.location.href = `/api/teamkalender/export?${params.toString()}`;
   }
 
   // Navigation — advances by the correct unit for the active period

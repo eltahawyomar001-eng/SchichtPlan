@@ -39,6 +39,7 @@ model User {
   notifications           Notification[]
   ticketsCreated          Ticket[]                 @relation("TicketCreator")
   ticketsAssigned         Ticket[]                 @relation("TicketAssignee")
+  ticketsTrashed          Ticket[]                 @relation("TicketTrasher")
   ticketComments          TicketComment[]
   ticketAttachments       TicketAttachment[]
   feedback                Feedback[]
@@ -1376,6 +1377,8 @@ enum TicketEventType {
   KOMMENTAR
   GESCHLOSSEN
   ANGEHANGT
+  GELOESCHT
+  WIEDERHERGESTELLT
 }
 
 model Ticket {
@@ -1409,6 +1412,12 @@ model Ticket {
   resolvedAt            DateTime? /// When ticket was resolved/closed
   slaBreached           Boolean            @default(false) /// Whether SLA was breached
   closedAt              DateTime?
+  /// Soft-delete (Papierkorb). Null = active, non-null = trashed. Hard
+  /// purge is a separate explicit action that also walks blob storage.
+  deletedAt             DateTime?
+  /// Audit: who moved this ticket into the trash bin.
+  deletedById           String?
+  deletedBy             User?              @relation("TicketTrasher", fields: [deletedById], references: [id], onDelete: SetNull)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   comments              TicketComment[]
@@ -1422,7 +1431,22 @@ model Ticket {
   @@index([status])
   @@index([externalToken])
   @@index([workspaceId, status])
+  @@index([workspaceId, deletedAt])
   @@index([categoryDefId])
+}
+
+/// Persistent Stripe webhook idempotency log. Holds every event id we have
+/// already processed so Stripe's 72-hour retry window cannot cause a
+/// duplicate state transition. Cheaper and more durable than the previous
+/// 5-minute Redis TTL.
+model StripeEvent {
+  id          String   @id /// Stripe event id (e.g. evt_1XYZ...)
+  type        String   @db.VarChar(120)
+  processedAt DateTime @default(now())
+  payloadHash String?  @db.VarChar(64) /// optional sha256 of the raw body
+
+  @@index([processedAt(sort: Desc)])
+  @@index([type])
 }
 
 /// Per-workspace ticket category. Replaces the global TicketCategory enum

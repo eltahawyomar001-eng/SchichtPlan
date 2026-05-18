@@ -142,6 +142,30 @@ export function logTicketClosed(ticketId: string, actor: EventActor): void {
 }
 
 /**
+ * Log a GELOESCHT event when a ticket is moved to the trash bin.
+ * Soft-delete only — hard purge intentionally does not log an event
+ * because the row (and all its events) cease to exist.
+ */
+export function logTicketTrashed(ticketId: string, actor: EventActor): void {
+  void createTicketEvent({
+    ticketId,
+    eventType: "GELOESCHT",
+    actor,
+  });
+}
+
+/**
+ * Log a WIEDERHERGESTELLT event when a trashed ticket is restored.
+ */
+export function logTicketRestored(ticketId: string, actor: EventActor): void {
+  void createTicketEvent({
+    ticketId,
+    eventType: "WIEDERHERGESTELLT",
+    actor,
+  });
+}
+
+/**
  * Log an ANGEHANGT event when a file is attached to a ticket.
  */
 export function logAttachmentAdded(

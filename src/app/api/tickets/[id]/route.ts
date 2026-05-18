@@ -20,7 +20,9 @@ import {
   logTicketAssigned,
   logTicketViewed,
   logTicketClosed,
+  logTicketTrashed,
 } from "@/lib/ticket-events";
+import { softDeleteTicket, purgeTicket } from "@/lib/ticket-trash";
 import {
   notifyTicketAssigned,
   notifyStatusChanged,
@@ -275,10 +277,13 @@ export async function PATCH(
 }
 
 // ─── DELETE  /api/tickets/[id] ─────────────────────────────────
+// Default behaviour is **soft delete** — the ticket moves to the workspace's
+// trash bin (Papierkorb). Add `?purge=true` to permanently destroy the
+// ticket along with its blob attachments and release storage usage.
 // Permission: tickets.delete is restricted to OWNER and ADMIN
 // (see permissionMatrix in /lib/authorization.ts).
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -293,25 +298,57 @@ export async function DELETE(
     if (addonRequired) return addonRequired;
 
     const { id } = await params;
+    const url = new URL(req.url);
+    const purge = url.searchParams.get("purge") === "true";
 
     const existing = await prisma.ticket.findFirst({
       where: { id, workspaceId },
-      select: { id: true, ticketNumber: true },
+      select: { id: true, ticketNumber: true, deletedAt: true },
     });
     if (!existing) return notFound("Ticket nicht gefunden");
 
-    // Cascade delete: relies on Prisma onDelete: Cascade for comments,
-    // attachments and events. Falls back to a transaction if the schema
-    // does not have cascade configured.
-    await prisma.ticket.delete({ where: { id } });
+    if (purge) {
+      // Hard delete: walk attachments, delete blobs, decrement storage
+      // counter, then cascade-delete the row. Only allowed from the
+      // trash bin so users can't accidentally bypass the soft step.
+      if (!existing.deletedAt) {
+        return NextResponse.json(
+          {
+            error: "PURGE_REQUIRES_TRASH",
+            message:
+              "Bitte zuerst in den Papierkorb verschieben, dann endgültig löschen.",
+          },
+          { status: 409 },
+        );
+      }
+      const result = await purgeTicket({ ticketId: id, workspaceId });
+      log.info("Ticket purged", {
+        ticketNumber: existing.ticketNumber,
+        userId: user.id,
+        ...result,
+      });
+      return NextResponse.json({ ok: true, purged: true, ...result });
+    }
 
-    log.info("Ticket deleted", {
+    if (existing.deletedAt) {
+      // Already in trash — DELETE is idempotent here.
+      return NextResponse.json({ ok: true, alreadyDeleted: true });
+    }
+
+    await softDeleteTicket({
+      ticketId: id,
+      workspaceId,
+      actorId: user.id,
+    });
+    logTicketTrashed(id, { id: user.id, name: user.name ?? "System" });
+
+    log.info("Ticket moved to trash", {
       ticketId: id,
       ticketNumber: existing.ticketNumber,
       userId: user.id,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, trashed: true });
   } catch (error) {
     log.error("Error deleting ticket:", { error });
     captureRouteError(error, { route: "/api/tickets/[id]", method: "DELETE" });

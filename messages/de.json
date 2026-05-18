@@ -568,8 +568,31 @@
       "remarks": "Bemerkung"
     }
   },
+  "userRoles": {
+    "OWNER": "Inhaber",
+    "ADMIN": "Administrator",
+    "MANAGER": "Objektleiter",
+    "EMPLOYEE": "Mitarbeiter",
+    "BACKOFFICE": "Backoffice",
+    "SUPERVISOR": "Vorgesetzter"
+  },
+  "ticketTrash": {
+    "title": "Papierkorb",
+    "loading": "Wird geladen…",
+    "loadError": "Papierkorb konnte nicht geladen werden.",
+    "networkError": "Netzwerkfehler. Bitte erneut versuchen.",
+    "restore": "Wiederherstellen",
+    "restoreError": "Wiederherstellung fehlgeschlagen.",
+    "purgeForever": "Endgültig löschen",
+    "purgeError": "Endgültiges Löschen fehlgeschlagen.",
+    "confirmPurge": "Dieses Ticket endgültig löschen? Alle Anhänge werden permanent entfernt — diese Aktion kann nicht rückgängig gemacht werden.",
+    "deletedAt": "Gelöscht am {date}",
+    "emptyTitle": "Papierkorb ist leer",
+    "emptyDescription": "Gelöschte Tickets erscheinen hier und können wiederhergestellt oder endgültig entfernt werden.",
+    "storageHint": "Hinweis: Tickets im Papierkorb sowie deren Anhänge belegen weiterhin Speicherplatz. Endgültiges Löschen gibt den Speicher frei."
+  },
   "ticketCategories": {
-    "title": "Ticket-Kategorien",
+    "title": "Ticket Kategorien",
     "createTitle": "Neue Kategorie",
     "listTitle": "Vorhandene Kategorien",
     "nameLabel": "Name",
@@ -958,7 +981,7 @@
     "automationsDesc": "Automatische Regeln für Schichtplanung, Zeiterfassung und Genehmigungen",
     "notificationPrefs": "E-Mail-Benachrichtigungen",
     "notificationPrefsDesc": "Benachrichtigungen bei Schichtzuweisungen und Updates konfigurieren",
-    "ticketCategories": "Ticket-Kategorien",
+    "ticketCategories": "Ticket Kategorien",
     "ticketCategoriesDesc": "Eigene Kategorien für Ihr Ticketing anlegen, umbenennen oder deaktivieren",
     "teamManagement": "Teamverwaltung",
     "teamManagementDesc": "Mitglieder einladen, Rollen verwalten und offene Einladungen einsehen",
@@ -2954,6 +2977,11 @@
     "sendComment": "Senden",
     "internalNote": "Interner Hinweis",
     "createError": "Fehler beim Erstellen des Tickets",
+    "trashLink": "Papierkorb",
+    "inTrashBanner": "Dieses Ticket befindet sich im Papierkorb.",
+    "restore": "Wiederherstellen",
+    "purgeForever": "Endgültig löschen",
+    "confirmPurge": "Dieses Ticket endgültig löschen? Alle Anhänge werden permanent entfernt.",
     "deleteTicket": "Ticket löschen",
     "deleteConfirmTitle": "Dieses Ticket wirklich löschen?",
     "deleteConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Kommentare, Anhänge und der Verlauf werden dauerhaft entfernt.",

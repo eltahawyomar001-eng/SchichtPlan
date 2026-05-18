@@ -93,6 +93,9 @@ export default function TicketsPage() {
   const [fetchError, setFetchError] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [categories, setCategories] = useState<
+    Array<{ id: string; name: string; legacyEnum: string | null }>
+  >([]);
   const [filterAssignedToMe, setFilterAssignedToMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -203,6 +206,25 @@ export default function TicketsPage() {
     fetchTickets();
     fetchStats();
   }, [fetchTickets, fetchStats]);
+
+  // Tenant-specific categories — drives the "Alle Kategorien" filter
+  // dropdown so it stays in sync with whatever the admin configured in
+  // Einstellungen → Ticket Kategorien.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/ticket-categories", {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data.categories ?? []);
+        }
+      } catch {
+        // silent — dropdown stays empty (only "Alle Kategorien")
+      }
+    })();
+  }, []);
 
   // Fetch workspace slug for the public ticket link
   useEffect(() => {
@@ -339,22 +361,11 @@ export default function TicketsPage() {
               onChange={(e) => setFilterCategory(e.target.value)}
             >
               <option value="all">{t("filters.allCategories")}</option>
-              <option value="SCHICHTPLAN">{t("categories.SCHICHTPLAN")}</option>
-              <option value="ZEITERFASSUNG">
-                {t("categories.ZEITERFASSUNG")}
-              </option>
-              <option value="LOHNABRECHNUNG">
-                {t("categories.LOHNABRECHNUNG")}
-              </option>
-              <option value="TECHNIK">{t("categories.TECHNIK")}</option>
-              <option value="HR">{t("categories.HR")}</option>
-              <option value="QUALITAETSMANGEL">
-                {t("categories.QUALITAETSMANGEL")}
-              </option>
-              <option value="FEHLENDE_LEISTUNG">
-                {t("categories.FEHLENDE_LEISTUNG")}
-              </option>
-              <option value="SONSTIGES">{t("categories.SONSTIGES")}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.legacyEnum ?? c.id}>
+                  {c.name}
+                </option>
+              ))}
             </Select>
             <Button
               variant={filterAssignedToMe ? "default" : "outline"}
@@ -365,10 +376,19 @@ export default function TicketsPage() {
               {t("filters.assignedToMe")}
             </Button>
           </div>
-          <Button onClick={() => router.push("/tickets/neu")}>
-            <PlusIcon className="h-4 w-4" />
-            {t("createTicket")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/tickets/papierkorb")}
+              className="whitespace-nowrap"
+            >
+              {t("trashLink")}
+            </Button>
+            <Button onClick={() => router.push("/tickets/neu")}>
+              <PlusIcon className="h-4 w-4" />
+              {t("createTicket")}
+            </Button>
+          </div>
         </div>
 
         {/* ── Bulk Selection Bar (managers only) ──────────── */}

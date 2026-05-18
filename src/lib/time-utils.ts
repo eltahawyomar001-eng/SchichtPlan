@@ -228,6 +228,74 @@ export function getStatusLabel(status: string, locale: string): string {
   return labels[status] ?? status;
 }
 
+// ─── Shift-status labels (separate enum from time-entry status) ──
+
+const SHIFT_STATUS_DE: Record<string, string> = {
+  SCHEDULED: "Geplant",
+  CONFIRMED: "Bestätigt",
+  COMPLETED: "Abgeschlossen",
+  CANCELLED: "Abgesagt",
+  ABSENT: "Abwesend",
+  OPEN: "Offen",
+};
+const SHIFT_STATUS_EN: Record<string, string> = {
+  SCHEDULED: "Scheduled",
+  CONFIRMED: "Confirmed",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  ABSENT: "Absent",
+  OPEN: "Open",
+};
+export function getShiftStatusLabel(status: string, locale: string): string {
+  const labels = locale === "en" ? SHIFT_STATUS_EN : SHIFT_STATUS_DE;
+  return labels[status] ?? status;
+}
+
+// ─── Absence-category labels ────────────────────────────────────
+
+const ABSENCE_CATEGORY_DE: Record<string, string> = {
+  URLAUB: "Urlaub",
+  KRANK: "Krankheit",
+  ELTERNZEIT: "Elternzeit",
+  SONDERURLAUB: "Sonderurlaub",
+  UNBEZAHLT: "Unbezahlt",
+  FORTBILDUNG: "Fortbildung",
+  SONSTIGES: "Sonstiges",
+};
+const ABSENCE_CATEGORY_EN: Record<string, string> = {
+  URLAUB: "Vacation",
+  KRANK: "Sick leave",
+  ELTERNZEIT: "Parental leave",
+  SONDERURLAUB: "Special leave",
+  UNBEZAHLT: "Unpaid leave",
+  FORTBILDUNG: "Training",
+  SONSTIGES: "Other",
+};
+export function getAbsenceCategoryLabel(
+  category: string,
+  locale: string,
+): string {
+  const labels = locale === "en" ? ABSENCE_CATEGORY_EN : ABSENCE_CATEGORY_DE;
+  return labels[category] ?? category;
+}
+
+// ─── Roster row-type labels (Shift / Absence / Holiday) ─────────
+
+const ROW_TYPE_DE: Record<string, string> = {
+  SHIFT: "Schicht",
+  ABSENCE: "Abwesenheit",
+  HOLIDAY: "Feiertag",
+};
+const ROW_TYPE_EN: Record<string, string> = {
+  SHIFT: "Shift",
+  ABSENCE: "Absence",
+  HOLIDAY: "Holiday",
+};
+export function getRowTypeLabel(type: string, locale: string): string {
+  const labels = locale === "en" ? ROW_TYPE_EN : ROW_TYPE_DE;
+  return labels[type] ?? type;
+}
+
 // ─── CSV export column headers (locale-aware) ───────────────────
 
 export const CSV_HEADERS_DE = {

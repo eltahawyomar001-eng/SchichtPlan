@@ -76,6 +76,7 @@ function formatBytes(bytes: number): string {
 
 export default function NewTicketPage() {
   const t = useTranslations("tickets");
+  const tRoles = useTranslations("userRoles");
   const router = useRouter();
 
   const [subject, setSubject] = useState("");
@@ -316,7 +317,7 @@ export default function NewTicketPage() {
                   {assignees.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name || a.email}
-                      {a.role ? ` · ${a.role}` : ""}
+                      {a.role ? ` · ${tRoles(a.role)}` : ""}
                     </option>
                   ))}
                 </Select>

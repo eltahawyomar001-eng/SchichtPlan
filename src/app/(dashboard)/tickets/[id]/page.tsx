@@ -77,6 +77,7 @@ interface Ticket {
   assignedTo: TicketUser | null;
   firstViewedAt: string | null;
   closedAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   comments: Comment[];
@@ -358,6 +359,42 @@ export default function TicketDetailPage() {
           <ArrowLeftIcon className="h-4 w-4" />
           {t("backToList")}
         </button>
+
+        {ticket.deletedAt && (
+          <div className="mb-4 flex flex-col gap-2 rounded-xl border border-amber-300 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200 sm:flex-row sm:items-center sm:justify-between">
+            <span>{t("inTrashBanner")}</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await fetch(`/api/tickets/${id}/restore`, {
+                    method: "POST",
+                  });
+                  if (res.ok) {
+                    fetchTicket();
+                    fetchEvents();
+                  }
+                }}
+                className="inline-flex h-8 items-center rounded-lg border border-emerald-300 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 px-3 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"
+              >
+                {t("restore")}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm(t("confirmPurge"))) return;
+                  const res = await fetch(`/api/tickets/${id}?purge=true`, {
+                    method: "DELETE",
+                  });
+                  if (res.ok) router.push("/tickets/papierkorb");
+                }}
+                className="inline-flex h-8 items-center rounded-lg border border-red-300 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-3 text-xs font-medium text-red-700 dark:text-red-300 hover:bg-red-100"
+              >
+                {t("purgeForever")}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>

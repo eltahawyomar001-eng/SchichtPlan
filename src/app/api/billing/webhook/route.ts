@@ -25,13 +25,17 @@ import { log } from "@/lib/logger";
 import { Redis } from "@upstash/redis";
 import { withRoute } from "@/lib/with-route";
 
-/* ── Idempotency guard (Upstash Redis) ──────────────────────────
- * Prevent processing the same Stripe event twice (e.g. on retries).
- * Uses Upstash Redis with a 5-minute TTL so dedup survives Vercel
- * cold-starts and works across multiple serverless instances.
- * Falls back to in-memory Map if Upstash env vars are missing.
+/* ── Idempotency guard (persistent DB + Redis fast-path) ─────────
+ * Stripe retries failed webhooks for up to 72 hours. The previous
+ * implementation used a 5-minute Redis TTL which left a large window
+ * where a slow retry could re-trigger handlers.
+ *
+ * New approach: a row in `StripeEvent` with the event id as primary
+ * key is the durable source of truth. Redis (when present) is used as
+ * an optional fast-path to skip a DB roundtrip for hot dedup. The DB
+ * row is what stops re-execution if Redis has expired or is offline.
  * ─────────────────────────────────────────────────────────────── */
-const EVENT_TTL_SECONDS = 5 * 60; // 5 minutes
+const REDIS_HOT_TTL_SECONDS = 60 * 60; // 1h fast-path
 
 const hasUpstash =
   !!process.env.UPSTASH_REDIS_REST_URL &&
@@ -44,35 +48,51 @@ const redis = hasUpstash
     })
   : undefined;
 
-// In-memory fallback for dev/staging without Upstash
-const localFallback = new Map<string, number>();
-
 async function isEventProcessed(eventId: string): Promise<boolean> {
   if (redis) {
     const exists = await redis.exists(`stripe_event:${eventId}`);
-    return exists === 1;
+    if (exists === 1) return true;
   }
-  // Fallback: in-memory
-  const ts = localFallback.get(eventId);
-  if (ts && Date.now() - ts < EVENT_TTL_SECONDS * 1000) return true;
-  return false;
+  const row = await prisma.stripeEvent.findUnique({
+    where: { id: eventId },
+    select: { id: true },
+  });
+  return !!row;
 }
 
-async function markEventProcessed(eventId: string): Promise<void> {
-  if (redis) {
-    await redis.set(`stripe_event:${eventId}`, "1", {
-      ex: EVENT_TTL_SECONDS,
+/**
+ * Persist the event id. The unique-constraint `create` is the atomic
+ * gate — if another concurrent handler beat us to it, we get P2002 and
+ * abort processing. Redis is best-effort cache only.
+ *
+ * Returns true on first write, false if the id was already present.
+ */
+async function markEventProcessed(
+  eventId: string,
+  eventType: string,
+): Promise<boolean> {
+  try {
+    await prisma.stripeEvent.create({
+      data: { id: eventId, type: eventType },
     });
-    return;
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === "P2002") return false; // race — another worker won
+    log.error("[Stripe] Failed to persist event id", { eventId, err });
+    // Don't block processing on a DB hiccup — we already verified the
+    // signature; missing the audit row is preferable to dropping the
+    // event entirely.
   }
-  // Fallback: in-memory
-  localFallback.set(eventId, Date.now());
-  if (localFallback.size > 500) {
-    const now = Date.now();
-    for (const [id, ts] of localFallback) {
-      if (now - ts > EVENT_TTL_SECONDS * 1000) localFallback.delete(id);
+  if (redis) {
+    try {
+      await redis.set(`stripe_event:${eventId}`, "1", {
+        ex: REDIS_HOT_TTL_SECONDS,
+      });
+    } catch {
+      // Redis is a cache; ignore failures.
     }
   }
+  return true;
 }
 
 /**
@@ -114,7 +134,12 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
     log.info(`[Stripe] Skipping duplicate event: ${event.id}`);
     return NextResponse.json({ received: true, duplicate: true });
   }
-  await markEventProcessed(event.id);
+  const firstWrite = await markEventProcessed(event.id, event.type);
+  if (!firstWrite) {
+    // A concurrent worker raced us and won — abort to avoid double-handling.
+    log.info(`[Stripe] Race-loss on event: ${event.id}`);
+    return NextResponse.json({ received: true, raceLost: true });
+  }
 
   switch (event.type) {
     /* ─── Checkout completed → activate subscription ─── */
@@ -369,7 +394,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       if (!customerId) break;
 
       try {
-        const sub = await prisma.subscription.findFirst({
+        let sub = await prisma.subscription.findFirst({
           where: { stripeCustomerId: customerId },
           select: {
             workspaceId: true,
@@ -378,6 +403,61 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             seatCount: true,
           },
         });
+
+        // Self-heal: invoice.paid fired but we have no local subscription
+        // for this customer. Common after a missed checkout.session.completed.
+        // Pull the live sub from Stripe and link by customer.
+        // (Stripe API 2024+ exposes the subscription via `parent.subscription_details`.)
+        const linkedSubRef =
+          invoice.parent?.subscription_details?.subscription ?? null;
+        if (!sub && linkedSubRef) {
+          const stripeSubId =
+            typeof linkedSubRef === "string" ? linkedSubRef : linkedSubRef.id;
+          if (stripeSubId) {
+            try {
+              const liveSub = await stripe.subscriptions.retrieve(stripeSubId);
+              const mainItem =
+                liveSub.items.data.find(
+                  (it) =>
+                    !getTicketingTierByPriceId(it.price.id) &&
+                    !getSchichtplanungBillingByPriceId(it.price.id),
+                ) ?? liveSub.items.data[0];
+              const linked = await linkSubscriptionByCustomer({
+                stripeCustomerId: customerId,
+                stripeSubscriptionId: liveSub.id,
+                stripePriceId: mainItem?.price.id ?? "",
+                status: liveSub.status,
+                seatCount: mainItem?.quantity ?? 1,
+                currentPeriodStart: new Date(
+                  (mainItem?.current_period_start ?? 0) * 1000,
+                ),
+                currentPeriodEnd: new Date(
+                  (mainItem?.current_period_end ?? 0) * 1000,
+                ),
+                cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+              });
+              if (linked > 0) {
+                sub = await prisma.subscription.findFirst({
+                  where: { stripeCustomerId: customerId },
+                  select: {
+                    workspaceId: true,
+                    ticketingTier: true,
+                    stripeSubscriptionId: true,
+                    seatCount: true,
+                  },
+                });
+                log.info(
+                  `[Stripe] Auto-linked sub on invoice.paid: customer=${customerId}`,
+                );
+              }
+            } catch (linkErr) {
+              log.warn("[Stripe] invoice.paid auto-link failed", {
+                error:
+                  linkErr instanceof Error ? linkErr.message : String(linkErr),
+              });
+            }
+          }
+        }
 
         if (sub) {
           // Sync period dates from live subscription so renewal date is always current.

@@ -3,15 +3,31 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 
-const CATEGORIES = [
-  { value: "SCHICHTPLAN", label: "Schichtplan" },
-  { value: "ZEITERFASSUNG", label: "Zeiterfassung" },
-  { value: "LOHNABRECHNUNG", label: "Lohnabrechnung" },
-  { value: "TECHNIK", label: "Technik" },
-  { value: "HR", label: "HR / Personal" },
-  { value: "QUALITAETSMANGEL", label: "Qualitätsmangel" },
-  { value: "FEHLENDE_LEISTUNG", label: "Fehlende Leistungserbringung" },
-  { value: "SONSTIGES", label: "Sonstiges" },
+// Categories come from the workspace's custom TicketCategoryDef table at
+// runtime so external customers see exactly the same labels admins
+// configured in Einstellungen → Ticket Kategorien. Falls back to the
+// legacy enum list only if the fetch fails (e.g. network blip).
+const FALLBACK_CATEGORIES = [
+  { id: "SCHICHTPLAN", name: "Schichtplan", legacyEnum: "SCHICHTPLAN" },
+  { id: "ZEITERFASSUNG", name: "Zeiterfassung", legacyEnum: "ZEITERFASSUNG" },
+  {
+    id: "LOHNABRECHNUNG",
+    name: "Lohnabrechnung",
+    legacyEnum: "LOHNABRECHNUNG",
+  },
+  { id: "TECHNIK", name: "Technik", legacyEnum: "TECHNIK" },
+  { id: "HR", name: "HR / Personal", legacyEnum: "HR" },
+  {
+    id: "QUALITAETSMANGEL",
+    name: "Qualitätsmangel",
+    legacyEnum: "QUALITAETSMANGEL",
+  },
+  {
+    id: "FEHLENDE_LEISTUNG",
+    name: "Fehlende Leistungserbringung",
+    legacyEnum: "FEHLENDE_LEISTUNG",
+  },
+  { id: "SONSTIGES", name: "Sonstiges", legacyEnum: "SONSTIGES" },
 ];
 
 interface SubmitResult {
@@ -24,6 +40,12 @@ interface LocationItem {
   name: string;
 }
 
+interface CategoryItem {
+  id: string;
+  name: string;
+  legacyEnum: string | null;
+}
+
 export default function ExternalTicketFormPage() {
   const params = useParams<{ slug: string }>();
 
@@ -33,6 +55,8 @@ export default function ExternalTicketFormPage() {
   const [location, setLocation] = useState("");
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [category, setCategory] = useState("SONSTIGES");
+  const [categories, setCategories] =
+    useState<CategoryItem[]>(FALLBACK_CATEGORIES);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
@@ -40,14 +64,35 @@ export default function ExternalTicketFormPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(
-          `/api/tickets/external/locations?workspace=${encodeURIComponent(params.slug)}`,
-        );
-        if (res.ok) {
-          setLocations(await res.json());
+        const [locRes, catRes] = await Promise.all([
+          fetch(
+            `/api/tickets/external/locations?workspace=${encodeURIComponent(params.slug)}`,
+          ),
+          fetch(
+            `/api/tickets/external/categories?workspace=${encodeURIComponent(params.slug)}`,
+          ),
+        ]);
+        if (locRes.ok) {
+          setLocations(await locRes.json());
+        }
+        if (catRes.ok) {
+          const data = await catRes.json();
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
+            setCategories(data.categories);
+            // Default the dropdown to "Sonstiges" if present, else first item.
+            const sonstiges = (data.categories as CategoryItem[]).find(
+              (c) => c.legacyEnum === "SONSTIGES",
+            );
+            setCategory(
+              sonstiges?.legacyEnum ??
+                data.categories[0]?.legacyEnum ??
+                data.categories[0]?.id ??
+                "SONSTIGES",
+            );
+          }
         }
       } catch {
-        // silent
+        // silent — fallback list already in state
       }
     })();
   }, [params.slug]);
@@ -207,9 +252,9 @@ export default function ExternalTicketFormPage() {
                 onChange={(e) => setCategory(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+                {categories.map((c) => (
+                  <option key={c.id} value={c.legacyEnum ?? c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>

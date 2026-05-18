@@ -568,6 +568,29 @@
       "remarks": "Remarks"
     }
   },
+  "userRoles": {
+    "OWNER": "Owner",
+    "ADMIN": "Admin",
+    "MANAGER": "Manager",
+    "EMPLOYEE": "Employee",
+    "BACKOFFICE": "Back office",
+    "SUPERVISOR": "Supervisor"
+  },
+  "ticketTrash": {
+    "title": "Trash",
+    "loading": "Loading…",
+    "loadError": "Failed to load trash.",
+    "networkError": "Network error. Please try again.",
+    "restore": "Restore",
+    "restoreError": "Restore failed.",
+    "purgeForever": "Delete permanently",
+    "purgeError": "Permanent delete failed.",
+    "confirmPurge": "Permanently delete this ticket? All attachments will be removed for good — this cannot be undone.",
+    "deletedAt": "Deleted on {date}",
+    "emptyTitle": "Trash is empty",
+    "emptyDescription": "Deleted tickets appear here and can be restored or permanently removed.",
+    "storageHint": "Heads up: tickets in the trash and their attachments still occupy storage. Permanent deletion frees the space."
+  },
   "ticketCategories": {
     "title": "Ticket categories",
     "createTitle": "New category",
@@ -2954,6 +2977,11 @@
     "sendComment": "Send",
     "internalNote": "Internal note",
     "createError": "Failed to create ticket",
+    "trashLink": "Trash",
+    "inTrashBanner": "This ticket is in the trash bin.",
+    "restore": "Restore",
+    "purgeForever": "Delete permanently",
+    "confirmPurge": "Delete this ticket permanently? All attachments will be removed for good.",
     "deleteTicket": "Delete ticket",
     "deleteConfirmTitle": "Delete this ticket?",
     "deleteConfirmDescription": "This action cannot be undone. All comments, attachments and history will be permanently removed.",

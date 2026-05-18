@@ -49,8 +49,13 @@ export async function GET(req: Request) {
     const assignedToId = searchParams.get("assignedToId");
     const ticketType = searchParams.get("ticketType");
     const search = searchParams.get("search");
+    // Trash-bin filter: ?trash=true → only soft-deleted, default → only active.
+    const trashOnly = searchParams.get("trash") === "true";
 
-    const where: Record<string, unknown> = { workspaceId };
+    const where: Record<string, unknown> = {
+      workspaceId,
+      deletedAt: trashOnly ? { not: null } : null,
+    };
 
     if (status) where.status = status;
     if (category) where.category = category;

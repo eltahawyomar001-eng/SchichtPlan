@@ -80,14 +80,26 @@ export async function requireStorageQuota(
     additionalBytes,
   );
   if (allowed) return null;
+  // The "trash bin also counts" reminder matches the directive's exact UX
+  // copy and points users at the purge action so they have a self-service
+  // path to free space before paying more.
+  const message =
+    "Ihr aktuelles Limit wurde erreicht. Bitte beachten Sie, dass auch " +
+    "Tickets im Papierkorb sowie deren Anhänge weiterhin Speicherplatz " +
+    "belegen. Löschen Sie Tickets endgültig oder wechseln Sie in ein " +
+    "höheres Abomodell, um weitere Tickets erstellen und Anhänge speichern " +
+    "zu können.";
   return NextResponse.json(
     {
       error: "STORAGE_QUOTA_EXCEEDED",
       code: "TICKET_STORAGE_QUOTA_EXCEEDED",
-      message: `Speicherplatz für Ticket-Anhänge ist erschöpft. ${formatBytes(remaining)} frei von ${formatBytes(limit)}.`,
+      message,
+      details: `${formatBytes(remaining)} frei von ${formatBytes(limit)}.`,
       used: used.toString(),
       limit: limit.toString(),
       remaining: remaining.toString(),
+      trashHint: true,
+      purgeUrl: "/tickets/papierkorb",
       upgradeRequired: true,
     },
     { status: 403 },

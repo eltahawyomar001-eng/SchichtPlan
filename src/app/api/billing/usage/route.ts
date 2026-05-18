@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { ensureWorkspaceUsage } from "@/lib/subscription-guard";
 import { getWorkspacePlan } from "@/lib/subscription";
 import { log } from "@/lib/logger";
+import { getTicketStorageBreakdown } from "@/lib/ticket-trash";
 
 /**
  * GET /api/billing/usage
@@ -29,16 +30,23 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
     // separately and shown alongside, but never folded into the main number,
     // so the three views (usage bar / seat-sync card / Stripe invoice) all
     // read the same value.
-    const [usage, plan, locationCount, activeEmployees, pendingInvitations] =
-      await Promise.all([
-        ensureWorkspaceUsage(workspaceId),
-        getWorkspacePlan(workspaceId),
-        prisma.location.count({ where: { workspaceId } }),
-        prisma.employee.count({ where: { workspaceId, isActive: true } }),
-        prisma.invitation.count({
-          where: { workspaceId, status: "PENDING" },
-        }),
-      ]);
+    const [
+      usage,
+      plan,
+      locationCount,
+      activeEmployees,
+      pendingInvitations,
+      ticketStorage,
+    ] = await Promise.all([
+      ensureWorkspaceUsage(workspaceId),
+      getWorkspacePlan(workspaceId),
+      prisma.location.count({ where: { workspaceId } }),
+      prisma.employee.count({ where: { workspaceId, isActive: true } }),
+      prisma.invitation.count({
+        where: { workspaceId, status: "PENDING" },
+      }),
+      getTicketStorageBreakdown(workspaceId),
+    ]);
 
     const unlimited = (n: number) => (n >= 999999 ? null : n);
     const maxLocations =
@@ -72,6 +80,16 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
       ticketsThisMonth: {
         used: usage.ticketsCreatedThisMonth,
         limit: usage.ticketsMonthlyLimit > 0 ? usage.ticketsMonthlyLimit : null,
+      },
+      tickets: {
+        active: ticketStorage.activeTickets,
+        trash: ticketStorage.trashTickets,
+      },
+      ticketStorageBytes: {
+        active: ticketStorage.activeBytes,
+        trash: ticketStorage.trashBytes,
+        total: ticketStorage.totalBytes,
+        limit: Number(usage.ticketStorageBytesLimit),
       },
       emailsThisMonth: {
         used: usage.emailsSentThisMonth,

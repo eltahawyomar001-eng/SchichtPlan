@@ -3020,7 +3020,9 @@
       "ZUGEWIESEN": "hat das Ticket zugewiesen",
       "KOMMENTAR": "hat einen Kommentar hinzugefügt",
       "GESCHLOSSEN": "hat das Ticket geschlossen",
-      "ANGEHANGT": "hat einen Anhang hinzugefügt"
+      "ANGEHANGT": "hat einen Anhang hinzugefügt",
+      "GELOESCHT": "hat das Ticket in den Papierkorb verschoben",
+      "WIEDERHERGESTELLT": "hat das Ticket wiederhergestellt"
     },
     "attachments": {
       "title": "Anhänge",

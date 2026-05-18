@@ -40,6 +40,13 @@ import {
 import { requireTicketingAddon } from "@/lib/ticketing-addon";
 import { logAttachmentAdded } from "@/lib/ticket-events";
 import {
+  BlobAccessError,
+  BlobClientTokenExpiredError,
+  BlobServiceNotAvailable,
+  BlobStoreNotFoundError,
+  BlobStoreSuspendedError,
+} from "@vercel/blob";
+import {
   MAX_ATTACHMENTS_PER_TICKET,
   validateFile,
   requireStorageQuota,
@@ -54,6 +61,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    // Pre-flight: detect missing blob token before touching DB or file data.
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      log.error("[ticket attachments POST] BLOB_READ_WRITE_TOKEN not set");
+      return NextResponse.json(
+        {
+          error: "STORAGE_NOT_CONFIGURED",
+          message:
+            "Datei-Upload ist derzeit nicht konfiguriert. Bitte Administrator kontaktieren.",
+        },
+        { status: 500 },
+      );
+    }
+
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -259,11 +279,13 @@ export async function POST(
       route: "/api/tickets/[id]/attachments",
       method: "POST",
     });
-    // Surface Vercel Blob misconfiguration explicitly so ops can spot it.
-    const msg = error instanceof Error ? error.message : String(error);
+    // Blob SDK config/availability errors → 500 (operator must fix, not retryable)
     if (
-      msg.toLowerCase().includes("token") ||
-      msg.toLowerCase().includes("blob_read_write_token")
+      error instanceof BlobAccessError ||
+      error instanceof BlobClientTokenExpiredError ||
+      error instanceof BlobServiceNotAvailable ||
+      error instanceof BlobStoreNotFoundError ||
+      error instanceof BlobStoreSuspendedError
     ) {
       return NextResponse.json(
         {
@@ -271,9 +293,10 @@ export async function POST(
           message:
             "Datei-Upload ist derzeit nicht konfiguriert. Bitte Administrator kontaktieren.",
         },
-        { status: 503 },
+        { status: 500 },
       );
     }
+    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       {
         error: "ATTACHMENT_UPLOAD_FAILED",

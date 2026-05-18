@@ -3020,7 +3020,9 @@
       "ZUGEWIESEN": "assigned the ticket",
       "KOMMENTAR": "added a comment",
       "GESCHLOSSEN": "closed the ticket",
-      "ANGEHANGT": "added an attachment"
+      "ANGEHANGT": "added an attachment",
+      "GELOESCHT": "moved the ticket to trash",
+      "WIEDERHERGESTELLT": "restored the ticket from trash"
     },
     "attachments": {
       "title": "Attachments",

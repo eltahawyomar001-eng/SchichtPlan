@@ -2,21 +2,17 @@
  * Ticket Attachments — Constants, validation & storage helpers.
  *
  * Storage backend: Supabase Storage (bucket: "ticket-attachments", public).
- * Uses the Supabase Storage REST API directly via fetch — no extra SDK needed.
- * Paths are UUID-randomised so URLs are unguessable even though the bucket is
- * public; security enforcement happens at the API route layer.
- *
- *   • Per-file size cap (25 MB) and per-workspace storage quota enforced here.
- *   • MIME-type allow-list enforced in ticket-file-validation.ts.
- *   • Storage usage tracked via WorkspaceUsage.ticketStorageBytesUsed.
+ * Uses @supabase/storage-js for reliable uploads — handles content-type,
+ * streaming, and structured error responses automatically.
+ * Paths are randomised so URLs are unguessable; security is enforced at the
+ * API route layer.
  */
 
+import { StorageClient } from "@supabase/storage-js";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 
-// Re-export client-safe primitives so existing callers don't need to know
-// about the split.
 export {
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENTS_PER_TICKET,
@@ -26,18 +22,21 @@ export {
 export type { FileValidationResult } from "@/lib/ticket-file-validation";
 
 /* ═══════════════════════════════════════════════════════════════
-   Supabase Storage REST helpers
+   Supabase Storage client
    ═══════════════════════════════════════════════════════════════ */
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const BUCKET = "ticket-attachments";
 
-function storageHeaders() {
-  return {
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    apikey: SUPABASE_ANON_KEY,
-  };
+function getStorageClient(): StorageClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error("SUPABASE_STORAGE_UNCONFIGURED");
+  }
+  return new StorageClient(`${url}/storage/v1`, {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+  });
 }
 
 /** Build a collision-resistant, workspace-scoped storage path. */
@@ -56,17 +55,22 @@ function buildStoragePath(
 
 /** Derive the public URL from a storage path. */
 function publicUrl(path: string): string {
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  return `${url}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
 /** Extract the storage path from a full public URL (for deletion). */
-function pathFromUrl(url: string): string | null {
-  const prefix = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
-  return url.startsWith(prefix) ? url.slice(prefix.length) : null;
+function pathFromUrl(fileUrl: string): string | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return null;
+  const prefix = `${url}/storage/v1/object/public/${BUCKET}/`;
+  return fileUrl.startsWith(prefix) ? fileUrl.slice(prefix.length) : null;
 }
 
 /**
  * Upload a file buffer to Supabase Storage and return the public URL.
+ * Throws on failure with a descriptive message that includes the Supabase
+ * error detail so it reaches the server logs.
  */
 export async function uploadToBlob(input: {
   workspaceId: string;
@@ -75,38 +79,28 @@ export async function uploadToBlob(input: {
   contentType: string;
   body: Blob | ArrayBuffer | Buffer;
 }): Promise<{ url: string; pathname: string }> {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error("Supabase environment variables are not configured.");
-  }
-
+  const storage = getStorageClient();
   const pathname = buildStoragePath(
     input.workspaceId,
     input.ticketId,
     input.fileName,
   );
 
-  const res = await fetch(
-    `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${pathname}`,
-    {
-      method: "POST",
-      headers: {
-        ...storageHeaders(),
-        "Content-Type": input.contentType,
-        "x-upsert": "false",
-      },
-      body: Buffer.isBuffer(input.body)
-        ? new Uint8Array(input.body)
-        : input.body instanceof ArrayBuffer
-          ? new Uint8Array(input.body)
-          : input.body,
-    },
-  );
+  // StorageClient expects a Blob/File/Buffer; convert ArrayBuffer → Buffer.
+  const body =
+    input.body instanceof ArrayBuffer ? Buffer.from(input.body) : input.body;
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => res.statusText);
-    throw new Error(
-      `Supabase Storage upload failed (${res.status}): ${detail.slice(0, 300)}`,
-    );
+  const { error } = await storage.from(BUCKET).upload(pathname, body, {
+    contentType: input.contentType,
+    upsert: false,
+  });
+
+  if (error) {
+    log.error("[ticket-attachments] Supabase upload error", {
+      message: error.message,
+      pathname,
+    });
+    throw new Error(`SUPABASE_UPLOAD_ERROR: ${error.message}`);
   }
 
   return { url: publicUrl(pathname), pathname };
@@ -114,39 +108,27 @@ export async function uploadToBlob(input: {
 
 /**
  * Delete a blob by its public URL.
- * Extracts the storage path, then calls the Supabase bulk-delete endpoint.
- * Errors are swallowed and logged — an orphaned file is recoverable;
- * blocking a purge on a failed delete is not acceptable UX.
+ * Errors are swallowed and logged — an orphaned file is recoverable.
  */
-export async function deleteBlob(url: string): Promise<void> {
+export async function deleteBlob(fileUrl: string): Promise<void> {
   try {
-    const path = pathFromUrl(url);
+    const path = pathFromUrl(fileUrl);
     if (!path) {
       log.warn("[ticket-attachments] deleteBlob: unrecognised URL, skipping", {
-        url,
+        fileUrl,
       });
       return;
     }
-
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}`, {
-      method: "DELETE",
-      headers: {
-        ...storageHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prefixes: [path] }),
-    });
-
-    if (!res.ok) {
-      const detail = await res.text().catch(() => res.statusText);
+    const storage = getStorageClient();
+    const { error } = await storage.from(BUCKET).remove([path]);
+    if (error) {
       log.warn("[ticket-attachments] deleteBlob failed", {
-        url,
-        status: res.status,
-        detail,
+        fileUrl,
+        message: error.message,
       });
     }
   } catch (err) {
-    log.warn("[ticket-attachments] deleteBlob threw", { url, err });
+    log.warn("[ticket-attachments] deleteBlob threw", { fileUrl, err });
   }
 }
 
@@ -175,8 +157,15 @@ export async function checkStorageQuota(
 
   const used: bigint = usage?.ticketStorageBytesUsed ?? BigInt(0);
   const limit: bigint = usage?.ticketStorageBytesLimit ?? BigInt(0);
-  const remaining: bigint = limit - used;
 
+  // A limit of 0 means the workspace has no ticketing storage tier configured.
+  // The addon gate (requireTicketingAddon) is the authoritative quota check;
+  // here we treat 0 as unlimited to avoid double-blocking.
+  if (limit === BigInt(0)) {
+    return { allowed: true, used, limit, remaining: BigInt(0) };
+  }
+
+  const remaining = limit - used;
   return {
     allowed: BigInt(additionalBytes) <= remaining,
     used,
@@ -218,7 +207,7 @@ export async function requireStorageQuota(
   );
 }
 
-/** Atomically increment storage usage. Call only AFTER successful blob upload. */
+/** Atomically increment storage usage. Call only AFTER successful upload. */
 export async function recordStorageUsage(
   workspaceId: string,
   bytes: number | bigint,

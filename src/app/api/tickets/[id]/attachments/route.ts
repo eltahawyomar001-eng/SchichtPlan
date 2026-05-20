@@ -276,11 +276,8 @@ export async function POST(
       method: "POST",
     });
     const msg = error instanceof Error ? error.message : String(error);
-    // Supabase Storage config errors → 500
-    if (
-      msg.includes("Supabase environment variables") ||
-      msg.includes("Storage upload failed")
-    ) {
+    log.error("[ticket attachments POST] upload error detail", { msg });
+    if (msg === "SUPABASE_STORAGE_UNCONFIGURED") {
       return NextResponse.json(
         {
           error: "STORAGE_NOT_CONFIGURED",
@@ -290,10 +287,15 @@ export async function POST(
         { status: 500 },
       );
     }
+    // Surface the actual Supabase rejection reason so it reaches the client
+    // (stripped of the SUPABASE_UPLOAD_ERROR: prefix for readability).
+    const clientMsg = msg.startsWith("SUPABASE_UPLOAD_ERROR: ")
+      ? msg.slice("SUPABASE_UPLOAD_ERROR: ".length)
+      : msg;
     return NextResponse.json(
       {
         error: "ATTACHMENT_UPLOAD_FAILED",
-        message: `Anhang konnte nicht hochgeladen werden: ${msg.slice(0, 200)}`,
+        message: `Anhang konnte nicht hochgeladen werden: ${clientMsg.slice(0, 200)}`,
       },
       { status: 500 },
     );

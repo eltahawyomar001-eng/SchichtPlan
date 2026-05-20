@@ -1516,7 +1516,13 @@ async function ManagerDashboardContent({
         />
 
         {/* SOS Urgent — today's unassigned shifts */}
-        <SosUrgentCard shifts={sosUrgentShifts} />
+        <SosUrgentCard
+          shifts={sosUrgentShifts}
+          title={t("widgets.sosUrgentTitle")}
+          ctaLabel={t("widgets.sosUrgentCta")}
+          viewAllLabel={t("widgets.sosUrgentViewAll")}
+          moreLabel={(count) => t("widgets.sosUrgentMore", { count })}
+        />
 
         {/* Shift Coverage */}
         <ShiftCoverageCard

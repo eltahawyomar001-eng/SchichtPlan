@@ -11,24 +11,32 @@ export interface OpenShiftToday {
 
 interface SosUrgentCardProps {
   shifts: OpenShiftToday[];
+  title: string;
+  ctaLabel: string;
+  viewAllLabel: string;
+  moreLabel: (count: number) => string;
 }
 
-export function SosUrgentCard({ shifts }: SosUrgentCardProps) {
+export function SosUrgentCard({
+  shifts,
+  title,
+  ctaLabel,
+  viewAllLabel,
+  moreLabel,
+}: SosUrgentCardProps) {
   if (shifts.length === 0) return null;
 
   return (
     <Card className="border-red-200 dark:border-red-900/40 bg-red-50/40 dark:bg-red-950/10">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg leading-none">🚨</span>
-            <CardTitle className="text-base text-red-700 dark:text-red-400">
-              Heute unbesetzte Schichten
-            </CardTitle>
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white">
-              {shifts.length}
-            </span>
-          </div>
+        <div className="flex items-center gap-2">
+          <AlertCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+          <CardTitle className="text-base text-red-700 dark:text-red-400">
+            {title}
+          </CardTitle>
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white">
+            {shifts.length}
+          </span>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -52,13 +60,13 @@ export function SosUrgentCard({ shifts }: SosUrgentCardProps) {
               href="/schichtplan"
               className="shrink-0 rounded-lg bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-700 transition-colors"
             >
-              SOS starten
+              {ctaLabel}
             </Link>
           </div>
         ))}
         {shifts.length > 4 && (
           <p className="text-xs text-red-500 dark:text-red-400 text-center pt-1">
-            +{shifts.length - 4} weitere unbesetzte Schichten
+            {moreLabel(shifts.length - 4)}
           </p>
         )}
         <div className="pt-1">
@@ -66,7 +74,7 @@ export function SosUrgentCard({ shifts }: SosUrgentCardProps) {
             href="/schichtplan"
             className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
           >
-            Zum Schichtplan →
+            {viewAllLabel} →
           </Link>
         </div>
       </CardContent>

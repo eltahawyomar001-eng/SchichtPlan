@@ -1883,6 +1883,22 @@ export default function SchichtplanPage() {
                 <p className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
                   {t("shiftActions")}
                 </p>
+
+                {/* SOS — full-width prominent action */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const target = detailShift;
+                    setDetailShift(null);
+                    setSosTarget(target);
+                  }}
+                  className="w-full justify-start gap-2 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                >
+                  <AlertCircleIcon className="h-3.5 w-3.5" />
+                  {t("sosAction")}
+                </Button>
+
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
@@ -2669,7 +2685,7 @@ function DraggableShiftCard({
               e.stopPropagation();
               onSos();
             }}
-            title="SOS – Notfall-Besetzung"
+            title={t("sosAction")}
             className="rounded p-1.5 text-red-400 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 transition-colors"
           >
             <AlertCircleIcon className="h-4 w-4" />
@@ -2876,7 +2892,7 @@ function MobileShiftCard({
               e.stopPropagation();
               onSos();
             }}
-            title="SOS – Notfall-Besetzung"
+            title={t("sosAction")}
             className="flex items-center justify-center rounded-xl p-2.5 text-red-500 bg-red-50 active:bg-red-100 transition-colors min-w-[48px] min-h-[48px]"
           >
             <AlertCircleIcon className="h-4 w-4" />

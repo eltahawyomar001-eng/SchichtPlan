@@ -212,6 +212,10 @@
       "openShifts": "offene Schichten",
       "fullCoverage": "Alle Schichten besetzt",
       "viewPlan": "Zum Schichtplan",
+      "sosUrgentTitle": "Heute unbesetzte Schichten",
+      "sosUrgentCta": "SOS starten",
+      "sosUrgentViewAll": "Zum Schichtplan",
+      "sosUrgentMore": "+{count} weitere unbesetzte Schichten",
       "noShiftsPlanned": "Keine Schichten in dieser Woche",
       "teamCalendar": "Team-Kalender",
       "shifts": "Schichten",
@@ -352,6 +356,10 @@
     "deleteConfirmMessage": "Möchten Sie diese Schicht wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "addonNotActivatedTitle": "Schichtplanung nicht aktiviert",
     "addonNotActivatedDescription": "Die Schichtplanung ist für diesen Workspace noch nicht aktiviert. Bitte wenden Sie sich an Ihren Administrator.",
+    "sosBannerTitle": "Neu: SOS Notfall-Besetzung",
+    "sosBannerDesc": "Schicht kurzfristig unbesetzt? Klick auf das rote Symbol auf einer Schichtkarte — Shiftfy benachrichtigt sofort alle verfügbaren Mitarbeiter und besetzt die Schicht automatisch.",
+    "sosBannerDismiss": "Banner schließen",
+    "sosAction": "SOS Notfall-Besetzung",
     "form": {
       "title": "Neue Schicht",
       "editTitle": "Schicht bearbeiten",
@@ -1694,6 +1702,7 @@
     "sosBullet2": "Optionaler Notfall-Bonus — €5, €10 oder freier Betrag pro Schicht",
     "sosBullet3": "Vollständig automatisch: Erster Annahmenbestätiger bekommt die Schicht",
     "sosBullet4": "Zuverlässigkeits-Score pro Mitarbeiter im Profil",
+    "sosMockupLive": "Läuft",
     "sosMockupTitle": "SOS · Mo 14:00–22:00",
     "sosMockupSubtitle": "Hauptstandort",
     "sosMockupNotified": "Benachrichtigt",
@@ -3206,6 +3215,7 @@
     "bonusCurrency": "Währung",
     "bonusNotePlaceholder": "Notiz (z.B. 'Nachtzuschlag')",
     "launch": "SOS starten",
+    "actionLabel": "SOS Notfall-Besetzung",
     "cancel": "Abbrechen",
     "launching": "Wird gestartet…",
     "live": "Läuft",
@@ -3231,6 +3241,8 @@
     "respondDeclined": "Du hast die Schicht abgelehnt.",
     "respondAlreadyFilled": "Diese Schicht wurde bereits besetzt.",
     "respondExpired": "Dieser Link ist abgelaufen.",
-    "respondError": "Ein Fehler ist aufgetreten."
+    "respondError": "Ein Fehler ist aufgetreten.",
+    "badgeAccepted": "Ja",
+    "badgeDeclined": "Nein"
   }
 }

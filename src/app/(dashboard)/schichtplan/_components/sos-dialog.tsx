@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import { useLocale } from "next-intl";
+import { AlertCircleIcon, CheckCircleIcon } from "@/components/icons";
 
 interface SosNotification {
   id: string;
@@ -181,7 +182,7 @@ export function SosDialog({ shift, open, onClose }: Props) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-zinc-700 bg-red-50 dark:bg-red-950/30">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🚨</span>
+            <AlertCircleIcon className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0" />
             <div>
               <h2 className="text-base font-semibold text-red-700 dark:text-red-400">
                 {t("title")}
@@ -334,14 +335,16 @@ function SosLiveBoard({
     <div className="p-6 space-y-5">
       {/* Status banner */}
       {isFilled && sosData.filledBy ? (
-        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 text-center">
-          <div className="text-2xl mb-1">✅</div>
-          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-            {t("filled")}
-          </p>
-          <p className="text-xs text-emerald-600/80 dark:text-emerald-400/70 mt-0.5">
-            {sosData.filledBy.firstName} {sosData.filledBy.lastName}
-          </p>
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 flex items-center gap-3">
+          <CheckCircleIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              {t("filled")}
+            </p>
+            <p className="text-xs text-emerald-600/80 dark:text-emerald-400/70 mt-0.5">
+              {sosData.filledBy.firstName} {sosData.filledBy.lastName}
+            </p>
+          </div>
         </div>
       ) : isClosed ? (
         <div className="rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-4 text-center">
@@ -352,7 +355,7 @@ function SosLiveBoard({
       ) : (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="animate-pulse text-red-500">●</span>
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
               {t("live")}
             </span>
@@ -457,20 +460,23 @@ function ResponseBadge({
 }: {
   response: SosNotification["response"];
 }) {
+  const t = useTranslations("sos");
   if (response === "PENDING")
     return (
-      <span className="text-[10px] font-medium text-amber-500 animate-pulse">
-        ●
-      </span>
+      <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
     );
   if (response === "ACCEPTED")
     return (
       <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-        ✓ Ja
+        {t("badgeAccepted")}
       </span>
     );
   if (response === "DECLINED")
-    return <span className="text-[10px] font-medium text-red-500">✗ Nein</span>;
+    return (
+      <span className="text-[10px] font-medium text-red-500">
+        {t("badgeDeclined")}
+      </span>
+    );
   return (
     <span className="text-[10px] text-gray-400 dark:text-zinc-500">—</span>
   );

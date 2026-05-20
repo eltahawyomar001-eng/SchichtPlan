@@ -184,7 +184,7 @@ export function SosDialog({ shift, open, onClose }: Props) {
             <span className="text-2xl">🚨</span>
             <div>
               <h2 className="text-base font-semibold text-red-700 dark:text-red-400">
-                {t.has("title") ? t("title") : "SOS – Notfall-Schichtbesetzung"}
+                {t("title")}
               </h2>
               <p className="text-xs text-red-600/80 dark:text-red-400/70 mt-0.5">
                 {shiftDate} · {shift.startTime} – {shift.endTime}
@@ -197,9 +197,7 @@ export function SosDialog({ shift, open, onClose }: Props) {
         {phase === "config" && (
           <div className="p-6 space-y-5">
             <p className="text-sm text-gray-600 dark:text-zinc-400">
-              {t.has("configDesc")
-                ? t("configDesc")
-                : "Mitarbeiter werden sofort benachrichtigt und können die Schicht per Push oder E-Mail annehmen."}
+              {t("configDesc")}
             </p>
 
             {/* Bonus toggle */}
@@ -207,12 +205,10 @@ export function SosDialog({ shift, open, onClose }: Props) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
-                    {t.has("bonus") ? t("bonus") : "Bonus anbieten"}
+                    {t("bonus")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
-                    {t.has("bonusDesc")
-                      ? t("bonusDesc")
-                      : "Optionale Sondervergütung für diesen Einsatz"}
+                    {t("bonusDesc")}
                   </p>
                 </div>
                 <button
@@ -248,11 +244,7 @@ export function SosDialog({ shift, open, onClose }: Props) {
                     type="text"
                     value={bonusNote}
                     onChange={(e) => setBonusNote(e.target.value)}
-                    placeholder={
-                      t.has("bonusNotePlaceholder")
-                        ? t("bonusNotePlaceholder")
-                        : 'Notiz (optional, z.B. "Nachtzuschlag")'
-                    }
+                    placeholder={t("bonusNotePlaceholder")}
                     className="w-full rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                 </div>
@@ -268,18 +260,14 @@ export function SosDialog({ shift, open, onClose }: Props) {
                 onClick={onClose}
                 className="flex-1 rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
               >
-                {t.has("cancel") ? t("cancel") : "Abbrechen"}
+                {t("cancel")}
               </button>
               <button
                 onClick={handleLaunch}
                 disabled={launching}
                 className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
               >
-                {launching
-                  ? "…"
-                  : t.has("launch")
-                    ? t("launch")
-                    : "🚨 SOS starten"}
+                {launching ? "…" : t("launch")}
               </button>
             </div>
           </div>
@@ -317,7 +305,7 @@ function SosLiveBoard({
   if (!sosData) {
     return (
       <div className="p-6 text-center text-sm text-gray-500 dark:text-zinc-400 animate-pulse">
-        {t.has("launching") ? t("launching") : "Starte SOS…"}
+        {t("launching")}
       </div>
     );
   }
@@ -349,7 +337,7 @@ function SosLiveBoard({
         <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 text-center">
           <div className="text-2xl mb-1">✅</div>
           <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-            {t.has("filled") ? t("filled") : "Schicht besetzt!"}
+            {t("filled")}
           </p>
           <p className="text-xs text-emerald-600/80 dark:text-emerald-400/70 mt-0.5">
             {sosData.filledBy.firstName} {sosData.filledBy.lastName}
@@ -358,13 +346,7 @@ function SosLiveBoard({
       ) : isClosed ? (
         <div className="rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-4 text-center">
           <p className="text-sm font-medium text-gray-600 dark:text-zinc-400">
-            {sosData.status === "EXPIRED"
-              ? t.has("expired")
-                ? t("expired")
-                : "SOS abgelaufen – niemand hat angenommen"
-              : t.has("cancelled")
-                ? t("cancelled")
-                : "SOS abgebrochen"}
+            {sosData.status === "EXPIRED" ? t("expired") : t("cancelled")}
           </p>
         </div>
       ) : (
@@ -372,33 +354,20 @@ function SosLiveBoard({
           <div className="flex items-center gap-2">
             <span className="animate-pulse text-red-500">●</span>
             <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
-              {t.has("live") ? t("live") : "Live"}
+              {t("live")}
             </span>
           </div>
           <span className="text-xs text-gray-500 dark:text-zinc-400">
-            {minutesLeft}m {t.has("remaining") ? t("remaining") : "übrig"} ·
-            Tier {sosData.escalationTier}/3
+            {minutesLeft}m {t("remaining")} · Tier {sosData.escalationTier}/3
           </span>
         </div>
       )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 text-center">
-        <StatBox
-          label={t.has("notified") ? t("notified") : "Benachrichtigt"}
-          value={total}
-          color="gray"
-        />
-        <StatBox
-          label={t.has("pending") ? t("pending") : "Ausstehend"}
-          value={pending}
-          color="amber"
-        />
-        <StatBox
-          label={t.has("declined") ? t("declined") : "Abgelehnt"}
-          value={declined}
-          color="red"
-        />
+        <StatBox label={t("notified")} value={total} color="gray" />
+        <StatBox label={t("pending")} value={pending} color="amber" />
+        <StatBox label={t("declined")} value={declined} color="red" />
       </div>
 
       {/* Employee list */}
@@ -434,22 +403,20 @@ function SosLiveBoard({
             onClick={onCancel}
             className="flex-1 rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
           >
-            {t.has("cancelSos") ? t("cancelSos") : "SOS abbrechen"}
+            {t("cancelSos")}
           </button>
         )}
         <button
           onClick={onClose}
           className="flex-1 rounded-lg bg-gray-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
         >
-          {t.has("close") ? t("close") : "Schließen"}
+          {t("close")}
         </button>
       </div>
 
       {accepted > 0 && !isFilled && (
         <p className="text-xs text-center text-gray-400 dark:text-zinc-500">
-          {t.has("acceptedNote")
-            ? t("acceptedNote")
-            : "Zuordnung wird verarbeitet…"}
+          {t("acceptedNote")}
         </p>
       )}
     </div>

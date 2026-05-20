@@ -20,16 +20,16 @@ export const GET = withRoute("/api/system/storage-health", "GET", async () => {
   const forbidden = requirePermission(user, "settings", "update");
   if (forbidden) return forbidden;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !anonKey) {
+  if (!supabaseUrl || !serviceKey) {
     return NextResponse.json(
       {
         ok: false,
         error: "SUPABASE_ENV_MISSING",
-        message:
-          "NEXT_PUBLIC_SUPABASE_URL oder NEXT_PUBLIC_SUPABASE_ANON_KEY fehlt.",
+        message: "SUPABASE_URL oder SUPABASE_SERVICE_ROLE_KEY fehlt.",
       },
       { status: 503 },
     );
@@ -38,8 +38,8 @@ export const GET = withRoute("/api/system/storage-health", "GET", async () => {
   const BUCKET = "ticket-attachments";
   const probePath = `_health/${workspaceId}/${Date.now()}.txt`;
   const headers = {
-    Authorization: `Bearer ${anonKey}`,
-    apikey: anonKey,
+    Authorization: `Bearer ${serviceKey}`,
+    apikey: serviceKey,
   };
 
   const start = Date.now();

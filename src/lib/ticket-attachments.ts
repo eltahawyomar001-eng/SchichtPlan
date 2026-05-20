@@ -47,9 +47,9 @@ function resolveSupabaseUrl(): string | null {
 
 function getStorageClient(): StorageClient {
   const url = resolveSupabaseUrl();
-  // Accept SUPABASE_ANON_KEY (server-only) or the NEXT_PUBLIC_ variant.
-  const key =
-    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // service_role key bypasses RLS — correct for trusted server-side uploads.
+  // Never expose this key client-side.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error("SUPABASE_STORAGE_UNCONFIGURED");
   }

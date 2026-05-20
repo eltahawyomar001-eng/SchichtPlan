@@ -60,9 +60,7 @@ export async function POST(
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
       process.env.DATABASE_URL?.match(/postgres\.([a-z0-9]+)[.:]/)
     );
-    const hasKey = !!(
-      process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!hasUrl || !hasKey) {
       log.error("[ticket attachments POST] Supabase env vars not set");
       return NextResponse.json(

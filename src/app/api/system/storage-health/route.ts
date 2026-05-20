@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { put, del } from "@vercel/blob";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
@@ -8,14 +7,10 @@ import { log } from "@/lib/logger";
 /**
  * GET /api/system/storage-health
  *
- * Admin-only diagnostic. Confirms that BLOB_READ_WRITE_TOKEN is present
- * and that a minimal put + delete round-trip against Vercel Blob works.
- * Use this when a workspace reports the "Datei-Upload ist derzeit nicht
- * konfiguriert" toast — it tells you in one request whether the prod
- * environment is missing the token vs. has a different problem.
- *
- * Returns `{ ok: true, latencyMs }` on success, otherwise a structured
- * error code that the caller (and ops) can act on directly.
+ * Admin-only diagnostic. Confirms that NEXT_PUBLIC_SUPABASE_URL and
+ * NEXT_PUBLIC_SUPABASE_ANON_KEY are present and that a minimal upload +
+ * delete round-trip against the Supabase Storage "ticket-attachments"
+ * bucket succeeds.
  */
 export const GET = withRoute("/api/system/storage-health", "GET", async () => {
   const auth = await requireAuth();
@@ -25,50 +20,83 @@ export const GET = withRoute("/api/system/storage-health", "GET", async () => {
   const forbidden = requirePermission(user, "settings", "update");
   if (forbidden) return forbidden;
 
-  const tokenPresent = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
-  if (!tokenPresent) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) {
     return NextResponse.json(
       {
         ok: false,
-        error: "BLOB_TOKEN_MISSING",
+        error: "SUPABASE_ENV_MISSING",
         message:
-          "BLOB_READ_WRITE_TOKEN ist nicht gesetzt. Bitte in den Vercel-Umgebungsvariablen ergänzen und neu deployen.",
+          "NEXT_PUBLIC_SUPABASE_URL oder NEXT_PUBLIC_SUPABASE_ANON_KEY fehlt.",
       },
       { status: 503 },
     );
   }
 
+  const BUCKET = "ticket-attachments";
   const probePath = `_health/${workspaceId}/${Date.now()}.txt`;
-  const probeBody = Buffer.from("ok", "utf8");
+  const headers = {
+    Authorization: `Bearer ${anonKey}`,
+    apikey: anonKey,
+  };
+
   const start = Date.now();
 
   try {
-    const blob = await put(probePath, probeBody, {
-      access: "public",
-      contentType: "text/plain",
-      addRandomSuffix: true,
-    });
+    const putRes = await fetch(
+      `${supabaseUrl}/storage/v1/object/${BUCKET}/${probePath}`,
+      {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type": "text/plain",
+          "x-upsert": "true",
+        },
+        body: "ok",
+      },
+    );
     const putMs = Date.now() - start;
-    try {
-      await del(blob.url);
-    } catch (err) {
-      log.warn("[storage-health] probe blob cleanup failed", {
-        url: blob.url,
-        err: err instanceof Error ? err.message : String(err),
+
+    if (!putRes.ok) {
+      const detail = await putRes.text().catch(() => putRes.statusText);
+      log.error("[storage-health] probe upload failed", {
+        status: putRes.status,
+        detail,
       });
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "STORAGE_PUT_FAILED",
+          message: `Speicherprobe fehlgeschlagen (${putRes.status}): ${detail.slice(0, 240)}`,
+        },
+        { status: 502 },
+      );
     }
+
+    // Best-effort cleanup
+    await fetch(`${supabaseUrl}/storage/v1/object/${BUCKET}`, {
+      method: "DELETE",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefixes: [probePath] }),
+    }).catch((err) =>
+      log.warn("[storage-health] probe cleanup failed", { err }),
+    );
+
     return NextResponse.json({
       ok: true,
       latencyMs: putMs,
-      probeUrl: blob.url,
+      bucket: BUCKET,
+      probeUrl: `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${probePath}`,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    log.error("[storage-health] put failed", { err: msg });
+    log.error("[storage-health] fetch threw", { err: msg });
     return NextResponse.json(
       {
         ok: false,
-        error: "BLOB_PUT_FAILED",
+        error: "STORAGE_FETCH_FAILED",
         message: `Speicherprobe fehlgeschlagen: ${msg.slice(0, 240)}`,
       },
       { status: 502 },

@@ -1,25 +1,22 @@
 /**
  * Ticket Attachments — Constants, validation & storage helpers.
  *
- * Industry-standard ticketing attachment behaviour:
- *   • Attachments belong to a Ticket (or optionally to a specific TicketComment).
- *   • Stored in Vercel Blob under "ticket-attachments/{workspaceId}/{ticketId}/...".
- *   • Per-file size cap (25 MB) and per-workspace storage quota
- *     (WorkspaceUsage.ticketStorageBytesLimit, set by the ticketing add-on tier).
- *   • MIME-type allow-list — common office files, images, PDF, archives, plain text.
- *   • Executables and scripts are rejected outright.
- *   • Internal users (authenticated) and external token-based users can both upload.
- *   • Storage usage tracked via WorkspaceUsage.ticketStorageBytesUsed (atomic increments).
+ * Storage backend: Supabase Storage (bucket: "ticket-attachments", public).
+ * Uses the Supabase Storage REST API directly via fetch — no extra SDK needed.
+ * Paths are UUID-randomised so URLs are unguessable even though the bucket is
+ * public; security enforcement happens at the API route layer.
+ *
+ *   • Per-file size cap (25 MB) and per-workspace storage quota enforced here.
+ *   • MIME-type allow-list enforced in ticket-file-validation.ts.
+ *   • Storage usage tracked via WorkspaceUsage.ticketStorageBytesUsed.
  */
 
 import { NextResponse } from "next/server";
-import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 
 // Re-export client-safe primitives so existing callers don't need to know
-// about the split. Anything in this file may pull in DB/Blob/SDK code; the
-// client should import from `ticket-file-validation` directly.
+// about the split.
 export {
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENTS_PER_TICKET,
@@ -27,6 +24,131 @@ export {
   validateFile,
 } from "@/lib/ticket-file-validation";
 export type { FileValidationResult } from "@/lib/ticket-file-validation";
+
+/* ═══════════════════════════════════════════════════════════════
+   Supabase Storage REST helpers
+   ═══════════════════════════════════════════════════════════════ */
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const BUCKET = "ticket-attachments";
+
+function storageHeaders() {
+  return {
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    apikey: SUPABASE_ANON_KEY,
+  };
+}
+
+/** Build a collision-resistant, workspace-scoped storage path. */
+function buildStoragePath(
+  workspaceId: string,
+  ticketId: string,
+  fileName: string,
+): string {
+  const safe = fileName
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_{2,}/g, "_")
+    .slice(0, 180);
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `${workspaceId}/${ticketId}/${Date.now()}-${rand}-${safe}`;
+}
+
+/** Derive the public URL from a storage path. */
+function publicUrl(path: string): string {
+  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+
+/** Extract the storage path from a full public URL (for deletion). */
+function pathFromUrl(url: string): string | null {
+  const prefix = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
+  return url.startsWith(prefix) ? url.slice(prefix.length) : null;
+}
+
+/**
+ * Upload a file buffer to Supabase Storage and return the public URL.
+ */
+export async function uploadToBlob(input: {
+  workspaceId: string;
+  ticketId: string;
+  fileName: string;
+  contentType: string;
+  body: Blob | ArrayBuffer | Buffer;
+}): Promise<{ url: string; pathname: string }> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Supabase environment variables are not configured.");
+  }
+
+  const pathname = buildStoragePath(
+    input.workspaceId,
+    input.ticketId,
+    input.fileName,
+  );
+
+  const res = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${pathname}`,
+    {
+      method: "POST",
+      headers: {
+        ...storageHeaders(),
+        "Content-Type": input.contentType,
+        "x-upsert": "false",
+      },
+      body: Buffer.isBuffer(input.body)
+        ? new Uint8Array(input.body)
+        : input.body instanceof ArrayBuffer
+          ? new Uint8Array(input.body)
+          : input.body,
+    },
+  );
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(
+      `Supabase Storage upload failed (${res.status}): ${detail.slice(0, 300)}`,
+    );
+  }
+
+  return { url: publicUrl(pathname), pathname };
+}
+
+/**
+ * Delete a blob by its public URL.
+ * Extracts the storage path, then calls the Supabase bulk-delete endpoint.
+ * Errors are swallowed and logged — an orphaned file is recoverable;
+ * blocking a purge on a failed delete is not acceptable UX.
+ */
+export async function deleteBlob(url: string): Promise<void> {
+  try {
+    const path = pathFromUrl(url);
+    if (!path) {
+      log.warn("[ticket-attachments] deleteBlob: unrecognised URL, skipping", {
+        url,
+      });
+      return;
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}`, {
+      method: "DELETE",
+      headers: {
+        ...storageHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prefixes: [path] }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => res.statusText);
+      log.warn("[ticket-attachments] deleteBlob failed", {
+        url,
+        status: res.status,
+        detail,
+      });
+    }
+  } catch (err) {
+    log.warn("[ticket-attachments] deleteBlob threw", { url, err });
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Storage quota
@@ -39,11 +161,6 @@ export interface QuotaCheckResult {
   remaining: bigint;
 }
 
-/**
- * Check whether the workspace has enough remaining storage for the requested
- * number of additional bytes. Returns a structured result; callers decide on
- * the user-facing response.
- */
 export async function checkStorageQuota(
   workspaceId: string,
   additionalBytes: number,
@@ -68,9 +185,7 @@ export async function checkStorageQuota(
   };
 }
 
-/**
- * Hard guard. Returns 403 NextResponse if quota would be exceeded, else null.
- */
+/** Hard guard. Returns 403 NextResponse if quota would be exceeded, else null. */
 export async function requireStorageQuota(
   workspaceId: string,
   additionalBytes: number,
@@ -80,9 +195,6 @@ export async function requireStorageQuota(
     additionalBytes,
   );
   if (allowed) return null;
-  // The "trash bin also counts" reminder matches the directive's exact UX
-  // copy and points users at the purge action so they have a self-service
-  // path to free space before paying more.
   const message =
     "Ihr aktuelles Limit wurde erreicht. Bitte beachten Sie, dass auch " +
     "Tickets im Papierkorb sowie deren Anhänge weiterhin Speicherplatz " +
@@ -142,64 +254,9 @@ export async function releaseStorageUsage(
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Vercel Blob upload / delete
-   ═══════════════════════════════════════════════════════════════ */
-
-/**
- * Build a workspace-scoped blob path.
- * Pattern: ticket-attachments/{workspaceId}/{ticketId}/{timestamp}-{safeName}
- */
-function buildBlobPath(
-  workspaceId: string,
-  ticketId: string,
-  fileName: string,
-): string {
-  const safe = fileName
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/_{2,}/g, "_")
-    .slice(0, 200);
-  return `ticket-attachments/${workspaceId}/${ticketId}/${Date.now()}-${safe}`;
-}
-
-/**
- * Upload a file buffer to Vercel Blob and return the public URL.
- * Uses random suffix to avoid collisions; access mode is "public"
- * because URLs are unguessable and we proxy/control listing via the API.
- */
-export async function uploadToBlob(input: {
-  workspaceId: string;
-  ticketId: string;
-  fileName: string;
-  contentType: string;
-  body: Blob | ArrayBuffer | Buffer;
-}): Promise<{ url: string; pathname: string }> {
-  const pathname = buildBlobPath(
-    input.workspaceId,
-    input.ticketId,
-    input.fileName,
-  );
-  const blob = await put(pathname, input.body, {
-    access: "public",
-    contentType: input.contentType,
-    addRandomSuffix: true,
-  });
-  return { url: blob.url, pathname: blob.pathname };
-}
-
-/** Delete a blob by its public URL. Errors are swallowed and logged. */
-export async function deleteBlob(url: string): Promise<void> {
-  try {
-    await del(url);
-  } catch (err) {
-    log.warn("[ticket-attachments] failed to delete blob", { url, err });
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════
    Misc helpers
    ═══════════════════════════════════════════════════════════════ */
 
-/** Format a bigint or number byte count as a human-readable string. */
 export function formatBytes(bytes: bigint | number): string {
   const n = typeof bytes === "bigint" ? Number(bytes) : bytes;
   if (n < 1024) return `${n} B`;

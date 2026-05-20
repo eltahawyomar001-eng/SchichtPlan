@@ -40,13 +40,6 @@ import {
 import { requireTicketingAddon } from "@/lib/ticketing-addon";
 import { logAttachmentAdded } from "@/lib/ticket-events";
 import {
-  BlobAccessError,
-  BlobClientTokenExpiredError,
-  BlobServiceNotAvailable,
-  BlobStoreNotFoundError,
-  BlobStoreSuspendedError,
-} from "@vercel/blob";
-import {
   MAX_ATTACHMENTS_PER_TICKET,
   validateFile,
   requireStorageQuota,
@@ -61,9 +54,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    // Pre-flight: detect missing blob token before touching DB or file data.
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      log.error("[ticket attachments POST] BLOB_READ_WRITE_TOKEN not set");
+    // Pre-flight: detect missing Supabase storage config before touching DB or file data.
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) {
+      log.error("[ticket attachments POST] Supabase env vars not set");
       return NextResponse.json(
         {
           error: "STORAGE_NOT_CONFIGURED",
@@ -279,13 +275,11 @@ export async function POST(
       route: "/api/tickets/[id]/attachments",
       method: "POST",
     });
-    // Blob SDK config/availability errors → 500 (operator must fix, not retryable)
+    const msg = error instanceof Error ? error.message : String(error);
+    // Supabase Storage config errors → 500
     if (
-      error instanceof BlobAccessError ||
-      error instanceof BlobClientTokenExpiredError ||
-      error instanceof BlobServiceNotAvailable ||
-      error instanceof BlobStoreNotFoundError ||
-      error instanceof BlobStoreSuspendedError
+      msg.includes("Supabase environment variables") ||
+      msg.includes("Storage upload failed")
     ) {
       return NextResponse.json(
         {
@@ -296,7 +290,6 @@ export async function POST(
         { status: 500 },
       );
     }
-    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       {
         error: "ATTACHMENT_UPLOAD_FAILED",

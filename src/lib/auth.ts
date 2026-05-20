@@ -241,6 +241,31 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    // Runs after PrismaAdapter upserts the user, before any JWT is issued.
+    // For OAuth sign-ins, guarantees a subscription row exists so the user
+    // never freezes on the onboarding activation screen.
+    async signIn({ user, account }) {
+      if (account?.type === "oauth") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { workspaceId: true },
+        });
+        if (dbUser?.workspaceId) {
+          const sub = await prisma.subscription.findUnique({
+            where: { workspaceId: dbUser.workspaceId },
+          });
+          if (!sub) {
+            // createUser event failed to create the trial — repair it now.
+            await initializeTrial(
+              prisma as Parameters<typeof initializeTrial>[0],
+              dbUser.workspaceId,
+            );
+          }
+        }
+      }
+      return true;
+    },
+
     async jwt({ token, user, account, trigger, session: updateData }) {
       // Client-side session update (e.g. profile name change)
       if (trigger === "update" && updateData) {
@@ -264,7 +289,11 @@ export const authOptions: NextAuthOptions = {
         token.onboardingCompleted = authUser.onboardingCompleted ?? false;
       }
 
-      // For OAuth sign-ins, bootstrap workspace if missing
+      // For OAuth sign-ins, bootstrap workspace if missing.
+      // This is a safety net: the createUser event should run first and do
+      // this atomically, but if it failed mid-transaction the JWT callback
+      // repairs the state — including the trial subscription that the old
+      // fallback was missing (root cause of subscription-less ghost accounts).
       if (account && account.provider !== "credentials" && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
@@ -284,17 +313,39 @@ export const authOptions: NextAuthOptions = {
                 .replace(/^-|-$/g, "") +
               "-" +
               token.sub.slice(-6);
-            const workspace = await prisma.workspace.create({
-              data: { name: `${displayName}'s Workspace`, slug },
+
+            // Full workspace bootstrap in one atomic transaction —
+            // same as createUser event but with initializeTrial included.
+            let newWorkspaceId: string | null = null;
+            let newEmployeeId: string | null = null;
+            await prisma.$transaction(async (tx) => {
+              const workspace = await tx.workspace.create({
+                data: { name: `${displayName}'s Workspace`, slug },
+              });
+              newWorkspaceId = workspace.id;
+              await tx.user.update({
+                where: { id: token.sub as string },
+                data: { workspaceId: workspace.id, role: "OWNER" },
+              });
+              const nameParts = (dbUser.name || "").trim().split(/\s+/);
+              const emp = await tx.employee.create({
+                data: {
+                  firstName: nameParts[0] || displayName,
+                  lastName: nameParts.slice(1).join(" ") || "",
+                  email: dbUser.email ?? "",
+                  userId: token.sub as string,
+                  workspaceId: workspace.id,
+                  isActive: true,
+                },
+              });
+              newEmployeeId = emp.id;
+              await initializeTrial(tx, workspace.id);
             });
-            await prisma.user.update({
-              where: { id: token.sub },
-              data: { workspaceId: workspace.id, role: "OWNER" },
-            });
+
             token.role = "OWNER";
-            token.workspaceId = workspace.id;
-            token.workspaceName = workspace.name;
-            token.employeeId = null;
+            token.workspaceId = newWorkspaceId;
+            token.workspaceName = `${displayName}'s Workspace`;
+            token.employeeId = newEmployeeId;
             token.onboardingCompleted = false;
           } else {
             token.role = dbUser.role;

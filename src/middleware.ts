@@ -249,6 +249,42 @@ export default withAuth(
       "unknown";
     const { pathname } = req.nextUrl;
 
+    // ── Onboarding gate (defense-in-depth) ────────────────────────
+    // The dashboard layout already redirects OWNER/ADMIN with
+    // onboardingCompleted=false, but this middleware-level gate catches
+    // direct API calls and any route that bypasses the layout (e.g. RSC
+    // fetches, SWR preflight, or routes added later without the layout check).
+    //
+    // Allow-list: paths an incomplete workspace legitimately needs to access.
+    const ONBOARDING_ALLOWLIST = [
+      "/onboarding",
+      "/api/onboarding",
+      "/api/billing",
+      "/api/auth",
+      "/api/health",
+      "/einstellungen/abonnement",
+      "/workspace-inaktiv",
+      "/testphase-abgelaufen",
+      "/hard-block",
+      "/api/profile", // profile update (name, locale)
+      "/api/push-subscriptions", // service-worker registration
+    ];
+    const token = req.nextauth?.token;
+    if (
+      token &&
+      token.onboardingCompleted === false &&
+      (token.role === "OWNER" || token.role === "ADMIN") &&
+      !ONBOARDING_ALLOWLIST.some((p) => pathname.startsWith(p)) &&
+      !pathname.startsWith("/api/auth") &&
+      // public/unauthenticated routes (already excluded by authorized())
+      !pathname.startsWith("/sos/") &&
+      !pathname.startsWith("/stempel") &&
+      !pathname.startsWith("/station") &&
+      !pathname.startsWith("/pin-reveal")
+    ) {
+      return NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+
     // ── CORS headers for API routes ──
     if (pathname.startsWith("/api/")) {
       const origin = req.headers.get("origin");
@@ -618,6 +654,9 @@ export default withAuth(
         if (pathname === "/api/station/authorize") return true;
         if (pathname === "/api/station/qr-token") return true;
         if (pathname === "/api/station/recent-punch") return true;
+        // SOS employee response page + API (token-gated, no session required)
+        if (pathname.startsWith("/sos/respond")) return true;
+        if (pathname.startsWith("/api/sos/respond")) return true;
         // Everything else requires auth
         return !!token;
       },
@@ -719,5 +758,9 @@ export const config = {
     // One-time PIN reveal (public, employee email link)
     "/pin-reveal",
     "/api/pin-reveal",
+    // SOS shift fill — employee response page (public, token-gated)
+    // and manager SOS API (protected, handled by authorized())
+    "/sos/:path*",
+    "/api/sos/:path*",
   ],
 };

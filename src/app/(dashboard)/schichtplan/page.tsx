@@ -54,6 +54,7 @@ import { isManagement } from "@/lib/authorization";
 import { getGermanHolidays } from "@/lib/holidays";
 import { cn, fmtNum } from "@/lib/utils";
 import { SosDialog } from "./_components/sos-dialog";
+import { SosDiscoveryBanner } from "./_components/sos-discovery-banner";
 import {
   DndContext,
   DragOverlay,
@@ -669,6 +670,8 @@ export default function SchichtplanPage() {
             {loadError}
           </div>
         )}
+
+        <SosDiscoveryBanner />
 
         {/* Navigation + View Toggle + Location Filter */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -2660,35 +2663,37 @@ function DraggableShiftCard({
         )}
       </div>
       {canManage && (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onSos();
             }}
             title="SOS – Notfall-Besetzung"
-            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-red-500"
+            className="rounded p-1.5 text-red-400 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 transition-colors"
           >
             <AlertCircleIcon className="h-4 w-4" />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-emerald-500"
-          >
-            <EditIcon className="h-4 w-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-red-500"
-          >
-            <TrashIcon className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-emerald-500"
+            >
+              <EditIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-red-500"
+            >
+              <TrashIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>

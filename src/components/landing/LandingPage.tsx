@@ -69,6 +69,7 @@ export function LandingPage() {
       <main id="main-content">
         <HeroSection />
         <FeatureTabsSection />
+        <SosFeatureSection />
         <BenefitsSection />
         <AppShowcaseSection />
         <TrustSection />
@@ -1215,6 +1216,110 @@ function PricingSection() {
               </Link>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── SOS Emergency Shift Fill Section ─── */
+function SosFeatureSection() {
+  const t = useTranslations("landing");
+
+  return (
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-red-50/40 via-white to-white dark:from-red-950/10 dark:via-zinc-950 dark:to-zinc-950">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left: copy */}
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-red-100 dark:bg-red-950/40 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-400 mb-4">
+              <span>🚨</span>
+              <span>{t("sosBadge")}</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-zinc-100">
+              {t("sosTitle")}
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 dark:text-zinc-400">
+              {t("sosDesc")}
+            </p>
+            <ul className="mt-6 space-y-3">
+              {[
+                t("sosBullet1"),
+                t("sosBullet2"),
+                t("sosBullet3"),
+                t("sosBullet4"),
+              ].map((text, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-sm font-bold">
+                    ✓
+                  </span>
+                  <span className="text-sm text-gray-700 dark:text-zinc-300">
+                    {text}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Right: mockup */}
+          <div className="relative">
+            <div className="rounded-2xl border border-red-200 dark:border-red-900/40 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
+              <div className="px-5 py-3 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900/40 flex items-center gap-3">
+                <span className="text-xl">🚨</span>
+                <div>
+                  <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+                    {t("sosMockupTitle")}
+                  </p>
+                  <p className="text-[11px] text-red-600/70 dark:text-red-400/60">
+                    {t("sosMockupSubtitle")}
+                  </p>
+                </div>
+                <span className="ml-auto flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400">
+                  <span className="animate-pulse">●</span> Live
+                </span>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-gray-50 dark:bg-zinc-800 py-2">
+                    <p className="text-xl font-bold tabular-nums text-gray-700 dark:text-zinc-300">
+                      12
+                    </p>
+                    <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                      {t("sosMockupNotified")}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 py-2">
+                    <p className="text-xl font-bold tabular-nums text-amber-600 dark:text-amber-400">
+                      7
+                    </p>
+                    <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                      {t("sosMockupPending")}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 py-2">
+                    <p className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                      1
+                    </p>
+                    <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                      {t("sosMockupAccepted")}
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 text-center">
+                  <div className="text-xl mb-0.5">✅</div>
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                    {t("sosMockupFilled")}
+                  </p>
+                  <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/70 mt-0.5">
+                    {t("sosMockupFilledBy")}
+                  </p>
+                </div>
+                <p className="text-[11px] text-center text-gray-400 dark:text-zinc-500">
+                  {t("sosMockupTime")}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

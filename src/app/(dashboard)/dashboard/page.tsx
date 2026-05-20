@@ -38,6 +38,10 @@ import {
   type CoverageDay,
 } from "./_components/shift-coverage-card";
 import {
+  SosUrgentCard,
+  type OpenShiftToday,
+} from "./_components/sos-urgent-card";
+import {
   TeamCalendarMiniCard,
   type CalendarDay,
 } from "./_components/team-calendar-mini-card";
@@ -909,6 +913,25 @@ async function ManagerDashboardContent({
     });
   }
 
+  /* ── Widget: SOS Urgent — today's unassigned shifts ── */
+  const sosUrgentShifts: OpenShiftToday[] = (
+    todayShifts as Array<{
+      id: string;
+      startTime: string;
+      endTime: string;
+      status: string;
+      employeeId: string | null;
+      location: { name: string } | null;
+    }>
+  )
+    .filter((s) => !s.employeeId && s.status !== "CANCELLED")
+    .map((s) => ({
+      id: s.id,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      locationName: s.location?.name ?? null,
+    }));
+
   /* ── Widget: Team Calendar Mini ── */
   const calYear = monthStart.getFullYear();
   const calMonth = monthStart.getMonth();
@@ -1491,6 +1514,9 @@ async function ManagerDashboardContent({
           emptyLabel={t("widgets.noRecentActivity")}
           timeUnit={t("widgets.timeUnit")}
         />
+
+        {/* SOS Urgent — today's unassigned shifts */}
+        <SosUrgentCard shifts={sosUrgentShifts} />
 
         {/* Shift Coverage */}
         <ShiftCoverageCard

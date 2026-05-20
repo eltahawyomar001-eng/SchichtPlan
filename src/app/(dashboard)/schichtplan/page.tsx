@@ -51,8 +51,9 @@ import {
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
 import { isManagement } from "@/lib/authorization";
-import { getGermanHolidays, type HolidayDefinition } from "@/lib/holidays";
+import { getGermanHolidays } from "@/lib/holidays";
 import { cn, fmtNum } from "@/lib/utils";
+import { SosDialog } from "./_components/sos-dialog";
 import {
   DndContext,
   DragOverlay,
@@ -127,6 +128,7 @@ export default function SchichtplanPage() {
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [detailShift, setDetailShift] = useState<Shift | null>(null);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
+  const [sosTarget, setSosTarget] = useState<Shift | null>(null);
   const [unassignTarget, setUnassignTarget] = useState<string | null>(null);
   const [selectedMonthDay, setSelectedMonthDay] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
@@ -910,6 +912,7 @@ export default function SchichtplanPage() {
                                 onDelete={() => setDeleteTarget(shift.id)}
                                 onView={() => setDetailShift(shift)}
                                 onCancel={() => setCancelTarget(shift.id)}
+                                onSos={() => setSosTarget(shift)}
                                 holidayName={dayHoliday}
                               />
                             ))}
@@ -1055,6 +1058,7 @@ export default function SchichtplanPage() {
                               onDelete={() => setDeleteTarget(shift.id)}
                               onView={() => setDetailShift(shift)}
                               onCancel={() => setCancelTarget(shift.id)}
+                              onSos={() => setSosTarget(shift)}
                               holidayName={dayHoliday}
                             />
                           ))}
@@ -1110,6 +1114,7 @@ export default function SchichtplanPage() {
                               onEdit={() => openEditForm(shift)}
                               onDelete={() => setDeleteTarget(shift.id)}
                               onView={() => setDetailShift(shift)}
+                              onSos={() => setSosTarget(shift)}
                               holidayName={dayHoliday}
                             />
                           ))
@@ -1218,6 +1223,7 @@ export default function SchichtplanPage() {
                                   onDelete={() => setDeleteTarget(shift.id)}
                                   onView={() => setDetailShift(shift)}
                                   onCancel={() => setCancelTarget(shift.id)}
+                                  onSos={() => setSosTarget(shift)}
                                   holidayName={dayHoliday}
                                 />
                               ))}
@@ -1767,6 +1773,14 @@ export default function SchichtplanPage() {
           variant="danger"
           onConfirm={handleUnassignShift}
           onCancel={() => setUnassignTarget(null)}
+        />
+      )}
+
+      {sosTarget && (
+        <SosDialog
+          shift={sosTarget}
+          open={!!sosTarget}
+          onClose={() => setSosTarget(null)}
         />
       )}
 
@@ -2556,6 +2570,7 @@ function DraggableShiftCard({
   onEdit,
   onDelete,
   onView,
+  onSos,
   holidayName,
 }: {
   shift: Shift;
@@ -2563,6 +2578,7 @@ function DraggableShiftCard({
   onEdit: () => void;
   onDelete: () => void;
   onView: () => void;
+  onSos: () => void;
   holidayName?: string;
 }) {
   const t = useTranslations("shiftPlan");
@@ -2645,6 +2661,16 @@ function DraggableShiftCard({
       </div>
       {canManage && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSos();
+            }}
+            title="SOS – Notfall-Besetzung"
+            className="rounded p-1.5 text-gray-400 dark:text-zinc-500 hover:bg-white dark:bg-zinc-900/50 hover:text-red-500"
+          >
+            <AlertCircleIcon className="h-4 w-4" />
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -2732,6 +2758,7 @@ function MobileShiftCard({
   onDelete,
   onView,
   onCancel,
+  onSos,
   holidayName,
 }: {
   shift: Shift;
@@ -2740,6 +2767,7 @@ function MobileShiftCard({
   onDelete: () => void;
   onView: () => void;
   onCancel: () => void;
+  onSos: () => void;
   holidayName?: string;
 }) {
   const t = useTranslations("shiftPlan");
@@ -2838,6 +2866,16 @@ function MobileShiftCard({
       {/* Action buttons — visible on mobile, 48px targets */}
       {canManage && !isCancelled && (
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSos();
+            }}
+            title="SOS – Notfall-Besetzung"
+            className="flex items-center justify-center rounded-xl p-2.5 text-red-500 bg-red-50 active:bg-red-100 transition-colors min-w-[48px] min-h-[48px]"
+          >
+            <AlertCircleIcon className="h-4 w-4" />
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();

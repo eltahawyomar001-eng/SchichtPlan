@@ -27,17 +27,27 @@ export async function GET(
     const { id } = await params;
     const workspaceId = (session.user as SessionUser).workspaceId;
 
-    const employee = await prisma.employee.findFirst({
-      where: { id, workspaceId },
-      include: {
-        shifts: { orderBy: { date: "desc" }, take: 20 },
-        timeEntries: { orderBy: { date: "desc" }, take: 20 },
-        absenceRequests: { orderBy: { startDate: "desc" }, take: 20 },
-        vacationBalances: { orderBy: { year: "desc" }, take: 3 },
-        department: { select: { id: true, name: true } },
-        location: { select: { id: true, name: true } },
-      },
-    });
+    const [employee, sosStats] = await Promise.all([
+      prisma.employee.findFirst({
+        where: { id, workspaceId },
+        include: {
+          shifts: { orderBy: { date: "desc" }, take: 20 },
+          timeEntries: { orderBy: { date: "desc" }, take: 20 },
+          absenceRequests: { orderBy: { startDate: "desc" }, take: 20 },
+          vacationBalances: { orderBy: { year: "desc" }, take: 3 },
+          department: { select: { id: true, name: true } },
+          location: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.sosNotification.groupBy({
+        by: ["response"],
+        where: {
+          employeeId: id,
+          sosRequest: { status: { in: ["FILLED", "EXPIRED", "CANCELLED"] } },
+        },
+        _count: true,
+      }),
+    ]);
 
     if (!employee) {
       return NextResponse.json(
@@ -46,7 +56,24 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(employee);
+    const sosTotal = sosStats.reduce(
+      (s: number, g: { _count: number }) => s + g._count,
+      0,
+    );
+    const sosPickups =
+      sosStats.find((g: { response: string }) => g.response === "ACCEPTED")
+        ?._count ?? 0;
+    const sosReliability =
+      sosTotal === 0 ? null : Math.round((sosPickups / sosTotal) * 100);
+
+    return NextResponse.json({
+      ...employee,
+      sosStats: {
+        total: sosTotal,
+        pickups: sosPickups,
+        reliability: sosReliability,
+      },
+    });
   } catch (error) {
     log.error("Error fetching employee:", { error: error });
     captureRouteError(error, { route: "/api/employees/[id]", method: "GET" });

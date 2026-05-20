@@ -20,6 +20,7 @@ import {
   CalendarOffIcon,
   PalmtreeIcon,
   EditIcon,
+  AlertCircleIcon,
 } from "@/components/icons";
 
 function statusVariant(
@@ -88,6 +89,7 @@ interface EmployeeDetail {
     totalDays: number;
     status: string;
   }[];
+  sosStats: { total: number; pickups: number; reliability: number | null };
   vacationBalances: {
     id: string;
     year: number;
@@ -274,7 +276,7 @@ export default function EmployeeDetailPage({
         </Card>
 
         {/* ── Stats row ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
               <CalendarIcon className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
@@ -317,6 +319,26 @@ export default function EmployeeDetailPage({
               <p className="text-xs text-gray-500 dark:text-zinc-400">
                 {t("vacationRemaining")}
               </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 sm:p-4 text-center">
+              <AlertCircleIcon className="h-5 w-5 mx-auto text-red-500 mb-1" />
+              <p
+                className={`text-2xl font-bold ${emp.sosStats.reliability === null ? "text-gray-400 dark:text-zinc-500" : emp.sosStats.reliability >= 70 ? "text-emerald-600" : emp.sosStats.reliability >= 40 ? "text-amber-600" : "text-red-500"}`}
+              >
+                {emp.sosStats.reliability === null
+                  ? "–"
+                  : `${emp.sosStats.reliability}%`}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                SOS-Zuverlässigkeit
+              </p>
+              {emp.sosStats.total > 0 && (
+                <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
+                  {emp.sosStats.pickups}/{emp.sosStats.total}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

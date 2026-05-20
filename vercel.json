@@ -28,6 +28,10 @@
     {
       "path": "/api/admin/data-retention",
       "schedule": "30 4 * * 0"
+    },
+    {
+      "path": "/api/automations/sos-escalation",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

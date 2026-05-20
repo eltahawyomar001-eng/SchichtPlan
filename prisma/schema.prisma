@@ -46,6 +46,7 @@ model User {
   ticketAttachments       TicketAttachment[]
   feedback                Feedback[]
   userTasks               UserTask[]
+  sosRequestsCreated      SosRequest[]             @relation("SosCreatedBy")
 }
 
 /// Personal to-do list shown on the dashboard "My Tasks" card.
@@ -197,6 +198,7 @@ model Workspace {
   stationSessions      StationSession[]
   customRoles          CustomRole[]
   userTasks            UserTask[]
+  sosRequests          SosRequest[]
 }
 
 /// Custom roles (Business+ feature). Each role inherits from a baseRole
@@ -439,6 +441,8 @@ model Employee {
   autoFillsVacated  AutoFillLog[]        @relation("AutoFillVacated")
   autoFillsAssigned AutoFillLog[]        @relation("AutoFillAssigned")
   serviceVisits     ServiceVisit[]
+  sosNotifications  SosNotification[]
+  sosFilled         SosRequest[]         @relation("SosFilledBy")
   locationId        String?
   location          Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
   pinHash           String?
@@ -551,6 +555,7 @@ model Shift {
   swapsTo          ShiftSwapRequest[]   @relation("SwapToShift")
   changeRequests   ShiftChangeRequest[]
   autoFillLogs     AutoFillLog[]
+  sosRequests      SosRequest[]
 
   @@index([workspaceId, date])
   @@index([employeeId, date])
@@ -1618,4 +1623,71 @@ model IssuerProfile {
   createdAt DateTime @default(now())
 
   @@index([validFrom])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SOS SHIFT FILL
+// ═══════════════════════════════════════════════════════════════
+
+enum SosStatus {
+  OPEN
+  FILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum SosResponse {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+/// Emergency shift-coverage request. Triggered by a manager when a shift
+/// needs urgent filling. Notifies ranked employees in tiers and resolves
+/// once someone accepts.
+model SosRequest {
+  id               String            @id @default(cuid())
+  workspaceId      String
+  shiftId          String
+  createdById      String
+  bonusAmount      Decimal?          @db.Decimal(10, 2)
+  bonusCurrency    String            @default("EUR")
+  bonusNote        String?
+  status           SosStatus         @default(OPEN)
+  expiresAt        DateTime
+  filledById       String?
+  filledAt         DateTime?
+  escalationTier   Int               @default(1)
+  nextEscalationAt DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shift            Shift             @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  createdBy        User              @relation("SosCreatedBy", fields: [createdById], references: [id])
+  filledBy         Employee?         @relation("SosFilledBy", fields: [filledById], references: [id])
+  notifications    SosNotification[]
+
+  @@index([workspaceId])
+  @@index([shiftId])
+  @@index([status])
+}
+
+/// Per-employee notification record for an SosRequest, including their
+/// response and a unique token for one-click email response links.
+model SosNotification {
+  id            String      @id @default(cuid())
+  sosRequestId  String
+  employeeId    String
+  tier          Int         @default(1)
+  notifiedAt    DateTime    @default(now())
+  response      SosResponse @default(PENDING)
+  respondedAt   DateTime?
+  responseToken String      @unique
+  sosRequest    SosRequest  @relation(fields: [sosRequestId], references: [id], onDelete: Cascade)
+  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([sosRequestId, employeeId])
+  @@index([sosRequestId])
+  @@index([employeeId])
 }

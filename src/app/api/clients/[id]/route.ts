@@ -132,7 +132,9 @@ export const DELETE = withRoute(
       workspaceId,
     });
 
-    dispatchWebhook(workspaceId, "client.deleted", { id }).catch(() => {});
+    dispatchWebhook(workspaceId, "client.deleted", { id }).catch((err) =>
+      log.warn("[dispatch] fire-and-forget failed", { err }),
+    );
 
     return NextResponse.json({ success: true });
   },

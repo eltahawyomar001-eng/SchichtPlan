@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { log } from "@/lib/logger";
 
 /**
  * PATCH /api/team/[id] — update a member's role
@@ -74,7 +75,7 @@ export const PATCH = withRoute(
       id,
       role,
       previousRole: targetUser.role,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json({ success: true });
   },
@@ -148,7 +149,9 @@ export const DELETE = withRoute(
       metadata: { action: "remove-from-workspace" },
     });
 
-    dispatchWebhook(workspaceId, "team_member.removed", { id }).catch(() => {});
+    dispatchWebhook(workspaceId, "team_member.removed", { id }).catch((err) =>
+      log.warn("[dispatch] fire-and-forget failed", { err }),
+    );
 
     return NextResponse.json({ success: true });
   },

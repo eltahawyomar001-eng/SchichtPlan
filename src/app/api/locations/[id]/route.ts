@@ -56,7 +56,7 @@ export const PATCH = withRoute(
       id,
       name: parsed.data.name,
       address: parsed.data.address,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(location);
   },
@@ -93,7 +93,9 @@ export const DELETE = withRoute(
       workspaceId: workspaceId!,
     });
 
-    dispatchWebhook(workspaceId!, "location.deleted", { id }).catch(() => {});
+    dispatchWebhook(workspaceId!, "location.deleted", { id }).catch((err) =>
+      log.warn("[dispatch] fire-and-forget failed", { err }),
+    );
 
     return NextResponse.json({ message: "Location deleted" });
   },

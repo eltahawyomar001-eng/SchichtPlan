@@ -162,7 +162,7 @@ export const POST = withRoute(
       id: visit.id,
       employeeId: effectiveEmployeeId,
       locationId,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     // Revisionssicher audit trail entry
     createVisitAuditEntry(req, {

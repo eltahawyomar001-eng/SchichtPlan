@@ -95,7 +95,7 @@ export const POST = withRoute(
     dispatchWebhook(workspaceId, "shift_template.created", {
       id: template.id,
       name,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(template, { status: 201 });
   },

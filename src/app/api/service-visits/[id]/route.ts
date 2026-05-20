@@ -130,7 +130,7 @@ export const PATCH = withRoute(
 
     dispatchWebhook(workspaceId, "service_visit.updated", {
       id: visit.id,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(visit);
   },

@@ -146,7 +146,7 @@ export const POST = withRoute(
     dispatchWebhook(workspaceId, "service_visit.signature_captured", {
       visitId: id,
       signatureId: signature.id,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     // Revisionssicher audit trail entry — includes signature data for legal proof
     createVisitAuditEntry(req, {

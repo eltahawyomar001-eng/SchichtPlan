@@ -7,6 +7,7 @@ import { requireAuth, serverError } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { log } from "@/lib/logger";
 
 export const GET = withRoute("/api/departments", "GET", async (req) => {
   const auth = await requireAuth();
@@ -76,7 +77,7 @@ export const POST = withRoute(
       name,
       color,
       locationId,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(department, { status: 201 });
   },

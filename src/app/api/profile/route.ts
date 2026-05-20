@@ -123,7 +123,7 @@ export const PATCH = withRoute("/api/profile", "PATCH", async (req) => {
     if (authUser.workspaceId) {
       dispatchWebhook(authUser.workspaceId, "user.password_changed", {
         id: userId,
-      }).catch(() => {});
+      }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
     }
 
     return NextResponse.json({ message: "Password updated" });
@@ -150,7 +150,7 @@ export const PATCH = withRoute("/api/profile", "PATCH", async (req) => {
       dispatchWebhook(authUser.workspaceId, "user.updated", {
         id: userId,
         name: body.name,
-      }).catch(() => {});
+      }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
     }
 
     return NextResponse.json({ message: "Profile updated" });

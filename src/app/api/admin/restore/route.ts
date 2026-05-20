@@ -85,7 +85,7 @@ export const POST = withRoute("/api/admin/restore", "POST", async (req) => {
     dispatchWebhook(workspaceId, `${type.toLowerCase()}.restored`, {
       id,
       type,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json({ success: true, type, id });
   } catch (error) {

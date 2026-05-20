@@ -50,7 +50,7 @@ export const PUT = withRoute(
       name,
       color,
       locationId,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(department);
   },
@@ -83,7 +83,9 @@ export const DELETE = withRoute(
       workspaceId,
     });
 
-    dispatchWebhook(workspaceId, "department.deleted", { id }).catch(() => {});
+    dispatchWebhook(workspaceId, "department.deleted", { id }).catch((err) =>
+      log.warn("[dispatch] fire-and-forget failed", { err }),
+    );
 
     return NextResponse.json({ success: true });
   },

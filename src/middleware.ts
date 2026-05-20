@@ -101,6 +101,30 @@ const importLimiter = redis
   : undefined;
 
 /**
+ * Public token/PIN endpoints — very strict limit (5 req / 60s per IP).
+ * Covers external ticket tokens, PIN reveal links, QR clock endpoints.
+ * Without this, a 6-digit PIN is brute-forceable in ~17 min at the
+ * generic 60 req/60s API limit.
+ */
+const tokenLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "60 s"),
+      prefix: "ratelimit:token",
+    })
+  : undefined;
+
+function isTokenPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/api/tickets/external/") ||
+    pathname.startsWith("/api/pin-reveal") ||
+    pathname.startsWith("/api/qr-clock") ||
+    pathname.startsWith("/api/station/authorize") ||
+    pathname.startsWith("/api/station/qr-token")
+  );
+}
+
+/**
  * Expensive endpoints — strict limit (10 req / 60s).
  * Covers GDPR exports, account deletion, feedback submission, and any
  * payroll/full-history reports that hold a DB connection > 1s. Stops a single
@@ -213,8 +237,6 @@ export default withAuth(
     res.headers.set("x-nonce", nonce);
     // Expose current pathname to server components / layouts (for subscription gate, etc.)
     res.headers.set("x-pathname", req.nextUrl.pathname);
-    // Expose current pathname to server components / layouts (for subscription gate, etc.)
-    res.headers.set("x-pathname", req.nextUrl.pathname);
 
     // Rate limiting (Upstash Redis — serverless-safe)
     const ip =
@@ -286,6 +308,58 @@ export default withAuth(
       }
     }
 
+    // ── Public token/PIN endpoints — very strict limit (5 req / 60s) ──
+    if (isTokenPath(pathname)) {
+      if (tokenLimiter) {
+        try {
+          const result = await tokenLimiter.limit(ip);
+          res.headers.set("X-RateLimit-Limit", "5");
+          res.headers.set("X-RateLimit-Remaining", String(result.remaining));
+          res.headers.set(
+            "X-RateLimit-Reset",
+            String(Math.ceil(result.reset / 1000)),
+          );
+          if (!result.success) {
+            return new NextResponse(
+              JSON.stringify({
+                error: "Too many requests.",
+                code: "RATE_LIMITED",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Retry-After": String(
+                    Math.ceil((result.reset - Date.now()) / 1000),
+                  ),
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        } catch {
+          const count = memLimitIncr(`token:${ip}`, 60_000);
+          if (count > 5) {
+            return new NextResponse(
+              JSON.stringify({
+                error: "Too many requests.",
+                code: "RATE_LIMITED",
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...staticHeaders,
+                  "Content-Security-Policy": buildCsp(nonce),
+                },
+              },
+            );
+          }
+        }
+      }
+    }
+
     // ── Import endpoint — strict rate limit (5 req / 60s) ──
     if (pathname.startsWith("/api/import")) {
       if (importLimiter) {
@@ -300,8 +374,7 @@ export default withAuth(
           if (!result.success) {
             return new NextResponse(
               JSON.stringify({
-                error:
-                  "Zu viele Import-Anfragen. Bitte versuchen Sie es später erneut.",
+                error: "Too many requests. Please try again later.",
                 code: "RATE_LIMITED",
               }),
               {
@@ -323,7 +396,7 @@ export default withAuth(
           if (count > 5) {
             return new NextResponse(
               JSON.stringify({
-                error: "Zu viele Import-Anfragen.",
+                error: "Too many requests.",
                 code: "RATE_LIMITED",
               }),
               {
@@ -354,8 +427,8 @@ export default withAuth(
           if (!result.success) {
             return new NextResponse(
               JSON.stringify({
-                error:
-                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+                error: "Too many requests. Please try again later.",
+                code: "RATE_LIMITED",
               }),
               {
                 status: 429,
@@ -376,8 +449,8 @@ export default withAuth(
           if (count > 10) {
             return new NextResponse(
               JSON.stringify({
-                error:
-                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+                error: "Too many requests. Please try again later.",
+                code: "RATE_LIMITED",
               }),
               {
                 status: 429,
@@ -408,7 +481,7 @@ export default withAuth(
             return new NextResponse(
               JSON.stringify({
                 error:
-                  "Zu viele Anfragen für diesen Endpunkt. Bitte versuchen Sie es später erneut.",
+                  "Too many requests for this endpoint. Please try again later.",
                 code: "RATE_LIMITED",
               }),
               {
@@ -429,7 +502,8 @@ export default withAuth(
           if (count > 10) {
             return new NextResponse(
               JSON.stringify({
-                error: "Zu viele Anfragen für diesen Endpunkt.",
+                error: "Too many requests for this endpoint.",
+                code: "RATE_LIMITED",
                 code: "RATE_LIMITED",
               }),
               {
@@ -464,8 +538,8 @@ export default withAuth(
           if (!result.success) {
             return new NextResponse(
               JSON.stringify({
-                error:
-                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+                error: "Too many requests. Please try again later.",
+                code: "RATE_LIMITED",
               }),
               {
                 status: 429,
@@ -486,8 +560,8 @@ export default withAuth(
           if (count > 60) {
             return new NextResponse(
               JSON.stringify({
-                error:
-                  "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+                error: "Too many requests. Please try again later.",
+                code: "RATE_LIMITED",
               }),
               {
                 status: 429,

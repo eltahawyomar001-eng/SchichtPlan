@@ -88,12 +88,21 @@ export const metadata: Metadata = {
     title: "Shiftfy – Schichtplanung & Zeiterfassung Software",
     description:
       "Digitale Schichtplanung, Zeiterfassung und Personalmanagement – alles in einer App. 7 Tage testen, DSGVO-konform, made in Germany.",
+    images: [
+      {
+        url: `${SITE_URL}/opengraph-image.png`,
+        width: 1200,
+        height: 630,
+        alt: "Shiftfy – Schichtplanung & Zeiterfassung Software",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shiftfy – Schichtplanung & Zeiterfassung Software",
     description:
       "Digitale Schichtplanung, Zeiterfassung und Personalmanagement. 7 Tage testen.",
+    images: [`${SITE_URL}/opengraph-image.png`],
   },
   robots: {
     index: true,
@@ -147,14 +156,18 @@ export default async function RootLayout({
           }}
         />
         {/* Preconnect to critical third-party origins */}
-        <link
-          rel="preconnect"
-          href="https://hhhjirjyfnzzvuefeeme.supabase.co"
-        />
-        <link
-          rel="dns-prefetch"
-          href="https://hhhjirjyfnzzvuefeeme.supabase.co"
-        />
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <>
+            <link
+              rel="preconnect"
+              href={process.env.NEXT_PUBLIC_SUPABASE_URL}
+            />
+            <link
+              rel="dns-prefetch"
+              href={process.env.NEXT_PUBLIC_SUPABASE_URL}
+            />
+          </>
+        )}
         {/* Apple splash screens — iPhone & iPad */}
         <link
           rel="apple-touch-startup-image"

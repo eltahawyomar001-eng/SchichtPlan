@@ -91,7 +91,7 @@ export const POST = withRoute(
     dispatchWebhook(user.workspaceId, "workspace.ownership_transferred", {
       from: user.id,
       to: targetUser.id,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json({
       success: true,

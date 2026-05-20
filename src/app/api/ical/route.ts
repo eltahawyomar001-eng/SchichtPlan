@@ -84,7 +84,7 @@ async function resolveUser(req: Request): Promise<{
           where: { id: icalToken.id },
           data: { lastUsedAt: new Date() },
         })
-        .catch(() => {});
+        .catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
     }
 
     return {

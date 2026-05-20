@@ -86,7 +86,7 @@ export async function GET(
             firstViewedById: user.id,
           },
         })
-        .catch(() => {});
+        .catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
       logTicketViewed(ticket.id, { id: user.id, name: user.name ?? "System" });
     }

@@ -595,21 +595,12 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
               .filter(Boolean)
               .join(", ");
 
-            // Atomically increment workspace invoice counter (GoBD § 147 — continuous sequence)
-            const year = new Date().getFullYear();
-            const seq = await prisma.$transaction(async (tx) => {
-              const updated = await tx.invoiceSequence.upsert({
-                where: { workspaceId: sub.workspaceId },
-                update: { lastNumber: { increment: 1 } },
-                create: { workspaceId: sub.workspaceId, lastNumber: 1 },
-                select: { lastNumber: true },
-              });
-              return updated.lastNumber;
-            });
-            const shiftfyInvoiceNumber = `${year}-${String(seq).padStart(6, "0")}`;
-
-            // Fetch the issuer identity active at invoice time (versioned for GoBD)
+            // Atomically increment sequence AND create invoice record in one transaction.
+            // GoBD § 147: if the invoice.upsert fails, the sequence rolls back — no gaps.
             const invoiceDate = new Date((invoice.created ?? 0) * 1000);
+            const year = invoiceDate.getFullYear();
+
+            // Fetch read-only lookups before the transaction (no side-effects to roll back).
             const issuerProfile = await prisma.issuerProfile.findFirst({
               where: { validFrom: { lte: invoiceDate } },
               orderBy: { validFrom: "desc" },
@@ -621,36 +612,46 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             const issuerAddress =
               issuerProfile?.address ?? process.env.SHIFTFY_ADDRESS ?? null;
 
-            await prisma.invoice.upsert({
-              where: { stripeInvoiceId: invoice.id },
-              update: {},
-              create: {
-                workspaceId: sub.workspaceId,
-                stripeInvoiceId: invoice.id,
-                invoiceNumber: shiftfyInvoiceNumber,
-                issuedAt: new Date((invoice.created ?? 0) * 1000),
-                amount: invoice.amount_paid ?? 0,
-                vatAmount:
-                  invoice.total_taxes?.reduce(
-                    (s, t) => s + (t.amount ?? 0),
-                    0,
-                  ) ?? null,
-                currency: invoice.currency ?? "eur",
-                pdfUrl:
-                  typeof invoice.invoice_pdf === "string"
-                    ? invoice.invoice_pdf
-                    : null,
-                hostedUrl:
-                  typeof invoice.hosted_invoice_url === "string"
-                    ? invoice.hosted_invoice_url
-                    : null,
-                issuerName,
-                issuerVatId,
-                issuerAddress,
-                recipientName: wc?.companyName ?? null,
-                recipientVatId: wc?.vatId ?? null,
-                recipientAddress: recipientAddress || null,
-              },
+            await prisma.$transaction(async (tx) => {
+              const updated = await tx.invoiceSequence.upsert({
+                where: { workspaceId: sub.workspaceId },
+                update: { lastNumber: { increment: 1 } },
+                create: { workspaceId: sub.workspaceId, lastNumber: 1 },
+                select: { lastNumber: true },
+              });
+              const shiftfyInvoiceNumber = `${year}-${String(updated.lastNumber).padStart(6, "0")}`;
+
+              await tx.invoice.upsert({
+                where: { stripeInvoiceId: invoice.id },
+                update: {},
+                create: {
+                  workspaceId: sub.workspaceId,
+                  stripeInvoiceId: invoice.id,
+                  invoiceNumber: shiftfyInvoiceNumber,
+                  issuedAt: invoiceDate,
+                  amount: invoice.amount_paid ?? 0,
+                  vatAmount:
+                    invoice.total_taxes?.reduce(
+                      (s, t) => s + (t.amount ?? 0),
+                      0,
+                    ) ?? null,
+                  currency: invoice.currency ?? "eur",
+                  pdfUrl:
+                    typeof invoice.invoice_pdf === "string"
+                      ? invoice.invoice_pdf
+                      : null,
+                  hostedUrl:
+                    typeof invoice.hosted_invoice_url === "string"
+                      ? invoice.hosted_invoice_url
+                      : null,
+                  issuerName,
+                  issuerVatId,
+                  issuerAddress,
+                  recipientName: wc?.companyName ?? null,
+                  recipientVatId: wc?.vatId ?? null,
+                  recipientAddress: recipientAddress || null,
+                },
+              });
             });
             log.info(`[Stripe] GoBD invoice recorded: ${invoice.id}`);
           } catch (err) {

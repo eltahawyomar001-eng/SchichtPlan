@@ -295,7 +295,7 @@ export const POST = withRoute(
     dispatchWebhook(workspaceId, "data_retention.executed", {
       totalDeleted,
       dryRun,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json({
       success: true,

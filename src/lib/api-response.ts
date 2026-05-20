@@ -128,6 +128,18 @@ export async function requireAuth(
     if (requireWorkspace && !user.workspaceId) {
       return { ok: false, response: noWorkspace() };
     }
+    // Re-verify workspace membership from DB on every request.
+    // The JWT is cached up to 5 min; a removed user would otherwise retain
+    // access until session expiry.
+    if (user.workspaceId) {
+      const live = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { workspaceId: true },
+      });
+      if (!live || live.workspaceId !== user.workspaceId) {
+        return { ok: false, response: unauthorized("Session invalidated") };
+      }
+    }
     return { ok: true, user, workspaceId: user.workspaceId as string };
   }
 

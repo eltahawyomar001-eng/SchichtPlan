@@ -281,7 +281,7 @@ export const PATCH = withRoute(
     dispatchWebhook(workspaceId, eventName, {
       id,
       status: validData.status,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(updated);
   },

@@ -51,14 +51,41 @@ export const GET = withRoute(
     const [requests, total] = await Promise.all([
       prisma.shiftChangeRequest.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          status: true,
+          reason: true,
+          newDate: true,
+          newStartTime: true,
+          newEndTime: true,
+          newNotes: true,
+          reviewNote: true,
+          reviewedAt: true,
+          reviewedBy: true,
+          createdAt: true,
+          updatedAt: true,
+          workspaceId: true,
+          requesterId: true,
           shift: {
-            include: {
-              employee: true,
-              location: true,
+            select: {
+              id: true,
+              date: true,
+              startTime: true,
+              endTime: true,
+              employee: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
+              },
+              location: { select: { id: true, name: true } },
             },
           },
-          requester: true,
+          requester: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
         },
         orderBy: { createdAt: "desc" },
         take,

@@ -100,7 +100,7 @@ export const POST = withRoute(
     dispatchWebhook(workspaceId, "service_visit.checked_out", {
       id,
       status: updated.status,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     // Revisionssicher audit trail entry
     createVisitAuditEntry(req, {

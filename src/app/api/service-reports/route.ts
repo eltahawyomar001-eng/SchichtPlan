@@ -121,7 +121,7 @@ export const POST = withRoute(
       id: report.id,
       title,
       totalVisits,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(report, { status: 201 });
   },

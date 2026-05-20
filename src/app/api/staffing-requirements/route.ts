@@ -130,7 +130,7 @@ export const POST = withRoute(
     dispatchWebhook(workspaceId, "staffing_requirement.created", {
       id: requirement.id,
       name: data.name,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(requirement, { status: 201 });
   },

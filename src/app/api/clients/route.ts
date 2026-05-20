@@ -79,7 +79,7 @@ export const POST = withRoute(
     dispatchWebhook(workspaceId, "client.created", {
       id: client.id,
       name,
-    }).catch(() => {});
+    }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
     return NextResponse.json(client, { status: 201 });
   },

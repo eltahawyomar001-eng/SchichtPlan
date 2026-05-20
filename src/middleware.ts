@@ -504,7 +504,6 @@ export default withAuth(
               JSON.stringify({
                 error: "Too many requests for this endpoint.",
                 code: "RATE_LIMITED",
-                code: "RATE_LIMITED",
               }),
               {
                 status: 429,

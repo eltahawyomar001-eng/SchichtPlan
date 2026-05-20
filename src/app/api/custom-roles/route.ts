@@ -1,26 +1,31 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { requireAdmin } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { prisma } from "@/lib/db";
+import { createAuditLog } from "@/lib/audit";
+import { validateBody } from "@/lib/validations";
 
 /**
- * Custom Roles CRUD — stub implementation.
+ * Custom Roles CRUD.
  *
- * This endpoint is gated behind the `customRoles` feature flag
- * (Business+ tier). Once a CustomRole Prisma model is added,
- * the handlers below should be wired to the database.
+ * Gated behind the `customRoles` plan feature (Business+ tier).
  *
- * For now it returns a static list of the built-in roles with
- * their permission descriptions.
+ * Each role has a baseRole (OWNER/ADMIN/MANAGER/EMPLOYEE) that defines its
+ * permission floor, plus an explicit allow-list of fine-grained permissions
+ * (e.g. ["shifts.create", "employees.read"]).
  */
 
+/* ── Built-in roles (read-only, always returned alongside custom ones) ── */
 const BUILT_IN_ROLES = [
   {
     id: "owner",
     name: "Inhaber",
     nameEn: "Owner",
     builtIn: true,
+    baseRole: "OWNER",
     permissions: [
       "employees.*",
       "shifts.*",
@@ -42,6 +47,7 @@ const BUILT_IN_ROLES = [
     name: "Administrator",
     nameEn: "Admin",
     builtIn: true,
+    baseRole: "ADMIN",
     permissions: [
       "employees.*",
       "shifts.*",
@@ -61,6 +67,7 @@ const BUILT_IN_ROLES = [
     name: "Manager",
     nameEn: "Manager",
     builtIn: true,
+    baseRole: "MANAGER",
     permissions: [
       "shifts.*",
       "employees.read",
@@ -77,6 +84,7 @@ const BUILT_IN_ROLES = [
     name: "Mitarbeiter",
     nameEn: "Employee",
     builtIn: true,
+    baseRole: "EMPLOYEE",
     permissions: [
       "shifts.read",
       "absences.create",
@@ -89,21 +97,52 @@ const BUILT_IN_ROLES = [
   },
 ];
 
+const VALID_BASE_ROLES = ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"] as const;
+
+const createCustomRoleSchema = z.object({
+  name: z.string().min(2).max(50),
+  nameEn: z.string().max(50).optional().nullable(),
+  description: z.string().max(500).optional().nullable(),
+  descriptionEn: z.string().max(500).optional().nullable(),
+  baseRole: z.enum(VALID_BASE_ROLES).default("EMPLOYEE"),
+  permissions: z.array(z.string().regex(/^[a-z-]+\.(\*|[a-z]+)$/)).default([]),
+});
+
 /* ── GET /api/custom-roles ── */
-export const GET = withRoute("/api/custom-roles", "GET", async (req) => {
+export const GET = withRoute("/api/custom-roles", "GET", async () => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { user, workspaceId } = auth;
 
-  // Only admins+ can view roles
   const authError = requireAdmin(user);
   if (authError) return authError;
 
-  // Gate behind customRoles feature
-  const planDenied = await requirePlanFeature(user.workspaceId, "customRoles");
+  const planDenied = await requirePlanFeature(workspaceId, "customRoles");
   if (planDenied) return planDenied;
 
-  return NextResponse.json(BUILT_IN_ROLES);
+  const custom = await prisma.customRole.findMany({
+    where: { workspaceId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+      nameEn: true,
+      description: true,
+      descriptionEn: true,
+      baseRole: true,
+      permissions: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return NextResponse.json({
+    builtIn: BUILT_IN_ROLES,
+    custom: (custom as Array<Record<string, unknown>>).map((r) => ({
+      ...r,
+      builtIn: false,
+    })),
+  });
 });
 
 /* ── POST /api/custom-roles ── */
@@ -118,25 +157,51 @@ export const POST = withRoute(
     const authError = requireAdmin(user);
     if (authError) return authError;
 
-    const planDenied = await requirePlanFeature(
-      user.workspaceId,
-      "customRoles",
-    );
+    const planDenied = await requirePlanFeature(workspaceId, "customRoles");
     if (planDenied) return planDenied;
 
-    // Not yet implemented — return 501 so the client knows this
-    // feature does not exist yet (not a success status).
-    return NextResponse.json(
-      {
-        error:
-          "Benutzerdefinierte Rollen sind noch nicht verfügbar. " +
-          "Die integrierten Rollen decken die meisten Anwendungsfälle ab.",
-        errorEn:
-          "Custom role creation is not yet available. " +
-          "The built-in roles cover most use cases.",
+    const parsed = validateBody(createCustomRoleSchema, await req.json());
+    if (!parsed.success) return parsed.response;
+    const data = parsed.data;
+
+    const existing = await prisma.customRole.findFirst({
+      where: { workspaceId, name: data.name },
+      select: { id: true },
+    });
+    if (existing) {
+      return NextResponse.json(
+        {
+          error: "Eine Rolle mit diesem Namen existiert bereits.",
+          code: "DUPLICATE_NAME",
+        },
+        { status: 409 },
+      );
+    }
+
+    const role = await prisma.customRole.create({
+      data: {
+        workspaceId,
+        name: data.name,
+        nameEn: data.nameEn ?? null,
+        description: data.description ?? null,
+        descriptionEn: data.descriptionEn ?? null,
+        baseRole: data.baseRole,
+        permissions: data.permissions,
+        createdById: user.id,
       },
-      { status: 501 },
-    );
+    });
+
+    createAuditLog({
+      action: "CREATE",
+      entityType: "CustomRole",
+      entityId: role.id,
+      userId: user.id,
+      userEmail: user.email,
+      workspaceId,
+      changes: { name: role.name, baseRole: role.baseRole },
+    });
+
+    return NextResponse.json({ ...role, builtIn: false }, { status: 201 });
   },
   { idempotent: true },
 );

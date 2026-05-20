@@ -828,7 +828,7 @@ function BillingContent() {
               </div>
             </div>
 
-            {/* Manage Subscription Button (placeholder retained below) */}
+            {/* Stripe Customer Portal — manage billing details, invoices, cancellation */}
             {subscription?.hasStripeSubscription && (
               <div className="mt-6">
                 <button

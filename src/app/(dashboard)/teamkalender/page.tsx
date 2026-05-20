@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
 import {
@@ -30,6 +29,7 @@ import { WeekView } from "./_components/week-view";
 import { DayView } from "./_components/day-view";
 import { EmployeePlannerGrid } from "./_components/employee-planner-grid";
 import { CalendarFilters } from "./_components/calendar-filters";
+import { ProjectPlanner } from "./_components/project-planner";
 import { CATEGORY_TO_EVENT_TYPE } from "./_components/types";
 import type {
   CalendarShift,
@@ -453,34 +453,10 @@ export default function TeamkalenderSeite() {
 
             {/* ── Project Planner tab ── */}
             {activeViewTab === "projectPlanner" && (
-              <div className="py-12 text-center space-y-3">
-                <p className="text-sm font-medium text-gray-600 dark:text-zinc-300">
-                  Projektplaner
-                </p>
-                <p className="text-sm text-gray-400 dark:text-zinc-500 max-w-sm mx-auto">
-                  Weise Schichten im{" "}
-                  <Link
-                    href="/schichtplan"
-                    className="text-emerald-600 hover:underline"
-                  >
-                    Schichtplan
-                  </Link>{" "}
-                  einem Projekt zu, um hier eine projektbezogene Ansicht zu
-                  erhalten.
-                </p>
-                {projects.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                    {projects.map((p) => (
-                      <span
-                        key={p.id}
-                        className="rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-gray-600 dark:text-zinc-400"
-                      >
-                        {p.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ProjectPlanner
+                startDate={dateRange.start}
+                endDate={dateRange.end}
+              />
             )}
 
             {/* ── Calendar tab — routes by period ── */}

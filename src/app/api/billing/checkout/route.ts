@@ -26,7 +26,7 @@ export const POST = withRoute(
   async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { user, workspaceId } = auth;
+    const { user } = auth;
 
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
@@ -80,7 +80,9 @@ export const POST = withRoute(
         process.env.NEXTAUTH_URL ||
         (process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : "http://localhost:3000");
+          : process.env.NODE_ENV === "production"
+            ? "https://www.shiftfy.de"
+            : "http://localhost:3000");
 
       return NextResponse.json({
         url: `${baseUrl}/einstellungen/abonnement?billing=success`,

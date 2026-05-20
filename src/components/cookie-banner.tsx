@@ -19,12 +19,10 @@ import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
-  type CookieConsent,
   getStoredConsent,
   saveConsent,
   acceptAll,
   rejectAll,
-  CONSENT_VERSION,
 } from "@/lib/cookie-consent";
 
 /**
@@ -48,30 +46,32 @@ export function CookieBanner() {
   // Before mount (server + first render), these are inert — component returns null.
   const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [functional, setFunctional] = useState(false);
   const [analytics, setAnalytics] = useState(false);
+  const [marketing, setMarketing] = useState(false);
 
   // Sync initial visibility & consent state after mount
   useEffect(() => {
     if (!hasMounted) return;
     const consent = getStoredConsent();
     if (!consent) {
-      // No consent stored — show banner.
-      // We use requestAnimationFrame to avoid the lint rule about
-      // synchronous setState inside effects. The visual result is identical.
       requestAnimationFrame(() => setVisible(true));
     } else {
       requestAnimationFrame(() => {
+        setFunctional(consent.functional);
         setAnalytics(consent.analytics);
+        setMarketing(consent.marketing);
       });
     }
   }, [hasMounted]);
 
   useEffect(() => {
-    // Allow re-opening from footer "Cookie Einstellungen" link
     const handleOpen = () => {
       const stored = getStoredConsent();
       if (stored) {
+        setFunctional(stored.functional);
         setAnalytics(stored.analytics);
+        setMarketing(stored.marketing);
       }
       setShowSettings(true);
       setVisible(true);
@@ -93,16 +93,10 @@ export function CookieBanner() {
   }, []);
 
   const handleSaveSettings = useCallback(() => {
-    const consent: CookieConsent = {
-      necessary: true,
-      analytics,
-      timestamp: new Date().toISOString(),
-      version: CONSENT_VERSION,
-    };
-    saveConsent(consent);
+    saveConsent({ functional, analytics, marketing });
     setVisible(false);
     setShowSettings(false);
-  }, [analytics]);
+  }, [functional, analytics, marketing]);
 
   if (!visible) return null;
 
@@ -173,6 +167,19 @@ export function CookieBanner() {
                 requiredLabel={t("required")}
               />
 
+              {/* Functional */}
+              <CookieCategory
+                label={t.has("functional") ? t("functional") : "Funktional"}
+                description={
+                  t.has("functionalDesc")
+                    ? t("functionalDesc")
+                    : "Speichert Komfort-Einstellungen wie Sprache, Theme und UI-Präferenzen."
+                }
+                checked={functional}
+                disabled={false}
+                onChange={setFunctional}
+              />
+
               {/* Analytics */}
               <CookieCategory
                 label={t("analytics")}
@@ -180,6 +187,19 @@ export function CookieBanner() {
                 checked={analytics}
                 disabled={false}
                 onChange={setAnalytics}
+              />
+
+              {/* Marketing */}
+              <CookieCategory
+                label={t.has("marketing") ? t("marketing") : "Marketing"}
+                description={
+                  t.has("marketingDesc")
+                    ? t("marketingDesc")
+                    : "Misst die Wirksamkeit unserer Anzeigen und erlaubt personalisierte Werbung. Aktuell ungenutzt."
+                }
+                checked={marketing}
+                disabled={false}
+                onChange={setMarketing}
               />
             </div>
 

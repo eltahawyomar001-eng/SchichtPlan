@@ -8,6 +8,10 @@ import { datevExportSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import {
+  uploadPayrollToDatev,
+  isDatevConfigured,
+} from "@/lib/integrations/datev-online";
 
 /**
  * POST /api/export/datev-online
@@ -78,40 +82,35 @@ export const POST = withRoute(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const datevPayload = buildDatevOnlinePayload(entries as any[], start, end);
 
-    // --- DATEV API call would go here ---
-    // const datevResponse = await fetch('https://api.datev.de/accounting/v1/...', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${datevAccessToken}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(datevPayload),
-    // });
-    //
-    // DATEV API integration is not yet connected.
-    // The payload is built and validated, but NOT actually uploaded.
-    const uploadResult = {
-      status: "PENDING_INTEGRATION",
-      datevReference: null,
-      recordCount: datevPayload.records.length,
-      employeeCount: datevPayload.employeeSummary.length,
-      periodStart: start,
-      periodEnd: end,
-      preparedAt: new Date().toISOString(),
-    };
+    // Try to upload to DATEV. If credentials are not configured, the helper
+    // returns { skipped: true } and we fall back to the "payload prepared"
+    // response so the CSV export still works as an alternative.
+    const uploadResult = await uploadPayrollToDatev({
+      format: datevPayload.format,
+      period: datevPayload.period,
+      records: datevPayload.records as unknown as Record<string, unknown>[],
+      employeeSummary: datevPayload.employeeSummary as unknown as Record<
+        string,
+        unknown
+      >[],
+    });
 
-    // Persist an ExportJob record — with honest status
+    const exportJobStatus = uploadResult.success
+      ? "COMPLETED"
+      : uploadResult.skipped
+        ? "PENDING"
+        : "FAILED";
+
     const exportJob = await prisma.exportJob.create({
       data: {
         format: "DATEV_ONLINE",
         fileName: `datev_online_${start}_${end}`,
-        status: "PENDING",
+        status: exportJobStatus,
         ...(monthCloseId ? { monthCloseId } : {}),
         workspaceId,
       },
     });
 
-    // Audit log
     createAuditLog({
       action: "CREATE",
       entityType: "DATEVOnlineExport",
@@ -120,36 +119,84 @@ export const POST = withRoute(
       userEmail: user.email!,
       workspaceId,
       metadata: {
-        datevReference: uploadResult.datevReference,
-        recordCount: uploadResult.recordCount,
-        employeeCount: uploadResult.employeeCount,
+        datevReference: uploadResult.datevReference ?? null,
+        recordCount: datevPayload.records.length,
+        employeeCount: datevPayload.employeeSummary.length,
         periodStart: start,
         periodEnd: end,
+        uploadStatus: uploadResult.status ?? exportJobStatus,
       },
     });
 
-    log.info("[datev-online] Payload prepared (API integration pending)", {
+    if (uploadResult.success) {
+      log.info("[datev-online] Upload accepted by DATEV", {
+        exportJobId: exportJob.id,
+        datevReference: uploadResult.datevReference,
+        records: datevPayload.records.length,
+      });
+      return NextResponse.json({
+        success: true,
+        message:
+          "DATEV-Upload erfolgreich an DATEV Unternehmen Online übermittelt.",
+        messageEn: "Payroll successfully uploaded to DATEV Unternehmen Online.",
+        exportJob: {
+          id: exportJob.id,
+          format: exportJob.format,
+          status: exportJob.status,
+        },
+        datevReference: uploadResult.datevReference,
+      });
+    }
+
+    if (uploadResult.skipped) {
+      log.info("[datev-online] Payload prepared — DATEV credentials missing", {
+        exportJobId: exportJob.id,
+        records: datevPayload.records.length,
+      });
+      return NextResponse.json({
+        success: false,
+        pending: true,
+        configured: isDatevConfigured(),
+        message:
+          "DATEV-Payload wurde erstellt, aber die API-Zugangsdaten für DATEV Unternehmen Online " +
+          "sind im Workspace nicht hinterlegt. Bitte verwenden Sie den CSV-Export als Alternative.",
+        messageEn:
+          "DATEV payload was prepared but no DATEV credentials are configured for this workspace. " +
+          "Please use CSV export as an alternative.",
+        exportJob: {
+          id: exportJob.id,
+          format: exportJob.format,
+          status: exportJob.status,
+        },
+        payload: datevPayload,
+      });
+    }
+
+    // Hard failure (4xx/5xx from DATEV)
+    log.error("[datev-online] Upload failed", {
       exportJobId: exportJob.id,
-      records: uploadResult.recordCount,
+      reason: uploadResult.reason,
+      httpStatus: uploadResult.httpStatus,
     });
-
-    return NextResponse.json({
-      success: false,
-      pending: true,
-      message:
-        "DATEV-Payload wurde erstellt, aber die API-Verbindung zu DATEV Unternehmen Online " +
-        "ist noch nicht konfiguriert. Bitte verwenden Sie den CSV-Export als Alternative.",
-      messageEn:
-        "DATEV payload was prepared but the API connection to DATEV Unternehmen Online " +
-        "is not yet configured. Please use CSV export as an alternative.",
-      exportJob: {
-        id: exportJob.id,
-        format: exportJob.format,
-        status: exportJob.status,
+    return NextResponse.json(
+      {
+        success: false,
+        error: "DATEV_UPLOAD_FAILED",
+        reason: uploadResult.reason,
+        httpStatus: uploadResult.httpStatus,
+        message:
+          "Upload an DATEV Unternehmen Online fehlgeschlagen. Bitte CSV-Export verwenden " +
+          "oder Administrator kontaktieren.",
+        messageEn:
+          "Upload to DATEV Unternehmen Online failed. Please use CSV export or contact your administrator.",
+        exportJob: {
+          id: exportJob.id,
+          format: exportJob.format,
+          status: exportJob.status,
+        },
       },
-      upload: uploadResult,
-      payload: datevPayload,
-    });
+      { status: 502 },
+    );
   },
   { idempotent: true },
 );

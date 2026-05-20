@@ -22,7 +22,11 @@ export const GET = withRoute("/api/station/setup-link", "GET", async () => {
   if (forbidden) return forbidden;
 
   const { token, expiresAt } = generateStationSetupToken(workspaceId);
-  const origin = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const origin =
+    process.env.NEXTAUTH_URL ??
+    (process.env.NODE_ENV === "production"
+      ? "https://www.shiftfy.de"
+      : "http://localhost:3000");
   return NextResponse.json({
     setupUrl: `${origin}/station?setup=${token}`,
     expiresAt,

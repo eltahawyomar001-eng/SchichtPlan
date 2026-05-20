@@ -195,12 +195,16 @@ function memLimitIncr(key: string, windowMs: number): number {
  * Only applied to /api/* paths. Preflight OPTIONS requests are
  * answered directly with a 204 (no body).
  * ────────────────────────────────────────────────────────────── */
+// In production the only allowed origin is the deployed app's own URL.
+// During local dev we add http://localhost:3000 as a convenience so the
+// curl-able test workflow works without setting NEXTAUTH_URL.
 const ALLOWED_ORIGINS = new Set(
   [
-    process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+    process.env.NEXTAUTH_URL,
+    process.env.NODE_ENV !== "production" ? "http://localhost:3000" : null,
     ...(process.env.CORS_ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) ??
       []),
-  ].filter(Boolean),
+  ].filter((value): value is string => Boolean(value)),
 );
 
 function isAllowedOrigin(origin: string | null): boolean {

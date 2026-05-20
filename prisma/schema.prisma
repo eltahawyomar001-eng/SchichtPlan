@@ -28,6 +28,8 @@ model User {
   updatedAt               DateTime                 @updatedAt
   workspaceId             String?
   workspace               Workspace?               @relation(fields: [workspaceId], references: [id])
+  customRoleId            String?
+  customRole              CustomRole?              @relation("UserCustomRole", fields: [customRoleId], references: [id])
   accounts                Account[]
   sessions                Session[]
   notificationPreferences NotificationPreference[]
@@ -43,6 +45,25 @@ model User {
   ticketComments          TicketComment[]
   ticketAttachments       TicketAttachment[]
   feedback                Feedback[]
+  userTasks               UserTask[]
+}
+
+/// Personal to-do list shown on the dashboard "My Tasks" card.
+/// Scoped to a single user; deleted when the user is removed.
+model UserTask {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  title       String
+  done        Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workspaceId])
 }
 
 model Account {
@@ -174,6 +195,32 @@ model Workspace {
   feedback             Feedback[]
   invoiceSequence      InvoiceSequence?
   stationSessions      StationSession[]
+  customRoles          CustomRole[]
+  userTasks            UserTask[]
+}
+
+/// Custom roles (Business+ feature). Each role inherits from a baseRole
+/// (OWNER/ADMIN/MANAGER/EMPLOYEE) and overrides individual permissions.
+/// A permission entry looks like "shifts.create", "employees.read", or "shifts.*".
+model CustomRole {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  name          String
+  nameEn        String?
+  description   String?
+  descriptionEn String?
+  /// One of OWNER, ADMIN, MANAGER, EMPLOYEE — sets the default permission floor.
+  baseRole      String    @default("EMPLOYEE")
+  /// JSON array of permission strings, e.g. ["shifts.*", "employees.read"]
+  permissions   Json      @default("[]")
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  users         User[]    @relation("UserCustomRole")
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
 }
 
 /// In-app bug reports / feature requests submitted via the dashboard widget.

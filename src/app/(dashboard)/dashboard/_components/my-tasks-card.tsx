@@ -18,76 +18,115 @@ interface MyTasksCardProps {
   emptyDesc: string;
 }
 
-const STORAGE_KEY = "shiftfy-my-tasks";
-
-function loadTasks(): Task[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveTasks(tasks: Task[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  } catch {
-    /* quota exceeded — silently ignore */
-  }
-}
-
 export function MyTasksCard({
   title,
   newLabel,
   emptyLabel,
   emptyDesc,
 }: MyTasksCardProps) {
-  const [tasks, setTasks] = useState<Task[]>(loadTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showInput, setShowInput] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /* Persist on change (skip initial hydrated render) */
-  const hydrated = useRef(false);
+  // Load tasks from backend
   useEffect(() => {
-    if (!hydrated.current) {
-      hydrated.current = true;
-      return;
-    }
-    saveTasks(tasks);
-  }, [tasks]);
+    let aborted = false;
+    fetch("/api/user-tasks")
+      .then((res) => (res.ok ? res.json() : { tasks: [] }))
+      .then((data) => {
+        if (aborted) return;
+        setTasks(
+          (data.tasks ?? []).map(
+            (t: { id: string; title: string; done: boolean }) => ({
+              id: t.id,
+              title: t.title,
+              done: t.done,
+            }),
+          ),
+        );
+      })
+      .catch(() => {
+        /* leave list empty on error */
+      })
+      .finally(() => {
+        if (!aborted) setLoading(false);
+      });
+    return () => {
+      aborted = true;
+    };
+  }, []);
 
   /* Focus input when revealed */
   useEffect(() => {
     if (showInput) inputRef.current?.focus();
   }, [showInput]);
 
-  const addTask = useCallback(() => {
+  const addTask = useCallback(async () => {
     const trimmed = newTitle.trim();
-    if (!trimmed) return;
-    const task: Task = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title: trimmed,
-      done: false,
-    };
-    setTasks((prev) => [task, ...prev]);
-    setNewTitle("");
-    setShowInput(false);
-  }, [newTitle]);
+    if (!trimmed || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/user-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: trimmed }),
+      });
+      if (res.ok) {
+        const task = await res.json();
+        setTasks((prev) => [
+          { id: task.id, title: task.title, done: task.done },
+          ...prev,
+        ]);
+        setNewTitle("");
+        setShowInput(false);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }, [newTitle, submitting]);
 
-  const toggleTask = useCallback((id: string) => {
+  const toggleTask = useCallback(async (id: string) => {
+    // Optimistic update
+    let nextDone = false;
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+      prev.map((t) => {
+        if (t.id === id) {
+          nextDone = !t.done;
+          return { ...t, done: nextDone };
+        }
+        return t;
+      }),
     );
+    // Persist
+    const res = await fetch(`/api/user-tasks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: nextDone }),
+    });
+    if (!res.ok) {
+      // Rollback on failure
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, done: !nextDone } : t)),
+      );
+    }
   }, []);
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  const deleteTask = useCallback(
+    async (id: string) => {
+      // Optimistic remove
+      const before = tasks;
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+      const res = await fetch(`/api/user-tasks/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        // Rollback
+        setTasks(before);
+      }
+    },
+    [tasks],
+  );
 
   const doneCount = tasks.filter((t) => t.done).length;
   const totalCount = tasks.length;
@@ -129,12 +168,12 @@ export function MyTasksCard({
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder={title + "…"}
-              maxLength={120}
+              maxLength={200}
               className="flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
             />
             <button
               type="submit"
-              disabled={!newTitle.trim()}
+              disabled={!newTitle.trim() || submitting}
               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 text-xs font-semibold text-white transition-colors"
             >
               <CheckIcon className="h-4 w-4" />
@@ -142,7 +181,11 @@ export function MyTasksCard({
           </form>
         )}
 
-        {tasks.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          </div>
+        ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center py-8 gap-4">
             <EmptyIllustration />
             <div className="text-center">
@@ -232,21 +275,18 @@ function EmptyIllustration() {
       className="opacity-80"
       aria-hidden
     >
-      {/* Body circle */}
       <circle
         cx="60"
         cy="68"
         r="32"
         className="fill-gray-100 dark:fill-zinc-800"
       />
-      {/* Head */}
       <circle
         cx="60"
         cy="36"
         r="18"
         className="fill-gray-200 dark:fill-zinc-700"
       />
-      {/* Face — simple smile */}
       <circle
         cx="54"
         cy="34"
@@ -266,7 +306,6 @@ function EmptyIllustration() {
         fill="none"
         className="stroke-gray-400 dark:stroke-zinc-500"
       />
-      {/* Arm — waving */}
       <path
         d="M88 58 Q94 48 98 38"
         strokeWidth="3"
@@ -274,14 +313,12 @@ function EmptyIllustration() {
         fill="none"
         className="stroke-emerald-400 dark:stroke-emerald-500"
       />
-      {/* Hand circle */}
       <circle
         cx="99"
         cy="36"
         r="4"
         className="fill-emerald-400 dark:fill-emerald-500"
       />
-      {/* Clipboard in other hand */}
       <rect
         x="26"
         y="56"
@@ -314,7 +351,6 @@ function EmptyIllustration() {
         rx="1"
         className="fill-gray-300 dark:fill-zinc-600"
       />
-      {/* Checkmark on clipboard */}
       <path
         d="M30 63 L32 65 L36 60"
         strokeWidth="1.5"
@@ -323,7 +359,6 @@ function EmptyIllustration() {
         fill="none"
         className="stroke-emerald-500 dark:stroke-emerald-400"
       />
-      {/* Shadow */}
       <ellipse
         cx="60"
         cy="106"

@@ -2,6 +2,29 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
+/**
+ * Connection-pooling strategy
+ * ───────────────────────────
+ * Two URLs are intentionally used and they must NOT be swapped:
+ *
+ *   DATABASE_URL  → Supavisor pooler (transaction mode), port 6543.
+ *                   Used at runtime by every API route / server component.
+ *                   Supports the high request volume Vercel serverless creates
+ *                   without exhausting Postgres' max_connections.
+ *
+ *   DIRECT_URL    → Direct Postgres connection, port 5432.
+ *                   Used ONLY by `prisma migrate` / `prisma db push`.
+ *                   Migrations need a real session (CREATE TYPE, advisory locks)
+ *                   that the transaction-mode pooler can't provide.
+ *
+ * Locally a single in-process `pg.Pool` is kept alive across hot-reloads via
+ * `globalForPrisma`. In production, each serverless instance gets its own pool
+ * but Supavisor multiplexes them down to a small set of real Postgres backends.
+ *
+ *   DATABASE_POOL_MAX           — local pool size (default 15)
+ *   DATABASE_STATEMENT_TIMEOUT_MS — hard cap per query (default 15_000 ms)
+ */
+
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function getClient(): PrismaClient {
@@ -10,20 +33,33 @@ function getClient(): PrismaClient {
     if (!connectionString) {
       throw new Error("DATABASE_URL environment variable is not set");
     }
+
     const poolMax = parseInt(process.env.DATABASE_POOL_MAX || "15", 10);
-    // Hard caps so a single slow query cannot hold a connection forever and
-    // exhaust the pool. Override per-call via withQueryTimeout() if a specific
-    // long-running operation needs more time (e.g. payroll export).
     const statementTimeoutMs = parseInt(
       process.env.DATABASE_STATEMENT_TIMEOUT_MS || "15000",
       10,
     );
+
+    // Detect Supavisor / pgBouncer transaction-mode pooler so we can tune the
+    // pg.Pool appropriately. Port 6543 is Supabase's pooled endpoint.
+    const usingPooler =
+      /:6543\b/.test(connectionString) ||
+      /pgbouncer=true/i.test(connectionString) ||
+      /pooler\.supabase\.(co|com)/i.test(connectionString);
+
     const pool = new Pool({
       connectionString,
       max: isNaN(poolMax) ? 15 : poolMax,
       statement_timeout: isNaN(statementTimeoutMs) ? 15000 : statementTimeoutMs,
       query_timeout: isNaN(statementTimeoutMs) ? 15000 : statementTimeoutMs,
+      // Behind a transaction-mode pooler, server-side prepared statements break
+      // because each transaction may run on a different backend. Disabling
+      // keepAlive also helps short-lived serverless invocations release sockets
+      // promptly so the pooler can hand them to the next request.
+      keepAlive: !usingPooler,
+      idleTimeoutMillis: usingPooler ? 5_000 : 30_000,
     });
+
     const adapter = new PrismaPg(pool);
     globalForPrisma.prisma = new PrismaClient({ adapter });
   }

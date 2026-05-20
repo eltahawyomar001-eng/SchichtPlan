@@ -247,7 +247,7 @@ function StationContent() {
   // ── Loading / Authorizing ──
   if (authState === "loading" || authState === "authorizing") {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-gray-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
           <p className="text-white/60 text-sm">
@@ -261,7 +261,7 @@ function StationContent() {
   // ── Not authorized ──
   if (authState === "error") {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-6 p-8 text-center">
+      <div className="min-h-[100dvh] bg-gray-950 flex flex-col items-center justify-center gap-6 p-8 text-center">
         <div className="h-16 w-16 rounded-full bg-red-500/20 flex items-center justify-center">
           <svg
             className="h-8 w-8 text-red-400"
@@ -288,7 +288,7 @@ function StationContent() {
 
   // ── Ready: QR display ──
   return (
-    <div className="kiosk-lock min-h-screen bg-gray-950 flex flex-col">
+    <div className="kiosk-lock min-h-[100dvh] bg-gray-950 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4">
         <div>
@@ -435,7 +435,7 @@ export default function StationPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="min-h-[100dvh] bg-gray-950 flex items-center justify-center">
           <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
         </div>
       }

@@ -77,7 +77,7 @@ export default function SavingsCalculatorPage() {
     }).format(val);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50/60 via-white to-white">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-emerald-50/60 via-white to-white">
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">

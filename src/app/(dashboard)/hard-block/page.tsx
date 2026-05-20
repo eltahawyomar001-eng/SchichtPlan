@@ -23,7 +23,7 @@ export default async function HardBlockPage() {
   const isOwnerOrAdmin = user.role === "OWNER" || user.role === "ADMIN";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 p-6">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-neutral-50 p-6">
       <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 shadow-sm text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
           <svg

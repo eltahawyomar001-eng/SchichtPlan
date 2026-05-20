@@ -139,7 +139,7 @@ export default function ExternalTicketFormPage() {
   // Success state
   if (result) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
             <svg
@@ -178,7 +178,7 @@ export default function ExternalTicketFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
+    <div className="min-h-[100dvh] bg-gray-50 px-4 py-12">
       <div className="mx-auto max-w-lg">
         <div className="rounded-lg bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900">

@@ -310,7 +310,7 @@ export function NotificationDropdown() {
               onClick={() => setOpen(false)}
             />
             {/* Sheet */}
-            <div className="fixed inset-x-0 bottom-0 z-[9999] rounded-t-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
+            <div className="fixed inset-x-0 bottom-0 z-[9999] rounded-t-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
               {/* Drag handle */}
               <div className="flex justify-center pt-2.5 pb-1">
                 <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-zinc-600" />

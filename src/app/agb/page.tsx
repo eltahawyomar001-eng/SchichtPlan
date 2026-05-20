@@ -16,7 +16,7 @@ export default function AGBPage() {
   const tosVersion = CURRENT_TOS_VERSION;
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950">
+    <div className="min-h-[100dvh] bg-gray-50/50 dark:bg-zinc-950">
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-zinc-800/60">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">

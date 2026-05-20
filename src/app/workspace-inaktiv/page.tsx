@@ -27,7 +27,7 @@ export default async function WorkspaceInactivePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 p-6">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-neutral-50 p-6">
       <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-semibold text-neutral-900">
           {t("title")}

@@ -113,7 +113,7 @@ export default function ExternalTicketStatusPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
           <p className="mt-4 text-gray-500 dark:text-zinc-400">
@@ -126,7 +126,7 @@ export default function ExternalTicketStatusPage() {
 
   if (error || !ticket) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4">
         <div className="w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <svg
@@ -157,7 +157,7 @@ export default function ExternalTicketStatusPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 px-4 py-12">
+    <div className="min-h-[100dvh] bg-gray-50 dark:bg-zinc-950 px-4 py-12">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* Header */}
         <div className="rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-sm">

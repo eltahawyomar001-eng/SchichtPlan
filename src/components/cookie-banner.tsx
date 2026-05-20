@@ -111,7 +111,7 @@ export function CookieBanner() {
       role="dialog"
       aria-modal="true"
       aria-label={t("title")}
-      className="fixed inset-x-0 bottom-0 z-[9999] px-4 pb-4 sm:px-6 sm:pb-6"
+      className="fixed inset-x-0 bottom-0 z-[9999] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
     >
       <div className="mx-auto max-w-2xl rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl shadow-gray-900/10 dark:shadow-black/30">
         {/* ── Main banner ── */}

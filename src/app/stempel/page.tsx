@@ -235,7 +235,7 @@ function FastPunchContent() {
   // ── Token error ──
   if (stage === "token-error") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-50">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center p-8 bg-gray-50">
         <div className="text-center space-y-4 max-w-xs w-full">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
             <AlertTriangleIcon className="h-8 w-8 text-amber-600" />
@@ -251,7 +251,7 @@ function FastPunchContent() {
   // ── Loading ──
   if (stage === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50">
         <Spinner className="h-8 w-8 text-emerald-500" />
       </div>
     );
@@ -266,7 +266,7 @@ function FastPunchContent() {
 
     return (
       <div
-        className={`min-h-screen flex flex-col items-center justify-center p-8 ${
+        className={`min-h-[100dvh] flex flex-col items-center justify-center p-8 ${
           isIn ? "bg-emerald-500" : "bg-red-500"
         }`}
       >
@@ -325,7 +325,7 @@ function FastPunchContent() {
   // ── Identified: IN / OUT ──
   if (stage === "identified" || stage === "punching") {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-[100dvh] flex flex-col bg-gray-50">
         <header className="bg-white border-b border-gray-100 px-6 py-4 text-center shadow-sm">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
             {workspaceName}
@@ -396,7 +396,7 @@ function FastPunchContent() {
   const isPinStage = stage === "pin" || stage === "pin-error";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-[100dvh] flex flex-col bg-gray-50">
       <header className="bg-white border-b border-gray-100 px-6 py-4 text-center shadow-sm">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
           {workspaceName || t("punchStation")}
@@ -501,7 +501,7 @@ function LocaleWrapper({ children }: { children: React.ReactNode }) {
 
 export default function StempelPage() {
   const fallback = (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50">
       <Spinner className="h-8 w-8 text-emerald-500" />
     </div>
   );

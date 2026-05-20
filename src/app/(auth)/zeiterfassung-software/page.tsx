@@ -94,7 +94,7 @@ const benefits = [
 
 export default function ZeiterfassungPage() {
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
+    <div className="min-h-[100dvh] bg-gray-50/50 dark:bg-gray-950">
       <BreadcrumbJsonLd
         items={[
           { name: "Startseite", url: "/" },

@@ -27,7 +27,7 @@ function PinRevealContent() {
 
   if (state === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
       </div>
     );
@@ -35,7 +35,7 @@ function PinRevealContent() {
 
   if (state === "error" || !pin) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-sm rounded-xl bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <svg
@@ -65,7 +65,7 @@ function PinRevealContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm rounded-xl bg-white p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
           <svg
@@ -106,7 +106,7 @@ export default function PinRevealPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
         </div>
       }

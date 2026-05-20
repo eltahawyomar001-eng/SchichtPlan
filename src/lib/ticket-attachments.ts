@@ -27,9 +27,29 @@ export type { FileValidationResult } from "@/lib/ticket-file-validation";
 
 const BUCKET = "ticket-attachments";
 
+/**
+ * Resolve the Supabase project URL.
+ * Priority: SUPABASE_URL → NEXT_PUBLIC_SUPABASE_URL → derived from DATABASE_URL.
+ * DATABASE_URL is guaranteed to be set in every environment (Prisma won't start
+ * without it), so the derivation is a reliable last-resort fallback.
+ */
+function resolveSupabaseUrl(): string | null {
+  if (process.env.SUPABASE_URL) return process.env.SUPABASE_URL;
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL)
+    return process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Extract project ref from DATABASE_URL or DIRECT_URL:
+  // postgresql://postgres.{ref}:password@host/postgres
+  const dbUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "";
+  const match = dbUrl.match(/postgres\.([a-z0-9]+)[.:]/);
+  if (match?.[1]) return `https://${match[1]}.supabase.co`;
+  return null;
+}
+
 function getStorageClient(): StorageClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = resolveSupabaseUrl();
+  // Accept SUPABASE_ANON_KEY (server-only) or the NEXT_PUBLIC_ variant.
+  const key =
+    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
     throw new Error("SUPABASE_STORAGE_UNCONFIGURED");
   }
@@ -55,13 +75,13 @@ function buildStoragePath(
 
 /** Derive the public URL from a storage path. */
 function publicUrl(path: string): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const url = resolveSupabaseUrl() ?? "";
   return `${url}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
 /** Extract the storage path from a full public URL (for deletion). */
 function pathFromUrl(fileUrl: string): string | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = resolveSupabaseUrl();
   if (!url) return null;
   const prefix = `${url}/storage/v1/object/public/${BUCKET}/`;
   return fileUrl.startsWith(prefix) ? fileUrl.slice(prefix.length) : null;

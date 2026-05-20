@@ -55,10 +55,15 @@ export async function POST(
 ) {
   try {
     // Pre-flight: detect missing Supabase storage config before touching DB or file data.
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
+    const hasUrl = !!(
+      process.env.SUPABASE_URL ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.DATABASE_URL?.match(/postgres\.([a-z0-9]+)[.:]/)
+    );
+    const hasKey = !!(
+      process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    if (!hasUrl || !hasKey) {
       log.error("[ticket attachments POST] Supabase env vars not set");
       return NextResponse.json(
         {

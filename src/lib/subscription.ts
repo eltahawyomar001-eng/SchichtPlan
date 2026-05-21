@@ -112,11 +112,18 @@ export async function getSubscriptionState(
     // active so paying Basic/Pro customers never see a false trial_expired
     // screen. The next /api/billing/subscription?reconcile=1 call will sync
     // the status from live Stripe.
+    //
+    // 7-day grace window: even if currentPeriodEnd is slightly in the past,
+    // a real Stripe subscriber gets a buffer to cover webhook delivery delays
+    // or Stripe retries. After 7 days without a successful renewal webhook the
+    // window closes and the paywall re-engages.
     const hasRealStripeSub =
       sub.stripeSubscriptionId && !sub.stripeSubscriptionId.startsWith("sim_");
-    const periodStillValid =
-      sub.currentPeriodEnd && sub.currentPeriodEnd > new Date();
-    if (hasRealStripeSub && periodStillValid) return "active";
+    const GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+    const periodOrGraceValid =
+      sub.currentPeriodEnd &&
+      sub.currentPeriodEnd.getTime() + GRACE_MS > Date.now();
+    if (hasRealStripeSub && periodOrGraceValid) return "active";
     return "trial_expired";
   }
   return "active";

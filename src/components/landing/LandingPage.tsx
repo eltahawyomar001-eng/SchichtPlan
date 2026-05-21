@@ -1228,13 +1228,13 @@ function SosFeatureSection() {
   const t = useTranslations("landing");
 
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-b from-red-50/40 via-white to-white dark:from-red-950/10 dark:via-zinc-950 dark:to-zinc-950">
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-emerald-50/40 via-white to-white dark:from-emerald-950/10 dark:via-zinc-950 dark:to-zinc-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: copy */}
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-red-100 dark:bg-red-950/40 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-400 mb-4">
-              <AlertCircleIcon className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-4">
+              <ZapIcon className="h-3.5 w-3.5" />
               <span>{t("sosBadge")}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-zinc-100">
@@ -1251,7 +1251,7 @@ function SosFeatureSection() {
                 t("sosBullet4"),
               ].map((text, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <CheckCircleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                  <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
                   <span className="text-sm text-gray-700 dark:text-zinc-300">
                     {text}
                   </span>
@@ -1262,45 +1262,47 @@ function SosFeatureSection() {
 
           {/* Right: mockup */}
           <div className="relative">
-            <div className="rounded-2xl border border-red-200 dark:border-red-900/40 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
-              <div className="px-5 py-3 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900/40 flex items-center gap-3">
-                <AlertCircleIcon className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden">
+              <div className="px-5 py-3 bg-gray-50 dark:bg-zinc-800/40 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-3">
+                <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-red-50 dark:bg-red-950/30 ring-1 ring-red-100 dark:ring-red-900/40">
+                  <AlertCircleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
                     {t("sosMockupTitle")}
                   </p>
-                  <p className="text-[11px] text-red-600/70 dark:text-red-400/60">
+                  <p className="text-[11px] text-gray-500 dark:text-zinc-400 truncate">
                     {t("sosMockupSubtitle")}
                   </p>
                 </div>
-                <span className="ml-auto flex items-center gap-1.5 text-[11px] font-medium text-red-600 dark:text-red-400">
+                <span className="ml-auto flex items-center gap-1.5 text-[11px] font-medium text-red-600 dark:text-red-400 shrink-0">
                   <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                   {t("sosMockupLive")}
                 </span>
               </div>
-              <div className="p-5 space-y-3">
+              <div className="p-5 space-y-4">
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-lg bg-gray-50 dark:bg-zinc-800 py-2">
+                  <div className="rounded-lg bg-gray-50 dark:bg-zinc-800 py-3">
                     <p className="text-xl font-bold tabular-nums text-gray-700 dark:text-zinc-300">
                       12
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                    <p className="text-[10px] text-gray-500 dark:text-zinc-400 mt-0.5">
                       {t("sosMockupNotified")}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 py-2">
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 py-3">
                     <p className="text-xl font-bold tabular-nums text-amber-600 dark:text-amber-400">
                       7
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                    <p className="text-[10px] text-gray-500 dark:text-zinc-400 mt-0.5">
                       {t("sosMockupPending")}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 py-2">
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 py-3">
                     <p className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                       1
                     </p>
-                    <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                    <p className="text-[10px] text-gray-500 dark:text-zinc-400 mt-0.5">
                       {t("sosMockupAccepted")}
                     </p>
                   </div>
@@ -1316,7 +1318,7 @@ function SosFeatureSection() {
                     </p>
                   </div>
                 </div>
-                <p className="text-[11px] text-center text-gray-400 dark:text-zinc-500">
+                <p className="text-[11px] text-center text-gray-500 dark:text-zinc-400">
                   {t("sosMockupTime")}
                 </p>
               </div>

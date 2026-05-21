@@ -878,6 +878,8 @@
     "recentTimeEntries": "Letzte Zeiteinträge",
     "absences": "Abwesenheiten",
     "vacationRemaining": "Resturlaub",
+    "sosReliability": "SOS-Zuverlässigkeit",
+    "sosReliabilityNoData": "Noch keine Daten",
     "shiftsTitle": "Letzte Schichten",
     "noShifts": "Keine Schichten vorhanden.",
     "timeEntriesTitle": "Letzte Zeiteinträge",

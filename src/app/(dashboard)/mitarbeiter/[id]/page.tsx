@@ -324,20 +324,29 @@ export default function EmployeeDetailPage({
           <Card>
             <CardContent className="p-4 sm:p-4 text-center">
               <AlertCircleIcon className="h-5 w-5 mx-auto text-red-500 mb-1" />
-              <p
-                className={`text-2xl font-bold ${emp.sosStats.reliability === null ? "text-gray-400 dark:text-zinc-500" : emp.sosStats.reliability >= 70 ? "text-emerald-600" : emp.sosStats.reliability >= 40 ? "text-amber-600" : "text-red-500"}`}
-              >
-                {emp.sosStats.reliability === null
-                  ? "–"
-                  : `${emp.sosStats.reliability}%`}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-zinc-400">
-                SOS-Zuverlässigkeit
-              </p>
-              {emp.sosStats.total > 0 && (
-                <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
-                  {emp.sosStats.pickups}/{emp.sosStats.total}
-                </p>
+              {emp.sosStats.reliability === null ? (
+                <>
+                  <p className="text-sm font-medium text-gray-400 dark:text-zinc-500 mt-1">
+                    {t("sosReliabilityNoData")}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                    {t("sosReliability")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    className={`text-2xl font-bold ${emp.sosStats.reliability >= 70 ? "text-emerald-600" : emp.sosStats.reliability >= 40 ? "text-amber-600" : "text-red-500"}`}
+                  >
+                    {emp.sosStats.reliability}%
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">
+                    {t("sosReliability")}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
+                    {emp.sosStats.pickups}/{emp.sosStats.total}
+                  </p>
+                </>
               )}
             </CardContent>
           </Card>

@@ -878,6 +878,8 @@
     "recentTimeEntries": "Recent Time Entries",
     "absences": "Absences",
     "vacationRemaining": "Vacation Remaining",
+    "sosReliability": "SOS Reliability",
+    "sosReliabilityNoData": "No data yet",
     "shiftsTitle": "Recent Shifts",
     "noShifts": "No shifts found.",
     "timeEntriesTitle": "Recent Time Entries",

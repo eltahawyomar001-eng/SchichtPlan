@@ -29,7 +29,7 @@ model User {
   workspaceId             String?
   workspace               Workspace?               @relation(fields: [workspaceId], references: [id])
   customRoleId            String?
-  customRole              CustomRole?              @relation("UserCustomRole", fields: [customRoleId], references: [id])
+  customRole              CustomRole?              @relation("UserCustomRole", fields: [customRoleId], references: [id], onDelete: SetNull)
   accounts                Account[]
   sessions                Session[]
   notificationPreferences NotificationPreference[]
@@ -799,7 +799,7 @@ model ShiftSwapRequest {
   requesterId   String
   requester     Employee   @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   targetId      String?
-  target        Employee?  @relation("SwapTarget", fields: [targetId], references: [id])
+  target        Employee?  @relation("SwapTarget", fields: [targetId], references: [id], onDelete: SetNull)
   reviewedBy    String?
   reviewedAt    DateTime?
   reviewNote    String?
@@ -1650,7 +1650,7 @@ model SosRequest {
   id               String            @id @default(cuid())
   workspaceId      String
   shiftId          String
-  createdById      String
+  createdById      String?
   bonusAmount      Decimal?          @db.Decimal(10, 2)
   bonusCurrency    String            @default("EUR")
   bonusNote        String?
@@ -1664,7 +1664,7 @@ model SosRequest {
   updatedAt        DateTime          @updatedAt
   workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shift            Shift             @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  createdBy        User              @relation("SosCreatedBy", fields: [createdById], references: [id])
+  createdBy        User?             @relation("SosCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   filledBy         Employee?         @relation("SosFilledBy", fields: [filledById], references: [id])
   notifications    SosNotification[]
   events           SosEvent[]

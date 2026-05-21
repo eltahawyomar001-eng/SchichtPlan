@@ -496,6 +496,9 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                 error:
                   syncErr instanceof Error ? syncErr.message : String(syncErr),
               });
+              // Rethrow so Stripe receives a 500 and retries — the only way
+              // to guarantee currentPeriodEnd is always up to date.
+              throw syncErr;
             }
           }
 
@@ -665,6 +668,8 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
         log.error("[Stripe] invoice.paid handler failed", {
           error: err instanceof Error ? err.message : String(err),
         });
+        // Rethrow so withRoute returns 500 and Stripe retries the webhook.
+        throw err;
       }
       break;
     }

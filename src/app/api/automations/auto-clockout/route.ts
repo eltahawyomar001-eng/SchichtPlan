@@ -20,20 +20,17 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
  * (e.g. employee forgot to clock out).
  */
 export async function GET(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  const cronSecret = authHeader?.replace("Bearer ", "");
+
+  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Invalid cron secret" }, { status: 401 });
+  }
+
+  const monitor = cronMonitor("auto-clockout", "*/10 * * * *");
+  monitor?.start();
+
   try {
-    const authHeader = req.headers.get("authorization");
-    const cronSecret = authHeader?.replace("Bearer ", "");
-
-    if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
-      return NextResponse.json(
-        { error: "Invalid cron secret" },
-        { status: 401 },
-      );
-    }
-
-    const monitor = cronMonitor("auto-clockout", "*/10 * * * *");
-    monitor?.start();
-
     const now = new Date();
     const tz = "Europe/Berlin";
 
@@ -138,17 +135,18 @@ export async function GET(req: Request) {
       }
     }
 
-    monitor?.finish("ok");
+    const hadErrors = errors.length > 0;
+    monitor?.finish(hadErrors ? "error" : "ok");
 
     log.info(
       `[auto-clockout] Done: ${closedCount} entries closed out of ${openEntries.length} open`,
     );
 
     return NextResponse.json({
-      success: true,
+      success: !hadErrors,
       openEntries: openEntries.length,
       closedCount,
-      errors: errors.length > 0 ? errors : undefined,
+      errors: hadErrors ? errors : undefined,
     });
   } catch (error) {
     log.error("[auto-clockout] Cron error:", { error });
@@ -156,6 +154,7 @@ export async function GET(req: Request) {
       route: "/api/automations/auto-clockout",
       method: "GET",
     });
+    monitor?.finish("error");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

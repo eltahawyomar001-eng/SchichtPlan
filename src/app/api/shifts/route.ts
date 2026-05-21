@@ -161,13 +161,29 @@ export const POST = withRoute(
       let skipped = 0;
       const conflicts: string[] = [];
 
+      // Collect all valid shifts first (conflict checks are read-only)
+      const shiftsToCreate: {
+        date: Date;
+        startTime: string;
+        endTime: string;
+        notes: string | null;
+        status: "SCHEDULED" | "OPEN";
+        employeeId: string | null;
+        locationId: string | null;
+        isNightShift: boolean;
+        isHolidayShift: boolean;
+        isSundayShift: boolean;
+        surchargePercent: number;
+        workspaceId: string;
+      }[] = [];
+
       const cursor = new Date(rangeStart);
       while (cursor <= rangeEnd) {
         const isoDay = toIso(cursor.getDay());
         if (days.includes(isoDay)) {
           const dateStr = cursor.toLocaleDateString("en-CA");
 
-          // Conflict check
+          // Conflict check (read-only — stays outside transaction)
           if (employeeId) {
             const c = await checkShiftConflicts({
               employeeId,
@@ -197,42 +213,45 @@ export const POST = withRoute(
             isHoliday: hol.isHoliday,
           });
 
-          await prisma.shift.create({
-            data: {
-              date: sd,
-              startTime,
-              endTime,
-              notes: notes || null,
-              status: employeeId ? "SCHEDULED" : "OPEN",
-              employeeId: employeeId || null,
-              locationId: locationId || null,
-              isNightShift: night,
-              isHolidayShift: hol.isHoliday,
-              isSundayShift: sun,
-              surchargePercent: surch,
-              workspaceId,
-            },
+          shiftsToCreate.push({
+            date: sd,
+            startTime,
+            endTime,
+            notes: notes || null,
+            status: (employeeId ? "SCHEDULED" : "OPEN") as "SCHEDULED" | "OPEN",
+            employeeId: employeeId || null,
+            locationId: locationId || null,
+            isNightShift: night,
+            isHolidayShift: hol.isHoliday,
+            isSundayShift: sun,
+            surchargePercent: surch,
+            workspaceId,
           });
           created++;
         }
         cursor.setDate(cursor.getDate() + 1);
       }
 
-      // Audit log for bulk operation
-      await createAuditLogTx(prisma, {
-        action: "CREATE",
-        entityType: "shift",
-        entityId: "bulk",
-        userId: user.id,
-        userEmail: user.email ?? undefined,
-        workspaceId,
-        changes: {
-          bulkCreated: created,
-          bulkSkipped: skipped,
-          dateRange: `${date} → ${endDate}`,
-          selectedDays: days,
-        },
-      });
+      // Atomic: all shifts + audit log in one transaction — either all commit or none
+      if (shiftsToCreate.length > 0) {
+        await prisma.$transaction(async (tx) => {
+          await tx.shift.createMany({ data: shiftsToCreate });
+          await createAuditLogTx(tx, {
+            action: "CREATE",
+            entityType: "shift",
+            entityId: "bulk",
+            userId: user.id,
+            userEmail: user.email ?? undefined,
+            workspaceId,
+            changes: {
+              bulkCreated: created,
+              bulkSkipped: skipped,
+              dateRange: `${date} → ${endDate}`,
+              selectedDays: days,
+            },
+          });
+        });
+      }
 
       return NextResponse.json(
         { created, skipped, conflicts },

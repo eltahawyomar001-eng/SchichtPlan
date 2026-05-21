@@ -134,7 +134,11 @@ export async function notifyEmployeeTier(
       ? `https://${process.env.VERCEL_URL}`
       : "https://www.shiftfy.de");
 
-  const shiftDate = new Date(shift.date).toLocaleDateString(
+  const shiftDateLong = new Date(shift.date).toLocaleDateString(
+    locale === "en" ? "en-GB" : "de-DE",
+    { weekday: "long", day: "numeric", month: "long", year: "numeric" },
+  );
+  const shiftDateShort = new Date(shift.date).toLocaleDateString(
     locale === "en" ? "en-GB" : "de-DE",
     { weekday: "short", day: "2-digit", month: "2-digit" },
   );
@@ -147,8 +151,8 @@ export async function notifyEmployeeTier(
 
   const pushTitle =
     locale === "en"
-      ? "🚨 Emergency Shift Needed!"
-      : "🚨 Notfall-Schicht gesucht!";
+      ? "Urgent: Shift coverage requested"
+      : "Dringend: Schicht braucht Vertretung";
 
   await Promise.allSettled(
     employees.map(async (emp) => {
@@ -169,11 +173,17 @@ export async function notifyEmployeeTier(
       });
 
       if (emp.userId) {
-        const pushBody = `${shiftDate}, ${timeRange}${locationName ? ` · ${locationName}` : ""}${bonusLine ? ` · Bonus: ${bonusLine}` : ""}`;
+        const pushBodyParts: string[] = [`${shiftDateShort}, ${timeRange}`];
+        if (locationName) pushBodyParts.push(locationName);
+        if (bonusLine) {
+          pushBodyParts.push(
+            locale === "en" ? `Bonus: ${bonusLine}` : `Bonus: ${bonusLine}`,
+          );
+        }
         await sendPushNotification({
           userId: emp.userId,
           title: pushTitle,
-          body: pushBody,
+          body: pushBodyParts.join(" | "),
           url: respondUrl,
           tag: `sos-${sosRequestId}`,
         }).catch(() => {});
@@ -182,18 +192,47 @@ export async function notifyEmployeeTier(
       if (emp.email) {
         const subject =
           locale === "en"
-            ? "🚨 Emergency: Your shift is urgently needed"
-            : "🚨 Notfall: Deine Hilfe wird dringend gebraucht";
-        const message =
+            ? "Urgent shift coverage request: assistance needed"
+            : "Dringende Schichtanfrage: Unterstützung benötigt";
+
+        const lines: string[] =
           locale === "en"
-            ? `A shift needs to be covered urgently:\n\n📅 ${shiftDate}\n⏰ ${timeRange}${locationName ? `\n📍 ${locationName}` : ""}${bonusLine ? `\n💰 Bonus: ${bonusLine}` : ""}\n\nClick the button below to accept or decline. This offer expires automatically.`
-            : `Eine Schicht muss dringend besetzt werden:\n\n📅 ${shiftDate}\n⏰ ${timeRange}${locationName ? `\n📍 ${locationName}` : ""}${bonusLine ? `\n💰 Bonus: ${bonusLine}` : ""}\n\nKlicke unten, um anzunehmen oder abzulehnen. Das Angebot läuft automatisch ab.`;
+            ? [
+                "A shift needs to be covered urgently.",
+                "",
+                `Date: ${shiftDateLong}`,
+                `Time: ${timeRange}`,
+              ]
+            : [
+                "Eine Schicht muss dringend besetzt werden.",
+                "",
+                `Datum: ${shiftDateLong}`,
+                `Uhrzeit: ${timeRange} Uhr`,
+              ];
+        if (locationName) {
+          lines.push(
+            locale === "en"
+              ? `Location: ${locationName}`
+              : `Standort: ${locationName}`,
+          );
+        }
+        if (bonusLine) {
+          lines.push(
+            locale === "en" ? `Bonus: ${bonusLine}` : `Bonus: ${bonusLine}`,
+          );
+        }
+        lines.push("");
+        lines.push(
+          locale === "en"
+            ? "Use the button below to accept or decline. This offer expires automatically."
+            : "Über die Schaltfläche unten kannst du annehmen oder ablehnen. Das Angebot läuft automatisch ab.",
+        );
 
         await sendEmail({
           to: emp.email,
           type: "SOS_SHIFT",
           title: subject,
-          message,
+          message: lines.join("\n"),
           link: respondUrl,
           locale,
         }).catch(() => {});

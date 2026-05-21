@@ -6,6 +6,7 @@ import {
   notifyEmployeeTier,
   getTierSlice,
 } from "@/lib/sos-ranking";
+import { emitSosEvent } from "@/lib/sos-events";
 import { log } from "@/lib/logger";
 
 /**
@@ -39,6 +40,17 @@ export const GET = withRoute(
         },
         data: { response: "EXPIRED", respondedAt: now },
       });
+
+      // Emit EXPIRED event per request
+      const expiredRequests = await prisma.sosRequest.findMany({
+        where: { status: "EXPIRED", expiresAt: { lte: now } },
+        select: { id: true },
+        orderBy: { updatedAt: "desc" },
+        take: expired.count,
+      });
+      for (const r of expiredRequests) {
+        await emitSosEvent({ sosRequestId: r.id, type: "EXPIRED" });
+      }
     }
 
     // ── 2. Escalate ready requests ────────────────────────────────
@@ -83,6 +95,24 @@ export const GET = withRoute(
           sos.bonusCurrency,
           sos.bonusNote,
         );
+        await emitSosEvent({
+          sosRequestId: sos.id,
+          type: "ESCALATED",
+          metadata: { tier: nextTier },
+        });
+        await emitSosEvent({
+          sosRequestId: sos.id,
+          type: "TIER_NOTIFIED",
+          metadata: {
+            tier: nextTier,
+            count: tierSlice.length,
+            employees: tierSlice.map((e) => ({
+              id: e.id,
+              name: `${e.firstName} ${e.lastName}`,
+              reliabilityScore: e.reliabilityScore,
+            })),
+          },
+        });
         log.info(
           `[SOS escalation] Escalated ${sos.id} to tier ${nextTier}, notified ${tierSlice.length}`,
         );

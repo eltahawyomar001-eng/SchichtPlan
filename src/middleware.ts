@@ -277,7 +277,7 @@ export default withAuth(
       !ONBOARDING_ALLOWLIST.some((p) => pathname.startsWith(p)) &&
       !pathname.startsWith("/api/auth") &&
       // public/unauthenticated routes (already excluded by authorized())
-      !pathname.startsWith("/sos/") &&
+      !pathname.startsWith("/sos/respond") &&
       !pathname.startsWith("/stempel") &&
       !pathname.startsWith("/station") &&
       !pathname.startsWith("/pin-reveal")

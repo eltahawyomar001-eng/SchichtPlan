@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
 import { withRoute } from "@/lib/with-route";
 import type { RouteContext } from "@/lib/with-route";
+import { emitSosEvent } from "@/lib/sos-events";
 import { log } from "@/lib/logger";
 
 /**
@@ -44,6 +45,9 @@ export const GET = withRoute(
             },
           },
           orderBy: [{ tier: "asc" }, { notifiedAt: "asc" }],
+        },
+        events: {
+          orderBy: { createdAt: "asc" },
         },
         filledBy: {
           select: { id: true, firstName: true, lastName: true, color: true },
@@ -86,6 +90,14 @@ export const DELETE = withRoute(
     await prisma.sosRequest.update({
       where: { id },
       data: { status: "CANCELLED" },
+    });
+
+    await emitSosEvent({
+      sosRequestId: id,
+      type: "CANCELLED",
+      actorType: "USER",
+      actorId: user.id,
+      actorName: user.name ?? user.email ?? "Manager",
     });
 
     log.info(`[SOS] Cancelled ${id} by user ${user.id}`);

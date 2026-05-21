@@ -1667,6 +1667,7 @@ model SosRequest {
   createdBy        User              @relation("SosCreatedBy", fields: [createdById], references: [id])
   filledBy         Employee?         @relation("SosFilledBy", fields: [filledById], references: [id])
   notifications    SosNotification[]
+  events           SosEvent[]
 
   @@index([workspaceId])
   @@index([shiftId])
@@ -1676,18 +1677,55 @@ model SosRequest {
 /// Per-employee notification record for an SosRequest, including their
 /// response and a unique token for one-click email response links.
 model SosNotification {
-  id            String      @id @default(cuid())
-  sosRequestId  String
-  employeeId    String
-  tier          Int         @default(1)
-  notifiedAt    DateTime    @default(now())
-  response      SosResponse @default(PENDING)
-  respondedAt   DateTime?
-  responseToken String      @unique
-  sosRequest    SosRequest  @relation(fields: [sosRequestId], references: [id], onDelete: Cascade)
-  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id              String      @id @default(cuid())
+  sosRequestId    String
+  employeeId      String
+  tier            Int         @default(1)
+  notifiedAt      DateTime    @default(now())
+  response        SosResponse @default(PENDING)
+  respondedAt     DateTime?
+  responseToken   String      @unique
+  linkOpenedAt    DateTime?
+  sosRequest      SosRequest  @relation(fields: [sosRequestId], references: [id], onDelete: Cascade)
+  employee        Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([sosRequestId, employeeId])
   @@index([sosRequestId])
   @@index([employeeId])
+}
+
+/// Chronological audit ledger for SOS lifecycle events.
+/// Each row records who did what at what time across the entire
+/// SOS dispatch flow — used to power the live control-room view.
+enum SosEventType {
+  CREATED
+  RANKED
+  TIER_NOTIFIED
+  LINK_OPENED
+  ACCEPTED
+  DECLINED
+  ESCALATED
+  FILLED
+  EXPIRED
+  CANCELLED
+}
+
+enum SosActorType {
+  SYSTEM
+  USER
+  EMPLOYEE
+}
+
+model SosEvent {
+  id           String       @id @default(cuid())
+  sosRequestId String
+  type         SosEventType
+  actorType    SosActorType @default(SYSTEM)
+  actorId      String?
+  actorName    String?
+  metadata     Json?
+  createdAt    DateTime     @default(now())
+  sosRequest   SosRequest   @relation(fields: [sosRequestId], references: [id], onDelete: Cascade)
+
+  @@index([sosRequestId, createdAt])
 }

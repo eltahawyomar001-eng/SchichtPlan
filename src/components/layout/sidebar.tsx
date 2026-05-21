@@ -39,6 +39,7 @@ import {
   SearchIcon,
   StarIcon,
   ChevronDownIcon,
+  AlertCircleIcon,
 } from "@/components/icons";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,12 @@ const navGroups: NavGroup[] = [
     items: [
       { key: "dashboard", href: "/dashboard", icon: DashboardIcon },
       { key: "shiftPlan", href: "/schichtplan", icon: CalendarIcon },
+      {
+        key: "sos",
+        href: "/sos",
+        icon: AlertCircleIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
       { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
       { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
       { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },

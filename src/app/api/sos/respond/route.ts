@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
+import { emitSosEvent } from "@/lib/sos-events";
 import { log } from "@/lib/logger";
 
 /**
  * GET /api/sos/respond?token=<responseToken>
- * Returns the SOS request details for the employee response page (no auth needed — token is the credential).
+ *
+ * Returns the SOS request details for the employee response page.
+ * No auth — the token IS the credential.
+ *
+ * Side effect: stamps `linkOpenedAt` the first time an employee
+ * opens their token and emits a LINK_OPENED audit event so the
+ * control-room ledger can show who saw the request and when.
  */
 export const GET = withRoute("/api/sos/respond", "GET", async (req) => {
   const { searchParams } = new URL(req.url);
@@ -29,6 +36,25 @@ export const GET = withRoute("/api/sos/respond", "GET", async (req) => {
 
   if (!notif) {
     return NextResponse.json({ error: "Invalid token" }, { status: 404 });
+  }
+
+  // Stamp first-open + emit audit event exactly once per employee.
+  if (!notif.linkOpenedAt) {
+    await prisma.sosNotification
+      .update({
+        where: { id: notif.id },
+        data: { linkOpenedAt: new Date() },
+      })
+      .catch(() => {});
+    await emitSosEvent({
+      sosRequestId: notif.sosRequestId,
+      type: "LINK_OPENED",
+      actorType: "EMPLOYEE",
+      actorId: notif.employeeId,
+      actorName:
+        `${notif.employee.firstName} ${notif.employee.lastName}`.trim(),
+      metadata: { tier: notif.tier },
+    });
   }
 
   const sos = notif.sosRequest;
@@ -69,7 +95,15 @@ export const GET = withRoute("/api/sos/respond", "GET", async (req) => {
 
 /**
  * POST /api/sos/respond?token=<responseToken>
+ *
  * Employee accepts or declines. No auth — token is the credential.
+ *
+ * For ACCEPT: uses a compare-and-swap UPDATE inside a transaction
+ * (`UPDATE … SET status='FILLED' WHERE id=… AND status='OPEN'`).
+ * The row-level lock that UPDATE acquires plus the conditional
+ * predicate guarantees that even under concurrent acceptance
+ * attempts, **exactly one** notification wins. All other in-flight
+ * acceptances see zero affected rows and return `alreadyResolved`.
  *
  * Body: { action: "accept" | "decline" }
  */
@@ -95,9 +129,7 @@ export const POST = withRoute("/api/sos/respond", "POST", async (req) => {
     where: { responseToken: token },
     include: {
       sosRequest: {
-        include: {
-          shift: { include: { location: { select: { name: true } } } },
-        },
+        select: { id: true, status: true, expiresAt: true, shiftId: true },
       },
       employee: { select: { id: true, firstName: true, lastName: true } },
     },
@@ -125,29 +157,54 @@ export const POST = withRoute("/api/sos/respond", "POST", async (req) => {
   }
 
   const now = new Date();
+  const employeeFullName =
+    `${notif.employee.firstName} ${notif.employee.lastName}`.trim();
 
   if (action === "decline") {
     await prisma.sosNotification.update({
       where: { id: notif.id },
       data: { response: "DECLINED", respondedAt: now },
     });
-    log.info(`[SOS] ${notif.employee.firstName} declined SOS ${sos.id}`);
+    await emitSosEvent({
+      sosRequestId: sos.id,
+      type: "DECLINED",
+      actorType: "EMPLOYEE",
+      actorId: notif.employeeId,
+      actorName: employeeFullName,
+      metadata: { tier: notif.tier },
+    });
+    log.info(`[SOS] ${employeeFullName} declined SOS ${sos.id}`);
     return NextResponse.json({ ok: true, accepted: false });
   }
 
-  // Accept — use a transaction to prevent race conditions
+  // ── ACCEPT: race-safe compare-and-swap claim ───────────────────
+  // Inside a single transaction:
+  //  1. Atomically flip SosRequest.status OPEN → FILLED via a
+  //     conditional UPDATE. The row-level lock + WHERE predicate
+  //     means only ONE concurrent writer succeeds; everyone else
+  //     gets zero affected rows.
+  //  2. Only the winner writes the notification, shift assignment,
+  //     and downstream state. Losers short-circuit with `conflict`.
   const result = await prisma.$transaction(async (tx) => {
-    // Re-check status inside transaction
-    const fresh = await tx.sosRequest.findUnique({ where: { id: sos.id } });
-    if (!fresh || fresh.status !== "OPEN") return { conflict: true };
+    const claimed = await tx.sosRequest.updateMany({
+      where: { id: sos.id, status: "OPEN" },
+      data: {
+        status: "FILLED",
+        filledById: notif.employeeId,
+        filledAt: now,
+      },
+    });
 
-    // Mark notification accepted
+    if (claimed.count === 0) {
+      // Another acceptance won the race
+      return { conflict: true as const };
+    }
+
     await tx.sosNotification.update({
       where: { id: notif.id },
       data: { response: "ACCEPTED", respondedAt: now },
     });
 
-    // Mark all other pending notifications as expired
     await tx.sosNotification.updateMany({
       where: {
         sosRequestId: sos.id,
@@ -157,33 +214,46 @@ export const POST = withRoute("/api/sos/respond", "POST", async (req) => {
       data: { response: "EXPIRED", respondedAt: now },
     });
 
-    // Assign shift to this employee
     await tx.shift.update({
       where: { id: sos.shiftId },
       data: { employeeId: notif.employeeId, status: "SCHEDULED" },
     });
 
-    // Close the SOS request
-    await tx.sosRequest.update({
-      where: { id: sos.id },
-      data: { status: "FILLED", filledById: notif.employeeId, filledAt: now },
-    });
-
-    return { ok: true };
+    return { ok: true as const };
   });
 
   if ("conflict" in result) {
     return NextResponse.json({ alreadyResolved: true });
   }
 
+  // ACCEPTED + FILLED events (outside the txn so audit failures
+  // never undo the actual claim)
+  await emitSosEvent({
+    sosRequestId: sos.id,
+    type: "ACCEPTED",
+    actorType: "EMPLOYEE",
+    actorId: notif.employeeId,
+    actorName: employeeFullName,
+    metadata: { tier: notif.tier },
+  });
+  await emitSosEvent({
+    sosRequestId: sos.id,
+    type: "FILLED",
+    metadata: {
+      employeeId: notif.employeeId,
+      employeeName: employeeFullName,
+      shiftId: sos.shiftId,
+    },
+  });
+
   log.info(
-    `[SOS] ${notif.employee.firstName} ACCEPTED SOS ${sos.id} → shift ${sos.shiftId}`,
+    `[SOS] ${employeeFullName} ACCEPTED SOS ${sos.id} → shift ${sos.shiftId}`,
   );
 
   return NextResponse.json({
     ok: true,
     accepted: true,
     shiftId: sos.shiftId,
-    employeeName: `${notif.employee.firstName} ${notif.employee.lastName}`,
+    employeeName: employeeFullName,
   });
 });

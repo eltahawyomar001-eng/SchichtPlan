@@ -64,9 +64,16 @@ export function AuditLedger({ events, locale }: Props) {
     );
   }
 
+  // Rigid column tracks — every row + the header share the EXACT same
+  // grid template, so columns line up regardless of badge text length.
+  // 72px time column · 132px event-badge column · flexible details.
+  const gridCols = "grid-cols-[72px_132px_minmax(0,1fr)]";
+
   return (
     <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-      <div className="grid grid-cols-[auto_auto_1fr] gap-x-4 text-[11px] uppercase tracking-wider font-semibold text-gray-400 dark:text-zinc-500 px-4 py-2 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-800/40">
+      <div
+        className={`grid ${gridCols} gap-x-4 px-4 py-2 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-800/40 text-[10px] uppercase tracking-wider font-semibold text-gray-400 dark:text-zinc-500`}
+      >
         <span>{locale === "en" ? "Time" : "Zeit"}</span>
         <span>{locale === "en" ? "Event" : "Ereignis"}</span>
         <span>{locale === "en" ? "Details" : "Details"}</span>
@@ -75,9 +82,9 @@ export function AuditLedger({ events, locale }: Props) {
         {events.map((ev) => (
           <li
             key={ev.id}
-            className="grid grid-cols-[auto_auto_1fr] gap-x-4 items-start px-4 py-3 animate-in fade-in slide-in-from-left-1 duration-300"
+            className={`grid ${gridCols} gap-x-4 items-center px-4 py-2 animate-in fade-in slide-in-from-left-1 duration-300`}
           >
-            <time className="text-xs tabular-nums text-gray-500 dark:text-zinc-400 mt-0.5">
+            <time className="text-xs tabular-nums text-gray-500 dark:text-zinc-400">
               {timeFmt.format(new Date(ev.createdAt))}
             </time>
             <EventIconLabel type={ev.type} locale={locale} />
@@ -99,13 +106,13 @@ function EventIconLabel({
   const config = EVENT_CONFIG[type];
   const Icon = config.icon;
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+    <span className="flex items-center gap-1.5 text-xs font-semibold min-w-0">
       <span
-        className={`inline-flex h-5 w-5 items-center justify-center rounded-md ${config.bg}`}
+        className={`inline-flex h-5 w-5 items-center justify-center rounded-md shrink-0 ${config.bg}`}
       >
         <Icon className={`h-3 w-3 ${config.fg}`} />
       </span>
-      <span className={config.fg}>{config.label[locale]}</span>
+      <span className={`${config.fg} truncate`}>{config.label[locale]}</span>
     </span>
   );
 }

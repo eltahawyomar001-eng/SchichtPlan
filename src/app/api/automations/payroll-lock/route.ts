@@ -8,7 +8,7 @@ import { requireAuth } from "@/lib/api-response";
 import { payrollLockSchema, validateBody } from "@/lib/validations";
 
 /**
- * POST /api/automations/payroll-lock
+ * GET /api/automations/payroll-lock
  *
  * Locks all reviewed time entries for a completed month.
  * Body: { year: number, month: number } (optional — defaults to previous month)
@@ -17,9 +17,9 @@ import { payrollLockSchema, validateBody } from "@/lib/validations";
  *  - Manually by managers
  *  - Via Vercel Cron on the 6th of each month at 00:00
  */
-export const POST = withRoute(
+export const GET = withRoute(
   "/api/automations/payroll-lock",
-  "POST",
+  "GET",
   async (req) => {
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");

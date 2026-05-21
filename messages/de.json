@@ -1,5 +1,6 @@
 {
   "common": {
+    "features": "Funktionen",
     "loading": "Laden…",
     "save": "Speichern",
     "saving": "Speichern…",

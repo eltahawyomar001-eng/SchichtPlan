@@ -1,5 +1,6 @@
 {
   "common": {
+    "features": "Features",
     "loading": "Loading…",
     "save": "Save",
     "saving": "Saving…",

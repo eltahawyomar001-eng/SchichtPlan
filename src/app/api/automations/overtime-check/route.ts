@@ -7,7 +7,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 
 /**
- * POST /api/automations/overtime-check
+ * GET /api/automations/overtime-check
  *
  * Checks all employees for overtime this week and creates
  * notifications for managers.
@@ -15,9 +15,9 @@ import { requireAuth } from "@/lib/api-response";
  *  - Manually by managers
  *  - Via Vercel Cron on Fridays at 16:00
  */
-export const POST = withRoute(
+export const GET = withRoute(
   "/api/automations/overtime-check",
-  "POST",
+  "GET",
   async (req) => {
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");

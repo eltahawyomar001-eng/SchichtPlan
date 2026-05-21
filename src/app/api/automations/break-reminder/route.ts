@@ -7,7 +7,7 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 
 /**
- * POST /api/automations/break-reminder
+ * GET /api/automations/break-reminder
  *
  * Checks all currently clocked-in employees:
  * 1. If working 6+ hours without break → sends break reminder notification.
@@ -18,7 +18,7 @@ import { withRoute } from "@/lib/with-route";
  * - §4: 30 min break after 6h, 45 min after 9h
  * - §5: 11 hours rest between shifts (enforced at clock-in)
  *
- * Called via Vercel Cron every 15 minutes.
+ * Called via Vercel Cron every 15 minutes (Vercel Cron always sends GET).
  *
  * Failure contract:
  *  - Push notification failures are caught per-item and logged; they never
@@ -26,9 +26,9 @@ import { withRoute } from "@/lib/with-route";
  *  - Any unhandled exception calls monitor.finish("error") so Sentry cron
  *    checks alert instead of silently staying "in_progress".
  */
-export const POST = withRoute(
+export const GET = withRoute(
   "/api/automations/break-reminder",
-  "POST",
+  "GET",
   async (req) => {
     const authHeader = req.headers.get("authorization");
     const cronSecret = authHeader?.replace("Bearer ", "");

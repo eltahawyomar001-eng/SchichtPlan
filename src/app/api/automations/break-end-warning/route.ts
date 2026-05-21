@@ -6,7 +6,7 @@ import { captureRouteError, cronMonitor } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 
 /**
- * POST /api/automations/break-end-warning
+ * GET /api/automations/break-end-warning
  *
  * Sends server-side WebPush notifications for employees whose break is
  * ending within the next 5 minutes, or has just ended (overrun).
@@ -23,9 +23,9 @@ import { withRoute } from "@/lib/with-route";
  *  - Any unhandled exception calls monitor.finish("error") so Sentry cron
  *    checks alert instead of silently staying "in_progress".
  */
-export const POST = withRoute(
+export const GET = withRoute(
   "/api/automations/break-end-warning",
-  "POST",
+  "GET",
   async (req) => {
     // ── Auth: cron secret only ──
     const authHeader = req.headers.get("authorization");

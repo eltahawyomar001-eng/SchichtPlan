@@ -7,16 +7,16 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 
 /**
- * POST /api/automations/generate-time-entries
+ * GET /api/automations/generate-time-entries
  *
  * Generates draft time entries from past shifts that don't have one yet.
  * Can be called:
  *  - Manually by managers via dashboard
  *  - Via Vercel Cron at 02:00 daily (with CRON_SECRET)
  */
-export const POST = withRoute(
+export const GET = withRoute(
   "/api/automations/generate-time-entries",
-  "POST",
+  "GET",
   async (req) => {
     // Support both session auth and cron secret
     const authHeader = req.headers.get("authorization");

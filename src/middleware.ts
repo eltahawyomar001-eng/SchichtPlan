@@ -631,6 +631,9 @@ export default withAuth(
         if (pathname.startsWith("/api/auth")) return true;
         // Stripe webhook is called server-to-server (no session)
         if (pathname === "/api/billing/webhook") return true;
+        // Vercel Cron jobs — no browser session; auth is the CRON_SECRET header
+        if (pathname.startsWith("/api/automations/")) return true;
+        if (pathname === "/api/admin/data-retention") return true;
         // Health check is public (uptime monitors, load balancers)
         if (pathname === "/api/health") return true;
         // Password reset pages are public

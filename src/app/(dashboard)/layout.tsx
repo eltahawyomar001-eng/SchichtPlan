@@ -16,7 +16,6 @@ const SUBSCRIPTION_ALLOWLIST = [
   "/einstellungen/abonnement",
   "/einstellungen/profil",
   "/workspace-inaktiv",
-  "/testphase-abgelaufen",
 ];
 
 /**
@@ -26,7 +25,6 @@ const SUBSCRIPTION_ALLOWLIST = [
 const HARD_BLOCK_ALLOWLIST = [
   "/einstellungen/abonnement",
   "/einstellungen/profil",
-  "/hard-block",
 ];
 
 export default async function DashboardLayout({

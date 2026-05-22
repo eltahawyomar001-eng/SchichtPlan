@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import {
   getSubscription,
-  ensureSubscription,
   isSimulationMode,
   updateSubscriptionFromStripe,
   linkSubscriptionByCustomer,
@@ -36,7 +35,24 @@ export const GET = withRoute(
     const { user } = auth;
 
     let sub = await getSubscription(user.workspaceId);
-    if (!sub) sub = await ensureSubscription(user.workspaceId);
+    // Fallback: auth callbacks should always create the trial, but if all
+    // three repair paths failed we create a TRIALING row here rather than
+    // INCOMPLETE (ensureSubscription), which would lock the user out.
+    if (!sub) {
+      const now = new Date();
+      const trialEnd = new Date(now);
+      trialEnd.setDate(trialEnd.getDate() + 7);
+      sub = await prisma.subscription.create({
+        data: {
+          workspaceId: user.workspaceId,
+          plan: "BASIC",
+          status: "TRIALING",
+          seatCount: 1,
+          trialStart: now,
+          trialEnd,
+        },
+      });
+    }
 
     const wantsReconcile =
       new URL(req.url).searchParams.get("reconcile") === "1" &&
@@ -199,7 +215,21 @@ export const GET = withRoute(
       }
     }
 
-    if (!sub) sub = await ensureSubscription(user.workspaceId);
+    if (!sub) {
+      const now = new Date();
+      const trialEnd = new Date(now);
+      trialEnd.setDate(trialEnd.getDate() + 7);
+      sub = await prisma.subscription.create({
+        data: {
+          workspaceId: user.workspaceId,
+          plan: "BASIC",
+          status: "TRIALING",
+          seatCount: 1,
+          trialStart: now,
+          trialEnd,
+        },
+      });
+    }
 
     const planId = sub.plan.toLowerCase() as PlanId;
     const planConfig = PLANS[planId];

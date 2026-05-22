@@ -275,26 +275,38 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (dbUser?.workspaceId) {
-          const sub = await prisma.subscription.findUnique({
-            where: { workspaceId: dbUser.workspaceId },
-          });
-          if (!sub) {
-            // createUser event failed to create the trial — repair it now.
-            await initializeTrial(
-              prisma as Parameters<typeof initializeTrial>[0],
-              dbUser.workspaceId,
-            );
-          } else if (sub.status === "INCOMPLETE" && !sub.stripeSubscriptionId) {
-            // Orphaned INCOMPLETE stub: the subscription endpoint's ensureSubscription
-            // created a placeholder before initializeTrial could run. Upgrade it to
-            // TRIALING so the onboarding poll passes immediately.
-            const now = new Date();
-            const trialEnd = new Date(now);
-            trialEnd.setDate(trialEnd.getDate() + 7);
-            await prisma.subscription.update({
+          // Wrapped in try/catch: a transient DB error here must never block
+          // sign-in — the JWT callback has the identical repair path as fallback.
+          try {
+            const sub = await prisma.subscription.findUnique({
               where: { workspaceId: dbUser.workspaceId },
-              data: { status: "TRIALING", trialStart: now, trialEnd },
             });
+            if (!sub) {
+              await initializeTrial(
+                prisma as Parameters<typeof initializeTrial>[0],
+                dbUser.workspaceId,
+              );
+            } else if (
+              sub.status === "INCOMPLETE" &&
+              !sub.stripeSubscriptionId
+            ) {
+              const now = new Date();
+              const trialEnd = new Date(now);
+              trialEnd.setDate(trialEnd.getDate() + 7);
+              await prisma.subscription.update({
+                where: { workspaceId: dbUser.workspaceId },
+                data: { status: "TRIALING", trialStart: now, trialEnd },
+              });
+            }
+          } catch (err) {
+            log.error(
+              "[auth] signIn subscription repair failed — JWT will retry",
+              {
+                userId: user.id,
+                workspaceId: dbUser.workspaceId,
+                error: err instanceof Error ? err.message : String(err),
+              },
+            );
           }
         }
       }
@@ -325,10 +337,10 @@ export const authOptions: NextAuthOptions = {
       }
 
       // For OAuth sign-ins, bootstrap workspace if missing.
-      // This is a safety net: the createUser event should run first and do
-      // this atomically, but if it failed mid-transaction the JWT callback
-      // repairs the state — including the trial subscription that the old
-      // fallback was missing (root cause of subscription-less ghost accounts).
+      // freshFromOAuth signals that this block ran and set token values from a
+      // fresh DB read — the cache block below must be skipped so it cannot
+      // overwrite those values with a stale 60-second-old cache entry.
+      let freshFromOAuth = false;
       if (account && account.provider !== "credentials" && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
@@ -391,10 +403,31 @@ export const authOptions: NextAuthOptions = {
               (dbUser.workspace as unknown as WorkspaceWithOnboarding | null)
                 ?.onboardingCompleted ?? false;
 
+            // Repair missing employee — createUser event may have rolled back
+            // after creating the workspace but before persisting the employee.
+            if (dbUser.workspaceId && !dbUser.employee) {
+              try {
+                const nameParts = (dbUser.name || "").trim().split(/\s+/);
+                const emp = await prisma.employee.create({
+                  data: {
+                    firstName: nameParts[0] || dbUser.name || "User",
+                    lastName: nameParts.slice(1).join(" ") || "",
+                    email: dbUser.email ?? "",
+                    userId: token.sub as string,
+                    workspaceId: dbUser.workspaceId,
+                    isActive: true,
+                  },
+                });
+                token.employeeId = emp.id;
+              } catch (err) {
+                log.error("[auth] JWT employee repair failed", {
+                  userId: token.sub,
+                  error: err instanceof Error ? err.message : String(err),
+                });
+              }
+            }
+
             // Repair: workspace exists but subscription may be missing or orphaned.
-            // This covers the race where createUser event succeeded (workspace/user)
-            // but initializeTrial failed, and ensureSubscription later created an
-            // INCOMPLETE stub via the subscription polling endpoint.
             if (dbUser.workspaceId) {
               const sub = await prisma.subscription.findUnique({
                 where: { workspaceId: dbUser.workspaceId },
@@ -420,12 +453,13 @@ export const authOptions: NextAuthOptions = {
             }
           }
         }
+        freshFromOAuth = true;
       }
 
-      // Refresh employeeId, workspaceId, and role from DB
-      // with a 60-second TTL cache to avoid a DB query on every
-      // single request while still picking up role/workspace changes.
-      if (token.sub) {
+      // Refresh employeeId, workspaceId, and role from DB with a 60-second TTL
+      // cache. Skipped when the account block above already read fresh DB state —
+      // running both would let a stale cache entry overwrite the fresh values.
+      if (!freshFromOAuth && token.sub) {
         const cacheKey = `jwt:${token.sub}`;
         const cached = await cache.get<JwtCacheEntry>(cacheKey);
         if (cached) {

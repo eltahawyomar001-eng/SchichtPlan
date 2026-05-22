@@ -482,7 +482,11 @@ export async function getWorkspacePlan(
   const plan = PLANS[planId] ?? null;
   if (!plan) return null;
 
-  if (sub.status === "TRIALING") {
+  // Only apply trial caps for our own free pre-purchase trial (no Stripe
+  // subscription ID). A paid Stripe subscription that happens to include a
+  // trial period (e.g. "first week free" on Professional) must use the full
+  // plan limits — the customer is already paying and expects what they bought.
+  if (sub.status === "TRIALING" && !sub.stripeSubscriptionId) {
     return { ...plan, limits: { ...plan.limits, ...TRIAL_LIMIT_OVERRIDES } };
   }
 

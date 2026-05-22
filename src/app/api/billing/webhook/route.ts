@@ -332,42 +332,44 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
           await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
         }
 
-        // Ticketing add-on: sync if Stripe state differs from DB state.
-        if (
-          dbSub.ticketingTier !== ticketingTier ||
-          dbSub.ticketingStripeSubscriptionItemId !== ticketingItemId
-        ) {
-          await prisma.subscription.update({
-            where: { workspaceId: dbSub.workspaceId },
-            data: {
-              ticketingTier,
-              ticketingStripeSubscriptionItemId: ticketingItemId,
-            },
-          });
-          await syncTicketingLimits(dbSub.workspaceId, ticketingTier);
-          log.info(
-            `[Stripe] Ticketing add-on synced from webhook: workspace=${dbSub.workspaceId} → ${ticketingTier}`,
-          );
-        }
-
-        // Schichtplanung add-on: sync if Stripe state differs from DB state.
+        // Add-on state: build a single atomic update covering both ticketing
+        // and Schichtplanung so a partial failure never leaves them split.
         const newSchichtplanungActive = schichtplanungItemId !== null;
-        if (
+        const ticketingChanged =
+          dbSub.ticketingTier !== ticketingTier ||
+          dbSub.ticketingStripeSubscriptionItemId !== ticketingItemId;
+        const schichtplanungChanged =
           dbSub.schichtplanungAddonActive !== newSchichtplanungActive ||
           dbSub.schichtplanungAddonBilling !== schichtplanungBilling ||
-          dbSub.schichtplanungStripeSubscriptionItemId !== schichtplanungItemId
-        ) {
+          dbSub.schichtplanungStripeSubscriptionItemId !== schichtplanungItemId;
+
+        if (ticketingChanged || schichtplanungChanged) {
           await prisma.subscription.update({
             where: { workspaceId: dbSub.workspaceId },
             data: {
-              schichtplanungAddonActive: newSchichtplanungActive,
-              schichtplanungAddonBilling: schichtplanungBilling,
-              schichtplanungStripeSubscriptionItemId: schichtplanungItemId,
+              ...(ticketingChanged && {
+                ticketingTier,
+                ticketingStripeSubscriptionItemId: ticketingItemId,
+              }),
+              ...(schichtplanungChanged && {
+                schichtplanungAddonActive: newSchichtplanungActive,
+                schichtplanungAddonBilling: schichtplanungBilling,
+                schichtplanungStripeSubscriptionItemId: schichtplanungItemId,
+              }),
             },
           });
-          log.info(
-            `[Stripe] Schichtplanung add-on synced from webhook: workspace=${dbSub.workspaceId} → active=${newSchichtplanungActive} billing=${schichtplanungBilling}`,
-          );
+
+          if (ticketingChanged) {
+            await syncTicketingLimits(dbSub.workspaceId, ticketingTier);
+            log.info(
+              `[Stripe] Ticketing add-on synced: workspace=${dbSub.workspaceId} → ${ticketingTier}`,
+            );
+          }
+          if (schichtplanungChanged) {
+            log.info(
+              `[Stripe] Schichtplanung add-on synced: workspace=${dbSub.workspaceId} → active=${newSchichtplanungActive} billing=${schichtplanungBilling}`,
+            );
+          }
         }
       }
 

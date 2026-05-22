@@ -27,7 +27,7 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   workspaceId             String?
-  workspace               Workspace?               @relation(fields: [workspaceId], references: [id])
+  workspace               Workspace?               @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   customRoleId            String?
   customRole              CustomRole?              @relation("UserCustomRole", fields: [customRoleId], references: [id], onDelete: SetNull)
   accounts                Account[]
@@ -1665,7 +1665,7 @@ model SosRequest {
   workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shift            Shift             @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   createdBy        User?             @relation("SosCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  filledBy         Employee?         @relation("SosFilledBy", fields: [filledById], references: [id])
+  filledBy         Employee?         @relation("SosFilledBy", fields: [filledById], references: [id], onDelete: SetNull)
   notifications    SosNotification[]
   events           SosEvent[]
 

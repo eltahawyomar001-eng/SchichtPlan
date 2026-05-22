@@ -20,17 +20,18 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
     password,
     workspaceName,
     invitationToken,
-    selectedPlan,
     consentGiven,
   } = parsed.data;
 
   // Suppress unused var warning — consentGiven is validated by Zod (must be true)
   void consentGiven;
 
-  // Owners signing up with a paid plan skip email verification — Stripe Checkout
-  // requires immediate sign-in to call /api/billing/checkout, and a successful
-  // payment is itself proof of email ownership.
-  const skipVerification = !invitationToken && !!selectedPlan;
+  // Email verification is always required. selectedPlan owners must verify
+  // before completing checkout — "payment proves email" is not true until
+  // the payment has actually completed, which happens after sign-in.
+  // Previously this was skipped for selectedPlan, allowing an attacker to
+  // pre-claim any email address with an immediately-verified account.
+  const skipVerification = false;
 
   // If no invitation token, workspace name is required
   if (!invitationToken && !workspaceName) {

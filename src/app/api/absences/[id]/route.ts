@@ -183,6 +183,17 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
         const forbidden = requirePermission(user, "absences", "approve");
         if (forbidden) return forbidden;
+
+        // Managers must not approve their own absence requests
+        if (existing.employeeId === user.employeeId) {
+          return NextResponse.json(
+            {
+              error:
+                "Sie können Ihren eigenen Abwesenheitsantrag nicht genehmigen.",
+            },
+            { status: 403 },
+          );
+        }
       }
 
       // ── Idempotency: reject duplicate status transitions ──

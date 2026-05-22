@@ -6,6 +6,7 @@ import {
   type PlanId,
   type PlanConfig,
 } from "@/lib/stripe";
+import { log } from "@/lib/logger";
 
 /* ═══════════════════════════════════════════════════════════════
    Subscription service — database operations
@@ -423,7 +424,12 @@ function mapStripeStatus(status: string): PrismaSubscriptionStatus {
     incomplete_expired: "INCOMPLETE_EXPIRED",
     paused: "PAUSED",
   };
-  return map[status] ?? "ACTIVE";
+  if (map[status]) return map[status];
+  log.error(
+    `[subscription] Unknown Stripe status: "${status}" — defaulting to INCOMPLETE`,
+    { status },
+  );
+  return "INCOMPLETE";
 }
 
 /* ═══════════════════════════════════════════════════════════════

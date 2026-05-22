@@ -4,6 +4,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { log } from "@/lib/logger";
 
 /**
  * DELETE /api/invitations/[id] — revoke a pending invitation
@@ -56,7 +57,9 @@ export const DELETE = withRoute(
     dispatchWebhook(workspaceId, "invitation.revoked", {
       id,
       email: invitation.email,
-    }).catch(() => {});
+    }).catch((err) =>
+      log.warn("[dispatch] invitation.revoked failed", { err }),
+    );
 
     return NextResponse.json({ success: true });
   },

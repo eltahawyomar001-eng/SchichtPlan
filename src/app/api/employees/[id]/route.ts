@@ -3,13 +3,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
-import { requirePermission, requireAdmin } from "@/lib/authorization";
+import {
+  requirePermission,
+  requireAdmin,
+  isEmployee,
+} from "@/lib/authorization";
 import { createAuditLogTx } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { updateEmployeeSchema, validateBody } from "@/lib/validations";
 import { reconcileSeatsFromEmployees } from "@/lib/billing-seats";
+import { cache } from "@/lib/cache";
 
 /** MiLoG minimum wage (€/h) — updated annually */
 const MILOG_MIN_WAGE = 12.82;
@@ -25,7 +30,13 @@ export async function GET(
     }
 
     const { id } = await params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const currentUser = session.user as SessionUser;
+    const workspaceId = currentUser.workspaceId;
+
+    // EMPLOYEE role may only fetch their own record
+    if (isEmployee(currentUser) && currentUser.employeeId !== id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const [employee, sosStats] = await Promise.all([
       prisma.employee.findFirst({
@@ -110,8 +121,8 @@ export async function PATCH(
       if (adminForbidden) return adminForbidden;
     }
 
-    const employee = await prisma.$transaction(async (tx) => {
-      const updated = await tx.employee.updateMany({
+    const { changedUserId } = await prisma.$transaction(async (tx) => {
+      await tx.employee.updateMany({
         where: { id, workspaceId },
         data: {
           firstName: body.firstName,
@@ -136,6 +147,7 @@ export async function PATCH(
       });
 
       // ── Update linked user's role (OWNER/ADMIN only) ──
+      let changedUserId: string | null = null;
       if (body.role) {
         const emp = await tx.employee.findFirst({
           where: { id, workspaceId },
@@ -162,6 +174,7 @@ export async function PATCH(
             where: { id: emp.userId },
             data: { role: body.role },
           });
+          changedUserId = emp.userId;
         }
       }
 
@@ -176,7 +189,18 @@ export async function PATCH(
         changes: body,
       });
 
-      return updated;
+      return { changedUserId };
+    });
+
+    // H-2: Bust the JWT cache for the affected user immediately after role change
+    // so the new role takes effect on their next request, not after TTL expiry.
+    if (changedUserId) {
+      await cache.del(`jwt:${changedUserId}`);
+    }
+
+    // M-1: Fetch the actual updated record to return (updateMany returns {count})
+    const updatedEmployee = await prisma.employee.findFirst({
+      where: { id, workspaceId },
     });
 
     const warnings: string[] = [];
@@ -203,7 +227,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      ...employee,
+      ...updatedEmployee,
       ...(warnings.length ? { warnings } : {}),
     });
   } catch (error) {

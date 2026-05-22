@@ -62,7 +62,7 @@ export const POST = withRoute("/api/admin/restore", "POST", async (req) => {
     }
 
     await model.update({
-      where: { id },
+      where: { id, workspaceId },
       data: { deletedAt: null },
     });
 

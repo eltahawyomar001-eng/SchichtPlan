@@ -250,20 +250,43 @@ export const POST = withRoute(
           }
         }
 
+        const currentTierCents =
+          currentTier && currentTier !== "NONE"
+            ? (TICKETING_ADDON[currentTier as keyof typeof TICKETING_ADDON]
+                ?.priceMonthlyCents ?? 0)
+            : 0;
+        const newTierCents =
+          TICKETING_ADDON[newTier as keyof typeof TICKETING_ADDON]
+            ?.priceMonthlyCents ?? 0;
+        const tierProration =
+          newTierCents > currentTierCents
+            ? "always_invoice"
+            : "create_prorations";
+
+        const dayBucket = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+
         if (existingItemId) {
           const updated = await stripe.subscriptionItems.update(
             existingItemId,
-            { price: priceId, proration_behavior: "create_prorations" },
+            { price: priceId, proration_behavior: tierProration },
+            {
+              idempotencyKey: `ticketing-update:${workspaceId}:${newTier}:${dayBucket}`,
+            },
           );
           newItemId = updated.id;
         } else {
-          const created = await stripe.subscriptionItems.create({
-            subscription: stripeSubId,
-            price: priceId,
-            quantity: 1,
-            proration_behavior: "always_invoice",
-            payment_behavior: "default_incomplete",
-          });
+          const created = await stripe.subscriptionItems.create(
+            {
+              subscription: stripeSubId,
+              price: priceId,
+              quantity: 1,
+              proration_behavior: "always_invoice",
+              payment_behavior: "error_if_incomplete",
+            },
+            {
+              idempotencyKey: `ticketing-create:${workspaceId}:${newTier}:${dayBucket}`,
+            },
+          );
           newItemId = created.id;
         }
       }

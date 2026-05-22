@@ -686,13 +686,15 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
       if (!customerId || !newEmail) break;
 
       try {
-        await prisma.subscription.updateMany({
+        const sub = await prisma.subscription.findFirst({
           where: { stripeCustomerId: customerId },
-          data: {}, // no-op field update — keep for audit
+          select: { workspaceId: true },
         });
-        log.info(
-          `[Stripe] customer.updated: customerId=${customerId} email=${newEmail}`,
-        );
+        log.info("[Stripe] customer.updated", {
+          customerId,
+          newEmail,
+          workspaceId: sub?.workspaceId ?? null,
+        });
       } catch (err) {
         log.error("[Stripe] customer.updated handler failed", {
           error: err instanceof Error ? err.message : String(err),

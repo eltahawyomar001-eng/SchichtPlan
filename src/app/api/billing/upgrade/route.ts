@@ -215,12 +215,35 @@ export const POST = withRoute(
         );
       }
 
-      // Update the plan item price — Stripe handles proration automatically
-      const updatedItem = await stripe.subscriptionItems.update(mainItem.id, {
-        price: newPriceId,
-        quantity: mainItem.quantity ?? sub.seatCount,
-        proration_behavior: "create_prorations",
-      });
+      // Determine proration direction: upgrades charge immediately so
+      // the customer gets access right away; downgrades credit on next invoice.
+      const currentPlan = getPlanByPriceId(mainItem.price.id);
+      const currentPriceCents =
+        billingCycle === "annual"
+          ? (currentPlan?.perUserAnnual ?? 0)
+          : (currentPlan?.perUserMonthly ?? 0);
+      const newPriceCents =
+        billingCycle === "annual"
+          ? planConfig.perUserAnnual
+          : planConfig.perUserMonthly;
+      const prorationBehavior =
+        newPriceCents > currentPriceCents
+          ? "always_invoice"
+          : "create_prorations";
+
+      const dayBucket = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+
+      const updatedItem = await stripe.subscriptionItems.update(
+        mainItem.id,
+        {
+          price: newPriceId,
+          quantity: mainItem.quantity ?? sub.seatCount,
+          proration_behavior: prorationBehavior,
+        },
+        {
+          idempotencyKey: `upgrade:${workspaceId}:${planId}:${billingCycle}:${dayBucket}`,
+        },
+      );
 
       // Refresh subscription to get the new period dates
       const refreshedSub = await stripe.subscriptions.retrieve(stripeSubId);

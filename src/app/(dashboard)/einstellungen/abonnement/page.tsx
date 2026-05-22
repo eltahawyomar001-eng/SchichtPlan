@@ -353,26 +353,28 @@ function BillingContent() {
       .catch(() => {});
   }, []);
 
-  // Auto-trigger checkout if user came from landing page with a plan
+  // Auto-trigger checkout if user came from landing page with a plan.
+  // Wait until subscription is loaded so handleCheckout sees the correct
+  // subscription state and the billing-cycle toggle is already synced.
+  const autoCheckoutFired = useRef(false);
   useEffect(() => {
+    if (loading || autoCheckoutFired.current) return;
     const storedPlan = localStorage.getItem("shiftfy_selected_plan");
     const storedBilling = localStorage.getItem("shiftfy_selected_billing");
     if (
       storedPlan &&
       (storedPlan === "basic" || storedPlan === "professional")
     ) {
+      autoCheckoutFired.current = true;
       localStorage.removeItem("shiftfy_selected_plan");
       localStorage.removeItem("shiftfy_selected_billing");
       if (storedBilling === "monthly" || storedBilling === "annual") {
         setBillingCycle(storedBilling);
       }
-      const timer = setTimeout(() => {
-        handleCheckout(storedPlan);
-      }, 500);
-      return () => clearTimeout(timer);
+      handleCheckout(storedPlan);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loading]);
 
   // Build plan options — prices come from /api/public/plans so they match stripe.ts
   const getPlanPrices = (planId: string) => {
@@ -555,7 +557,7 @@ function BillingContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.message ?? data.error ?? t("checkoutError"));
+        setErrorMsg(localizeErr(data, "checkoutError"));
         return;
       }
       if (data.url) {
@@ -789,7 +791,7 @@ function BillingContent() {
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("plan")}
                 </p>
-                <p className="mt-1 text-lg font-bold text-gray-900">
+                <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                   {subscription?.plan
                     ? t(
                         `plan${subscription.plan.charAt(0)}${subscription.plan.slice(1).toLowerCase()}`,
@@ -801,7 +803,7 @@ function BillingContent() {
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("seats")}
                 </p>
-                <p className="mt-1 text-lg font-bold text-gray-900">
+                <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                   {subscription?.seatCount ?? 1}
                 </p>
               </div>
@@ -809,7 +811,7 @@ function BillingContent() {
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("employees")}
                 </p>
-                <p className="mt-1 text-lg font-bold text-gray-900">
+                <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                   {subscription?.limits?.maxEmployees === Infinity ||
                   (subscription?.limits?.maxEmployees ?? 0) > 10000
                     ? t("unlimited")
@@ -820,7 +822,7 @@ function BillingContent() {
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t("renewalDate")}
                 </p>
-                <p className="mt-1 text-lg font-bold text-gray-900">
+                <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                   {subscription?.currentPeriodEnd
                     ? formatDate(subscription.currentPeriodEnd)
                     : "—"}
@@ -970,12 +972,14 @@ function BillingContent() {
                   </span>
                 )}
 
-                <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {plan.name}
+                </h3>
 
                 <div className="mt-4">
                   {plan.isEnterprise ? (
                     <>
-                      <span className="text-2xl font-extrabold text-gray-900">
+                      <span className="text-2xl font-extrabold text-gray-900 dark:text-white">
                         {t("custom")}
                       </span>
                       <p className="text-xs text-gray-400 mt-1">
@@ -985,7 +989,7 @@ function BillingContent() {
                   ) : (
                     <>
                       <div className="flex flex-wrap items-baseline gap-1">
-                        <span className="text-3xl font-extrabold text-gray-900">
+                        <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
                           {perUserCents > 0 ? formatCents(perUserCents) : "—"}
                         </span>
                         <span className="text-sm text-gray-400 break-words">
@@ -1368,7 +1372,7 @@ function BillingContent() {
 
         {/* ─── FAQ Hints ─── */}
         <div className="rounded-2xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 p-5 sm:p-6">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
             {t("billingFaqTitle")}
           </h3>
           <div className="mt-4 space-y-3 text-sm text-gray-600">

@@ -33,28 +33,31 @@ export const POST = withRoute("/api/billing/sync", "POST", async () => {
   const stripe = getStripe();
 
   try {
-    const stripeSubs = await stripe.subscriptions.list({
+    // Fetch all non-canceled subscriptions so past_due and unpaid states
+    // are also handled — a customer recovering from a failed payment must
+    // not be stuck on a stale status just because the sync ignores their
+    // current subscription state.
+    const allSubs = await stripe.subscriptions.list({
       customer: sub.stripeCustomerId,
-      status: "active",
-      limit: 1,
+      status: "all",
+      limit: 5,
       expand: ["data.items"],
     });
 
-    if (stripeSubs.data.length === 0) {
-      // Check trialing
-      const trialSubs = await stripe.subscriptions.list({
-        customer: sub.stripeCustomerId,
-        status: "trialing",
-        limit: 1,
-        expand: ["data.items"],
+    const SYNCABLE = ["active", "trialing", "past_due", "unpaid"];
+    const ranked = allSubs.data
+      .filter((s) => SYNCABLE.includes(s.status))
+      .sort((a, b) => {
+        const rank = (s: string) =>
+          s === "active" ? 0 : s === "trialing" ? 1 : s === "past_due" ? 2 : 3;
+        return rank(a.status) - rank(b.status);
       });
-      if (trialSubs.data.length === 0) {
-        return NextResponse.json({ synced: false, reason: "NO_ACTIVE_SUB" });
-      }
-      stripeSubs.data.push(trialSubs.data[0]);
+
+    if (ranked.length === 0) {
+      return NextResponse.json({ synced: false, reason: "NO_ACTIVE_SUB" });
     }
 
-    const liveSub = stripeSubs.data[0];
+    const liveSub = ranked[0];
     const mainItem =
       liveSub.items.data.find(
         (it) =>

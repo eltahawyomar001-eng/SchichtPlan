@@ -288,24 +288,50 @@ export const POST = withRoute(
           }
         }
 
+        // Monthly-normalised cents to determine proration direction.
+        // Annual pricing is cheaper per month — switching annual→monthly is
+        // an effective upgrade (higher monthly cost) so charge immediately.
+        const toMonthlyCents = (billing: string | null) =>
+          billing === "annual"
+            ? Math.round(SCHICHTPLANUNG_ADDON.perUserAnnualCents / 12)
+            : SCHICHTPLANUNG_ADDON.perUserMonthlyCents;
+        const currentMonthlyCents = toMonthlyCents(
+          subscription.schichtplanungAddonBilling,
+        );
+        const newMonthlyCents = toMonthlyCents(newBilling);
+        const schichtProration =
+          newMonthlyCents > currentMonthlyCents
+            ? "always_invoice"
+            : "create_prorations";
+
+        const dayBucket = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+
         if (existingItemId) {
           const updated = await stripe.subscriptionItems.update(
             existingItemId,
             {
               price: priceId,
               quantity,
-              proration_behavior: "create_prorations",
+              proration_behavior: schichtProration,
+            },
+            {
+              idempotencyKey: `schichtplanung-update:${workspaceId}:${newBilling}:${dayBucket}`,
             },
           );
           newItemId = updated.id;
         } else {
-          const created = await stripe.subscriptionItems.create({
-            subscription: stripeSubId,
-            price: priceId,
-            quantity,
-            proration_behavior: "always_invoice",
-            payment_behavior: "default_incomplete",
-          });
+          const created = await stripe.subscriptionItems.create(
+            {
+              subscription: stripeSubId,
+              price: priceId,
+              quantity,
+              proration_behavior: "always_invoice",
+              payment_behavior: "error_if_incomplete",
+            },
+            {
+              idempotencyKey: `schichtplanung-create:${workspaceId}:${newBilling}:${dayBucket}`,
+            },
+          );
           newItemId = created.id;
         }
       }

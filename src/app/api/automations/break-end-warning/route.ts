@@ -4,6 +4,7 @@ import { sendPushNotification } from "@/lib/notifications/push";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
+import { cache } from "@/lib/cache";
 
 /**
  * GET /api/automations/break-end-warning
@@ -36,6 +37,13 @@ export const GET = withRoute(
         { status: 403 },
       );
     }
+
+    const lockKey = "cron:lock:break-end-warning";
+    const isLocked = await cache.get(lockKey);
+    if (isLocked) {
+      return NextResponse.json({ skipped: true, reason: "concurrent_run" });
+    }
+    await cache.set(lockKey, "1", 240); // 240s < 5-min cron interval
 
     const monitor = cronMonitor("break-end-warning", "*/5 * * * *");
 

@@ -108,13 +108,8 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           { status: 409 },
         );
       }
-      if (isEmployee(user)) {
-        const linkedEmployee = await prisma.employee.findFirst({
-          where: { workspaceId: user.workspaceId, email: user.email },
-        });
-        if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
+      if (isEmployee(user) && existing.employeeId !== user.employeeId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
       const newStart = edits.startDate
@@ -231,13 +226,8 @@ export async function PATCH(req: Request, { params }: RouteParams) {
             { status: 409 },
           );
         }
-        if (isEmployee(user)) {
-          const linkedEmployee = await prisma.employee.findFirst({
-            where: { workspaceId: user.workspaceId, email: user.email },
-          });
-          if (!linkedEmployee || existing.employeeId !== linkedEmployee.id) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-          }
+        if (isEmployee(user) && existing.employeeId !== user.employeeId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
       }
 

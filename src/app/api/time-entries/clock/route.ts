@@ -117,7 +117,12 @@ export const POST = withRoute(
       try {
         entry = await prisma.$transaction(async (tx) => {
           const open = await tx.timeEntry.findFirst({
-            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            where: {
+              employeeId,
+              workspaceId,
+              isLiveClock: true,
+              clockOutAt: null,
+            },
           });
           if (open) {
             throw new Error(`ALREADY_CLOCKED_IN:${open.id}`);
@@ -165,7 +170,12 @@ export const POST = withRoute(
       const entry = await prisma
         .$transaction(async (tx) => {
           const open = await tx.timeEntry.findFirst({
-            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            where: {
+              employeeId,
+              workspaceId,
+              isLiveClock: true,
+              clockOutAt: null,
+            },
             orderBy: { clockInAt: "desc" },
           });
           if (!open) {
@@ -214,7 +224,12 @@ export const POST = withRoute(
       const entry = await prisma
         .$transaction(async (tx) => {
           const open = await tx.timeEntry.findFirst({
-            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            where: {
+              employeeId,
+              workspaceId,
+              isLiveClock: true,
+              clockOutAt: null,
+            },
             orderBy: { clockInAt: "desc" },
           });
           if (!open || !open.breakStart || open.breakEnd) {
@@ -254,7 +269,12 @@ export const POST = withRoute(
       const entry = await prisma
         .$transaction(async (tx) => {
           const open = await tx.timeEntry.findFirst({
-            where: { employeeId, isLiveClock: true, clockOutAt: null },
+            where: {
+              employeeId,
+              workspaceId,
+              isLiveClock: true,
+              clockOutAt: null,
+            },
             orderBy: { clockInAt: "desc" },
           });
           if (!open) {
@@ -368,6 +388,7 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
   if (!auth.ok) return auth.response;
   const { user } = auth;
   const employeeId = user.employeeId;
+  const workspaceId = user.workspaceId;
   if (!employeeId) {
     return NextResponse.json({
       active: false,
@@ -379,7 +400,7 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
 
   // Open (active) clock entry
   let open = await prisma.timeEntry.findFirst({
-    where: { employeeId, isLiveClock: true, clockOutAt: null },
+    where: { employeeId, workspaceId, isLiveClock: true, clockOutAt: null },
     orderBy: { clockInAt: "desc" },
   });
 
@@ -463,6 +484,7 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
   const todayEntries = await prisma.timeEntry.findMany({
     where: {
       employeeId,
+      workspaceId,
       isLiveClock: true,
       clockOutAt: { not: null },
       clockInAt: { gte: todayStart, lte: todayEnd },

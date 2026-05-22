@@ -5,6 +5,7 @@ import { slugify } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/verification";
 import { registerSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 import { initializeTrial } from "@/lib/subscription";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
@@ -220,19 +221,24 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
         }
       } catch (err) {
         log.error("[register] PIN generation failed (invited)", { error: err });
+        captureRouteError(err, { route: "/api/auth/register", method: "POST" });
       }
     })();
 
-    // Send verification email (non-blocking)
-    sendVerificationEmail(email).catch((err) =>
-      log.error("Failed to send verification email", { error: err }),
-    );
+    let emailSendFailed = false;
+    try {
+      await sendVerificationEmail(email);
+    } catch (err) {
+      emailSendFailed = true;
+      log.error("Failed to send verification email", { error: err });
+    }
 
     return NextResponse.json(
       {
         message: "Konto erfolgreich erstellt.",
         userId: result.user.id,
         requiresVerification: true,
+        ...(emailSendFailed ? { emailSendFailed: true } : {}),
       },
       { status: 201 },
     );
@@ -307,22 +313,25 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
       }
     } catch (err) {
       log.error("[register] PIN generation failed (owner)", { error: err });
+      captureRouteError(err, { route: "/api/auth/register", method: "POST" });
     }
   })();
 
-  // Send verification email (non-blocking) unless the user is going straight to checkout
-  if (!skipVerification) {
-    sendVerificationEmail(email).catch((err) =>
-      log.error("Failed to send verification email", { error: err }),
-    );
+  let emailSendFailed = false;
+  try {
+    await sendVerificationEmail(email);
+  } catch (err) {
+    emailSendFailed = true;
+    log.error("Failed to send verification email", { error: err });
   }
 
   return NextResponse.json(
     {
       message: "Konto erfolgreich erstellt.",
       userId: result.user.id,
-      requiresVerification: !skipVerification,
-      autoSignIn: skipVerification,
+      requiresVerification: true,
+      autoSignIn: false,
+      ...(emailSendFailed ? { emailSendFailed: true } : {}),
     },
     { status: 201 },
   );

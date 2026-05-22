@@ -7,6 +7,7 @@ import {
 } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
+import { cache } from "@/lib/cache";
 
 /**
  * GET /api/automations/auto-clockout
@@ -26,6 +27,13 @@ export async function GET(req: Request) {
   if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Invalid cron secret" }, { status: 401 });
   }
+
+  const lockKey = "cron:lock:auto-clockout";
+  const isLocked = await cache.get(lockKey);
+  if (isLocked) {
+    return NextResponse.json({ skipped: true, reason: "concurrent_run" });
+  }
+  await cache.set(lockKey, "1", 540); // 540s < 10-min cron interval
 
   const monitor = cronMonitor("auto-clockout", "*/10 * * * *");
   monitor?.start();

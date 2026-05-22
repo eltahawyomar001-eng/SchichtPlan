@@ -632,7 +632,18 @@ export default withAuth(
         // Stripe webhook is called server-to-server (no session)
         if (pathname === "/api/billing/webhook") return true;
         // Vercel Cron jobs — no browser session; auth is the CRON_SECRET header
-        if (pathname.startsWith("/api/automations/")) return true;
+        // Explicitly list cron routes only; /api/automations/settings is a
+        // protected user-facing endpoint and must NOT be in this allowlist.
+        if (
+          pathname === "/api/automations/break-reminder" ||
+          pathname === "/api/automations/break-end-warning" ||
+          pathname === "/api/automations/auto-clockout" ||
+          pathname === "/api/automations/generate-time-entries" ||
+          pathname === "/api/automations/overtime-check" ||
+          pathname === "/api/automations/payroll-lock" ||
+          pathname === "/api/automations/sos-escalation"
+        )
+          return true;
         if (pathname === "/api/admin/data-retention") return true;
         // Health check is public (uptime monitors, load balancers)
         if (pathname === "/api/health") return true;

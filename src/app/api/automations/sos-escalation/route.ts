@@ -27,7 +27,16 @@ import { log } from "@/lib/logger";
 export const GET = withRoute(
   "/api/automations/sos-escalation",
   "GET",
-  async () => {
+  async (req) => {
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = authHeader?.replace("Bearer ", "");
+    if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+      return NextResponse.json(
+        { error: "Invalid cron secret" },
+        { status: 401 },
+      );
+    }
+
     const monitor = cronMonitor("sos-escalation", "*/5 * * * *");
 
     try {

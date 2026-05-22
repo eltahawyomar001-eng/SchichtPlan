@@ -323,19 +323,32 @@ export const GET = withRoute(
     }
 
     const monitor = cronMonitor("data-retention", "30 4 * * 0");
-    const results = await executeRetention();
-    const totalDeleted = results.reduce((sum, r) => sum + r.deleted, 0);
+    try {
+      const results = await executeRetention();
+      const totalDeleted = results.reduce((sum, r) => sum + r.deleted, 0);
 
-    log.info(
-      `[data-retention] Cron retention: ${totalDeleted} records deleted`,
-      { results },
-    );
+      log.info(
+        `[data-retention] Cron retention: ${totalDeleted} records deleted`,
+        { results },
+      );
 
-    monitor.finish("ok");
-    return NextResponse.json({
-      success: true,
-      totalDeleted,
-      results,
-    });
+      monitor.finish("ok");
+      return NextResponse.json({
+        success: true,
+        totalDeleted,
+        results,
+      });
+    } catch (cronError) {
+      log.error("[data-retention] Cron fatal error", { error: cronError });
+      captureRouteError(cronError, {
+        route: "/api/admin/data-retention",
+        method: "GET",
+      });
+      monitor.finish("error");
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 },
+      );
+    }
   },
 );

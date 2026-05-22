@@ -9,6 +9,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { AlertTriangleIcon } from "@/components/icons";
 
 interface UsageMetric {
   used: number;
@@ -49,6 +50,7 @@ function MetricRow({
   limit,
   unit,
   hint,
+  locked,
   t,
 }: {
   label: string;
@@ -56,8 +58,27 @@ function MetricRow({
   limit: number | null;
   unit?: string;
   hint?: string;
+  locked?: boolean;
   t: (k: string) => string;
 }) {
+  if (locked) {
+    return (
+      <div className="opacity-60">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm font-medium text-gray-500 dark:text-zinc-500">
+            {label}
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-600">
+            {t("usageNotInPlan")}
+          </span>
+        </div>
+        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-zinc-800">
+          <div className="h-full w-0 rounded-full bg-gray-200 dark:bg-zinc-700" />
+        </div>
+      </div>
+    );
+  }
+
   const percent = pct(used, limit);
   const usedLabel = unit
     ? `${used.toLocaleString()} ${unit}`
@@ -106,19 +127,24 @@ export function UsageDashboard() {
   const t = useTranslations("billing");
   const [data, setData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      // cache: "no-store" — usage counts must reflect the live DB on every
-      // fetch, never a stale CDN/SW cache.
       const res = await fetch("/api/billing/usage", { cache: "no-store" });
-      const d = res.ok ? ((await res.json()) as UsageData) : null;
-      setData(d);
+      if (res.ok) {
+        setData((await res.json()) as UsageData);
+        setLoadError(false);
+      } else if (!data) {
+        // Only show error on first load; keep stale data on transient error.
+        setLoadError(true);
+      }
     } catch {
-      // leave previous data on transient error
+      if (!data) setLoadError(true);
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -148,6 +174,23 @@ export function UsageDashboard() {
         </CardHeader>
         <CardContent>
           <div className="h-24 animate-pulse rounded-lg bg-gray-100 dark:bg-zinc-800" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("usageTitle")}</CardTitle>
+          <CardDescription>{t("usageDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+            <AlertTriangleIcon className="h-4 w-4 shrink-0 text-amber-500" />
+            {t("usageLoadError")}
+          </div>
         </CardContent>
       </Card>
     );
@@ -195,22 +238,24 @@ export function UsageDashboard() {
             limit={data.pdfsThisMonth.limit}
             t={t}
           />
-          {data.ticketsThisMonth.limit !== null && (
-            <MetricRow
-              label={t("usageTickets")}
-              used={data.ticketsThisMonth.used}
-              limit={data.ticketsThisMonth.limit}
-              t={t}
-            />
-          )}
-          {data.emailsThisMonth?.limit !== null && (
-            <MetricRow
-              label={t("usageEmails")}
-              used={data.emailsThisMonth?.used ?? 0}
-              limit={data.emailsThisMonth?.limit ?? null}
-              t={t}
-            />
-          )}
+          {/* Tickets and emails: show with actual limit or as locked (null = not in plan).
+              Industry standard: always show the row, lock it when not purchased. */}
+          <MetricRow
+            label={t("usageTickets")}
+            used={data.ticketsThisMonth.used}
+            limit={data.ticketsThisMonth.limit}
+            locked={data.ticketsThisMonth.limit === null}
+            t={t}
+          />
+          <MetricRow
+            label={t("usageEmails")}
+            used={data.emailsThisMonth?.used ?? 0}
+            limit={data.emailsThisMonth?.limit ?? null}
+            locked={
+              !data.emailsThisMonth || data.emailsThisMonth.limit === null
+            }
+            t={t}
+          />
         </div>
       </CardContent>
     </Card>

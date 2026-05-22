@@ -14,9 +14,13 @@ interface Props {
   tiers: TierStats[];
   currentTier: number;
   status: "OPEN" | "FILLED" | "CANCELLED" | "EXPIRED";
+  locale?: "de" | "en";
 }
 
-const TIER_CAPACITY = [5, 10, 20];
+// Max employees that can be notified per tier wave. These are display caps
+// only — the actual batch size is constrained by available employees, so we
+// show whichever is smaller: the notified count OR the hard maximum.
+const TIER_MAX = [5, 10, 20];
 
 /**
  * Three-column escalation visualizer.
@@ -25,7 +29,18 @@ const TIER_CAPACITY = [5, 10, 20];
  * paddings, and label positions line up across active / inactive /
  * filled states. Only colors and the dashed border style change.
  */
-export function TierProgress({ tiers, currentTier, status }: Props) {
+export function TierProgress({
+  tiers,
+  currentTier,
+  status,
+  locale = "de",
+}: Props) {
+  const L = {
+    active: locale === "en" ? "Active" : "Aktiv",
+    accepted: locale === "en" ? "accepted" : "angenommen",
+    declined: locale === "en" ? "declined" : "abgelehnt",
+    pending: locale === "en" ? "open" : "offen",
+  };
   return (
     <div className="grid grid-cols-3 gap-3">
       {[1, 2, 3].map((t) => {
@@ -36,7 +51,10 @@ export function TierProgress({ tiers, currentTier, status }: Props) {
           accepted: 0,
           declined: 0,
         };
-        const capacity = TIER_CAPACITY[t - 1];
+        // Show the actual notified count as the capacity when it's smaller than
+        // the hard max — avoids "1/5" when the workspace only has 1 employee.
+        const capacity =
+          stat.notified > 0 ? Math.max(stat.notified, 1) : TIER_MAX[t - 1];
         const isActive = status === "OPEN" && currentTier === t;
         const isReached = currentTier >= t;
         const isFilled = stat.accepted > 0;
@@ -76,7 +94,7 @@ export function TierProgress({ tiers, currentTier, status }: Props) {
               {isActive ? (
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600 dark:text-red-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                  Aktiv
+                  {L.active}
                 </span>
               ) : (
                 <span aria-hidden className="h-1.5 w-1.5" />
@@ -119,14 +137,18 @@ export function TierProgress({ tiers, currentTier, status }: Props) {
             <div className="mt-3 flex items-center flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-zinc-400 min-h-[16px]">
               {stat.accepted > 0 && (
                 <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  {stat.accepted} angenommen
+                  {stat.accepted} {L.accepted}
                 </span>
               )}
               {stat.declined > 0 && (
-                <span className="text-red-500">{stat.declined} abgelehnt</span>
+                <span className="text-red-500">
+                  {stat.declined} {L.declined}
+                </span>
               )}
               {stat.pending > 0 && status === "OPEN" && (
-                <span>{stat.pending} offen</span>
+                <span>
+                  {stat.pending} {L.pending}
+                </span>
               )}
               {/* zero-width spacer keeps the row baseline aligned when
                   all three counters are absent (inactive tiers) */}

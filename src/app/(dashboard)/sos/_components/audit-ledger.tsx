@@ -159,7 +159,7 @@ function EventDescription({
         <p className="text-sm text-gray-700 dark:text-zinc-300">
           {locale === "en"
             ? `Tier ${tier} dispatched to ${count} employee${count === 1 ? "" : "s"}.`
-            : `Stufe ${tier} an ${count} Mitarbeiter${count === 1 ? "" : ""} verschickt.`}
+            : `Stufe ${tier} an ${count} Mitarbeiter verschickt.`}
         </p>
       );
     }

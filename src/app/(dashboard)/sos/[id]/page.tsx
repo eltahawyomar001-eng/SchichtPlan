@@ -93,6 +93,7 @@ export default function SosLivePage({
   const [data, setData] = useState<SosData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const loading = data === null && error === null;
 
@@ -136,21 +137,13 @@ export default function SosLivePage({
 
   async function cancelSos() {
     if (!data) return;
-    if (
-      !window.confirm(
-        locale === "en"
-          ? "Cancel this SOS request?"
-          : "Diese SOS-Anfrage wirklich abbrechen?",
-      )
-    ) {
-      return;
-    }
     setCancelling(true);
     try {
       await fetch(`/api/sos/${data.id}`, { method: "DELETE" });
       router.push("/sos");
     } catch {
       setCancelling(false);
+      setConfirmCancel(false);
     }
   }
 
@@ -286,12 +279,18 @@ export default function SosLivePage({
                   <p className="text-[10px] uppercase tracking-wider font-semibold text-red-600 dark:text-red-400">
                     {t("countdown")}
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums leading-none text-gray-900 dark:text-zinc-100">
-                    {totalMinutes}
-                    <span className="text-sm font-medium text-gray-400 dark:text-zinc-500 ml-0.5">
-                      m {String(seconds).padStart(2, "0")}s
-                    </span>
-                  </p>
+                  {totalMinutes === 0 && seconds === 0 ? (
+                    <p className="mt-1 text-sm font-semibold text-gray-400 dark:text-zinc-500 animate-pulse">
+                      {locale === "en" ? "Expiring…" : "Läuft ab…"}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-2xl font-bold tabular-nums leading-none text-gray-900 dark:text-zinc-100">
+                      {totalMinutes}
+                      <span className="text-sm font-medium text-gray-400 dark:text-zinc-500 ml-0.5">
+                        m {String(seconds).padStart(2, "0")}s
+                      </span>
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -312,17 +311,51 @@ export default function SosLivePage({
             </div>
 
             {data.status === "OPEN" && (
-              <div className="mt-5 pt-5 border-t border-red-100 dark:border-red-900/30 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={cancelSos}
-                  disabled={cancelling}
-                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
-                >
-                  <XIcon className="h-3.5 w-3.5 mr-1.5" />
-                  {t("cancelAction")}
-                </Button>
+              <div className="mt-5 pt-5 border-t border-red-100 dark:border-red-900/30 flex items-center justify-end gap-2">
+                {confirmCancel ? (
+                  <>
+                    <span className="text-xs text-gray-600 dark:text-zinc-400 mr-1">
+                      {locale === "en" ? "Sure?" : "Sicher?"}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConfirmCancel(false)}
+                      disabled={cancelling}
+                      className="text-gray-500 border-gray-200"
+                    >
+                      {t("backToList")
+                        ? locale === "en"
+                          ? "No"
+                          : "Nein"
+                        : "Nein"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={cancelSos}
+                      disabled={cancelling}
+                      className="bg-red-600 hover:bg-red-700 text-white border-0"
+                    >
+                      {cancelling ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <XIcon className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      {locale === "en" ? "Yes, cancel" : "Ja, abbrechen"}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmCancel(true)}
+                    disabled={cancelling}
+                    className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                  >
+                    <XIcon className="h-3.5 w-3.5 mr-1.5" />
+                    {t("cancelAction")}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -338,6 +371,7 @@ export default function SosLivePage({
             tiers={tierStats}
             currentTier={data.escalationTier}
             status={data.status}
+            locale={locale === "en" ? "en" : "de"}
           />
         </section>
 

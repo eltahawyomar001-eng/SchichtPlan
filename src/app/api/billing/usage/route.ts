@@ -37,6 +37,7 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
       activeEmployees,
       pendingInvitations,
       ticketStorage,
+      storageRows,
     ] = await Promise.all([
       ensureWorkspaceUsage(workspaceId),
       getWorkspacePlan(workspaceId),
@@ -46,6 +47,15 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
         where: { workspaceId, status: "PENDING" },
       }),
       getTicketStorageBreakdown(workspaceId),
+      // Query actual Supabase storage instead of the manually-incremented counter.
+      // The counter only tracks ticket attachments and service-visit signatures,
+      // misses direct uploads, and never decrements on delete — so it always drifts.
+      // storage.objects paths follow: {workspaceId}/{...}
+      prisma.$queryRaw<[{ total_bytes: bigint }]>`
+        SELECT COALESCE(SUM((metadata->>'size')::bigint), 0)::bigint AS total_bytes
+        FROM storage.objects
+        WHERE name LIKE ${workspaceId + "/%"}
+      `,
     ]);
 
     const unlimited = (n: number) => (n >= 999999 ? null : n);
@@ -54,7 +64,11 @@ export const GET = withRoute("/api/billing/usage", "GET", async () => {
         ? null
         : plan.limits.maxLocations;
 
-    const storageBytesUsed = Number(usage.storageBytesUsed);
+    // Use live Supabase storage query; fall back to counter if query returns nothing.
+    const storageBytesUsed = Number(
+      (storageRows as [{ total_bytes: bigint }])[0]?.total_bytes ??
+        usage.storageBytesUsed,
+    );
     const storageBytesLimit = Number(usage.storageBytesLimit);
     const usedMb = Math.round((storageBytesUsed / (1024 * 1024)) * 10) / 10;
     const limitMb = Math.round(storageBytesLimit / (1024 * 1024));

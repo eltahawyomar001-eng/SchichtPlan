@@ -914,8 +914,11 @@ function BillingContent() {
         {/* ─── Company Billing Info (WorkspaceCustomer) ─── */}
         <WorkspaceBillingInfo />
 
-        {/* ─── Billing Cycle Toggle ─── */}
-        <div className="flex flex-col items-center gap-3">
+        {/* ─── Pricing + Billing Cycle Toggle ─── */}
+        <div
+          id="pricing"
+          className="flex flex-col items-center gap-3 scroll-mt-20"
+        >
           <div className="inline-flex items-center rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1 shadow-sm">
             <button
               onClick={() => setBillingCycle("monthly")}
@@ -1130,6 +1133,22 @@ function BillingContent() {
                     </div>
                   )}
 
+                  {/* Trial gate — addons need a real paid Stripe subscription */}
+                  {subscription &&
+                    !subscription.hasStripeSubscription &&
+                    (!subscription.ticketingTier ||
+                      subscription.ticketingTier === "NONE") && (
+                      <div className="mb-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+                        {t("addonRequiresPaidPlan")}{" "}
+                        <a
+                          href="#pricing"
+                          className="font-semibold underline underline-offset-2 hover:opacity-80"
+                        >
+                          {t("addonRequiresPaidPlanCta")}
+                        </a>
+                      </div>
+                    )}
+
                   {/* Auto-charge info */}
                   <p className="mb-4 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                     <ShieldCheckIcon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
@@ -1272,7 +1291,9 @@ function BillingContent() {
           id="schichtplanung-addon"
           className="scroll-mt-6"
         >
-          <SchichtplanungAddonCard />
+          <SchichtplanungAddonCard
+            hasStripeSubscription={subscription?.hasStripeSubscription ?? false}
+          />
         </div>
 
         {/* ─── Payment Info ─── */}

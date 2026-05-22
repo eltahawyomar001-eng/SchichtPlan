@@ -68,7 +68,7 @@ export function TrialBanner() {
             ? "Noch 1 Tag Testzeitraum übrig."
             : `Noch ${state.daysLeft} Tage Testzeitraum übrig.`}{" "}
         <Link
-          href="/einstellungen/abonnement"
+          href="/einstellungen/abonnement#pricing"
           className="underline underline-offset-2 hover:opacity-80 transition-opacity"
         >
           Jetzt upgraden

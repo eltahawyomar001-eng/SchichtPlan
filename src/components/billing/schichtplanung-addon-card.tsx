@@ -34,7 +34,11 @@ function formatPrice(cents: number, locale: string): string {
   });
 }
 
-export function SchichtplanungAddonCard() {
+export function SchichtplanungAddonCard({
+  hasStripeSubscription,
+}: {
+  hasStripeSubscription?: boolean;
+}) {
   const t = useTranslations("billing");
   const locale = useLocale();
   const [data, setData] = useState<SchichtplanungState | null>(null);
@@ -123,6 +127,37 @@ export function SchichtplanungAddonCard() {
   }
 
   if (!data) return null;
+
+  // Trial users have no Stripe subscription yet — addons require a paid base plan.
+  // Show a clear CTA instead of letting them click and get a confusing API error.
+  if (hasStripeSubscription === false && !data.freeWithPlan && !data.active) {
+    return (
+      <Card id="schichtplanung-addon" className="scroll-mt-24">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>{t("schichtplanungAddonTitle")}</CardTitle>
+              <CardDescription className="mt-1">
+                {t("schichtplanungAddonDescription")}
+              </CardDescription>
+            </div>
+            <Badge variant="outline">{t("schichtplanungAddonInactive")}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+            {t("addonRequiresPaidPlan")}{" "}
+            <a
+              href="#pricing"
+              className="font-semibold underline underline-offset-2 hover:opacity-80"
+            >
+              {t("addonRequiresPaidPlanCta")}
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const {
     active,

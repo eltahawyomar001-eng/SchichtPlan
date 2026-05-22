@@ -283,6 +283,21 @@ export const PATCH = withRoute(
       status: validData.status,
     }).catch((err) => log.warn("[dispatch] fire-and-forget failed", { err }));
 
+    // Re-fetch after GENEHMIGT so the client sees ABGESCHLOSSEN, not the
+    // intermediate GENEHMIGT state written before the swap transaction.
+    if (validData.status === "GENEHMIGT" && existing.targetId) {
+      const finalSwap = await prisma.shiftSwapRequest.findUnique({
+        where: { id },
+        include: {
+          requester: true,
+          target: true,
+          shift: { include: { location: true } },
+          targetShift: { include: { location: true } },
+        },
+      });
+      if (finalSwap) return NextResponse.json(finalSwap);
+    }
+
     return NextResponse.json(updated);
   },
 );

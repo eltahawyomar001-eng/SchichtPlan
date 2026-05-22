@@ -612,26 +612,28 @@ export async function generateTimeEntriesFromShifts(workspaceId: string) {
     const grossMinutes = calcGrossMinutes(shift.startTime, shift.endTime);
     const breakMinutes = calcLegalBreak(grossMinutes);
     const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+    const employeeId = shift.employeeId; // narrowed above; capture for tx callback
 
-    await prisma.timeEntry.create({
-      data: {
-        date: shift.date,
-        startTime: shift.startTime,
-        endTime: shift.endTime,
-        breakMinutes,
-        grossMinutes,
-        netMinutes,
-        employeeId: shift.employeeId,
-        shiftId: shift.id,
-        workspaceId,
-        status: "ENTWURF",
-      },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.timeEntry.create({
+        data: {
+          date: shift.date,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+          breakMinutes,
+          grossMinutes,
+          netMinutes,
+          employeeId,
+          shiftId: shift.id,
+          workspaceId,
+          status: "ENTWURF",
+        },
+      });
 
-    // Mark shift as completed
-    await prisma.shift.update({
-      where: { id: shift.id },
-      data: { status: "COMPLETED" },
+      await tx.shift.update({
+        where: { id: shift.id },
+        data: { status: "COMPLETED" },
+      });
     });
 
     created++;

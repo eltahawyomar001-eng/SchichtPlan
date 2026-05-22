@@ -15,6 +15,7 @@ import {
   clearFailedAttempts,
 } from "@/lib/login-lockout";
 import { initializeTrial } from "@/lib/subscription";
+import { log } from "@/lib/logger";
 
 /** Workspace shape that includes the onboardingCompleted field.
  *  Used for casting until moduleResolution:bundler fully resolves
@@ -196,46 +197,56 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   events: {
-    // After PrismaAdapter creates a new OAuth user, bootstrap workspace + employee + trial
+    // After PrismaAdapter creates a new OAuth user, bootstrap workspace + employee + trial.
+    // Wrapped in try/catch because NextAuth swallows event errors silently — the JWT
+    // callback has a repair path, but logging here makes failures visible.
     async createUser({ user }) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { workspaceId: true, name: true, email: true },
-      });
-      if (dbUser && !dbUser.workspaceId) {
-        const displayName =
-          dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
-        const slug =
-          displayName
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "") +
-          "-" +
-          user.id.slice(-6);
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { workspaceId: true, name: true, email: true },
+        });
+        if (dbUser && !dbUser.workspaceId) {
+          const displayName =
+            dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
+          const slug =
+            displayName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "") +
+            "-" +
+            user.id.slice(-6);
 
-        await prisma.$transaction(async (tx) => {
-          const workspace = await tx.workspace.create({
-            data: { name: `${displayName}'s Workspace`, slug },
-          });
-          await tx.user.update({
-            where: { id: user.id },
-            data: { workspaceId: workspace.id, role: "OWNER" },
-          });
+          await prisma.$transaction(async (tx) => {
+            const workspace = await tx.workspace.create({
+              data: { name: `${displayName}'s Workspace`, slug },
+            });
+            await tx.user.update({
+              where: { id: user.id },
+              data: { workspaceId: workspace.id, role: "OWNER" },
+            });
 
-          // Auto-create Employee profile so punch-clock works immediately
-          const nameParts = (dbUser.name || "").trim().split(/\s+/);
-          await tx.employee.create({
-            data: {
-              firstName: nameParts[0] || displayName,
-              lastName: nameParts.slice(1).join(" ") || "",
-              email: dbUser.email ?? "",
-              userId: user.id,
-              workspaceId: workspace.id,
-              isActive: true,
-            },
-          });
+            // Auto-create Employee profile so punch-clock works immediately
+            const nameParts = (dbUser.name || "").trim().split(/\s+/);
+            await tx.employee.create({
+              data: {
+                firstName: nameParts[0] || displayName,
+                lastName: nameParts.slice(1).join(" ") || "",
+                email: dbUser.email ?? "",
+                userId: user.id,
+                workspaceId: workspace.id,
+                isActive: true,
+              },
+            });
 
-          await initializeTrial(tx, workspace.id);
+            await initializeTrial(tx, workspace.id);
+          });
+        }
+      } catch (err) {
+        // The JWT callback will repair workspace/trial on the first sign-in.
+        log.error("[auth] createUser event failed — JWT callback will repair", {
+          userId: user.id,
+          error: err instanceof Error ? err.message : String(err),
         });
       }
     },
@@ -273,6 +284,17 @@ export const authOptions: NextAuthOptions = {
               prisma as Parameters<typeof initializeTrial>[0],
               dbUser.workspaceId,
             );
+          } else if (sub.status === "INCOMPLETE" && !sub.stripeSubscriptionId) {
+            // Orphaned INCOMPLETE stub: the subscription endpoint's ensureSubscription
+            // created a placeholder before initializeTrial could run. Upgrade it to
+            // TRIALING so the onboarding poll passes immediately.
+            const now = new Date();
+            const trialEnd = new Date(now);
+            trialEnd.setDate(trialEnd.getDate() + 7);
+            await prisma.subscription.update({
+              where: { workspaceId: dbUser.workspaceId },
+              data: { status: "TRIALING", trialStart: now, trialEnd },
+            });
           }
         }
       }
@@ -368,6 +390,34 @@ export const authOptions: NextAuthOptions = {
             token.onboardingCompleted =
               (dbUser.workspace as unknown as WorkspaceWithOnboarding | null)
                 ?.onboardingCompleted ?? false;
+
+            // Repair: workspace exists but subscription may be missing or orphaned.
+            // This covers the race where createUser event succeeded (workspace/user)
+            // but initializeTrial failed, and ensureSubscription later created an
+            // INCOMPLETE stub via the subscription polling endpoint.
+            if (dbUser.workspaceId) {
+              const sub = await prisma.subscription.findUnique({
+                where: { workspaceId: dbUser.workspaceId },
+                select: { status: true, stripeSubscriptionId: true },
+              });
+              if (!sub) {
+                await initializeTrial(
+                  prisma as Parameters<typeof initializeTrial>[0],
+                  dbUser.workspaceId,
+                );
+              } else if (
+                sub.status === "INCOMPLETE" &&
+                !sub.stripeSubscriptionId
+              ) {
+                const now = new Date();
+                const trialEnd = new Date(now);
+                trialEnd.setDate(trialEnd.getDate() + 7);
+                await prisma.subscription.update({
+                  where: { workspaceId: dbUser.workspaceId },
+                  data: { status: "TRIALING", trialStart: now, trialEnd },
+                });
+              }
+            }
           }
         }
       }

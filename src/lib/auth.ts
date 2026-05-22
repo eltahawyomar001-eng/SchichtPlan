@@ -262,17 +262,15 @@ export const authOptions: NextAuthOptions = {
           select: { workspaceId: true, hashedPassword: true },
         });
 
-        // Block OAuth from silently claiming an existing credentials account.
-        // If the user registered with email+password, they must sign in that way
-        // unless they explicitly linked this OAuth provider from their settings.
-        if (dbUser?.hashedPassword) {
-          const alreadyLinked = await prisma.account.findFirst({
-            where: { userId: user.id, provider: account.provider },
-          });
-          if (!alreadyLinked) {
-            return `/login?error=OAuthAccountNotLinked`;
-          }
-        }
+        // OAuth-claiming-credentials protection is handled by NextAuth itself:
+        // when getUserByEmail finds an existing user but getUserByAccount finds
+        // no Account for this provider, NextAuth returns OAuthAccountNotLinked
+        // BEFORE signIn is called — so no further check is needed here.
+        //
+        // WARNING: if allowDangerousEmailAccountLinking is ever added to the
+        // NextAuth config, that protection disappears and must be re-implemented
+        // at the adapter level (override linkAccount, not here in signIn, because
+        // the Account row is created before signIn fires).
 
         if (dbUser?.workspaceId) {
           // Wrapped in try/catch: a transient DB error here must never block

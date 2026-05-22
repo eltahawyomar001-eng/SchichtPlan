@@ -1081,6 +1081,7 @@
     "email": "Email address",
     "password": "Password",
     "invalidCredentials": "Invalid email or password.",
+    "oauthAccountNotLinked": "This email is already registered with a password account. Please sign in with your email and password.",
     "accountLocked": "Too many failed login attempts. Your account is locked for 15 minutes.",
     "signingIn": "Signing in…",
     "noAccount": "Don't have an account?",

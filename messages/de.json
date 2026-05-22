@@ -1081,6 +1081,7 @@
     "email": "E-Mail-Adresse",
     "password": "Passwort",
     "invalidCredentials": "E-Mail oder Passwort ist falsch.",
+    "oauthAccountNotLinked": "Diese E-Mail ist bereits mit einem Passwort-Konto verknüpft. Bitte melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an.",
     "accountLocked": "Zu viele fehlgeschlagene Anmeldeversuche. Ihr Konto ist für 15 Minuten gesperrt.",
     "signingIn": "Wird angemeldet…",
     "noAccount": "Noch kein Konto?",

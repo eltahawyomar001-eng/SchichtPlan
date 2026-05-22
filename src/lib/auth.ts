@@ -248,8 +248,21 @@ export const authOptions: NextAuthOptions = {
       if (account?.type === "oauth") {
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { workspaceId: true },
+          select: { workspaceId: true, hashedPassword: true },
         });
+
+        // Block OAuth from silently claiming an existing credentials account.
+        // If the user registered with email+password, they must sign in that way
+        // unless they explicitly linked this OAuth provider from their settings.
+        if (dbUser?.hashedPassword) {
+          const alreadyLinked = await prisma.account.findFirst({
+            where: { userId: user.id, provider: account.provider },
+          });
+          if (!alreadyLinked) {
+            return `/login?error=OAuthAccountNotLinked`;
+          }
+        }
+
         if (dbUser?.workspaceId) {
           const sub = await prisma.subscription.findUnique({
             where: { workspaceId: dbUser.workspaceId },

@@ -20,6 +20,12 @@ import {
   checkArbZg5RestPeriod,
   checkArbZg4BreakRequirement,
 } from "@/lib/arbzg";
+import {
+  isPublicHoliday,
+  isSunday,
+  isNightShift,
+  calculateSurcharge,
+} from "@/lib/holidays";
 
 export const PATCH = withRoute(
   "/api/shifts/[id]",
@@ -130,6 +136,39 @@ export const PATCH = withRoute(
       }
     }
 
+    // Recalculate surcharges when date or times change — a shift moved to a
+    // Sunday/holiday must pick up the correct surcharge, not keep the old one.
+    let surchargeFields: Record<string, unknown> = {};
+    if (body.date || body.startTime || body.endTime) {
+      const effectiveDate = body.date
+        ? new Date(body.date)
+        : new Date(currentShift.date);
+      const effectiveStart = body.startTime ?? currentShift.startTime;
+      const effectiveEnd = body.endTime ?? currentShift.endTime;
+
+      const ws = await prisma.workspace.findUnique({
+        where: { id: workspaceId! },
+        select: { bundesland: true },
+      });
+      const bundesland = ws?.bundesland ?? "HE";
+
+      const holCheck = isPublicHoliday(effectiveDate, bundesland);
+      const sunCheck = isSunday(effectiveDate);
+      const nightCheck = isNightShift(effectiveStart, effectiveEnd);
+      const surch = calculateSurcharge({
+        isNight: nightCheck,
+        isSunday: sunCheck,
+        isHoliday: holCheck.isHoliday,
+      });
+
+      surchargeFields = {
+        isNightShift: nightCheck,
+        isHolidayShift: holCheck.isHoliday,
+        isSundayShift: sunCheck,
+        surchargePercent: surch,
+      };
+    }
+
     const shift = await prisma.$transaction(async (tx) => {
       const updated = await tx.shift.updateMany({
         where: { id, workspaceId },
@@ -142,6 +181,7 @@ export const PATCH = withRoute(
           notes: body.notes,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           status: derivedStatus as any,
+          ...surchargeFields,
         },
       });
 

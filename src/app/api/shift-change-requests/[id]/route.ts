@@ -81,12 +81,26 @@ export const PATCH = withRoute(
         }
       }
 
-      const updated = await prisma.shiftChangeRequest.update({
+      const { count: cancelCount } = await prisma.shiftChangeRequest.updateMany(
+        {
+          where: {
+            id,
+            status: "AUSSTEHEND",
+            workspaceId: workspaceId ?? undefined,
+          },
+          data: { status: "STORNIERT" },
+        },
+      );
+      if (cancelCount === 0) {
+        return NextResponse.json(
+          { error: "Request already processed" },
+          { status: 409 },
+        );
+      }
+      const cancelled = await prisma.shiftChangeRequest.findFirst({
         where: { id },
-        data: { status: "STORNIERT" },
       });
-
-      return NextResponse.json(updated);
+      return NextResponse.json(cancelled);
     }
 
     // ── Approve / Reject: Only management ──
@@ -98,16 +112,33 @@ export const PATCH = withRoute(
     if (forbidden) return forbidden;
 
     if (action === "reject") {
-      const updated = await prisma.shiftChangeRequest.update({
-        where: { id },
-        data: {
-          status: "ABGELEHNT",
-          reviewedBy: user.id,
-          reviewedAt: new Date(),
-          reviewNote: reviewNote || null,
+      const { count: rejectCount } = await prisma.shiftChangeRequest.updateMany(
+        {
+          where: {
+            id,
+            status: "AUSSTEHEND",
+            workspaceId: workspaceId ?? undefined,
+          },
+          data: {
+            status: "ABGELEHNT",
+            reviewedBy: user.id,
+            reviewedAt: new Date(),
+            reviewNote: reviewNote || null,
+          },
         },
+      );
+      if (rejectCount === 0) {
+        return NextResponse.json(
+          { error: "Request already processed" },
+          { status: 409 },
+        );
+      }
+      const updated = await prisma.shiftChangeRequest.findFirst({
+        where: { id },
         include: { requester: true, shift: true },
       });
+      if (!updated)
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
 
       // ── E-Signature: Record signed rejection ──
       createESignature({
@@ -198,22 +229,40 @@ export const PATCH = withRoute(
         }
       }
 
-      // Apply changes to the shift and approve the request in a transaction
-      const [updatedShift, updatedRequest] = await prisma.$transaction([
-        prisma.shift.update({
-          where: { id: changeRequest.shiftId },
-          data: shiftUpdate,
-        }),
-        prisma.shiftChangeRequest.update({
-          where: { id },
+      // Apply changes atomically — status guard in WHERE prevents double-approval
+      const txResult = await prisma.$transaction(async (tx) => {
+        const { count: approveCount } = await tx.shiftChangeRequest.updateMany({
+          where: {
+            id,
+            status: "AUSSTEHEND",
+            workspaceId: workspaceId ?? undefined,
+          },
           data: {
             status: "GENEHMIGT",
             reviewedBy: user.id,
             reviewedAt: new Date(),
             reviewNote: reviewNote || null,
           },
-        }),
-      ]);
+        });
+        if (approveCount === 0) return null;
+        const updatedShift = await tx.shift.update({
+          where: { id: changeRequest.shiftId },
+          data: shiftUpdate,
+        });
+        return updatedShift;
+      });
+
+      if (!txResult) {
+        return NextResponse.json(
+          { error: "Request already processed" },
+          { status: 409 },
+        );
+      }
+
+      const updatedShift = txResult;
+      const updatedRequest = await prisma.shiftChangeRequest.findFirst({
+        where: { id },
+      });
 
       // ── E-Signature: Record signed approval ──
       createESignature({

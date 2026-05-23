@@ -65,6 +65,17 @@ export const POST = withRoute(
       });
       const isFlexible = employee?.flexibleWork ?? false;
 
+      // Audit any manual bypass — this is a prominent log entry so managers can
+      // review ArbZG §5 overrides in the log aggregator.
+      if (!isFlexible && bypassRestPeriod) {
+        log.warn("[ArbZG] §5 rest-period bypass used at clock-in", {
+          employeeId,
+          workspaceId,
+          userId: user.id,
+          at: now.toISOString(),
+        });
+      }
+
       // Skip ArbZG checks for flexible employees or when the user explicitly confirmed
       if (!isFlexible && !bypassRestPeriod) {
         // ArbZG §5: warn but do NOT hard-block — return 200 with a warning flag

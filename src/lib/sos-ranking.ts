@@ -1,8 +1,13 @@
 import { prisma } from "@/lib/db";
 import { sendPushNotification } from "@/lib/notifications/push";
 import { sendEmail } from "@/lib/notifications/email";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import type { Shift } from "@prisma/client";
+
+/** Store only the hash; raw token travels only in the email URL (never touches DB). */
+function hashSosToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 export interface RankedEmployee {
   id: string;
@@ -157,6 +162,8 @@ export async function notifyEmployeeTier(
   await Promise.allSettled(
     employees.map(async (emp) => {
       const token = randomUUID();
+      // Only the hash is stored — raw token is never written to DB
+      const tokenHash = hashSosToken(token);
       const respondUrl = `${baseUrl}/sos/respond?token=${token}`;
 
       await prisma.sosNotification.upsert({
@@ -167,7 +174,7 @@ export async function notifyEmployeeTier(
           sosRequestId,
           employeeId: emp.id,
           tier,
-          responseToken: token,
+          responseToken: tokenHash,
         },
         update: {},
       });

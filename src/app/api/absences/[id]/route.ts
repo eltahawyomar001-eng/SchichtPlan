@@ -136,8 +136,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       if (halfDayStart) totalDays -= 0.5;
       if (halfDayEnd) totalDays -= 0.5;
 
-      const updated = await prisma.absenceRequest.update({
-        where: { id },
+      // workspaceId in WHERE is defence-in-depth — the findFirst above already
+      // verified it, but we add it here so the write itself can never touch
+      // a record from a different workspace.
+      const { count: editCount } = await prisma.absenceRequest.updateMany({
+        where: { id, workspaceId: user.workspaceId! },
         data: {
           ...(edits.category && { category: edits.category }),
           startDate: newStart,
@@ -146,8 +149,17 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           halfDayEnd,
           totalDays,
         },
+      });
+      if (editCount === 0) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      const updated = await prisma.absenceRequest.findFirst({
+        where: { id },
         include: { employee: true },
       });
+      if (!updated) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
 
       // Sync vacation balance for URLAUB
       if (

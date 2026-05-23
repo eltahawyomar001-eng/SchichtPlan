@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
 import { emitSosEvent } from "@/lib/sos-events";
 import { log } from "@/lib/logger";
+
+function hashSosToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 /**
  * GET /api/sos/respond?token=<responseToken>
@@ -23,7 +28,7 @@ export const GET = withRoute("/api/sos/respond", "GET", async (req) => {
   }
 
   const notif = await prisma.sosNotification.findUnique({
-    where: { responseToken: token },
+    where: { responseToken: hashSosToken(token) },
     include: {
       sosRequest: {
         include: {
@@ -126,7 +131,7 @@ export const POST = withRoute("/api/sos/respond", "POST", async (req) => {
   }
 
   const notif = await prisma.sosNotification.findUnique({
-    where: { responseToken: token },
+    where: { responseToken: hashSosToken(token) },
     include: {
       sosRequest: {
         select: { id: true, status: true, expiresAt: true, shiftId: true },

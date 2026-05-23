@@ -37,9 +37,9 @@ export const POST = withRoute(
 
     const { id } = params;
 
-    // Fetch the shift
-    const shift = await prisma.shift.findUnique({
-      where: { id },
+    // workspaceId enforced at DB level — prevents claiming cross-tenant shifts
+    const shift = await prisma.shift.findFirst({
+      where: { id, workspaceId: workspaceId ?? undefined },
     });
 
     if (!shift) {

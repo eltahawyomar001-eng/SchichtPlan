@@ -86,12 +86,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // Verify shift belongs to requester
-    const shift = await prisma.shift.findUnique({
-      where: { id: body.shiftId },
+    // Verify shift belongs to requester — workspaceId enforced at DB level
+    const shift = await prisma.shift.findFirst({
+      where: { id: body.shiftId, workspaceId },
     });
 
-    if (!shift || shift.workspaceId !== workspaceId) {
+    if (!shift) {
       return NextResponse.json({ error: "Shift not found" }, { status: 404 });
     }
 
@@ -153,8 +153,9 @@ export async function POST(req: Request) {
       }
 
       // Check if taking the target's shift would violate ArbZG for the requester
-      const targetShift = await prisma.shift.findUnique({
-        where: { id: body.targetShiftId },
+      // workspaceId enforced at DB level — prevents cross-tenant swap
+      const targetShift = await prisma.shift.findFirst({
+        where: { id: body.targetShiftId, workspaceId },
       });
 
       if (targetShift) {

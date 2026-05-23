@@ -56,10 +56,15 @@ export const PATCH = withRoute(
       );
     }
 
-    await prisma.user.update({
-      where: { id },
+    // workspaceId guard ensures the write can't land on a user who was removed
+    // from the workspace between the findUnique check and this update.
+    const { count: roleCount } = await prisma.user.updateMany({
+      where: { id, workspaceId },
       data: { role },
     });
+    if (roleCount === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     createAuditLog({
       action: "UPDATE",

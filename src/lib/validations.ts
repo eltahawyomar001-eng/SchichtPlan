@@ -167,7 +167,9 @@ export const forgotPasswordSchema = z.object({
 // ── Invitation ──────────────────────────────────────────────────
 export const createInvitationSchema = z.object({
   email: email,
-  role: z.enum(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]),
+  // OWNER is intentionally excluded — workspace owners are set at creation time
+  // and cannot be granted via invitation under any circumstances.
+  role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]),
 });
 
 // ── Billing: Checkout ───────────────────────────────────────────

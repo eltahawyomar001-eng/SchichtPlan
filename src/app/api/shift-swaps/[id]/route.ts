@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { SwapStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
@@ -122,9 +123,39 @@ export const PATCH = withRoute(
       data.status = "STORNIERT";
     }
 
-    const updated = await prisma.shiftSwapRequest.update({
+    // Compare-and-swap: the WHERE includes the expected prior status so two
+    // concurrent requests can't both succeed — whichever writes second sees
+    // count=0 and returns a 409 instead of silently double-applying the transition.
+    const allowedPriorStatuses: Record<string, SwapStatus[]> = {
+      ANGENOMMEN: ["ANGEFRAGT"],
+      GENEHMIGT: ["ANGEFRAGT", "ANGENOMMEN"],
+      ABGELEHNT: ["ANGEFRAGT", "ANGENOMMEN"],
+      STORNIERT: ["ANGEFRAGT", "ANGENOMMEN"],
+    };
+    const priorStatuses = allowedPriorStatuses[validData.status] ?? [];
+
+    const { count: swapCount } = await prisma.shiftSwapRequest.updateMany({
+      where: {
+        id,
+        workspaceId: user.workspaceId!,
+        status: { in: priorStatuses },
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: data as any,
+    });
+
+    if (swapCount === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Anfrage wurde bereits bearbeitet oder der Status hat sich geändert.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const updated = await prisma.shiftSwapRequest.findUnique({
       where: { id },
-      data,
       include: {
         requester: true,
         target: true,
@@ -132,6 +163,10 @@ export const PATCH = withRoute(
         targetShift: { include: { location: true } },
       },
     });
+
+    if (!updated) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     // ── Automation: Auto-approve swap if no conflicts ──
     if (validData.status === "ANGENOMMEN") {

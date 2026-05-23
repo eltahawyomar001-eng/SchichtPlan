@@ -48,6 +48,26 @@ export const POST = withRoute("/api/sos", "POST", async (req) => {
   if (!shift)
     return NextResponse.json({ error: "Shift not found" }, { status: 404 });
 
+  // Rate limit: max 3 SOS launches per workspace per 5 minutes to prevent
+  // accidental or malicious notification storms burning Twilio/Resend credits.
+  const recentCount = await prisma.sosRequest.count({
+    where: {
+      workspaceId: user.workspaceId!,
+      createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+    },
+  });
+  if (recentCount >= 3) {
+    return NextResponse.json(
+      {
+        error: "RATE_LIMITED",
+        message:
+          "Maximal 3 SOS-Anfragen pro 5 Minuten erlaubt. Bitte warten Sie kurz.",
+        messageEn: "Maximum 3 SOS requests per 5 minutes. Please wait.",
+      },
+      { status: 429 },
+    );
+  }
+
   const existing = await prisma.sosRequest.findFirst({
     where: { shiftId, status: "OPEN" },
   });

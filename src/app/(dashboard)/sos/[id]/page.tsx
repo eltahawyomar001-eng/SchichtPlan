@@ -8,7 +8,6 @@ import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   AlertCircleIcon,
@@ -16,6 +15,8 @@ import {
   ChevronLeftIcon,
   ClockIcon,
   MapPinIcon,
+  UsersIcon,
+  ZapIcon,
   XIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
@@ -98,8 +99,8 @@ export default function SosLivePage({
   const loading = data === null && error === null;
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+    const ticker = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(ticker);
   }, []);
 
   useEffect(() => {
@@ -152,20 +153,20 @@ export default function SosLivePage({
       <div>
         <Topbar title={t("title")} description={t("description")} />
         <PageContent>
-          <Card>
-            <CardContent className="py-12 text-center">
-              <AlertCircleIcon className="h-8 w-8 mx-auto text-gray-300 mb-2" />
-              <p className="text-sm font-medium text-gray-600 dark:text-zinc-400">
-                {t("notFound")}
-              </p>
-              <Link
-                href="/sos"
-                className="mt-3 inline-block text-xs text-emerald-600 hover:underline"
-              >
-                {t("backToList")}
-              </Link>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-16 px-8 text-center">
+            <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+              <AlertCircleIcon className="h-6 w-6 text-gray-400 dark:text-zinc-500" />
+            </div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+              {t("notFound")}
+            </p>
+            <Link
+              href="/sos"
+              className="mt-3 inline-block text-xs font-medium text-emerald-600 hover:underline"
+            >
+              {t("backToList")}
+            </Link>
+          </div>
         </PageContent>
       </div>
     );
@@ -176,7 +177,8 @@ export default function SosLivePage({
       <div>
         <Topbar title={t("title")} description={t("description")} />
         <PageContent>
-          <div className="h-24 rounded-xl bg-gray-100 dark:bg-zinc-800 animate-pulse" />
+          <div className="h-6 w-20 rounded bg-gray-100 dark:bg-zinc-800 animate-pulse" />
+          <div className="h-44 rounded-2xl bg-gray-100 dark:bg-zinc-800 animate-pulse" />
           <div className="grid grid-cols-3 gap-3">
             {[0, 1, 2].map((i) => (
               <div
@@ -196,19 +198,16 @@ export default function SosLivePage({
     locale: dfnsLocale,
   });
   const expiresAt = new Date(data.expiresAt);
-  const totalMinutes = Math.max(
-    0,
-    Math.round((expiresAt.getTime() - now) / 60000),
-  );
-  const seconds = Math.max(
-    0,
-    Math.floor((expiresAt.getTime() - now) / 1000) % 60,
-  );
 
-  const tierStats = [1, 2, 3].map((t) => {
-    const notifs = data.notifications.filter((n) => n.tier === t);
+  const totalSecs = Math.max(0, Math.floor((expiresAt.getTime() - now) / 1000));
+  const countdownH = Math.floor(totalSecs / 3600);
+  const countdownM = Math.floor((totalSecs % 3600) / 60);
+  const countdownS = totalSecs % 60;
+
+  const tierStats = [1, 2, 3].map((tier) => {
+    const notifs = data.notifications.filter((n) => n.tier === tier);
     return {
-      tier: t,
+      tier,
       notified: notifs.length,
       pending: notifs.filter((n) => n.response === "PENDING").length,
       accepted: notifs.filter((n) => n.response === "ACCEPTED").length,
@@ -216,119 +215,183 @@ export default function SosLivePage({
     };
   });
 
+  const isOpen = data.status === "OPEN";
+  const isFilled = data.status === "FILLED";
+
   return (
     <div>
       <Topbar title={t("liveTitle")} description={t("liveDescription")} />
       <PageContent>
-        {/* Back nav — distinct top/bottom breathing room so it reads as
-            navigation chrome rather than part of the banner below */}
-        <div className="pt-1 pb-2">
+        {/* Back link */}
+        <div className="pt-1 pb-3">
           <Link
             href="/sos"
-            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200 transition-colors"
           >
             <ChevronLeftIcon className="h-3.5 w-3.5" />
             {t("backToList")}
           </Link>
         </div>
 
-        {/* Main status banner */}
-        <Card
+        {/* ── STATUS BANNER ─────────────────────────────────── */}
+        <div
           className={cn(
-            "transition-colors duration-500 ease-out",
-            data.status === "OPEN"
-              ? "border-red-200 dark:border-red-900/40 bg-red-50/30 dark:bg-red-950/10"
-              : data.status === "FILLED"
-                ? "border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10"
-                : "border-gray-200 dark:border-zinc-700",
+            "rounded-2xl overflow-hidden border",
+            isOpen
+              ? "border-red-200 dark:border-red-800/50"
+              : isFilled
+                ? "border-emerald-200 dark:border-emerald-800/50"
+                : "border-zinc-200 dark:border-zinc-700",
           )}
         >
-          <CardContent className="p-6">
-            {/* items-center centers the right-hand FILLED BY badge on the
-                same horizontal axis as the shift-info block. gap-6 keeps
-                the two columns from colliding when wrapped on mobile. */}
-            <div className="flex flex-wrap items-center justify-between gap-6">
-              <div className="min-w-0 flex-1 space-y-2">
+          {/* Accent stripe */}
+          <div
+            className={cn(
+              "h-1",
+              isOpen
+                ? "bg-red-500"
+                : isFilled
+                  ? "bg-emerald-500"
+                  : "bg-zinc-400 dark:bg-zinc-600",
+            )}
+          />
+
+          <div
+            className={cn(
+              "px-6 py-6",
+              isOpen
+                ? "bg-red-50/40 dark:bg-red-950/10"
+                : isFilled
+                  ? "bg-emerald-50/30 dark:bg-emerald-950/10"
+                  : "bg-white dark:bg-zinc-900",
+            )}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-6">
+              {/* LEFT — shift details */}
+              <div className="min-w-0 flex-1 space-y-4">
                 <StatusHeader status={data.status} t={t} />
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-zinc-100">
+
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-zinc-50 capitalize">
                     {shiftDate}
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-zinc-400 mt-1">
+                  <div className="flex items-center gap-2 text-[15px] font-semibold text-gray-600 dark:text-zinc-300">
+                    <ClockIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500 shrink-0" />
                     {data.shift.startTime} – {data.shift.endTime}
-                    {locale === "en" ? "" : " Uhr"}
-                  </p>
+                    {locale !== "en" ? " Uhr" : ""}
+                  </div>
+                  {data.shift.location && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+                      <MapPinIcon className="h-3.5 w-3.5 shrink-0" />
+                      {data.shift.location.name}
+                    </div>
+                  )}
                 </div>
-                {data.shift.location && (
-                  <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-zinc-400">
-                    <MapPinIcon className="h-3.5 w-3.5" />
-                    {data.shift.location.name}
-                  </p>
-                )}
-                {data.bonusAmount && Number(data.bonusAmount) > 0 && (
-                  <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                    {t("bonus")}: {Number(data.bonusAmount).toFixed(2)}{" "}
-                    {data.bonusCurrency}
-                    {data.bonusNote ? ` · ${data.bonusNote}` : ""}
-                  </p>
-                )}
+
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  {data.bonusAmount && Number(data.bonusAmount) > 0 && (
+                    <span className="inline-flex items-center rounded-lg border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/20 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                      + {Number(data.bonusAmount).toFixed(2)}{" "}
+                      {data.bonusCurrency}
+                      {data.bonusNote ? ` · ${data.bonusNote}` : ""}
+                    </span>
+                  )}
+                  {data.createdBy && (
+                    <span className="text-[11px] text-gray-400 dark:text-zinc-500">
+                      {locale === "en" ? "By" : "Von"}{" "}
+                      {data.createdBy.name ?? data.createdBy.email}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {data.status === "OPEN" && (
-                <div className="rounded-xl bg-white dark:bg-zinc-900 border border-red-100 dark:border-red-900/40 px-4 py-3 text-center min-w-[120px]">
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-red-600 dark:text-red-400">
+              {/* RIGHT — countdown or filled-by */}
+              {isOpen && (
+                <div className="shrink-0 rounded-xl border border-red-100 dark:border-red-900/40 bg-white dark:bg-zinc-900/80 px-5 py-4 text-center min-w-[148px]">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-red-500 dark:text-red-400 mb-3">
                     {t("countdown")}
                   </p>
-                  {totalMinutes === 0 && seconds === 0 ? (
-                    <p className="mt-1 text-sm font-semibold text-gray-400 dark:text-zinc-500 animate-pulse">
+                  {totalSecs === 0 ? (
+                    <p className="text-sm font-semibold text-gray-400 dark:text-zinc-500 animate-pulse">
                       {locale === "en" ? "Expiring…" : "Läuft ab…"}
                     </p>
                   ) : (
-                    <p className="mt-1 text-2xl font-bold tabular-nums leading-none text-gray-900 dark:text-zinc-100">
-                      {totalMinutes}
-                      <span className="text-sm font-medium text-gray-400 dark:text-zinc-500 ml-0.5">
-                        m {String(seconds).padStart(2, "0")}s
-                      </span>
-                    </p>
+                    <>
+                      <p className="text-3xl font-black tabular-nums leading-none tracking-tighter text-gray-900 dark:text-zinc-50">
+                        {countdownH > 0 && (
+                          <span>{String(countdownH).padStart(2, "0")}:</span>
+                        )}
+                        {String(countdownM).padStart(2, "0")}:
+                        <span
+                          className={cn(
+                            "transition-colors duration-500",
+                            countdownS <= 10 &&
+                              countdownH === 0 &&
+                              countdownM === 0
+                              ? "text-red-500 dark:text-red-400"
+                              : "",
+                          )}
+                        >
+                          {String(countdownS).padStart(2, "0")}
+                        </span>
+                      </p>
+                      <p className="mt-2 text-[9px] text-gray-400 dark:text-zinc-500 tracking-wide">
+                        {countdownH > 0 ? "Std · Min · Sek" : "Min · Sek"}
+                      </p>
+                    </>
                   )}
                 </div>
               )}
 
-              {data.status === "FILLED" && data.filledBy && (
-                <div className="rounded-xl bg-white dark:bg-zinc-900 border border-emerald-100 dark:border-emerald-900/40 px-4 py-3 min-w-[180px]">
-                  <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400">
+              {isFilled && data.filledBy && (
+                <div className="shrink-0 rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-white dark:bg-zinc-900/80 px-4 py-4 min-w-[180px]">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3">
                     {t("filledBadge")}
                   </p>
-                  <p className="mt-1.5 inline-flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                    <CheckCircleIcon className="h-4 w-4 shrink-0" />
-                    {formatPersonName(
-                      data.filledBy.firstName,
-                      data.filledBy.lastName,
-                    )}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ring-2 ring-white dark:ring-zinc-800"
+                      style={{ background: data.filledBy.color ?? "#10b981" }}
+                    >
+                      {data.filledBy.firstName[0]?.toUpperCase() ?? "?"}
+                      {data.filledBy.lastName[0]?.toUpperCase() ?? ""}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 dark:text-zinc-100 truncate">
+                        {formatPersonName(
+                          data.filledBy.firstName,
+                          data.filledBy.lastName,
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <CheckCircleIcon className="h-3 w-3 text-emerald-500 shrink-0" />
+                        <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                          {locale === "en" ? "Accepted" : "Angenommen"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {data.status === "OPEN" && (
-              <div className="mt-5 pt-5 border-t border-red-100 dark:border-red-900/30 flex items-center justify-end gap-2">
+            {/* Cancel action */}
+            {isOpen && (
+              <div className="mt-5 pt-4 border-t border-red-100 dark:border-red-900/30 flex items-center justify-end gap-2">
                 {confirmCancel ? (
                   <>
                     <span className="text-xs text-gray-600 dark:text-zinc-400 mr-1">
-                      {locale === "en" ? "Sure?" : "Sicher?"}
+                      {locale === "en"
+                        ? "Are you sure?"
+                        : "Wirklich abbrechen?"}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setConfirmCancel(false)}
                       disabled={cancelling}
-                      className="text-gray-500 border-gray-200"
                     >
-                      {t("backToList")
-                        ? locale === "en"
-                          ? "No"
-                          : "Nein"
-                        : "Nein"}
+                      {locale === "en" ? "No" : "Nein"}
                     </Button>
                     <Button
                       size="sm"
@@ -337,11 +400,13 @@ export default function SosLivePage({
                       className="bg-red-600 hover:bg-red-700 text-white border-0"
                     >
                       {cancelling ? (
-                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                       ) : (
-                        <XIcon className="h-3.5 w-3.5 mr-1.5" />
+                        <>
+                          <XIcon className="h-3.5 w-3.5 mr-1.5" />
+                          {locale === "en" ? "Yes, cancel" : "Ja, abbrechen"}
+                        </>
                       )}
-                      {locale === "en" ? "Yes, cancel" : "Ja, abbrechen"}
                     </Button>
                   </>
                 ) : (
@@ -358,14 +423,15 @@ export default function SosLivePage({
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Escalation visualizer */}
+        {/* ── ESCALATION TIERS ──────────────────────────────── */}
         <section aria-labelledby="sos-escalation-heading">
           <SectionHeader
             id="sos-escalation-heading"
             label={t("escalationProgress")}
+            icon={<ZapIcon className="h-3.5 w-3.5 text-amber-500" />}
           />
           <TierProgress
             tiers={tierStats}
@@ -375,46 +441,61 @@ export default function SosLivePage({
           />
         </section>
 
-        {/* Audit ledger */}
+        {/* ── AUDIT LEDGER ──────────────────────────────────── */}
         <section aria-labelledby="sos-ledger-heading">
-          <SectionHeader id="sos-ledger-heading" label={t("auditLedger")} />
+          <SectionHeader
+            id="sos-ledger-heading"
+            label={t("auditLedger")}
+            icon={
+              <ClockIcon className="h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
+            }
+          />
           <AuditLedger
             events={data.events}
             locale={locale === "en" ? "en" : "de"}
           />
         </section>
 
-        {/* Notification roster — pb-24 reserves a safe area so the
-            last roster row never sits beneath the floating chat
-            widget anchored to the bottom-right of the viewport. */}
+        {/* ── NOTIFICATION ROSTER ───────────────────────────── */}
         {data.notifications.length > 0 && (
           <section aria-labelledby="sos-roster-heading" className="pb-24">
-            <SectionHeader id="sos-roster-heading" label={t("roster")} />
+            <SectionHeader
+              id="sos-roster-heading"
+              label={t("roster")}
+              count={data.notifications.length}
+              icon={
+                <UsersIcon className="h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
+              }
+            />
             <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
               <ul className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {data.notifications.map((n) => (
-                  <li
-                    key={n.id}
-                    className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 px-4 py-2.5"
-                  >
+                  <li key={n.id} className="flex items-center gap-3 px-4 py-3">
                     <span
-                      className="h-2 w-2 rounded-full shrink-0"
+                      className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
                       style={{ background: n.employee.color ?? "#94a3b8" }}
-                    />
-                    <span className="text-sm font-medium text-gray-800 dark:text-zinc-200 truncate">
-                      {formatPersonName(
-                        n.employee.firstName,
-                        n.employee.lastName,
-                      )}
+                    >
+                      {n.employee.firstName[0]?.toUpperCase() ?? "?"}
+                      {n.employee.lastName[0]?.toUpperCase() ?? ""}
                     </span>
-                    <span className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-gray-400 dark:text-zinc-500">
-                      <span className="font-semibold">T{n.tier}</span>
-                      {n.linkOpenedAt && (
-                        <span className="font-normal normal-case tracking-normal">
-                          · {t("linkOpened")}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-zinc-200 truncate">
+                        {formatPersonName(
+                          n.employee.firstName,
+                          n.employee.lastName,
+                        )}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-semibold text-gray-400 dark:text-zinc-500">
+                          Tier {n.tier}
                         </span>
-                      )}
-                    </span>
+                        {n.linkOpenedAt && (
+                          <span className="text-[10px] text-gray-400 dark:text-zinc-500">
+                            · {t("linkOpened")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     <RosterBadge response={n.response} t={t} />
                   </li>
                 ))}
@@ -427,21 +508,35 @@ export default function SosLivePage({
   );
 }
 
-/** Shared section header — keeps every section flush to the same
- *  vertical left axis as the cards beneath it. */
-function SectionHeader({ id, label }: { id: string; label: string }) {
+function SectionHeader({
+  id,
+  label,
+  icon,
+  count,
+}: {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  count?: number;
+}) {
   return (
-    <h3
-      id={id}
-      className="px-1 pb-2 text-[11px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400"
-    >
-      {label}
-    </h3>
+    <div className="flex items-center gap-2 px-0.5 pb-2.5">
+      {icon}
+      <h3
+        id={id}
+        className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400"
+      >
+        {label}
+        {count !== undefined && (
+          <span className="ml-1.5 font-normal normal-case tracking-normal text-gray-400 dark:text-zinc-500">
+            ({count})
+          </span>
+        )}
+      </h3>
+    </div>
   );
 }
 
-/** Trim + title-case a person's name so DB rows like "khaled omar"
- *  render as "Khaled Omar". Safe for empty strings. */
 function formatPersonName(first: string, last: string): string {
   const cap = (s: string) =>
     s
@@ -499,19 +594,21 @@ function RosterBadge({
 }) {
   if (response === "PENDING")
     return (
-      <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+      <span className="inline-flex items-center rounded-md border border-amber-100 dark:border-amber-900/30 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 shrink-0">
         {t("statusPending")}
       </span>
     );
   if (response === "ACCEPTED")
     return (
-      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">
+        <CheckCircleIcon className="h-3 w-3" />
         {t("statusAccepted")}
       </span>
     );
   if (response === "DECLINED")
     return (
-      <span className="text-[10px] font-semibold text-red-500">
+      <span className="inline-flex items-center gap-1 rounded-md border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400 shrink-0">
+        <XIcon className="h-3 w-3" />
         {t("statusDeclined")}
       </span>
     );

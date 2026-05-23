@@ -1517,7 +1517,16 @@ async function executeAction(
   }
 }
 
-/** Replace {{field}} placeholders in strings with context values */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Replace {{field}} placeholders — HTML-escape values for safe email rendering */
 function interpolate(
   template: string | undefined,
   context: Record<string, unknown>,
@@ -1525,6 +1534,6 @@ function interpolate(
   if (!template) return "";
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     const val = context[key];
-    return val != null ? String(val) : "";
+    return val != null ? escapeHtml(String(val)) : "";
   });
 }

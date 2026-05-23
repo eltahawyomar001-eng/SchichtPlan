@@ -87,11 +87,11 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const { id } = await params;
     const rawBody = await req.json();
 
-    const existing = await prisma.absenceRequest.findUnique({
-      where: { id },
+    const existing = await prisma.absenceRequest.findFirst({
+      where: { id, workspaceId: user.workspaceId! },
     });
 
-    if (!existing || existing.workspaceId !== user.workspaceId) {
+    if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -241,7 +241,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.absenceRequest.update({
-        where: { id },
+        where: { id, workspaceId: user.workspaceId! },
         data,
         include: { employee: true },
       });
@@ -362,11 +362,11 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     const user = session.user as SessionUser;
     const { id } = await params;
 
-    const existing = await prisma.absenceRequest.findUnique({
-      where: { id },
+    const existing = await prisma.absenceRequest.findFirst({
+      where: { id, workspaceId: user.workspaceId! },
     });
 
-    if (!existing || existing.workspaceId !== user.workspaceId) {
+    if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

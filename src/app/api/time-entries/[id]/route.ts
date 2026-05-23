@@ -128,6 +128,26 @@ export const PATCH = withRoute(
       }
     }
 
+    // Guard: prevent arbitrary backdating (payroll fraud risk).
+    // Employees may correct up to 7 days back; managers/admins up to 30 days.
+    if (body.date) {
+      const newDate = new Date(body.date);
+      const maxBackdateDays = isEmployee(user) ? 7 : 30;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - maxBackdateDays);
+      cutoff.setHours(0, 0, 0, 0);
+      if (newDate < cutoff) {
+        return NextResponse.json(
+          {
+            error: "BACKDATE_TOO_FAR",
+            message: `Einträge können maximal ${maxBackdateDays} Tage rückwirkend geändert werden.`,
+            messageEn: `Entries can be backdated by at most ${maxBackdateDays} days.`,
+          },
+          { status: 422 },
+        );
+      }
+    }
+
     // Recalculate durations
     const startTime = body.startTime ?? existing.startTime;
     const endTime = body.endTime ?? existing.endTime;

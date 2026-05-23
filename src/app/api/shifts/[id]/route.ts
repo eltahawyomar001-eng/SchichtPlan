@@ -16,6 +16,7 @@ import { captureRouteError } from "@/lib/sentry";
 import { updateShiftSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
+import { checkArbZg5RestPeriod } from "@/lib/arbzg";
 
 export const PATCH = withRoute(
   "/api/shifts/[id]",
@@ -85,6 +86,31 @@ export const PATCH = withRoute(
         return NextResponse.json(
           { error: "Conflicts detected", conflicts },
           { status: 409 },
+        );
+      }
+
+      // ArbZG §5 — 11h minimum rest between shifts (hard block)
+      const restDate =
+        body.date ||
+        new Date(currentShift.date).toLocaleDateString("en-CA", {
+          timeZone: "Europe/Berlin",
+        });
+      const rest = await checkArbZg5RestPeriod({
+        employeeId: resolvedEmployeeId,
+        date: restDate,
+        startTime: body.startTime || currentShift.startTime,
+        endTime: body.endTime || currentShift.endTime,
+        workspaceId: workspaceId!,
+        excludeShiftId: id,
+      });
+      if (rest.violation) {
+        return NextResponse.json(
+          {
+            error: "ARBZG_5_VIOLATION",
+            message: rest.message,
+            messageEn: rest.messageEn,
+          },
+          { status: 422 },
         );
       }
     }

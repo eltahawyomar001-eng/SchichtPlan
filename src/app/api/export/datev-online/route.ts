@@ -216,6 +216,7 @@ interface DatevTimeEntry {
     firstName: string;
     lastName: string;
     position: string | null;
+    contractType: string | null;
   };
   location: { name: string } | null;
 }
@@ -225,6 +226,22 @@ function buildDatevOnlinePayload(
   periodStart: string,
   periodEnd: string,
 ) {
+  // DATEV LODAS Lohnart codes by contract type.
+  // These are the standard LODAS defaults — a workspace may override them
+  // via a future datevLohnartCode field on the Employee model if their
+  // Steuerberater uses a different chart-of-accounts setup.
+  //
+  // 1000 — Laufender Arbeitslohn (VOLLZEIT, TEILZEIT, MIDIJOB)
+  // 1400 — Geringfügig Beschäftigte, lfd. Bezüge (MINIJOB / § 8 SGB IV)
+  function lohnartForContract(contractType: string | null): string {
+    switch (contractType) {
+      case "MINIJOB":
+        return "1400";
+      default:
+        return "1000";
+    }
+  }
+
   // DATEV Lohn & Gehalt record format
   const records = entries.map((e) => ({
     personalnummer: toPersonnelNumber(e.employee.id),
@@ -237,7 +254,7 @@ function buildDatevOnlinePayload(
     bruttoStunden: Number(toIndustrialHours(e.grossMinutes).toFixed(2)),
     nettoStunden: Number(toIndustrialHours(e.netMinutes).toFixed(2)),
     standort: e.location?.name || "",
-    lohnart: "1000", // Standard hourly rate code
+    lohnart: lohnartForContract(e.employee.contractType ?? null),
   }));
 
   // Aggregate by employee for summary

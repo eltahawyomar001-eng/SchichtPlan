@@ -77,8 +77,17 @@ export async function GET(
     const sosReliability =
       sosTotal === 0 ? null : Math.round((sosPickups / sosTotal) * 100);
 
+    // DSGVO Art. 5 data-minimisation: employees must not see their own wage
+    // or contract details (§ BetrVG / German labour law — Stundenlohn is
+    // between employer and employee individually, not self-disclosed via API).
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { hourlyRate, contractType, ...employeeForEmployee } = employee;
+    const responseEmployee = isEmployee(currentUser)
+      ? employeeForEmployee
+      : employee;
+
     return NextResponse.json({
-      ...employee,
+      ...responseEmployee,
       sosStats: {
         total: sosTotal,
         pickups: sosPickups,
@@ -114,6 +123,20 @@ export async function PATCH(
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;
+
+    // MiLoG hard block — must run before the transaction so the DB is
+    // never updated with an illegal wage.
+    if (body.hourlyRate != null && body.hourlyRate < MILOG_MIN_WAGE) {
+      return NextResponse.json(
+        {
+          error: "MILOG_VIOLATION",
+          message: `Der angegebene Stundenlohn (${body.hourlyRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h) unterschreitet den gesetzlichen Mindestlohn von ${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h (MiLoG). Bitte korrigieren Sie den Stundenlohn.`,
+          messageEn: `The specified hourly rate (${body.hourlyRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h) is below the statutory minimum wage of ${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h (MiLoG). Please correct the hourly rate.`,
+          milogMinWage: MILOG_MIN_WAGE,
+        },
+        { status: 422 },
+      );
+    }
 
     // Changing roles requires OWNER or ADMIN
     if (body.role) {
@@ -203,14 +226,6 @@ export async function PATCH(
       where: { id, workspaceId },
     });
 
-    const warnings: string[] = [];
-    const parsedRate = body.hourlyRate ?? null;
-    if (parsedRate != null && parsedRate < MILOG_MIN_WAGE) {
-      warnings.push(
-        `Stundenlohn (${parsedRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h, MiLoG)`,
-      );
-    }
-
     // ── Webhook dispatch (fire & forget) ──
     dispatchWebhook(workspaceId!, "employee.updated", { id, ...body }).catch(
       (err) =>
@@ -232,10 +247,7 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({
-      ...updatedEmployee,
-      ...(warnings.length ? { warnings } : {}),
-    });
+    return NextResponse.json({ ...updatedEmployee });
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "SELF_ROLE_CHANGE") {

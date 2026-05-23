@@ -112,6 +112,20 @@ export async function POST(req: Request) {
       departmentId,
     } = parsed.data;
 
+    // MiLoG (Mindestlohngesetz) hard block — applies to all contract types.
+    // Reject before touching the DB so no partial state is created.
+    if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {
+      return NextResponse.json(
+        {
+          error: "MILOG_VIOLATION",
+          message: `Der angegebene Stundenlohn (${hourlyRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h) unterschreitet den gesetzlichen Mindestlohn von ${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h (MiLoG). Bitte korrigieren Sie den Stundenlohn.`,
+          messageEn: `The specified hourly rate (${hourlyRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h) is below the statutory minimum wage of ${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h (MiLoG). Please correct the hourly rate.`,
+          milogMinWage: MILOG_MIN_WAGE,
+        },
+        { status: 422 },
+      );
+    }
+
     const employee = await prisma.$transaction(async (tx) => {
       const created = await tx.employee.create({
         data: {
@@ -268,17 +282,7 @@ export async function POST(req: Request) {
     // catch up since the helper computes seats from the live DB count).
     await reconcileSeatsFromEmployees(workspaceId, "add");
 
-    const warnings: string[] = [];
-    if (hourlyRate != null && hourlyRate < MILOG_MIN_WAGE) {
-      warnings.push(
-        `Stundenlohn (${hourlyRate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €) liegt unter dem gesetzlichen Mindestlohn (${MILOG_MIN_WAGE.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/h, MiLoG)`,
-      );
-    }
-
-    const response = NextResponse.json(
-      { ...employee, ...(warnings.length ? { warnings } : {}) },
-      { status: 201 },
-    );
+    const response = NextResponse.json({ ...employee }, { status: 201 });
     await cacheIdempotentResponse(req, response);
     return response;
   } catch (error) {

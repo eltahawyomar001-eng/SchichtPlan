@@ -2,6 +2,22 @@
   "name": "shiftfy",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "exceljs": {
+      "uuid": ">=11.1.1"
+    },
+    "next": {
+      "postcss": ">=8.4.48"
+    },
+    "next-auth": {
+      "uuid": ">=11.1.1",
+      "cookie": ">=0.7.0"
+    },
+    "@auth/core": {
+      "cookie": ">=0.7.0"
+    },
+    "@hono/node-server": ">=1.19.13"
+  },
   "engines": {
     "node": ">=22.0.0",
     "npm": ">=11.0.0"

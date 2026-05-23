@@ -22,6 +22,7 @@ import { log } from "@/lib/logger";
 import { requireAuth, serverError } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
+import { checkArbZg5RestPeriod } from "@/lib/arbzg";
 
 export const GET = withRoute("/api/shifts", "GET", async (req) => {
   const auth = await requireAuth();
@@ -200,6 +201,23 @@ export const POST = withRoute(
               cursor.setDate(cursor.getDate() + 1);
               continue;
             }
+
+            // ArbZG §5 — 11h minimum rest (hard block per day in bulk)
+            const rest = await checkArbZg5RestPeriod({
+              employeeId,
+              date: dateStr,
+              startTime,
+              endTime,
+              workspaceId,
+            });
+            if (rest.violation) {
+              skipped++;
+              conflicts.push(
+                `${new Date(dateStr).toLocaleDateString("de-DE")}: ${rest.message}`,
+              );
+              cursor.setDate(cursor.getDate() + 1);
+              continue;
+            }
           }
 
           // Surcharges
@@ -273,11 +291,27 @@ export const POST = withRoute(
 
       if (conflicts.length > 0) {
         return NextResponse.json(
-          {
-            error: "Conflicts detected",
-            conflicts,
-          },
+          { error: "Conflicts detected", conflicts },
           { status: 409 },
+        );
+      }
+
+      // ArbZG §5 — 11h minimum rest between shifts (hard block)
+      const rest = await checkArbZg5RestPeriod({
+        employeeId,
+        date,
+        startTime,
+        endTime,
+        workspaceId,
+      });
+      if (rest.violation) {
+        return NextResponse.json(
+          {
+            error: "ARBZG_5_VIOLATION",
+            message: rest.message,
+            messageEn: rest.messageEn,
+          },
+          { status: 422 },
         );
       }
     }

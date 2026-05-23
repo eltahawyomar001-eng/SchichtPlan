@@ -550,7 +550,8 @@ model Shift {
   updatedAt        DateTime             @updatedAt
   deletedAt        DateTime?
   employeeId       String?
-  employee         Employee?            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  // SET NULL: employee deletion unassigns shifts (schedule data preserved for audit trail)
+  employee         Employee?            @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   locationId       String?
   location         Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
   workspaceId      String
@@ -638,7 +639,8 @@ model TimeEntry {
   updatedAt    DateTime         @updatedAt
   deletedAt    DateTime?
   employeeId   String
-  employee     Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  // RESTRICT: cannot delete employee with time records (ArbZG §16: 2yr working-time retention)
+  employee     Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   locationId   String?
   location     Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
   shiftId      String?
@@ -1082,7 +1084,8 @@ model AuditLog {
   metadata    String?     @db.Text // Additional context (IP, user-agent, etc.)
   createdAt   DateTime    @default(now())
   workspaceId String
-  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // RESTRICT: audit records must survive workspace deletion (HGB §257 / AO §147 / GoBD — 10yr retention)
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
 
   @@index([workspaceId, createdAt])
   @@index([entityType, entityId])

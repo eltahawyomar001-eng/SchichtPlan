@@ -287,6 +287,47 @@ export async function DELETE(
     const forbidden = requirePermission(user, "employees", "delete");
     if (forbidden) return forbidden;
 
+    // ── Preflight: ArbZG §16 — time records must be retained 2 years ──
+    // TimeEntry.employee FK is now RESTRICT, so the DB would reject the delete
+    // anyway, but we give a human-readable error before hitting the constraint.
+    const [timeEntryCount, futureShiftCount] = await Promise.all([
+      prisma.timeEntry.count({
+        where: { employeeId: id, workspaceId: workspaceId! },
+      }),
+      prisma.shift.count({
+        where: {
+          employeeId: id,
+          workspaceId: workspaceId!,
+          date: { gt: new Date() },
+          status: { notIn: ["CANCELLED", "COMPLETED"] },
+        },
+      }),
+    ]);
+
+    if (timeEntryCount > 0) {
+      return NextResponse.json(
+        {
+          error: "EMPLOYEE_HAS_TIME_RECORDS",
+          message: `Dieser Mitarbeiter hat ${timeEntryCount} Zeiterfassungseinträge und kann nicht gelöscht werden. Gemäß ArbZG §16 müssen Arbeitszeitnachweise 2 Jahre aufbewahrt werden. Bitte archivieren Sie den Mitarbeiter stattdessen.`,
+          messageEn: `This employee has ${timeEntryCount} time tracking record(s) and cannot be deleted. ArbZG §16 requires 2-year retention of working time records. Please archive the employee instead.`,
+          timeEntryCount,
+        },
+        { status: 409 },
+      );
+    }
+
+    if (futureShiftCount > 0) {
+      return NextResponse.json(
+        {
+          error: "EMPLOYEE_HAS_FUTURE_SHIFTS",
+          message: `Dieser Mitarbeiter hat ${futureShiftCount} zukünftige Schicht(en). Bitte zunächst umplanen oder stornieren, bevor der Mitarbeiter gelöscht wird.`,
+          messageEn: `This employee has ${futureShiftCount} upcoming shift(s). Please reassign or cancel them before deleting the employee.`,
+          futureShiftCount,
+        },
+        { status: 409 },
+      );
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.employee.deleteMany({
         where: { id, workspaceId },
@@ -304,18 +345,33 @@ export async function DELETE(
     });
 
     // ── Pay-as-you-grow: drop Stripe seat quantity ──
+    // Employee is already deleted from DB. Log sync failures and capture to
+    // Sentry so ops can trigger a manual reconcile if needed.
     const deleteSeatResult = await reconcileSeatsFromEmployees(
       workspaceId!,
       "remove",
     );
     if (!deleteSeatResult.ok) {
-      log.error("[billing-seats] DELETE seat sync failed", {
-        workspaceId,
-        reason: deleteSeatResult.reason,
-      });
+      log.error(
+        "[billing-seats] DELETE seat sync failed — employee deleted but Stripe not decremented",
+        {
+          workspaceId,
+          reason: deleteSeatResult.reason,
+        },
+      );
+      captureRouteError(
+        new Error(`Seat sync drift on delete: ${deleteSeatResult.reason}`),
+        {
+          route: "/api/employees/[id]",
+          method: "DELETE",
+        },
+      );
     }
 
-    return NextResponse.json({ message: "Employee deleted" });
+    return NextResponse.json({
+      message: "Employee deleted",
+      ...(deleteSeatResult.ok ? {} : { seatSyncPending: true }),
+    });
   } catch (error) {
     log.error("Error deleting employee:", { error: error });
     captureRouteError(error, {

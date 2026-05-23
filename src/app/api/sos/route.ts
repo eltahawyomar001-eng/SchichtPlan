@@ -58,6 +58,27 @@ export const POST = withRoute("/api/sos", "POST", async (req) => {
     );
   }
 
+  // Rank candidates BEFORE creating the record — if nobody can be notified,
+  // return a clear error instead of creating an orphaned SOS request.
+  const ranked = await rankEmployeesForSos(
+    shift,
+    user.workspaceId,
+    shift.employeeId,
+  );
+
+  if (ranked.length === 0) {
+    return NextResponse.json(
+      {
+        error: "NO_CANDIDATES",
+        message:
+          "Keine geeigneten Mitarbeiter für SOS-Benachrichtigung gefunden. Bitte mindestens einen weiteren Mitarbeiter anlegen.",
+        messageEn:
+          "No eligible employees found for SOS notification. Please add at least one other employee first.",
+      },
+      { status: 422 },
+    );
+  }
+
   const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
   const nextEscalationAt = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -89,12 +110,6 @@ export const POST = withRoute("/api/sos", "POST", async (req) => {
       shiftId,
     },
   });
-
-  const ranked = await rankEmployeesForSos(
-    shift,
-    user.workspaceId,
-    shift.employeeId,
-  );
 
   // RANKED event — system indexed candidates by reliability
   await emitSosEvent({

@@ -363,7 +363,21 @@ export const POST = withRoute(
         action: "clock-out",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
 
-      return NextResponse.json(entry);
+      // ArbZG §3: surface capping prominently so every client can display
+      // a banner — silently truncating pay is a wage dispute waiting to happen.
+      const cappedByArbzg = !!(
+        entry as { remarks?: string | null }
+      ).remarks?.includes("ArbZG §3");
+      return NextResponse.json({
+        ...entry,
+        arbzg: {
+          wasCapped: cappedByArbzg,
+          cappedToHours: 10,
+          message: cappedByArbzg
+            ? "Ihre Arbeitszeit wurde gemäß ArbZG §3 auf das gesetzliche Tageslimit von 10 Stunden begrenzt."
+            : null,
+        },
+      });
     }
 
     return NextResponse.json({ error: "INVALID_ACTION" }, { status: 400 });

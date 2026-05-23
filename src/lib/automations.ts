@@ -23,6 +23,7 @@ import { dispatchExternalNotification, sendEmail } from "@/lib/notifications";
 import { getWorkspaceOwnerLocale } from "@/lib/notifications/locale-helper";
 import { log } from "@/lib/logger";
 import { batchAutoFill } from "@/lib/auto-fill";
+import { checkArbZg5RestPeriod } from "@/lib/arbzg";
 
 // ═══════════════════════════════════════════════════════════════════
 // AUTOMATION SETTINGS CHECK
@@ -954,7 +955,21 @@ export async function createRecurringShifts(params: {
       timeZone: "Europe/Berlin",
     });
 
-    // Check for conflicts
+    // ArbZG §5 — 11h rest period (same check applied at single-shift creation)
+    const rest = await checkArbZg5RestPeriod({
+      employeeId: baseShift.employeeId,
+      date: dateStr,
+      startTime: baseShift.startTime,
+      endTime: baseShift.endTime,
+      workspaceId,
+    });
+    if (rest.violation) {
+      skipped++;
+      conflictMessages.push(`KW+${week} (${dateStr}): ${rest.message}`);
+      continue;
+    }
+
+    // Check for schedule conflicts (includes ArbZG §3 daily max)
     const conflicts = await checkShiftConflicts({
       employeeId: baseShift.employeeId,
       date: dateStr,

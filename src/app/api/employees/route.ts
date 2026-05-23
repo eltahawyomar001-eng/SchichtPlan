@@ -40,9 +40,16 @@ export async function GET(req: Request) {
       ];
     }
 
+    // DSGVO Art. 5(1)(c) data minimisation: wage and contract fields must not
+    // be fetched from the DB at all for EMPLOYEE-role requests, not just stripped
+    // in JS after the query. pinHash is never returned to any client.
     const [employees, total] = await Promise.all([
-      prisma.employee.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma.employee.findMany as any)({
         where,
+        omit: isEmployee(user)
+          ? { hourlyRate: true, contractType: true, pinHash: true }
+          : { pinHash: true },
         include: {
           employeeSkills: {
             include: { skill: { select: { id: true, name: true } } },
@@ -59,16 +66,7 @@ export async function GET(req: Request) {
       prisma.employee.count({ where }),
     ]);
 
-    // DSGVO Art. 5 data-minimisation: employees must not see colleagues' wages
-    // or contract details. Strip these fields before responding to EMPLOYEE role.
-    const employeeView = isEmployee(user)
-      ? employees.map(
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          ({ hourlyRate, contractType, ...rest }) => rest,
-        )
-      : employees;
-
-    return paginatedResponse(employeeView, total, take, skip);
+    return paginatedResponse(employees, total, take, skip);
   } catch (error) {
     log.error("Error fetching employees:", { error: error });
     captureRouteError(error, { route: "/api/employees", method: "GET" });
@@ -276,13 +274,32 @@ export async function POST(req: Request) {
     );
 
     // ── Pay-as-you-grow: bump Stripe seat quantity ──
-    // Awaited so the customer is billed in lockstep with the create. Fails
-    // silently for sim-mode / unbilled workspaces — never blocks employee
-    // creation on a Stripe outage (the next create or admin reconcile will
-    // catch up since the helper computes seats from the live DB count).
-    await reconcileSeatsFromEmployees(workspaceId, "add");
+    // Employee is already committed. If Stripe is down we log the drift and
+    // return a seatSyncPending flag so the caller can surface a retry prompt.
+    // The next successful reconcile (triggered by any subsequent create/delete
+    // or admin action) will catch up automatically.
+    let seatSyncPending = false;
+    const seatResult = await reconcileSeatsFromEmployees(workspaceId, "add");
+    if (!seatResult.ok) {
+      seatSyncPending = true;
+      log.error(
+        "[billing-seats] POST seat sync failed — employee created but Stripe not updated",
+        {
+          employeeId: employee.id,
+          workspaceId,
+          reason: seatResult.reason,
+        },
+      );
+      captureRouteError(new Error(`Seat sync drift: ${seatResult.reason}`), {
+        route: "/api/employees",
+        method: "POST",
+      });
+    }
 
-    const response = NextResponse.json({ ...employee }, { status: 201 });
+    const response = NextResponse.json(
+      { ...employee, ...(seatSyncPending ? { seatSyncPending: true } : {}) },
+      { status: 201 },
+    );
     await cacheIdempotentResponse(req, response);
     return response;
   } catch (error) {

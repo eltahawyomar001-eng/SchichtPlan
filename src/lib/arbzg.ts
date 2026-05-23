@@ -114,3 +114,47 @@ export async function checkArbZg5RestPeriod(params: {
 
   return { violation: false };
 }
+
+/**
+ * ArbZG §4 — mandatory break advisory.
+ *
+ * §4 requires employers to provide breaks DURING the shift, not necessarily
+ * to encode them in the schedule. We therefore return a non-blocking WARNING
+ * (not a hard violation) so the UI can inform the manager.
+ *
+ * Thresholds:
+ *  > 6h work → minimum 30 min break
+ *  > 9h work → minimum 45 min break
+ */
+export function checkArbZg4BreakRequirement(
+  startTime: string,
+  endTime: string,
+): {
+  required: boolean;
+  minBreakMinutes: number;
+  message?: string;
+  messageEn?: string;
+} {
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  let durationMinutes = eh * 60 + em - (sh * 60 + sm);
+  if (durationMinutes <= 0) durationMinutes += 24 * 60; // overnight
+
+  if (durationMinutes > 9 * 60) {
+    return {
+      required: true,
+      minBreakMinutes: 45,
+      message: `Schichtdauer über 9 Stunden — ArbZG §4 schreibt mindestens 45 Minuten Pause vor.`,
+      messageEn: `Shift duration exceeds 9 hours — ArbZG §4 requires at least 45 minutes of break time.`,
+    };
+  }
+  if (durationMinutes > 6 * 60) {
+    return {
+      required: true,
+      minBreakMinutes: 30,
+      message: `Schichtdauer über 6 Stunden — ArbZG §4 schreibt mindestens 30 Minuten Pause vor.`,
+      messageEn: `Shift duration exceeds 6 hours — ArbZG §4 requires at least 30 minutes of break time.`,
+    };
+  }
+  return { required: false, minBreakMinutes: 0 };
+}

@@ -16,7 +16,10 @@ import { captureRouteError } from "@/lib/sentry";
 import { updateShiftSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
-import { checkArbZg5RestPeriod } from "@/lib/arbzg";
+import {
+  checkArbZg5RestPeriod,
+  checkArbZg4BreakRequirement,
+} from "@/lib/arbzg";
 
 export const PATCH = withRoute(
   "/api/shifts/[id]",
@@ -220,7 +223,25 @@ export const PATCH = withRoute(
         log.error("[webhook] shift.updated dispatch error", { error: err }),
     );
 
-    return NextResponse.json(shift);
+    // ArbZG §4 — non-blocking break advisory when time changes
+    const effectiveStart = body.startTime ?? currentShift.startTime;
+    const effectiveEnd = body.endTime ?? currentShift.endTime;
+    const breakAdvisory = checkArbZg4BreakRequirement(
+      effectiveStart,
+      effectiveEnd,
+    );
+    const warnings = breakAdvisory.required
+      ? [
+          {
+            code: "ARBZG_4_BREAK",
+            message: breakAdvisory.message,
+            messageEn: breakAdvisory.messageEn,
+            minBreakMinutes: breakAdvisory.minBreakMinutes,
+          },
+        ]
+      : [];
+
+    return NextResponse.json({ ...shift, warnings });
   },
 );
 

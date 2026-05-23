@@ -67,6 +67,7 @@ export async function sendPinEmail({
   const result = await sendEmail({
     to,
     type: "pin_assigned",
+    category: "transactional",
     title: `Ihre Stempeluhr-PIN – ${workspaceName}`,
     message:
       `Guten Tag ${firstName},\n\n` +

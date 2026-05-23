@@ -232,6 +232,7 @@ export async function POST(req: Request) {
             await sendEmail({
               to: email,
               type: "invitation",
+              category: "transactional",
               title: copy.subject,
               message: copy.body,
               link: `/einladung/${token}`,

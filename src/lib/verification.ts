@@ -41,6 +41,7 @@ export async function sendVerificationEmail(
   await sendEmail({
     to: email,
     type: "email-verification",
+    category: "transactional",
     title: isDE
       ? "Bestätigen Sie Ihre E-Mail-Adresse"
       : "Verify your email address",

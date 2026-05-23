@@ -530,6 +530,7 @@ export async function createSystemNotification(params: {
         const result = await sendEmail({
           to: employeeEmail,
           type,
+          category: "transactional",
           title,
           message,
           link,
@@ -1460,6 +1461,7 @@ async function executeAction(
       await sendEmail({
         to: email,
         type: "AUTOMATION",
+        category: "transactional",
         title: interpolate(action.title as string, context),
         message: interpolate(action.message as string, context),
         locale,

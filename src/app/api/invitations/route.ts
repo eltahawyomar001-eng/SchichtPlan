@@ -119,6 +119,7 @@ export const POST = withRoute(
     await sendEmail({
       to: email,
       type: "invitation",
+      category: "transactional",
       title: copy.subject,
       message: copy.body,
       link: inviteLink,

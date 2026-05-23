@@ -216,6 +216,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             await sendEmail({
               to: owner.email,
               type: "SYSTEM",
+              category: "transactional",
               title: copy.subject,
               message: copy.body,
               link: "/einstellungen/abonnement",
@@ -561,6 +562,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                   await sendEmail({
                     to: owner.email,
                     type: "SYSTEM",
+                    category: "transactional",
                     title: copy.subject,
                     message: copy.body,
                     link: "/einstellungen/abonnement",
@@ -743,6 +745,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
               await sendEmail({
                 to: owner.email,
                 type: "SYSTEM",
+                category: "transactional",
                 title: copy.subject,
                 message: copy.body,
                 link: "/einstellungen/abonnement",

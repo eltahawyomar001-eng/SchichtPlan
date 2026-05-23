@@ -17,17 +17,32 @@ const FROM_ADDRESS =
   process.env.RESEND_FROM_EMAIL || "Shiftfy <onboarding@resend.dev>";
 
 /**
+ * Email category — controls suppression rules and Resend tagging.
+ *
+ * transactional: triggered by a specific user action (ticket assigned,
+ *   password reset, invitation, payment event, PIN, etc.).
+ *   Legal basis under DSGVO Art. 6(1)(b)/(f): contractual necessity or
+ *   legitimate interest. Cannot be opted-out of by the recipient.
+ *
+ * marketing: unsolicited, platform-initiated (upgrade nudges, newsletters).
+ *   Requires explicit consent (DSGVO Art. 6(1)(a) / UWG §7).
+ *   Respects user opt-out preferences.
+ */
+export type EmailCategory = "transactional" | "marketing";
+
+/**
  * Send a notification email via Resend.
  */
 export async function sendEmail(params: {
   to: string;
   type: string;
+  category: EmailCategory;
   title: string;
   message: string;
   link?: string | null;
   locale?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { to, type, title, message, link, locale = "de" } = params;
+  const { to, type, category, title, message, link, locale = "de" } = params;
 
   const client = getResend();
   if (!client) {
@@ -48,6 +63,7 @@ export async function sendEmail(params: {
       subject: title,
       html,
       text,
+      tags: [{ name: "category", value: category }],
     });
 
     if (result.error) {

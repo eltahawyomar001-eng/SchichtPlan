@@ -59,6 +59,7 @@ export const POST = withRoute(
       await sendEmail({
         to: email,
         type: "password-reset",
+        category: "transactional",
         title: copy.subject,
         message: copy.body,
         link: resetUrl,

@@ -165,6 +165,7 @@ export async function sendMonthlyBillingEmail(
   const result = await sendEmail({
     to: billingEmail,
     type: "SYSTEM",
+    category: "transactional",
     title: copy.subject,
     message: copy.body,
     link: "/einstellungen/abonnement",

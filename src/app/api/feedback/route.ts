@@ -75,6 +75,7 @@ export const POST = withRoute("/api/feedback", "POST", async (req) => {
   sendEmail({
     to: inbox,
     type: "feedback",
+    category: "transactional",
     title: `[${categoryLabel}] ${parsed.data.subject}`,
     message: `${parsed.data.message}${pageNote}\n\nWorkspace: ${workspaceId}\nUser: ${user.id}`,
   }).catch((err) => log.error("[Feedback] email delivery failed", { err }));

@@ -231,6 +231,7 @@ export async function notifyEmployeeTier(
         await sendEmail({
           to: emp.email,
           type: "SOS_SHIFT",
+          category: "transactional",
           title: subject,
           message: lines.join("\n"),
           link: respondUrl,

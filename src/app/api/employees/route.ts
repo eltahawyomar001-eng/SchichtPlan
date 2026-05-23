@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requirePermission } from "@/lib/authorization";
+import { requirePermission, isEmployee } from "@/lib/authorization";
 import { requireUserSlot } from "@/lib/subscription-guard";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
 import { executeCustomRules } from "@/lib/automations";
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   try {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
-    const { workspaceId } = auth;
+    const { workspaceId, user } = auth;
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
@@ -59,7 +59,16 @@ export async function GET(req: Request) {
       prisma.employee.count({ where }),
     ]);
 
-    return paginatedResponse(employees, total, take, skip);
+    // DSGVO Art. 5 data-minimisation: employees must not see colleagues' wages
+    // or contract details. Strip these fields before responding to EMPLOYEE role.
+    const employeeView = isEmployee(user)
+      ? employees.map(
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          ({ hourlyRate, contractType, ...rest }) => rest,
+        )
+      : employees;
+
+    return paginatedResponse(employeeView, total, take, skip);
   } catch (error) {
     log.error("Error fetching employees:", { error: error });
     captureRouteError(error, { route: "/api/employees", method: "GET" });

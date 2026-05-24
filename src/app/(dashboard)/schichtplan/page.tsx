@@ -713,7 +713,7 @@ export default function SchichtplanPage() {
                 <Select
                   value={filterLocationId}
                   onChange={(e) => setFilterLocationId(e.target.value)}
-                  className="h-9 w-auto min-w-[160px]"
+                  className="w-auto min-w-[160px]"
                 >
                   <option value="">{t("allLocations")}</option>
                   {locations.map((loc) => (
@@ -763,7 +763,7 @@ export default function SchichtplanPage() {
                 className="gap-1.5"
               >
                 <ZapIcon className="h-4 w-4 text-amber-500" />
-                <span className="hidden sm:inline">{t("autoSchedule")}</span>
+                <span>{t("autoSchedule")}</span>
               </Button>
             )}
           </div>
@@ -1391,7 +1391,7 @@ export default function SchichtplanPage() {
             {/* ── Shift Templates ── */}
             {!editingShift && shiftTemplates.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.templates")}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -1431,7 +1431,7 @@ export default function SchichtplanPage() {
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
                 <CalendarIcon className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                <span className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.dateAndTime")}
                 </span>
               </div>
@@ -1591,7 +1591,7 @@ export default function SchichtplanPage() {
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
                 <UserIcon className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                <span className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.assignment")}
                 </span>
               </div>
@@ -1655,7 +1655,7 @@ export default function SchichtplanPage() {
             <fieldset className="space-y-3">
               <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400 mb-1">
                 <EditIcon className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                <span className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("form.additional")}
                 </span>
               </div>
@@ -1880,7 +1880,7 @@ export default function SchichtplanPage() {
             {/* Action buttons */}
             {canManage && detailShift.status !== "CANCELLED" && (
               <div className="border-t pt-4 space-y-2">
-                <p className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-zinc-400 tracking-wider mb-2">
                   {t("shiftActions")}
                 </p>
 
@@ -2482,7 +2482,7 @@ export default function SchichtplanPage() {
       {canManage && (
         <button
           onClick={() => openCreateForm(currentWeek)}
-          className="fixed z-40 sm:hidden right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] h-14 w-14 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center active:scale-95 transition-transform"
+          className="fixed z-40 sm:hidden right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+1rem)] h-14 w-14 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
           aria-label={t("form.title")}
         >
           <PlusIcon className="h-6 w-6" />

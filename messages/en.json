@@ -90,7 +90,7 @@
     "monthClose": "Month Close",
     "automationRules": "Automation",
     "webhooks": "Webhooks",
-    "developer": "Developer",
+    "developer": "Integrations",
     "teamCalendar": "Team Calendar",
     "annualPlanning": "Annual Planning",
     "dataIO": "Import / Export",
@@ -832,6 +832,9 @@
     "form": {
       "title": "New Employee",
       "editTitle": "Edit Employee",
+      "sectionPersonal": "Personal Information",
+      "sectionWorkHours": "Work Hours",
+      "sectionAccess": "Account Access",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",

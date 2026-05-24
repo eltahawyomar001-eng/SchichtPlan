@@ -254,7 +254,7 @@ export function CalendarGrid({
       {weekRows.map((week) => (
         <div
           key={week.weekNumber}
-          className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-gray-100 dark:border-zinc-800 min-h-[80px]"
+          className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-gray-100 dark:border-zinc-800 min-h-[100px]"
         >
           {/* Week number */}
           <div className="flex items-start pt-2 justify-center text-[11px] font-medium text-gray-400 dark:text-zinc-500">
@@ -274,7 +274,7 @@ export function CalendarGrid({
               return (
                 <div
                   key={day.toISOString()}
-                  className={`relative border-r border-gray-100 dark:border-zinc-800 last:border-r-0 px-1 pt-1 min-h-[80px] ${
+                  className={`relative border-r border-gray-100 dark:border-zinc-800 last:border-r-0 px-1 pt-1 min-h-[80px] overflow-hidden ${
                     !inMonth ? "bg-gray-50/50 dark:bg-zinc-900/50" : ""
                   } ${isHoliday ? HOLIDAY_STYLE.bg : ""}`}
                 >
@@ -293,8 +293,8 @@ export function CalendarGrid({
               );
             })}
 
-            {/* Horizontal bars overlay */}
-            <div className="absolute inset-0 pointer-events-none pt-6">
+            {/* Horizontal bars overlay — max 3 visible, then "+N more" */}
+            <div className="absolute inset-0 pointer-events-none pt-6 overflow-hidden">
               {/* Holiday bars */}
               {week.holidays.map((h) => {
                 const col = dayIndex(h.date);
@@ -317,8 +317,8 @@ export function CalendarGrid({
                 );
               })}
 
-              {/* Shift & absence bars — stacked */}
-              {week.bars.map((bar, idx) => {
+              {/* Shift & absence bars — max 3 rows, remainder shown as "+N mehr" */}
+              {week.bars.slice(0, 3).map((bar, idx) => {
                 const topOffset = 20 + idx * 20;
                 return (
                   <div
@@ -339,6 +339,18 @@ export function CalendarGrid({
                   </div>
                 );
               })}
+
+              {/* "+N mehr" overflow indicator */}
+              {week.bars.length > 3 && (
+                <div
+                  className="absolute h-[18px] pointer-events-auto"
+                  style={{ left: 0, right: 0, top: `${20 + 3 * 20}px` }}
+                >
+                  <div className="mx-1 h-full flex items-center text-[10px] font-medium text-gray-500 dark:text-zinc-400">
+                    +{week.bars.length - 3} mehr
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

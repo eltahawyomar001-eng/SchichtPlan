@@ -507,6 +507,13 @@ export default function MitarbeiterPage() {
           preventClose={handlePreventClose}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ── Persönliche Daten ── */}
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                {t("form.sectionPersonal")}
+              </p>
+              <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">{t("form.firstName")} *</Label>
@@ -577,6 +584,13 @@ export default function MitarbeiterPage() {
               />
             </div>
 
+            {/* ── Arbeitsstunden ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                {t("form.sectionWorkHours")}
+              </p>
+              <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="hourlyRate">{t("form.hourlyRate")}</Label>
@@ -686,6 +700,14 @@ export default function MitarbeiterPage() {
               </button>
             </div>
 
+            {/* ── Zugangsdaten ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                {t("form.sectionAccess")}
+              </p>
+              <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+            </div>
+
             {/* Role — shown when editing */}
             {editingEmployee && (
               <div className="space-y-2">
@@ -770,9 +792,6 @@ export default function MitarbeiterPage() {
                   }
                   className="h-9 w-12 rounded-lg border border-gray-200 dark:border-zinc-700 cursor-pointer p-0.5"
                 />
-                <span className="text-sm text-gray-500 font-mono">
-                  {formData.color}
-                </span>
               </div>
             </div>
 

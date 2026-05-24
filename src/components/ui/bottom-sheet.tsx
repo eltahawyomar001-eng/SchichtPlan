@@ -190,7 +190,7 @@ export function BottomSheet({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 backdrop-blur-md animate-fade-in"
       style={{
         paddingLeft: "env(safe-area-inset-left, 0px)",
         paddingRight: "env(safe-area-inset-right, 0px)",

@@ -96,6 +96,32 @@ function ClockFilled({ className }: { className?: string }) {
   );
 }
 
+function AbsenceOutline({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      strokeWidth={1.8}
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2.5" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+      <path d="M9 15l2 2 4-4" />
+    </svg>
+  );
+}
+
+function AbsenceFilled({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M16 2a1 1 0 011 1v2h2.5A2.5 2.5 0 0122 7.5V19.5a2.5 2.5 0 01-2.5 2.5h-15A2.5 2.5 0 012 19.5V7.5A2.5 2.5 0 014.5 5H7V3a1 1 0 012 0v2h6V3a1 1 0 011-1zM4 11v8.5a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V11H4zm8.53 2.22a.75.75 0 010 1.06l-3 3a.75.75 0 01-1.06 0l-1.5-1.5a.75.75 0 111.06-1.06l.97.97 2.47-2.47a.75.75 0 011.06 0z" />
+    </svg>
+  );
+}
+
 function EllipsisOutline({ className }: { className?: string }) {
   return (
     <svg
@@ -145,6 +171,12 @@ const tabs: NavTab[] = [
     href: "/schichtplan",
     outline: CalendarOutline,
     filled: CalendarFilled,
+  },
+  {
+    key: "absences",
+    href: "/abwesenheiten",
+    outline: AbsenceOutline,
+    filled: AbsenceFilled,
   },
   {
     key: "punchClock",

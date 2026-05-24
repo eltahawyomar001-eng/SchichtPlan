@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { PageContent } from "@/components/ui/page-content";
+import { AdaptiveModal } from "@/components/ui/adaptive-modal";
 import { usePlanLimit } from "@/components/providers/plan-limit-provider";
 import {
   PlusIcon,
@@ -583,280 +584,266 @@ export default function AbwesenheitenPage() {
       </PageContent>
 
       {/* ── New Absence Request Modal ──────────────────────────── */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
-          <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{t("newRequest")}</CardTitle>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                >
-                  <XIcon className="h-5 w-5 text-gray-400" />
-                </button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {canManage ? (
-                  <div>
-                    <Label>{t("form.employee")}</Label>
-                    <Select
-                      value={formData.employeeId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, employeeId: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">{tc("selectPlaceholder")}</option>
-                      {employees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.firstName} {emp.lastName}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                ) : (
-                  <input type="hidden" value={user?.employeeId || ""} />
-                )}
+      <AdaptiveModal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={t("newRequest")}
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowForm(false)}
+            >
+              {tc("cancel")}
+            </Button>
+            <Button type="submit" form="new-absence-form">
+              {t("form.submit")}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="new-absence-form"
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
+          {canManage ? (
+            <div>
+              <Label>{t("form.employee")}</Label>
+              <Select
+                value={formData.employeeId}
+                onChange={(e) =>
+                  setFormData({ ...formData, employeeId: e.target.value })
+                }
+                required
+              >
+                <option value="">{tc("selectPlaceholder")}</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : (
+            <input type="hidden" value={user?.employeeId || ""} />
+          )}
 
-                <div>
-                  <Label>{t("form.category")}</Label>
-                  <Select
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                  >
-                    {CATEGORY_KEYS.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {t(`categories.${cat.value}`)}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+          <div>
+            <Label>{t("form.category")}</Label>
+            <Select
+              value={formData.category}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
+            >
+              {CATEGORY_KEYS.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {t(`categories.${cat.value}`)}
+                </option>
+              ))}
+            </Select>
+          </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label>{t("form.startDate")}</Label>
-                    <Input
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, startDate: e.target.value })
-                      }
-                      required
-                    />
-                    <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                      <input
-                        type="checkbox"
-                        checked={formData.halfDayStart}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            halfDayStart: e.target.checked,
-                          })
-                        }
-                        className="rounded"
-                      />
-                      {t("halfDay")}
-                    </label>
-                  </div>
-                  <div>
-                    <Label>{t("form.endDate")}</Label>
-                    <Input
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, endDate: e.target.value })
-                      }
-                      required
-                    />
-                    <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                      <input
-                        type="checkbox"
-                        checked={formData.halfDayEnd}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            halfDayEnd: e.target.checked,
-                          })
-                        }
-                        className="rounded"
-                      />
-                      {t("halfDay")}
-                    </label>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>{t("form.startDate")}</Label>
+              <Input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, startDate: e.target.value })
+                }
+                required
+              />
+              <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={formData.halfDayStart}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      halfDayStart: e.target.checked,
+                    })
+                  }
+                  className="rounded"
+                />
+                {t("halfDay")}
+              </label>
+            </div>
+            <div>
+              <Label>{t("form.endDate")}</Label>
+              <Input
+                type="date"
+                value={formData.endDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, endDate: e.target.value })
+                }
+                required
+              />
+              <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={formData.halfDayEnd}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      halfDayEnd: e.target.checked,
+                    })
+                  }
+                  className="rounded"
+                />
+                {t("halfDay")}
+              </label>
+            </div>
+          </div>
 
-                {/* ── Holiday-aware day-count preview ── */}
-                {(formData.startDate || formData.endDate) && (
-                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 text-sm">
-                    {previewLoading && !preview && (
-                      <p className="text-gray-600 dark:text-zinc-400">
-                        {t("preview.loading")}
-                      </p>
+          {/* ── Holiday-aware day-count preview ── */}
+          {(formData.startDate || formData.endDate) && (
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 text-sm">
+              {previewLoading && !preview && (
+                <p className="text-gray-600 dark:text-zinc-400">
+                  {t("preview.loading")}
+                </p>
+              )}
+              {preview && (
+                <>
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <span className="text-base font-semibold text-emerald-700 dark:text-emerald-300">
+                      {t("preview.deductible", {
+                        count: preview.deductibleDays,
+                      })}
+                    </span>
+                    {preview.holidayCount > 0 && (
+                      <span className="text-xs text-emerald-700 dark:text-emerald-400">
+                        {t("preview.holidaysExcluded", {
+                          count: preview.holidayCount,
+                        })}
+                      </span>
                     )}
-                    {preview && (
-                      <>
-                        <div className="flex flex-wrap items-baseline gap-3">
-                          <span className="text-base font-semibold text-emerald-700 dark:text-emerald-300">
-                            {t("preview.deductible", {
-                              count: preview.deductibleDays,
-                            })}
-                          </span>
-                          {preview.holidayCount > 0 && (
-                            <span className="text-xs text-emerald-700 dark:text-emerald-400">
-                              {t("preview.holidaysExcluded", {
-                                count: preview.holidayCount,
-                              })}
-                            </span>
-                          )}
-                          <span className="ml-auto text-xs text-gray-500 dark:text-zinc-500">
-                            {t("preview.bundesland", {
-                              code: preview.bundesland,
-                            })}
-                          </span>
-                        </div>
-                        {preview.breakdown.some(
-                          (d) => d.kind === "HOLIDAY",
-                        ) && (
-                          <ul className="mt-2 space-y-0.5 text-xs text-gray-600 dark:text-zinc-400">
-                            {preview.breakdown
-                              .filter((d) => d.kind === "HOLIDAY")
-                              .map((d) => (
-                                <li key={d.date}>
-                                  • {d.date} — {d.holidayName}
-                                </li>
-                              ))}
-                          </ul>
-                        )}
-                      </>
-                    )}
+                    <span className="ml-auto text-xs text-gray-500 dark:text-zinc-500">
+                      {t("preview.bundesland", {
+                        code: preview.bundesland,
+                      })}
+                    </span>
                   </div>
-                )}
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowForm(false)}
-                  >
-                    {tc("cancel")}
-                  </Button>
-                  <Button type="submit">{t("form.submit")}</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  {preview.breakdown.some((d) => d.kind === "HOLIDAY") && (
+                    <ul className="mt-2 space-y-0.5 text-xs text-gray-600 dark:text-zinc-400">
+                      {preview.breakdown
+                        .filter((d) => d.kind === "HOLIDAY")
+                        .map((d) => (
+                          <li key={d.date}>
+                            • {d.date} — {d.holidayName}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </form>
+      </AdaptiveModal>
 
       {/* ── Edit Absence Modal (employee own pending) ─────────── */}
-      {editingAbsence && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
-          <Card className="w-full max-w-lg mx-0 sm:mx-4 rounded-b-none sm:rounded-b-xl max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:pb-0">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{t("editRequest")}</CardTitle>
-                <button
-                  onClick={() => setEditingAbsence(null)}
-                  className="rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                >
-                  <XIcon className="h-5 w-5 text-gray-400" />
-                </button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleEditSubmit} className="space-y-4">
-                <div>
-                  <Label>{t("form.category")}</Label>
-                  <Select
-                    value={editForm.category}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, category: e.target.value })
-                    }
-                  >
-                    {CATEGORY_KEYS.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {t(`categories.${cat.value}`)}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label>{t("form.startDate")}</Label>
-                    <Input
-                      type="date"
-                      value={editForm.startDate}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, startDate: e.target.value })
-                      }
-                      required
-                    />
-                    <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                      <input
-                        type="checkbox"
-                        checked={editForm.halfDayStart}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            halfDayStart: e.target.checked,
-                          })
-                        }
-                        className="rounded"
-                      />
-                      {t("halfDay")}
-                    </label>
-                  </div>
-                  <div>
-                    <Label>{t("form.endDate")}</Label>
-                    <Input
-                      type="date"
-                      value={editForm.endDate}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, endDate: e.target.value })
-                      }
-                      required
-                    />
-                    <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                      <input
-                        type="checkbox"
-                        checked={editForm.halfDayEnd}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            halfDayEnd: e.target.checked,
-                          })
-                        }
-                        className="rounded"
-                      />
-                      {t("halfDay")}
-                    </label>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditingAbsence(null)}
-                  >
-                    {tc("cancel")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={!!actionLoading[editingAbsence.id]}
-                  >
-                    {t("form.save")}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <AdaptiveModal
+        open={!!editingAbsence}
+        onClose={() => setEditingAbsence(null)}
+        title={t("editRequest")}
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditingAbsence(null)}
+            >
+              {tc("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              form="edit-absence-form"
+              disabled={!!editingAbsence && !!actionLoading[editingAbsence.id]}
+            >
+              {t("form.save")}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="edit-absence-form"
+          onSubmit={handleEditSubmit}
+          className="space-y-4"
+        >
+          <div>
+            <Label>{t("form.category")}</Label>
+            <Select
+              value={editForm.category}
+              onChange={(e) =>
+                setEditForm({ ...editForm, category: e.target.value })
+              }
+            >
+              {CATEGORY_KEYS.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {t(`categories.${cat.value}`)}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>{t("form.startDate")}</Label>
+              <Input
+                type="date"
+                value={editForm.startDate}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, startDate: e.target.value })
+                }
+                required
+              />
+              <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={editForm.halfDayStart}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      halfDayStart: e.target.checked,
+                    })
+                  }
+                  className="rounded"
+                />
+                {t("halfDay")}
+              </label>
+            </div>
+            <div>
+              <Label>{t("form.endDate")}</Label>
+              <Input
+                type="date"
+                value={editForm.endDate}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, endDate: e.target.value })
+                }
+                required
+              />
+              <label className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={editForm.halfDayEnd}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      halfDayEnd: e.target.checked,
+                    })
+                  }
+                  className="rounded"
+                />
+                {t("halfDay")}
+              </label>
+            </div>
+          </div>
+        </form>
+      </AdaptiveModal>
     </div>
   );
 }

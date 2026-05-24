@@ -59,7 +59,7 @@ export function Topbar({
     <>
       {/* ── iOS large title — mobile only ── */}
       {!hideMobile && (
-        <div className="lg:hidden pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="lg:hidden pt-3">
           <div className="px-4 pb-2">
             {/* Utility row — compact, right-aligned */}
             <div className="flex items-center justify-between mb-1">

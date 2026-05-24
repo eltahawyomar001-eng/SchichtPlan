@@ -518,7 +518,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="mb-4">
               <div className="mb-2 flex items-center gap-2 px-3">
                 <StarIcon className="w-3 h-3 text-amber-400" />
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                <p className="text-[11px] font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
                   {t("favorites")}
                 </p>
                 <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
@@ -572,7 +572,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     onClick={() => !query && toggleGroup(groupIdx)}
                     className="w-full mb-1.5 flex items-center gap-2 px-3 group/header"
                   >
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 group-hover/header:text-gray-600 dark:group-hover/header:text-zinc-300 transition-colors">
+                    <p className="text-[11px] font-semibold tracking-wider text-gray-400 dark:text-zinc-500 group-hover/header:text-gray-600 dark:group-hover/header:text-zinc-300 transition-colors">
                       {t(group.labelKey)}
                     </p>
                     <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />

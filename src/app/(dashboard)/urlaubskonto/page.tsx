@@ -288,7 +288,7 @@ export default function UrlaubskontoSeite() {
               <div className="overflow-x-auto">
                 <div className="min-w-[740px]">
                   {/* Header */}
-                  <div className="grid grid-cols-8 gap-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <div className="grid grid-cols-8 gap-4 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-6 py-3 text-xs font-medium tracking-wide text-gray-500 dark:text-zinc-400">
                     <div className="col-span-2">{t("employee")}</div>
                     <div className="text-center">{t("contractTypeLabel")}</div>
                     <div className="text-center">{t("entitlement")}</div>

@@ -302,6 +302,38 @@ export default withAuth(
           headers: res.headers,
         });
       }
+
+      // ── Fetch Metadata CSRF defense ──
+      // Modern browsers always send Sec-Fetch-Site on all requests.
+      // "cross-site" means the request originated from a different origin —
+      // reject mutations so a malicious third-party page cannot trigger
+      // state changes on behalf of a logged-in user.
+      // Exempt public endpoints that legitimately receive cross-origin POSTs.
+      const secFetchSite = req.headers.get("sec-fetch-site");
+      const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(
+        req.method,
+      );
+      const isCsrfExempt =
+        pathname.startsWith("/api/auth/mobile/") ||
+        pathname.startsWith("/api/qr-clock/") ||
+        pathname.startsWith("/api/station/") ||
+        pathname.startsWith("/api/tickets/external/") ||
+        pathname === "/api/billing/webhook" ||
+        pathname.startsWith("/api/sos/respond");
+
+      if (isMutation && secFetchSite === "cross-site" && !isCsrfExempt) {
+        return new NextResponse(
+          JSON.stringify({ error: "Forbidden", code: "CSRF_BLOCKED" }),
+          {
+            status: 403,
+            headers: {
+              "Content-Type": "application/json",
+              ...staticHeaders,
+              "Content-Security-Policy": buildCsp(nonce),
+            },
+          },
+        );
+      }
     }
 
     // ── Request body size limits (M4 — prevent oversized payloads) ──

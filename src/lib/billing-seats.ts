@@ -3,6 +3,7 @@ import { getStripe } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { getTicketingTierByPriceId } from "@/lib/ticketing-addon";
 import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
+import { withCircuitBreaker, CircuitOpenError } from "@/lib/circuit-breaker";
 
 /**
  * Per-seat billing helpers.
@@ -110,19 +111,28 @@ export async function syncSeatQuantityToStripe(
 
   try {
     const stripe = getStripe();
-    const liveSub = await stripe.subscriptions.retrieve(
-      sub.stripeSubscriptionId!,
-      { expand: ["items"] },
-    );
 
-    // Find the main plan item — exclude ticketing and schichtplanung addon
-    // items (those are billed independently and have fixed quantities).
-    const mainItem =
-      liveSub.items.data.find(
-        (it) =>
-          !getTicketingTierByPriceId(it.price.id) &&
-          !getSchichtplanungBillingByPriceId(it.price.id),
-      ) ?? liveSub.items.data[0];
+    // Retrieve live subscription through circuit breaker — return mainItem
+    // as part of the result so NO_MAIN_ITEM is a return value, not a throw,
+    // and therefore doesn't count as a Stripe failure.
+    const { mainItem, liveQty } = await withCircuitBreaker(
+      "stripe",
+      async () => {
+        const liveSub = await stripe.subscriptions.retrieve(
+          sub.stripeSubscriptionId!,
+          { expand: ["items"] },
+        );
+        // Find the main plan item — exclude ticketing and schichtplanung addon
+        // items (those are billed independently and have fixed quantities).
+        const item =
+          liveSub.items.data.find(
+            (it) =>
+              !getTicketingTierByPriceId(it.price.id) &&
+              !getSchichtplanungBillingByPriceId(it.price.id),
+          ) ?? liveSub.items.data[0];
+        return { mainItem: item ?? null, liveQty: item?.quantity ?? MIN_SEATS };
+      },
+    );
 
     if (!mainItem) {
       log.warn("[Billing:Seats] No main item found on subscription", {
@@ -137,8 +147,6 @@ export async function syncSeatQuantityToStripe(
         reason: "NO_MAIN_ITEM",
       };
     }
-
-    const liveQty = mainItem.quantity ?? MIN_SEATS;
 
     // No-op if live Stripe quantity already matches target — but heal DB if
     // it drifted from Stripe.
@@ -155,9 +163,11 @@ export async function syncSeatQuantityToStripe(
     const prorationBehavior =
       direction === "remove" ? "create_prorations" : "always_invoice";
 
-    await stripe.subscriptions.update(sub.stripeSubscriptionId!, {
-      items: [{ id: mainItem.id, quantity: seats }],
-      proration_behavior: prorationBehavior,
+    await withCircuitBreaker("stripe", async () => {
+      await stripe.subscriptions.update(sub.stripeSubscriptionId!, {
+        items: [{ id: mainItem.id, quantity: seats }],
+        proration_behavior: prorationBehavior,
+      });
     });
 
     // Stripe succeeded — DB update is best-effort; Stripe webhook will heal any drift
@@ -182,6 +192,19 @@ export async function syncSeatQuantityToStripe(
     );
     return { ok: true, before: liveQty, after: seats, changed: true };
   } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      log.warn(
+        "[Billing:Seats] Stripe circuit open — skipping seat sync, will reconcile on next webhook",
+        { workspaceId, attemptedSeats: seats },
+      );
+      return {
+        ok: false,
+        before: sub.seatCount,
+        after: seats,
+        changed: false,
+        reason: "CIRCUIT_OPEN",
+      };
+    }
     log.error("[Billing:Seats] Stripe quantity sync failed", {
       err,
       workspaceId,
@@ -250,18 +273,20 @@ export async function getSeatDrift(workspaceId: string): Promise<{
 
   try {
     const stripe = getStripe();
-    const liveSub = await stripe.subscriptions.retrieve(
-      sub.stripeSubscriptionId!,
-      { expand: ["items"] },
-    );
-    const mainItem =
-      liveSub.items.data.find(
-        (it) =>
-          !getTicketingTierByPriceId(it.price.id) &&
-          !getSchichtplanungBillingByPriceId(it.price.id),
-      ) ?? liveSub.items.data[0];
+    const { liveQty } = await withCircuitBreaker("stripe", async () => {
+      const liveSub = await stripe.subscriptions.retrieve(
+        sub.stripeSubscriptionId!,
+        { expand: ["items"] },
+      );
+      const mainItem =
+        liveSub.items.data.find(
+          (it) =>
+            !getTicketingTierByPriceId(it.price.id) &&
+            !getSchichtplanungBillingByPriceId(it.price.id),
+        ) ?? liveSub.items.data[0];
+      return { liveQty: mainItem?.quantity ?? MIN_SEATS };
+    });
 
-    const liveQty = mainItem?.quantity ?? MIN_SEATS;
     const expected = Math.max(MIN_SEATS, employeeCount);
     return {
       employeeCount,
@@ -269,6 +294,17 @@ export async function getSeatDrift(workspaceId: string): Promise<{
       inSync: liveQty === expected,
     };
   } catch (err) {
+    if (err instanceof CircuitOpenError) {
+      log.warn("[Billing:Seats] Stripe circuit open — drift check skipped", {
+        workspaceId,
+      });
+      return {
+        employeeCount,
+        stripeQuantity: null,
+        inSync: false,
+        reason: "CIRCUIT_OPEN",
+      };
+    }
     log.error("[Billing:Seats] Drift check failed", { err, workspaceId });
     return {
       employeeCount,

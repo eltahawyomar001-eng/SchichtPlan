@@ -5,6 +5,7 @@ import { requirePlanFeature } from "@/lib/subscription";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { parseOptionalDateQueryParam } from "@/lib/validations";
 
 /**
  * GET /api/reports?start=2025-01-01&end=2025-01-31
@@ -27,17 +28,21 @@ export const GET = withRoute("/api/reports", "GET", async (req) => {
   if (planGate) return planGate;
 
   const { searchParams } = new URL(req.url);
-  const startDate = searchParams.get("start");
-  const endDate = searchParams.get("end");
+
+  const startResult = parseOptionalDateQueryParam(
+    searchParams.get("start"),
+    "start",
+  );
+  if (!startResult.ok) return startResult.response;
+  const endResult = parseOptionalDateQueryParam(searchParams.get("end"), "end");
+  if (!endResult.ok) return endResult.response;
 
   // Default: current month
   const now = new Date();
-  const start = startDate
-    ? new Date(startDate)
-    : new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = endDate
-    ? new Date(endDate)
-    : new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const start =
+    startResult.date ?? new Date(now.getFullYear(), now.getMonth(), 1);
+  const end =
+    endResult.date ?? new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
   // Fetch shifts in range
   const shifts = await prisma.shift.findMany({

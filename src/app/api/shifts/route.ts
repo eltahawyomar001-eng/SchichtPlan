@@ -13,7 +13,11 @@ import {
   isNightShift,
   calculateSurcharge,
 } from "@/lib/holidays";
-import { createShiftSchema, validateBody } from "@/lib/validations";
+import {
+  createShiftSchema,
+  validateBody,
+  parseOptionalDateQueryParam,
+} from "@/lib/validations";
 import { createAuditLogTx } from "@/lib/audit";
 import { captureRouteError } from "@/lib/sentry";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -33,8 +37,14 @@ export const GET = withRoute("/api/shifts", "GET", async (req) => {
   const { user, workspaceId } = auth;
 
   const { searchParams } = new URL(req.url);
-  const startDate = searchParams.get("start");
-  const endDate = searchParams.get("end");
+
+  const startResult = parseOptionalDateQueryParam(
+    searchParams.get("start"),
+    "start",
+  );
+  if (!startResult.ok) return startResult.response;
+  const endResult = parseOptionalDateQueryParam(searchParams.get("end"), "end");
+  if (!endResult.ok) return endResult.response;
 
   const where: {
     workspaceId: string;
@@ -44,10 +54,10 @@ export const GET = withRoute("/api/shifts", "GET", async (req) => {
     workspaceId,
   };
 
-  if (startDate && endDate) {
+  if (startResult.date && endResult.date) {
     where.date = {
-      gte: new Date(startDate),
-      lte: new Date(endDate),
+      gte: startResult.date,
+      lte: endResult.date,
     };
   }
 

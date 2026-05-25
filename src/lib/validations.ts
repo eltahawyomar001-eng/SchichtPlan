@@ -921,3 +921,71 @@ export const createTicketCommentSchema = z.object({
     .superRefine(rejectSensitiveData),
   isInternal: z.boolean().optional(),
 });
+
+// ── Date query-param helper ─────────────────────────────────────
+
+const isoDateParam = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/,
+    "Datum muss im Format YYYY-MM-DD oder ISO 8601 sein",
+  )
+  .refine((v) => !isNaN(Date.parse(v)), "Ungültiges Datum");
+
+/**
+ * Validate a date query-string param and return a Date or a 400 response.
+ * Usage:
+ *   const start = parseDateQueryParam(searchParams.get("start"), "start");
+ *   if (!start.ok) return start.response;
+ */
+export function parseDateQueryParam(
+  value: string | null,
+  paramName: string,
+): { ok: true; date: Date } | { ok: false; response: NextResponse } {
+  if (!value) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: `Missing required query parameter: ${paramName}` },
+        { status: 400 },
+      ),
+    };
+  }
+  const result = isoDateParam.safeParse(value);
+  if (!result.success) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        {
+          error: `Invalid date for parameter '${paramName}': ${result.error.issues[0]?.message ?? "ungültiges Format"}`,
+        },
+        { status: 400 },
+      ),
+    };
+  }
+  return { ok: true, date: new Date(result.data) };
+}
+
+/**
+ * Like parseDateQueryParam but returns null instead of a 400 when value is absent.
+ * Use this for optional date filters.
+ */
+export function parseOptionalDateQueryParam(
+  value: string | null,
+  paramName: string,
+): { ok: true; date: Date | null } | { ok: false; response: NextResponse } {
+  if (!value) return { ok: true, date: null };
+  const result = isoDateParam.safeParse(value);
+  if (!result.success) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        {
+          error: `Invalid date for parameter '${paramName}': ${result.error.issues[0]?.message ?? "ungültiges Format"}`,
+        },
+        { status: 400 },
+      ),
+    };
+  }
+  return { ok: true, date: new Date(result.data) };
+}

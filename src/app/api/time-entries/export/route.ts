@@ -8,6 +8,7 @@ import {
 } from "@/lib/time-utils";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { parseOptionalDateQueryParam } from "@/lib/validations";
 import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
@@ -31,13 +32,19 @@ export const GET = withRoute("/api/time-entries/export", "GET", async (req) => {
   }
 
   const { searchParams } = new URL(req.url);
-  const startDate = searchParams.get("start");
-  const endDate = searchParams.get("end");
   const employeeId = searchParams.get("employeeId");
 
+  const startResult = parseOptionalDateQueryParam(
+    searchParams.get("start"),
+    "start",
+  );
+  if (!startResult.ok) return startResult.response;
+  const endResult = parseOptionalDateQueryParam(searchParams.get("end"), "end");
+  if (!endResult.ok) return endResult.response;
+
   const where: Record<string, unknown> = { workspaceId };
-  if (startDate && endDate) {
-    where.date = { gte: new Date(startDate), lte: new Date(endDate) };
+  if (startResult.date && endResult.date) {
+    where.date = { gte: startResult.date, lte: endResult.date };
   }
   if (employeeId) where.employeeId = employeeId;
 

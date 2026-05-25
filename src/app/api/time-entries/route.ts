@@ -14,7 +14,11 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
-import { createTimeEntrySchema, validateBody } from "@/lib/validations";
+import {
+  createTimeEntrySchema,
+  validateBody,
+  parseOptionalDateQueryParam,
+} from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 
 // ─── GET  /api/time-entries ─────────────────────────────────────
@@ -24,15 +28,21 @@ export const GET = withRoute("/api/time-entries", "GET", async (req) => {
   const { user, workspaceId } = auth;
 
   const { searchParams } = new URL(req.url);
-  const startDate = searchParams.get("start");
-  const endDate = searchParams.get("end");
   const employeeId = searchParams.get("employeeId");
   const status = searchParams.get("status");
 
+  const startResult = parseOptionalDateQueryParam(
+    searchParams.get("start"),
+    "start",
+  );
+  if (!startResult.ok) return startResult.response;
+  const endResult = parseOptionalDateQueryParam(searchParams.get("end"), "end");
+  if (!endResult.ok) return endResult.response;
+
   const where: Record<string, unknown> = { workspaceId };
 
-  if (startDate && endDate) {
-    where.date = { gte: new Date(startDate), lte: new Date(endDate) };
+  if (startResult.date && endResult.date) {
+    where.date = { gte: startResult.date, lte: endResult.date };
   }
   if (employeeId) where.employeeId = employeeId;
   if (status) where.status = status;

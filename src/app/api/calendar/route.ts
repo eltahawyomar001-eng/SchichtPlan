@@ -3,6 +3,7 @@ import { isEmployee } from "@/lib/authorization";
 import { requireAuth } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { NextResponse } from "next/server";
+import { parseDateQueryParam } from "@/lib/validations";
 
 /**
  * GET /api/calendar?start=YYYY-MM-DD&end=YYYY-MM-DD
@@ -21,18 +22,14 @@ export const GET = withRoute("/api/calendar", "GET", async (req) => {
   const { user, workspaceId } = auth;
 
   const { searchParams } = new URL(req.url);
-  const startDate = searchParams.get("start");
-  const endDate = searchParams.get("end");
 
-  if (!startDate || !endDate) {
-    return NextResponse.json(
-      { error: "start and end query params required" },
-      { status: 400 },
-    );
-  }
+  const startResult = parseDateQueryParam(searchParams.get("start"), "start");
+  if (!startResult.ok) return startResult.response;
+  const endResult = parseDateQueryParam(searchParams.get("end"), "end");
+  if (!endResult.ok) return endResult.response;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = startResult.date;
+  const end = endResult.date;
 
   // Build employee scope for EMPLOYEE role
   const empScope: Record<string, unknown> =

@@ -12,10 +12,14 @@ import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { mobileRefreshSchema, validateBody } from "@/lib/validations";
+import { isLockedOut } from "@/lib/login-lockout";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-change-me",
-);
+function getJwtSecret(): Uint8Array {
+  const s = process.env.NEXTAUTH_SECRET;
+  if (!s) throw new Error("NEXTAUTH_SECRET is not set");
+  return new TextEncoder().encode(s);
+}
+
 const ACCESS_TOKEN_TTL = "24h";
 
 export const POST = withRoute(
@@ -29,10 +33,12 @@ export const POST = withRoute(
     if (!parsed.success) return parsed.response;
     const { refreshToken } = parsed.data;
 
+    const jwtSecret = getJwtSecret();
+
     // ── Refresh-Token verifizieren ──
     let payload: jose.JWTPayload;
     try {
-      const result = await jose.jwtVerify(refreshToken, JWT_SECRET);
+      const result = await jose.jwtVerify(refreshToken, jwtSecret);
       payload = result.payload;
     } catch {
       return NextResponse.json(
@@ -64,6 +70,19 @@ export const POST = withRoute(
       );
     }
 
+    // ── Lockout-Prüfung: gesperrte Nutzer dürfen keinen neuen Token erhalten ──
+    if (user.email) {
+      const lockedSeconds = await isLockedOut(user.email);
+      if (lockedSeconds > 0) {
+        return NextResponse.json(
+          {
+            error: `Konto gesperrt. Bitte warte ${Math.ceil(lockedSeconds / 60)} Minute(n).`,
+          },
+          { status: 429 },
+        );
+      }
+    }
+
     // ── Neuen Access-Token generieren ──
     const tokenPayload = {
       sub: user.id,
@@ -80,7 +99,7 @@ export const POST = withRoute(
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime(ACCESS_TOKEN_TTL)
-      .sign(JWT_SECRET);
+      .sign(jwtSecret);
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 

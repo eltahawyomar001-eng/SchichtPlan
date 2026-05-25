@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isOwner } from "@/lib/authorization";
 import { log } from "@/lib/logger";
-import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 import {
   requireAuth,
@@ -54,10 +53,11 @@ export const POST = withRoute(
       return badRequest("scheduledAt must be a valid ISO date");
     }
 
-    // Get all users in the workspace
+    // Get all users in the workspace — capped to prevent runaway allocations
     const users = await prisma.user.findMany({
       where: { workspaceId },
       select: { id: true },
+      take: 5000,
     });
 
     const dateStr = scheduledDate.toLocaleDateString("de-DE", {

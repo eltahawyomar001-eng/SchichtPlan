@@ -27,9 +27,12 @@ import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { mobileLoginSchema, validateBody } from "@/lib/validations";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-change-me",
-);
+function getJwtSecret(): Uint8Array {
+  const s = process.env.NEXTAUTH_SECRET;
+  if (!s) throw new Error("NEXTAUTH_SECRET is not set");
+  return new TextEncoder().encode(s);
+}
+
 const ACCESS_TOKEN_TTL = "24h";
 const REFRESH_TOKEN_TTL = "30d";
 
@@ -167,11 +170,13 @@ export const POST = withRoute("/api/auth/mobile/login", "POST", async (req) => {
     type: "access" as const,
   };
 
+  const jwtSecret = getJwtSecret();
+
   const accessToken = await new jose.SignJWT(tokenPayload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_TTL)
-    .sign(JWT_SECRET);
+    .sign(jwtSecret);
 
   const refreshToken = await new jose.SignJWT({
     sub: user.id,
@@ -180,7 +185,7 @@ export const POST = withRoute("/api/auth/mobile/login", "POST", async (req) => {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_TTL)
-    .sign(JWT_SECRET);
+    .sign(jwtSecret);
 
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 

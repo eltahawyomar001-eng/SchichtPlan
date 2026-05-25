@@ -23,12 +23,14 @@ export const GET = withRoute("/api/holidays", "GET", async (req) => {
   const bundeslandParam = searchParams.get("bundesland");
 
   const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
+  if (isNaN(year) || year < 2000 || year > 2100) {
+    return NextResponse.json({ error: "Invalid year" }, { status: 400 });
+  }
 
   // Use query param, then workspace setting, then default HE
   let bundesland = bundeslandParam;
   if (!bundesland) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const workspace = await (prisma.workspace as any).findUnique({
+    const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
       select: { bundesland: true },
     });

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { resetPasswordSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { cache } from "@/lib/cache";
 
 export const POST = withRoute(
   "/api/auth/reset-password",
@@ -67,6 +68,14 @@ export const POST = withRoute(
       await tx.passwordResetToken.delete({
         where: { id: resetToken.id },
       });
+    });
+
+    // Bust the JWT role-cache so any active session picks up the password change
+    // on its next request instead of coasting on the 60 s Redis TTL.
+    await cache.del(`jwt:${user.id}`).catch(() => {});
+
+    log.info("[reset-password] Password reset, JWT cache busted", {
+      userId: user.id,
     });
 
     return NextResponse.json({

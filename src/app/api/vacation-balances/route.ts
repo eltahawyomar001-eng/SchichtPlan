@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { createVacationBalanceSchema, validateBody } from "@/lib/validations";
-import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
@@ -17,42 +16,24 @@ function calculateMinEntitlement(workDaysPerWeek: number): number {
   return Math.round(workDaysPerWeek * 4 * 10) / 10; // round to 1 decimal
 }
 
-/**
- * Recalculate used + planned days from actual AbsenceRequests for an employee/year.
- * - used = sum of totalDays for GENEHMIGT URLAUB absences in that year
- * - planned = sum of totalDays for AUSSTEHEND URLAUB absences in that year
- */
-async function recalculateFromAbsences(
-  employeeId: string,
-  year: number,
-  workspaceId: string,
-): Promise<{ used: number; planned: number }> {
-  const startOfYear = new Date(year, 0, 1);
-  const endOfYear = new Date(year, 11, 31);
-
-  const absences = await prisma.absenceRequest.findMany({
-    where: {
-      employeeId,
-      workspaceId,
-      category: "URLAUB",
-      status: { in: ["GENEHMIGT", "AUSSTEHEND"] },
-      startDate: { lte: endOfYear },
-      endDate: { gte: startOfYear },
-      deletedAt: null,
-    },
-    select: { status: true, totalDays: true },
-  });
-
-  let used = 0;
-  let planned = 0;
+/** Aggregate absence days per employee from a pre-fetched batch. */
+function computeUsedPlanned(
+  absences: { employeeId: string; status: string; totalDays: number }[],
+): Map<string, { used: number; planned: number }> {
+  const result = new Map<string, { used: number; planned: number }>();
   for (const a of absences) {
-    if (a.status === "GENEHMIGT") used += a.totalDays;
-    else if (a.status === "AUSSTEHEND") planned += a.totalDays;
+    const entry = result.get(a.employeeId) ?? { used: 0, planned: 0 };
+    if (a.status === "GENEHMIGT") entry.used += a.totalDays;
+    else if (a.status === "AUSSTEHEND") entry.planned += a.totalDays;
+    result.set(a.employeeId, entry);
   }
-  return {
-    used: Math.round(used * 10) / 10,
-    planned: Math.round(planned * 10) / 10,
-  };
+  for (const [id, v] of result) {
+    result.set(id, {
+      used: Math.round(v.used * 10) / 10,
+      planned: Math.round(v.planned * 10) / 10,
+    });
+  }
+  return result;
 }
 
 /**
@@ -74,6 +55,9 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
   const employeeIdParam = searchParams.get("employeeId");
 
   const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
+  if (isNaN(year) || year < 2000 || year > 2100) {
+    return NextResponse.json({ error: "Invalid year" }, { status: 400 });
+  }
 
   // ── Determine which employees to include ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,6 +92,23 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
     where: { workspaceId, year, employeeId: { in: employeeIds } },
   });
   const existingMap = new Map(existingBalances.map((b) => [b.employeeId, b]));
+
+  // ── Batch-fetch all absences for all employees in one query (avoids N+1) ──
+  const startOfYear = new Date(year, 0, 1);
+  const endOfYear = new Date(year, 11, 31);
+  const allAbsences = await prisma.absenceRequest.findMany({
+    where: {
+      workspaceId,
+      employeeId: { in: employeeIds },
+      category: "URLAUB",
+      status: { in: ["GENEHMIGT", "AUSSTEHEND"] },
+      startDate: { lte: endOfYear },
+      endDate: { gte: startOfYear },
+      deletedAt: null,
+    },
+    select: { employeeId: true, status: true, totalDays: true },
+  });
+  const absencesByEmployee = computeUsedPlanned(allAbsences);
 
   // ── Auto-provision policy ──
   // We ONLY auto-create VacationBalance rows for the *current* calendar year.
@@ -158,24 +159,28 @@ export const GET = withRoute("/api/vacation-balances", "GET", async (req) => {
     // Skip employees with no balance for non-current years (empty state on UI)
     if (!balance) continue;
 
-    // Recalculate used/planned from actual absences
-    const { used, planned } = await recalculateFromAbsences(
-      emp.id,
-      year,
-      workspaceId,
-    );
+    // Use pre-fetched absence data — no extra DB round-trip per employee
+    const { used, planned } = absencesByEmployee.get(emp.id) ?? {
+      used: 0,
+      planned: 0,
+    };
     const remaining =
       balance.totalEntitlement + balance.carryOver - used - planned;
 
-    // Update if values differ
+    // Update if values differ — version check prevents lost-update under concurrent writes
     if (
       balance.used !== used ||
       balance.planned !== planned ||
       balance.remaining !== remaining
     ) {
       balance = await prisma.vacationBalance.update({
-        where: { id: balance.id },
-        data: { used, planned, remaining: Math.round(remaining * 10) / 10 },
+        where: { id: balance.id, version: balance.version },
+        data: {
+          used,
+          planned,
+          remaining: Math.round(remaining * 10) / 10,
+          version: { increment: 1 },
+        },
       });
     }
 

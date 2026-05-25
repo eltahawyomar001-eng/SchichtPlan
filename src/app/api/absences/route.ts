@@ -159,13 +159,18 @@ export const POST = withRoute(
       );
     }
 
-    // Holiday-aware classification — statutory public holidays are NEVER
-    // deducted from the employee's vacation balance, even when they fall on
-    // a normal working day. See src/lib/absence-days.ts for the algorithm.
-    const employeeForBundesland = await prisma.employee.findUnique({
-      where: { id: body.employeeId },
+    // Validate employee belongs to this workspace before proceeding
+    const employeeForBundesland = await prisma.employee.findFirst({
+      where: { id: body.employeeId, workspaceId },
       select: { locationId: true },
     });
+
+    if (!employeeForBundesland) {
+      return NextResponse.json(
+        { error: "Employee not found" },
+        { status: 404 },
+      );
+    }
     const classification = await classifyAbsenceForWorkspace({
       workspaceId,
       employeeId: body.employeeId,
@@ -185,6 +190,7 @@ export const POST = withRoute(
         const overlapping = await tx.absenceRequest.findFirst({
           where: {
             employeeId: body.employeeId,
+            workspaceId,
             status: "GENEHMIGT",
             startDate: { lte: end },
             endDate: { gte: start },

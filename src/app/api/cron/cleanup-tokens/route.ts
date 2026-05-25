@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
-import { captureRouteError } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * GET /api/cron/cleanup-tokens
@@ -9,7 +9,7 @@ import { captureRouteError } from "@/lib/sentry";
  * Deletes expired PasswordResetTokens and PinRevealTokens.
  * Runs via Vercel Cron daily at 03:30 UTC.
  */
-export async function GET(req: Request) {
+export const GET = withRoute("/api/cron/cleanup-tokens", "GET", async (req) => {
   const authHeader = req.headers.get("authorization");
   const cronSecret = authHeader?.replace("Bearer ", "");
 
@@ -17,23 +17,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid cron secret" }, { status: 401 });
   }
 
-  try {
-    const now = new Date();
+  const now = new Date();
 
-    const resetTokens = await prisma.passwordResetToken.deleteMany({
-      where: { expires: { lt: now } },
-    });
+  const resetTokens = await prisma.passwordResetToken.deleteMany({
+    where: { expires: { lt: now } },
+  });
 
-    log.info("[cron/cleanup-tokens] done", {
-      resetTokensDeleted: resetTokens.count,
-    });
+  log.info("[cron/cleanup-tokens] done", {
+    resetTokensDeleted: resetTokens.count,
+  });
 
-    return NextResponse.json({ resetTokensDeleted: resetTokens.count });
-  } catch (err) {
-    captureRouteError(err, {
-      route: "/api/cron/cleanup-tokens",
-      method: "GET",
-    });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  return NextResponse.json({ resetTokensDeleted: resetTokens.count });
+});

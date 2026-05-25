@@ -40,33 +40,35 @@ export const POST = withRoute("/api/admin/backfill-pins", "POST", async () => {
   let emailed = 0;
   const errors: string[] = [];
 
-  for (const emp of employees) {
-    try {
-      const rawPin = await generateUniquePin(workspaceId);
-      const pHash = hashPin(workspaceId, rawPin);
-      await prisma.employee.update({
-        where: { id: emp.id },
-        data: { pinHash: pHash },
-      });
-      assigned++;
-
-      if (emp.email) {
-        await sendPinEmail({
-          to: emp.email,
-          firstName: emp.firstName,
-          rawPin,
-          workspaceName,
+  await Promise.allSettled(
+    employees.map(async (emp) => {
+      try {
+        const rawPin = await generateUniquePin(workspaceId);
+        const pHash = hashPin(workspaceId, rawPin);
+        await prisma.employee.update({
+          where: { id: emp.id },
+          data: { pinHash: pHash },
         });
-        emailed++;
+        assigned++;
+
+        if (emp.email) {
+          await sendPinEmail({
+            to: emp.email,
+            firstName: emp.firstName,
+            rawPin,
+            workspaceName,
+          });
+          emailed++;
+        }
+      } catch (err) {
+        log.error("[backfill-pins] failed for employee", {
+          err,
+          employeeId: emp.id,
+        });
+        errors.push(emp.id);
       }
-    } catch (err) {
-      log.error("[backfill-pins] failed for employee", {
-        err,
-        employeeId: emp.id,
-      });
-      errors.push(emp.id);
-    }
-  }
+    }),
+  );
 
   return NextResponse.json({
     assigned,

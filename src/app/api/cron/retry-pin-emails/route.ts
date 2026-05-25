@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendPinEmail, generateUniquePin, hashPin } from "@/lib/employee-pin";
 import { log } from "@/lib/logger";
-import { captureRouteError } from "@/lib/sentry";
+import { withRoute } from "@/lib/with-route";
 
 const BATCH_SIZE = 50;
 
@@ -12,15 +12,20 @@ const BATCH_SIZE = 50;
  * Retries PIN emails for employees where pinEmailFailed = true.
  * Runs via Vercel Cron every 6 hours.
  */
-export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = authHeader?.replace("Bearer ", "");
+export const GET = withRoute(
+  "/api/cron/retry-pin-emails",
+  "GET",
+  async (req) => {
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = authHeader?.replace("Bearer ", "");
 
-  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Invalid cron secret" }, { status: 401 });
-  }
+    if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+      return NextResponse.json(
+        { error: "Invalid cron secret" },
+        { status: 401 },
+      );
+    }
 
-  try {
     const employees = await prisma.employee.findMany({
       where: { pinEmailFailed: true, email: { not: null }, isActive: true },
       select: {
@@ -86,11 +91,5 @@ export async function GET(req: Request) {
 
     log.info("[cron/retry-pin-emails] done", { succeeded, failed });
     return NextResponse.json({ succeeded, failed });
-  } catch (err) {
-    captureRouteError(err, {
-      route: "/api/cron/retry-pin-emails",
-      method: "GET",
-    });
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
-}
+  },
+);

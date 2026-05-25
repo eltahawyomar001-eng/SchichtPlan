@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { withTimeout } from "@/lib/request-timeout";
 
 const startedAt = Date.now();
 
@@ -39,11 +40,15 @@ export const GET = withRoute("/api/health", "GET", async (req) => {
   ) {
     const redisStart = Date.now();
     try {
-      const res = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/ping`, {
-        headers: {
-          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-        },
-      });
+      const res = await withTimeout(
+        fetch(`${process.env.UPSTASH_REDIS_REST_URL}/ping`, {
+          headers: {
+            Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          },
+        }),
+        5_000,
+        "Redis ping",
+      );
       checks.redis = {
         status: res.ok ? "ok" : "error",
         latencyMs: Date.now() - redisStart,
@@ -59,11 +64,15 @@ export const GET = withRoute("/api/health", "GET", async (req) => {
   if (process.env.STRIPE_SECRET_KEY) {
     const stripeStart = Date.now();
     try {
-      const res = await fetch("https://api.stripe.com/v1/balance", {
-        headers: {
-          Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-        },
-      });
+      const res = await withTimeout(
+        fetch("https://api.stripe.com/v1/balance", {
+          headers: {
+            Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+          },
+        }),
+        5_000,
+        "Stripe balance",
+      );
       checks.stripe = {
         status: res.ok ? "ok" : "error",
         latencyMs: Date.now() - stripeStart,

@@ -157,34 +157,27 @@ const MAX_JSON_BODY_BYTES = 1_048_576; // 1 MB
 /** Maximum file upload body size (10 MB — import route has its own 5 MB check) */
 const MAX_UPLOAD_BODY_BYTES = 10_485_760; // 10 MB
 
-/* ──────────────────────────────────────────────────────────────
- * In-process LRU fallback counters (M-2)
- *
- * Used when Redis is unavailable. Per-instance only — does not
- * share state across Edge worker instances in production. Provides
- * meaningful protection in development and during brief Redis outages
- * on single-instance deployments (e.g. Railway, Fly.io).
- * ────────────────────────────────────────────────────────────── */
-interface FallbackEntry {
-  count: number;
-  resetAt: number;
-}
-const MEM_LIMIT_MAX = 2000;
-const memLimitStore = new Map<string, FallbackEntry>();
-
-function memLimitIncr(key: string, windowMs: number): number {
-  const now = Date.now();
-  const entry = memLimitStore.get(key);
-  if (!entry || now > entry.resetAt) {
-    if (memLimitStore.size >= MEM_LIMIT_MAX) {
-      const oldest = memLimitStore.keys().next().value;
-      if (oldest) memLimitStore.delete(oldest);
-    }
-    memLimitStore.set(key, { count: 1, resetAt: now + windowMs });
-    return 1;
-  }
-  entry.count += 1;
-  return entry.count;
+/** Return 503 when the Redis rate-limiter is temporarily unavailable. */
+function rateLimitUnavailable(
+  staticHeaders: Record<string, string>,
+  nonce: string,
+): NextResponse {
+  return new NextResponse(
+    JSON.stringify({
+      error:
+        "Rate limiting service temporarily unavailable. Please try again shortly.",
+      code: "RATE_LIMIT_UNAVAILABLE",
+    }),
+    {
+      status: 503,
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": "30",
+        ...staticHeaders,
+        "Content-Security-Policy": buildCsp(nonce),
+      },
+    },
+  );
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -379,23 +372,7 @@ export default withAuth(
             );
           }
         } catch {
-          const count = memLimitIncr(`token:${ip}`, 60_000);
-          if (count > 5) {
-            return new NextResponse(
-              JSON.stringify({
-                error: "Too many requests.",
-                code: "RATE_LIMITED",
-              }),
-              {
-                status: 429,
-                headers: {
-                  "Content-Type": "application/json",
-                  ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
-                },
-              },
-            );
-          }
+          return rateLimitUnavailable(staticHeaders, nonce);
         }
       }
     }
@@ -431,24 +408,7 @@ export default withAuth(
             );
           }
         } catch {
-          // Redis unavailable — in-process fallback (5 req / 60s)
-          const count = memLimitIncr(`import:${ip}`, 60_000);
-          if (count > 5) {
-            return new NextResponse(
-              JSON.stringify({
-                error: "Too many requests.",
-                code: "RATE_LIMITED",
-              }),
-              {
-                status: 429,
-                headers: {
-                  "Content-Type": "application/json",
-                  ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
-                },
-              },
-            );
-          }
+          return rateLimitUnavailable(staticHeaders, nonce);
         }
       }
     }
@@ -484,24 +444,7 @@ export default withAuth(
             );
           }
         } catch {
-          // Redis unavailable — in-process fallback (10 req / 60s)
-          const count = memLimitIncr(`auth:${ip}`, 60_000);
-          if (count > 10) {
-            return new NextResponse(
-              JSON.stringify({
-                error: "Too many requests. Please try again later.",
-                code: "RATE_LIMITED",
-              }),
-              {
-                status: 429,
-                headers: {
-                  "Content-Type": "application/json",
-                  ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
-                },
-              },
-            );
-          }
+          return rateLimitUnavailable(staticHeaders, nonce);
         }
       }
     }
@@ -538,23 +481,7 @@ export default withAuth(
             );
           }
         } catch {
-          const count = memLimitIncr(`expensive:${ip}`, 60_000);
-          if (count > 10) {
-            return new NextResponse(
-              JSON.stringify({
-                error: "Too many requests for this endpoint.",
-                code: "RATE_LIMITED",
-              }),
-              {
-                status: 429,
-                headers: {
-                  "Content-Type": "application/json",
-                  ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
-                },
-              },
-            );
-          }
+          return rateLimitUnavailable(staticHeaders, nonce);
         }
       }
     }
@@ -594,24 +521,7 @@ export default withAuth(
             );
           }
         } catch {
-          // Redis unavailable — in-process fallback (60 req / 60s)
-          const count = memLimitIncr(`api:${ip}`, 60_000);
-          if (count > 60) {
-            return new NextResponse(
-              JSON.stringify({
-                error: "Too many requests. Please try again later.",
-                code: "RATE_LIMITED",
-              }),
-              {
-                status: 429,
-                headers: {
-                  "Content-Type": "application/json",
-                  ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
-                },
-              },
-            );
-          }
+          return rateLimitUnavailable(staticHeaders, nonce);
         }
       }
     }

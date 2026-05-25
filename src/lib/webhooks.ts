@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { log } from "@/lib/logger";
 import { withTimeout } from "@/lib/request-timeout";
+import { WebhookFailureStatus } from "@prisma/client";
 
 /**
  * Webhook delivery timeout (ms).
@@ -73,20 +74,56 @@ export async function dispatchWebhook(
               status: res.status,
             });
           } else {
+            const errMsg = `HTTP ${res.status}`;
             log.warn("[webhook] Non-OK response", {
               endpointId: ep.id,
               url: ep.url,
               event,
               status: res.status,
             });
+            await prisma.webhookFailure
+              .create({
+                data: {
+                  endpointId: ep.id,
+                  workspaceId,
+                  event,
+                  payload: body,
+                  status: WebhookFailureStatus.PENDING,
+                  attempts: 1,
+                  lastAttempt: new Date(),
+                  errorMessage: errMsg,
+                },
+              })
+              .catch((e) =>
+                log.error("[webhook] Failed to persist DLQ entry", {
+                  error: e,
+                }),
+              );
           }
         } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
           log.warn("[webhook] Delivery failed", {
             endpointId: ep.id,
             url: ep.url,
             event,
-            error: err instanceof Error ? err.message : String(err),
+            error: errMsg,
           });
+          await prisma.webhookFailure
+            .create({
+              data: {
+                endpointId: ep.id,
+                workspaceId,
+                event,
+                payload: body,
+                status: WebhookFailureStatus.PENDING,
+                attempts: 1,
+                lastAttempt: new Date(),
+                errorMessage: errMsg,
+              },
+            })
+            .catch((e) =>
+              log.error("[webhook] Failed to persist DLQ entry", { error: e }),
+            );
         }
       }),
     );

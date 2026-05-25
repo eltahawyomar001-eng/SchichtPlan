@@ -160,10 +160,22 @@ export async function syncSeatQuantityToStripe(
       proration_behavior: prorationBehavior,
     });
 
-    await prisma.subscription.update({
-      where: { workspaceId },
-      data: { seatCount: seats },
-    });
+    // Stripe succeeded — DB update is best-effort; Stripe webhook will heal any drift
+    await prisma.subscription
+      .update({
+        where: { workspaceId },
+        data: { seatCount: seats },
+      })
+      .catch((dbErr) => {
+        log.error(
+          "[Billing:Seats] Stripe updated but DB seatCount sync failed — will heal on next webhook",
+          {
+            workspaceId,
+            seats,
+            dbErr,
+          },
+        );
+      });
 
     log.info(
       `[Billing:Seats] Synced quantity for ws=${workspaceId}: ${liveQty} → ${seats} (${direction}, ${prorationBehavior})`,

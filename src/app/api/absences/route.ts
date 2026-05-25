@@ -38,6 +38,7 @@ async function syncVacationBalance(
       deletedAt: null,
     },
     select: { status: true, totalDays: true },
+    take: 500, // hard cap — no employee can have >500 absence requests in a year
   });
 
   let used = 0;
@@ -58,9 +59,10 @@ async function syncVacationBalance(
       Math.round(
         (balance.totalEntitlement + balance.carryOver - used - planned) * 10,
       ) / 10;
+    // Optimistic concurrency: increment version to detect concurrent updates
     await prisma.vacationBalance.update({
-      where: { id: balance.id },
-      data: { used, planned, remaining },
+      where: { id: balance.id, version: balance.version },
+      data: { used, planned, remaining, version: { increment: 1 } },
     });
   }
 }

@@ -47,6 +47,7 @@ async function syncVacationBalance(
       deletedAt: null,
     },
     select: { status: true, totalDays: true },
+    take: 500,
   });
 
   let used = 0;
@@ -68,8 +69,8 @@ async function syncVacationBalance(
         (balance.totalEntitlement + balance.carryOver - used - planned) * 10,
       ) / 10;
     await prisma.vacationBalance.update({
-      where: { id: balance.id },
-      data: { used, planned, remaining },
+      where: { id: balance.id, version: balance.version },
+      data: { used, planned, remaining, version: { increment: 1 } },
     });
   }
   // If no balance record exists, the GET endpoint will auto-create it

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/authorization";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
 
@@ -36,7 +36,9 @@ export const DELETE = withRoute(
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
-    const { id } = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const { id } = _json.data as Record<string, unknown>;
     if (!id) return NextResponse.json({ error: "MISSING_ID" }, { status: 400 });
 
     await prisma.stationSession.updateMany({

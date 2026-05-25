@@ -7,7 +7,7 @@ import {
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 
 export const POST = withRoute(
@@ -18,7 +18,9 @@ export const POST = withRoute(
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
 
-    const parsed = validateBody(createPushSubscriptionSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createPushSubscriptionSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { endpoint, keys } = parsed.data;
 
@@ -57,7 +59,9 @@ export const DELETE = withRoute(
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
 
-    const parsed = validateBody(deletePushSubscriptionSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(deletePushSubscriptionSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { endpoint } = parsed.data;
 

@@ -4,7 +4,7 @@ import { requirePermission, isEmployee } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createTimeAccountSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -96,7 +96,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "time-accounts", "create");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createTimeAccountSchema, body);
     if (!parsed.success) return parsed.response;
     const { data: validData } = parsed;

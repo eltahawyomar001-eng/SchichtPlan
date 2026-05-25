@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/authorization";
 import { requireLocationSlot } from "@/lib/subscription";
 import { createLocationSchema, validateBody } from "@/lib/validations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -45,7 +45,9 @@ export const POST = withRoute(
     const planLimit = await requireLocationSlot(workspaceId);
     if (planLimit) return planLimit;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createLocationSchema, body);
     if (!parsed.success) return parsed.response;
     const { name, address } = parsed.data;

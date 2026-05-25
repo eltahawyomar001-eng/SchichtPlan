@@ -41,6 +41,11 @@ export default function Error({
         <p className="mb-6 text-sm text-gray-500 dark:text-zinc-400">
           {t("errorLoadingPage")}
         </p>
+        {error.digest && (
+          <p className="mb-4 font-mono text-xs text-gray-400 dark:text-zinc-500">
+            Ref: {error.digest}
+          </p>
+        )}
         <button
           onClick={() => reset()}
           className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"

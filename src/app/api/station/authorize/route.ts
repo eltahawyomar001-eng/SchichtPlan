@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import crypto from "crypto";
 import { withRoute } from "@/lib/with-route";
 import {
@@ -19,7 +20,9 @@ import { prisma } from "@/lib/db";
 export const POST = withRoute("/api/station/authorize", "POST", async (req) => {
   let body: { setupToken?: string };
   try {
-    body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    body = _json.data as typeof body;
   } catch {
     return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
   }

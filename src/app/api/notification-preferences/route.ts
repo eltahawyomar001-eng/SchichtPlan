@@ -7,6 +7,7 @@ import {
   validateBody,
 } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
+import { parseJsonBody } from "@/lib/api-response";
 
 // ─── GET  /api/notification-preferences ─────────────────────────
 export const GET = withRoute(
@@ -60,9 +61,11 @@ export const PUT = withRoute(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
     const parsed = validateBody(
       updateNotificationPreferencesSchema,
-      await req.json(),
+      _json.data,
     );
     if (!parsed.success) return parsed.response;
     const enabled = parsed.data.emailEnabled;

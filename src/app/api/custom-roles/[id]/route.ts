@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { validateBody } from "@/lib/validations";
 
@@ -37,7 +37,9 @@ export const PATCH = withRoute(
     const planDenied = await requirePlanFeature(workspaceId, "customRoles");
     if (planDenied) return planDenied;
 
-    const parsed = validateBody(updateCustomRoleSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateCustomRoleSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const data = parsed.data;
 

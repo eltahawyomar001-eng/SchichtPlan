@@ -12,7 +12,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createAbsenceSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { classifyAbsenceForWorkspace } from "@/lib/absence-days";
 
@@ -131,7 +131,9 @@ export const POST = withRoute(
     const planGate = await requirePlanFeature(workspaceId, "absenceManagement");
     if (planGate) return planGate;
 
-    const parsed = validateBody(createAbsenceSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createAbsenceSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

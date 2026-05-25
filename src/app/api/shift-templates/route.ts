@@ -9,7 +9,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createShiftTemplateSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -66,7 +66,9 @@ export const POST = withRoute(
     const planGate = await requirePlanFeature(workspaceId, "shiftTemplates");
     if (planGate) return planGate;
 
-    const parsed = validateBody(createShiftTemplateSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createShiftTemplateSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const { name, startTime, endTime, color, locationId } = parsed.data;

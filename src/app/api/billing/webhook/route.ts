@@ -104,11 +104,10 @@ async function markEventProcessed(
  */
 export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    return NextResponse.json(
-      { error: "Stripe webhook secret not configured" },
-      { status: 501 },
-    );
+  // Return 403 — never expose whether Stripe is configured or not.
+  // A missing or suspiciously short secret is also rejected.
+  if (!webhookSecret || webhookSecret.length < 32) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const stripe = getStripe();

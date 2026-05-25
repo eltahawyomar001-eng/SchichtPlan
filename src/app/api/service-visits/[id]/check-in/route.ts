@@ -1,3 +1,4 @@
+import { parseJsonBody } from "@/lib/api-response";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -32,7 +33,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "service-visits", "update");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(checkInVisitSchema, body);
     if (!parsed.success) return parsed.response;
 

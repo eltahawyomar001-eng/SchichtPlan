@@ -6,6 +6,7 @@ import {
   apiSuccess,
   badRequest,
   forbidden,
+  parseJsonBody,
 } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
@@ -59,7 +60,9 @@ export async function POST(req: Request) {
       return forbidden("Nur der Workspace-Eigentümer kann Vorfälle verwalten");
     }
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(incidentSchema, body);
     if (!parsed.success) return parsed.response;
     const data = parsed.data;

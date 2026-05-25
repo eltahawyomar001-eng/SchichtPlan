@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { verifyQrToken } from "@/lib/qr-token";
 import { hashPin } from "@/lib/employee-pin";
@@ -24,7 +25,9 @@ import {
 export const POST = withRoute("/api/qr-clock/identify", "POST", async (req) => {
   let body: { token?: string; pin?: string };
   try {
-    body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    body = _json.data as typeof body;
   } catch {
     return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
   }

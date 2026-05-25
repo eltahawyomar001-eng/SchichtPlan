@@ -136,6 +136,7 @@ export const createTimeEntrySchema = z.object({
   projectId: optionalString,
   breakStart: optionalString,
   breakEnd: optionalString,
+  breakMinutes: z.coerce.number().int().min(0).max(480).optional(),
   remarks: optionalString.pipe(z.string().max(2000).optional()),
 });
 

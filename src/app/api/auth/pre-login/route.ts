@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import {
@@ -21,7 +22,9 @@ import { withRoute } from "@/lib/with-route";
  * account is locked for 15 minutes (DSGVO Art. 32).
  */
 export const POST = withRoute("/api/auth/pre-login", "POST", async (req) => {
-  const parsed = validateBody(preLoginSchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(preLoginSchema, _json.data);
   if (!parsed.success) return parsed.response;
   const { email, password } = parsed.data;
 

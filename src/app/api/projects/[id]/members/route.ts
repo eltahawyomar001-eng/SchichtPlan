@@ -9,7 +9,7 @@ import {
 import { log } from "@/lib/logger";
 import { createAuditLog } from "@/lib/audit";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -29,7 +29,9 @@ export const POST = withRoute(
     if (forbidden) return forbidden;
 
     const { id } = params;
-    const parsed = validateBody(addProjectMemberSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(addProjectMemberSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { employeeId, role } = parsed.data;
 
@@ -78,7 +80,9 @@ export const DELETE = withRoute(
     if (forbidden) return forbidden;
 
     const { id } = params;
-    const parsed = validateBody(removeProjectMemberSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(removeProjectMemberSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { employeeId } = parsed.data;
 

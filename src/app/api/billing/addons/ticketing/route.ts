@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
 import { prisma } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
@@ -50,7 +50,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
-    const parsed = bodySchema.safeParse(await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = bodySchema.safeParse(_json.data);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Ungültiger Tier-Wert.", details: parsed.error.flatten() },

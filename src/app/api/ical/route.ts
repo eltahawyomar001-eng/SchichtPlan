@@ -132,19 +132,36 @@ export async function GET(req: Request) {
     const companyName = workspace?.name || "Schichtplan";
 
     const { searchParams } = new URL(req.url);
-    const start = searchParams.get("start");
-    const end = searchParams.get("end");
+    const startParam = searchParams.get("start");
+    const endParam = searchParams.get("end");
 
-    const where: Record<string, unknown> = { workspaceId };
+    // Validate date params; fall back to a sensible window if absent or invalid.
+    const parseDate = (s: string | null): Date | null => {
+      if (!s) return null;
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const now = new Date();
+    const defaultStart = new Date(now);
+    defaultStart.setMonth(defaultStart.getMonth() - 6);
+    const defaultEnd = new Date(now);
+    defaultEnd.setMonth(defaultEnd.getMonth() + 12);
+
+    const rangeStart = parseDate(startParam) ?? defaultStart;
+    const rangeEnd = parseDate(endParam) ?? defaultEnd;
+
+    const where: Record<string, unknown> = {
+      workspaceId,
+      date: { gte: rangeStart, lte: rangeEnd },
+    };
     if (employeeId) where.employeeId = employeeId;
-    if (start && end) {
-      where.date = { gte: new Date(start), lte: new Date(end) };
-    }
 
     const shifts = await prisma.shift.findMany({
       where,
       include: { employee: true, location: true },
       orderBy: { date: "asc" },
+      take: 2000, // hard cap — prevents unbounded reads on old accounts
     });
 
     const cal = ical({

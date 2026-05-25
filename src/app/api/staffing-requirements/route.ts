@@ -10,7 +10,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /**
  * GET /api/staffing-requirements
@@ -82,7 +82,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "shifts", "create");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createStaffingRequirementSchema, body);
     if (!parsed.success) return parsed.response;
 

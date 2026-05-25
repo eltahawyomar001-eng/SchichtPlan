@@ -4,7 +4,12 @@ import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { createExternalTicketSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
-import { serverError, badRequest, notFound } from "@/lib/api-response";
+import {
+  serverError,
+  badRequest,
+  notFound,
+  parseJsonBody,
+} from "@/lib/api-response";
 import { logTicketCreated } from "@/lib/ticket-events";
 import { createTicketWithNumber } from "@/lib/ticket-number";
 import {
@@ -44,7 +49,9 @@ export async function POST(req: Request) {
     const quotaCheck = await requireTicketQuota(workspace.id);
     if (quotaCheck) return quotaCheck;
 
-    const parsed = validateBody(createExternalTicketSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createExternalTicketSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

@@ -4,7 +4,12 @@ import { isOwner } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth, forbidden, badRequest } from "@/lib/api-response";
+import {
+  requireAuth,
+  forbidden,
+  badRequest,
+  parseJsonBody,
+} from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 
 /**
@@ -29,7 +34,9 @@ export const POST = withRoute(
 
     if (!isOwner(user)) return forbidden();
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const { scheduledAt, durationMinutes, description } = body as {
       scheduledAt?: string;
       durationMinutes?: number;

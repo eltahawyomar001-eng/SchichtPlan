@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
@@ -11,7 +12,9 @@ import { initializeTrial } from "@/lib/subscription";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 
 export const POST = withRoute("/api/auth/register", "POST", async (req) => {
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const parsed = validateBody(registerSchema, body);
   if (!parsed.success) return parsed.response;
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
@@ -12,7 +13,9 @@ export const POST = withRoute(
   "/api/auth/forgot-password",
   "POST",
   async (req) => {
-    const parsed = validateBody(forgotPasswordSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(forgotPasswordSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { email } = parsed.data;
 

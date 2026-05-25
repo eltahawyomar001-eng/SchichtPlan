@@ -4,7 +4,7 @@ import { lockMonthTimeEntries } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { payrollLockSchema, validateBody } from "@/lib/validations";
 
 /**
@@ -85,7 +85,9 @@ export const GET = withRoute(
     let month = defaultMonth;
 
     try {
-      const body = await req.json();
+      const _json = await parseJsonBody(req);
+      if (!_json.ok) return _json.response;
+      const body = _json.data;
       const parsed = validateBody(payrollLockSchema, body);
       if (parsed.success) {
         if (parsed.data.year) year = parsed.data.year;

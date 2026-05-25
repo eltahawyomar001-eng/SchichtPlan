@@ -7,7 +7,7 @@ import { runBackfill } from "@/lib/auto-scheduler";
 import { backfillSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /**
  * POST /api/shifts/backfill
@@ -40,7 +40,9 @@ export const POST = withRoute(
     const planGate = await requirePlanFeature(workspaceId, "autoScheduling");
     if (planGate) return planGate;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(backfillSchema, body);
     if (!parsed.success) return parsed.response;
 

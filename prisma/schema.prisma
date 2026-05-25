@@ -180,6 +180,7 @@ model Workspace {
   monthCloses          MonthClose[]
   exportJobs           ExportJob[]
   webhookEndpoints     WebhookEndpoint[]
+  webhookFailures      WebhookFailure[]
   automationRules      AutomationRule[]
   auditLogs            AuditLog[]
   eSignatures          ESignature[]
@@ -450,6 +451,7 @@ model Employee {
   locationId        String?
   location          Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
   pinHash           String?
+  pinEmailFailed    Boolean              @default(false)
 
   @@unique([email, workspaceId])
   @@unique([workspaceId, pinHash])
@@ -564,6 +566,7 @@ model Shift {
 
   @@index([workspaceId, date])
   @@index([employeeId, date])
+  @@index([workspaceId, employeeId])
 }
 
 enum ShiftStatus {
@@ -603,6 +606,8 @@ model VacationBalance {
   employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId      String
   workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  version          Int       @default(0)
 
   @@unique([employeeId, year])
   @@index([workspaceId])
@@ -652,6 +657,7 @@ model TimeEntry {
 
   @@index([workspaceId, date])
   @@index([employeeId, date])
+  @@index([workspaceId, employeeId])
   @@index([status])
   @@index([projectId])
 }
@@ -725,6 +731,8 @@ model AbsenceRequest {
 
   @@index([workspaceId, status])
   @@index([employeeId, startDate])
+  @@index([workspaceId, employeeId])
+  @@index([workspaceId, startDate])
 }
 
 enum AvailabilityType {
@@ -799,7 +807,8 @@ model ShiftSwapRequest {
   status        SwapStatus @default(ANGEFRAGT)
   reason        String?    @db.Text
   shiftId       String
-  shift         Shift      @relation("SwapFromShift", fields: [shiftId], references: [id], onDelete: Cascade)
+  // RESTRICT: deleting a shift with an open swap request must be an explicit action
+  shift         Shift      @relation("SwapFromShift", fields: [shiftId], references: [id], onDelete: Restrict)
   targetShiftId String?
   targetShift   Shift?     @relation("SwapToShift", fields: [targetShiftId], references: [id], onDelete: SetNull)
   requesterId   String
@@ -815,6 +824,7 @@ model ShiftSwapRequest {
   workspace     Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, status])
+  @@index([workspaceId, createdAt])
   @@index([requesterId])
   @@index([targetId])
 }
@@ -999,17 +1009,44 @@ model ExportJob {
 // ═══════════════════════════════════════════════════════════════
 
 model WebhookEndpoint {
-  id          String    @id @default(cuid())
-  url         String    @db.Text
+  id          String           @id @default(cuid())
+  url         String           @db.Text
   secret      String
   events      String[]
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  failures    WebhookFailure[]
 
   @@index([workspaceId])
+}
+
+enum WebhookFailureStatus {
+  PENDING
+  RETRYING
+  FAILED
+  DELIVERED
+}
+
+model WebhookFailure {
+  id           String               @id @default(cuid())
+  payload      String               @db.Text
+  event        String
+  status       WebhookFailureStatus @default(PENDING)
+  attempts     Int                  @default(0)
+  lastAttempt  DateTime?
+  errorMessage String?              @db.Text
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  endpointId   String
+  endpoint     WebhookEndpoint      @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  workspace    Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════

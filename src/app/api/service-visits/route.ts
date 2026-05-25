@@ -8,7 +8,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { createVisitAuditEntry } from "@/lib/visit-audit";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 // ─── GET  /api/service-visits ───────────────────────────────────
 export const GET = withRoute("/api/service-visits", "GET", async (req) => {
@@ -89,7 +89,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "service-visits", "create");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createServiceVisitSchema, body);
     if (!parsed.success) return parsed.response;
 

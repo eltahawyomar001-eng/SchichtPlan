@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { updateProjectSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -65,7 +65,9 @@ export const PATCH = withRoute(
     if (forbidden) return forbidden;
 
     const { id } = params;
-    const parsed = validateBody(updateProjectSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateProjectSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

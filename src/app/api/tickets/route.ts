@@ -6,7 +6,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createTicketSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { logTicketCreated, logAttachmentAdded } from "@/lib/ticket-events";
 import { notifyNewTicket } from "@/lib/ticket-notifications";
 import { createTicketWithNumber } from "@/lib/ticket-number";
@@ -165,7 +165,9 @@ export async function POST(req: Request) {
       }
       files = form.getAll("file").filter((v): v is File => v instanceof File);
     } else {
-      rawBody = await req.json();
+      const _json = await parseJsonBody(req);
+      if (!_json.ok) return _json.response;
+      rawBody = _json.data as Record<string, unknown>;
     }
 
     const parsed = validateBody(createTicketSchema, rawBody);

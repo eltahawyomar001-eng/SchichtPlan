@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { validateBody } from "@/lib/validations";
 
 const updateSchema = z.object({
@@ -24,7 +24,9 @@ export const PATCH = withRoute(
     if (!auth.ok) return auth.response;
     const { user } = auth;
 
-    const parsed = validateBody(updateSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const existing = await prisma.userTask.findUnique({

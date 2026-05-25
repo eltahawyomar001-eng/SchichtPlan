@@ -12,7 +12,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createTimeEntrySchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
@@ -74,16 +74,18 @@ export const POST = withRoute(
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
 
-    const body = await req.json();
-    const parsed = validateBody(createTimeEntrySchema, body);
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createTimeEntrySchema, _json.data);
     if (!parsed.success) return parsed.response;
+    const data = parsed.data;
 
     // EMPLOYEE can only create time entries for themselves
     if (isEmployee(user)) {
       const linkedEmployee = await prisma.employee.findFirst({
         where: { workspaceId, email: user.email ?? undefined },
       });
-      if (!linkedEmployee || body.employeeId !== linkedEmployee.id) {
+      if (!linkedEmployee || data.employeeId !== linkedEmployee.id) {
         return NextResponse.json(
           { error: "ONLY_OWN_ENTRIES" },
           { status: 403 },
@@ -92,7 +94,7 @@ export const POST = withRoute(
     }
 
     // Validate
-    const errors = validateTimeEntry(body);
+    const errors = validateTimeEntry(data);
     if (errors.length > 0) {
       return NextResponse.json({ errors }, { status: 400 });
     }
@@ -100,14 +102,14 @@ export const POST = withRoute(
     // Overlap check
     const existingEntries = await prisma.timeEntry.findMany({
       where: {
-        employeeId: body.employeeId,
-        date: new Date(body.date),
+        employeeId: data.employeeId,
+        date: new Date(data.date),
         status: { not: "ZURUECKGEWIESEN" },
       },
     });
 
-    const newStart = body.startTime;
-    const newEnd = body.endTime;
+    const newStart = data.startTime;
+    const newEnd = data.endTime;
     for (const entry of existingEntries) {
       if (timesOverlap(entry.startTime, entry.endTime, newStart, newEnd)) {
         return NextResponse.json(
@@ -125,8 +127,8 @@ export const POST = withRoute(
         0,
       );
       const newNet = calcNetMinutes(
-        calcGrossMinutes(body.startTime, body.endTime),
-        calcBreakMinutes(body.breakStart, body.breakEnd, body.breakMinutes),
+        calcGrossMinutes(data.startTime, data.endTime),
+        calcBreakMinutes(data.breakStart, data.breakEnd, data.breakMinutes),
       );
       if (dayTotal + newNet > 600) {
         return NextResponse.json(
@@ -137,11 +139,11 @@ export const POST = withRoute(
     }
 
     // Calculate durations
-    const grossMinutes = calcGrossMinutes(body.startTime, body.endTime);
+    const grossMinutes = calcGrossMinutes(data.startTime, data.endTime);
     const rawBreakMins = calcBreakMinutes(
-      body.breakStart,
-      body.breakEnd,
-      body.breakMinutes,
+      data.breakStart,
+      data.breakEnd,
+      data.breakMinutes,
     );
     // ── Automation: Ensure ArbZG minimum break ──
     const breakMins = ensureLegalBreak(grossMinutes, rawBreakMins);
@@ -150,18 +152,18 @@ export const POST = withRoute(
     const entry = await prisma.$transaction(async (tx) => {
       const created = await tx.timeEntry.create({
         data: {
-          date: new Date(body.date),
-          startTime: body.startTime,
-          endTime: body.endTime,
-          breakStart: body.breakStart || null,
-          breakEnd: body.breakEnd || null,
+          date: new Date(data.date),
+          startTime: data.startTime,
+          endTime: data.endTime,
+          breakStart: data.breakStart || null,
+          breakEnd: data.breakEnd || null,
           breakMinutes: breakMins,
           grossMinutes,
           netMinutes,
-          remarks: body.remarks || null,
-          employeeId: body.employeeId,
-          locationId: body.locationId || null,
-          shiftId: body.shiftId || null,
+          remarks: data.remarks || null,
+          employeeId: data.employeeId,
+          locationId: data.locationId || null,
+          shiftId: data.shiftId || null,
           workspaceId,
         },
         include: { employee: true, location: true },
@@ -182,10 +184,10 @@ export const POST = withRoute(
     // ── Webhook dispatch (fire & forget) ──
     dispatchWebhook(workspaceId, "time-entry.created", {
       id: entry.id,
-      date: body.date,
-      startTime: body.startTime,
-      endTime: body.endTime,
-      employeeId: body.employeeId,
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      employeeId: data.employeeId,
       grossMinutes,
       netMinutes,
     }).catch((err) =>
@@ -200,10 +202,10 @@ export const POST = withRoute(
       userEmail: user.email,
       workspaceId,
       changes: {
-        date: body.date,
-        startTime: body.startTime,
-        endTime: body.endTime,
-        employeeId: body.employeeId,
+        date: data.date,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        employeeId: data.employeeId,
       },
     });
 

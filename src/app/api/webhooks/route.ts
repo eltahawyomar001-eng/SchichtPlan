@@ -7,7 +7,7 @@ import { createWebhookSchema, validateBody } from "@/lib/validations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -57,7 +57,9 @@ export const POST = withRoute(
     const planGate = await requirePlanFeature(user.workspaceId!, "apiWebhooks");
     if (planGate) return planGate;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createWebhookSchema, body);
     if (!parsed.success) return parsed.response;
     const { url, events } = parsed.data;

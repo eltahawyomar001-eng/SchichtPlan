@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -85,7 +86,9 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const user = session.user as SessionUser;
     const { id } = await params;
-    const rawBody = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const rawBody = _json.data as Record<string, unknown>;
 
     const existing = await prisma.absenceRequest.findFirst({
       where: { id, workspaceId: user.workspaceId! },

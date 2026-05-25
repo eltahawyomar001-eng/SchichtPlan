@@ -1,3 +1,4 @@
+import { parseJsonBody } from "@/lib/api-response";
 /**
  * POST /api/auth/mobile/refresh
  *
@@ -21,7 +22,9 @@ export const POST = withRoute(
   "/api/auth/mobile/refresh",
   "POST",
   async (req) => {
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(mobileRefreshSchema, body);
     if (!parsed.success) return parsed.response;
     const { refreshToken } = parsed.data;

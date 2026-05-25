@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
@@ -47,7 +48,9 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

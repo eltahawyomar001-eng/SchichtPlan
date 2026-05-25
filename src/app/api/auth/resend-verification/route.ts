@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/verification";
 import { resendVerificationSchema, validateBody } from "@/lib/validations";
@@ -15,7 +16,9 @@ export const POST = withRoute(
   "/api/auth/resend-verification",
   "POST",
   async (req) => {
-    const parsed = validateBody(resendVerificationSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(resendVerificationSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { email } = parsed.data;
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { verifyEmailToken } from "@/lib/verification";
 import { verifyEmailSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
@@ -11,7 +12,9 @@ import { withRoute } from "@/lib/with-route";
  * Body: { token: string, email: string }
  */
 export const POST = withRoute("/api/auth/verify-email", "POST", async (req) => {
-  const parsed = validateBody(verifyEmailSchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(verifyEmailSchema, _json.data);
   if (!parsed.success) return parsed.response;
   const { token, email } = parsed.data;
 

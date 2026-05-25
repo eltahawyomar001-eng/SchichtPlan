@@ -8,7 +8,7 @@ import {
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createShiftSwapSchema, validateBody } from "@/lib/validations";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
 export async function GET(req: Request) {
@@ -63,7 +63,9 @@ export async function POST(req: Request) {
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
 
-    const parsed = validateBody(createShiftSwapSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createShiftSwapSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

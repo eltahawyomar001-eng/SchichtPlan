@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { log } from "@/lib/logger";
 import { validateBody } from "@/lib/validations";
@@ -46,7 +46,9 @@ export const PATCH = withRoute(
       );
     }
 
-    const parsed = validateBody(patchCategorySchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(patchCategorySchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     try {

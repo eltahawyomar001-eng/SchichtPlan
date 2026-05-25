@@ -7,7 +7,7 @@ import { createAuditLog } from "@/lib/audit";
 import { datevExportSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import {
   uploadPayrollToDatev,
   isDatevConfigured,
@@ -45,7 +45,9 @@ export const POST = withRoute(
     const planGate = await requirePlanFeature(workspaceId, "datevOnlineUpload");
     if (planGate) return planGate;
 
-    const parsed = validateBody(datevExportSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(datevExportSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { start, end, employeeId, monthCloseId } = parsed.data;
 

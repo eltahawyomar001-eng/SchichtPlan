@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parsePagination } from "@/lib/pagination";
 import { log } from "@/lib/logger";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { updateNotificationsSchema, validateBody } from "@/lib/validations";
 
@@ -43,7 +43,9 @@ export const PATCH = withRoute("/api/notifications", "PATCH", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { user } = auth;
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const parsed = validateBody(updateNotificationsSchema, body);
   if (!parsed.success) return parsed.response;
 

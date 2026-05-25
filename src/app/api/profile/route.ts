@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { updateProfileSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -78,7 +78,9 @@ export const PATCH = withRoute("/api/profile", "PATCH", async (req) => {
   if (!auth.ok) return auth.response;
   const { user: authUser } = auth;
   const userId = authUser.id;
-  const parsed = validateBody(updateProfileSchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(updateProfileSchema, _json.data);
   if (!parsed.success) return parsed.response;
   const body = parsed.data;
 

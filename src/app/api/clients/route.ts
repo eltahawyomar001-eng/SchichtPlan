@@ -5,7 +5,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createClientSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -50,7 +50,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "clients", "create");
     if (forbidden) return forbidden;
 
-    const parsed = validateBody(createClientSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createClientSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const { name, email, phone, address, notes } = parsed.data;

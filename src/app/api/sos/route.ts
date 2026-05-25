@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
 import { withRoute } from "@/lib/with-route";
 import {
@@ -24,7 +24,9 @@ export const POST = withRoute("/api/sos", "POST", async (req) => {
   const forbidden = requirePermission(user, "shifts", "update");
   if (forbidden) return forbidden;
 
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const {
     shiftId,
     bonusAmount,

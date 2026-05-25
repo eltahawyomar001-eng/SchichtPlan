@@ -6,7 +6,7 @@ import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { monthCloseSchema, validateBody } from "@/lib/validations";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { withRetry } from "@/lib/prisma-retry";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
@@ -60,7 +60,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "month-close", "create");
     if (forbidden) return forbidden;
 
-    const parsed = validateBody(monthCloseSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(monthCloseSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const { year, month, action } = parsed.data;

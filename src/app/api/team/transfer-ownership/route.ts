@@ -5,7 +5,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { transferOwnershipSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /**
  * POST /api/team/transfer-ownership
@@ -28,7 +28,9 @@ export const POST = withRoute(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const parsed = validateBody(transferOwnershipSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(transferOwnershipSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { targetUserId } = parsed.data;
 

@@ -205,6 +205,25 @@ export async function requireAuth(
   return { ok: false, response: unauthorized() };
 }
 
+/* ── Safe JSON body parser ──────────────────────────────────── */
+
+/**
+ * Parse the request body as JSON, returning a 400 on malformed input
+ * instead of letting SyntaxError bubble up as an unhandled 500.
+ */
+export async function parseJsonBody(
+  req: Request,
+): Promise<
+  { ok: true; data: unknown } | { ok: false; response: NextResponse }
+> {
+  try {
+    const data = await req.json();
+    return { ok: true, data };
+  } catch {
+    return { ok: false, response: badRequest("Invalid JSON body") };
+  }
+}
+
 /* ── Success helper ─────────────────────────────────────────── */
 
 /**

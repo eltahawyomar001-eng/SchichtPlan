@@ -12,7 +12,7 @@ import {
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 
 /**
@@ -38,7 +38,9 @@ export const POST = withRoute(
       );
     }
 
-    const parsed = validateBody(clockActionSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(clockActionSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const { action, timezone, bypassRestPeriod } = parsed.data;

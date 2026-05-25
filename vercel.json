@@ -32,6 +32,10 @@
     {
       "path": "/api/automations/sos-escalation",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/retry-pin-emails",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

@@ -8,7 +8,7 @@ import { autoScheduleSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /**
  * POST /api/shifts/auto-schedule
@@ -38,7 +38,9 @@ export const POST = withRoute(
     const planGate = await requirePlanFeature(workspaceId, "autoScheduling");
     if (planGate) return planGate;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(autoScheduleSchema, body);
     if (!parsed.success) return parsed.response;
 

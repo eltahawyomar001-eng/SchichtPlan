@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/authorization";
 import { createVacationBalanceSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /**
  * Calculate the BUrlG (Bundesurlaubsgesetz) legal minimum vacation days.
@@ -211,7 +211,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "employees", "update");
     if (forbidden) return forbidden;
 
-    const parsed = validateBody(createVacationBalanceSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createVacationBalanceSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { employeeId, year, totalEntitlement, carryOver } = parsed.data;
 

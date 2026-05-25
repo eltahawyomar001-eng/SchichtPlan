@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
 import { updateWorkspaceSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 
 // German Bundesländer (federal states) — used for reference / future validation
@@ -69,7 +69,9 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
   const authError = requireAdmin(user);
   if (authError) return authError;
 
-  const parsed = validateBody(updateWorkspaceSchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(updateWorkspaceSchema, _json.data);
   if (!parsed.success) return parsed.response;
   const body = parsed.data;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,7 +148,9 @@ export const DELETE = withRoute("/api/workspace", "DELETE", async (req) => {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data as Record<string, unknown>;
   const { confirmName } = body;
 
   if (!confirmName || typeof confirmName !== "string") {

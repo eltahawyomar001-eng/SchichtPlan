@@ -1,3 +1,4 @@
+import { parseJsonBody } from "@/lib/api-response";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
@@ -9,7 +10,9 @@ export const POST = withRoute(
   "/api/auth/reset-password",
   "POST",
   async (req) => {
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(resetPasswordSchema, body);
     if (!parsed.success) return parsed.response;
     const { token, password } = parsed.data;

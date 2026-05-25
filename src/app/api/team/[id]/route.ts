@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { updateTeamRoleSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
@@ -25,7 +25,9 @@ export const PATCH = withRoute(
     }
 
     const { id } = params;
-    const parsed = validateBody(updateTeamRoleSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateTeamRoleSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { role } = parsed.data;
 

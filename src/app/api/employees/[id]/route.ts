@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -119,7 +120,9 @@ export async function PATCH(
     const forbidden = requirePermission(user, "employees", "update");
     if (forbidden) return forbidden;
 
-    const parsed = validateBody(updateEmployeeSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateEmployeeSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

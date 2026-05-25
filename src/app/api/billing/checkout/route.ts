@@ -9,7 +9,7 @@ import {
 import type { PlanId } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 
 /**
@@ -31,7 +31,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "settings", "update");
     if (forbidden) return forbidden;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data as Record<string, unknown>;
     const planId = (body.plan as string)?.toLowerCase() as PlanId;
     const billingCycle: "monthly" | "annual" =
       body.billingCycle === "monthly" ? "monthly" : "annual";

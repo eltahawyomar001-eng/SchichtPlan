@@ -13,6 +13,7 @@ import {
   serverError,
   notFound,
   forbidden,
+  parseJsonBody,
 } from "@/lib/api-response";
 import { requireTicketingAddon } from "@/lib/ticketing-addon";
 import {
@@ -126,7 +127,9 @@ export async function PATCH(
 
     const { id } = await params;
 
-    const parsed = validateBody(updateTicketSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateTicketSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

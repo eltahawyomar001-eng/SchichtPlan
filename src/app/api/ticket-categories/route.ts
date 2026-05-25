@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { log } from "@/lib/logger";
 import {
@@ -59,7 +59,9 @@ export const POST = withRoute("/api/ticket-categories", "POST", async (req) => {
   const forbidden = requirePermission(user, "settings", "update");
   if (forbidden) return forbidden;
 
-  const parsed = validateBody(createCategorySchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(createCategorySchema, _json.data);
   if (!parsed.success) return parsed.response;
   const { name, color, sortOrder } = parsed.data;
 

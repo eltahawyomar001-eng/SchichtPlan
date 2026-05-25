@@ -19,7 +19,7 @@ import { captureRouteError } from "@/lib/sentry";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import {
@@ -106,7 +106,9 @@ export const POST = withRoute(
     const addonRequired = await requireSchichtplanungAddon(workspaceId);
     if (addonRequired) return addonRequired;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createShiftSchema, body);
     if (!parsed.success) return parsed.response;
     const {

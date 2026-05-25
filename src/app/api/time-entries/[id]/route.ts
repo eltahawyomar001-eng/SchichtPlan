@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -98,7 +99,9 @@ export const PATCH = withRoute(
       );
     }
 
-    const parsed = validateBody(updateTimeEntrySchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateTimeEntrySchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

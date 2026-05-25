@@ -5,7 +5,7 @@ import { log } from "@/lib/logger";
 import { createSkillSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -26,7 +26,9 @@ export const PUT = withRoute(
 
     const { id } = params;
 
-    const parsed = validateBody(createSkillSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createSkillSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const { name, category } = parsed.data;

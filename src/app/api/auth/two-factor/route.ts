@@ -8,7 +8,7 @@ import { twoFactorVerifySchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { encrypt, decrypt, isEncrypted } from "@/lib/encryption";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /* ── helpers ── */
 
@@ -129,7 +129,9 @@ export const POST = withRoute("/api/auth/two-factor", "POST", async (req) => {
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
-  const parsed = validateBody(twoFactorVerifySchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(twoFactorVerifySchema, _json.data);
   if (!parsed.success) return parsed.response;
   // Accept both "code" and "token" for backwards compatibility
   const code: string | undefined = parsed.data.code || parsed.data.token;

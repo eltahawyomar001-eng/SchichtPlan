@@ -4,6 +4,7 @@ import {
   apiSuccess,
   badRequest,
   serverError,
+  parseJsonBody,
 } from "@/lib/api-response";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
@@ -69,7 +70,9 @@ export const PUT = withRoute("/api/dashboard/favorites", "PUT", async (req) => {
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const parsed = validateBody(updateFavoritesSchema, body);
   if (!parsed.success) return parsed.response;
 

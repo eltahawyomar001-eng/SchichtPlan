@@ -4,7 +4,7 @@ import { isOwner } from "@/lib/authorization";
 import { workspaceWipeSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 
 /**
@@ -47,7 +47,9 @@ export const DELETE = withRoute(
     }
 
     // Require explicit confirmation
-    const parsed = validateBody(workspaceWipeSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(workspaceWipeSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const expectedConfirm = `DELETE-${workspaceId}`;

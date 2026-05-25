@@ -10,7 +10,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { sendEmail } from "@/lib/notifications/email";
 import { invitationEmail } from "@/lib/notifications/email-i18n";
 import { getLocaleFromCookie } from "@/i18n/locale";
@@ -92,7 +92,9 @@ export async function POST(req: Request) {
     const planLimit = await requireUserSlot(workspaceId);
     if (planLimit) return planLimit;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createEmployeeSchema, body);
     if (!parsed.success) return parsed.response;
     const {
@@ -124,6 +126,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Generate PIN before the transaction so the hash is included in the
+    // employee.create call. The @@unique([workspaceId, pinHash]) constraint
+    // makes the write atomic — no TOCTOU window between check and insert.
+    const rawPin = await generateUniquePin(workspaceId);
+    const pinHash = hashPin(workspaceId, rawPin);
+
     const employee = await prisma.$transaction(async (tx) => {
       const created = await tx.employee.create({
         data: {
@@ -144,6 +152,7 @@ export async function POST(req: Request) {
           locationId: locationId || null,
           departmentId: departmentId || null,
           workspaceId,
+          pinHash,
         },
       });
 
@@ -161,31 +170,34 @@ export async function POST(req: Request) {
       return created;
     });
 
-    // ── PIN generation (fire & forget) ──
-    (async () => {
+    // ── PIN email — awaited, failure flagged for cron retry ──
+    if (email) {
       try {
-        const rawPin = await generateUniquePin(workspaceId);
-        const pHash = hashPin(workspaceId, rawPin);
-        await prisma.employee.update({
-          where: { id: employee.id },
-          data: { pinHash: pHash },
+        const ws = await prisma.workspace.findUnique({
+          where: { id: workspaceId },
+          select: { name: true },
         });
-        if (email) {
-          const ws = await prisma.workspace.findUnique({
-            where: { id: workspaceId },
-            select: { name: true },
-          });
-          await sendPinEmail({
-            to: email,
-            firstName,
-            rawPin,
-            workspaceName: ws?.name ?? "",
-          });
-        }
+        await sendPinEmail({
+          to: email,
+          firstName,
+          rawPin,
+          workspaceName: ws?.name ?? "",
+        });
       } catch (err) {
-        log.error("[Employees] PIN generation failed", { error: err });
+        log.error("[Employees] PIN email failed — flagging for cron retry", {
+          error: err,
+          employeeId: employee.id,
+        });
+        await prisma.employee
+          .update({
+            where: { id: employee.id },
+            data: { pinEmailFailed: true },
+          })
+          .catch((e) =>
+            log.error("[Employees] Failed to set pinEmailFailed", { error: e }),
+          );
       }
-    })();
+    }
 
     // ── Automation: Execute custom rules ──
     executeCustomRules("employee.created", workspaceId, {

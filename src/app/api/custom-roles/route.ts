@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit";
 import { validateBody } from "@/lib/validations";
@@ -160,7 +160,9 @@ export const POST = withRoute(
     const planDenied = await requirePlanFeature(workspaceId, "customRoles");
     if (planDenied) return planDenied;
 
-    const parsed = validateBody(createCustomRoleSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createCustomRoleSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const data = parsed.data;
 

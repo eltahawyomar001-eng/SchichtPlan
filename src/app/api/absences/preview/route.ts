@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { isEmployee } from "@/lib/authorization";
 import { validateBody } from "@/lib/validations";
@@ -30,7 +30,9 @@ export const POST = withRoute("/api/absences/preview", "POST", async (req) => {
   if (!auth.ok) return auth.response;
   const { user, workspaceId } = auth;
 
-  const parsed = validateBody(previewSchema, await req.json());
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const parsed = validateBody(previewSchema, _json.data);
   if (!parsed.success) return parsed.response;
   const body = parsed.data;
 

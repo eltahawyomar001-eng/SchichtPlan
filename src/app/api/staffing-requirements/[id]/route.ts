@@ -9,7 +9,7 @@ import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 /**
  * GET /api/staffing-requirements/[id]
@@ -78,7 +78,9 @@ export const PUT = withRoute(
       );
     }
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(updateStaffingRequirementSchema, body);
     if (!parsed.success) return parsed.response;
 

@@ -9,7 +9,7 @@ import {
 import { createESignature, getClientIp } from "@/lib/e-signature";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { updateShiftSwapSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -29,7 +29,9 @@ export const PATCH = withRoute(
     const { user, workspaceId } = auth;
 
     const { id } = params;
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(updateShiftSwapSchema, body);
     if (!parsed.success) return parsed.response;
     const { data: validData } = parsed;

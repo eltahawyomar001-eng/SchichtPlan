@@ -9,7 +9,7 @@ import {
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 // ─── GET  /api/shift-change-requests ────────────────────────────
 // Management sees all requests for the workspace.
@@ -111,10 +111,9 @@ export const POST = withRoute(
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const parsed = validateBody(
-      createShiftChangeRequestSchema,
-      await req.json(),
-    );
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createShiftChangeRequestSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { shiftId, newDate, newStartTime, newEndTime, newNotes, reason } =
       parsed.data;

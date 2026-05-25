@@ -12,6 +12,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { parseJsonBody } from "@/lib/api-response";
 import bcrypt from "bcryptjs";
 import * as jose from "jose";
 import * as OTPAuth from "otpauth";
@@ -45,7 +46,9 @@ async function findMatchingRecoveryCode(
 }
 
 export const POST = withRoute("/api/auth/mobile/login", "POST", async (req) => {
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const parsed = validateBody(mobileLoginSchema, body);
   if (!parsed.success) return parsed.response;
   const { email, password, totpCode } = parsed.data;

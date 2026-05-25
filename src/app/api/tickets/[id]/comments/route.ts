@@ -13,6 +13,7 @@ import {
   serverError,
   notFound,
   forbidden,
+  parseJsonBody,
 } from "@/lib/api-response";
 import { requireTicketingAddon } from "@/lib/ticketing-addon";
 import { logCommentAdded, logStatusChanged } from "@/lib/ticket-events";
@@ -39,7 +40,9 @@ export async function POST(
 
     const { id } = await params;
 
-    const parsed = validateBody(createTicketCommentSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createTicketCommentSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

@@ -6,7 +6,7 @@ import { randomBytes } from "crypto";
 import { createInvitationSchema, validateBody } from "@/lib/validations";
 import { requireUserSlot } from "@/lib/subscription-guard";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { getLocaleFromCookie } from "@/i18n/locale";
 
 /**
@@ -53,7 +53,9 @@ export const POST = withRoute(
     const slotLimit = await requireUserSlot(user.workspaceId);
     if (slotLimit) return slotLimit;
 
-    const body = await req.json();
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
     const parsed = validateBody(createInvitationSchema, body);
     if (!parsed.success) return parsed.response;
     const { email, role } = parsed.data;

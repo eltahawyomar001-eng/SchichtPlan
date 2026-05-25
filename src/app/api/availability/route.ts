@@ -5,7 +5,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createAvailabilitySchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -53,7 +53,9 @@ export const POST = withRoute(
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const parsed = validateBody(createAvailabilitySchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createAvailabilitySchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const body = parsed.data;

@@ -12,7 +12,7 @@ import {
 } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -45,10 +45,9 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const parsed = validateBody(
-      updateShiftChangeRequestSchema,
-      await req.json(),
-    );
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(updateShiftChangeRequestSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const action = parsed.data.action;
     const reviewNote = parsed.data.reviewNote;

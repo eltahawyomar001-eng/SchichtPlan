@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { createDepartmentSchema, validateBody } from "@/lib/validations";
-import { requireAuth, serverError } from "@/lib/api-response";
+import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -45,7 +45,9 @@ export const POST = withRoute(
     const forbidden = requirePermission(user, "employees", "create");
     if (forbidden) return forbidden;
 
-    const parsed = validateBody(createDepartmentSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createDepartmentSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const { name, color, locationId } = parsed.data;

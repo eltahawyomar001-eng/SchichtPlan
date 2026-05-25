@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { validateBody } from "@/lib/validations";
 
 const createSchema = z.object({
@@ -46,7 +46,9 @@ export const POST = withRoute(
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
 
-    const parsed = validateBody(createSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(createSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
     const task = await prisma.userTask.create({

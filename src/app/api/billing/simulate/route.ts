@@ -7,7 +7,7 @@ import { PLANS } from "@/lib/stripe";
 import { billingSimulateSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 
 /**
@@ -50,7 +50,9 @@ export const POST = withRoute(
       return NextResponse.json({ error: "No workspace" }, { status: 400 });
     }
 
-    const parsed = validateBody(billingSimulateSchema, await req.json());
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const parsed = validateBody(billingSimulateSchema, _json.data);
     if (!parsed.success) return parsed.response;
     const { plan, billingCycle } = parsed.data;
 

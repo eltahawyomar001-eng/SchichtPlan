@@ -4,7 +4,7 @@ import { isOwner } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth, forbidden } from "@/lib/api-response";
+import { requireAuth, forbidden, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -30,7 +30,9 @@ export const POST = withRoute("/api/admin/restore", "POST", async (req) => {
 
   if (!isOwner(user)) return forbidden();
 
-  const body = await req.json();
+  const _json = await parseJsonBody(req);
+  if (!_json.ok) return _json.response;
+  const body = _json.data;
   const { type, id } = body as { type: string; id: string };
 
   if (!type || !id) {

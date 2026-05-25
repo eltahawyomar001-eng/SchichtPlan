@@ -7,6 +7,9 @@ import {
   type PlanConfig,
 } from "@/lib/stripe";
 import { log } from "@/lib/logger";
+import { cache } from "@/lib/cache";
+
+const SUB_STATE_TTL = 60; // 1 minute — short enough to reflect Stripe webhook updates
 
 /* ═══════════════════════════════════════════════════════════════
    Subscription service — database operations
@@ -93,6 +96,10 @@ export type SubscriptionState = "active" | "trial_expired" | "inactive";
 export async function getSubscriptionState(
   workspaceId: string,
 ): Promise<SubscriptionState> {
+  const cacheKey = `sub:state:${workspaceId}`;
+  const cached = await cache.get<SubscriptionState>(cacheKey);
+  if (cached) return cached;
+
   const sub = await prisma.subscription.findUnique({
     where: { workspaceId },
     select: {
@@ -102,11 +109,18 @@ export async function getSubscriptionState(
       currentPeriodEnd: true,
     },
   });
-  if (!sub) return "inactive";
-  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
-    return "inactive";
 
-  if (sub.status === "TRIALING" && sub.trialEnd && sub.trialEnd < new Date()) {
+  let state: SubscriptionState;
+  if (
+    !sub ||
+    !(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status)
+  ) {
+    state = "inactive";
+  } else if (
+    sub.status === "TRIALING" &&
+    sub.trialEnd &&
+    sub.trialEnd < new Date()
+  ) {
     // Webhook-miss safeguard: when a Stripe subscription exists and the
     // current period is still in the future, the user has paid — Stripe just
     // hasn't delivered the trial→active transition webhook yet. Treat as
@@ -124,10 +138,23 @@ export async function getSubscriptionState(
     const periodOrGraceValid =
       sub.currentPeriodEnd &&
       sub.currentPeriodEnd.getTime() + GRACE_MS > Date.now();
-    if (hasRealStripeSub && periodOrGraceValid) return "active";
-    return "trial_expired";
+    state = hasRealStripeSub && periodOrGraceValid ? "active" : "trial_expired";
+  } else {
+    state = "active";
   }
-  return "active";
+
+  await cache.set(cacheKey, state, SUB_STATE_TTL);
+  return state;
+}
+
+/**
+ * Invalidate cached subscription state for a workspace.
+ * Call this from the Stripe webhook handler after any status change.
+ */
+export async function invalidateSubscriptionCache(
+  workspaceId: string,
+): Promise<void> {
+  await cache.del(`sub:state:${workspaceId}`);
 }
 
 /**

@@ -7,7 +7,9 @@ import {
   updateSubscriptionFromStripe,
   linkSubscriptionByCustomer,
   cancelSubscription,
+  invalidateSubscriptionCache,
 } from "@/lib/subscription";
+import { invalidateSchichtplanungAddonCache } from "@/lib/schichtplanung-addon";
 import { syncUsageLimits } from "@/lib/subscription-guard";
 import {
   getTicketingTierByPriceId,
@@ -181,6 +183,12 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
 
       // Sync usage limits to match the new plan
       await syncUsageLimits(workspaceId, (plan?.id ?? "basic") as PlanId);
+
+      // Invalidate cached subscription state so the next request re-fetches
+      await Promise.all([
+        invalidateSubscriptionCache(workspaceId),
+        invalidateSchichtplanungAddonCache(workspaceId),
+      ]).catch(() => {});
 
       log.info(
         `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
@@ -371,6 +379,12 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             );
           }
         }
+
+        // Invalidate cached state after any update
+        await Promise.all([
+          invalidateSubscriptionCache(dbSub.workspaceId),
+          invalidateSchichtplanungAddonCache(dbSub.workspaceId),
+        ]).catch(() => {});
       }
 
       log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
@@ -380,7 +394,11 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
     /* ─── Subscription deleted → downgrade to free ─── */
     case "customer.subscription.deleted": {
       const sub = event.data.object;
-      await cancelSubscription(sub.id);
+      const cancelled = await cancelSubscription(sub.id);
+      await Promise.all([
+        invalidateSubscriptionCache(cancelled.workspaceId),
+        invalidateSchichtplanungAddonCache(cancelled.workspaceId),
+      ]).catch(() => {});
       log.info(`[Stripe] Cancelled: ${sub.id}`);
       break;
     }

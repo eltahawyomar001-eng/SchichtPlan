@@ -13,6 +13,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { ACTIVE_SUBSCRIPTION_STATUSES } from "@/lib/subscription";
+import { cache } from "@/lib/cache";
+
+const ADDON_CACHE_TTL = 60; // 1 minute
 
 /* ═══════════════════════════════════════════════════════════════
    Pricing config
@@ -60,15 +63,29 @@ export function getSchichtplanungBillingByPriceId(
 export async function hasSchichtplanungAddon(
   workspaceId: string,
 ): Promise<boolean> {
+  const cacheKey = `addon:schichtplanung:${workspaceId}`;
+  const cached = await cache.get<boolean>(cacheKey);
+  if (cached !== null) return cached;
+
   const sub = await prisma.subscription.findUnique({
     where: { workspaceId },
     select: { status: true, plan: true, schichtplanungAddonActive: true },
   });
-  if (!sub) return false;
-  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
-    return false;
-  if (sub.plan === "ENTERPRISE") return true;
-  return sub.schichtplanungAddonActive;
+
+  const result =
+    !!sub &&
+    (ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status) &&
+    (sub.plan === "ENTERPRISE" || sub.schichtplanungAddonActive);
+
+  await cache.set(cacheKey, result, ADDON_CACHE_TTL);
+  return result;
+}
+
+/** Invalidate cached add-on state (call from Stripe webhook on subscription changes). */
+export async function invalidateSchichtplanungAddonCache(
+  workspaceId: string,
+): Promise<void> {
+  await cache.del(`addon:schichtplanung:${workspaceId}`);
 }
 
 /* ═══════════════════════════════════════════════════════════════

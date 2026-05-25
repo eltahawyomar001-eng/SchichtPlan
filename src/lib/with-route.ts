@@ -66,6 +66,11 @@ export function withRoute(
     req: Request,
     context?: RouteContext,
   ): Promise<NextResponse | Response> => {
+    // Extract or generate a request ID for end-to-end tracing
+    const requestId =
+      (req.headers.get("x-request-id") ?? "").trim() || crypto.randomUUID();
+    const rlog = log.withRequestId(requestId);
+
     try {
       // ── Idempotency check (opt-in) ──
       if (options?.idempotent) {
@@ -80,6 +85,11 @@ export function withRoute(
         await cacheIdempotentResponse(req, response);
       }
 
+      // Echo request ID back so callers can correlate logs
+      if (response instanceof NextResponse || response instanceof Response) {
+        response.headers.set("x-request-id", requestId);
+      }
+
       return response;
     } catch (error) {
       // Map Prisma unique-constraint and relation violations to 409 instead of 500
@@ -90,27 +100,27 @@ export function withRoute(
           );
           return NextResponse.json(
             { error: "Conflict", code: "CONFLICT", fields },
-            { status: 409 },
+            { status: 409, headers: { "x-request-id": requestId } },
           );
         }
         if (error.code === "P2014" || error.code === "P2016") {
           return NextResponse.json(
             { error: "Relation violation", code: "RELATION_ERROR" },
-            { status: 409 },
+            { status: 409, headers: { "x-request-id": requestId } },
           );
         }
         if (error.code === "P2025") {
           return NextResponse.json(
             { error: "Not found", code: "NOT_FOUND" },
-            { status: 404 },
+            { status: 404, headers: { "x-request-id": requestId } },
           );
         }
       }
-      log.error(`${method} ${route} failed`, { error });
+      rlog.error(`${method} ${route} failed`, { error });
       captureRouteError(error, { route, method });
       return NextResponse.json(
         { error: "Internal server error" },
-        { status: 500 },
+        { status: 500, headers: { "x-request-id": requestId } },
       );
     }
   };

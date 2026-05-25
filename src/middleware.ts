@@ -627,6 +627,10 @@ export const config = {
     // Password reset pages (public, but security headers apply)
     "/passwort-vergessen",
     "/passwort-zuruecksetzen",
+    // Super-admin panel (requires login; email check happens inside the page/routes)
+    "/super-admin",
+    "/super-admin/:path*",
+    "/api/super-admin/:path*",
     // Protect all dashboard routes
     "/dashboard/:path*",
     "/schichtplan/:path*",

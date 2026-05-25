@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
@@ -6,6 +7,10 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getSubscriptionState, getHardBlockState } from "@/lib/subscription";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 /**
  * Paths that remain reachable inside the dashboard even when the workspace

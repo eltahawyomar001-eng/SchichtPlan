@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/types";
 import ical, { ICalCalendarMethod } from "ical-generator";
 import { randomBytes } from "crypto";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
 
 /** Token is valid for 90 days before automatic rotation. */
 const TOKEN_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
@@ -210,6 +211,7 @@ export async function GET(req: Request) {
     return new Response(cal.toString(), { status: 200, headers });
   } catch (error) {
     log.error("iCal error:", { error: error });
+    captureRouteError(error, { route: "/api/ical", method: "GET" });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

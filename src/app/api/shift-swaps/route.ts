@@ -9,6 +9,7 @@ import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createShiftSwapSchema, validateBody } from "@/lib/validations";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
+import { captureRouteError } from "@/lib/sentry";
 
 // ─── GET  /api/shift-swaps ──────────────────────────────────────
 export async function GET(req: Request) {
@@ -52,6 +53,7 @@ export async function GET(req: Request) {
     return paginatedResponse(swaps, total, take, skip);
   } catch (error) {
     log.error("Error fetching shift swaps:", { error: error });
+    captureRouteError(error, { route: "/api/shift-swaps", method: "GET" });
     return serverError("Error loading");
   }
 }
@@ -227,6 +229,7 @@ export async function POST(req: Request) {
     return NextResponse.json(swap, { status: 201 });
   } catch (error) {
     log.error("Error creating shift swap:", { error: error });
+    captureRouteError(error, { route: "/api/shift-swaps", method: "POST" });
     return NextResponse.json(
       { error: "Error creating resource" },
       { status: 500 },

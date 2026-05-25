@@ -13,6 +13,7 @@ import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
 import { getLocaleFromCookie } from "@/i18n/locale";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
@@ -137,6 +138,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     log.error("Error exporting:", { error: error });
+    captureRouteError(error, { route: "/api/export/datev", method: "GET" });
     return NextResponse.json({ error: "Error exporting" }, { status: 500 });
   }
 }

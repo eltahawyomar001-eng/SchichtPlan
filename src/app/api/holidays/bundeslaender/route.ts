@@ -15,6 +15,11 @@ export const GET = withRoute(
       name,
     }));
 
-    return NextResponse.json(list);
+    return NextResponse.json(list, {
+      headers: {
+        "Cache-Control":
+          "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
+      },
+    });
   },
 );

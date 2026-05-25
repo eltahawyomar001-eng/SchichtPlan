@@ -39,5 +39,13 @@ export const GET = async () => {
     name: SCHICHTPLANUNG_ADDON.name,
   };
 
-  return NextResponse.json({ plans, ticketingTiers, schichtplanung });
+  return NextResponse.json(
+    { plans, ticketingTiers, schichtplanung },
+    {
+      headers: {
+        "Cache-Control":
+          "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+      },
+    },
+  );
 };

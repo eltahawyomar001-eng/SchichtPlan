@@ -264,6 +264,10 @@ export const authOptions: NextAuthOptions = {
                 });
               }
             });
+            // Flag as new OAuth user so /oauth-welcome can show "account created" UI
+            await cache
+              .set(`new_oauth_reg:${user.id}`, "1", 300)
+              .catch(() => {});
             log.info(
               "[auth] createUser: new OAuth user joined via invitation",
               { userId: user.id, workspaceId: invitation.workspaceId },
@@ -302,6 +306,11 @@ export const authOptions: NextAuthOptions = {
 
               await initializeTrial(tx, workspace.id);
             });
+
+            // Flag as new OAuth user so /oauth-welcome can show "account created" UI
+            await cache
+              .set(`new_oauth_reg:${user.id}`, "1", 300)
+              .catch(() => {});
           }
         }
       } catch (err) {

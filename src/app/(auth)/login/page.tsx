@@ -23,7 +23,9 @@ function LoginForm() {
   const t = useTranslations("auth");
   const justRegistered = searchParams.get("registered") === "true";
   const justVerified = searchParams.get("verified") === "true";
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const rawCallback = searchParams.get("callbackUrl") || "/dashboard";
+  // Reject absolute URLs to prevent open redirect (only allow same-origin paths)
+  const callbackUrl = rawCallback.startsWith("/") ? rawCallback : "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

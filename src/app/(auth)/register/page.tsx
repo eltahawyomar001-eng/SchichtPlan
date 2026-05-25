@@ -478,7 +478,13 @@ function RegisterForm() {
           {/* Google OAuth */}
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() =>
+              signIn("google", {
+                callbackUrl: invitationToken
+                  ? `/einladung/${invitationToken}`
+                  : "/dashboard",
+              })
+            }
             className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md active:scale-[0.98]"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">

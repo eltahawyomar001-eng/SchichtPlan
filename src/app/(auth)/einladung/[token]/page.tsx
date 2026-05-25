@@ -68,6 +68,19 @@ export default function EinladungPage() {
     }
   }, [token]);
 
+  // When OAuth auto-accepted the invitation (createUser event) the GET returns
+  // INVITATION_ACCEPTED. If the user is already signed in, just go to dashboard.
+  useEffect(() => {
+    if (
+      !loading &&
+      sessionStatus !== "loading" &&
+      error === "INVITATION_ACCEPTED" &&
+      isSignedIn
+    ) {
+      router.replace("/dashboard");
+    }
+  }, [loading, sessionStatus, error, isSignedIn, router]);
+
   // Accept invitation
   const handleAccept = async () => {
     setAccepting(true);
@@ -147,6 +160,55 @@ export default function EinladungPage() {
 
   // Error state (only for fatal errors where we have no invitation data)
   if (error && !invitation) {
+    // If already accepted and signed in, the useEffect above will redirect — show spinner
+    if (error === "INVITATION_ACCEPTED" && isSignedIn) {
+      return (
+        <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+            <p className="mt-3 text-sm text-gray-500">{t("loading")}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Already accepted but NOT signed in — guide them to sign in
+    if (error === "INVITATION_ACCEPTED") {
+      return (
+        <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-lg text-center">
+            <Link href="/" className="mb-6 inline-flex items-center gap-2">
+              <ShiftfyMark className="h-8 w-8" />
+              <span className="text-lg font-bold text-gray-900">Shiftfy</span>
+            </Link>
+            <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+              <CheckCircleIcon className="h-7 w-7 text-emerald-500" />
+            </div>
+            <h1 className="mt-4 text-xl font-bold text-gray-900">
+              {t("errorAlreadyAccepted")}
+            </h1>
+            <p className="mt-2 text-sm text-gray-500">
+              {t("alreadyAcceptedSignIn")}
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+              >
+                {t("goToLogin")}
+              </Link>
+              <Link
+                href="/"
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                {t("backToHome")}
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-lg text-center">

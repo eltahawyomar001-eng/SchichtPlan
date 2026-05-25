@@ -206,41 +206,103 @@ export const authOptions: NextAuthOptions = {
           where: { id: user.id },
           select: { workspaceId: true, name: true, email: true },
         });
-        if (dbUser && !dbUser.workspaceId) {
+        if (dbUser && !dbUser.workspaceId && dbUser.email) {
           const displayName =
-            dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
-          const slug =
-            displayName
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-|-$/g, "") +
-            "-" +
-            user.id.slice(-6);
+            dbUser.name || dbUser.email.split("@")[0] || "Mein Unternehmen";
 
-          await prisma.$transaction(async (tx) => {
-            const workspace = await tx.workspace.create({
-              data: { name: `${displayName}'s Workspace`, slug },
-            });
-            await tx.user.update({
-              where: { id: user.id },
-              data: { workspaceId: workspace.id, role: "OWNER" },
-            });
-
-            // Auto-create Employee profile so punch-clock works immediately
-            const nameParts = (dbUser.name || "").trim().split(/\s+/);
-            await tx.employee.create({
-              data: {
-                firstName: nameParts[0] || displayName,
-                lastName: nameParts.slice(1).join(" ") || "",
-                email: dbUser.email ?? "",
-                userId: user.id,
-                workspaceId: workspace.id,
-                isActive: true,
-              },
-            });
-
-            await initializeTrial(tx, workspace.id);
+          // Check for a pending invitation before creating a standalone workspace.
+          // When an invited user clicks the invitation link and authenticates via OAuth,
+          // NextAuth has no mechanism to carry the invitation token through the OAuth
+          // redirect — we detect the invitation by matching the verified email address.
+          const invitation = await prisma.invitation.findFirst({
+            where: {
+              email: { equals: dbUser.email, mode: "insensitive" },
+              status: "PENDING",
+              expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: "desc" }, // most recent wins when multiple exist
           });
+
+          if (invitation) {
+            // Join the inviting workspace instead of bootstrapping a standalone one
+            const nameParts = displayName.trim().split(/\s+/);
+            await prisma.$transaction(async (tx) => {
+              await tx.user.update({
+                where: { id: user.id },
+                data: {
+                  workspaceId: invitation.workspaceId,
+                  role: invitation.role,
+                },
+              });
+              await tx.invitation.update({
+                where: { id: invitation.id },
+                data: { status: "ACCEPTED" },
+              });
+              // Link to existing pre-created employee or create one
+              const existing = await tx.employee.findFirst({
+                where: {
+                  email: { equals: dbUser.email!, mode: "insensitive" },
+                  workspaceId: invitation.workspaceId,
+                  userId: null,
+                },
+              });
+              if (existing) {
+                await tx.employee.update({
+                  where: { id: existing.id },
+                  data: { userId: user.id },
+                });
+              } else {
+                await tx.employee.create({
+                  data: {
+                    firstName: nameParts[0] || displayName,
+                    lastName: nameParts.slice(1).join(" ") || "",
+                    email: dbUser.email!,
+                    userId: user.id,
+                    workspaceId: invitation.workspaceId,
+                    isActive: true,
+                  },
+                });
+              }
+            });
+            log.info(
+              "[auth] createUser: new OAuth user joined via invitation",
+              { userId: user.id, workspaceId: invitation.workspaceId },
+            );
+          } else {
+            // No pending invitation — create standalone workspace
+            const slug =
+              displayName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "") +
+              "-" +
+              user.id.slice(-6);
+
+            await prisma.$transaction(async (tx) => {
+              const workspace = await tx.workspace.create({
+                data: { name: `${displayName}'s Workspace`, slug },
+              });
+              await tx.user.update({
+                where: { id: user.id },
+                data: { workspaceId: workspace.id, role: "OWNER" },
+              });
+
+              // Auto-create Employee profile so punch-clock works immediately
+              const nameParts = (dbUser.name || "").trim().split(/\s+/);
+              await tx.employee.create({
+                data: {
+                  firstName: nameParts[0] || displayName,
+                  lastName: nameParts.slice(1).join(" ") || "",
+                  email: dbUser.email ?? "",
+                  userId: user.id,
+                  workspaceId: workspace.id,
+                  isActive: true,
+                },
+              });
+
+              await initializeTrial(tx, workspace.id);
+            });
+          }
         }
       } catch (err) {
         // The JWT callback will repair workspace/trial on the first sign-in.
@@ -259,8 +321,28 @@ export const authOptions: NextAuthOptions = {
       if (account?.type === "oauth") {
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { workspaceId: true, hashedPassword: true },
+          select: {
+            workspaceId: true,
+            hashedPassword: true,
+            emailVerified: true,
+          },
         });
+
+        // OAuth providers (Google, Azure AD) verify the user's email address before
+        // issuing a token. NextAuth's callback-handler.js creates every OAuth user with
+        // emailVerified: null regardless of what the provider attests — correct this so
+        // credential sign-in isn't permanently blocked if the user later adds a password
+        // via the forgot-password flow.
+        if (dbUser && !dbUser.emailVerified) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { emailVerified: new Date() },
+            });
+          } catch {
+            /* best-effort — not sign-in-blocking */
+          }
+        }
 
         // OAuth-claiming-credentials protection is handled by NextAuth itself:
         // when getUserByEmail finds an existing user but getUserByAccount finds
@@ -351,47 +433,119 @@ export const authOptions: NextAuthOptions = {
           if (!dbUser.workspaceId) {
             const displayName =
               dbUser.name || dbUser.email?.split("@")[0] || "Mein Unternehmen";
-            const slug =
-              displayName
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-|-$/g, "") +
-              "-" +
-              token.sub.slice(-6);
 
-            // Full workspace bootstrap in one atomic transaction —
-            // same as createUser event but with initializeTrial included.
-            let newWorkspaceId: string | null = null;
-            let newEmployeeId: string | null = null;
-            await prisma.$transaction(async (tx) => {
-              const workspace = await tx.workspace.create({
-                data: { name: `${displayName}'s Workspace`, slug },
-              });
-              newWorkspaceId = workspace.id;
-              await tx.user.update({
-                where: { id: token.sub as string },
-                data: { workspaceId: workspace.id, role: "OWNER" },
-              });
+            // Same invitation check as in createUser — this is the repair path
+            // for when createUser failed. Without the check, the repair would
+            // silently create a standalone workspace for a user who should have
+            // joined an invited workspace.
+            const invitation = dbUser.email
+              ? await prisma.invitation.findFirst({
+                  where: {
+                    email: { equals: dbUser.email, mode: "insensitive" },
+                    status: "PENDING",
+                    expiresAt: { gt: new Date() },
+                  },
+                  orderBy: { createdAt: "desc" },
+                })
+              : null;
+
+            if (invitation) {
+              // Join invited workspace
+              let joinedEmployeeId: string | null = null;
               const nameParts = (dbUser.name || "").trim().split(/\s+/);
-              const emp = await tx.employee.create({
-                data: {
-                  firstName: nameParts[0] || displayName,
-                  lastName: nameParts.slice(1).join(" ") || "",
-                  email: dbUser.email ?? "",
-                  userId: token.sub as string,
-                  workspaceId: workspace.id,
-                  isActive: true,
-                },
+              await prisma.$transaction(async (tx) => {
+                await tx.user.update({
+                  where: { id: token.sub as string },
+                  data: {
+                    workspaceId: invitation.workspaceId,
+                    role: invitation.role,
+                  },
+                });
+                await tx.invitation.update({
+                  where: { id: invitation.id },
+                  data: { status: "ACCEPTED" },
+                });
+                const existing = await tx.employee.findFirst({
+                  where: {
+                    email: { equals: dbUser.email!, mode: "insensitive" },
+                    workspaceId: invitation.workspaceId,
+                    userId: null,
+                  },
+                });
+                if (existing) {
+                  await tx.employee.update({
+                    where: { id: existing.id },
+                    data: { userId: token.sub as string },
+                  });
+                  joinedEmployeeId = existing.id;
+                } else {
+                  const emp = await tx.employee.create({
+                    data: {
+                      firstName: nameParts[0] || displayName,
+                      lastName: nameParts.slice(1).join(" ") || "",
+                      email: dbUser.email ?? "",
+                      userId: token.sub as string,
+                      workspaceId: invitation.workspaceId,
+                      isActive: true,
+                    },
+                  });
+                  joinedEmployeeId = emp.id;
+                }
               });
-              newEmployeeId = emp.id;
-              await initializeTrial(tx, workspace.id);
-            });
 
-            token.role = "OWNER";
-            token.workspaceId = newWorkspaceId;
-            token.workspaceName = `${displayName}'s Workspace`;
-            token.employeeId = newEmployeeId;
-            token.onboardingCompleted = false;
+              const invWs = await prisma.workspace.findUnique({
+                where: { id: invitation.workspaceId },
+                select: { name: true },
+              });
+              token.role = invitation.role;
+              token.workspaceId = invitation.workspaceId;
+              token.workspaceName = invWs?.name || null;
+              token.employeeId = joinedEmployeeId;
+              token.onboardingCompleted = false;
+            } else {
+              // No invitation — create standalone workspace (repair path)
+              const slug =
+                displayName
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-|-$/g, "") +
+                "-" +
+                token.sub.slice(-6);
+
+              // Full workspace bootstrap in one atomic transaction —
+              // same as createUser event but with initializeTrial included.
+              let newWorkspaceId: string | null = null;
+              let newEmployeeId: string | null = null;
+              await prisma.$transaction(async (tx) => {
+                const workspace = await tx.workspace.create({
+                  data: { name: `${displayName}'s Workspace`, slug },
+                });
+                newWorkspaceId = workspace.id;
+                await tx.user.update({
+                  where: { id: token.sub as string },
+                  data: { workspaceId: workspace.id, role: "OWNER" },
+                });
+                const nameParts = (dbUser.name || "").trim().split(/\s+/);
+                const emp = await tx.employee.create({
+                  data: {
+                    firstName: nameParts[0] || displayName,
+                    lastName: nameParts.slice(1).join(" ") || "",
+                    email: dbUser.email ?? "",
+                    userId: token.sub as string,
+                    workspaceId: workspace.id,
+                    isActive: true,
+                  },
+                });
+                newEmployeeId = emp.id;
+                await initializeTrial(tx, workspace.id);
+              });
+
+              token.role = "OWNER";
+              token.workspaceId = newWorkspaceId;
+              token.workspaceName = `${displayName}'s Workspace`;
+              token.employeeId = newEmployeeId;
+              token.onboardingCompleted = false;
+            }
           } else {
             token.role = dbUser.role;
             token.workspaceId = dbUser.workspaceId;

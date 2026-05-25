@@ -105,12 +105,22 @@ export const POST = withRoute(
       return NextResponse.json({ error: "EMAIL_MISMATCH" }, { status: 403 });
     }
 
-    // Check if user is already in a workspace
+    // If the user already has a workspace, only allow re-homing when they are
+    // the sole member (the auto-created OAuth onboarding workspace scenario).
+    // Users in a shared workspace cannot silently leave it via an invitation.
     if (user.workspaceId) {
-      return NextResponse.json(
-        { error: "ALREADY_IN_WORKSPACE" },
-        { status: 409 },
-      );
+      const memberCount = await prisma.user.count({
+        where: { workspaceId: user.workspaceId },
+      });
+      if (memberCount > 1) {
+        return NextResponse.json(
+          { error: "ALREADY_IN_WORKSPACE" },
+          { status: 409 },
+        );
+      }
+      // Sole owner of their workspace — proceed with re-homing below.
+      // The old workspace is kept for data safety; its trial subscription
+      // will expire naturally.
     }
 
     // Accept: update user workspace + role, link/create employee, mark invitation as accepted

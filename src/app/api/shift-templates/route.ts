@@ -45,7 +45,12 @@ export const GET = withRoute("/api/shift-templates", "GET", async (req) => {
     prisma.shiftTemplate.count({ where: { workspaceId } }),
   ]);
 
-  return paginatedResponse(templates, total, take, skip);
+  const res = paginatedResponse(templates, total, take, skip);
+  res.headers.set(
+    "Cache-Control",
+    "private, max-age=30, stale-while-revalidate=300",
+  );
+  return res;
 });
 
 export const POST = withRoute(

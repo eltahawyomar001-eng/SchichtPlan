@@ -20,11 +20,35 @@ Sentry.init({
       event.tags = { ...event.tags, sla_relevant: "true" };
     }
 
-    // Strip sensitive data from breadcrumbs
+    // Strip PII query params and sensitive headers from all URLs in the event
+    const PII_PARAMS = [
+      "token",
+      "email",
+      "password",
+      "reset_token",
+      "invite",
+      "code",
+    ];
+    const redactUrl = (url: string): string => {
+      try {
+        const u = new URL(url);
+        for (const p of PII_PARAMS) {
+          if (u.searchParams.has(p)) u.searchParams.set(p, "[Filtered]");
+        }
+        return u.toString();
+      } catch {
+        return url;
+      }
+    };
+
+    if (event.request?.url) {
+      event.request.url = redactUrl(event.request.url);
+    }
     if (event.breadcrumbs) {
       event.breadcrumbs = event.breadcrumbs.map((b) => {
         if (b.category === "http" && b.data?.url) {
-          // Redact authorization headers
+          b.data.url = redactUrl(String(b.data.url));
+          // Redact sensitive headers
           if (b.data.headers) {
             delete b.data.headers.authorization;
             delete b.data.headers.cookie;

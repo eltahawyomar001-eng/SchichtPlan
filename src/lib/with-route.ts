@@ -25,6 +25,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
@@ -81,6 +82,30 @@ export function withRoute(
 
       return response;
     } catch (error) {
+      // Map Prisma unique-constraint and relation violations to 409 instead of 500
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2002") {
+          const fields = (error.meta?.target as string[] | undefined)?.join(
+            ", ",
+          );
+          return NextResponse.json(
+            { error: "Conflict", code: "CONFLICT", fields },
+            { status: 409 },
+          );
+        }
+        if (error.code === "P2014" || error.code === "P2016") {
+          return NextResponse.json(
+            { error: "Relation violation", code: "RELATION_ERROR" },
+            { status: 409 },
+          );
+        }
+        if (error.code === "P2025") {
+          return NextResponse.json(
+            { error: "Not found", code: "NOT_FOUND" },
+            { status: 404 },
+          );
+        }
+      }
       log.error(`${method} ${route} failed`, { error });
       captureRouteError(error, { route, method });
       return NextResponse.json(

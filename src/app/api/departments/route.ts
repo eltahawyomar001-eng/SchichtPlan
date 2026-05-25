@@ -30,7 +30,12 @@ export const GET = withRoute("/api/departments", "GET", async (req) => {
     prisma.department.count({ where: { workspaceId } }),
   ]);
 
-  return paginatedResponse(departments, total, take, skip);
+  const res = paginatedResponse(departments, total, take, skip);
+  res.headers.set(
+    "Cache-Control",
+    "private, max-age=30, stale-while-revalidate=300",
+  );
+  return res;
 });
 
 export const POST = withRoute(

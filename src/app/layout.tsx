@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { CookieBanner } from "@/components/cookie-banner";
 import { CombinedJsonLd } from "@/components/seo/JsonLd";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -186,6 +187,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
           <CookieBanner />
+          <Analytics />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -26,7 +26,12 @@ export const GET = withRoute("/api/locations", "GET", async (req) => {
     prisma.location.count({ where: { workspaceId } }),
   ]);
 
-  return paginatedResponse(locations, total, take, skip);
+  const res = paginatedResponse(locations, total, take, skip);
+  res.headers.set(
+    "Cache-Control",
+    "private, max-age=30, stale-while-revalidate=300",
+  );
+  return res;
 });
 
 export const POST = withRoute(

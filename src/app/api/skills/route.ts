@@ -38,7 +38,12 @@ export const GET = withRoute("/api/skills", "GET", async (req) => {
     prisma.skill.count({ where: { workspaceId } }),
   ]);
 
-  return paginatedResponse(skills, total, take, skip);
+  const res = paginatedResponse(skills, total, take, skip);
+  res.headers.set(
+    "Cache-Control",
+    "private, max-age=30, stale-while-revalidate=300",
+  );
+  return res;
 });
 
 export const POST = withRoute(

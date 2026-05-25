@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
@@ -6,6 +6,7 @@ import ExcelJS from "exceljs";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { cache } from "@/lib/cache";
 
 // ── Import limits ──────────────────────────────────────────────
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -127,277 +128,345 @@ export const POST = withRoute(
       );
     }
 
-    let created = 0;
-    let skipped = 0;
-    let duplicates = 0;
+    // ── Async job setup ──────────────────────────────────────────
+    const jobId = crypto.randomUUID();
+    const JOB_TTL = 86_400; // 24 h
 
-    if (type === "employees") {
-      // ── Duplicate detection: fetch existing emails in this workspace ──
-      const existingEmployees = await prisma.employee.findMany({
-        where: { workspaceId: user.workspaceId },
-        select: { email: true },
-      });
-      const existingEmails = new Set(
-        existingEmployees
-          .map((e: { email: string | null }) => e.email?.toLowerCase())
-          .filter(Boolean),
-      );
+    await cache.set(
+      `import:job:${jobId}`,
+      {
+        status: "pending",
+        total: rows.length,
+        type,
+        workspaceId: user.workspaceId,
+      },
+      JOB_TTL,
+    );
 
-      // Parse and validate all rows first
-      const validRows: {
-        firstName: string;
-        lastName: string;
-        email: string | null;
-        phone: string | null;
-        position: string | null;
-        hourlyRate: number | null;
-        weeklyHours: number | null;
-        color: string;
-      }[] = [];
-
-      for (const row of rows) {
-        const firstName =
-          row["vorname"] || row["firstname"] || row["first_name"];
-        const lastName = row["nachname"] || row["lastname"] || row["last_name"];
-        if (!firstName || !lastName) {
-          skipped++;
-          continue;
-        }
-
-        const email = (row["email"] || "").toLowerCase() || null;
-
-        // Email is mandatory for employee assignment & billing
-        if (!email) {
-          skipped++;
-          continue;
-        }
-
-        if (existingEmails.has(email)) {
-          duplicates++;
-          continue;
-        }
-
-        // Mark email as seen to detect intra-file duplicates
-        if (email) existingEmails.add(email);
-
-        validRows.push({
-          firstName,
-          lastName,
-          email,
-          phone: row["telefon"] || row["phone"] || null,
-          position: row["position"] || row["rolle"] || null,
-          hourlyRate:
-            row["stundenlohn"] || row["hourlyrate"]
-              ? parseFloat(row["stundenlohn"] || row["hourlyrate"])
-              : null,
-          weeklyHours:
-            row["wochenstunden"] || row["weeklyhours"]
-              ? parseFloat(row["wochenstunden"] || row["weeklyhours"])
-              : null,
-          color: `#${Math.floor(Math.random() * 16777215)
-            .toString(16)
-            .padStart(6, "0")}`,
-        });
-      }
-
-      // Batch insert in a transaction
-      await prisma.$transaction(async (tx) => {
-        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-          const batch = validRows.slice(i, i + BATCH_SIZE);
-          await tx.employee.createMany({
-            data: batch.map((r) => ({
-              ...r,
-              workspaceId: user.workspaceId!,
-            })),
-            skipDuplicates: true,
-          });
-        }
-      });
-
-      created = validRows.length;
-    }
-
-    if (type === "shifts") {
-      // Parse and validate all rows first
-      const validRows: {
-        date: Date;
-        startTime: string;
-        endTime: string;
-        notes: string | null;
-      }[] = [];
-
-      for (const row of rows) {
-        const date = row["datum"] || row["date"];
-        const startTime = row["start"] || row["startzeit"] || row["starttime"];
-        const endTime = row["ende"] || row["endzeit"] || row["endtime"];
-
-        if (!date || !startTime || !endTime) {
-          skipped++;
-          continue;
-        }
-
-        const parsedDate = new Date(date);
-        if (isNaN(parsedDate.getTime())) {
-          skipped++;
-          continue;
-        }
-
-        validRows.push({
-          date: parsedDate,
-          startTime,
-          endTime,
-          notes: row["notizen"] || row["notes"] || null,
-        });
-      }
-
-      // Batch insert in a transaction
-      await prisma.$transaction(async (tx) => {
-        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-          const batch = validRows.slice(i, i + BATCH_SIZE);
-          await tx.shift.createMany({
-            data: batch.map((r) => ({
-              ...r,
-              workspaceId: user.workspaceId!,
-            })),
-          });
-        }
-      });
-
-      created = validRows.length;
-    }
-
-    if (type === "time-entries") {
-      // Build employee lookup by email within this workspace
-      const employees = await prisma.employee.findMany({
-        where: { workspaceId: user.workspaceId! },
-        select: { id: true, email: true, firstName: true, lastName: true },
-      });
-      const emailToId = new Map<string, string>();
-      const nameToId = new Map<string, string>();
-      for (const emp of employees) {
-        if (emp.email) emailToId.set(emp.email.toLowerCase(), emp.id);
-        nameToId.set(
-          `${emp.firstName.toLowerCase()} ${emp.lastName.toLowerCase()}`,
-          emp.id,
+    // Process DB inserts after the 202 response is sent
+    after(async () => {
+      try {
+        await cache.set(
+          `import:job:${jobId}`,
+          {
+            status: "processing",
+            total: rows.length,
+            type,
+            workspaceId: user.workspaceId,
+          },
+          JOB_TTL,
         );
-        nameToId.set(
-          `${emp.lastName.toLowerCase()}, ${emp.firstName.toLowerCase()}`,
-          emp.id,
-        );
-      }
 
-      // Helper to parse HH:MM time strings
-      const isValidTime = (t: string) => /^\d{1,2}:\d{2}$/.test(t);
+        let created = 0;
+        let skipped = 0;
+        let duplicates = 0;
 
-      const validRows: {
-        date: Date;
-        startTime: string;
-        endTime: string;
-        breakMinutes: number;
-        grossMinutes: number;
-        netMinutes: number;
-        employeeId: string;
-        remarks: string | null;
-      }[] = [];
-
-      for (const row of rows) {
-        const date = row["datum"] || row["date"];
-        const startTime =
-          row["start"] || row["startzeit"] || row["starttime"] || row["von"];
-        const endTime =
-          row["ende"] || row["endzeit"] || row["endtime"] || row["bis"];
-
-        if (!date || !startTime || !endTime) {
-          skipped++;
-          continue;
-        }
-
-        const parsedDate = new Date(date);
-        if (isNaN(parsedDate.getTime())) {
-          skipped++;
-          continue;
-        }
-
-        if (!isValidTime(startTime) || !isValidTime(endTime)) {
-          skipped++;
-          continue;
-        }
-
-        // Resolve employee
-        const empEmail = (row["email"] || row["e-mail"] || "").toLowerCase();
-        const empName = (
-          row["mitarbeiter"] ||
-          row["employee"] ||
-          row["name"] ||
-          ""
-        ).toLowerCase();
-
-        let employeeId: string | undefined;
-        if (empEmail && emailToId.has(empEmail)) {
-          employeeId = emailToId.get(empEmail);
-        } else if (empName && nameToId.has(empName)) {
-          employeeId = nameToId.get(empName);
-        }
-
-        if (!employeeId) {
-          skipped++;
-          continue;
-        }
-
-        // Calculate minutes
-        const breakStr =
-          row["pause"] || row["pauseminuten"] || row["break"] || "0";
-        const breakMinutes = parseInt(breakStr, 10) || 0;
-
-        const [sH, sM] = startTime.split(":").map(Number);
-        const [eH, eM] = endTime.split(":").map(Number);
-        let grossMinutes = eH * 60 + eM - (sH * 60 + sM);
-        if (grossMinutes < 0) grossMinutes += 24 * 60; // overnight
-        const netMinutes = Math.max(0, grossMinutes - breakMinutes);
-
-        validRows.push({
-          date: parsedDate,
-          startTime: startTime.padStart(5, "0"),
-          endTime: endTime.padStart(5, "0"),
-          breakMinutes,
-          grossMinutes,
-          netMinutes,
-          employeeId,
-          remarks: row["bemerkung"] || row["remarks"] || row["notizen"] || null,
-        });
-      }
-
-      // Batch insert in a transaction
-      await prisma.$transaction(async (tx) => {
-        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-          const batch = validRows.slice(i, i + BATCH_SIZE);
-          await tx.timeEntry.createMany({
-            data: batch.map((r) => ({
-              ...r,
-              workspaceId: user.workspaceId!,
-            })),
+        if (type === "employees") {
+          // ── Duplicate detection: fetch existing emails in this workspace ──
+          const existingEmployees = await prisma.employee.findMany({
+            where: { workspaceId: user.workspaceId },
+            select: { email: true },
           });
+          const existingEmails = new Set(
+            existingEmployees
+              .map((e: { email: string | null }) => e.email?.toLowerCase())
+              .filter(Boolean),
+          );
+
+          // Parse and validate all rows first
+          const validRows: {
+            firstName: string;
+            lastName: string;
+            email: string | null;
+            phone: string | null;
+            position: string | null;
+            hourlyRate: number | null;
+            weeklyHours: number | null;
+            color: string;
+          }[] = [];
+
+          for (const row of rows) {
+            const firstName =
+              row["vorname"] || row["firstname"] || row["first_name"];
+            const lastName =
+              row["nachname"] || row["lastname"] || row["last_name"];
+            if (!firstName || !lastName) {
+              skipped++;
+              continue;
+            }
+
+            const email = (row["email"] || "").toLowerCase() || null;
+
+            // Email is mandatory for employee assignment & billing
+            if (!email) {
+              skipped++;
+              continue;
+            }
+
+            if (existingEmails.has(email)) {
+              duplicates++;
+              continue;
+            }
+
+            // Mark email as seen to detect intra-file duplicates
+            if (email) existingEmails.add(email);
+
+            validRows.push({
+              firstName,
+              lastName,
+              email,
+              phone: row["telefon"] || row["phone"] || null,
+              position: row["position"] || row["rolle"] || null,
+              hourlyRate:
+                row["stundenlohn"] || row["hourlyrate"]
+                  ? parseFloat(row["stundenlohn"] || row["hourlyrate"])
+                  : null,
+              weeklyHours:
+                row["wochenstunden"] || row["weeklyhours"]
+                  ? parseFloat(row["wochenstunden"] || row["weeklyhours"])
+                  : null,
+              color: `#${Math.floor(Math.random() * 16777215)
+                .toString(16)
+                .padStart(6, "0")}`,
+            });
+          }
+
+          // Batch insert in a transaction
+          await prisma.$transaction(async (tx) => {
+            for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+              const batch = validRows.slice(i, i + BATCH_SIZE);
+              await tx.employee.createMany({
+                data: batch.map((r) => ({
+                  ...r,
+                  workspaceId: user.workspaceId!,
+                })),
+                skipDuplicates: true,
+              });
+            }
+          });
+
+          created = validRows.length;
         }
-      });
 
-      created = validRows.length;
-    }
+        if (type === "shifts") {
+          // Parse and validate all rows first
+          const validRows: {
+            date: Date;
+            startTime: string;
+            endTime: string;
+            notes: string | null;
+          }[] = [];
 
-    log.info("[import] Complete", {
-      type,
-      created,
-      skipped,
-      duplicates,
-      total: rows.length,
-      workspaceId: user.workspaceId,
+          for (const row of rows) {
+            const date = row["datum"] || row["date"];
+            const startTime =
+              row["start"] || row["startzeit"] || row["starttime"];
+            const endTime = row["ende"] || row["endzeit"] || row["endtime"];
+
+            if (!date || !startTime || !endTime) {
+              skipped++;
+              continue;
+            }
+
+            const parsedDate = new Date(date);
+            if (isNaN(parsedDate.getTime())) {
+              skipped++;
+              continue;
+            }
+
+            validRows.push({
+              date: parsedDate,
+              startTime,
+              endTime,
+              notes: row["notizen"] || row["notes"] || null,
+            });
+          }
+
+          // Batch insert in a transaction
+          await prisma.$transaction(async (tx) => {
+            for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+              const batch = validRows.slice(i, i + BATCH_SIZE);
+              await tx.shift.createMany({
+                data: batch.map((r) => ({
+                  ...r,
+                  workspaceId: user.workspaceId!,
+                })),
+              });
+            }
+          });
+
+          created = validRows.length;
+        }
+
+        if (type === "time-entries") {
+          // Build employee lookup by email within this workspace
+          const employees = await prisma.employee.findMany({
+            where: { workspaceId: user.workspaceId! },
+            select: { id: true, email: true, firstName: true, lastName: true },
+          });
+          const emailToId = new Map<string, string>();
+          const nameToId = new Map<string, string>();
+          for (const emp of employees) {
+            if (emp.email) emailToId.set(emp.email.toLowerCase(), emp.id);
+            nameToId.set(
+              `${emp.firstName.toLowerCase()} ${emp.lastName.toLowerCase()}`,
+              emp.id,
+            );
+            nameToId.set(
+              `${emp.lastName.toLowerCase()}, ${emp.firstName.toLowerCase()}`,
+              emp.id,
+            );
+          }
+
+          // Helper to parse HH:MM time strings
+          const isValidTime = (t: string) => /^\d{1,2}:\d{2}$/.test(t);
+
+          const validRows: {
+            date: Date;
+            startTime: string;
+            endTime: string;
+            breakMinutes: number;
+            grossMinutes: number;
+            netMinutes: number;
+            employeeId: string;
+            remarks: string | null;
+          }[] = [];
+
+          for (const row of rows) {
+            const date = row["datum"] || row["date"];
+            const startTime =
+              row["start"] ||
+              row["startzeit"] ||
+              row["starttime"] ||
+              row["von"];
+            const endTime =
+              row["ende"] || row["endzeit"] || row["endtime"] || row["bis"];
+
+            if (!date || !startTime || !endTime) {
+              skipped++;
+              continue;
+            }
+
+            const parsedDate = new Date(date);
+            if (isNaN(parsedDate.getTime())) {
+              skipped++;
+              continue;
+            }
+
+            if (!isValidTime(startTime) || !isValidTime(endTime)) {
+              skipped++;
+              continue;
+            }
+
+            // Resolve employee
+            const empEmail = (
+              row["email"] ||
+              row["e-mail"] ||
+              ""
+            ).toLowerCase();
+            const empName = (
+              row["mitarbeiter"] ||
+              row["employee"] ||
+              row["name"] ||
+              ""
+            ).toLowerCase();
+
+            let employeeId: string | undefined;
+            if (empEmail && emailToId.has(empEmail)) {
+              employeeId = emailToId.get(empEmail);
+            } else if (empName && nameToId.has(empName)) {
+              employeeId = nameToId.get(empName);
+            }
+
+            if (!employeeId) {
+              skipped++;
+              continue;
+            }
+
+            // Calculate minutes
+            const breakStr =
+              row["pause"] || row["pauseminuten"] || row["break"] || "0";
+            const breakMinutes = parseInt(breakStr, 10) || 0;
+
+            const [sH, sM] = startTime.split(":").map(Number);
+            const [eH, eM] = endTime.split(":").map(Number);
+            let grossMinutes = eH * 60 + eM - (sH * 60 + sM);
+            if (grossMinutes < 0) grossMinutes += 24 * 60; // overnight
+            const netMinutes = Math.max(0, grossMinutes - breakMinutes);
+
+            validRows.push({
+              date: parsedDate,
+              startTime: startTime.padStart(5, "0"),
+              endTime: endTime.padStart(5, "0"),
+              breakMinutes,
+              grossMinutes,
+              netMinutes,
+              employeeId,
+              remarks:
+                row["bemerkung"] || row["remarks"] || row["notizen"] || null,
+            });
+          }
+
+          // Batch insert in a transaction
+          await prisma.$transaction(async (tx) => {
+            for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+              const batch = validRows.slice(i, i + BATCH_SIZE);
+              await tx.timeEntry.createMany({
+                data: batch.map((r) => ({
+                  ...r,
+                  workspaceId: user.workspaceId!,
+                })),
+              });
+            }
+          });
+
+          created = validRows.length;
+        }
+
+        log.info("[import] Complete", {
+          type,
+          created,
+          skipped,
+          duplicates,
+          total: rows.length,
+          workspaceId: user.workspaceId,
+        });
+
+        await cache.set(
+          `import:job:${jobId}`,
+          {
+            status: "done",
+            total: rows.length,
+            created,
+            skipped,
+            duplicates,
+            type,
+            workspaceId: user.workspaceId,
+          },
+          JOB_TTL,
+        );
+      } catch (err) {
+        log.error("[import] Background job failed", { jobId, error: err });
+        await cache
+          .set(
+            `import:job:${jobId}`,
+            {
+              status: "error",
+              total: rows.length,
+              error: err instanceof Error ? err.message : "Unknown error",
+              type,
+              workspaceId: user.workspaceId,
+            },
+            JOB_TTL,
+          )
+          .catch(() => {});
+      }
     });
 
-    return NextResponse.json({
-      created,
-      skipped,
-      duplicates,
-      total: rows.length,
-    });
+    return NextResponse.json(
+      { jobId, status: "pending", total: rows.length },
+      { status: 202 },
+    );
   },
   { idempotent: true },
 );

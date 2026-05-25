@@ -1773,3 +1773,31 @@ model SosEvent {
 
   @@index([sosRequestId, createdAt])
 }
+
+/// Persistent queue for outbound transactional emails.
+/// Allows a cron job to retry failed Resend deliveries without losing
+/// critical emails (PIN, invitation, password reset) to transient failures.
+model EmailJob {
+  id           String    @id @default(cuid())
+  to           String
+  type         String
+  category     String    @default("transactional")
+  title        String
+  message      String    @db.Text
+  link         String?
+  locale       String    @default("de")
+  /// PENDING → attempted but not yet delivered; SENT → delivered; FAILED → gave up
+  status       String    @default("PENDING")
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(5)
+  /// When to attempt next (used for exponential back-off)
+  nextRetryAt  DateTime?
+  lastAttempt  DateTime?
+  errorMessage String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, attempts])
+  @@index([nextRetryAt])
+  @@index([createdAt])
+}

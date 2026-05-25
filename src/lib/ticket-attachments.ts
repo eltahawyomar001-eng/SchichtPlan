@@ -18,6 +18,7 @@ export {
   MAX_ATTACHMENTS_PER_TICKET,
   ALLOWED_MIME_TYPES,
   validateFile,
+  checkMagicBytes,
 } from "@/lib/ticket-file-validation";
 export type { FileValidationResult } from "@/lib/ticket-file-validation";
 

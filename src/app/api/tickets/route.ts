@@ -18,6 +18,7 @@ import {
 import {
   MAX_ATTACHMENTS_PER_TICKET,
   validateFile,
+  checkMagicBytes,
   requireStorageQuota,
   recordStorageUsage,
   uploadToBlob,
@@ -288,6 +289,17 @@ export async function POST(req: Request) {
       try {
         for (const file of validFiles) {
           const arrayBuf = await file.arrayBuffer();
+
+          // Verify file content matches declared MIME (prevents polyglot files)
+          if (!checkMagicBytes(new Uint8Array(arrayBuf), file.type)) {
+            rejections.push({
+              fileName: file.name,
+              code: "MAGIC_BYTES_MISMATCH",
+              message: `Der Inhalt von "${file.name}" stimmt nicht mit dem deklarierten Dateityp überein.`,
+            });
+            continue;
+          }
+
           const blob = await uploadToBlob({
             workspaceId,
             ticketId: ticket.id,

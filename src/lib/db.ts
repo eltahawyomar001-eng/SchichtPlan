@@ -47,9 +47,16 @@ function getClient(): PrismaClient {
       /pgbouncer=true/i.test(connectionString) ||
       /pooler\.supabase\.(co|com)/i.test(connectionString);
 
+    // When behind a transaction-mode pooler (Supavisor / pgBouncer) each
+    // serverless function needs only a handful of simultaneous connections —
+    // the pooler manages the real Postgres backend pool. A high max here just
+    // wastes pooler slots. Default: 3 behind a pooler, 15 for direct.
+    // Override with DATABASE_POOL_MAX env var when needed.
+    const effectiveMax = isNaN(poolMax) ? (usingPooler ? 3 : 15) : poolMax;
+
     const pool = new Pool({
       connectionString,
-      max: isNaN(poolMax) ? 15 : poolMax,
+      max: effectiveMax,
       statement_timeout: isNaN(statementTimeoutMs) ? 15000 : statementTimeoutMs,
       query_timeout: isNaN(statementTimeoutMs) ? 15000 : statementTimeoutMs,
       // Behind a transaction-mode pooler, server-side prepared statements break

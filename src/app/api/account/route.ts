@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
+import { cache } from "@/lib/cache";
 import { withRoute } from "@/lib/with-route";
 import { log } from "@/lib/logger";
 
@@ -56,7 +57,21 @@ export const DELETE = withRoute("/api/account", "DELETE", async (req) => {
     workspaceId: user.workspaceId,
   });
 
+  // Bust JWT role cache before deleting so no token can be re-used
+  await cache.del(`jwt:${user.id}`).catch(() => {});
+
   await prisma.user.delete({ where: { id: user.id } });
 
-  return NextResponse.json({ success: true });
+  log.info("[GDPR:Erasure] account deleted", {
+    userId: user.id,
+    workspaceId: user.workspaceId,
+  });
+
+  // Tell the client to clear the session cookie immediately
+  const res = NextResponse.json({ success: true });
+  res.headers.set(
+    "Set-Cookie",
+    "next-auth.session-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0, __Secure-next-auth.session-token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0",
+  );
+  return res;
 });

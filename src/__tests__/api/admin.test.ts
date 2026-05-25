@@ -18,7 +18,7 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
     notification: { deleteMany: vi.fn(), count: vi.fn() },
     auditLog: { deleteMany: vi.fn(), count: vi.fn() },
     eSignature: { deleteMany: vi.fn(), count: vi.fn() },
-    chatMessage: { deleteMany: vi.fn(), count: vi.fn() },
+
     exportJob: { deleteMany: vi.fn(), count: vi.fn() },
     serviceVisitAuditLog: { deleteMany: vi.fn(), count: vi.fn() },
     timeEntryAudit: { deleteMany: vi.fn(), count: vi.fn() },

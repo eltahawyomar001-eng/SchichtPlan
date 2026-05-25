@@ -131,6 +131,18 @@ function Navbar() {
             {t("navFaq")}
           </a>
           <Link
+            href="/schichtplanung-software"
+            className="text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+          >
+            Schichtplanung
+          </Link>
+          <Link
+            href="/zeiterfassung-software"
+            className="text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+          >
+            Zeiterfassung
+          </Link>
+          <Link
             href="/blog"
             className="text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
           >
@@ -1778,20 +1790,20 @@ function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm text-gray-500">
               <li>
-                <a
-                  href="#features"
+                <Link
+                  href="/zeiterfassung-software"
                   className="hover:text-gray-700 transition-colors"
                 >
                   {t("footerTimeTracking")}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#features"
+                <Link
+                  href="/schichtplanung-software"
                   className="hover:text-gray-700 transition-colors"
                 >
                   {t("footerShiftPlanning")}
-                </a>
+                </Link>
               </li>
               <li>
                 <a

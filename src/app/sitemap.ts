@@ -20,6 +20,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${SITE_URL}/schichtplanung-software`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.95,
+    },
+    {
+      url: `${SITE_URL}/zeiterfassung-software`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.95,
+    },
+    {
       url: `${SITE_URL}/blog`,
       lastModified: now,
       changeFrequency: "weekly",
@@ -69,11 +81,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // Blog post slugs
+  // Blog post slugs — keep in sync with POSTS object in blog/[slug]/page.tsx
   const blogSlugs = [
     "schichtplanung-best-practices",
     "arbeitszeitgesetz-2025",
-    "digitale-zeiterfassung",
+    "mitarbeiterbindung-schichtarbeit",
+    "digitale-stempeluhr-vorteile",
   ];
 
   const blogPages: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({

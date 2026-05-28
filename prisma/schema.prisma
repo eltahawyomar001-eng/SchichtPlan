@@ -527,6 +527,13 @@ model LocationRequiredSkill {
 model EmployeeSkill {
   id         String    @id @default(cuid())
   expiresAt  DateTime? @db.Date
+  /// §34a / Sachkunde: the actual certificate identity, not just a label.
+  certificateNumber String?
+  issuingAuthority  String?
+  issuedAt          DateTime? @db.Date
+  /// Public URL of the uploaded certificate scan (Supabase Storage).
+  documentUrl       String?
+  documentName      String?
   createdAt  DateTime  @default(now())
   employeeId String
   employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)

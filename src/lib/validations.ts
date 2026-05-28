@@ -607,6 +607,17 @@ export const workspaceWipeSchema = z.object({
 export const assignEmployeeSkillSchema = z.object({
   skillId: requiredString,
   expiresAt: optionalString,
+  certificateNumber: optionalString,
+  issuingAuthority: optionalString,
+  issuedAt: optionalString,
+});
+
+// ── Employee Skill Update (certificate details) ─────────────────
+export const updateEmployeeSkillSchema = z.object({
+  expiresAt: optionalString.nullable(),
+  certificateNumber: optionalString.nullable(),
+  issuingAuthority: optionalString.nullable(),
+  issuedAt: optionalString.nullable(),
 });
 
 // ── Update Shift (PATCH) ────────────────────────────────────────

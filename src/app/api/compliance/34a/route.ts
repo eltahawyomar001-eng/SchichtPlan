@@ -93,6 +93,9 @@ export async function GET(req: Request) {
               select: {
                 skillId: true,
                 expiresAt: true,
+                certificateNumber: true,
+                issuingAuthority: true,
+                documentUrl: true,
                 skill: { select: { name: true } },
               },
             },
@@ -119,8 +122,12 @@ export async function GET(req: Request) {
           skillName: string;
           status: "VALID" | "EXPIRED" | "MISSING";
           expiresAt: Date | null;
+          certificateNumber: string | null;
+          issuingAuthority: string | null;
+          hasDocument: boolean;
         }[];
         compliant: boolean;
+        documentationComplete: boolean;
       }
     >();
 
@@ -131,7 +138,13 @@ export async function GET(req: Request) {
         const empSkillMap = new Map(
           emp.employeeSkills.map((es) => [
             es.skillId,
-            { expiresAt: es.expiresAt, name: es.skill.name },
+            {
+              expiresAt: es.expiresAt,
+              name: es.skill.name,
+              certificateNumber: es.certificateNumber,
+              issuingAuthority: es.issuingAuthority,
+              documentUrl: es.documentUrl,
+            },
           ]),
         );
 
@@ -143,6 +156,9 @@ export async function GET(req: Request) {
               skillName: req.skill.name,
               status: "MISSING" as const,
               expiresAt: null,
+              certificateNumber: null,
+              issuingAuthority: null,
+              hasDocument: false,
             };
           }
           const expired = held.expiresAt && new Date(held.expiresAt) < today;
@@ -151,10 +167,18 @@ export async function GET(req: Request) {
             skillName: req.skill.name,
             status: expired ? ("EXPIRED" as const) : ("VALID" as const),
             expiresAt: held.expiresAt ?? null,
+            certificateNumber: held.certificateNumber ?? null,
+            issuingAuthority: held.issuingAuthority ?? null,
+            hasDocument: !!held.documentUrl,
           };
         });
 
         const compliant = certStatus.every((c) => c.status === "VALID");
+        // Documentation is complete only when every valid cert also has the
+        // scanned document on file (the audit-proof artifact).
+        const documentationComplete = certStatus.every(
+          (c) => c.status !== "MISSING" && c.hasDocument,
+        );
         guardMap.set(emp.id, {
           employeeId: emp.id,
           name: `${emp.firstName} ${emp.lastName}`,
@@ -162,6 +186,7 @@ export async function GET(req: Request) {
           shiftCount: 0,
           certStatus,
           compliant,
+          documentationComplete,
         });
       }
       guardMap.get(emp.id)!.shiftCount++;
@@ -175,6 +200,10 @@ export async function GET(req: Request) {
     const compliantGuards = guards.filter((g) => g.compliant).length;
     const nonCompliantGuards = guards.filter((g) => !g.compliant).length;
     const overallCompliant = nonCompliantGuards === 0;
+    // Guards who are cert-valid but missing the scanned proof on file.
+    const guardsMissingDocuments = guards.filter(
+      (g) => g.compliant && !g.documentationComplete,
+    ).length;
 
     return NextResponse.json({
       location: {
@@ -194,6 +223,7 @@ export async function GET(req: Request) {
         compliantGuards,
         nonCompliantGuards,
         overallCompliant,
+        guardsMissingDocuments,
       },
       guards,
       generatedAt: new Date().toISOString(),

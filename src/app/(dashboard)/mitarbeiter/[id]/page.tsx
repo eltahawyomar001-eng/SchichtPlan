@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { PageContent } from "@/components/ui/page-content";
 import { fmtNum } from "@/lib/utils";
+import { CertificateManager } from "@/components/employees/certificate-manager";
 import {
   ChevronLeftIcon,
   MailIcon,
@@ -351,6 +352,9 @@ export default function EmployeeDetailPage({
             </CardContent>
           </Card>
         </div>
+
+        {/* ── §34a certificates ── */}
+        <CertificateManager employeeId={emp.id} />
 
         {/* ── Recent shifts ── */}
         <Card>

@@ -57,13 +57,22 @@ export const POST = withRoute(
     if (!_json.ok) return _json.response;
     const parsed = validateBody(assignEmployeeSkillSchema, _json.data);
     if (!parsed.success) return parsed.response;
-    const { skillId, expiresAt } = parsed.data;
+    const {
+      skillId,
+      expiresAt,
+      certificateNumber,
+      issuingAuthority,
+      issuedAt,
+    } = parsed.data;
 
     const es = await prisma.employeeSkill.create({
       data: {
         employeeId: id,
         skillId,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
+        certificateNumber: certificateNumber || null,
+        issuingAuthority: issuingAuthority || null,
+        issuedAt: issuedAt ? new Date(issuedAt) : null,
       },
       include: { skill: true },
     });

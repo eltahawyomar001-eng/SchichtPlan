@@ -622,6 +622,24 @@ export const updateEmployeeSkillSchema = z.object({
   issuedAt: optionalString.nullable(),
 });
 
+// ── Betriebsrat (works council) — BetrVG §87 ────────────────────
+export const addBetriebsratMemberSchema = z.object({
+  userId: requiredString,
+  isChair: z.boolean().optional().default(false),
+});
+
+export const createApprovalSchema = z.object({
+  title: requiredString.max(200, "Maximal 200 Zeichen"),
+  periodStart: dateString,
+  periodEnd: dateString,
+  locationId: optionalString,
+});
+
+export const decideApprovalSchema = z.object({
+  decision: z.enum(["APPROVED", "REJECTED"]),
+  note: optionalString.pipe(z.string().max(2000).optional()),
+});
+
 // ── Update Shift (PATCH) ────────────────────────────────────────
 export const updateShiftSchema = z.object({
   date: optionalString,

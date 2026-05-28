@@ -135,6 +135,12 @@ const navGroups: NavGroup[] = [
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
       {
+        key: "betriebsrat",
+        href: "/betriebsrat",
+        icon: ScaleIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
         key: "shiftTemplates",
         href: "/schichtvorlagen",
         icon: TemplateIcon,
@@ -374,6 +380,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const [schichtplanungActive, setSchichtplanungActive] = useState<
     boolean | null
   >(null);
+  // Works-council members may be regular employees — surface the portal link
+  // for them even though it lives in the management nav group.
+  const [brMember, setBrMember] = useState(false);
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    fetch("/api/betriebsrat/access")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setBrMember(Boolean(d.isMember));
+      })
+      .catch(() => {
+        /* fail-quiet */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -398,7 +422,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     const items: NavItem[] = [];
     for (const group of navGroups) {
       for (const item of group.items) {
-        if (!item.roles || (userRole && item.roles.includes(userRole))) {
+        const brAllowed = item.key === "betriebsrat" && brMember;
+        if (
+          !item.roles ||
+          (userRole && item.roles.includes(userRole)) ||
+          brAllowed
+        ) {
           // Decorate ticketing/schichtplanung nav with "Add-on" badge only
           // for roles that can actually subscribe (OWNER/ADMIN). Employees
           // and managers should not see upsell badges.
@@ -422,7 +451,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       }
     }
     return items;
-  }, [userRole, ticketingActive, schichtplanungActive, t]);
+  }, [userRole, ticketingActive, schichtplanungActive, brMember, t]);
 
   /* Pinned items (favorites) */
   const pinnedItems = useMemo(
@@ -553,6 +582,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           {/* ── Regular nav groups ── */}
           {navGroups.map((group, groupIdx) => {
             const visibleItems = group.items.filter((item) => {
+              if (item.key === "betriebsrat" && brMember) return true;
               if (!item.roles) return true;
               if (!userRole) return false;
               return item.roles.includes(userRole);

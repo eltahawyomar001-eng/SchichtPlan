@@ -47,6 +47,9 @@ model User {
   feedback                Feedback[]
   userTasks               UserTask[]
   sosRequestsCreated      SosRequest[]             @relation("SosCreatedBy")
+  betriebsratMembership   BetriebsratMember?
+  approvalsSubmitted      ShiftPlanApproval[]      @relation("ApprovalSubmitter")
+  approvalsReviewed       ShiftPlanApproval[]      @relation("ApprovalReviewer")
 }
 
 /// Personal to-do list shown on the dashboard "My Tasks" card.
@@ -204,6 +207,63 @@ model Workspace {
   customRoles          CustomRole[]
   userTasks            UserTask[]
   sosRequests          SosRequest[]
+  betriebsratMembers   BetriebsratMember[]
+  shiftPlanApprovals   ShiftPlanApproval[]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BETRIEBSRAT (WORKS COUNCIL) CO-DETERMINATION — BetrVG §87
+// ═══════════════════════════════════════════════════════════════
+
+/// A works-council member designated by the employer. Members can review and
+/// approve/object to submitted shift schedules via the Betriebsrat portal.
+model BetriebsratMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// The User account that acts as the works-council member.
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Works-council chair (Vorsitzende:r) — informational.
+  isChair     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+}
+
+enum ShiftPlanApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+/// A shift schedule (period + optional location scope) submitted to the works
+/// council for co-determination per BetrVG §87. Tracks a response deadline.
+model ShiftPlanApproval {
+  id           String                  @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title        String
+  periodStart  DateTime                @db.Date
+  periodEnd    DateTime                @db.Date
+  locationId   String?
+  /// Snapshot of the schedule scope at submission (shift/employee counts).
+  shiftCount   Int                     @default(0)
+  status       ShiftPlanApprovalStatus @default(PENDING)
+  /// Statutory response deadline (default: submittedAt + 3 days).
+  deadline     DateTime
+  decisionNote String?                 @db.Text
+  submittedById String
+  submittedBy   User                   @relation("ApprovalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+  reviewedById String?
+  reviewedBy   User?                   @relation("ApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@index([workspaceId, status])
+  @@index([workspaceId, periodStart])
 }
 
 /// Custom roles (Business+ feature). Each role inherits from a baseRole

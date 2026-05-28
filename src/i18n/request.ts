@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
+import { log } from "@/lib/logger";
 
 /**
  * Request-scoped i18n configuration.
@@ -24,5 +25,21 @@ export default getRequestConfig(async () => {
   return {
     locale,
     messages: (await import(`../../messages/${locale}.json`)).default,
+    // Safety net: a missing/edge translation key must never crash a whole page
+    // into the root error boundary. Degrade gracefully — log it, and render a
+    // readable fallback (the last path segment) instead of throwing.
+    onError(error) {
+      if (error.code === "MISSING_MESSAGE") {
+        log.warn("[i18n] missing message", { message: error.message });
+        return;
+      }
+      log.error("[i18n] error", { message: error.message });
+    },
+    getMessageFallback({ key, namespace }) {
+      const full = namespace ? `${namespace}.${key}` : key;
+      // Human-ish fallback: last segment, so the UI shows e.g. "submit"
+      // rather than a blank or a crash.
+      return full.split(".").pop() ?? full;
+    },
   };
 });

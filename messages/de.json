@@ -817,6 +817,8 @@
   "employeesPage": {
     "title": "Mitarbeiter",
     "description": "Mitarbeiter verwalten und bearbeiten",
+    "inviteSent": "Einladung per E-Mail gesendet — der Mitarbeiter kann sein Konto erstellen.",
+    "inviteFailed": "Mitarbeiter angelegt, aber die Einladung konnte nicht gesendet werden. Bitte unter Einstellungen → Verwalten erneut einladen.",
     "newEmployee": "Neuer Mitarbeiter",
     "searchPlaceholder": "Mitarbeiter suchen…",
     "deleteConfirm": "Soll dieser Mitarbeiter wirklich gelöscht werden?",

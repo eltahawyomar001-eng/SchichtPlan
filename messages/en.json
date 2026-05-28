@@ -817,6 +817,8 @@
   "employeesPage": {
     "title": "Employees",
     "description": "Manage and edit your employees",
+    "inviteSent": "Invitation email sent — the employee can create their account.",
+    "inviteFailed": "Employee created, but the invitation could not be sent. Please re-invite under Settings → Manage.",
     "newEmployee": "New employee",
     "searchPlaceholder": "Search employees…",
     "deleteConfirm": "Are you sure you want to delete this employee?",

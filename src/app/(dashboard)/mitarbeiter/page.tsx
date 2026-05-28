@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
@@ -337,6 +338,16 @@ export default function MitarbeiterPage() {
       });
 
       if (res.ok) {
+        // Surface the invitation outcome so "did the email go out?" is never a
+        // silent unknown (only on create, not edit).
+        if (!editingEmployee) {
+          const data = await res.json().catch(() => null);
+          if (data?.invitationSent) {
+            toast.success(t("inviteSent"));
+          } else if (data?.invitationFailed) {
+            toast.error(t("inviteFailed"));
+          }
+        }
         setShowForm(false);
         setEditingEmployee(null);
         setFormData({

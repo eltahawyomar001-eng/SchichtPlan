@@ -208,70 +208,79 @@ export async function POST(req: Request) {
       position: position || "",
     });
 
-    // ── Invitation email (fire & forget) ──
+    // ── Invitation email (awaited, outcome reported) ──
     // When an email is provided for the new employee and the address isn't
     // already a workspace member or pending invite, automatically send an
     // invitation so they can register and get linked to this employee record.
+    // Awaited (not fire-and-forget) so the UI can confirm the email actually
+    // went out — silent failure here was the cause of "no email fired".
+    let invitationSent = false;
+    let invitationSkipped: "ALREADY_MEMBER" | "ALREADY_INVITED" | null = null;
+    let invitationFailed = false;
     if (email) {
-      (async () => {
-        try {
-          const alreadyMember = await prisma.user.findFirst({
-            where: { email, workspaceId },
-            select: { id: true },
-          });
-          const pendingInvite = alreadyMember
-            ? null
-            : await prisma.invitation.findFirst({
-                where: { email, workspaceId, status: "PENDING" },
-                select: { id: true },
-              });
+      try {
+        const alreadyMember = await prisma.user.findFirst({
+          where: { email, workspaceId },
+          select: { id: true },
+        });
+        const pendingInvite = alreadyMember
+          ? null
+          : await prisma.invitation.findFirst({
+              where: { email, workspaceId, status: "PENDING" },
+              select: { id: true },
+            });
 
-          if (!alreadyMember && !pendingInvite) {
-            const token = randomBytes(32).toString("hex");
-            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            const workspace = await prisma.workspace.findUnique({
-              where: { id: workspaceId },
-              select: { name: true },
-            });
-            await prisma.invitation.create({
-              data: {
-                token,
-                email,
-                role: "EMPLOYEE",
-                status: "PENDING",
-                expiresAt,
-                workspaceId,
-                invitedById: user.id,
-              },
-            });
-            const locale = await getLocaleFromCookie();
-            const inviterName = user.name || user.email || "Ihr Arbeitgeber";
-            const workspaceName = workspace?.name || "Shiftfy";
-            const copy = invitationEmail(
-              locale,
-              inviterName,
-              workspaceName,
-              "EMPLOYEE",
-            );
-            await sendEmail({
-              to: email,
-              type: "invitation",
-              category: "transactional",
-              title: copy.subject,
-              message: copy.body,
-              link: `/einladung/${token}`,
-              locale,
-            });
-            log.info(
-              `[Employees] Invitation sent to ${email} for workspace ${workspaceId}`,
-            );
-          }
-        } catch (err) {
-          log.error("[Employees] Failed to send invitation email", {
-            error: err,
+        if (alreadyMember) {
+          invitationSkipped = "ALREADY_MEMBER";
+        } else if (pendingInvite) {
+          invitationSkipped = "ALREADY_INVITED";
+        } else {
+          const token = randomBytes(32).toString("hex");
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          const workspace = await prisma.workspace.findUnique({
+            where: { id: workspaceId },
+            select: { name: true },
           });
+          await prisma.invitation.create({
+            data: {
+              token,
+              email,
+              role: "EMPLOYEE",
+              status: "PENDING",
+              expiresAt,
+              workspaceId,
+              invitedById: user.id,
+            },
+          });
+          const locale = await getLocaleFromCookie();
+          const inviterName = user.name || user.email || "Ihr Arbeitgeber";
+          const workspaceName = workspace?.name || "Shiftfy";
+          const copy = invitationEmail(
+            locale,
+            inviterName,
+            workspaceName,
+            "EMPLOYEE",
+          );
+          await sendEmail({
+            to: email,
+            type: "invitation",
+            category: "transactional",
+            title: copy.subject,
+            message: copy.body,
+            link: `/einladung/${token}`,
+            locale,
+          });
+          invitationSent = true;
+          log.info(
+            `[Employees] Invitation sent to ${email} for workspace ${workspaceId}`,
+          );
         }
-      })();
+      } catch (err) {
+        invitationFailed = true;
+        log.error("[Employees] Failed to send invitation email", {
+          error: err,
+        });
+      }
     }
 
     // ── Webhook dispatch (fire & forget) ──
@@ -309,7 +318,13 @@ export async function POST(req: Request) {
     }
 
     const response = NextResponse.json(
-      { ...employee, ...(seatSyncPending ? { seatSyncPending: true } : {}) },
+      {
+        ...employee,
+        ...(seatSyncPending ? { seatSyncPending: true } : {}),
+        invitationSent,
+        invitationSkipped,
+        invitationFailed,
+      },
       { status: 201 },
     );
     await cacheIdempotentResponse(req, response);

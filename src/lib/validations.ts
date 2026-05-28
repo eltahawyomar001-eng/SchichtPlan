@@ -71,6 +71,8 @@ export const createShiftSchema = z.object({
   employeeId: optionalString,
   locationId: optionalString,
   notes: optionalString.pipe(z.string().max(1000).optional()),
+  /** Planned break in minutes (ArbZG §4). Enforced server-side. */
+  breakMinutes: z.coerce.number().int().min(0).max(480).optional(),
   repeatWeeks: z.coerce.number().int().min(0).max(52).optional(),
   /** Optional end-date for multi-day bulk creation */
   endDate: dateString.optional(),
@@ -628,6 +630,7 @@ export const updateShiftSchema = z.object({
   employeeId: optionalString.nullable(),
   locationId: optionalString.nullable(),
   notes: optionalString.pipe(z.string().max(1000).optional()),
+  breakMinutes: z.coerce.number().int().min(0).max(480).optional(),
   status: z.enum(["SCHEDULED", "OPEN", "COMPLETED", "CANCELLED"]).optional(),
 });
 

@@ -29,6 +29,8 @@ import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import {
   checkArbZg5RestPeriod,
   checkArbZg4BreakRequirement,
+  suggestBreakForGross,
+  shiftGrossMinutes,
 } from "@/lib/arbzg";
 import { requireLocationCertifications } from "@/lib/certification-check";
 
@@ -134,6 +136,29 @@ export const POST = withRoute(
       selectedDays,
     } = parsed.data;
 
+    // ArbZG §4 — resolve the planned break. When the client supplies no break,
+    // auto-insert the statutory minimum so a non-compliant shift can never be
+    // saved. When it supplies one that is too short, hard-block below.
+    const gross = shiftGrossMinutes(startTime, endTime);
+    const breakMinutes =
+      parsed.data.breakMinutes ?? suggestBreakForGross(gross);
+    const break4 = checkArbZg4BreakRequirement(
+      startTime,
+      endTime,
+      breakMinutes,
+    );
+    if (break4.violation) {
+      return NextResponse.json(
+        {
+          error: "ARBZG_4_VIOLATION",
+          message: break4.message,
+          messageEn: break4.messageEn,
+          minBreakMinutes: break4.minBreakMinutes,
+        },
+        { status: 422 },
+      );
+    }
+
     /* ══════════════════════════════════════════════════════════
      * BULK MODE — create shifts across a date range
      * Triggered when endDate is supplied.
@@ -191,6 +216,7 @@ export const POST = withRoute(
         isHolidayShift: boolean;
         isSundayShift: boolean;
         surchargePercent: number;
+        breakMinutes: number;
         workspaceId: string;
       }[] = [];
 
@@ -269,6 +295,7 @@ export const POST = withRoute(
             isHolidayShift: hol.isHoliday,
             isSundayShift: sun,
             surchargePercent: surch,
+            breakMinutes,
             workspaceId,
           });
           created++;
@@ -384,6 +411,7 @@ export const POST = withRoute(
           isHolidayShift: holidayCheck.isHoliday,
           isSundayShift: sundayCheck,
           surchargePercent: surcharge,
+          breakMinutes,
           workspaceId,
         },
         include: {
@@ -480,15 +508,18 @@ export const POST = withRoute(
       log.error("[webhook] shift.created dispatch error", { error: err }),
     );
 
-    // ArbZG §4 — non-blocking break advisory (warning, not a rejection)
-    const breakAdvisory = checkArbZg4BreakRequirement(startTime, endTime);
-    const warnings = breakAdvisory.required
+    // ArbZG §4 — inform the UI when a statutory break was auto-inserted because
+    // the client supplied none (the shift is already compliant at this point).
+    const autoBreakInserted =
+      parsed.data.breakMinutes == null && breakMinutes > 0;
+    const warnings = autoBreakInserted
       ? [
           {
-            code: "ARBZG_4_BREAK",
-            message: breakAdvisory.message,
-            messageEn: breakAdvisory.messageEn,
-            minBreakMinutes: breakAdvisory.minBreakMinutes,
+            code: "ARBZG_4_BREAK_AUTO",
+            message: `ArbZG §4: ${breakMinutes} Minuten Pause wurden automatisch eingeplant.`,
+            messageEn: `ArbZG §4: a ${breakMinutes}-minute break was automatically scheduled.`,
+            minBreakMinutes: break4.minBreakMinutes,
+            breakMinutes,
           },
         ]
       : [];

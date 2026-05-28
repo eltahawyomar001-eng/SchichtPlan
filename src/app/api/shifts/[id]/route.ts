@@ -20,6 +20,9 @@ import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import {
   checkArbZg5RestPeriod,
   checkArbZg4BreakRequirement,
+  shiftGrossMinutes,
+  suggestBreakForGross,
+  requiredBreakForNet,
 } from "@/lib/arbzg";
 import {
   isPublicHoliday,
@@ -137,6 +140,33 @@ export const PATCH = withRoute(
       if (certErr) return certErr;
     }
 
+    // ── ArbZG §4 — mandatory break enforcement (hard block) ──
+    // Applies whether or not the shift is assigned. When the client doesn't
+    // touch the break but the (possibly new) duration needs more, auto-bump it
+    // so a non-compliant shift can never persist.
+    const effStart = body.startTime ?? currentShift.startTime;
+    const effEnd = body.endTime ?? currentShift.endTime;
+    const grossM = shiftGrossMinutes(effStart, effEnd);
+    const breakProvided = body.breakMinutes != null;
+    let effBreak = breakProvided
+      ? body.breakMinutes!
+      : currentShift.breakMinutes;
+    if (!breakProvided && effBreak < requiredBreakForNet(grossM - effBreak)) {
+      effBreak = suggestBreakForGross(grossM);
+    }
+    const break4 = checkArbZg4BreakRequirement(effStart, effEnd, effBreak);
+    if (break4.violation) {
+      return NextResponse.json(
+        {
+          error: "ARBZG_4_VIOLATION",
+          message: break4.message,
+          messageEn: break4.messageEn,
+          minBreakMinutes: break4.minBreakMinutes,
+        },
+        { status: 422 },
+      );
+    }
+
     // Auto-derive status when assignment changes:
     // - Unassigning → OPEN
     // - Assigning an OPEN shift → SCHEDULED
@@ -192,6 +222,7 @@ export const PATCH = withRoute(
           ...(hasEmployeeIdField ? { employeeId: newEmployeeId } : {}),
           locationId: body.locationId || null,
           notes: body.notes,
+          breakMinutes: effBreak,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           status: derivedStatus as any,
           ...surchargeFields,

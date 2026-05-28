@@ -95,6 +95,7 @@ interface Shift {
   endTime: string;
   notes: string | null;
   status: string;
+  breakMinutes?: number;
   employee: Employee | null;
   location: Location | null;
 }
@@ -139,6 +140,7 @@ export default function SchichtplanPage() {
     employeeId: "",
     locationId: "",
     notes: "",
+    breakMinutes: 30,
     repeatWeeks: 0,
     endDate: "",
     selectedDays: [1, 2, 3, 4, 5] as number[],
@@ -325,6 +327,7 @@ export default function SchichtplanPage() {
       employeeId: "",
       locationId: "",
       notes: "",
+      breakMinutes: 30,
       repeatWeeks: 0,
       endDate: "",
       selectedDays: [1, 2, 3, 4, 5],
@@ -342,6 +345,7 @@ export default function SchichtplanPage() {
       employeeId: shift.employee?.id || "",
       locationId: shift.location?.id || "",
       notes: shift.notes || "",
+      breakMinutes: shift.breakMinutes ?? 0,
       repeatWeeks: 0,
       endDate: "",
       selectedDays: [1, 2, 3, 4, 5],
@@ -363,6 +367,26 @@ export default function SchichtplanPage() {
     return { valid: true, hours: Math.floor(diff / 60), minutes: diff % 60 };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.startTime, formData.endTime]);
+
+  // ArbZG §4 — statutory minimum break for the chosen shift length.
+  // > 6h → 30 min · > 9.5h gross → 45 min (so net working time ≤ 9h).
+  const requiredBreak = useMemo(() => {
+    if (!timeValidation.valid) return 0;
+    const gross = timeValidation.hours * 60 + timeValidation.minutes;
+    if (gross > 570) return 45;
+    if (gross > 360) return 30;
+    return 0;
+  }, [timeValidation]);
+
+  // Auto-insert the statutory break when the chosen times require more than
+  // the manager currently planned — they can raise it, but never go below.
+  useEffect(() => {
+    setFormData((f) =>
+      f.breakMinutes < requiredBreak
+        ? { ...f, breakMinutes: requiredBreak }
+        : f,
+    );
+  }, [requiredBreak]);
 
   // Computed: how many shifts the bulk range will create
   const bulkShiftCount = useMemo(() => {
@@ -439,6 +463,7 @@ export default function SchichtplanPage() {
           employeeId: "",
           locationId: "",
           notes: "",
+          breakMinutes: 30,
           repeatWeeks: 0,
           endDate: "",
           selectedDays: [1, 2, 3, 4, 5],
@@ -1580,6 +1605,46 @@ export default function SchichtplanPage() {
                       <AlertCircleIcon className="h-3 w-3 shrink-0" />
                       {t("form.timeError")}
                     </span>
+                  )}
+                </div>
+              )}
+
+              {/* ── ArbZG §4 — planned break ── */}
+              {timeValidation.valid && (
+                <div>
+                  <Label htmlFor="breakMinutes">{t("form.break")}</Label>
+                  <Select
+                    id="breakMinutes"
+                    value={String(formData.breakMinutes)}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        breakMinutes: Math.max(
+                          Number(e.target.value),
+                          requiredBreak,
+                        ),
+                      }))
+                    }
+                    className="mt-1.5"
+                  >
+                    {requiredBreak === 0 && (
+                      <option value="0">{t("form.breakNone")}</option>
+                    )}
+                    {[30, 45, 60]
+                      .filter((m) => m >= requiredBreak)
+                      .map((m) => (
+                        <option key={m} value={m}>
+                          {t("form.breakMinutes", { minutes: m })}
+                        </option>
+                      ))}
+                  </Select>
+                  {requiredBreak > 0 && (
+                    <div className="mt-2 flex items-start gap-2 rounded-xl bg-emerald-50 border border-emerald-100 p-2.5">
+                      <CheckCircleIcon className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <p className="text-xs text-emerald-700 leading-relaxed">
+                        {t("form.breakHint", { minutes: requiredBreak })}
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

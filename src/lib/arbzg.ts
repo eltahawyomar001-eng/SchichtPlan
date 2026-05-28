@@ -115,46 +115,83 @@ export async function checkArbZg5RestPeriod(params: {
   return { violation: false };
 }
 
+/** Gross attendance window (start→end) in minutes, handling overnight shifts. */
+export function shiftGrossMinutes(startTime: string, endTime: string): number {
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  let duration = eh * 60 + em - (sh * 60 + sm);
+  if (duration <= 0) duration += 24 * 60; // overnight
+  return duration;
+}
+
 /**
- * ArbZG §4 — mandatory break advisory.
+ * ArbZG §4 minimum break for a given *working* time (Arbeitszeit, i.e. gross
+ * attendance minus breaks):
+ *   > 6h work → 30 min · > 9h work → 45 min · otherwise none.
+ */
+export function requiredBreakForNet(netMinutes: number): number {
+  if (netMinutes > 9 * 60) return 45;
+  if (netMinutes > 6 * 60) return 30;
+  return 0;
+}
+
+/**
+ * Smallest legally compliant break for a given gross attendance window.
+ * Used to auto-suggest / auto-insert the break when planning.
+ *   ≤ 6h → 0 · > 6h to 9.5h → 30 · > 9.5h → 45
+ */
+export function suggestBreakForGross(grossMinutes: number): number {
+  for (const candidate of [0, 30, 45]) {
+    if (requiredBreakForNet(grossMinutes - candidate) <= candidate) {
+      return candidate;
+    }
+  }
+  return 45;
+}
+
+/**
+ * ArbZG §4 — mandatory break enforcement (HARD BLOCK).
  *
- * §4 requires employers to provide breaks DURING the shift, not necessarily
- * to encode them in the schedule. We therefore return a non-blocking WARNING
- * (not a hard violation) so the UI can inform the manager.
+ * Given the gross shift window and the planned break, determines whether the
+ * resulting working time would breach §4. A shift may not be scheduled when the
+ * planned break is shorter than the statutory minimum for its working time.
  *
- * Thresholds:
- *  > 6h work → minimum 30 min break
- *  > 9h work → minimum 45 min break
+ * Returns { violation: false } when compliant.
  */
 export function checkArbZg4BreakRequirement(
   startTime: string,
   endTime: string,
+  breakMinutes = 0,
 ): {
   required: boolean;
+  violation: boolean;
   minBreakMinutes: number;
+  netMinutes: number;
   message?: string;
   messageEn?: string;
 } {
-  const [sh, sm] = startTime.split(":").map(Number);
-  const [eh, em] = endTime.split(":").map(Number);
-  let durationMinutes = eh * 60 + em - (sh * 60 + sm);
-  if (durationMinutes <= 0) durationMinutes += 24 * 60; // overnight
+  const gross = shiftGrossMinutes(startTime, endTime);
+  const net = gross - breakMinutes;
+  const minBreakMinutes = requiredBreakForNet(net);
+  const required = minBreakMinutes > 0;
+  const violation = breakMinutes < minBreakMinutes;
 
-  if (durationMinutes > 9 * 60) {
-    return {
-      required: true,
-      minBreakMinutes: 45,
-      message: `Schichtdauer über 9 Stunden — ArbZG §4 schreibt mindestens 45 Minuten Pause vor.`,
-      messageEn: `Shift duration exceeds 9 hours — ArbZG §4 requires at least 45 minutes of break time.`,
-    };
+  if (!violation) {
+    return { required, violation: false, minBreakMinutes, netMinutes: net };
   }
-  if (durationMinutes > 6 * 60) {
-    return {
-      required: true,
-      minBreakMinutes: 30,
-      message: `Schichtdauer über 6 Stunden — ArbZG §4 schreibt mindestens 30 Minuten Pause vor.`,
-      messageEn: `Shift duration exceeds 6 hours — ArbZG §4 requires at least 30 minutes of break time.`,
-    };
-  }
-  return { required: false, minBreakMinutes: 0 };
+
+  const threshold = minBreakMinutes === 45 ? 9 : 6;
+  return {
+    required: true,
+    violation: true,
+    minBreakMinutes,
+    netMinutes: net,
+    message:
+      `ArbZG §4: Bei einer Arbeitszeit über ${threshold} Stunden ist eine Pause ` +
+      `von mindestens ${minBreakMinutes} Minuten vorgeschrieben. Geplant sind ` +
+      `nur ${breakMinutes} Minuten.`,
+    messageEn:
+      `ArbZG §4: A working time over ${threshold} hours requires a break of at ` +
+      `least ${minBreakMinutes} minutes. Only ${breakMinutes} minutes were planned.`,
+  };
 }

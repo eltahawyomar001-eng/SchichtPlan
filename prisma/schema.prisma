@@ -565,6 +565,8 @@ model Shift {
   startTime        String
   endTime          String
   notes            String?
+  /// Planned break in minutes (ArbZG §4). Enforced as a hard block on save.
+  breakMinutes     Int                  @default(0)
   status           ShiftStatus          @default(SCHEDULED)
   isNightShift     Boolean              @default(false)
   isHolidayShift   Boolean              @default(false)

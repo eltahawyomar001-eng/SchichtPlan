@@ -37,6 +37,14 @@
 - Arbeitszeitkonten mit automatischer Saldo-Berechnung
 - Team-Einladungen per E-Mail mit Rollen (Owner / Admin / Manager / Employee)
 
+### Compliance & Rechtssicherheit (DE)
+
+- **§34a Sachkunde-Verwaltung** — echte Zertifikate je Mitarbeiter (Zertifikatsnummer, ausstellende Stelle, Ausstellungs-/Ablaufdatum, Dokument-Upload via Supabase Storage). Standorte definieren Pflicht-Qualifikationen; Mitarbeiter ohne gültigen Nachweis werden bei der Einplanung **hart blockiert**. §34a-Compliance-Bericht je Standort/Zeitraum (inkl. fehlender Nachweise) druck- und exportfertig.
+- **ArbZG §4 — Pausen-Durchsetzung** — Schichten, deren Arbeitszeit 6 bzw. 9 Stunden ohne ausreichende Pause überschreitet, lassen sich nicht speichern (422). Die gesetzliche Mindestpause (30 / 45 Min.) wird automatisch eingeplant und im Planer angezeigt. Greift bei Einzel-, Serien- und Bulk-Erstellung sowie bei Änderungen.
+- **ArbZG §5 — Ruhezeit** — 11-Stunden-Mindestruhe zwischen Schichten als harte Planungssperre.
+- **Betriebsrat-Portal (BetrVG §87)** — Management legt Dienstpläne (Zeitraum + optional Standort) zur Mitbestimmung vor; gesetzliche 3-Tage-Frist mit Überfälligkeits-Tracking. Betriebsratsmitglieder prüfen den schreibgeschützten Plan und stimmen zu oder verweigern mit Begründung. Mitgliederverwaltung (OWNER/ADMIN) und mitgliedsabhängiger Sidebar-Zugang.
+- **eAU — elektronische Arbeitsunfähigkeitsbescheinigung** — Erfassung/Verwaltung je Krankmeldung (AU-Zeitraum, Erst-/Folgebescheinigung, Ausstellungsdatum, Krankenkasse — ohne Diagnose). Pluggable Provider-Architektur: HTTP-Gateway für zertifizierte ITSG/GKV-Connector (`EAU_GATEWAY_URL`) mit Fallback auf manuelle Erfassung über das SV-Meldeportal.
+
 ### Ticketsystem (Add-on)
 
 - **Externes Ticket-Formular** (`/ticket/neu/[slug]`) — öffentlich zugänglicher Link je Workspace

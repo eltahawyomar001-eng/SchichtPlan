@@ -32,6 +32,8 @@ import {
   StarIcon,
   QuoteIcon,
   AlertCircleIcon,
+  ScaleIcon,
+  FileCheckIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -71,6 +73,7 @@ export function LandingPage() {
         <HeroSection />
         <FeatureTabsSection />
         <SosFeatureSection />
+        <ComplianceFeatureSection />
         <BenefitsSection />
         <AppShowcaseSection />
         <TrustSection />
@@ -1336,6 +1339,71 @@ function SosFeatureSection() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ComplianceFeatureSection() {
+  const t = useTranslations("landing");
+
+  const features = [
+    {
+      icon: ShieldCheckIcon,
+      title: t("compliance34aTitle"),
+      desc: t("compliance34aDesc"),
+    },
+    {
+      icon: ClockIcon,
+      title: t("complianceArbzgTitle"),
+      desc: t("complianceArbzgDesc"),
+    },
+    {
+      icon: ScaleIcon,
+      title: t("complianceBetriebsratTitle"),
+      desc: t("complianceBetriebsratDesc"),
+    },
+    {
+      icon: FileCheckIcon,
+      title: t("complianceEauTitle"),
+      desc: t("complianceEauDesc"),
+    },
+  ];
+
+  return (
+    <section className="py-16 sm:py-24 bg-white dark:bg-zinc-950">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-4">
+            <ScaleIcon className="h-3.5 w-3.5" />
+            <span>{t("complianceBadge")}</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-zinc-100">
+            {t("complianceTitle")}
+          </h2>
+          <p className="mt-4 text-lg text-gray-600 dark:text-zinc-400">
+            {t("complianceDesc")}
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((f, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 mb-4">
+                <f.icon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
+                {f.title}
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400 leading-relaxed">
+                {f.desc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

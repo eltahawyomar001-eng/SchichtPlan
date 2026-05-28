@@ -19,6 +19,16 @@ interface ReleaseNote {
 
 const releases: ReleaseNote[] = [
   {
+    date: "2026-05-28",
+    version: "0.8.0",
+    highlights: [
+      "§34a Sachkunde: echte Zertifikate mit Nummer, Aussteller, Gültigkeit und Dokument-Upload — inkl. automatischer Einplanungssperre und Compliance-Bericht",
+      "ArbZG §4: gesetzliche Pausen werden bei der Schichtplanung erzwungen (harte Sperre über 6 / 9 Stunden)",
+      "Betriebsrat-Portal: Dienstpläne nach BetrVG §87 zur Mitbestimmung vorlegen — mit 3-Tage-Frist und revisionssicherer Entscheidung",
+      "eAU: elektronische Arbeitsunfähigkeitsbescheinigungen pro Krankmeldung erfassen und verwalten (anschlussbereit an zertifizierte GKV-Gateways)",
+    ],
+  },
+  {
     date: "2026-05-07",
     version: "0.7.0",
     highlights: [

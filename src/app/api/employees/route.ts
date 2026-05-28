@@ -18,8 +18,8 @@ import { randomBytes } from "crypto";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 import { reconcileSeatsFromEmployees } from "@/lib/billing-seats";
 
-/** MiLoG minimum wage (€/h) — updated annually */
-const MILOG_MIN_WAGE = 12.82;
+/** MiLoG statutory minimum wage (€/h), 2026 value — updated annually. */
+const MILOG_MIN_WAGE = 13.9;
 
 export async function GET(req: Request) {
   try {

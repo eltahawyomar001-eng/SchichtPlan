@@ -159,6 +159,9 @@ model Workspace {
   /// Default/target break duration in minutes shown as countdown on the punch clock.
   /// German default per ArbZG §4: 30 min for 6–9h shifts, 45 min for >9h shifts.
   defaultBreakMinutes  Int                   @default(30)
+  /// Applicable minimum hourly wage in cents, for the MiLoG audit check.
+  /// Default = statutory minimum 2026 (€13.90); raise for branch/Tarif minimums.
+  minHourlyWageCents   Int                   @default(1390)
   onboardingCompleted  Boolean               @default(false)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -210,6 +213,35 @@ model Workspace {
   betriebsratMembers   BetriebsratMember[]
   shiftPlanApprovals   ShiftPlanApproval[]
   eauRequests          EauRequest[]
+  auditDossiers        AuditDossier[]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRÜFUNGSSICHER — audit-readiness dossiers (Zoll/FKS, §34a, ArbZG, MiLoG)
+// ═══════════════════════════════════════════════════════════════
+
+/// A generated, point-in-time compliance dossier for a date range. Persisted
+/// with a content hash so the employer can prove what was produced and when —
+/// the artifact handed to an auditor (Zoll/FKS, Gewerbeamt).
+model AuditDossier {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  periodStart    DateTime  @db.Date
+  periodEnd      DateTime  @db.Date
+  /// Overall audit-readiness score 0–100 at generation time.
+  readinessScore Int
+  passCount      Int       @default(0)
+  warnCount      Int       @default(0)
+  failCount      Int       @default(0)
+  /// Full findings + summary snapshot (frozen at generation time).
+  snapshot       Json
+  /// SHA-256 of the snapshot — tamper-evidence fingerprint.
+  contentHash    String
+  generatedById  String?
+  generatedAt    DateTime  @default(now())
+
+  @@index([workspaceId, generatedAt])
 }
 
 // ═══════════════════════════════════════════════════════════════

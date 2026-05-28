@@ -135,6 +135,12 @@ const navGroups: NavGroup[] = [
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
       {
+        key: "pruefungssicher",
+        href: "/pruefungssicher",
+        icon: FileCheckIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
         key: "betriebsrat",
         href: "/betriebsrat",
         icon: ScaleIcon,

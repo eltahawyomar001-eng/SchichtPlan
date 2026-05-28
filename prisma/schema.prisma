@@ -209,6 +209,7 @@ model Workspace {
   sosRequests          SosRequest[]
   betriebsratMembers   BetriebsratMember[]
   shiftPlanApprovals   ShiftPlanApproval[]
+  eauRequests          EauRequest[]
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -502,6 +503,7 @@ model Employee {
   timeAccount       TimeAccount?
   vacationBalances  VacationBalance[]
   employeeSkills    EmployeeSkill[]
+  eauRequests       EauRequest[]
   projectMembers    ProjectMember[]
   autoFillsVacated  AutoFillLog[]        @relation("AutoFillVacated")
   autoFillsAssigned AutoFillLog[]        @relation("AutoFillAssigned")
@@ -812,11 +814,59 @@ model AbsenceRequest {
   employee     Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   workspaceId  String
   workspace    Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  eauRequests  EauRequest[]
 
   @@index([workspaceId, status])
   @@index([employeeId, startDate])
   @@index([workspaceId, employeeId])
   @@index([workspaceId, startDate])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// eAU — ELEKTRONISCHE ARBEITSUNFÄHIGKEITSBESCHEINIGUNG
+// Employer retrieval of sick notes from the statutory health insurer (GKV).
+// Mandatory since 2023. Note: the eAU response never contains a diagnosis.
+// ═══════════════════════════════════════════════════════════════
+
+enum EauStatus {
+  PENDING
+  RETRIEVED
+  NOT_FOUND
+  ERROR
+  MANUAL
+}
+
+model EauRequest {
+  id               String          @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeId       String
+  employee         Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  absenceRequestId String?
+  absenceRequest   AbsenceRequest? @relation(fields: [absenceRequestId], references: [id], onDelete: SetNull)
+  status           EauStatus       @default(PENDING)
+  /// Which provider handled the retrieval ("manual", "http", "itsg", …).
+  provider         String          @default("manual")
+  /// Incapacity period reported by the eAU.
+  auFrom           DateTime?       @db.Date
+  auTo             DateTime?       @db.Date
+  /// Erstbescheinigung (true) vs Folgebescheinigung (false).
+  isInitial        Boolean?
+  /// Ausstellungsdatum.
+  issuedDate       DateTime?       @db.Date
+  krankenkasse     String?
+  /// Provider/case reference returned by the gateway.
+  reference        String?
+  message          String?         @db.Text
+  requestedById    String?
+  requestedAt      DateTime        @default(now())
+  retrievedAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([workspaceId])
+  @@index([employeeId])
+  @@index([absenceRequestId])
 }
 
 enum AvailabilityType {

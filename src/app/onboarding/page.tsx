@@ -437,7 +437,6 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
 
 function CompleteStep() {
   const t = useTranslations("onboardingWizard");
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleFinish = async () => {
@@ -445,10 +444,11 @@ function CompleteStep() {
     try {
       await fetch("/api/onboarding/complete", { method: "POST" });
     } catch {
-      // Best-effort; user can still proceed
+      // best-effort
     }
-    router.push("/dashboard");
-    router.refresh();
+    // Hard redirect so the middleware re-evaluates the session from scratch
+    // with the freshly-busted JWT cache. router.push() reuses the stale token.
+    window.location.href = "/dashboard";
   };
 
   return (
@@ -588,7 +588,6 @@ function ActivatingScreen({ state }: { state: SubGate }) {
 /* ─── Main Wizard ────────────────────────────────────────────── */
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [subGate, setSubGate] = useState<SubGate>("checking");
   const pollCountRef = useRef(0);
@@ -662,12 +661,15 @@ export default function OnboardingPage() {
           <ThemeToggle />
           {subGate === "active" && (
             <button
-              onClick={() => {
-                fetch("/api/onboarding/complete", { method: "POST" }).catch(
-                  () => {},
-                );
-                router.push("/dashboard");
-                router.refresh();
+              onClick={async () => {
+                try {
+                  await fetch("/api/onboarding/complete", { method: "POST" });
+                } catch {
+                  // best-effort
+                }
+                // Hard redirect so the middleware re-evaluates the session
+                // from scratch with the freshly-busted JWT cache.
+                window.location.href = "/dashboard";
               }}
               className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >

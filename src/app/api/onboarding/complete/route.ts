@@ -6,6 +6,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { getSubscriptionState } from "@/lib/subscription";
+import { cache } from "@/lib/cache";
 
 /** Subscription states that allow dashboard access. */
 const ALLOWED_SUB_STATES = ["active", "trial_expired"] as const;
@@ -57,6 +58,10 @@ export const POST = withRoute(
       where: { id: user.workspaceId },
       data: { onboardingCompleted: true },
     });
+
+    // Bust the JWT role-refresh cache so the next request reads onboardingCompleted=true
+    // from the DB instead of the stale 60-second cached value.
+    await cache.del(`jwt:${user.id}`).catch(() => {});
 
     createAuditLog({
       action: "UPDATE",

@@ -645,6 +645,18 @@ export const updateEauRequestSchema = z.object({
   applyToAbsence: z.boolean().optional(),
 });
 
+// ── SV-Meldeverfahren (gateway: eAU + Sofortmeldung) ────────────
+export const svEauSchema = z.object({
+  employeeId: requiredString,
+  sicknessStartDate: dateString,
+});
+
+export const svSofortmeldungSchema = z.object({
+  employeeId: requiredString,
+  // Optional override; otherwise the employee's employmentStartDate is used.
+  employmentStartDate: optionalString,
+});
+
 // ── Betriebsrat (works council) — BetrVG §87 ────────────────────
 export const addBetriebsratMemberSchema = z.object({
   userId: requiredString,

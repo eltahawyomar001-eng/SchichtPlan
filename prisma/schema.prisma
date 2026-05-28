@@ -162,6 +162,9 @@ model Workspace {
   /// Applicable minimum hourly wage in cents, for the MiLoG audit check.
   /// Default = statutory minimum 2026 (€13.90); raise for branch/Tarif minimums.
   minHourlyWageCents   Int                   @default(1390)
+  /// Betriebsnummer (8-digit employer number from the Bundesagentur für Arbeit).
+  /// Required for Sofortmeldung and eAU transmission via the SV gateway.
+  betriebsnummer       String?
   onboardingCompleted  Boolean               @default(false)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -214,6 +217,58 @@ model Workspace {
   shiftPlanApprovals   ShiftPlanApproval[]
   eauRequests          EauRequest[]
   auditDossiers        AuditDossier[]
+  svSubmissions        SvSubmission[]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SV-MELDEVERFAHREN — eAU & Sofortmeldung via a certified gateway
+// (DATEV HR APIs / DEÜV clearinghouse). We never run our own GKV/DSRV
+// transport server; we format payloads and route them through the gateway.
+// ═══════════════════════════════════════════════════════════════
+
+enum SvSubmissionType {
+  EAU
+  SOFORTMELDUNG
+}
+
+enum SvSubmissionStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  ERROR
+  NOT_INSURED
+}
+
+/// One transmission to the SV gateway (eAU lookup or Sofortmeldung). Stores the
+/// request/response payloads + the gateway tracking ID for audit purposes.
+model SvSubmission {
+  id            String             @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeId    String
+  employee      Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type          SvSubmissionType
+  status        SvSubmissionStatus @default(PENDING)
+  /// Meldegrund (e.g. "20" for Sofortmeldung). Null for eAU.
+  meldegrund    String?
+  /// Gateway-issued reference / tracking id.
+  trackingId    String?
+  /// Whether this ran against the sandbox environment.
+  sandbox       Boolean            @default(true)
+  requestPayload  Json?
+  responsePayload Json?
+  errorCode     String?
+  errorMessage  String?            @db.Text
+  /// eAU result fields (mirror of EauRequest for the gateway path).
+  auFrom        DateTime?          @db.Date
+  auTo          DateTime?          @db.Date
+  submittedById String?
+  submittedAt   DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([workspaceId, type])
+  @@index([employeeId])
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -546,6 +601,18 @@ model Employee {
   location          Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
   pinHash           String?
   pinEmailFailed    Boolean              @default(false)
+  // ── Sozialversicherung (eAU / Sofortmeldung) metadata ──
+  /// Geburtsdatum — required for eAU lookups and Sofortmeldung.
+  dateOfBirth          DateTime?         @db.Date
+  /// Versicherungsnummer (SV-Nummer / Rentenversicherungsnummer), 12 chars.
+  socialSecurityNumber String?
+  /// Geburtsort — fallback identifier for Sofortmeldung when SV-Nr. is missing.
+  birthPlace           String?
+  /// Staatsangehörigkeit — fallback identifier for Sofortmeldung.
+  nationality          String?
+  /// Eintrittsdatum (employment entry) — the Sofortmeldung reference timestamp.
+  employmentStartDate  DateTime?         @db.Date
+  svSubmissions        SvSubmission[]
 
   @@unique([email, workspaceId])
   @@unique([workspaceId, pinHash])

@@ -114,15 +114,27 @@ export default function PruefungssicherPage() {
   const [minWage, setMinWage] = useState("");
   const [savingWage, setSavingWage] = useState(false);
   const [archivedView, setArchivedView] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const fetchReadiness = useCallback(async () => {
     setLoading(true);
     setArchivedView(null);
+    setApiError(null);
     try {
       const res = await fetch(
         `/api/compliance/readiness?from=${from}&to=${to}`,
       );
-      if (res.ok) setResult(await res.json());
+      if (res.ok) {
+        setResult(await res.json());
+      } else {
+        const d = await res.json().catch(() => ({}));
+        const msg = d?.message || d?.error || `Fehler ${res.status}`;
+        setApiError(msg);
+        toast.error(msg);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Netzwerkfehler";
+      setApiError(msg);
     } finally {
       setLoading(false);
     }
@@ -169,18 +181,27 @@ export default function PruefungssicherPage() {
 
   async function generateDossier() {
     setGenerating(true);
+    setApiError(null);
     try {
       const res = await fetch("/api/compliance/dossier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ from, to }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         toast.success(t("dossierCreated"));
-        fetchDossiers();
+        await fetchDossiers();
       } else {
-        toast.error(tc("errorOccurred"));
+        const msg =
+          data?.message || data?.error || `Server error ${res.status}`;
+        setApiError(msg);
+        toast.error(msg);
       }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Netzwerkfehler";
+      setApiError(msg);
+      toast.error(msg);
     } finally {
       setGenerating(false);
     }
@@ -288,6 +309,16 @@ export default function PruefungssicherPage() {
             )}
           </CardContent>
         </Card>
+
+        {apiError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2 print:hidden">
+            <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Fehler beim Archivieren</p>
+              <p className="mt-0.5 font-mono text-xs">{apiError}</p>
+            </div>
+          </div>
+        )}
 
         {loading && !result ? (
           <div className="flex justify-center py-12">

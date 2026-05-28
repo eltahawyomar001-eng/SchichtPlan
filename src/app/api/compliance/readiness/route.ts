@@ -3,6 +3,7 @@ import { requireAuth, badRequest } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
 import { withRoute } from "@/lib/with-route";
 import { computeReadiness } from "@/lib/audit-readiness";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,21 @@ export const GET = withRoute(
       return badRequest("Ungültiger Zeitraum");
     }
 
-    const result = await computeReadiness(workspaceId, from, to);
-    return NextResponse.json(result);
+    try {
+      const result = await computeReadiness(workspaceId, from, to);
+      return NextResponse.json(result);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.error("[readiness GET] failed", {
+        error: msg,
+        workspaceId,
+        from,
+        to,
+      });
+      return NextResponse.json(
+        { error: "COMPUTE_FAILED", message: `Prüfung fehlgeschlagen: ${msg}` },
+        { status: 500 },
+      );
+    }
   },
 );

@@ -389,7 +389,7 @@ export async function POST(req: Request) {
       creatorName: user.name ?? "Mitarbeiter",
     });
 
-    if (assignedToId && assignedToId !== user.id) {
+    if (assignedToId) {
       notifyTicketAssigned({
         assigneeId: assignedToId,
         workspaceId,

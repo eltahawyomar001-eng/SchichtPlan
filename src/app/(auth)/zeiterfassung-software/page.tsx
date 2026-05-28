@@ -7,6 +7,7 @@ import {
   ArrowRightIcon,
   SmartphoneIcon,
   ShieldCheckIcon,
+  FileCheckIcon,
 } from "@/components/icons";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
@@ -15,13 +16,16 @@ export const metadata: Metadata = {
   title:
     "Zeiterfassung Software – Digitale Arbeitszeiterfassung für Teams | Shiftfy",
   description:
-    "Zeiterfassung Software für Unternehmen: Stempeluhr-App, GPS-Verifizierung, automatische Pausenberechnung nach ArbZG. DSGVO-konform, 7 Tage testen. Ideal für Gastronomie, Sicherheitsdienste & Dienstleister.",
+    "Prüfungssichere Zeiterfassung für Unternehmen: Stempeluhr-App, GPS-Verifizierung, automatische Pausenberechnung nach ArbZG — und auf Knopfdruck ein Zoll/FKS-Prüfungsdossier. DSGVO-konform, 7 Tage testen. Ideal für Sicherheitsdienste, Gastronomie & Dienstleister.",
   keywords: [
     "Zeiterfassung",
     "Zeiterfassung Software",
     "Zeiterfassung App",
     "Arbeitszeiterfassung",
     "digitale Zeiterfassung",
+    "prüfungssichere Zeiterfassung",
+    "Zeiterfassung Zoll Prüfung",
+    "Zeiterfassung FKS",
     "Zeiterfassung Mitarbeiter",
     "Stempeluhr App",
     "Stempeluhr digital",
@@ -68,6 +72,12 @@ const features = [
       "Alle Daten auf deutschen/EU-Servern. Vollständige Datenschutz-Dokumentation und Auftragsdatenverarbeitung.",
     icon: ShieldCheckIcon,
   },
+  {
+    title: "Prüfungssicher für Zoll & FKS",
+    description:
+      "Jede erfasste Arbeitszeit fließt direkt in das Prüfungssicher-Dossier. Auf Knopfdruck legen Sie der Finanzkontrolle Schwarzarbeit (Zoll/FKS) einen revisionssicheren Nachweis vor — mit ArbZG-, §34a- und Mindestlohn-Prüfung. Das bietet keine andere Zeiterfassung.",
+    icon: FileCheckIcon,
+  },
 ];
 
 const useCases = [
@@ -88,6 +98,7 @@ const benefits = [
   "Monatsabschluss per Klick",
   "Industrieminuten-Umrechnung (z. B. 7:45 h → 7,75 h)",
   "Lückenloser Audit-Trail für Prüfungen",
+  "Prüfungssicheres Behörden-Dossier (Zoll/FKS) auf Knopfdruck",
   "Mehrstufiger Freigabe-Workflow",
   "Urlaubskonto und Zeitkonto pro Mitarbeiter",
 ];

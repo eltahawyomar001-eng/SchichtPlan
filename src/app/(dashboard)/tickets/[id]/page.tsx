@@ -794,6 +794,12 @@ export default function TicketDetailPage() {
                       }
                     >
                       <option value="">{t("unassigned")}</option>
+                      {ticket.assignedTo &&
+                        !users.find((u) => u.id === ticket.assignedTo!.id) && (
+                          <option value={ticket.assignedTo.id}>
+                            {ticket.assignedTo.name ?? ticket.assignedTo.email}
+                          </option>
+                        )}
                       {users
                         .filter((u) =>
                           ["OWNER", "ADMIN", "MANAGER"].includes(u.role),

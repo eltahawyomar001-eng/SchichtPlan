@@ -8,7 +8,10 @@ import { createTicketSchema, validateBody } from "@/lib/validations";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { logTicketCreated, logAttachmentAdded } from "@/lib/ticket-events";
-import { notifyNewTicket } from "@/lib/ticket-notifications";
+import {
+  notifyNewTicket,
+  notifyTicketAssigned,
+} from "@/lib/ticket-notifications";
 import { createTicketWithNumber } from "@/lib/ticket-number";
 import {
   recordTicketCreation,
@@ -385,6 +388,17 @@ export async function POST(req: Request) {
       subject: ticket.subject,
       creatorName: user.name ?? "Mitarbeiter",
     });
+
+    if (assignedToId && assignedToId !== user.id) {
+      notifyTicketAssigned({
+        assigneeId: assignedToId,
+        workspaceId,
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        assignedByName: user.name ?? "System",
+      });
+    }
 
     return NextResponse.json(
       {

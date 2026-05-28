@@ -1109,6 +1109,7 @@
     "noData": "No data in the period.",
     "archiveTitle": "Archived dossiers",
     "noArchive": "No dossiers archived yet.",
+    "justArchived": "Just archived",
     "open": "View",
     "viewingArchived": "Archived dossier from {date} — read-only.",
     "dossierTitle": "Compliance dossier (Audit-Ready)",

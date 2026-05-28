@@ -1109,6 +1109,7 @@
     "noData": "Keine Daten im Zeitraum.",
     "archiveTitle": "Archivierte Dossiers",
     "noArchive": "Noch keine Dossiers archiviert.",
+    "justArchived": "Soeben archiviert",
     "open": "Ansehen",
     "viewingArchived": "Archiviertes Dossier vom {date} — schreibgeschützt.",
     "dossierTitle": "Compliance-Dossier (Prüfungssicher)",

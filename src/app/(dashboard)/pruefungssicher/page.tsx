@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -115,6 +115,8 @@ export default function PruefungssicherPage() {
   const [savingWage, setSavingWage] = useState(false);
   const [archivedView, setArchivedView] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [justArchived, setJustArchived] = useState<string | null>(null);
+  const archiveRef = useRef<HTMLDivElement>(null);
 
   const fetchReadiness = useCallback(async () => {
     setLoading(true);
@@ -192,6 +194,15 @@ export default function PruefungssicherPage() {
       if (res.ok) {
         toast.success(t("dossierCreated"));
         await fetchDossiers();
+        if (data?.id) setJustArchived(data.id);
+        // Bring the freshly archived dossier into view so it's never "lost".
+        setTimeout(() => {
+          archiveRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100);
+        setTimeout(() => setJustArchived(null), 6000);
       } else {
         const msg =
           data?.message || data?.error || `Server error ${res.status}`;
@@ -526,58 +537,76 @@ export default function PruefungssicherPage() {
               </CardContent>
             </Card>
 
-            {/* Archived dossiers */}
-            <Card className="print:hidden">
-              <CardHeader>
-                <CardTitle className="text-base">{t("archiveTitle")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {dossiers.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-gray-400">
-                    {t("noArchive")}
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {dossiers.map((d) => (
-                      <div
-                        key={d.id}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 dark:border-zinc-800 px-3 py-2"
-                      >
-                        <div className="min-w-0 text-sm">
-                          <span className="font-medium text-gray-900 dark:text-zinc-100">
-                            {fmtDate(d.periodStart)} – {fmtDate(d.periodEnd)}
-                          </span>
-                          <span
-                            className={`ml-2 font-semibold ${scoreColor(d.readinessScore)}`}
-                          >
-                            {d.readinessScore}%
-                          </span>
-                          <span className="ml-2 text-xs text-gray-400 font-mono">
-                            #{d.contentHash.slice(0, 10)}
-                          </span>
-                          <span className="ml-2 text-xs text-gray-400">
-                            {new Date(d.generatedAt).toLocaleString("de-DE")}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => viewArchived(d.id)}
-                        >
-                          {t("open")}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
             <p className="text-center text-[11px] text-gray-400 print:mt-4">
               {t("hashNote")}
             </p>
           </>
         ) : null}
+
+        {/* Archived dossiers — always visible so a freshly archived dossier is
+            never "lost" at the bottom of a long report. */}
+        <Card className="print:hidden" ref={archiveRef}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileCheckIcon className="h-5 w-5 text-emerald-600" />
+              {t("archiveTitle")}
+              {dossiers.length > 0 && (
+                <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs">
+                  {dossiers.length}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dossiers.length === 0 ? (
+              <p className="py-4 text-center text-sm text-gray-400">
+                {t("noArchive")}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {dossiers.map((d) => (
+                  <div
+                    key={d.id}
+                    className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-colors ${
+                      justArchived === d.id
+                        ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
+                        : "border-gray-100 dark:border-zinc-800"
+                    }`}
+                  >
+                    <div className="min-w-0 text-sm">
+                      <span className="font-medium text-gray-900 dark:text-zinc-100">
+                        {fmtDate(d.periodStart)} – {fmtDate(d.periodEnd)}
+                      </span>
+                      <span
+                        className={`ml-2 font-semibold ${scoreColor(d.readinessScore)}`}
+                      >
+                        {d.readinessScore}%
+                      </span>
+                      {justArchived === d.id && (
+                        <Badge className="ml-2 bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]">
+                          {t("justArchived")}
+                        </Badge>
+                      )}
+                      <span className="ml-2 text-xs text-gray-400 font-mono">
+                        #{d.contentHash.slice(0, 10)}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-400">
+                        {new Date(d.generatedAt).toLocaleString("de-DE")}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => viewArchived(d.id)}
+                    >
+                      {t("open")}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </PageContent>
     </div>
   );

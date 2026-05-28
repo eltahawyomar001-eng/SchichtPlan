@@ -30,6 +30,7 @@ import {
   checkArbZg5RestPeriod,
   checkArbZg4BreakRequirement,
 } from "@/lib/arbzg";
+import { requireLocationCertifications } from "@/lib/certification-check";
 
 export const GET = withRoute("/api/shifts", "GET", async (req) => {
   const auth = await requireAuth();
@@ -233,6 +234,16 @@ export const POST = withRoute(
               cursor.setDate(cursor.getDate() + 1);
               continue;
             }
+
+            // §34a / certification hard block (bulk: skip days, collect reason)
+            const certErr = await requireLocationCertifications(
+              employeeId,
+              locationId,
+            );
+            if (certErr) {
+              // Return immediately — cert violation blocks the whole bulk, not just one day
+              return certErr;
+            }
           }
 
           // Surcharges
@@ -329,6 +340,13 @@ export const POST = withRoute(
           { status: 422 },
         );
       }
+
+      // §34a / certification hard block
+      const certErr = await requireLocationCertifications(
+        employeeId,
+        locationId,
+      );
+      if (certErr) return certErr;
     }
 
     // ── Auto-detect surcharges ──

@@ -460,23 +460,24 @@ model Employee {
 }
 
 model Location {
-  id                   String                @id @default(cuid())
-  name                 String
-  address              String?
+  id                    String                  @id @default(cuid())
+  name                  String
+  address               String?
   /// 2-letter Bundesland code (BE, BY, NW, …). Used by the holiday-aware
   /// vacation calculator. Falls back to Workspace.bundesland when null.
-  bundesland           String?
-  createdAt            DateTime              @default(now())
-  workspaceId          String
-  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  shifts               Shift[]
-  timeEntries          TimeEntry[]
-  departments          Department[]
-  shiftTemplates       ShiftTemplate[]
-  staffingRequirements StaffingRequirement[]
-  autoScheduleRuns     AutoScheduleRun[]
-  serviceVisits        ServiceVisit[]
-  employees            Employee[]
+  bundesland            String?
+  createdAt             DateTime                @default(now())
+  workspaceId           String
+  workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shifts                Shift[]
+  timeEntries           TimeEntry[]
+  departments           Department[]
+  shiftTemplates        ShiftTemplate[]
+  staffingRequirements  StaffingRequirement[]
+  autoScheduleRuns      AutoScheduleRun[]
+  serviceVisits         ServiceVisit[]
+  employees             Employee[]
+  requiredSkills        LocationRequiredSkill[]
 }
 
 model Department {
@@ -496,17 +497,31 @@ model Department {
 }
 
 model Skill {
-  id                   String                @id @default(cuid())
-  name                 String
-  category             String?
-  createdAt            DateTime              @default(now())
-  workspaceId          String
-  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  employeeSkills       EmployeeSkill[]
-  staffingRequirements StaffingRequirement[]
+  id                    String                  @id @default(cuid())
+  name                  String
+  category              String?
+  createdAt             DateTime                @default(now())
+  workspaceId           String
+  workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeSkills        EmployeeSkill[]
+  staffingRequirements  StaffingRequirement[]
+  locationRequirements  LocationRequiredSkill[]
 
   @@unique([name, workspaceId])
   @@index([workspaceId])
+}
+
+model LocationRequiredSkill {
+  id         String   @id @default(cuid())
+  locationId String
+  skillId    String
+  createdAt  DateTime @default(now())
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, skillId])
+  @@index([locationId])
+  @@index([skillId])
 }
 
 model EmployeeSkill {

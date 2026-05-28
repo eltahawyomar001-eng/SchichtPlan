@@ -27,6 +27,7 @@ import {
   isNightShift,
   calculateSurcharge,
 } from "@/lib/holidays";
+import { requireLocationCertifications } from "@/lib/certification-check";
 
 export const PATCH = withRoute(
   "/api/shifts/[id]",
@@ -125,6 +126,15 @@ export const PATCH = withRoute(
           { status: 422 },
         );
       }
+
+      // §34a / certification hard block
+      const resolvedLocationId =
+        "locationId" in body ? body.locationId : currentShift.locationId;
+      const certErr = await requireLocationCertifications(
+        resolvedEmployeeId,
+        resolvedLocationId,
+      );
+      if (certErr) return certErr;
     }
 
     // Auto-derive status when assignment changes:

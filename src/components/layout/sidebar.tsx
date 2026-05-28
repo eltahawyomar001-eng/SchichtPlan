@@ -129,6 +129,12 @@ const navGroups: NavGroup[] = [
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
       {
+        key: "compliance",
+        href: "/compliance",
+        icon: ShieldCheckIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
         key: "shiftTemplates",
         href: "/schichtvorlagen",
         icon: TemplateIcon,

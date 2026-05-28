@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ interface Skill {
 }
 
 const EMPTY_FORM = {
-  skillId: "",
+  skillName: "",
   certificateNumber: "",
   issuingAuthority: "",
   issuedAt: "",
@@ -60,28 +61,34 @@ function certStatus(expiresAt: string | null): CertStatus {
   return "VALID";
 }
 
-function fmt(d: string | null): string {
-  if (!d) return "–";
-  return new Date(d).toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
-
 export function CertificateManager({ employeeId }: { employeeId: string }) {
+  const t = useTranslations("certificates");
+  const tc = useTranslations("common");
+
   const [certs, setCerts] = useState<EmployeeSkill[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editSkillId, setEditSkillId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
+  const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadSkillId = useRef<string | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const replaceSkillId = useRef<string | null>(null);
+
+  function fmt(d: string | null): string {
+    if (!d) return "–";
+    return new Date(d).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
 
   const fetchCerts = useCallback(async () => {
     try {
@@ -107,57 +114,138 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
 
   function openAdd() {
     setEditSkillId(null);
+    setEditName("");
     setForm(EMPTY_FORM);
+    setFile(null);
     setFormError(null);
     setShowForm(true);
   }
 
   function openEdit(c: EmployeeSkill) {
     setEditSkillId(c.skillId);
+    setEditName(c.skill.name);
     setForm({
-      skillId: c.skillId,
+      skillName: c.skill.name,
       certificateNumber: c.certificateNumber ?? "",
       issuingAuthority: c.issuingAuthority ?? "",
       issuedAt: c.issuedAt ? c.issuedAt.slice(0, 10) : "",
       expiresAt: c.expiresAt ? c.expiresAt.slice(0, 10) : "",
     });
+    setFile(null);
     setFormError(null);
     setShowForm(true);
+  }
+
+  /** Resolve an existing skill by name (case-insensitive) or create it. */
+  async function resolveSkillId(name: string): Promise<string | null> {
+    const trimmed = name.trim();
+    const existing = skills.find(
+      (s) => s.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) return existing.id;
+    // Create the qualification on the fly.
+    const res = await fetch("/api/skills", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed, category: "§34a" }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      await fetchSkills();
+      return created.id ?? null;
+    }
+    // Likely a duplicate created elsewhere — refetch and match.
+    const r2 = await fetch("/api/skills");
+    if (r2.ok) {
+      const d = await r2.json();
+      const list: Skill[] = d.data ?? d;
+      const match = list.find(
+        (s) => s.name.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (match) return match.id;
+    }
+    return null;
+  }
+
+  async function uploadDocument(skillId: string, f: File): Promise<boolean> {
+    const fd = new FormData();
+    fd.append("file", f);
+    const res = await fetch(
+      `/api/employees/${employeeId}/skills/${skillId}/document`,
+      { method: "POST", body: fd },
+    );
+    return res.ok;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (saving) return;
     setFormError(null);
-    if (!editSkillId && !form.skillId) {
-      setFormError("Bitte eine Qualifikation auswählen.");
+    if (!editSkillId && !form.skillName.trim()) {
+      setFormError(t("qualificationRequired"));
       return;
     }
     setSaving(true);
     try {
-      const url = editSkillId
-        ? `/api/employees/${employeeId}/skills/${editSkillId}`
-        : `/api/employees/${employeeId}/skills`;
-      const res = await fetch(url, {
-        method: editSkillId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          skillId: form.skillId,
-          certificateNumber: form.certificateNumber,
-          issuingAuthority: form.issuingAuthority,
-          issuedAt: form.issuedAt,
-          expiresAt: form.expiresAt,
-        }),
-      });
-      if (res.ok) {
-        setShowForm(false);
-        await fetchCerts();
+      let skillId = editSkillId;
+
+      if (editSkillId) {
+        const res = await fetch(
+          `/api/employees/${employeeId}/skills/${editSkillId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              certificateNumber: form.certificateNumber,
+              issuingAuthority: form.issuingAuthority,
+              issuedAt: form.issuedAt,
+              expiresAt: form.expiresAt,
+            }),
+          },
+        );
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          setFormError(d.message || d.error || t("errorSave"));
+          return;
+        }
       } else {
-        const d = await res.json().catch(() => ({}));
-        setFormError(d.message || d.error || "Speichern fehlgeschlagen.");
+        skillId = await resolveSkillId(form.skillName);
+        if (!skillId) {
+          setFormError(t("errorSave"));
+          return;
+        }
+        const res = await fetch(`/api/employees/${employeeId}/skills`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            skillId,
+            certificateNumber: form.certificateNumber,
+            issuingAuthority: form.issuingAuthority,
+            issuedAt: form.issuedAt,
+            expiresAt: form.expiresAt,
+          }),
+        });
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          setFormError(d.message || d.error || t("errorAlreadyAssigned"));
+          return;
+        }
       }
+
+      if (file && skillId) {
+        const ok = await uploadDocument(skillId, file);
+        if (!ok) {
+          setFormError(t("errorUpload"));
+          await fetchCerts();
+          return;
+        }
+      }
+
+      setShowForm(false);
+      setFile(null);
+      await fetchCerts();
     } catch {
-      setFormError("Netzwerkfehler.");
+      setFormError(t("errorNetwork"));
     } finally {
       setSaving(false);
     }
@@ -172,33 +260,23 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
     fetchCerts();
   }
 
-  function triggerUpload(skillId: string) {
-    uploadSkillId.current = skillId;
-    fileInputRef.current?.click();
+  function triggerReplace(skillId: string) {
+    replaceSkillId.current = skillId;
+    replaceInputRef.current?.click();
   }
 
-  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    const skillId = uploadSkillId.current;
+  async function handleReplaceSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    const skillId = replaceSkillId.current;
     e.target.value = "";
-    if (!file || !skillId) return;
+    if (!f || !skillId) return;
     setUploadingFor(skillId);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch(
-        `/api/employees/${employeeId}/skills/${skillId}/document`,
-        { method: "POST", body: fd },
-      );
-      if (res.ok) {
-        await fetchCerts();
-      } else {
-        const d = await res.json().catch(() => ({}));
-        alert(d.message || "Upload fehlgeschlagen.");
-      }
+      await uploadDocument(skillId, f);
+      await fetchCerts();
     } finally {
       setUploadingFor(null);
-      uploadSkillId.current = null;
+      replaceSkillId.current = null;
     }
   }
 
@@ -209,28 +287,25 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
     fetchCerts();
   }
 
-  const assignedIds = new Set(certs.map((c) => c.skillId));
-  const availableSkills = skills.filter((s) => !assignedIds.has(s.id));
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base flex items-center gap-2">
           <ShieldCheckIcon className="h-5 w-5 text-emerald-600" />
-          §34a Sachkunde &amp; Zertifikate
+          {t("title")}
         </CardTitle>
         <Button size="sm" onClick={openAdd}>
           <PlusIcon className="h-4 w-4" />
-          <span className="hidden sm:inline">Zertifikat hinzufügen</span>
+          <span className="hidden sm:inline">{t("add")}</span>
         </Button>
       </CardHeader>
       <CardContent>
         <input
-          ref={fileInputRef}
+          ref={replaceInputRef}
           type="file"
           accept="application/pdf,image/png,image/jpeg"
           className="hidden"
-          onChange={handleFileSelected}
+          onChange={handleReplaceSelected}
         />
 
         {loading ? (
@@ -238,10 +313,16 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
           </div>
         ) : certs.length === 0 ? (
-          <p className="py-6 text-center text-sm text-gray-400 dark:text-zinc-500">
-            Noch keine Zertifikate hinterlegt. Für §34a-pflichtige Standorte ist
-            ein gültiger Sachkundenachweis erforderlich.
-          </p>
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <ShieldCheckIcon className="h-10 w-10 text-gray-300 dark:text-zinc-600" />
+            <p className="max-w-md text-sm text-gray-500 dark:text-zinc-400">
+              {t("empty")}
+            </p>
+            <Button onClick={openAdd}>
+              <PlusIcon className="h-4 w-4" />
+              {t("addFirst")}
+            </Button>
+          </div>
         ) : (
           <div className="space-y-3">
             {certs.map((c) => {
@@ -257,39 +338,43 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
                         <span className="font-semibold text-gray-900 dark:text-zinc-100">
                           {c.skill.name}
                         </span>
-                        {status === "VALID" && (
+                        {(status === "VALID" || status === "PERMANENT") && (
                           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs gap-1">
-                            <CheckCircleIcon className="h-3 w-3" /> Gültig
-                          </Badge>
-                        )}
-                        {status === "PERMANENT" && (
-                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs gap-1">
-                            <CheckCircleIcon className="h-3 w-3" /> Unbefristet
+                            <CheckCircleIcon className="h-3 w-3" />
+                            {status === "PERMANENT"
+                              ? t("statusPermanent")
+                              : t("statusValid")}
                           </Badge>
                         )}
                         {status === "EXPIRING" && (
                           <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs gap-1">
-                            <AlertTriangleIcon className="h-3 w-3" /> Läuft bald
-                            ab
+                            <AlertTriangleIcon className="h-3 w-3" />
+                            {t("statusExpiring")}
                           </Badge>
                         )}
                         {status === "EXPIRED" && (
                           <Badge className="bg-red-50 text-red-700 border-red-200 text-xs gap-1">
-                            <AlertTriangleIcon className="h-3 w-3" /> Abgelaufen
+                            <AlertTriangleIcon className="h-3 w-3" />
+                            {t("statusExpired")}
                           </Badge>
                         )}
                       </div>
                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 dark:text-zinc-400">
                         <span className="inline-flex items-center gap-1.5">
                           <HashIcon className="h-3.5 w-3.5 shrink-0" />
-                          Zert.-Nr.: {c.certificateNumber || "–"}
+                          {t("certNumber")}: {c.certificateNumber || "–"}
                         </span>
-                        <span>Aussteller: {c.issuingAuthority || "–"}</span>
-                        <span>Ausgestellt: {fmt(c.issuedAt)}</span>
-                        <span>Gültig bis: {fmt(c.expiresAt)}</span>
+                        <span>
+                          {t("issuer")}: {c.issuingAuthority || "–"}
+                        </span>
+                        <span>
+                          {t("issuedOn")}: {fmt(c.issuedAt)}
+                        </span>
+                        <span>
+                          {t("validUntil")}: {fmt(c.expiresAt)}
+                        </span>
                       </div>
 
-                      {/* Document row */}
                       <div className="mt-3 flex items-center gap-2 flex-wrap">
                         {c.documentUrl ? (
                           <>
@@ -300,16 +385,16 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
                               className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
                             >
                               <DownloadIcon className="h-3.5 w-3.5" />
-                              {c.documentName || "Nachweis"}
+                              {c.documentName || t("document")}
                             </a>
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-7 text-xs"
                               disabled={uploadingFor === c.skillId}
-                              onClick={() => triggerUpload(c.skillId)}
+                              onClick={() => triggerReplace(c.skillId)}
                             >
-                              Ersetzen
+                              {t("replace")}
                             </Button>
                             <Button
                               variant="ghost"
@@ -317,26 +402,26 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
                               className="h-7 text-xs text-gray-400 hover:text-red-600"
                               onClick={() => removeDocument(c.skillId)}
                             >
-                              Entfernen
+                              {t("remove")}
                             </Button>
                           </>
                         ) : (
                           <>
                             <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                               <AlertTriangleIcon className="h-3.5 w-3.5" />
-                              Kein Nachweis hinterlegt
+                              {t("noDocument")}
                             </span>
                             <Button
                               variant="outline"
                               size="sm"
                               className="h-7 text-xs"
                               disabled={uploadingFor === c.skillId}
-                              onClick={() => triggerUpload(c.skillId)}
+                              onClick={() => triggerReplace(c.skillId)}
                             >
                               <PaperclipIcon className="h-3.5 w-3.5" />
                               {uploadingFor === c.skillId
-                                ? "Lädt…"
-                                : "Nachweis hochladen"}
+                                ? t("uploading")
+                                : t("uploadProof")}
                             </Button>
                           </>
                         )}
@@ -372,41 +457,40 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
       <AdaptiveModal
         open={showForm}
         onClose={() => setShowForm(false)}
-        title={editSkillId ? "Zertifikat bearbeiten" : "Zertifikat hinzufügen"}
+        title={editSkillId ? t("editTitle") : t("addTitle")}
         size="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!editSkillId && (
-            <div className="space-y-2">
-              <Label>Qualifikation *</Label>
-              <select
-                value={form.skillId}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, skillId: e.target.value }))
-                }
-                className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="">Bitte auswählen…</option>
-                {availableSkills.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              {availableSkills.length === 0 && (
-                <p className="text-xs text-amber-600">
-                  Alle vorhandenen Qualifikationen sind bereits zugewiesen. Neue
-                  Qualifikationen können unter „Qualifikationen“ angelegt
-                  werden.
+          <div className="space-y-2">
+            <Label>{t("qualification")} *</Label>
+            {editSkillId ? (
+              <Input value={editName} disabled />
+            ) : (
+              <>
+                <Input
+                  list="cert-skill-suggestions"
+                  placeholder={t("qualificationPlaceholder")}
+                  value={form.skillName}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, skillName: e.target.value }))
+                  }
+                />
+                <datalist id="cert-skill-suggestions">
+                  {skills.map((s) => (
+                    <option key={s.id} value={s.name} />
+                  ))}
+                </datalist>
+                <p className="text-xs text-gray-400 dark:text-zinc-500">
+                  {t("qualificationHint")}
                 </p>
-              )}
-            </div>
-          )}
+              </>
+            )}
+          </div>
 
           <div className="space-y-2">
-            <Label>Zertifikatsnummer</Label>
+            <Label>{t("certNumber")}</Label>
             <Input
-              placeholder="z. B. SK-2024-018273"
+              placeholder={t("certNumberPlaceholder")}
               value={form.certificateNumber}
               onChange={(e) =>
                 setForm((f) => ({ ...f, certificateNumber: e.target.value }))
@@ -415,9 +499,9 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
           </div>
 
           <div className="space-y-2">
-            <Label>Ausstellende Stelle</Label>
+            <Label>{t("issuer")}</Label>
             <Input
-              placeholder="z. B. IHK Frankfurt am Main"
+              placeholder={t("issuerPlaceholder")}
               value={form.issuingAuthority}
               onChange={(e) =>
                 setForm((f) => ({ ...f, issuingAuthority: e.target.value }))
@@ -427,7 +511,7 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Ausgestellt am</Label>
+              <Label>{t("issuedOn")}</Label>
               <Input
                 type="date"
                 value={form.issuedAt}
@@ -437,7 +521,7 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Gültig bis</Label>
+              <Label>{t("validUntil")}</Label>
               <Input
                 type="date"
                 value={form.expiresAt}
@@ -446,6 +530,21 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
                 }
               />
             </div>
+          </div>
+
+          {/* Document upload — in the same dialog */}
+          <div className="space-y-2">
+            <Label>{t("fileLabel")}</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf,image/png,image/jpeg"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-gray-600 dark:text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100"
+            />
+            <p className="text-xs text-gray-400 dark:text-zinc-500">
+              {file ? file.name : t("fileHint")}
+            </p>
           </div>
 
           {formError && (
@@ -460,10 +559,10 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
               variant="outline"
               onClick={() => setShowForm(false)}
             >
-              Abbrechen
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Speichern…" : "Speichern"}
+              {saving ? tc("saving") : tc("save")}
             </Button>
           </ModalFooter>
         </form>
@@ -471,10 +570,10 @@ export function CertificateManager({ employeeId }: { employeeId: string }) {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Zertifikat entfernen?"
-        message="Das Zertifikat und der hinterlegte Nachweis werden dauerhaft gelöscht."
-        confirmLabel="Entfernen"
-        cancelLabel="Abbrechen"
+        title={t("deleteTitle")}
+        message={t("deleteMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}

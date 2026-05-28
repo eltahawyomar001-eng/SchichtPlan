@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,24 +27,20 @@ interface EauRecord {
   message: string | null;
 }
 
-const STATUS: Record<EauRecord["status"], { label: string; cls: string }> = {
-  PENDING: {
-    label: "Ausstehend",
-    cls: "bg-gray-100 text-gray-600 border-gray-200",
-  },
-  RETRIEVED: {
-    label: "Abgerufen",
-    cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  },
-  NOT_FOUND: {
-    label: "Nicht gefunden",
-    cls: "bg-amber-50 text-amber-700 border-amber-200",
-  },
-  ERROR: { label: "Fehler", cls: "bg-red-50 text-red-700 border-red-200" },
-  MANUAL: {
-    label: "Manuell zu erfassen",
-    cls: "bg-blue-50 text-blue-700 border-blue-200",
-  },
+const STATUS_CLS: Record<EauRecord["status"], string> = {
+  PENDING: "bg-gray-100 text-gray-600 border-gray-200",
+  RETRIEVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  NOT_FOUND: "bg-amber-50 text-amber-700 border-amber-200",
+  ERROR: "bg-red-50 text-red-700 border-red-200",
+  MANUAL: "bg-blue-50 text-blue-700 border-blue-200",
+};
+
+const STATUS_KEY: Record<EauRecord["status"], string> = {
+  PENDING: "statusPending",
+  RETRIEVED: "statusRetrieved",
+  NOT_FOUND: "statusNotFound",
+  ERROR: "statusError",
+  MANUAL: "statusManual",
 };
 
 function fmt(d: string | null): string {
@@ -60,6 +57,8 @@ export function EauPanel({
   employeeId: string;
   startDate: string;
 }) {
+  const t = useTranslations("eau");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [records, setRecords] = useState<EauRecord[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -155,12 +154,12 @@ export function EauPanel({
         className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800"
       >
         <FileCheckIcon className="h-3.5 w-3.5" />
-        eAU
+        {t("label")}
         {latest && (
           <Badge
-            className={`ml-1 text-[10px] border ${STATUS[latest.status].cls}`}
+            className={`ml-1 text-[10px] border ${STATUS_CLS[latest.status]}`}
           >
-            {STATUS[latest.status].label}
+            {t(STATUS_KEY[latest.status])}
           </Badge>
         )}
       </button>
@@ -168,15 +167,15 @@ export function EauPanel({
       {open && (
         <div className="mt-2 rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-800/30 p-3">
           {!loaded ? (
-            <p className="text-xs text-gray-400">Lädt…</p>
+            <p className="text-xs text-gray-400">{t("loading")}</p>
           ) : records.length === 0 ? (
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-gray-500 dark:text-zinc-400">
-                Noch kein eAU-Abruf für diese Krankmeldung.
+                {t("none")}
               </p>
               <Button size="sm" disabled={busy} onClick={retrieve}>
                 <RefreshIcon className="h-3.5 w-3.5" />
-                {busy ? "Wird abgerufen…" : "eAU abrufen"}
+                {busy ? t("retrieving") : t("retrieve")}
               </Button>
             </div>
           ) : (
@@ -188,14 +187,14 @@ export function EauPanel({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <Badge
-                      className={`text-[10px] border ${STATUS[r.status].cls}`}
+                      className={`text-[10px] border ${STATUS_CLS[r.status]}`}
                     >
                       {r.status === "RETRIEVED" ? (
                         <CheckCircleIcon className="h-3 w-3 mr-1" />
                       ) : r.status === "ERROR" || r.status === "NOT_FOUND" ? (
                         <AlertTriangleIcon className="h-3 w-3 mr-1" />
                       ) : null}
-                      {STATUS[r.status].label}
+                      {t(STATUS_KEY[r.status])}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -204,23 +203,29 @@ export function EauPanel({
                       onClick={() => openEdit(r)}
                     >
                       <EditIcon className="h-3 w-3" />
-                      Erfassen
+                      {t("record")}
                     </Button>
                   </div>
                   <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-zinc-400">
-                    <span>AU von: {fmt(r.auFrom)}</span>
-                    <span>AU bis: {fmt(r.auTo)}</span>
                     <span>
-                      Art:{" "}
+                      {t("auFrom")}: {fmt(r.auFrom)}
+                    </span>
+                    <span>
+                      {t("auTo")}: {fmt(r.auTo)}
+                    </span>
+                    <span>
+                      {t("type")}:{" "}
                       {r.isInitial == null
                         ? "–"
                         : r.isInitial
-                          ? "Erstbescheinigung"
-                          : "Folgebescheinigung"}
+                          ? t("initial")
+                          : t("followUp")}
                     </span>
-                    <span>Ausgestellt: {fmt(r.issuedDate)}</span>
+                    <span>
+                      {t("issuedOn")}: {fmt(r.issuedDate)}
+                    </span>
                     <span className="col-span-2">
-                      Krankenkasse: {r.krankenkasse || "–"}
+                      {t("krankenkasse")}: {r.krankenkasse || "–"}
                     </span>
                   </div>
                   {r.message && (
@@ -238,7 +243,7 @@ export function EauPanel({
                 className="w-full"
               >
                 <RefreshIcon className="h-3.5 w-3.5" />
-                Erneut abrufen (Folgebescheinigung)
+                {t("retrieveAgain")}
               </Button>
             </div>
           )}
@@ -249,17 +254,16 @@ export function EauPanel({
       <AdaptiveModal
         open={!!edit}
         onClose={() => setEdit(null)}
-        title="eAU-Daten erfassen"
+        title={t("modalTitle")}
         size="md"
       >
         <form onSubmit={saveEdit} className="space-y-4">
           <p className="text-xs text-gray-500 dark:text-zinc-400">
-            Tragen Sie die über das SV-Meldeportal abgerufenen Angaben ein. Die
-            eAU enthält keine Diagnose.
+            {t("modalHint")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>AU von</Label>
+              <Label>{t("auFrom")}</Label>
               <Input
                 type="date"
                 value={form.auFrom}
@@ -281,7 +285,7 @@ export function EauPanel({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Ausgestellt am</Label>
+              <Label>{t("issuedDate")}</Label>
               <Input
                 type="date"
                 value={form.issuedDate}
@@ -291,9 +295,9 @@ export function EauPanel({
               />
             </div>
             <div className="space-y-2">
-              <Label>Krankenkasse</Label>
+              <Label>{t("krankenkasse")}</Label>
               <Input
-                placeholder="z. B. AOK Hessen"
+                placeholder={t("krankenkassePlaceholder")}
                 value={form.krankenkasse}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, krankenkasse: e.target.value }))
@@ -310,7 +314,7 @@ export function EauPanel({
               }
               className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
             />
-            Erstbescheinigung (sonst Folgebescheinigung)
+            {t("isInitial")}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -321,7 +325,7 @@ export function EauPanel({
               }
               className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
             />
-            Abwesenheitszeitraum auf AU-Zeitraum aktualisieren
+            {t("applyToAbsence")}
           </label>
           <ModalFooter>
             <Button
@@ -329,10 +333,10 @@ export function EauPanel({
               variant="outline"
               onClick={() => setEdit(null)}
             >
-              Abbrechen
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Speichern…" : "Speichern"}
+              {saving ? tc("saving") : tc("save")}
             </Button>
           </ModalFooter>
         </form>

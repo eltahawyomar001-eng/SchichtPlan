@@ -380,14 +380,12 @@ export default function StandortePage() {
         >
           <div className="space-y-5">
             <p className="text-sm text-gray-500 dark:text-zinc-400">
-              Guards scheduled at this location must hold all certifications
-              listed here. Assignments will be blocked if any certification is
-              missing or expired.
+              {t("cert.intro")}
             </p>
 
             {/* Current required certifications */}
             <div className="space-y-2">
-              <Label>Required certifications</Label>
+              <Label>{t("cert.required")}</Label>
               {certLoading ? (
                 <div className="flex gap-2">
                   {[1, 2].map((i) => (
@@ -396,7 +394,7 @@ export default function StandortePage() {
                 </div>
               ) : requiredSkills.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-zinc-500 italic">
-                  No certifications required — any guard can be assigned.
+                  {t("cert.noneRequired")}
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
@@ -410,7 +408,7 @@ export default function StandortePage() {
                       <button
                         onClick={() => removeRequiredSkill(rs.skillId)}
                         className="ml-1 rounded-full text-emerald-600 hover:text-red-600 dark:text-emerald-400 dark:hover:text-red-400 transition-colors"
-                        title="Remove"
+                        title={t("cert.remove")}
                       >
                         ×
                       </button>
@@ -423,14 +421,14 @@ export default function StandortePage() {
             {/* Add certification */}
             {availableSkillsToAdd.length > 0 && (
               <div className="space-y-2">
-                <Label>Add certification</Label>
+                <Label>{t("cert.add")}</Label>
                 <div className="flex gap-2">
                   <Select
                     value={selectedSkillId}
                     onChange={(e) => setSelectedSkillId(e.target.value)}
                     className="flex-1"
                   >
-                    <option value="">Select certification…</option>
+                    <option value="">{t("cert.selectPlaceholder")}</option>
                     {availableSkillsToAdd.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
@@ -444,7 +442,7 @@ export default function StandortePage() {
                     size="sm"
                   >
                     <PlusIcon className="h-4 w-4" />
-                    Add
+                    {t("cert.addButton")}
                   </Button>
                 </div>
               </div>
@@ -452,17 +450,17 @@ export default function StandortePage() {
 
             {allSkills.length === 0 && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-                No certifications defined yet. Go to{" "}
+                {t("cert.noneDefinedPre")}{" "}
                 <a href="/qualifikationen" className="underline font-medium">
-                  Qualifications
+                  {t("cert.qualificationsLink")}
                 </a>{" "}
-                to create certifications first.
+                {t("cert.noneDefinedPost")}
               </div>
             )}
 
             <ModalFooter>
               <Button variant="outline" onClick={closeCertModal}>
-                Done
+                {t("cert.done")}
               </Button>
             </ModalFooter>
           </div>
@@ -550,18 +548,18 @@ export default function StandortePage() {
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wide flex items-center gap-1.5">
                           <ShieldCheckIcon className="h-3.5 w-3.5" />
-                          Required certifications
+                          {t("cert.cardLabel")}
                         </span>
                         <button
                           onClick={() => openCertModal(location)}
                           className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-medium"
                         >
-                          Manage
+                          {t("cert.manage")}
                         </button>
                       </div>
                       {certs.length === 0 ? (
                         <p className="text-xs text-gray-400 dark:text-zinc-600 italic">
-                          None — open to all guards
+                          {t("cert.cardNone")}
                         </p>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">

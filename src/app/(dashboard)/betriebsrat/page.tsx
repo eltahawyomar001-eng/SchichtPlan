@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,41 +78,23 @@ function fmtDate(d: string): string {
   });
 }
 
-function deadlineInfo(deadline: string, status: string) {
-  if (status !== "PENDING") return { text: "", overdue: false, urgent: false };
-  const ms = new Date(deadline).getTime() - Date.now();
-  if (ms <= 0)
-    return { text: "Frist überschritten", overdue: true, urgent: true };
-  const days = Math.floor(ms / 86_400_000);
-  const hours = Math.floor((ms % 86_400_000) / 3_600_000);
-  const text =
-    days > 0
-      ? `${days} Tag(e) ${hours} Std. verbleibend`
-      : `${hours} Std. verbleibend`;
-  return { text, overdue: false, urgent: days < 1 };
-}
+const STATUS_CLS: Record<Approval["status"], string> = {
+  PENDING: "bg-amber-50 text-amber-700 border-amber-200",
+  APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  REJECTED: "bg-red-50 text-red-700 border-red-200",
+  WITHDRAWN: "bg-gray-100 text-gray-600 border-gray-200",
+};
 
-const STATUS_BADGE: Record<Approval["status"], { label: string; cls: string }> =
-  {
-    PENDING: {
-      label: "Ausstehend",
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
-    },
-    APPROVED: {
-      label: "Zugestimmt",
-      cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    },
-    REJECTED: {
-      label: "Verweigert",
-      cls: "bg-red-50 text-red-700 border-red-200",
-    },
-    WITHDRAWN: {
-      label: "Zurückgezogen",
-      cls: "bg-gray-100 text-gray-600 border-gray-200",
-    },
-  };
+const STATUS_KEY: Record<Approval["status"], string> = {
+  PENDING: "statusPending",
+  APPROVED: "statusApproved",
+  REJECTED: "statusRejected",
+  WITHDRAWN: "statusWithdrawn",
+};
 
 export default function BetriebsratPage() {
+  const t = useTranslations("betriebsrat");
+  const tc = useTranslations("common");
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const isManager = role === "OWNER" || role === "ADMIN" || role === "MANAGER";
@@ -153,6 +136,21 @@ export default function BetriebsratPage() {
   const [removeMemberId, setRemoveMemberId] = useState<string | null>(null);
   const [withdrawId, setWithdrawId] = useState<string | null>(null);
 
+  function deadlineInfo(deadline: string, status: string) {
+    if (status !== "PENDING")
+      return { text: "", overdue: false, urgent: false };
+    const ms = new Date(deadline).getTime() - Date.now();
+    if (ms <= 0)
+      return { text: t("deadlineExceeded"), overdue: true, urgent: true };
+    const days = Math.floor(ms / 86_400_000);
+    const hours = Math.floor((ms % 86_400_000) / 3_600_000);
+    const text =
+      days > 0
+        ? t("daysHoursLeft", { days, hours })
+        : t("hoursLeft", { hours });
+    return { text, overdue: false, urgent: days < 1 };
+  }
+
   const fetchApprovals = useCallback(async () => {
     try {
       const res = await fetch("/api/betriebsrat/approvals");
@@ -161,13 +159,14 @@ export default function BetriebsratPage() {
         setApprovals(d.approvals ?? []);
         setCanReview(Boolean(d.canReview));
       } else {
-        setError("Kein Zugriff auf den Betriebsrat-Bereich.");
+        setError(t("noAccess"));
       }
     } catch {
-      setError("Netzwerkfehler.");
+      setError(t("networkError"));
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSupporting = useCallback(async () => {
@@ -193,7 +192,7 @@ export default function BetriebsratPage() {
     if (submitting) return;
     setSubmitError(null);
     if (!submitForm.title || !submitForm.periodStart || !submitForm.periodEnd) {
-      setSubmitError("Titel und Zeitraum sind erforderlich.");
+      setSubmitError(t("titleAndPeriodRequired"));
       return;
     }
     setSubmitting(true);
@@ -214,7 +213,7 @@ export default function BetriebsratPage() {
         fetchApprovals();
       } else {
         const d = await res.json().catch(() => ({}));
-        setSubmitError(d.message || d.error || "Fehler beim Vorlegen.");
+        setSubmitError(d.message || d.error || t("submitError"));
       }
     } finally {
       setSubmitting(false);
@@ -231,7 +230,7 @@ export default function BetriebsratPage() {
       const d = await res.json();
       setReviewData({ approval: d.approval, shifts: d.shifts });
     } else {
-      setReviewError("Vorlage konnte nicht geladen werden.");
+      setReviewError(t("loadError"));
     }
   }
 
@@ -239,9 +238,7 @@ export default function BetriebsratPage() {
     if (!reviewId || deciding) return;
     setReviewError(null);
     if (decision === "REJECTED" && !reviewNote.trim()) {
-      setReviewError(
-        "Bei einer Verweigerung ist eine Begründung erforderlich.",
-      );
+      setReviewError(t("reasonRequired"));
       return;
     }
     setDeciding(true);
@@ -257,7 +254,7 @@ export default function BetriebsratPage() {
         fetchApprovals();
       } else {
         const d = await res.json().catch(() => ({}));
-        setReviewError(d.message || d.error || "Entscheidung fehlgeschlagen.");
+        setReviewError(d.message || d.error || t("decideError"));
       }
     } finally {
       setDeciding(false);
@@ -304,13 +301,13 @@ export default function BetriebsratPage() {
   return (
     <div>
       <Topbar
-        title="Betriebsrat"
-        description="Mitbestimmung bei Dienstplänen (BetrVG §87)"
+        title={t("title")}
+        description={t("description")}
         actions={
           isManager ? (
             <Button size="sm" onClick={() => setShowSubmit(true)}>
               <PlusIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Dienstplan vorlegen</span>
+              <span className="hidden sm:inline">{t("submit")}</span>
             </Button>
           ) : undefined
         }
@@ -322,11 +319,7 @@ export default function BetriebsratPage() {
           <CardContent className="p-4 sm:p-5 flex items-start gap-3">
             <ScaleIcon className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
             <p className="text-sm text-gray-600 dark:text-zinc-400 leading-relaxed">
-              Nach <strong>BetrVG §87 Abs. 1</strong> hat der Betriebsrat ein
-              Mitbestimmungsrecht bei Beginn und Ende der Arbeitszeit, Pausen
-              und der vorübergehenden Verkürzung oder Verlängerung der
-              Arbeitszeit. Vorgelegte Dienstpläne sind innerhalb der Frist zu
-              bestätigen oder mit Begründung abzulehnen.
+              {t("intro")}
             </p>
           </CardContent>
         </Card>
@@ -346,7 +339,7 @@ export default function BetriebsratPage() {
           !error && (
             <Card>
               <CardContent className="py-12 text-center text-sm text-gray-400 dark:text-zinc-500">
-                Aktuell liegen keine Dienstpläne zur Mitbestimmung vor.
+                {t("empty")}
               </CardContent>
             </Card>
           )
@@ -354,7 +347,6 @@ export default function BetriebsratPage() {
           <div className="space-y-3">
             {approvals.map((a) => {
               const dl = deadlineInfo(a.deadline, a.status);
-              const badge = STATUS_BADGE[a.status];
               return (
                 <Card key={a.id} className="card-elevated">
                   <CardContent className="p-4 sm:p-5">
@@ -364,23 +356,26 @@ export default function BetriebsratPage() {
                           <h3 className="font-semibold text-gray-900 dark:text-zinc-100">
                             {a.title}
                           </h3>
-                          <Badge className={`text-xs border ${badge.cls}`}>
-                            {badge.label}
+                          <Badge
+                            className={`text-xs border ${STATUS_CLS[a.status]}`}
+                          >
+                            {t(STATUS_KEY[a.status])}
                           </Badge>
                           {dl.overdue && (
                             <Badge className="text-xs border bg-red-100 text-red-700 border-red-300 gap-1">
                               <AlertTriangleIcon className="h-3 w-3" />
-                              Überfällig
+                              {t("overdue")}
                             </Badge>
                           )}
                         </div>
                         <div className="mt-1.5 text-sm text-gray-500 dark:text-zinc-400 space-y-0.5">
                           <p>
-                            Zeitraum: {fmtDate(a.periodStart)} –{" "}
-                            {fmtDate(a.periodEnd)} · {a.shiftCount} Schichten
+                            {t("period")}: {fmtDate(a.periodStart)} –{" "}
+                            {fmtDate(a.periodEnd)} · {a.shiftCount}{" "}
+                            {t("shifts")}
                           </p>
                           <p>
-                            Vorgelegt von{" "}
+                            {t("submittedBy")}{" "}
                             {a.submittedBy.name || a.submittedBy.email}
                           </p>
                           {a.status === "PENDING" && (
@@ -388,12 +383,12 @@ export default function BetriebsratPage() {
                               className={`inline-flex items-center gap-1.5 ${dl.urgent ? "text-red-600 font-medium" : ""}`}
                             >
                               <ClockIcon className="h-3.5 w-3.5" />
-                              Frist: {fmtDate(a.deadline)} · {dl.text}
+                              {t("deadline")}: {fmtDate(a.deadline)} · {dl.text}
                             </p>
                           )}
                           {a.reviewedBy && a.reviewedAt && (
                             <p>
-                              Entschieden von {a.reviewedBy.name} am{" "}
+                              {t("decidedBy")} {a.reviewedBy.name} {t("on")}{" "}
                               {fmtDate(a.reviewedAt)}
                             </p>
                           )}
@@ -407,7 +402,7 @@ export default function BetriebsratPage() {
                       <div className="flex gap-2 shrink-0">
                         {canReview && a.status === "PENDING" ? (
                           <Button size="sm" onClick={() => openReview(a.id)}>
-                            Prüfen &amp; Entscheiden
+                            {t("review")}
                           </Button>
                         ) : (
                           <Button
@@ -415,7 +410,7 @@ export default function BetriebsratPage() {
                             size="sm"
                             onClick={() => openReview(a.id)}
                           >
-                            Ansehen
+                            {t("viewOnly")}
                           </Button>
                         )}
                         {isManager && a.status === "PENDING" && !canReview && (
@@ -425,7 +420,7 @@ export default function BetriebsratPage() {
                             className="text-gray-400 hover:text-red-600"
                             onClick={() => setWithdrawId(a.id)}
                           >
-                            Zurückziehen
+                            {t("withdraw")}
                           </Button>
                         )}
                       </div>
@@ -443,7 +438,7 @@ export default function BetriebsratPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <UsersIcon className="h-5 w-5 text-emerald-600" />
-                Betriebsratsmitglieder
+                {t("members")}
               </CardTitle>
               <Button
                 size="sm"
@@ -451,14 +446,13 @@ export default function BetriebsratPage() {
                 onClick={() => setShowAddMember(true)}
               >
                 <PlusIcon className="h-4 w-4" />
-                Mitglied
+                {t("member")}
               </Button>
             </CardHeader>
             <CardContent>
               {members.length === 0 ? (
                 <p className="py-4 text-center text-sm text-gray-400 dark:text-zinc-500">
-                  Noch keine Mitglieder benannt. Ohne Mitglieder kann kein
-                  Dienstplan bestätigt werden.
+                  {t("noMembers")}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -473,7 +467,7 @@ export default function BetriebsratPage() {
                         </span>
                         {m.isChair && (
                           <Badge className="ml-2 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                            Vorsitz
+                            {t("chair")}
                           </Badge>
                         )}
                       </div>
@@ -498,14 +492,14 @@ export default function BetriebsratPage() {
       <AdaptiveModal
         open={showSubmit}
         onClose={() => setShowSubmit(false)}
-        title="Dienstplan zur Mitbestimmung vorlegen"
+        title={t("submitTitle")}
         size="md"
       >
         <form onSubmit={handleSubmitPlan} className="space-y-4">
           <div className="space-y-2">
-            <Label>Bezeichnung *</Label>
+            <Label>{t("label")} *</Label>
             <Input
-              placeholder="z. B. Dienstplan KW 23 – Objekt Nord"
+              placeholder={t("labelPlaceholder")}
               value={submitForm.title}
               onChange={(e) =>
                 setSubmitForm((f) => ({ ...f, title: e.target.value }))
@@ -514,7 +508,7 @@ export default function BetriebsratPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Von *</Label>
+              <Label>{t("from")} *</Label>
               <Input
                 type="date"
                 value={submitForm.periodStart}
@@ -524,7 +518,7 @@ export default function BetriebsratPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Bis *</Label>
+              <Label>{t("to")} *</Label>
               <Input
                 type="date"
                 value={submitForm.periodEnd}
@@ -535,14 +529,14 @@ export default function BetriebsratPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Standort (optional)</Label>
+            <Label>{t("locationOptional")}</Label>
             <Select
               value={submitForm.locationId}
               onChange={(e) =>
                 setSubmitForm((f) => ({ ...f, locationId: e.target.value }))
               }
             >
-              <option value="">Alle Standorte</option>
+              <option value="">{t("allLocations")}</option>
               {locations.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -561,10 +555,10 @@ export default function BetriebsratPage() {
               variant="outline"
               onClick={() => setShowSubmit(false)}
             >
-              Abbrechen
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Wird vorgelegt…" : "Vorlegen"}
+              {submitting ? t("submitting") : t("submit")}
             </Button>
           </ModalFooter>
         </form>
@@ -574,7 +568,7 @@ export default function BetriebsratPage() {
       <AdaptiveModal
         open={!!reviewId}
         onClose={() => setReviewId(null)}
-        title={reviewData?.approval.title || "Dienstplan prüfen"}
+        title={reviewData?.approval.title || t("reviewTitle")}
         size="lg"
       >
         {!reviewData ? (
@@ -584,20 +578,24 @@ export default function BetriebsratPage() {
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-gray-500 dark:text-zinc-400">
-              Zeitraum: {fmtDate(reviewData.approval.periodStart)} –{" "}
+              {t("period")}: {fmtDate(reviewData.approval.periodStart)} –{" "}
               {fmtDate(reviewData.approval.periodEnd)} ·{" "}
-              {reviewData.shifts.length} Schichten
+              {reviewData.shifts.length} {t("shifts")}
             </p>
 
             <div className="max-h-72 overflow-y-auto rounded-xl border border-gray-100 dark:border-zinc-800">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-gray-50 dark:bg-zinc-800/80">
                   <tr className="text-left text-gray-500 dark:text-zinc-400">
-                    <th className="px-3 py-2 font-medium">Datum</th>
-                    <th className="px-3 py-2 font-medium">Zeit</th>
-                    <th className="px-3 py-2 font-medium">Pause</th>
-                    <th className="px-3 py-2 font-medium">Mitarbeiter</th>
-                    <th className="px-3 py-2 font-medium">Standort</th>
+                    <th className="px-3 py-2 font-medium">{t("tableDate")}</th>
+                    <th className="px-3 py-2 font-medium">{t("tableTime")}</th>
+                    <th className="px-3 py-2 font-medium">{t("tableBreak")}</th>
+                    <th className="px-3 py-2 font-medium">
+                      {t("tableEmployee")}
+                    </th>
+                    <th className="px-3 py-2 font-medium">
+                      {t("tableLocation")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y dark:divide-zinc-800">
@@ -607,7 +605,7 @@ export default function BetriebsratPage() {
                         colSpan={5}
                         className="px-3 py-6 text-center text-gray-400"
                       >
-                        Keine Schichten im Zeitraum.
+                        {t("noShifts")}
                       </td>
                     </tr>
                   ) : (
@@ -636,12 +634,12 @@ export default function BetriebsratPage() {
             {canReview && reviewData.approval.status === "PENDING" ? (
               <>
                 <div className="space-y-2">
-                  <Label>Anmerkung / Begründung</Label>
+                  <Label>{t("noteLabel")}</Label>
                   <textarea
                     value={reviewNote}
                     onChange={(e) => setReviewNote(e.target.value)}
                     rows={3}
-                    placeholder="Bei Verweigerung erforderlich…"
+                    placeholder={t("notePlaceholder")}
                     className="w-full rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -659,7 +657,7 @@ export default function BetriebsratPage() {
                     onClick={() => decide("REJECTED")}
                   >
                     <CircleXIcon className="h-4 w-4" />
-                    Zustimmung verweigern
+                    {t("refuse")}
                   </Button>
                   <Button
                     type="button"
@@ -667,13 +665,13 @@ export default function BetriebsratPage() {
                     onClick={() => decide("APPROVED")}
                   >
                     <CheckCircleIcon className="h-4 w-4" />
-                    Zustimmen
+                    {t("approve")}
                   </Button>
                 </ModalFooter>
               </>
             ) : (
               <p className="text-sm text-gray-500 dark:text-zinc-400">
-                Status: {STATUS_BADGE[reviewData.approval.status].label}
+                {t("statusLabel")}: {t(STATUS_KEY[reviewData.approval.status])}
                 {reviewData.approval.decisionNote &&
                   ` — „${reviewData.approval.decisionNote}“`}
               </p>
@@ -686,17 +684,17 @@ export default function BetriebsratPage() {
       <AdaptiveModal
         open={showAddMember}
         onClose={() => setShowAddMember(false)}
-        title="Betriebsratsmitglied benennen"
+        title={t("addMemberTitle")}
         size="md"
       >
         <form onSubmit={addMember} className="space-y-4">
           <div className="space-y-2">
-            <Label>Benutzer *</Label>
+            <Label>{t("user")} *</Label>
             <Select
               value={newMemberId}
               onChange={(e) => setNewMemberId(e.target.value)}
             >
-              <option value="">Bitte auswählen…</option>
+              <option value="">{t("selectUser")}</option>
               {eligibleTeam.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name || u.email} ({u.role})
@@ -704,9 +702,7 @@ export default function BetriebsratPage() {
               ))}
             </Select>
             {eligibleTeam.length === 0 && (
-              <p className="text-xs text-amber-600">
-                Keine weiteren Benutzer verfügbar.
-              </p>
+              <p className="text-xs text-amber-600">{t("noUsers")}</p>
             )}
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -716,7 +712,7 @@ export default function BetriebsratPage() {
               onChange={(e) => setNewMemberChair(e.target.checked)}
               className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
             />
-            Vorsitzende:r des Betriebsrats
+            {t("isChair")}
           </label>
           <ModalFooter>
             <Button
@@ -724,10 +720,10 @@ export default function BetriebsratPage() {
               variant="outline"
               onClick={() => setShowAddMember(false)}
             >
-              Abbrechen
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={!newMemberId}>
-              Benennen
+              {t("designate")}
             </Button>
           </ModalFooter>
         </form>
@@ -735,10 +731,10 @@ export default function BetriebsratPage() {
 
       <ConfirmDialog
         open={!!removeMemberId}
-        title="Mitglied entfernen?"
-        message="Der Benutzer verliert den Zugriff auf den Betriebsrat-Bereich."
-        confirmLabel="Entfernen"
-        cancelLabel="Abbrechen"
+        title={t("removeMemberTitle")}
+        message={t("removeMemberMessage")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
         variant="danger"
         onConfirm={handleRemoveMember}
         onCancel={() => setRemoveMemberId(null)}
@@ -746,10 +742,10 @@ export default function BetriebsratPage() {
 
       <ConfirmDialog
         open={!!withdrawId}
-        title="Vorlage zurückziehen?"
-        message="Der Dienstplan wird aus der Mitbestimmung zurückgezogen."
-        confirmLabel="Zurückziehen"
-        cancelLabel="Abbrechen"
+        title={t("withdrawTitle")}
+        message={t("withdrawMessage")}
+        confirmLabel={t("withdraw")}
+        cancelLabel={tc("cancel")}
         variant="danger"
         onConfirm={handleWithdraw}
         onCancel={() => setWithdrawId(null)}

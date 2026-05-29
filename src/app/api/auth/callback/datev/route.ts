@@ -5,12 +5,12 @@
  * stores them in DATEVToken, and redirects to the settings page.
  *
  * Error handling:
- *  - state mismatch / expired → 400 (CSRF protection)
+ *  - state mismatch / expired → redirect with state_mismatch
  *  - token exchange failure   → redirect to settings with error param
  */
 
 import { NextResponse } from "next/server";
-import { cache } from "@/lib/cache";
+import { prisma } from "@/lib/db";
 import { exchangeCodeForTokens, saveDatevTokens } from "@/lib/datev-oidc";
 import { log } from "@/lib/logger";
 import { createAuditLog } from "@/lib/audit";
@@ -38,16 +38,25 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`${settingsUrl}missing_params`);
   }
 
-  // Retrieve and consume the state session stored during /connect.
-  const session = await cache.get<{
-    verifier: string;
-    workspaceId: string;
-    userId: string;
-  }>(`datev:oidc:${state}`);
-  await cache.del(`datev:oidc:${state}`); // one-time use
+  // Retrieve and delete the PKCE state stored during /connect (one-time use).
+  const session = await prisma.datevOAuthState.findUnique({
+    where: { state },
+  });
+
+  if (session) {
+    // Delete regardless of whether we succeed — prevent replay attacks.
+    await prisma.datevOAuthState.delete({ where: { state } }).catch(() => {});
+  }
 
   if (!session) {
     log.warn("[datev-callback] state not found or expired", { state });
+    return NextResponse.redirect(`${settingsUrl}state_mismatch`);
+  }
+
+  // Reject states older than 10 minutes.
+  const ageMs = Date.now() - session.createdAt.getTime();
+  if (ageMs > 10 * 60 * 1_000) {
+    log.warn("[datev-callback] state expired", { state, ageMs });
     return NextResponse.redirect(`${settingsUrl}state_mismatch`);
   }
 

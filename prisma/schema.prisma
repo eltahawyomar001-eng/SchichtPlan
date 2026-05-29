@@ -239,6 +239,16 @@ model DATEVToken {
   updatedAt     DateTime  @updatedAt
 }
 
+/// Short-lived PKCE state for the DATEV OAuth flow — one row per in-flight connect attempt.
+/// Deleted immediately after the callback consumes it. Rows older than 10 min are stale.
+model DatevOAuthState {
+  state       String   @id
+  verifier    String   @db.Text
+  workspaceId String
+  userId      String
+  createdAt   DateTime @default(now())
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SV-MELDEVERFAHREN — eAU & Sofortmeldung via a certified gateway
 // (DATEV HR APIs / DEÜV clearinghouse). We never run our own GKV/DSRV

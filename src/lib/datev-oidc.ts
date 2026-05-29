@@ -39,13 +39,16 @@ export const DATEV_ENDPOINTS = {
   get authorize() {
     return `${baseLogin()}/authorize`;
   },
-  // Token endpoint is always api.datev.de — same for sandbox and production.
-  token: "https://api.datev.de/token",
-  get userinfo() {
-    return `${baseApi()}/userinfo`;
+  // Per OpenAPI spec: sandbox token = sandbox-api.datev.de/token, prod = api.datev.de/token
+  get token() {
+    return `${baseApi()}/token`;
   },
   get eauBase() {
-    return `${baseApi()}/hr/eau/v1`;
+    // Per OpenAPI spec servers[]: eau.api.datev.de/platform/v1 (prod)
+    //                              eau.api.datev.de/platform-sandbox/v1 (sandbox)
+    return isDatevSandbox()
+      ? "https://eau.api.datev.de/platform-sandbox/v1"
+      : "https://eau.api.datev.de/platform/v1";
   },
 };
 
@@ -73,7 +76,7 @@ export function buildAuthorizationUrl(params: {
     response_type: "code",
     client_id: clientId,
     redirect_uri: params.redirectUri,
-    scope: "openid profile email datev:hr:eau",
+    scope: "openid datev:hr:eau",
     state: params.state,
     code_challenge: params.codeChallenge,
     code_challenge_method: "S256",

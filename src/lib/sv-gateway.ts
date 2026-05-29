@@ -25,12 +25,17 @@ export { isDatevSandbox } from "@/lib/datev-oidc";
 // ── Types ──────────────────────────────────────────────────────
 
 export interface EauGatewayInput {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string; // YYYY-MM-DD
-  socialSecurityNumber: string | null;
+  // DATEV path identifiers — employee must exist in DATEV LODAS/LUG
+  consultantNumber: string; // DATEV Beraternummer (1–9999999)
+  clientNumber: string; // DATEV Mandantennummer (1–99999)
+  personnelNumber: string; // DATEV Personalnummer (1–99999)
   sicknessStartDate: string; // YYYY-MM-DD
-  betriebsnummer: string;
+  source: "LODAS" | "LUG";
+  notificationEmail?: string;
+  // kept for mock fallback only
+  firstName?: string;
+  lastName?: string;
+  socialSecurityNumber?: string | null;
 }
 
 export interface EauGatewayResult {
@@ -94,36 +99,34 @@ async function callDatevEau(
   accessToken: string,
 ): Promise<EauGatewayResult> {
   /**
-   * DATEV hr:eau v1.0.0 — POST /hr/eau/v1/abfragen
-   * Payload shape (DATEV spec):
-   *   versicherungsnummer  — SV-Nummer (Rentenversicherungsnummer)
-   *   vorname
-   *   nachname
-   *   geburtsdatum         — YYYY-MM-DD
-   *   krankheitsbeginn     — first day of incapacity, YYYY-MM-DD
-   *   betriebsnummer       — employer number
+   * DATEV hr:eau v1.0.23 — per official OpenAPI spec:
+   * POST /clients/{consultantNumber}-{clientNumber}/employees/{personnelNumber}/eau-requests
+   * Body: { source, start_work_incapacity, notification?, follow_up_certification? }
+   * Headers: Authorization: Bearer <token>  +  X-Datev-Client-ID: <clientId>
    */
-  const payload = {
-    betriebsnummer: input.betriebsnummer,
-    versicherungsnummer: input.socialSecurityNumber,
-    vorname: input.firstName,
-    nachname: input.lastName,
-    geburtsdatum: input.dateOfBirth,
-    krankheitsbeginn: input.sicknessStartDate,
+  const url = `${DATEV_ENDPOINTS.eauBase}/clients/${input.consultantNumber}-${input.clientNumber}/employees/${input.personnelNumber}/eau-requests`;
+  const payload: Record<string, unknown> = {
+    source: input.source,
+    start_work_incapacity: input.sicknessStartDate,
   };
+  if (input.notificationEmail) {
+    payload.notification = { email: input.notificationEmail };
+  }
 
+  const clientId = process.env.DATEV_CLIENT_ID ?? "";
   log.info("[sv-gateway] calling DATEV hr:eau", {
-    endpoint: DATEV_ENDPOINTS.eauBase,
+    url,
     sandbox: isDatevSandbox(),
   });
 
   let res: Response;
   try {
-    res = await fetch(`${DATEV_ENDPOINTS.eauBase}/abfragen`, {
+    res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
+        "X-Datev-Client-ID": clientId,
         Accept: "application/json",
       },
       body: JSON.stringify(payload),
@@ -139,49 +142,43 @@ async function callDatevEau(
   try {
     json = await res.json();
   } catch {
-    /* empty response */
+    /* empty */
   }
 
   log.info("[sv-gateway] DATEV eAU response", {
     status: res.status,
+    location: res.headers.get("location"),
     body: JSON.stringify(json).slice(0, 300),
   });
 
-  if (res.status === 200 || res.status === 201) {
-    /**
-     * Successful response fields (DATEV hr:eau v1.0.0):
-     *   ausfallgrund        — incapacity reason code
-     *   arbeitsunfaehigVon  — AU start date
-     *   arbeitsunfaehigBis  — AU end date (null if ongoing)
-     *   erstbescheinigung   — true = initial, false = follow-up
-     *   abfrageId           — tracking reference
-     */
+  if (res.status === 201) {
+    // 201 Created — Location header contains the resource URI with UUID
+    const location = res.headers.get("location") ?? "";
+    const uuid = location.split("/").pop() ?? "";
     return {
       status: "ACCEPTED",
-      trackingId: String(json.abfrageId ?? ""),
-      auFrom: String(json.arbeitsunfaehigVon ?? input.sicknessStartDate),
-      auTo: json.arbeitsunfaehigBis
-        ? String(json.arbeitsunfaehigBis)
-        : undefined,
-      isInitial: Boolean(json.erstbescheinigung),
+      trackingId: uuid || String(json.request_id ?? ""),
+      auFrom: input.sicknessStartDate,
+      isInitial: true,
       raw: json,
     };
   }
 
-  // 404 / 422 — no eAU found (private insurance or not submitted yet)
   if (res.status === 404 || res.status === 422) {
-    const code = String(json.code ?? json.fehlercode ?? res.status);
+    const msgs =
+      (json.additional_messages as { description?: string }[] | undefined) ??
+      [];
+    const detail =
+      msgs[0]?.description ??
+      String(json.error_description ?? "Kein eAU-Nachweis.");
     return {
       status: "NOT_INSURED",
-      errorCode: code,
-      errorMessage: String(
-        json.message ?? json.meldung ?? "Kein eAU-Nachweis gefunden.",
-      ),
+      errorCode: String(json.error ?? res.status),
+      errorMessage: detail,
       raw: json,
     };
   }
 
-  // 401 — token expired mid-flight or revoked
   if (res.status === 401) {
     return {
       status: "ERROR",
@@ -204,22 +201,22 @@ async function callDatevEau(
 // ── Sandbox simulator ──────────────────────────────────────────
 
 function mockEau(input: EauGatewayInput): EauGatewayResult {
-  if (!input.socialSecurityNumber) {
+  if (
+    !input.consultantNumber ||
+    !input.clientNumber ||
+    !input.personnelNumber
+  ) {
     return {
-      status: "NOT_INSURED",
-      errorCode: "PRIVATE_INSURANCE",
+      status: "ERROR",
+      errorCode: "MISSING_DATEV_IDS",
       errorMessage:
-        "Kein gesetzlicher eAU-Abruf möglich (vermutlich privat versichert).",
+        "Beraternummer, Mandantennummer und Personalnummer sind erforderlich.",
     };
   }
-  const start = new Date(input.sicknessStartDate);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 3);
   return {
     status: "ACCEPTED",
     trackingId: `SBX-EAU-${Date.now().toString(36).toUpperCase()}`,
     auFrom: input.sicknessStartDate,
-    auTo: end.toLocaleDateString("en-CA"),
     isInitial: true,
     raw: { sandbox: true },
   };

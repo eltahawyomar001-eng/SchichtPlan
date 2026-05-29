@@ -68,46 +68,39 @@ export const POST = withRoute("/api/compliance/eau", "POST", async (req) => {
   if (!parsed.success) return parsed.response;
   const { employeeId, sicknessStartDate } = parsed.data;
 
-  const [employee, workspace] = await Promise.all([
-    prisma.employee.findFirst({
-      where: { id: employeeId, workspaceId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dateOfBirth: true,
-        socialSecurityNumber: true,
-      },
-    }),
-    prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { betriebsnummer: true },
-    }),
-  ]);
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, workspaceId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      datevConsultantNumber: true,
+      datevClientNumber: true,
+      datevPersonnelNumber: true,
+    },
+  });
 
   if (!employee) return badRequest("Mitarbeiter nicht gefunden");
 
-  // Structural prerequisites for an eAU lookup.
+  // DATEV identifies employees via their LODAS/LUG numbers, not personal data.
   const missing: string[] = [];
-  if (!employee.dateOfBirth) missing.push("Geburtsdatum");
-  if (!workspace?.betriebsnummer) missing.push("Betriebsnummer (Workspace)");
+  if (!employee.datevConsultantNumber) missing.push("DATEV Beraternummer");
+  if (!employee.datevClientNumber) missing.push("DATEV Mandantennummer");
+  if (!employee.datevPersonnelNumber) missing.push("DATEV Personalnummer");
   if (missing.length > 0) {
     return badRequest(
-      `Für den eAU-Abruf fehlen folgende Angaben: ${missing.join(", ")}.`,
+      `Für den eAU-Abruf fehlen folgende DATEV-Angaben: ${missing.join(", ")}. Bitte im Mitarbeiterprofil hinterlegen.`,
     );
   }
 
   const sandbox = isSvSandbox();
-  const dob = employee.dateOfBirth!.toLocaleDateString("en-CA");
-  // Pass workspaceId so the gateway uses the stored DATEV token when available.
   const result = await requestEau(
     {
-      firstName: employee.firstName,
-      lastName: employee.lastName,
-      dateOfBirth: dob,
-      socialSecurityNumber: employee.socialSecurityNumber,
+      consultantNumber: employee.datevConsultantNumber!,
+      clientNumber: employee.datevClientNumber!,
+      personnelNumber: employee.datevPersonnelNumber!,
       sicknessStartDate,
-      betriebsnummer: workspace!.betriebsnummer!,
+      source: "LODAS",
     },
     workspaceId,
   );
@@ -123,7 +116,9 @@ export const POST = withRoute("/api/compliance/eau", "POST", async (req) => {
       requestPayload: {
         employeeId,
         sicknessStartDate,
-        betriebsnummer: workspace!.betriebsnummer,
+        consultantNumber: employee.datevConsultantNumber,
+        clientNumber: employee.datevClientNumber,
+        personnelNumber: employee.datevPersonnelNumber,
       },
       responsePayload: (result.raw as object) ?? null,
       errorCode: result.errorCode ?? null,

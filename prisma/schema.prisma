@@ -631,6 +631,10 @@ model Employee {
   nationality          String?
   /// Eintrittsdatum (employment entry) — the Sofortmeldung reference timestamp.
   employmentStartDate  DateTime?         @db.Date
+  /// DATEV LODAS/LUG identifiers — required for hr:eau eAU requests via DATEV API.
+  datevConsultantNumber String?
+  datevClientNumber     String?
+  datevPersonnelNumber  String?
   svSubmissions        SvSubmission[]
 
   @@unique([email, workspaceId])

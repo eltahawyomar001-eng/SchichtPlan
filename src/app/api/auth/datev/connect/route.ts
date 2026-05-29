@@ -16,11 +16,19 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const auth = await requireAuth();
-  if (!auth.ok) return auth.response;
+  if (!auth.ok) {
+    return NextResponse.redirect(
+      `${process.env.NEXTAUTH_URL ?? "https://www.shiftfy.de"}/einstellungen?datev=auth_required`,
+    );
+  }
   const { user, workspaceId } = auth;
 
   const adminErr = requireAdmin(user);
-  if (adminErr) return adminErr;
+  if (adminErr) {
+    return NextResponse.redirect(
+      `${process.env.NEXTAUTH_URL ?? "https://www.shiftfy.de"}/einstellungen?datev=forbidden`,
+    );
+  }
 
   const state = generateState();
 

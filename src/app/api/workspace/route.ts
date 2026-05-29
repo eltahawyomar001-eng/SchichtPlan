@@ -48,6 +48,7 @@ export const GET = withRoute("/api/workspace", "GET", async (req) => {
       defaultBreakMinutes: true,
       datevConsultantNumber: true,
       datevClientNumber: true,
+      betriebsnummer: true,
       logo: true,
       createdAt: true,
     },
@@ -106,6 +107,9 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
   if (typeof body.datevClientNumber === "string") {
     data.datevClientNumber = body.datevClientNumber.trim() || null;
   }
+  if (typeof body.betriebsnummer === "string") {
+    data.betriebsnummer = body.betriebsnummer.trim() || null;
+  }
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
@@ -126,6 +130,7 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
       defaultBreakMinutes: true,
       datevConsultantNumber: true,
       datevClientNumber: true,
+      betriebsnummer: true,
       logo: true,
     },
   });

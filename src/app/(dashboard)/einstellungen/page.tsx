@@ -39,6 +39,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { DATEVConnectCard } from "@/components/settings/datev-connect-card";
 import { DATEVNumbersCard } from "@/components/settings/datev-numbers-card";
+import { BetriebsnummerCard } from "@/components/settings/betriebsnummer-card";
 import { WorkspaceLogoCard } from "@/components/settings/workspace-logo-card";
 
 export default function EinstellungenPage() {
@@ -1107,6 +1108,7 @@ export default function EinstellungenPage() {
         <DATEVConnectCard />
         <WorkspaceLogoCard />
         <DATEVNumbersCard />
+        <BetriebsnummerCard />
 
         {/* DSGVO: Data Privacy & Account Card */}
         <Card>

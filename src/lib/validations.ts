@@ -48,6 +48,12 @@ export const createEmployeeSchema = z.object({
   color: optionalString,
   locationId: z.string().optional().nullable(),
   departmentId: z.string().optional().nullable(),
+  datevPersonnelNumber: optionalString.pipe(z.string().max(20).optional()),
+  employmentStartDate: optionalString,
+  dateOfBirth: optionalString,
+  socialSecurityNumber: optionalString.pipe(z.string().max(20).optional()),
+  birthPlace: optionalString.pipe(z.string().max(100).optional()),
+  nationality: optionalString.pipe(z.string().max(50).optional()),
 });
 
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
@@ -56,6 +62,11 @@ export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
   departmentId: z.string().optional().nullable(),
   role: z.enum(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
   datevPersonnelNumber: optionalString.pipe(z.string().max(20).optional()),
+  employmentStartDate: optionalString,
+  dateOfBirth: optionalString,
+  socialSecurityNumber: optionalString.pipe(z.string().max(20).optional()),
+  birthPlace: optionalString.pipe(z.string().max(100).optional()),
+  nationality: optionalString.pipe(z.string().max(50).optional()),
 });
 
 // ── Location ────────────────────────────────────────────────────
@@ -546,6 +557,7 @@ export const updateWorkspaceSchema = z
       .optional(),
     datevConsultantNumber: optionalString.pipe(z.string().max(20).optional()),
     datevClientNumber: optionalString.pipe(z.string().max(20).optional()),
+    betriebsnummer: optionalString.pipe(z.string().max(15).optional()),
   })
   .refine(
     (data) =>
@@ -554,7 +566,8 @@ export const updateWorkspaceSchema = z
       data.bundesland !== undefined ||
       data.defaultBreakMinutes !== undefined ||
       data.datevConsultantNumber !== undefined ||
-      data.datevClientNumber !== undefined,
+      data.datevClientNumber !== undefined ||
+      data.betriebsnummer !== undefined,
     { message: "Keine Änderungen angegeben" },
   );
 

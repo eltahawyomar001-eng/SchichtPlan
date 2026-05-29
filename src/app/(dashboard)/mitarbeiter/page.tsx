@@ -83,6 +83,11 @@ interface Employee {
   department?: DepartmentItem | null;
   user?: { id: string; role: string } | null;
   datevPersonnelNumber?: string | null;
+  employmentStartDate?: string | null;
+  dateOfBirth?: string | null;
+  socialSecurityNumber?: string | null;
+  birthPlace?: string | null;
+  nationality?: string | null;
 }
 
 export default function MitarbeiterPage() {
@@ -122,6 +127,11 @@ export default function MitarbeiterPage() {
     departmentId: "",
     role: "",
     datevPersonnelNumber: "",
+    employmentStartDate: "",
+    dateOfBirth: "",
+    socialSecurityNumber: "",
+    birthPlace: "",
+    nationality: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -272,6 +282,11 @@ export default function MitarbeiterPage() {
       departmentId: "",
       role: "",
       datevPersonnelNumber: "",
+      employmentStartDate: "",
+      dateOfBirth: "",
+      socialSecurityNumber: "",
+      birthPlace: "",
+      nationality: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -297,6 +312,13 @@ export default function MitarbeiterPage() {
       departmentId: emp.departmentId || "",
       role: emp.user?.role || "",
       datevPersonnelNumber: emp.datevPersonnelNumber ?? "",
+      employmentStartDate: emp.employmentStartDate
+        ? emp.employmentStartDate.slice(0, 10)
+        : "",
+      dateOfBirth: emp.dateOfBirth ? emp.dateOfBirth.slice(0, 10) : "",
+      socialSecurityNumber: emp.socialSecurityNumber ?? "",
+      birthPlace: emp.birthPlace ?? "",
+      nationality: emp.nationality ?? "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -370,6 +392,11 @@ export default function MitarbeiterPage() {
           departmentId: "",
           role: "",
           datevPersonnelNumber: "",
+          employmentStartDate: "",
+          dateOfBirth: "",
+          socialSecurityNumber: "",
+          birthPlace: "",
+          nationality: "",
         });
         fetchEmployees();
         window.dispatchEvent(new Event("shiftfy:usage-changed"));
@@ -834,6 +861,101 @@ export default function MitarbeiterPage() {
                 placeholder="z.B. 1"
                 maxLength={20}
               />
+            </div>
+
+            {/* ── SV-Stammdaten (für Sofortmeldung / eAU) ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                {t("form.svSection")}
+              </p>
+              <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 -mt-2">
+              {t("form.svSectionHint")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="employmentStartDate">
+                  {t("form.employmentStartDate")}
+                </Label>
+                <Input
+                  id="employmentStartDate"
+                  type="date"
+                  value={formData.employmentStartDate}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      employmentStartDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">{t("form.dateOfBirth")}</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      dateOfBirth: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="socialSecurityNumber">
+                {t("form.socialSecurityNumber")}
+              </Label>
+              <Input
+                id="socialSecurityNumber"
+                value={formData.socialSecurityNumber}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    socialSecurityNumber: e.target.value,
+                  }))
+                }
+                placeholder="z.B. 12345678A123"
+                maxLength={20}
+              />
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                {t("form.socialSecurityNumberHint")}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="birthPlace">{t("form.birthPlace")}</Label>
+                <Input
+                  id="birthPlace"
+                  value={formData.birthPlace}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      birthPlace: e.target.value,
+                    }))
+                  }
+                  placeholder="z.B. Berlin"
+                  maxLength={100}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nationality">{t("form.nationality")}</Label>
+                <Input
+                  id="nationality"
+                  value={formData.nationality}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      nationality: e.target.value,
+                    }))
+                  }
+                  placeholder="z.B. DE"
+                  maxLength={50}
+                />
+              </div>
             </div>
 
             {formError && (

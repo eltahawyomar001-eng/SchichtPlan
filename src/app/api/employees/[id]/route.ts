@@ -173,6 +173,30 @@ export async function PATCH(
             body.datevPersonnelNumber !== undefined
               ? body.datevPersonnelNumber?.trim() || null
               : undefined,
+          employmentStartDate:
+            body.employmentStartDate !== undefined
+              ? body.employmentStartDate
+                ? new Date(body.employmentStartDate)
+                : null
+              : undefined,
+          dateOfBirth:
+            body.dateOfBirth !== undefined
+              ? body.dateOfBirth
+                ? new Date(body.dateOfBirth)
+                : null
+              : undefined,
+          socialSecurityNumber:
+            body.socialSecurityNumber !== undefined
+              ? body.socialSecurityNumber?.trim() || null
+              : undefined,
+          birthPlace:
+            body.birthPlace !== undefined
+              ? body.birthPlace?.trim() || null
+              : undefined,
+          nationality:
+            body.nationality !== undefined
+              ? body.nationality?.trim() || null
+              : undefined,
         },
       });
 

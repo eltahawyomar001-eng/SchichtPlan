@@ -845,6 +845,14 @@
       "sectionWorkHours": "Arbeitsstunden",
       "sectionAccess": "Zugangsdaten",
       "datevPersonnelNumber": "DATEV-Personalnummer",
+      "svSection": "SV-Stammdaten (Sofortmeldung / eAU)",
+      "svSectionHint": "Pflichtangaben für SV-Meldungen (Sofortmeldung, eAU). Geburtsdatum + entweder Versicherungsnummer oder Geburtsort & Staatsangehörigkeit.",
+      "employmentStartDate": "Eintrittsdatum",
+      "dateOfBirth": "Geburtsdatum",
+      "socialSecurityNumber": "Versicherungsnummer",
+      "socialSecurityNumberHint": "Wenn unbekannt, Geburtsort und Staatsangehörigkeit angeben.",
+      "birthPlace": "Geburtsort",
+      "nationality": "Staatsangehörigkeit",
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail",
@@ -1146,6 +1154,28 @@
     "saved": "Gespeichert",
     "saveError": "Fehler beim Speichern",
     "networkError": "Netzwerkfehler"
+  },
+  "betriebsnummer": {
+    "title": "Betriebsnummer",
+    "description": "Die 8-stellige Betriebsnummer wird von der Bundesagentur für Arbeit vergeben und für SV-Meldungen (Sofortmeldung, DEÜV) benötigt.",
+    "label": "Betriebsnummer",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "saved": "Gespeichert",
+    "saveError": "Fehler beim Speichern",
+    "networkError": "Netzwerkfehler"
+  },
+  "sofortmeldung": {
+    "title": "Sofortmeldung (§ 28a SGB IV)",
+    "description": "Mitarbeiter in sofortmeldepflichtigen Branchen (z. B. Bau, Gastronomie, Sicherheit, Spedition) müssen vor Arbeitsantritt bei der DSRV angemeldet werden. Sendet die Sofortmeldung mit den hinterlegten SV-Stammdaten.",
+    "triggerButton": "Sofortmeldung senden",
+    "submitting": "Wird gesendet…",
+    "submitted": "Sofortmeldung übermittelt.",
+    "genericError": "Sofortmeldung konnte nicht gesendet werden.",
+    "networkError": "Netzwerkfehler — bitte erneut versuchen.",
+    "noSubmissions": "Noch keine Sofortmeldung übermittelt.",
+    "historyTitle": "Bisherige Meldungen",
+    "sandbox": "Sandbox"
   },
   "workspaceLogo": {
     "title": "Unternehmenslogo",

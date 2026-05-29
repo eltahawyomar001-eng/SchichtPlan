@@ -110,6 +110,12 @@ export async function POST(req: Request) {
       color,
       locationId,
       departmentId,
+      datevPersonnelNumber,
+      employmentStartDate,
+      dateOfBirth,
+      socialSecurityNumber,
+      birthPlace,
+      nationality,
     } = parsed.data;
 
     // MiLoG (Mindestlohngesetz) hard block — applies to all contract types.
@@ -151,6 +157,14 @@ export async function POST(req: Request) {
               .padStart(6, "0")}`,
           locationId: locationId || null,
           departmentId: departmentId || null,
+          datevPersonnelNumber: datevPersonnelNumber?.trim() || null,
+          employmentStartDate: employmentStartDate
+            ? new Date(employmentStartDate)
+            : null,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+          socialSecurityNumber: socialSecurityNumber?.trim() || null,
+          birthPlace: birthPlace?.trim() || null,
+          nationality: nationality?.trim() || null,
           workspaceId,
           pinHash,
         },

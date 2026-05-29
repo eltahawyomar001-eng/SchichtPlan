@@ -845,6 +845,14 @@
       "sectionWorkHours": "Work Hours",
       "sectionAccess": "Account Access",
       "datevPersonnelNumber": "DATEV Personnel Number",
+      "svSection": "Social-security master data (Sofortmeldung / eAU)",
+      "svSectionHint": "Required for SV submissions (Sofortmeldung, eAU). Date of birth plus either insurance number or birthplace & nationality.",
+      "employmentStartDate": "Employment start date",
+      "dateOfBirth": "Date of birth",
+      "socialSecurityNumber": "Insurance number",
+      "socialSecurityNumberHint": "If unknown, provide birthplace and nationality instead.",
+      "birthPlace": "Place of birth",
+      "nationality": "Nationality",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
@@ -1146,6 +1154,28 @@
     "saved": "Saved",
     "saveError": "Error saving",
     "networkError": "Network error"
+  },
+  "betriebsnummer": {
+    "title": "Betriebsnummer (Employer Number)",
+    "description": "The 8-digit Betriebsnummer is issued by the Bundesagentur für Arbeit and is required for social-security submissions (Sofortmeldung, DEÜV).",
+    "label": "Betriebsnummer",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveError": "Error saving",
+    "networkError": "Network error"
+  },
+  "sofortmeldung": {
+    "title": "Sofortmeldung (§ 28a SGB IV)",
+    "description": "Employees in regulated sectors (e.g. construction, hospitality, security, freight) must be reported to the DSRV before they start work. Sends the Sofortmeldung using the stored social-security master data.",
+    "triggerButton": "Send Sofortmeldung",
+    "submitting": "Sending…",
+    "submitted": "Sofortmeldung submitted.",
+    "genericError": "Could not send Sofortmeldung.",
+    "networkError": "Network error — please try again.",
+    "noSubmissions": "No Sofortmeldung sent yet.",
+    "historyTitle": "Previous submissions",
+    "sandbox": "Sandbox"
   },
   "workspaceLogo": {
     "title": "Company Logo",

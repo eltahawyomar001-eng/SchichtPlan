@@ -101,12 +101,12 @@ export async function exchangeCodeForTokens(params: {
   if (!clientId || !clientSecret)
     throw new Error("DATEV credentials not configured");
 
+  // DATEV app is a Public client — no client_secret in token exchange.
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code: params.code,
     redirect_uri: params.redirectUri,
     client_id: clientId,
-    client_secret: clientSecret,
   });
 
   const res = await fetch(DATEV_ENDPOINTS.token, {
@@ -135,13 +135,12 @@ export async function refreshAccessToken(
   refreshToken: string,
 ): Promise<TokenSet> {
   const clientId = process.env.DATEV_CLIENT_ID!;
-  const clientSecret = process.env.DATEV_CLIENT_SECRET!;
 
+  // Public client — no client_secret.
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
     client_id: clientId,
-    client_secret: clientSecret,
   });
 
   const res = await fetch(DATEV_ENDPOINTS.token, {

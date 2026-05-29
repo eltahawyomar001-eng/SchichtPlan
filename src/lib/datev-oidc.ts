@@ -39,9 +39,8 @@ export const DATEV_ENDPOINTS = {
   get authorize() {
     return `${baseLogin()}/authorize`;
   },
-  get token() {
-    return `${baseApi()}/token`;
-  },
+  // Token endpoint is always api.datev.de — same for sandbox and production.
+  token: "https://api.datev.de/token",
   get userinfo() {
     return `${baseApi()}/userinfo`;
   },

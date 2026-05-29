@@ -165,6 +165,7 @@ model Workspace {
   /// Betriebsnummer (8-digit employer number from the Bundesagentur für Arbeit).
   /// Required for Sofortmeldung and eAU transmission via the SV gateway.
   betriebsnummer       String?
+  logo                 String?
   datevConsultantNumber String?
   datevClientNumber     String?
   onboardingCompleted  Boolean               @default(false)

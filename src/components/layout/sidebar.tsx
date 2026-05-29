@@ -389,6 +389,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   // Works-council members may be regular employees — surface the portal link
   // for them even though it lives in the management nav group.
   const [brMember, setBrMember] = useState(false);
+  const [workspaceLogo, setWorkspaceLogo] = useState<string | null>(null);
+  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/workspace")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setWorkspaceLogo(d.logo ?? null);
+          setWorkspaceName(d.name ?? null);
+        }
+      })
+      .catch(() => {});
+  }, [session]);
+
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -529,6 +545,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <XIcon className="h-5 w-5" />
           </button>
         </div>
+
+        {/* Workspace identity */}
+        {workspaceLogo && (
+          <div className="px-4 pb-2">
+            <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 bg-gray-50 dark:bg-zinc-800/50">
+              <div className="relative h-7 w-7 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex-shrink-0">
+                <img
+                  src={workspaceLogo}
+                  alt=""
+                  className="h-full w-full object-contain p-0.5"
+                />
+              </div>
+              {workspaceName && (
+                <span className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate">
+                  {workspaceName}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Search bar */}
         <div className="px-3 pb-2">

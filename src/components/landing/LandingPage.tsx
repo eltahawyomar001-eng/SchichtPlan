@@ -1552,6 +1552,8 @@ function FAQSection() {
     { q: t("faq3Q"), a: t("faq3A") },
     { q: t("faq4Q"), a: t("faq4A") },
     { q: t("faq5Q"), a: t("faq5A") },
+    { q: t("faqEau"), a: t("faqEauAnswer") },
+    { q: t("faqDatevConnect"), a: t("faqDatevConnectAnswer") },
   ];
 
   return (

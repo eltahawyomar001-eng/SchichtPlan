@@ -48,6 +48,7 @@ export const GET = withRoute("/api/workspace", "GET", async (req) => {
       defaultBreakMinutes: true,
       datevConsultantNumber: true,
       datevClientNumber: true,
+      logo: true,
       createdAt: true,
     },
   });
@@ -125,6 +126,7 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
       defaultBreakMinutes: true,
       datevConsultantNumber: true,
       datevClientNumber: true,
+      logo: true,
     },
   });
 

@@ -25,10 +25,13 @@ export async function GET(req: Request) {
 
   const settingsUrl = `${process.env.NEXTAUTH_URL ?? ""}/einstellungen?datev=`;
 
-  // User denied access on DATEV's side.
+  // User denied access or DATEV returned an error.
   if (error) {
-    log.warn("[datev-callback] user denied or error from DATEV", { error });
-    return NextResponse.redirect(`${settingsUrl}denied`);
+    const desc = searchParams.get("error_description") ?? "";
+    log.warn("[datev-callback] error from DATEV", { error, desc });
+    return NextResponse.redirect(
+      `${settingsUrl}denied&detail=${encodeURIComponent(`${error}: ${desc}`.slice(0, 200))}`,
+    );
   }
 
   if (!code || !state) {

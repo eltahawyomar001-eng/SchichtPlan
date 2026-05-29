@@ -51,11 +51,14 @@ export function DATEVConnectCard() {
     if (typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search);
     const result = p.get("datev");
+    const detail = p.get("detail");
     if (result) {
       fetchStatus();
-      // Clean the query param without a page reload.
-      const clean = window.location.pathname;
-      window.history.replaceState({}, "", clean);
+      if (result !== "connected") {
+        const msg = detail ? decodeURIComponent(detail) : result;
+        alert(`DATEV Fehler: ${msg}`);
+      }
+      window.history.replaceState({}, "", window.location.pathname);
     }
   }, [fetchStatus]);
 

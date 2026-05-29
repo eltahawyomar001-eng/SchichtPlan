@@ -66,20 +66,18 @@ export function generateState(): string {
 // ── Build the authorization URL ─────────────────────────────────
 export function buildAuthorizationUrl(params: {
   state: string;
-  codeChallenge: string;
   redirectUri: string;
 }): string {
   const clientId = process.env.DATEV_CLIENT_ID;
   if (!clientId) throw new Error("DATEV_CLIENT_ID not set");
 
+  // DATEV uses standard Authorization Code flow without PKCE.
   const q = new URLSearchParams({
     response_type: "code",
     client_id: clientId,
     redirect_uri: params.redirectUri,
     scope: "openid datev:hr:eau",
     state: params.state,
-    code_challenge: params.codeChallenge,
-    code_challenge_method: "S256",
   });
   return `${DATEV_ENDPOINTS.authorize}?${q.toString()}`;
 }
@@ -96,7 +94,6 @@ export interface TokenSet {
 
 export async function exchangeCodeForTokens(params: {
   code: string;
-  codeVerifier: string;
   redirectUri: string;
 }): Promise<TokenSet> {
   const clientId = process.env.DATEV_CLIENT_ID!;
@@ -110,7 +107,6 @@ export async function exchangeCodeForTokens(params: {
     redirect_uri: params.redirectUri,
     client_id: clientId,
     client_secret: clientSecret,
-    code_verifier: params.codeVerifier,
   });
 
   const res = await fetch(DATEV_ENDPOINTS.token, {

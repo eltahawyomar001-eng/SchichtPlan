@@ -100,22 +100,39 @@ export async function exchangeCodeForTokens(params: {
   codeVerifier: string;
   redirectUri: string;
 }): Promise<TokenSet> {
-  const clientId = process.env.DATEV_CLIENT_ID!;
-  if (!clientId) throw new Error("DATEV_CLIENT_ID not configured");
+  const clientId = process.env.DATEV_CLIENT_ID;
   const clientSecret = process.env.DATEV_CLIENT_SECRET;
+
+  if (!clientId) throw new Error("DATEV_CLIENT_ID not configured");
+
+  log.info("[datev-oidc] exchanging code for tokens", {
+    endpoint: DATEV_ENDPOINTS.token,
+    hasSecret: !!clientSecret,
+    clientIdPrefix: clientId.slice(0, 8),
+    redirectUri: params.redirectUri,
+  });
+
+  // OIDC default auth method is client_secret_basic: credentials in Authorization header.
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+  if (clientId && clientSecret) {
+    headers["Authorization"] =
+      `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
+  }
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code: params.code,
     redirect_uri: params.redirectUri,
-    client_id: clientId,
     code_verifier: params.codeVerifier,
-    ...(clientSecret ? { client_secret: clientSecret } : {}),
+    // client_id still included for servers that accept both methods
+    client_id: clientId,
   });
 
   const res = await fetch(DATEV_ENDPOINTS.token, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers,
     body,
     signal: AbortSignal.timeout(15_000),
   });
@@ -125,6 +142,7 @@ export async function exchangeCodeForTokens(params: {
     log.error("[datev-oidc] token exchange failed", {
       status: res.status,
       body: text,
+      hasSecret: !!clientSecret,
     });
     throw new Error(
       `DATEV token exchange failed: ${res.status} ${text.slice(0, 200)}`,
@@ -141,16 +159,23 @@ export async function refreshAccessToken(
   const clientId = process.env.DATEV_CLIENT_ID!;
   const clientSecret = process.env.DATEV_CLIENT_SECRET;
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+  if (clientId && clientSecret) {
+    headers["Authorization"] =
+      `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
+  }
+
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
     client_id: clientId,
-    ...(clientSecret ? { client_secret: clientSecret } : {}),
   });
 
   const res = await fetch(DATEV_ENDPOINTS.token, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers,
     body,
     signal: AbortSignal.timeout(15_000),
   });

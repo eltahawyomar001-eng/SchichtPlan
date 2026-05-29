@@ -1135,6 +1135,19 @@
       "WAGE_UNDOCUMENTED": "No hourly rate on file — minimum wage cannot be evidenced."
     }
   },
+  "datevConnect": {
+    "title": "DATEV Connection (hr:eau)",
+    "description": "Connect your workspace to DATEV to retrieve electronic sick notes (eAU) directly and submit Sofortmeldungen.",
+    "statusConnected": "Connected",
+    "statusExpired": "Token expired — please reconnect",
+    "tokenExpires": "Token expires",
+    "connectedOn": "Connected on",
+    "scope": "Permissions",
+    "connect": "Connect to DATEV",
+    "reconnect": "Reconnect",
+    "disconnect": "Disconnect",
+    "disconnecting": "Disconnecting…"
+  },
   "locationsPage": {
     "title": "Locations",
     "description": "Manage and edit your locations",

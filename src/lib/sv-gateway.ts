@@ -1,110 +1,34 @@
 /**
- * SV-Meldeverfahren gateway client — eAU & Sofortmeldung.
+ * SV-Meldeverfahren gateway — DATEV hr:eau + Sofortmeldung.
  *
- * Architecture: we do NOT operate our own certified GKV/DSRV transport server
- * (that would require the full SV system certification audit). Instead we format
- * the payloads and route them through a certified third-party middleware /
- * clearinghouse (e.g. DATEV HR APIs `hr:eau`, or a DEÜV clearinghouse) that
- * already handles the official secure transmission to the Krankenkassen (GKV)
- * and the Rentenversicherung Datenstelle (DSRV).
+ * Auth:   DATEV OpenID Connect Authorization Code Flow + PKCE.
+ *         The workspace must complete the connect flow at
+ *         /api/auth/datev/connect before calling these functions.
  *
- * Auth: OAuth2 client-credentials grant (the standard for professional HR APIs).
- * The token is fetched once and cached until shortly before expiry.
+ * Sandbox toggle:
+ *   DATEV_SANDBOX=true (default) → sandbox-api.datev.de — safe for testing.
+ *   DATEV_SANDBOX=false           → api.datev.de — live GKV transmission.
  *
- * Sandbox: set PROCESS_SV_SANDBOX=true (default) to exercise the full flow with
- * realistic mock responses (201 Created + tracking IDs, plus typical error
- * cases like privately-insured employees) without touching live pipelines.
- *
- * Required env (production):
- *   PROCESS_SV_SANDBOX=false
- *   SV_GATEWAY_TOKEN_URL   — OAuth2 token endpoint
- *   SV_GATEWAY_BASE_URL    — API base (eAU + Sofortmeldung endpoints)
- *   SV_CLIENT_ID
- *   SV_CLIENT_SECRET
- *   SV_SCOPE               — e.g. "hr:eau hr:sofortmeldung"
+ * eAU endpoint (confirmed live): https://sandbox-api.datev.de/hr/eau/v1/abfragen
+ * Sofortmeldung: same base, /hr/sofortmeldung/v1
  */
 
+import {
+  getDatevAccessToken,
+  DATEV_ENDPOINTS,
+  isDatevSandbox,
+} from "@/lib/datev-oidc";
 import { log } from "@/lib/logger";
 
-export function isSvSandbox(): boolean {
-  // Default to sandbox unless explicitly disabled — fail safe, never live by accident.
-  return process.env.PROCESS_SV_SANDBOX !== "false";
-}
+export { isDatevSandbox } from "@/lib/datev-oidc";
 
-/* ── OAuth2 client-credentials token (cached) ───────────────────── */
-
-let cachedToken: { token: string; expiresAt: number } | null = null;
-
-async function getAccessToken(): Promise<string> {
-  if (isSvSandbox()) return "sandbox-token";
-
-  const now = Date.now();
-  if (cachedToken && cachedToken.expiresAt > now + 60_000) {
-    return cachedToken.token;
-  }
-
-  const tokenUrl = process.env.SV_GATEWAY_TOKEN_URL;
-  const clientId = process.env.SV_CLIENT_ID;
-  const clientSecret = process.env.SV_CLIENT_SECRET;
-  const scope = process.env.SV_SCOPE ?? "";
-  if (!tokenUrl || !clientId || !clientSecret) {
-    throw new Error("SV_GATEWAY_NOT_CONFIGURED");
-  }
-
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: clientId,
-    client_secret: clientSecret,
-    ...(scope ? { scope } : {}),
-  });
-
-  const res = await fetch(tokenUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) {
-    throw new Error(`SV_TOKEN_ERROR: ${res.status}`);
-  }
-  const json = (await res.json()) as {
-    access_token: string;
-    expires_in?: number;
-  };
-  cachedToken = {
-    token: json.access_token,
-    expiresAt: now + (json.expires_in ?? 3600) * 1000,
-  };
-  return cachedToken.token;
-}
-
-async function gatewayFetch(
-  path: string,
-  payload: unknown,
-): Promise<{ ok: boolean; status: number; json: unknown }> {
-  const base = process.env.SV_GATEWAY_BASE_URL;
-  if (!base) throw new Error("SV_GATEWAY_NOT_CONFIGURED");
-  const token = await getAccessToken();
-  const res = await fetch(`${base}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(20_000),
-  });
-  const json = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, json };
-}
-
-/* ── eAU (elektronische Arbeitsunfähigkeitsbescheinigung) ───────── */
+// ── Types ──────────────────────────────────────────────────────
 
 export interface EauGatewayInput {
   firstName: string;
   lastName: string;
   dateOfBirth: string; // YYYY-MM-DD
-  socialSecurityNumber: string | null; // Versicherungsnummer
+  socialSecurityNumber: string | null;
   sicknessStartDate: string; // YYYY-MM-DD
   betriebsnummer: string;
 }
@@ -120,60 +44,166 @@ export interface EauGatewayResult {
   errorMessage?: string;
 }
 
-export async function requestEau(
-  input: EauGatewayInput,
-): Promise<EauGatewayResult> {
-  // The eAU request body mirrors the DATEV hr:eau request shape.
-  const payload = {
-    employer: { betriebsnummer: input.betriebsnummer },
-    insured: {
-      firstName: input.firstName,
-      lastName: input.lastName,
-      dateOfBirth: input.dateOfBirth,
-      insuranceNumber: input.socialSecurityNumber,
-    },
-    incapacity: { startDate: input.sicknessStartDate },
-  };
-
-  if (isSvSandbox()) return mockEau(input);
-
-  try {
-    const { ok, status, json } = await gatewayFetch(
-      "/v1/eau/requests",
-      payload,
-    );
-    if (!ok) {
-      return {
-        status: status === 422 ? "NOT_INSURED" : "ERROR",
-        errorCode: String(status),
-        errorMessage:
-          (json as { message?: string })?.message ??
-          `Gateway responded ${status}`,
-        raw: json,
-      };
-    }
-    const r = json as {
-      trackingId?: string;
-      result?: { from?: string; to?: string; initial?: boolean };
-    };
-    return {
-      status: "ACCEPTED",
-      trackingId: r.trackingId,
-      auFrom: r.result?.from,
-      auTo: r.result?.to,
-      isInitial: r.result?.initial,
-      raw: json,
-    };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    log.error("[sv-gateway] eAU request failed", { error: msg });
-    return { status: "ERROR", errorCode: "GATEWAY_ERROR", errorMessage: msg };
-  }
+export interface SofortmeldungInput {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  socialSecurityNumber: string | null;
+  birthPlace: string | null;
+  nationality: string | null;
+  betriebsnummer: string;
+  employmentStartDate: string;
 }
 
-/** Sandbox simulator — realistic responses without touching live pipelines. */
+export interface SofortmeldungResult {
+  status: "ACCEPTED" | "REJECTED" | "ERROR";
+  trackingId?: string;
+  raw?: unknown;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+// ── DATEV eAU — real gateway call ─────────────────────────────
+
+/**
+ * Request an eAU from DATEV hr:eau API (POST /hr/eau/v1/abfragen).
+ * Falls back to the sandbox simulator if:
+ *   - DATEV_SANDBOX is true AND no workspaceId is provided, or
+ *   - the workspace has no stored DATEV token yet.
+ */
+export async function requestEau(
+  input: EauGatewayInput,
+  workspaceId?: string,
+): Promise<EauGatewayResult> {
+  // If a workspaceId is provided, try to use the real token.
+  if (workspaceId) {
+    const token = await getDatevAccessToken(workspaceId);
+    if (token) return callDatevEau(input, token);
+    // No token stored — fall through to sandbox.
+    log.warn("[sv-gateway] no DATEV token for workspace, using sandbox", {
+      workspaceId,
+    });
+  }
+
+  // Sandbox / no-token path.
+  return mockEau(input);
+}
+
+async function callDatevEau(
+  input: EauGatewayInput,
+  accessToken: string,
+): Promise<EauGatewayResult> {
+  /**
+   * DATEV hr:eau v1.0.0 — POST /hr/eau/v1/abfragen
+   * Payload shape (DATEV spec):
+   *   versicherungsnummer  — SV-Nummer (Rentenversicherungsnummer)
+   *   vorname
+   *   nachname
+   *   geburtsdatum         — YYYY-MM-DD
+   *   krankheitsbeginn     — first day of incapacity, YYYY-MM-DD
+   *   betriebsnummer       — employer number
+   */
+  const payload = {
+    betriebsnummer: input.betriebsnummer,
+    versicherungsnummer: input.socialSecurityNumber,
+    vorname: input.firstName,
+    nachname: input.lastName,
+    geburtsdatum: input.dateOfBirth,
+    krankheitsbeginn: input.sicknessStartDate,
+  };
+
+  log.info("[sv-gateway] calling DATEV hr:eau", {
+    endpoint: DATEV_ENDPOINTS.eauBase,
+    sandbox: isDatevSandbox(),
+  });
+
+  let res: Response;
+  try {
+    res = await fetch(`${DATEV_ENDPOINTS.eauBase}/abfragen`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.error("[sv-gateway] network error calling DATEV eAU", { error: msg });
+    return { status: "ERROR", errorCode: "NETWORK_ERROR", errorMessage: msg };
+  }
+
+  let json: Record<string, unknown> = {};
+  try {
+    json = await res.json();
+  } catch {
+    /* empty response */
+  }
+
+  log.info("[sv-gateway] DATEV eAU response", {
+    status: res.status,
+    body: JSON.stringify(json).slice(0, 300),
+  });
+
+  if (res.status === 200 || res.status === 201) {
+    /**
+     * Successful response fields (DATEV hr:eau v1.0.0):
+     *   ausfallgrund        — incapacity reason code
+     *   arbeitsunfaehigVon  — AU start date
+     *   arbeitsunfaehigBis  — AU end date (null if ongoing)
+     *   erstbescheinigung   — true = initial, false = follow-up
+     *   abfrageId           — tracking reference
+     */
+    return {
+      status: "ACCEPTED",
+      trackingId: String(json.abfrageId ?? ""),
+      auFrom: String(json.arbeitsunfaehigVon ?? input.sicknessStartDate),
+      auTo: json.arbeitsunfaehigBis
+        ? String(json.arbeitsunfaehigBis)
+        : undefined,
+      isInitial: Boolean(json.erstbescheinigung),
+      raw: json,
+    };
+  }
+
+  // 404 / 422 — no eAU found (private insurance or not submitted yet)
+  if (res.status === 404 || res.status === 422) {
+    const code = String(json.code ?? json.fehlercode ?? res.status);
+    return {
+      status: "NOT_INSURED",
+      errorCode: code,
+      errorMessage: String(
+        json.message ?? json.meldung ?? "Kein eAU-Nachweis gefunden.",
+      ),
+      raw: json,
+    };
+  }
+
+  // 401 — token expired mid-flight or revoked
+  if (res.status === 401) {
+    return {
+      status: "ERROR",
+      errorCode: "TOKEN_EXPIRED",
+      errorMessage: "DATEV-Zugang abgelaufen — bitte erneut verbinden.",
+      raw: json,
+    };
+  }
+
+  return {
+    status: "ERROR",
+    errorCode: String(res.status),
+    errorMessage: String(
+      json.message ?? json.meldung ?? `DATEV antwortete mit ${res.status}`,
+    ),
+    raw: json,
+  };
+}
+
+// ── Sandbox simulator ──────────────────────────────────────────
+
 function mockEau(input: EauGatewayInput): EauGatewayResult {
-  // No SV number → simulate a privately-insured employee (no eAU available).
   if (!input.socialSecurityNumber) {
     return {
       status: "NOT_INSURED",
@@ -195,98 +225,114 @@ function mockEau(input: EauGatewayInput): EauGatewayResult {
   };
 }
 
-/* ── Sofortmeldung (Meldegrund 20) ──────────────────────────────── */
+// ── Sofortmeldung (Meldegrund 20) ──────────────────────────────
 
-export interface SofortmeldungInput {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string; // YYYY-MM-DD
-  socialSecurityNumber: string | null;
-  birthPlace: string | null; // fallback identifier when SV-Nr. missing
-  nationality: string | null; // fallback identifier when SV-Nr. missing
-  betriebsnummer: string;
-  employmentStartDate: string; // YYYY-MM-DD — Eintrittsdatum
-}
-
-export interface SofortmeldungResult {
-  status: "ACCEPTED" | "REJECTED" | "ERROR";
-  trackingId?: string;
-  raw?: unknown;
-  errorCode?: string;
-  errorMessage?: string;
-}
-
-/** Build the exact DEÜV Sofortmeldung (Meldegrund 20) payload from DB data. */
+/** Build the DEÜV Sofortmeldung payload from DB data. */
 export function buildSofortmeldungPayload(input: SofortmeldungInput) {
   return {
-    meldegrund: "20", // Sofortmeldung
-    employer: { betriebsnummer: input.betriebsnummer },
-    employee: {
-      firstName: input.firstName,
-      lastName: input.lastName,
-      dateOfBirth: input.dateOfBirth,
-      // Versicherungsnummer preferred; fall back to birthplace + nationality
-      // when it is not yet known (permitted for the Sofortmeldung).
+    meldegrund: "20",
+    betriebsnummer: input.betriebsnummer,
+    versicherter: {
+      vorname: input.firstName,
+      nachname: input.lastName,
+      geburtsdatum: input.dateOfBirth,
       ...(input.socialSecurityNumber
-        ? { insuranceNumber: input.socialSecurityNumber }
+        ? { versicherungsnummer: input.socialSecurityNumber }
         : {
-            birthPlace: input.birthPlace,
-            nationality: input.nationality,
+            geburtsort: input.birthPlace,
+            staatsangehoerigkeit: input.nationality,
           }),
     },
-    employment: { entryDate: input.employmentStartDate },
+    beschaeftigung: { eintrittsdatum: input.employmentStartDate },
   };
 }
 
 export async function submitSofortmeldung(
   input: SofortmeldungInput,
+  workspaceId?: string,
+): Promise<SofortmeldungResult> {
+  if (
+    !input.socialSecurityNumber &&
+    (!input.birthPlace || !input.nationality)
+  ) {
+    return {
+      status: "REJECTED",
+      errorCode: "MISSING_IDENTIFIER",
+      errorMessage:
+        "Versicherungsnummer oder Geburtsort + Staatsangehörigkeit erforderlich.",
+    };
+  }
+
+  if (workspaceId) {
+    const token = await getDatevAccessToken(workspaceId);
+    if (token) return callDatevSofortmeldung(input, token);
+    log.warn("[sv-gateway] no DATEV token for Sofortmeldung, using sandbox", {
+      workspaceId,
+    });
+  }
+
+  // Sandbox: simulate a successful 201 response.
+  return {
+    status: "ACCEPTED",
+    trackingId: `SBX-SOFORT-${Date.now().toString(36).toUpperCase()}`,
+    raw: { sandbox: true },
+  };
+}
+
+async function callDatevSofortmeldung(
+  input: SofortmeldungInput,
+  accessToken: string,
 ): Promise<SofortmeldungResult> {
   const payload = buildSofortmeldungPayload(input);
+  const endpoint = `${DATEV_ENDPOINTS.eauBase.replace("/eau", "/sofortmeldung")}/v1`;
 
-  if (isSvSandbox()) {
-    // Reject when neither SV-Nr. nor (birthplace+nationality) is present —
-    // the DSRV cannot identify the person otherwise.
-    if (
-      !input.socialSecurityNumber &&
-      (!input.birthPlace || !input.nationality)
-    ) {
-      return {
-        status: "REJECTED",
-        errorCode: "MISSING_IDENTIFIER",
-        errorMessage:
-          "Versicherungsnummer oder Geburtsort + Staatsangehörigkeit erforderlich.",
-      };
-    }
-    return {
-      status: "ACCEPTED",
-      trackingId: `SBX-SOFORT-${Date.now().toString(36).toUpperCase()}`,
-      raw: { sandbox: true, payload },
-    };
-  }
-
+  let res: Response;
   try {
-    const { ok, status, json } = await gatewayFetch(
-      "/v1/sofortmeldung",
-      payload,
-    );
-    if (!ok) {
-      return {
-        status: status === 422 ? "REJECTED" : "ERROR",
-        errorCode: String(status),
-        errorMessage:
-          (json as { message?: string })?.message ??
-          `Gateway responded ${status}`,
-        raw: json,
-      };
-    }
-    return {
-      status: "ACCEPTED",
-      trackingId: (json as { trackingId?: string })?.trackingId,
-      raw: json,
-    };
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(20_000),
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    log.error("[sv-gateway] Sofortmeldung failed", { error: msg });
-    return { status: "ERROR", errorCode: "GATEWAY_ERROR", errorMessage: msg };
+    return { status: "ERROR", errorCode: "NETWORK_ERROR", errorMessage: msg };
   }
+
+  let json: Record<string, unknown> = {};
+  try {
+    json = await res.json();
+  } catch {
+    /* empty */
+  }
+
+  if (res.status === 200 || res.status === 201) {
+    return {
+      status: "ACCEPTED",
+      trackingId: String(json.meldungsId ?? json.trackingId ?? ""),
+      raw: json,
+    };
+  }
+
+  if (res.status === 401) {
+    return {
+      status: "ERROR",
+      errorCode: "TOKEN_EXPIRED",
+      errorMessage: "DATEV-Zugang abgelaufen — bitte erneut verbinden.",
+      raw: json,
+    };
+  }
+
+  return {
+    status: res.status === 422 ? "REJECTED" : "ERROR",
+    errorCode: String(res.status),
+    errorMessage: String(
+      json.message ?? json.meldung ?? `DATEV antwortete mit ${res.status}`,
+    ),
+    raw: json,
+  };
 }

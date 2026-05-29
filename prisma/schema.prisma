@@ -218,6 +218,25 @@ model Workspace {
   eauRequests          EauRequest[]
   auditDossiers        AuditDossier[]
   svSubmissions        SvSubmission[]
+  datevToken           DATEVToken?
+}
+
+/// DATEV OAuth2 token store — one per workspace, refreshed automatically.
+/// Tokens are never exposed to clients; server-only.
+model DATEVToken {
+  id            String    @id @default(cuid())
+  workspaceId   String    @unique
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  accessToken   String    @db.Text
+  refreshToken  String?   @db.Text
+  idToken       String?   @db.Text
+  tokenType     String    @default("Bearer")
+  expiresAt     DateTime
+  scope         String?
+  sandbox       Boolean   @default(true)
+  connectedById String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════════

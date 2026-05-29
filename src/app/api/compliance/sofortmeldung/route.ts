@@ -8,7 +8,7 @@ import { svSofortmeldungSchema, validateBody } from "@/lib/validations";
 import {
   submitSofortmeldung,
   buildSofortmeldungPayload,
-  isSvSandbox,
+  isDatevSandbox as isSvSandbox,
 } from "@/lib/sv-gateway";
 
 export const dynamic = "force-dynamic";
@@ -120,7 +120,7 @@ export const POST = withRoute(
       employmentStartDate: entryDate!,
     };
 
-    const result = await submitSofortmeldung(input);
+    const result = await submitSofortmeldung(input, workspaceId);
 
     const submission = await prisma.svSubmission.create({
       data: {

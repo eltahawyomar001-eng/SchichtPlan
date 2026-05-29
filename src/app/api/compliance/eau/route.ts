@@ -7,7 +7,7 @@ import { createAuditLog } from "@/lib/audit";
 import { svEauSchema, validateBody } from "@/lib/validations";
 import {
   requestEau,
-  isSvSandbox,
+  isDatevSandbox as isSvSandbox,
   type EauGatewayResult,
 } from "@/lib/sv-gateway";
 
@@ -99,14 +99,18 @@ export const POST = withRoute("/api/compliance/eau", "POST", async (req) => {
 
   const sandbox = isSvSandbox();
   const dob = employee.dateOfBirth!.toLocaleDateString("en-CA");
-  const result = await requestEau({
-    firstName: employee.firstName,
-    lastName: employee.lastName,
-    dateOfBirth: dob,
-    socialSecurityNumber: employee.socialSecurityNumber,
-    sicknessStartDate,
-    betriebsnummer: workspace!.betriebsnummer!,
-  });
+  // Pass workspaceId so the gateway uses the stored DATEV token when available.
+  const result = await requestEau(
+    {
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      dateOfBirth: dob,
+      socialSecurityNumber: employee.socialSecurityNumber,
+      sicknessStartDate,
+      betriebsnummer: workspace!.betriebsnummer!,
+    },
+    workspaceId,
+  );
 
   const submission = await prisma.svSubmission.create({
     data: {

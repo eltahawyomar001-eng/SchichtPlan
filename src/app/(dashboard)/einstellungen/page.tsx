@@ -37,6 +37,7 @@ import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
+import { DATEVConnectCard } from "@/components/settings/datev-connect-card";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();
@@ -1099,6 +1100,9 @@ export default function EinstellungenPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* DATEV Integration */}
+        <DATEVConnectCard />
 
         {/* DSGVO: Data Privacy & Account Card */}
         <Card>

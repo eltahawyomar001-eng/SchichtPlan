@@ -1135,6 +1135,19 @@
       "WAGE_UNDOCUMENTED": "Kein Stundenlohn hinterlegt — Mindestlohn nicht nachweisbar."
     }
   },
+  "datevConnect": {
+    "title": "DATEV-Verbindung (hr:eau)",
+    "description": "Verbinden Sie Ihr Workspace mit DATEV, um elektronische Arbeitsunfähigkeitsbescheinigungen (eAU) direkt abzurufen und Sofortmeldungen zu übermitteln.",
+    "statusConnected": "Verbunden",
+    "statusExpired": "Token abgelaufen — bitte erneut verbinden",
+    "tokenExpires": "Token läuft ab",
+    "connectedOn": "Verbunden am",
+    "scope": "Berechtigungen",
+    "connect": "Mit DATEV verbinden",
+    "reconnect": "Erneut verbinden",
+    "disconnect": "Trennen",
+    "disconnecting": "Wird getrennt…"
+  },
   "locationsPage": {
     "title": "Standorte",
     "description": "Standorte verwalten und bearbeiten",

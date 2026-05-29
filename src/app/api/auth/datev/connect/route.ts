@@ -10,7 +10,11 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/authorization";
 import { cache } from "@/lib/cache";
-import { generateState, buildAuthorizationUrl } from "@/lib/datev-oidc";
+import {
+  generatePKCE,
+  generateState,
+  buildAuthorizationUrl,
+} from "@/lib/datev-oidc";
 
 export const dynamic = "force-dynamic";
 
@@ -30,16 +34,25 @@ export async function GET() {
     );
   }
 
+  const { verifier, challenge } = generatePKCE();
   const state = generateState();
 
-  // Store workspaceId + userId keyed by state — 10 min CSRF window.
-  await cache.set(`datev:oidc:${state}`, { workspaceId, userId: user.id }, 600);
+  // Store verifier + workspaceId + userId keyed by state — 10 min CSRF window.
+  await cache.set(
+    `datev:oidc:${state}`,
+    { verifier, workspaceId, userId: user.id },
+    600,
+  );
 
   const redirectUri =
     process.env.DATEV_REDIRECT_URI ??
     `${process.env.NEXTAUTH_URL}/api/auth/callback/datev`;
 
-  const authUrl = buildAuthorizationUrl({ state, redirectUri });
+  const authUrl = buildAuthorizationUrl({
+    state,
+    codeChallenge: challenge,
+    redirectUri,
+  });
 
   return NextResponse.redirect(authUrl);
 }

@@ -40,6 +40,7 @@ export async function GET(req: Request) {
 
   // Retrieve and consume the state session stored during /connect.
   const session = await cache.get<{
+    verifier: string;
     workspaceId: string;
     userId: string;
   }>(`datev:oidc:${state}`);
@@ -58,6 +59,7 @@ export async function GET(req: Request) {
   try {
     tokens = await exchangeCodeForTokens({
       code,
+      codeVerifier: session.verifier,
       redirectUri,
     });
   } catch (err) {

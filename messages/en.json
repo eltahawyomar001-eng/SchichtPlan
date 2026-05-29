@@ -844,6 +844,7 @@
       "sectionPersonal": "Personal Information",
       "sectionWorkHours": "Work Hours",
       "sectionAccess": "Account Access",
+      "datevPersonnelNumber": "DATEV Personnel Number",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
@@ -1134,6 +1135,17 @@
       "WAGE_BELOW_MIN": "Hourly rate {rate} € is below the minimum wage of {min} € (MiLoG).",
       "WAGE_UNDOCUMENTED": "No hourly rate on file — minimum wage cannot be evidenced."
     }
+  },
+  "datevNumbers": {
+    "title": "DATEV Credentials",
+    "description": "Consultant and client numbers apply to the whole workspace and are provided by your tax advisor.",
+    "consultantNumber": "Consultant Number (Beraternummer)",
+    "clientNumber": "Client Number (Mandantennummer)",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveError": "Error saving",
+    "networkError": "Network error"
   },
   "datevConnect": {
     "title": "DATEV Connection (hr:eau)",

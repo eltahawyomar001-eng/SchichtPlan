@@ -82,6 +82,7 @@ interface Employee {
   departmentId?: string | null;
   department?: DepartmentItem | null;
   user?: { id: string; role: string } | null;
+  datevPersonnelNumber?: string | null;
 }
 
 export default function MitarbeiterPage() {
@@ -120,6 +121,7 @@ export default function MitarbeiterPage() {
     locationId: "",
     departmentId: "",
     role: "",
+    datevPersonnelNumber: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -269,6 +271,7 @@ export default function MitarbeiterPage() {
       locationId: "",
       departmentId: "",
       role: "",
+      datevPersonnelNumber: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -293,6 +296,7 @@ export default function MitarbeiterPage() {
       locationId: emp.locationId || "",
       departmentId: emp.departmentId || "",
       role: emp.user?.role || "",
+      datevPersonnelNumber: emp.datevPersonnelNumber ?? "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -365,6 +369,7 @@ export default function MitarbeiterPage() {
           locationId: "",
           departmentId: "",
           role: "",
+          datevPersonnelNumber: "",
         });
         fetchEmployees();
         window.dispatchEvent(new Event("shiftfy:usage-changed"));
@@ -804,6 +809,31 @@ export default function MitarbeiterPage() {
                   className="h-9 w-12 rounded-lg border border-gray-200 dark:border-zinc-700 cursor-pointer p-0.5"
                 />
               </div>
+            </div>
+
+            {/* ── DATEV ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                DATEV
+              </p>
+              <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="datevPersonnelNumber">
+                {t("form.datevPersonnelNumber")}
+              </Label>
+              <Input
+                id="datevPersonnelNumber"
+                value={formData.datevPersonnelNumber}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    datevPersonnelNumber: e.target.value,
+                  }))
+                }
+                placeholder="z.B. 1"
+                maxLength={20}
+              />
             </div>
 
             {formError && (

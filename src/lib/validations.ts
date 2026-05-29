@@ -55,6 +55,7 @@ export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
   flexibleWork: z.boolean().optional(),
   departmentId: z.string().optional().nullable(),
   role: z.enum(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
+  datevPersonnelNumber: optionalString.pipe(z.string().max(20).optional()),
 });
 
 // ── Location ────────────────────────────────────────────────────
@@ -543,13 +544,17 @@ export const updateWorkspaceSchema = z
       .min(0, "Mindestens 0 Minuten")
       .max(240, "Maximal 240 Minuten")
       .optional(),
+    datevConsultantNumber: optionalString.pipe(z.string().max(20).optional()),
+    datevClientNumber: optionalString.pipe(z.string().max(20).optional()),
   })
   .refine(
     (data) =>
       data.name !== undefined ||
       data.industry !== undefined ||
       data.bundesland !== undefined ||
-      data.defaultBreakMinutes !== undefined,
+      data.defaultBreakMinutes !== undefined ||
+      data.datevConsultantNumber !== undefined ||
+      data.datevClientNumber !== undefined,
     { message: "Keine Änderungen angegeben" },
   );
 

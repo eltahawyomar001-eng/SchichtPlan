@@ -844,6 +844,7 @@
       "sectionPersonal": "Persönliche Daten",
       "sectionWorkHours": "Arbeitsstunden",
       "sectionAccess": "Zugangsdaten",
+      "datevPersonnelNumber": "DATEV-Personalnummer",
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail",
@@ -1134,6 +1135,17 @@
       "WAGE_BELOW_MIN": "Stundenlohn {rate} € unterschreitet den Mindestlohn von {min} € (MiLoG).",
       "WAGE_UNDOCUMENTED": "Kein Stundenlohn hinterlegt — Mindestlohn nicht nachweisbar."
     }
+  },
+  "datevNumbers": {
+    "title": "DATEV-Zugangsdaten",
+    "description": "Beraternummer und Mandantennummer gelten für den gesamten Workspace und werden von Ihrem Steuerberater vergeben.",
+    "consultantNumber": "Beraternummer",
+    "clientNumber": "Mandantennummer",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "saved": "Gespeichert",
+    "saveError": "Fehler beim Speichern",
+    "networkError": "Netzwerkfehler"
   },
   "datevConnect": {
     "title": "DATEV-Verbindung (hr:eau)",

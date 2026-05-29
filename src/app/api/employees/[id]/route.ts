@@ -169,6 +169,10 @@ export async function PATCH(
             body.departmentId !== undefined
               ? body.departmentId || null
               : undefined,
+          datevPersonnelNumber:
+            body.datevPersonnelNumber !== undefined
+              ? body.datevPersonnelNumber?.trim() || null
+              : undefined,
         },
       });
 

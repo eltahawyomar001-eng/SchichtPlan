@@ -46,6 +46,8 @@ export const GET = withRoute("/api/workspace", "GET", async (req) => {
       industry: true,
       bundesland: true,
       defaultBreakMinutes: true,
+      datevConsultantNumber: true,
+      datevClientNumber: true,
       createdAt: true,
     },
   });
@@ -97,6 +99,13 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
     data.defaultBreakMinutes = body.defaultBreakMinutes;
   }
 
+  if (typeof body.datevConsultantNumber === "string") {
+    data.datevConsultantNumber = body.datevConsultantNumber.trim() || null;
+  }
+  if (typeof body.datevClientNumber === "string") {
+    data.datevClientNumber = body.datevClientNumber.trim() || null;
+  }
+
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
       { error: "Keine Änderungen angegeben." },
@@ -114,6 +123,8 @@ export const PATCH = withRoute("/api/workspace", "PATCH", async (req) => {
       industry: true,
       bundesland: true,
       defaultBreakMinutes: true,
+      datevConsultantNumber: true,
+      datevClientNumber: true,
     },
   });
 

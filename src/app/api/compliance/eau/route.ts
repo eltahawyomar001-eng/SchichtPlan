@@ -68,25 +68,33 @@ export const POST = withRoute("/api/compliance/eau", "POST", async (req) => {
   if (!parsed.success) return parsed.response;
   const { employeeId, sicknessStartDate } = parsed.data;
 
-  const employee = await prisma.employee.findFirst({
-    where: { id: employeeId, workspaceId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      datevConsultantNumber: true,
-      datevClientNumber: true,
-      datevPersonnelNumber: true,
-    },
-  });
+  const [employee, workspace] = await Promise.all([
+    prisma.employee.findFirst({
+      where: { id: employeeId, workspaceId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        datevPersonnelNumber: true,
+      },
+    }),
+    prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { datevConsultantNumber: true, datevClientNumber: true },
+    }),
+  ]);
 
   if (!employee) return badRequest("Mitarbeiter nicht gefunden");
 
+  const consultantNumber = workspace?.datevConsultantNumber;
+  const clientNumber = workspace?.datevClientNumber;
+  const personnelNumber = employee.datevPersonnelNumber;
+
   // DATEV identifies employees via their LODAS/LUG numbers, not personal data.
   const missing: string[] = [];
-  if (!employee.datevConsultantNumber) missing.push("DATEV Beraternummer");
-  if (!employee.datevClientNumber) missing.push("DATEV Mandantennummer");
-  if (!employee.datevPersonnelNumber) missing.push("DATEV Personalnummer");
+  if (!consultantNumber) missing.push("DATEV Beraternummer (Einstellungen)");
+  if (!clientNumber) missing.push("DATEV Mandantennummer (Einstellungen)");
+  if (!personnelNumber) missing.push("DATEV Personalnummer");
   if (missing.length > 0) {
     return badRequest(
       `Für den eAU-Abruf fehlen folgende DATEV-Angaben: ${missing.join(", ")}. Bitte im Mitarbeiterprofil hinterlegen.`,
@@ -96,9 +104,9 @@ export const POST = withRoute("/api/compliance/eau", "POST", async (req) => {
   const sandbox = isSvSandbox();
   const result = await requestEau(
     {
-      consultantNumber: employee.datevConsultantNumber!,
-      clientNumber: employee.datevClientNumber!,
-      personnelNumber: employee.datevPersonnelNumber!,
+      consultantNumber: consultantNumber!,
+      clientNumber: clientNumber!,
+      personnelNumber: personnelNumber!,
       sicknessStartDate,
       source: "LODAS",
     },
@@ -116,9 +124,9 @@ export const POST = withRoute("/api/compliance/eau", "POST", async (req) => {
       requestPayload: {
         employeeId,
         sicknessStartDate,
-        consultantNumber: employee.datevConsultantNumber,
-        clientNumber: employee.datevClientNumber,
-        personnelNumber: employee.datevPersonnelNumber,
+        consultantNumber,
+        clientNumber,
+        personnelNumber,
       },
       responsePayload: (result.raw as object) ?? null,
       errorCode: result.errorCode ?? null,

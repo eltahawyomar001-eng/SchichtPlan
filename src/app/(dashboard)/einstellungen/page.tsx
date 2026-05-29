@@ -38,6 +38,7 @@ import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { DATEVConnectCard } from "@/components/settings/datev-connect-card";
+import { DATEVNumbersCard } from "@/components/settings/datev-numbers-card";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();
@@ -1103,6 +1104,7 @@ export default function EinstellungenPage() {
 
         {/* DATEV Integration */}
         <DATEVConnectCard />
+        <DATEVNumbersCard />
 
         {/* DSGVO: Data Privacy & Account Card */}
         <Card>

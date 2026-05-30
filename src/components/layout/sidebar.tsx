@@ -548,17 +548,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Workspace identity */}
         {workspaceLogo && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 bg-gray-50 dark:bg-zinc-800/50">
-              <div className="relative h-7 w-7 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex-shrink-0">
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50">
+              <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex-shrink-0 shadow-sm">
                 <img
                   src={workspaceLogo}
                   alt=""
-                  className="h-full w-full object-contain p-0.5"
+                  className="h-full w-full object-contain p-1"
                 />
               </div>
               {workspaceName && (
-                <span className="text-xs font-medium text-gray-700 dark:text-zinc-300 truncate">
+                <span className="text-sm font-semibold text-gray-800 dark:text-zinc-200 truncate leading-tight">
                   {workspaceName}
                 </span>
               )}

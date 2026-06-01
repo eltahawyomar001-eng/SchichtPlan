@@ -97,9 +97,9 @@ describe("stripe plan config", () => {
       }
     });
 
-    it("no plan offers a trial period", () => {
-      expect(PLANS.basic.trialDays).toBe(0);
-      expect(PLANS.professional.trialDays).toBe(0);
+    it("trial period config matches stripe.ts", () => {
+      expect(PLANS.basic.trialDays).toBe(7);
+      expect(PLANS.professional.trialDays).toBe(7);
       expect(PLANS.enterprise.trialDays).toBe(0);
     });
   });

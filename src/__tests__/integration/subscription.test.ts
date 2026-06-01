@@ -159,7 +159,7 @@ describe("subscription", () => {
   // ─── canAddEmployee / requireEmployeeSlot ──────────────────
 
   describe("canAddEmployee", () => {
-    it("allows adding when under the limit (basic: 10 max)", async () => {
+    it("allows adding when under the limit (basic: 15 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
         plan: "BASIC",
         status: "ACTIVE",
@@ -169,17 +169,17 @@ describe("subscription", () => {
       expect(await canAddEmployee("ws-1")).toBe(true);
     });
 
-    it("blocks when at the limit (basic: 10 max)", async () => {
+    it("blocks when at the limit (basic: 15 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
         plan: "BASIC",
         status: "ACTIVE",
       });
-      mockEmployeeCount.mockResolvedValue(10);
+      mockEmployeeCount.mockResolvedValue(15);
 
       expect(await canAddEmployee("ws-1")).toBe(false);
     });
 
-    it("allows for professional plan (50 max)", async () => {
+    it("allows for professional plan (100 max)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue({
         plan: "PROFESSIONAL",
         status: "ACTIVE",
@@ -189,9 +189,9 @@ describe("subscription", () => {
       expect(await canAddEmployee("ws-1")).toBe(true);
     });
 
-    it("allows when no subscription exists (defaults apply)", async () => {
+    it("blocks when no subscription exists (gate-closed by default)", async () => {
       mockSubscriptionFindUnique.mockResolvedValue(null);
-      expect(await canAddEmployee("ws-1")).toBe(true);
+      expect(await canAddEmployee("ws-1")).toBe(false);
     });
   });
 
@@ -211,7 +211,7 @@ describe("subscription", () => {
         plan: "BASIC",
         status: "ACTIVE",
       });
-      mockEmployeeCount.mockResolvedValue(10);
+      mockEmployeeCount.mockResolvedValue(15);
 
       const result = await requireEmployeeSlot("ws-1");
       expect(result).not.toBeNull();
@@ -220,7 +220,7 @@ describe("subscription", () => {
       const body = await result!.json();
       expect(body.error).toBe("PLAN_LIMIT");
       expect(body.feature).toBe("maxEmployees");
-      expect(body.limit).toBe(10);
+      expect(body.limit).toBe(15);
     });
   });
 
@@ -280,7 +280,7 @@ describe("subscription", () => {
   describe("PLANS config", () => {
     it("basic has restrictive limits", () => {
       const b = PLANS.basic;
-      expect(b.limits.maxEmployees).toBe(10);
+      expect(b.limits.maxEmployees).toBe(15);
       expect(b.limits.maxLocations).toBe(1);
       expect(b.limits.datevExport).toBe(false);
       expect(b.limits.apiWebhooks).toBe(false);
@@ -290,8 +290,8 @@ describe("subscription", () => {
 
     it("professional unlocks datev, webhooks, roles, analytics", () => {
       const p = PLANS.professional;
-      expect(p.limits.maxEmployees).toBe(50);
-      expect(p.limits.maxLocations).toBe(5);
+      expect(p.limits.maxEmployees).toBe(100);
+      expect(p.limits.maxLocations).toBe(10);
       expect(p.limits.datevExport).toBe(true);
       expect(p.limits.apiWebhooks).toBe(true);
       expect(p.limits.customRoles).toBe(true);

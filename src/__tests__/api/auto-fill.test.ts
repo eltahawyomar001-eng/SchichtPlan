@@ -63,6 +63,39 @@ vi.mock("next-auth", () => ({
 vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
@@ -132,6 +165,14 @@ vi.mock("@/lib/auto-scheduler", () => ({
 // Mock audit log
 vi.mock("@/lib/audit", () => ({
   createAuditLog: vi.fn(),
+}));
+
+vi.mock("@/lib/schichtplanung-addon", () => ({
+  requireSchichtplanungAddon: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("@/lib/sentry", () => ({
+  captureRouteError: vi.fn(),
 }));
 
 // Mock automations for the API routes (not auto-fill itself)

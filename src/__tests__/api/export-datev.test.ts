@@ -23,6 +23,40 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
@@ -37,9 +71,42 @@ vi.mock("@/lib/subscription-guard", () => ({
 }));
 vi.mock("@/lib/time-utils", () => ({
   toIndustrialHours: vi.fn(() => 8.0),
+  getExportHeaders: vi.fn(() => ({
+    personnelNo: "Personalnummer",
+    lastName: "Nachname",
+    firstName: "Vorname",
+    date: "Datum",
+    start: "Von",
+    end: "Bis",
+    pauseMinOnly: "Pause (min)",
+    grossStd: "Brutto (Std)",
+    netStd: "Netto (Std)",
+    location: "Standort",
+    status: "Status",
+    closed: "Abgeschlossen",
+  })),
+  getStatusLabel: vi.fn((s: string) => s),
+  toPersonnelNumber: vi.fn((n: string | null) => n ?? ""),
+}));
+
+vi.mock("@/i18n/locale", () => ({
+  getLocaleFromCookie: vi.fn().mockResolvedValue("de"),
+}));
+
+vi.mock("@/lib/sentry", () => ({
+  captureRouteError: vi.fn(),
 }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 import { buildOwner, buildEmployee } from "../helpers/factories";

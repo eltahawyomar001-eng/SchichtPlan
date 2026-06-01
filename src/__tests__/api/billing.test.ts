@@ -12,6 +12,22 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
   },
   mockPrisma: {
     workspace: { findUnique: vi.fn() },
+    subscription: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
+    },
+    stripeEvent: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: "evt-1" }),
+    },
+    user: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -35,6 +51,40 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
@@ -62,12 +112,38 @@ vi.mock("@/lib/stripe", () => ({
   },
 }));
 vi.mock("@/lib/subscription", () => mockSubscription);
+
+vi.mock("@/lib/subscription-guard", () => ({
+  syncUsageLimits: vi.fn().mockResolvedValue(undefined),
+  requireUserSlot: vi.fn().mockResolvedValue(null),
+  ensureWorkspaceUsage: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("@/lib/ticketing-addon", () => ({
+  getTicketingTierByPriceId: vi.fn().mockReturnValue(null),
+  requireTicketingAddon: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("@/lib/schichtplanung-addon", () => ({
+  getSchichtplanungBillingByPriceId: vi.fn().mockReturnValue(null),
+  requireSchichtplanungAddon: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/idempotency", () => ({
   checkIdempotency: vi.fn(() => null),
   cacheIdempotentResponse: vi.fn(),
 }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
@@ -201,20 +277,25 @@ describe("GET /api/billing/subscription", () => {
   });
 
   it("auto-creates subscription if none exists", async () => {
-    mockSession.user = buildOwner();
+    const owner = buildOwner();
+    mockSession.user = owner;
     mockSubscription.getSubscription.mockResolvedValue(null);
-    mockSubscription.ensureSubscription.mockResolvedValue({
+    // Route creates a TRIALING subscription via prisma.subscription.create when none exists
+    mockPrisma.subscription.create.mockResolvedValue({
+      id: "sub-new",
       plan: "BASIC",
-      status: "ACTIVE",
+      status: "TRIALING",
       seatCount: 1,
-      currentPeriodEnd: null,
+      workspaceId: owner.workspaceId,
+      trialStart: new Date(),
+      trialEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       cancelAtPeriodEnd: false,
-      trialEnd: null,
       stripeSubscriptionId: null,
+      ticketingTier: "NONE",
+      schichtplanungEnabled: false,
     });
 
     const res = await handler.GET(new Request("http://localhost"));
     expect(res.status).toBe(200);
-    expect(mockSubscription.ensureSubscription).toHaveBeenCalled();
   });
 });

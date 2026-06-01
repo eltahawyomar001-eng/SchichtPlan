@@ -94,18 +94,70 @@ vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
 }));
 
+vi.mock("@/lib/ticketing-addon", () => ({
+  requireTicketingAddon: vi.fn().mockResolvedValue(null),
+  requireTicketQuota: vi.fn().mockResolvedValue(null),
+  recordTicketCreation: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/ticket-attachments", () => ({
+  MAX_ATTACHMENTS_PER_TICKET: 10,
+  validateFile: vi.fn().mockReturnValue({ ok: true }),
+  checkMagicBytes: vi.fn().mockResolvedValue(true),
+  requireStorageQuota: vi.fn().mockResolvedValue(null),
+  recordStorageUsage: vi.fn().mockResolvedValue(undefined),
+  uploadToBlob: vi.fn().mockResolvedValue({ url: "https://example.com/file" }),
+  deleteBlob: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/ticket-events", () => ({
+  logStatusChanged: vi.fn(),
+  logTicketAssigned: vi.fn(),
+  logTicketViewed: vi.fn(),
+  logTicketClosed: vi.fn(),
+  logTicketTrashed: vi.fn(),
+  logTicketCreated: vi.fn(),
+  logAttachmentAdded: vi.fn(),
+  logCommentAdded: vi.fn(),
+}));
+
+vi.mock("@/lib/ticket-notifications", () => ({
+  notifyTicketAssigned: vi.fn(),
+  notifyStatusChanged: vi.fn(),
+  notifyNewTicket: vi.fn(),
+  notifyTicketComment: vi.fn(),
+  notifyCommentAdded: vi.fn(),
+}));
+
+vi.mock("@/lib/ticket-trash", () => ({
+  softDeleteTicket: vi.fn().mockResolvedValue(undefined),
+  purgeTicket: vi.fn().mockResolvedValue({ deletedAttachments: 0 }),
+}));
+
 vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 vi.mock("@/lib/pagination", () => ({
   parsePagination: vi.fn().mockReturnValue({ take: 50, skip: 0 }),
   paginatedResponse: vi.fn(
-    async (items: unknown[], total: number, take: number, skip: number) => {
-      const { NextResponse } = await import("next/server");
-      return NextResponse.json({ data: items, total, take, skip });
+    (items: unknown[], total: number, take: number, skip: number) => {
+      const body = JSON.stringify({ data: items, total, take, skip });
+      return new Response(body, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     },
   ),
 }));

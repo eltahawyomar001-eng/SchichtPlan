@@ -21,6 +21,8 @@ const {
   mockLocationCreate,
   mockUsageFindUnique,
   mockInvitationCount,
+  mockCustomRoleFindFirst,
+  mockCustomRoleCreate,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockSubscriptionFindUnique: vi.fn(),
@@ -32,6 +34,8 @@ const {
   mockLocationCreate: vi.fn(),
   mockUsageFindUnique: vi.fn(),
   mockInvitationCount: vi.fn(),
+  mockCustomRoleFindFirst: vi.fn(),
+  mockCustomRoleCreate: vi.fn(),
 }));
 
 vi.mock("next-auth", () => ({
@@ -44,6 +48,39 @@ vi.mock("next-auth", () => ({
 vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
@@ -52,11 +89,15 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/db", () => {
   const mockPrisma = {
-    subscription: { findUnique: mockSubscriptionFindUnique },
+    subscription: {
+      findUnique: mockSubscriptionFindUnique,
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     employee: {
       count: mockEmployeeCount,
       findMany: mockEmployeeFindMany,
       create: mockEmployeeCreate,
+      findFirst: vi.fn().mockResolvedValue(null),
     },
     invitation: { count: mockInvitationCount },
     workspaceUsage: {
@@ -71,6 +112,18 @@ vi.mock("@/lib/db", () => {
       count: mockLocationCount,
       findMany: mockLocationFindMany,
       create: mockLocationCreate,
+    },
+    customRole: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: mockCustomRoleFindFirst,
+      create: mockCustomRoleCreate,
+    },
+    user: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      update: vi.fn(),
+    },
+    workspace: {
+      findUnique: vi.fn().mockResolvedValue({ id: "ws-1", name: "Test" }),
     },
     auditLog: {
       create: vi.fn().mockResolvedValue({ id: "audit-1" }),
@@ -278,12 +331,11 @@ describe("GET /api/custom-roles", () => {
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toBeInstanceOf(Array);
-    expect(body.length).toBe(4);
-    expect(body[0].id).toBe("owner");
-    expect(body[1].id).toBe("admin");
-    expect(body[2].id).toBe("manager");
-    expect(body[3].id).toBe("employee");
+    // Route returns { builtIn: [...], custom: [] }
+    expect(body.builtIn).toBeInstanceOf(Array);
+    expect(body.builtIn.length).toBe(4);
+    expect(body.builtIn[0].id).toBe("owner");
+    expect(body.custom).toBeInstanceOf(Array);
   });
 });
 
@@ -309,11 +361,20 @@ describe("POST /api/custom-roles", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 501 Not Implemented for admin on professional plan", async () => {
+  it("creates custom role for admin on professional plan", async () => {
     mockSession.user = buildAdmin();
     mockSubscriptionFindUnique.mockResolvedValue({
       plan: "PROFESSIONAL",
       status: "ACTIVE",
+    });
+    mockCustomRoleFindFirst.mockResolvedValue(null);
+    mockCustomRoleCreate.mockResolvedValue({
+      id: "role-1",
+      name: "Custom Role",
+      permissions: ["shifts.*"],
+      workspaceId: "ws-1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     const req = new Request("http://localhost/api/custom-roles", {
@@ -325,9 +386,9 @@ describe("POST /api/custom-roles", () => {
       body: JSON.stringify({ name: "Custom Role", permissions: ["shifts.*"] }),
     });
     const res = await handler.POST(req);
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(201);
 
     const body = await res.json();
-    expect(body.error).toBeDefined();
+    expect(body.name).toBe("Custom Role");
   });
 });

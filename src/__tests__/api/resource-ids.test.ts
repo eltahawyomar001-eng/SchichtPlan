@@ -31,6 +31,40 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
@@ -49,9 +83,42 @@ vi.mock("@/lib/webhooks", () => ({
   dispatchWebhook: vi.fn(() => Promise.resolve()),
 }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 vi.mock("@/lib/sentry", () => ({ captureRouteError: vi.fn() }));
+
+vi.mock("@/lib/schichtplanung-addon", () => ({
+  requireSchichtplanungAddon: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("@/lib/arbzg", () => ({
+  checkArbZg5RestPeriod: vi.fn().mockResolvedValue({ violation: false }),
+  checkArbZg4BreakRequirement: vi
+    .fn()
+    .mockResolvedValue({ violation: false, suggestedBreak: 0 }),
+  suggestBreakForGross: vi.fn().mockReturnValue(0),
+  shiftGrossMinutes: vi.fn().mockReturnValue(480),
+}));
+
+vi.mock("@/lib/holidays", () => ({
+  isPublicHoliday: vi.fn().mockReturnValue({ isHoliday: false }),
+  isSunday: vi.fn().mockReturnValue(false),
+  isNightShift: vi.fn().mockReturnValue(false),
+  calculateSurcharge: vi.fn().mockReturnValue(0),
+}));
+
+vi.mock("@/lib/certification-check", () => ({
+  requireLocationCertifications: vi.fn().mockResolvedValue(null),
+}));
 
 import { buildOwner, buildEmployee } from "../helpers/factories";
 

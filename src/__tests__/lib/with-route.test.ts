@@ -21,6 +21,11 @@ vi.mock("@/lib/logger", () => ({
     info: vi.fn(),
     warn: (...args: unknown[]) => mockLogWarn(...args),
     error: (...args: unknown[]) => mockLogError(...args),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: (...args: unknown[]) => mockLogWarn(...args),
+      error: (...args: unknown[]) => mockLogError(...args),
+    })),
   },
 }));
 

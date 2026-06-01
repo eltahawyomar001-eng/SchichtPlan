@@ -12,7 +12,16 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 describe("GET /api/health", () => {

@@ -48,6 +48,39 @@ vi.mock("next-auth", () => ({
 vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
@@ -56,7 +89,10 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/db", () => {
   const mockPrisma = {
-    subscription: { findUnique: mockSubscriptionFindUnique },
+    subscription: {
+      findUnique: mockSubscriptionFindUnique,
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     employee: {
       count: mockEmployeeCount,
       create: mockEmployeeCreate,
@@ -64,7 +100,18 @@ vi.mock("@/lib/db", () => {
       updateMany: mockEmployeeUpdateMany,
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
-    invitation: { count: mockInvitationCount },
+    invitation: {
+      count: mockInvitationCount,
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: "inv-1" }),
+    },
+    user: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
+    workspace: {
+      findUnique: vi.fn().mockResolvedValue({ id: "ws-1", name: "Test WS" }),
+    },
     workspaceUsage: {
       findUnique: mockUsageFindUnique,
       create: vi
@@ -98,6 +145,55 @@ vi.mock("@/lib/automations", () => ({
 vi.mock("@/lib/audit", () => ({
   createAuditLog: vi.fn(),
   createAuditLogTx: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/employee-pin", () => ({
+  generateUniquePin: vi.fn().mockResolvedValue("1234"),
+  hashPin: vi.fn().mockReturnValue("hashed-pin"),
+  sendPinEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/billing-seats", () => ({
+  reconcileSeatsFromEmployees: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
+vi.mock("@/i18n/locale", () => ({
+  getLocaleFromCookie: vi.fn().mockResolvedValue("de"),
+}));
+
+vi.mock("@/lib/notifications/email", () => ({
+  sendEmail: vi.fn().mockResolvedValue(undefined),
+  invitationEmail: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock("@/lib/notifications/email-i18n", () => ({
+  invitationEmail: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock("@/lib/idempotency", () => ({
+  checkIdempotency: vi.fn().mockResolvedValue(null),
+  cacheIdempotentResponse: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/webhooks", () => ({
+  dispatchWebhook: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/sentry", () => ({
+  captureRouteError: vi.fn(),
+}));
+
+vi.mock("@/lib/logger", () => ({
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 import { buildOwner, buildEmployee, buildManager } from "../helpers/factories";
@@ -233,18 +329,15 @@ describe("POST /api/employees — MiLoG warning", () => {
     handler = await import("@/app/api/employees/route");
   });
 
-  it("returns warning when hourlyRate is below minimum wage", async () => {
+  it("blocks creation when hourlyRate is below minimum wage (MiLoG hard block)", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
-
-    // PROFESSIONAL plan — no employee limit issues
+    // requireUserSlot needs subscription + usage data to proceed
     mockSubscriptionFindUnique.mockResolvedValue({
       plan: "PROFESSIONAL",
       status: "ACTIVE",
       workspaceId: owner.workspaceId,
     });
-    mockEmployeeCount.mockResolvedValue(1);
-    mockInvitationCount.mockResolvedValue(0);
     mockUsageFindUnique.mockResolvedValue({
       id: "usage-1",
       workspaceId: owner.workspaceId,
@@ -255,15 +348,8 @@ describe("POST /api/employees — MiLoG warning", () => {
       storageBytesUsed: BigInt(0),
       storageBytesLimit: BigInt(5368709120),
     });
-
-    const createdEmployee = {
-      id: "emp1",
-      firstName: "Max",
-      lastName: "Mustermann",
-      hourlyRate: 10.5,
-      workspaceId: owner.workspaceId,
-    };
-    mockEmployeeCreate.mockResolvedValue(createdEmployee);
+    mockEmployeeCount.mockResolvedValue(1);
+    mockInvitationCount.mockResolvedValue(0);
 
     const req = new Request("http://localhost/api/employees", {
       method: "POST",
@@ -272,16 +358,16 @@ describe("POST /api/employees — MiLoG warning", () => {
         firstName: "Max",
         lastName: "Mustermann",
         email: "max@example.com",
-        hourlyRate: 10.5,
+        hourlyRate: 10.5, // below MILOG_MIN_WAGE (13.9)
       }),
     });
     const res = await handler.POST(req);
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(422);
 
     const body = await res.json();
-    expect(body.warnings).toBeDefined();
-    expect(body.warnings[0]).toContain("Mindestlohn");
-    expect(body.warnings[0]).toContain("MiLoG");
+    expect(body.error).toBe("MILOG_VIOLATION");
+    expect(body.message).toContain("MiLoG");
+    expect(body.milogMinWage).toBe(13.9);
   });
 
   it("does not return warning when hourlyRate is above minimum wage", async () => {

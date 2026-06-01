@@ -36,9 +36,14 @@ vi.mock("@/lib/db", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    account: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     employee: {
       create: vi.fn(),
       count: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
+      update: vi.fn(),
     },
     verificationToken: {
       create: vi.fn().mockResolvedValue({ token: "test-token" }),
@@ -58,6 +63,10 @@ vi.mock("@/lib/verification", () => ({
 vi.mock("@/lib/utils", () => ({
   slugify: vi.fn((s: string) => s.toLowerCase().replace(/\s+/g, "-")),
   cn: vi.fn((...classes: string[]) => classes.filter(Boolean).join(" ")),
+}));
+
+vi.mock("@/lib/subscription", () => ({
+  initializeTrial: vi.fn().mockResolvedValue(undefined),
 }));
 
 /* ═══════════════════════════════════════════════════════════════
@@ -143,7 +152,7 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(409);
 
     const body = await res.json();
-    expect(body.error).toContain("existiert bereits");
+    expect(body.message).toContain("existiert bereits");
   });
 
   it("creates user and workspace for valid registration", async () => {
@@ -165,6 +174,11 @@ describe("POST /api/auth/register", () => {
             email: "new@example.com",
             name: "New User",
           }),
+        },
+        employee: {
+          create: vi.fn().mockResolvedValue({ id: "emp-new" }),
+          findFirst: vi.fn().mockResolvedValue(null),
+          update: vi.fn().mockResolvedValue({}),
         },
       };
       return cb(tx);

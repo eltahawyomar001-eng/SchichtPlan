@@ -14,12 +14,14 @@ const {
   mockWebhookCount,
   mockWebhookCreate,
   mockSubscriptionFindUnique,
+  mockUserFindUnique,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockWebhookFindMany: vi.fn(),
   mockWebhookCount: vi.fn(),
   mockWebhookCreate: vi.fn(),
   mockSubscriptionFindUnique: vi.fn(),
+  mockUserFindUnique: vi.fn(),
 }));
 
 vi.mock("next-auth", () => ({
@@ -29,6 +31,40 @@ vi.mock("next-auth", () => ({
   ),
 }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
@@ -41,19 +77,32 @@ vi.mock("@/lib/db", () => ({
       create: mockWebhookCreate,
     },
     subscription: { findUnique: mockSubscriptionFindUnique },
+    user: { findUnique: mockUserFindUnique },
   },
 }));
 vi.mock("@/lib/sentry", () => ({ captureRouteError: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 vi.mock("@/lib/pagination", () => ({
   parsePagination: vi.fn().mockReturnValue({ take: 50, skip: 0 }),
   paginatedResponse: vi.fn(
-    async (items: unknown[], total: number, take: number, skip: number) => {
-      const { NextResponse } = await import("next/server");
-      return NextResponse.json({ data: items, total, take, skip });
+    (items: unknown[], total: number, take: number, skip: number) => {
+      const body = JSON.stringify({ data: items, total, take, skip });
+      return new Response(body, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     },
   ),
 }));
@@ -74,6 +123,11 @@ describe("GET /api/webhooks", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     handler = await import("@/app/api/webhooks/route");
+    mockUserFindUnique.mockImplementation(() =>
+      Promise.resolve(
+        mockSession.user ? { workspaceId: mockSession.user.workspaceId } : null,
+      ),
+    );
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -118,6 +172,11 @@ describe("POST /api/webhooks", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     handler = await import("@/app/api/webhooks/route");
+    mockUserFindUnique.mockImplementation(() =>
+      Promise.resolve(
+        mockSession.user ? { workspaceId: mockSession.user.workspaceId } : null,
+      ),
+    );
   });
 
   it("returns 401 when not authenticated", async () => {

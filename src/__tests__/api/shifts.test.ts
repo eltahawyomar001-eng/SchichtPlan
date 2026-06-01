@@ -37,6 +37,40 @@ vi.mock("next-auth", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
@@ -91,20 +125,49 @@ vi.mock("@/lib/webhooks", () => ({
   dispatchWebhook: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/arbzg", () => ({
+  checkArbZg5RestPeriod: vi.fn().mockResolvedValue({ violation: false }),
+  checkArbZg4BreakRequirement: vi
+    .fn()
+    .mockResolvedValue({ violation: false, suggestedBreak: 0 }),
+  suggestBreakForGross: vi.fn().mockReturnValue(0),
+  shiftGrossMinutes: vi.fn().mockReturnValue(480),
+}));
+
+vi.mock("@/lib/certification-check", () => ({
+  requireLocationCertifications: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("@/lib/schichtplanung-addon", () => ({
+  requireSchichtplanungAddon: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/sentry", () => ({
   captureRouteError: vi.fn(),
 }));
 
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 vi.mock("@/lib/pagination", () => ({
   parsePagination: vi.fn().mockReturnValue({ take: 50, skip: 0 }),
   paginatedResponse: vi.fn(
-    async (items: unknown[], total: number, take: number, skip: number) => {
-      const { NextResponse } = await import("next/server");
-      return NextResponse.json({ data: items, total, take, skip });
+    (items: unknown[], total: number, take: number, skip: number) => {
+      const body = JSON.stringify({ data: items, total, take, skip });
+      return new Response(body, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     },
   ),
 }));
@@ -158,7 +221,7 @@ describe("GET /api/shifts", () => {
     expect(body.data).toHaveLength(1);
   });
 
-  it("EMPLOYEE only sees own shifts", async () => {
+  it("EMPLOYEE sees all workspace shifts but PII is stripped for colleagues", async () => {
     mockSession.user = buildEmployee({
       employeeId: "emp-1",
       workspaceId: "ws-1",
@@ -166,9 +229,12 @@ describe("GET /api/shifts", () => {
     mockShiftFindMany.mockResolvedValue([]);
     mockShiftCount.mockResolvedValue(0);
 
-    await handler.GET(new Request("http://localhost/api/shifts"));
+    const res = await handler.GET(new Request("http://localhost/api/shifts"));
+    expect(res.status).toBe(200);
+    // Route returns all workspace shifts (no employeeId filter) but strips colleague PII client-side
     const findCall = mockShiftFindMany.mock.calls[0][0];
-    expect(findCall.where.employeeId).toBe("emp-1");
+    expect(findCall.where.workspaceId).toBe("ws-1");
+    expect(findCall.where.employeeId).toBeUndefined();
   });
 
   it("filters by date range", async () => {

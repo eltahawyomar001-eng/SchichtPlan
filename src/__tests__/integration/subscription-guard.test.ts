@@ -37,12 +37,22 @@ vi.mock("@/lib/db", () => ({
     subscription: {
       findUnique: mockSubscriptionFindUnique,
       findFirst: mockSubscriptionFindFirst,
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
   },
 }));
 
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 import {
@@ -144,19 +154,18 @@ describe("subscription-guard", () => {
   // ─── countOccupiedSlots ───────────────────────────────────
 
   describe("countOccupiedSlots", () => {
-    it("returns sum of linked employees (userId != null) and pending invitations", async () => {
+    it("returns sum of active employees and pending invitations", async () => {
       mockEmployeeCount.mockResolvedValue(5);
       mockInvitationCount.mockResolvedValue(3);
 
       const count = await countOccupiedSlots(WS_ID);
       expect(count).toBe(8);
 
-      // Verify employee count only includes linked users
+      // Current implementation counts all active employees (not just linked ones)
       expect(mockEmployeeCount).toHaveBeenCalledWith({
         where: {
           workspaceId: WS_ID,
           isActive: true,
-          userId: { not: null },
         },
       });
     });

@@ -93,14 +93,26 @@ vi.mock("@/lib/webhooks", () => ({
 }));
 vi.mock("@/lib/sentry", () => ({ captureRouteError: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 vi.mock("@/lib/pagination", () => ({
   parsePagination: vi.fn().mockReturnValue({ take: 50, skip: 0 }),
   paginatedResponse: vi.fn(
-    async (items: unknown[], total: number, take: number, skip: number) => {
-      const { NextResponse } = await import("next/server");
-      return NextResponse.json({ data: items, total, take, skip });
+    (items: unknown[], total: number, take: number, skip: number) => {
+      const body = JSON.stringify({ data: items, total, take, skip });
+      return new Response(body, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     },
   ),
 }));

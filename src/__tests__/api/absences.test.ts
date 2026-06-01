@@ -46,6 +46,40 @@ vi.mock("next-auth", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({ authOptions: {} }));
+vi.mock("@/lib/api-response", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/api-response")>();
+  return {
+    ...orig,
+    requireAuth: vi.fn(async () => {
+      if (!mockSession.user) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Unauthorized" },
+            { status: 401 },
+          ),
+        };
+      }
+      if (!mockSession.user.workspaceId) {
+        const { NextResponse } = await import("next/server");
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "No workspace" },
+            { status: 400 },
+          ),
+        };
+      }
+      return {
+        ok: true,
+        user: mockSession.user,
+        workspaceId: mockSession.user.workspaceId as string,
+      };
+    }),
+  };
+});
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
@@ -65,6 +99,10 @@ vi.mock("@/lib/db", () => {
     employee: {
       findFirst: mockEmployeeFindFirst,
     },
+    vacationBalance: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      update: vi.fn().mockResolvedValue({}),
+    },
   };
   return {
     prisma: {
@@ -77,6 +115,29 @@ vi.mock("@/lib/db", () => {
 
 vi.mock("@/lib/subscription", () => ({
   requirePlanFeature: (...args: unknown[]) => mockRequirePlanFeature(...args),
+}));
+
+vi.mock("@/lib/absence-days", () => ({
+  classifyAbsenceForWorkspace: vi
+    .fn()
+    .mockImplementation(
+      ({
+        halfDayStart,
+        halfDayEnd,
+      }: {
+        halfDayStart?: boolean;
+        halfDayEnd?: boolean;
+      }) => {
+        const adj = (halfDayStart ? 0.5 : 0) + (halfDayEnd ? 0.5 : 0);
+        return Promise.resolve({
+          deductibleDays: 5 - adj,
+          workingDays: 5,
+          publicHolidays: 0,
+          weekendDays: 0,
+          classification: "URLAUB",
+        });
+      },
+    ),
 }));
 
 vi.mock("@/lib/automations", () => ({
@@ -103,15 +164,27 @@ vi.mock("@/lib/sentry", () => ({
 
 vi.mock("@/lib/audit", () => ({ createAuditLog: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withRequestId: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  },
 }));
 
 vi.mock("@/lib/pagination", () => ({
   parsePagination: vi.fn().mockReturnValue({ take: 50, skip: 0 }),
   paginatedResponse: vi.fn(
-    async (items: unknown[], total: number, take: number, skip: number) => {
-      const { NextResponse } = await import("next/server");
-      return NextResponse.json({ data: items, total, take, skip });
+    (items: unknown[], total: number, take: number, skip: number) => {
+      const body = JSON.stringify({ data: items, total, take, skip });
+      return new Response(body, {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     },
   ),
 }));
@@ -152,6 +225,7 @@ describe("POST /api/absences", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockRequirePlanFeature.mockResolvedValue(null);
+    mockEmployeeFindFirst.mockResolvedValue({ locationId: null });
     handler = await import("@/app/api/absences/route");
   });
 
@@ -377,7 +451,7 @@ describe("PATCH /api/absences/[id]", () => {
 
   it("returns 404 when absence does not exist", async () => {
     mockSession.user = buildAdmin();
-    mockAbsenceFindUnique.mockResolvedValue(null);
+    mockAbsenceFindFirst.mockResolvedValue(null);
 
     const res = await handler.PATCH(
       patchReq({ status: "GENEHMIGT" }),
@@ -388,10 +462,8 @@ describe("PATCH /api/absences/[id]", () => {
 
   it("returns 404 when absence belongs to different workspace", async () => {
     mockSession.user = buildAdmin({ workspaceId: "ws-1" });
-    mockAbsenceFindUnique.mockResolvedValue({
-      id: "abs-1",
-      workspaceId: "ws-other",
-    });
+    // Prisma filters by workspaceId in WHERE — returns null for different workspace
+    mockAbsenceFindFirst.mockResolvedValue(null);
 
     const res = await handler.PATCH(
       patchReq({ status: "GENEHMIGT" }),
@@ -403,7 +475,7 @@ describe("PATCH /api/absences/[id]", () => {
   it("approves an absence (sets reviewedBy, reviewedAt)", async () => {
     const user = buildAdmin({ workspaceId: "ws-1" });
     mockSession.user = user;
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-1",
@@ -433,7 +505,7 @@ describe("PATCH /api/absences/[id]", () => {
 
   it("rejects an absence with review note", async () => {
     mockSession.user = buildAdmin({ workspaceId: "ws-1" });
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-1",
@@ -466,10 +538,11 @@ describe("PATCH /api/absences/[id]", () => {
       email: "e@t.de",
     });
     mockSession.user = empUser;
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-1",
+      status: "AUSSTEHEND",
     });
     mockEmployeeFindFirst.mockResolvedValue({ id: "emp-1" });
     mockAbsenceUpdate.mockResolvedValue({
@@ -491,10 +564,11 @@ describe("PATCH /api/absences/[id]", () => {
       workspaceId: "ws-1",
       email: "e@t.de",
     });
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-other",
+      status: "AUSSTEHEND",
     });
     mockEmployeeFindFirst.mockResolvedValue({ id: "emp-1" });
 
@@ -519,7 +593,7 @@ describe("PATCH /api/absences/[id]", () => {
       employeeId: "emp-1",
       workspaceId: "ws-1",
     });
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-1",
@@ -558,7 +632,7 @@ describe("DELETE /api/absences/[id]", () => {
 
   it("returns 404 when absence does not exist", async () => {
     mockSession.user = buildAdmin();
-    mockAbsenceFindUnique.mockResolvedValue(null);
+    mockAbsenceFindFirst.mockResolvedValue(null);
     const res = await handler.DELETE(
       new Request("http://localhost/api/absences/abs-1", { method: "DELETE" }),
       routeParams,
@@ -568,7 +642,7 @@ describe("DELETE /api/absences/[id]", () => {
 
   it("admin can delete any absence", async () => {
     mockSession.user = buildAdmin({ workspaceId: "ws-1" });
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-other",
@@ -588,7 +662,7 @@ describe("DELETE /api/absences/[id]", () => {
       workspaceId: "ws-1",
       email: "e@t.de",
     });
-    mockAbsenceFindUnique.mockResolvedValue({
+    mockAbsenceFindFirst.mockResolvedValue({
       id: "abs-1",
       workspaceId: "ws-1",
       employeeId: "emp-other",

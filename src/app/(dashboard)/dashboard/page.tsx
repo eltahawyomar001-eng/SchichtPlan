@@ -506,6 +506,7 @@ async function ManagerDashboardContent({
         clockInAt: { not: null },
         isLiveClock: true,
         date: { gte: todayStart, lt: tomorrow },
+        deletedAt: null,
       },
       include: {
         employee: {

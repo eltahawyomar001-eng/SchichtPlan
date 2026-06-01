@@ -301,6 +301,8 @@ export default function ZeiterfassungPage() {
       if (res.ok) {
         fetchEntries();
         setSelectedEntry(null);
+      } else {
+        setLoadError(tc("errorOccurred"));
       }
     } catch {
       setLoadError(tc("errorOccurred"));
@@ -870,13 +872,15 @@ export default function ZeiterfassungPage() {
                       <EditIcon className="h-4 w-4" />
                       {tc("edit")}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(selectedEntry.id)}
-                    >
-                      {tc("delete")}
-                    </Button>
+                    {selectedEntry.status === "ENTWURF" && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(selectedEntry.id)}
+                      >
+                        {tc("delete")}
+                      </Button>
+                    )}
                   </div>
                 )}
 

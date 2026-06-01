@@ -39,7 +39,7 @@ export const GET = withRoute("/api/time-entries", "GET", async (req) => {
   const endResult = parseOptionalDateQueryParam(searchParams.get("end"), "end");
   if (!endResult.ok) return endResult.response;
 
-  const where: Record<string, unknown> = { workspaceId };
+  const where: Record<string, unknown> = { workspaceId, deletedAt: null };
 
   if (startResult.date && endResult.date) {
     where.date = { gte: startResult.date, lte: endResult.date };

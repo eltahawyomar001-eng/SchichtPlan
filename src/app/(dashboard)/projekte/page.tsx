@@ -235,9 +235,11 @@ export default function ProjekteSeite() {
   async function removeMember(memberId: string) {
     if (!memberProject) return;
     try {
-      await fetch(`/api/projects/${memberProject.id}/members/${memberId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/projects/${memberProject.id}/members/${memberId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) return;
       fetchData();
       const refreshed = await fetch("/api/projects");
       if (refreshed.ok) {

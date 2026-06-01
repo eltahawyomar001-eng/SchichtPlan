@@ -139,11 +139,16 @@ export default function QualifikationenSeite() {
 
         // Sync skill assignments to selected employees
         if (skillId) {
-          await fetch(`/api/skills/${skillId}/assignments`, {
+          const assignRes = await fetch(`/api/skills/${skillId}/assignments`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ employeeIds: selectedEmployees }),
           });
+          if (!assignRes.ok) {
+            const err = await assignRes.json().catch(() => ({}));
+            setFormError(err?.message ?? tc("errorOccurred"));
+            return;
+          }
         }
 
         setShowForm(false);

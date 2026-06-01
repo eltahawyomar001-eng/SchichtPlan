@@ -3318,6 +3318,8 @@
     "deleteConfirmDescription": "This action cannot be undone. All comments, attachments and history will be permanently removed.",
     "deleteSuccess": "Ticket deleted successfully.",
     "deleteError": "Failed to delete ticket.",
+    "updateError": "Failed to save changes.",
+    "commentError": "Failed to send comment.",
     "auditTrail": "Activity",
     "statuses": {
       "OFFEN": "Open",
@@ -3363,7 +3365,8 @@
       "uploadFailed": "Upload failed",
       "download": "Download",
       "delete": "Delete",
-      "confirmDelete": "Really delete this attachment?"
+      "confirmDelete": "Really delete this attachment?",
+      "deleteFailed": "Failed to delete attachment."
     },
     "filters": {
       "allStatuses": "All Statuses",

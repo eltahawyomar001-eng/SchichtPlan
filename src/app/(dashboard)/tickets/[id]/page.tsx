@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -202,9 +203,12 @@ export default function TicketDetailPage() {
         setIsInternal(false);
         fetchTicket();
         fetchEvents();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.message ?? t("commentError"));
       }
     } catch {
-      // silent
+      toast.error(t("commentError"));
     } finally {
       setSubmitting(false);
     }
@@ -220,9 +224,12 @@ export default function TicketDetailPage() {
       if (res.ok) {
         fetchTicket();
         fetchEvents();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.message ?? t("updateError"));
       }
     } catch {
-      // silent
+      toast.error(t("updateError"));
     }
   };
 
@@ -303,9 +310,12 @@ export default function TicketDetailPage() {
       if (res.ok) {
         fetchTicket();
         fetchEvents();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.message ?? t("attachments.deleteFailed"));
       }
     } catch {
-      // silent
+      toast.error(t("attachments.deleteFailed"));
     }
   };
 

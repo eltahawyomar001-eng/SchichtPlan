@@ -74,7 +74,7 @@ jobs:
         run: npx prisma migrate deploy
 
       - name: Run Tests
-        run: npx vitest run --reporter=verbose
+        run: npx vitest run --reporter=verbose --coverage
 
   security-audit:
     name: Security Audit

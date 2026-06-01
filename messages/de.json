@@ -3318,6 +3318,8 @@
     "deleteConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Kommentare, Anhänge und der Verlauf werden dauerhaft entfernt.",
     "deleteSuccess": "Ticket erfolgreich gelöscht.",
     "deleteError": "Ticket konnte nicht gelöscht werden.",
+    "updateError": "Änderung konnte nicht gespeichert werden.",
+    "commentError": "Kommentar konnte nicht gesendet werden.",
     "auditTrail": "Verlauf",
     "statuses": {
       "OFFEN": "Offen",
@@ -3363,7 +3365,8 @@
       "uploadFailed": "Upload fehlgeschlagen",
       "download": "Herunterladen",
       "delete": "Löschen",
-      "confirmDelete": "Diesen Anhang wirklich löschen?"
+      "confirmDelete": "Diesen Anhang wirklich löschen?",
+      "deleteFailed": "Anhang konnte nicht gelöscht werden."
     },
     "filters": {
       "allStatuses": "Alle Status",

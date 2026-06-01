@@ -433,26 +433,38 @@ export default function MitarbeiterPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/employees/${deleteTarget}`, { method: "DELETE" });
+      const res = await fetch(`/api/employees/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.message ?? tc("errorOccurred"));
+        return;
+      }
       setDeleteTarget(null);
       fetchEmployees();
       window.dispatchEvent(new Event("shiftfy:usage-changed"));
     } catch {
-      setError(tc("errorOccurred"));
+      toast.error(tc("errorOccurred"));
     }
   };
 
   const handleToggleActive = async (emp: Employee) => {
     try {
-      await fetch(`/api/employees/${emp.id}`, {
+      const res = await fetch(`/api/employees/${emp.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...emp, isActive: !emp.isActive }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.message ?? tc("errorOccurred"));
+        return;
+      }
       fetchEmployees();
       window.dispatchEvent(new Event("shiftfy:usage-changed"));
     } catch {
-      setError(tc("errorOccurred"));
+      toast.error(tc("errorOccurred"));
     }
   };
 

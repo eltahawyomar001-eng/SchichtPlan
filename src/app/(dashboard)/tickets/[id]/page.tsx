@@ -169,10 +169,10 @@ export default function TicketDetailPage() {
   const fetchUsers = useCallback(async () => {
     if (!canManage) return;
     try {
-      const res = await fetch("/api/team");
+      const res = await fetch("/api/tickets/assignees");
       if (res.ok) {
         const data = await res.json();
-        setUsers(data.data ?? data);
+        setUsers(data.assignees ?? []);
       }
     } catch {
       // silent
@@ -800,15 +800,11 @@ export default function TicketDetailPage() {
                             {ticket.assignedTo.name ?? ticket.assignedTo.email}
                           </option>
                         )}
-                      {users
-                        .filter((u) =>
-                          ["OWNER", "ADMIN", "MANAGER"].includes(u.role),
-                        )
-                        .map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.name ?? u.email}
-                          </option>
-                        ))}
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name ?? u.email}
+                        </option>
+                      ))}
                     </Select>
                   </div>
                 </CardContent>

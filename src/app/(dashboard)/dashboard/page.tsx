@@ -222,6 +222,7 @@ async function EmployeeDashboardContent({
             workspaceId,
             employeeId,
             date: { gte: todayStart, lt: tomorrow },
+            deletedAt: null,
           },
           include: { employee: true, location: true },
           orderBy: { startTime: "asc" },
@@ -233,6 +234,7 @@ async function EmployeeDashboardContent({
             workspaceId,
             employeeId,
             date: { gte: tomorrow },
+            deletedAt: null,
           },
           include: { employee: true, location: true },
           orderBy: [{ date: "asc" }, { startTime: "asc" }],
@@ -241,7 +243,12 @@ async function EmployeeDashboardContent({
       : Promise.resolve([]),
     employeeId
       ? prisma.absenceRequest.count({
-          where: { workspaceId, employeeId, status: "AUSSTEHEND" },
+          where: {
+            workspaceId,
+            employeeId,
+            status: "AUSSTEHEND",
+            deletedAt: null,
+          },
         })
       : Promise.resolve(0),
     employeeId
@@ -481,20 +488,26 @@ async function ManagerDashboardContent({
     teamMembers,
   ] = await Promise.all([
     prisma.employee.count({ where: { workspaceId, isActive: true } }),
-    prisma.shift.count({ where: { workspaceId } }),
+    prisma.shift.count({ where: { workspaceId, deletedAt: null } }),
     prisma.location.count({ where: { workspaceId } }),
     prisma.shift.findMany({
-      where: { workspaceId, date: { gte: todayStart, lt: tomorrow } },
+      where: {
+        workspaceId,
+        date: { gte: todayStart, lt: tomorrow },
+        deletedAt: null,
+      },
       include: { employee: true, location: true },
       orderBy: { startTime: "asc" },
     }),
     prisma.absenceRequest.count({
-      where: { workspaceId, status: "AUSSTEHEND" },
+      where: { workspaceId, status: "AUSSTEHEND", deletedAt: null },
     }),
     prisma.shiftSwapRequest.count({
       where: { workspaceId, status: "ANGEFRAGT" },
     }),
-    prisma.timeEntry.count({ where: { workspaceId, status: "EINGEREICHT" } }),
+    prisma.timeEntry.count({
+      where: { workspaceId, status: "EINGEREICHT", deletedAt: null },
+    }),
     prisma.user.findUnique({
       where: { id: userId },
       select: { dashboardFavorites: true },
@@ -544,6 +557,7 @@ async function ManagerDashboardContent({
       where: {
         workspaceId,
         status: "GENEHMIGT",
+        deletedAt: null,
         startDate: { lte: monthEnd },
         endDate: { gte: monthStart },
       },
@@ -619,6 +633,7 @@ async function ManagerDashboardContent({
       where: {
         workspaceId,
         status: "GENEHMIGT",
+        deletedAt: null,
         startDate: { lt: tomorrow },
         endDate: { gte: todayStart },
       },
@@ -630,7 +645,7 @@ async function ManagerDashboardContent({
     }),
     /* Widget: Pending Requests */
     prisma.absenceRequest.findMany({
-      where: { workspaceId, status: "AUSSTEHEND" },
+      where: { workspaceId, status: "AUSSTEHEND", deletedAt: null },
       include: {
         employee: { select: { firstName: true, lastName: true, color: true } },
       },
@@ -673,6 +688,7 @@ async function ManagerDashboardContent({
         clockOutAt: null,
         date: { gte: todayStart, lt: tomorrow },
         projectId: { not: null },
+        deletedAt: null,
       },
       include: {
         employee: { select: { firstName: true, lastName: true, color: true } },

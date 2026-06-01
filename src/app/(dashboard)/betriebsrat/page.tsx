@@ -170,17 +170,21 @@ export default function BetriebsratPage() {
   }, []);
 
   const fetchSupporting = useCallback(async () => {
-    const [m, l, tm] = await Promise.all([
-      fetch("/api/betriebsrat/members").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/locations").then((r) => (r.ok ? r.json() : [])),
-      isAdmin
-        ? fetch("/api/team").then((r) => (r.ok ? r.json() : { data: [] }))
-        : Promise.resolve({ data: [] }),
-    ]);
-    setMembers(Array.isArray(m) ? m : []);
-    setLocations(l.data ?? l ?? []);
-    setTeam(tm.data ?? tm ?? []);
-  }, [isAdmin]);
+    try {
+      const [m, l, tm] = await Promise.all([
+        fetch("/api/betriebsrat/members").then((r) => (r.ok ? r.json() : [])),
+        fetch("/api/locations").then((r) => (r.ok ? r.json() : [])),
+        isAdmin
+          ? fetch("/api/team").then((r) => (r.ok ? r.json() : { data: [] }))
+          : Promise.resolve({ data: [] }),
+      ]);
+      setMembers(Array.isArray(m) ? m : []);
+      setLocations(l.data ?? l ?? []);
+      setTeam(tm.data ?? tm ?? []);
+    } catch {
+      setError(t("networkError"));
+    }
+  }, [isAdmin, t]);
 
   useEffect(() => {
     fetchApprovals();
@@ -274,6 +278,8 @@ export default function BetriebsratPage() {
       setNewMemberId("");
       setNewMemberChair(false);
       fetchSupporting();
+    } else {
+      setError(t("networkError"));
     }
   }
 
@@ -285,6 +291,9 @@ export default function BetriebsratPage() {
     if (res.ok) {
       setRemoveMemberId(null);
       fetchSupporting();
+    } else {
+      setRemoveMemberId(null);
+      setError(t("networkError"));
     }
   }
 
@@ -296,6 +305,9 @@ export default function BetriebsratPage() {
     if (res.ok) {
       setWithdrawId(null);
       fetchApprovals();
+    } else {
+      setWithdrawId(null);
+      setError(t("networkError"));
     }
   }
 

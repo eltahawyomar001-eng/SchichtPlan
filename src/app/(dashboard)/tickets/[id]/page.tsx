@@ -147,13 +147,15 @@ export default function TicketDetailPage() {
       const res = await fetch(`/api/tickets/${id}`);
       if (res.ok) {
         setTicket(await res.json());
+      } else if (res.status !== 404) {
+        toast.error(t("loadError") ?? "Ticket konnte nicht geladen werden");
       }
     } catch {
-      // silent
+      toast.error(t("loadError") ?? "Netzwerkfehler");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   const fetchEvents = useCallback(async () => {
     if (!canManage && !isAssignee) return;
@@ -383,6 +385,10 @@ export default function TicketDetailPage() {
                   if (res.ok) {
                     fetchTicket();
                     fetchEvents();
+                  } else {
+                    toast.error(
+                      t("restoreError") ?? "Wiederherstellen fehlgeschlagen",
+                    );
                   }
                 }}
                 className="inline-flex h-8 items-center rounded-lg border border-emerald-300 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 px-3 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"
@@ -396,7 +402,11 @@ export default function TicketDetailPage() {
                   const res = await fetch(`/api/tickets/${id}?purge=true`, {
                     method: "DELETE",
                   });
-                  if (res.ok) router.push("/tickets/papierkorb");
+                  if (res.ok) {
+                    router.push("/tickets/papierkorb");
+                  } else {
+                    toast.error(t("purgeError") ?? "Löschen fehlgeschlagen");
+                  }
                 }}
                 className="inline-flex h-8 items-center rounded-lg border border-red-300 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-3 text-xs font-medium text-red-700 dark:text-red-300 hover:bg-red-100"
               >

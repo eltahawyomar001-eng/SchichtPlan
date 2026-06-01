@@ -196,11 +196,18 @@ export default function EmployeeDetailPage({
               onClick={async () => {
                 setPinSending(true);
                 try {
-                  await fetch(`/api/employees/${emp.id}/resend-pin`, {
-                    method: "POST",
-                  });
-                  setPinSent(true);
-                  setTimeout(() => setPinSent(false), 4000);
+                  const res = await fetch(
+                    `/api/employees/${emp.id}/resend-pin`,
+                    { method: "POST" },
+                  );
+                  if (res.ok) {
+                    setPinSent(true);
+                    setTimeout(() => setPinSent(false), 4000);
+                  } else {
+                    setError(t("networkError"));
+                  }
+                } catch {
+                  setError(t("networkError"));
                 } finally {
                   setPinSending(false);
                 }

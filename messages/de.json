@@ -268,7 +268,8 @@
       "you": "Sie",
       "manage": "Verwalten",
       "noTeamMembers": "Keine Teammitglieder vorhanden",
-      "memberCount": "{count} {count, plural, =1 {Mitglied} other {Mitglieder}}"
+      "memberCount": "{count} {count, plural, =1 {Mitglied} other {Mitglieder}}",
+      "shiftSwap": "Schichttausch"
     }
   },
   "onboarding": {

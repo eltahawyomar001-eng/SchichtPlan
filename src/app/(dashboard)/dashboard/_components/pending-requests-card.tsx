@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { CalendarOffIcon, CheckCircleIcon } from "@/components/icons";
+import { CalendarOffIcon, CheckCircleIcon, SwapIcon } from "@/components/icons";
 
 /* ── Types ── */
 export interface PendingRequest {
@@ -10,9 +10,10 @@ export interface PendingRequest {
     lastName: string;
     color: string | null;
   };
-  category: string; // AbsenceCategory enum value
+  category: string;
   startDate: string; // formatted date string
   endDate: string; // formatted date string
+  type?: "absence" | "swap";
 }
 
 interface PendingRequestsCardProps {
@@ -76,8 +77,18 @@ export function PendingRequestsCard({
                     </p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
-                  <CalendarOffIcon className="h-3 w-3" />
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium ${
+                    req.type === "swap"
+                      ? "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300"
+                      : "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
+                  }`}
+                >
+                  {req.type === "swap" ? (
+                    <SwapIcon className="h-3 w-3" />
+                  ) : (
+                    <CalendarOffIcon className="h-3 w-3" />
+                  )}
                   {categoryLabel(req.category)}
                 </span>
               </div>

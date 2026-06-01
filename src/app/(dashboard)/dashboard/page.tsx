@@ -486,6 +486,7 @@ async function ManagerDashboardContent({
     recentTimeEntries,
     liveProjectEntries,
     teamMembers,
+    pendingSwapRequests,
   ] = await Promise.all([
     prisma.employee.count({ where: { workspaceId, isActive: true } }),
     prisma.shift.count({ where: { workspaceId, deletedAt: null } }),
@@ -540,6 +541,7 @@ async function ManagerDashboardContent({
         workspaceId,
         date: { gte: weekStart, lte: weekEnd },
         deletedAt: null,
+        status: { not: "CANCELLED" },
       },
       select: { date: true, status: true, employeeId: true },
     }),
@@ -572,6 +574,7 @@ async function ManagerDashboardContent({
         lastName: true,
         color: true,
         createdAt: true,
+        dateOfBirth: true,
       },
     }),
     /* Widget: Compliance */
@@ -706,6 +709,18 @@ async function ManagerDashboardContent({
         role: true,
       },
       orderBy: [{ role: "asc" }, { name: "asc" }],
+    }),
+    /* Widget: Pending Requests — shift swaps */
+    prisma.shiftSwapRequest.findMany({
+      where: { workspaceId, status: "ANGEFRAGT" },
+      include: {
+        requester: {
+          select: { firstName: true, lastName: true, color: true },
+        },
+        shift: { select: { date: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
     }),
   ]);
 
@@ -884,14 +899,14 @@ async function ManagerDashboardContent({
 
   /* ── Widget: Overtime Tracker ── */
   const overtimeEmployees: OvertimeEmployee[] = timeAccounts
-    .filter((ta) => ta.currentBalance !== 0)
+    .filter((ta) => ta.currentBalance !== 0 && empMap.has(ta.employeeId))
     .map((ta) => {
-      const emp = empMap.get(ta.employeeId);
+      const emp = empMap.get(ta.employeeId)!;
       return {
         id: ta.employeeId,
-        firstName: emp?.firstName ?? "–",
-        lastName: emp?.lastName ?? "",
-        color: emp?.color ?? null,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        color: emp.color,
         overtimeMinutes: ta.currentBalance,
         contractHours: ta.contractHours,
       };
@@ -967,29 +982,31 @@ async function ManagerDashboardContent({
       new Date(s.date).toLocaleDateString("en-CA"),
     ),
   );
-  const absenceDateSet = new Set<string>();
+  const absenceDateMap = new Map<string, number>();
   for (const abs of monthAbsencesForCalendar) {
     const start = new Date(abs.startDate);
     const end = new Date(abs.endDate);
     for (let dd = new Date(start); dd <= end; dd.setDate(dd.getDate() + 1)) {
-      absenceDateSet.add(dd.toLocaleDateString("en-CA"));
+      const key = dd.toLocaleDateString("en-CA");
+      absenceDateMap.set(key, (absenceDateMap.get(key) ?? 0) + 1);
     }
   }
   for (let i = 0; i < 42; i++) {
     const cd = new Date(calStart);
     cd.setDate(cd.getDate() + i);
     const iso = cd.toLocaleDateString("en-CA");
+    const absCount = absenceDateMap.get(iso) ?? 0;
     calendarDays.push({
       date: iso,
       day: cd.getDate(),
       isToday: iso === todayIso,
       isCurrentMonth: cd.getMonth() === calMonth,
       hasShifts: shiftDateSet.has(iso),
-      hasAbsences: absenceDateSet.has(iso),
+      hasAbsences: absCount > 0,
       shiftCount: monthShiftsForCalendar.filter(
         (s) => new Date(s.date).toLocaleDateString("en-CA") === iso,
       ).length,
-      absenceCount: absenceDateSet.has(iso) ? 1 : 0,
+      absenceCount: absCount,
     });
   }
   const monthLabelStr = firstOfMonth.toLocaleDateString(localeFmt, {
@@ -1010,6 +1027,7 @@ async function ManagerDashboardContent({
   const berlinTodayMs = berlinToday.getTime();
   const celebrations: CelebrationEntry[] = [];
   for (const emp of allActiveEmployees) {
+    // Work anniversary (1+ year, within next 7 days)
     const hireDate = new Date(emp.createdAt);
     const yearsWorked = berlinToday.getFullYear() - hireDate.getFullYear();
     if (yearsWorked >= 1) {
@@ -1029,6 +1047,29 @@ async function ManagerDashboardContent({
           date: anniv.toLocaleDateString(localeFmt),
           detail: t("widgets.yearsAnniversary", { count: yearsWorked }),
           daysUntil: diff,
+        });
+      }
+    }
+    // Birthday (within next 7 days, requires dateOfBirth)
+    if (emp.dateOfBirth) {
+      const dob = new Date(emp.dateOfBirth);
+      const bdayThisYear = new Date(
+        berlinToday.getFullYear(),
+        dob.getMonth(),
+        dob.getDate(),
+      );
+      const bdayDiff = Math.floor(
+        (bdayThisYear.getTime() - berlinTodayMs) / 86400000,
+      );
+      if (bdayDiff >= 0 && bdayDiff <= 7) {
+        celebrations.push({
+          id: `bday_${emp.id}`,
+          firstName: emp.firstName,
+          lastName: emp.lastName,
+          color: emp.color,
+          type: "birthday",
+          date: bdayThisYear.toLocaleDateString(localeFmt),
+          daysUntil: bdayDiff,
         });
       }
     }
@@ -1152,17 +1193,32 @@ async function ManagerDashboardContent({
   }));
 
   /* ── Widget: Pending Requests ── */
-  const pendingReqs: PendingRequest[] = pendingAbsenceRequests.map((req) => ({
-    id: req.id,
-    employee: {
-      firstName: req.employee.firstName,
-      lastName: req.employee.lastName,
-      color: req.employee.color,
-    },
-    category: req.category,
-    startDate: new Date(req.startDate).toLocaleDateString(localeFmt),
-    endDate: new Date(req.endDate).toLocaleDateString(localeFmt),
-  }));
+  const pendingReqs: PendingRequest[] = [
+    ...pendingAbsenceRequests.map((req) => ({
+      id: req.id,
+      employee: {
+        firstName: req.employee.firstName,
+        lastName: req.employee.lastName,
+        color: req.employee.color,
+      },
+      category: req.category,
+      startDate: new Date(req.startDate).toLocaleDateString(localeFmt),
+      endDate: new Date(req.endDate).toLocaleDateString(localeFmt),
+      type: "absence" as const,
+    })),
+    ...pendingSwapRequests.map((req) => ({
+      id: req.id,
+      employee: {
+        firstName: req.requester.firstName,
+        lastName: req.requester.lastName,
+        color: req.requester.color,
+      },
+      category: t("widgets.shiftSwap"),
+      startDate: new Date(req.shift.date).toLocaleDateString(localeFmt),
+      endDate: new Date(req.shift.date).toLocaleDateString(localeFmt),
+      type: "swap" as const,
+    })),
+  ].slice(0, 5);
 
   /* ── Widget: Location Distribution ── */
   const locationColors = [

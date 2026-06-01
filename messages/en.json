@@ -268,7 +268,8 @@
       "you": "You",
       "manage": "Manage",
       "noTeamMembers": "No team members found",
-      "memberCount": "{count} {count, plural, =1 {member} other {members}}"
+      "memberCount": "{count} {count, plural, =1 {member} other {members}}",
+      "shiftSwap": "Shift Swap"
     }
   },
   "onboarding": {

@@ -191,20 +191,26 @@ export default function AutomatisierungSeite() {
   }
 
   async function toggleActive(rule: AutomationRule) {
-    await fetch(`/api/automation-rules/${rule.id}`, {
+    const res = await fetch(`/api/automation-rules/${rule.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: !rule.isActive }),
     });
-    fetchRules();
+    if (res.ok) fetchRules();
   }
 
   async function deleteRule() {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/automation-rules/${deleteTarget}`, {
+      const res = await fetch(`/api/automation-rules/${deleteTarget}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setLoadError(err?.message ?? tc("errorOccurred"));
+        setDeleteTarget(null);
+        return;
+      }
       setDeleteTarget(null);
       fetchRules();
     } catch {

@@ -116,12 +116,13 @@ export default function WebhooksSeite() {
 
   async function toggleActive(hook: WebhookEndpoint) {
     try {
-      await fetch(`/api/webhooks/${hook.id}`, {
+      const res = await fetch(`/api/webhooks/${hook.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !hook.isActive }),
       });
-      fetchHooks();
+      if (res.ok) fetchHooks();
+      else setError(tc("errorOccurred"));
     } catch {
       setError(tc("errorOccurred"));
     }
@@ -130,7 +131,14 @@ export default function WebhooksSeite() {
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/webhooks/${deleteTarget}`, { method: "DELETE" });
+      const res = await fetch(`/api/webhooks/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err?.message ?? tc("errorOccurred"));
+        return;
+      }
       setDeleteTarget(null);
       fetchHooks();
     } catch {

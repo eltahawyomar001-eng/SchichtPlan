@@ -489,7 +489,14 @@ export default function SchichtplanPage() {
   const handleDeleteShift = async () => {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/shifts/${deleteTarget}`, { method: "DELETE" });
+      const res = await fetch(`/api/shifts/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setLoadError(err?.message ?? tc("errorOccurred"));
+        return;
+      }
       setDeleteTarget(null);
       setDetailShift(null);
       fetchData();

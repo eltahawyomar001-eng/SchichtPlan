@@ -279,20 +279,24 @@ export default function BetriebsratPage() {
 
   async function handleRemoveMember() {
     if (!removeMemberId) return;
-    await fetch(`/api/betriebsrat/members/${removeMemberId}`, {
+    const res = await fetch(`/api/betriebsrat/members/${removeMemberId}`, {
       method: "DELETE",
     });
-    setRemoveMemberId(null);
-    fetchSupporting();
+    if (res.ok) {
+      setRemoveMemberId(null);
+      fetchSupporting();
+    }
   }
 
   async function handleWithdraw() {
     if (!withdrawId) return;
-    await fetch(`/api/betriebsrat/approvals/${withdrawId}`, {
+    const res = await fetch(`/api/betriebsrat/approvals/${withdrawId}`, {
       method: "DELETE",
     });
-    setWithdrawId(null);
-    fetchApprovals();
+    if (res.ok) {
+      setWithdrawId(null);
+      fetchApprovals();
+    }
   }
 
   const memberUserIds = new Set(members.map((m) => m.user.id));

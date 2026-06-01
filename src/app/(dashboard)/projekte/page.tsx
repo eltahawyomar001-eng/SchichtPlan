@@ -188,7 +188,14 @@ export default function ProjekteSeite() {
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/projects/${deleteTarget}`, { method: "DELETE" });
+      const res = await fetch(`/api/projects/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err?.message ?? tc("errorOccurred"));
+        return;
+      }
       setDeleteTarget(null);
       fetchData();
     } catch {

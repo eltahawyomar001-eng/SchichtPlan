@@ -140,8 +140,13 @@ export default function SosLivePage({
     if (!data) return;
     setCancelling(true);
     try {
-      await fetch(`/api/sos/${data.id}`, { method: "DELETE" });
-      router.push("/sos");
+      const res = await fetch(`/api/sos/${data.id}`, { method: "DELETE" });
+      if (res.ok) {
+        router.push("/sos");
+      } else {
+        setCancelling(false);
+        setConfirmCancel(false);
+      }
     } catch {
       setCancelling(false);
       setConfirmCancel(false);

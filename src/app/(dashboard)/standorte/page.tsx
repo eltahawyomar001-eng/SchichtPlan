@@ -174,7 +174,14 @@ export default function StandortePage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/locations/${deleteTarget}`, { method: "DELETE" });
+      const res = await fetch(`/api/locations/${deleteTarget}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err?.message ?? tc("errorOccurred"));
+        return;
+      }
       setDeleteTarget(null);
       fetchLocations();
       window.dispatchEvent(new Event("shiftfy:usage-changed"));
@@ -235,11 +242,15 @@ export default function StandortePage() {
 
   const removeRequiredSkill = async (skillId: string) => {
     if (!certModalLocationId) return;
-    await fetch(`/api/locations/${certModalLocationId}/required-skills`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ skillId }),
-    });
+    const res = await fetch(
+      `/api/locations/${certModalLocationId}/required-skills`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skillId }),
+      },
+    );
+    if (!res.ok) return;
     setRequiredSkills((prev) => prev.filter((s) => s.skillId !== skillId));
   };
 

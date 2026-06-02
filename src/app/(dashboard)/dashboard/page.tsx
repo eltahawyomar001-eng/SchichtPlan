@@ -659,7 +659,7 @@ async function ManagerDashboardContent({
     }),
     /* Widget: Location Distribution */
     prisma.location.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       select: {
         id: true,
         name: true,

@@ -43,7 +43,7 @@ export const GET = withRoute("/api/projects/planner", "GET", async (req) => {
 
   const [projects, entries] = await Promise.all([
     prisma.project.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       select: {
         id: true,
         name: true,

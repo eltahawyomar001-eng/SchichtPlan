@@ -32,7 +32,7 @@ export const GET = withRoute("/api/shift-templates", "GET", async (req) => {
 
   const [templates, total] = await Promise.all([
     prisma.shiftTemplate.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       include: {
         location: {
           select: { id: true, name: true },
@@ -42,7 +42,7 @@ export const GET = withRoute("/api/shift-templates", "GET", async (req) => {
       take,
       skip,
     }),
-    prisma.shiftTemplate.count({ where: { workspaceId } }),
+    prisma.shiftTemplate.count({ where: { workspaceId, deletedAt: null } }),
   ]);
 
   const res = paginatedResponse(templates, total, take, skip);

@@ -22,7 +22,7 @@ export const GET = withRoute("/api/clients", "GET", async (req) => {
 
   const [clients, total] = await Promise.all([
     prisma.client.findMany({
-      where: { workspaceId: user.workspaceId },
+      where: { workspaceId: user.workspaceId, deletedAt: null },
       include: {
         projects: { select: { id: true, name: true, status: true } },
       },
@@ -31,7 +31,7 @@ export const GET = withRoute("/api/clients", "GET", async (req) => {
       skip,
     }),
     prisma.client.count({
-      where: { workspaceId: user.workspaceId },
+      where: { workspaceId: user.workspaceId, deletedAt: null },
     }),
   ]);
 

@@ -27,7 +27,7 @@ export const GET = withRoute("/api/skills", "GET", async (req) => {
 
   const [skills, total] = await Promise.all([
     prisma.skill.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       include: {
         _count: { select: { employeeSkills: true } },
       },
@@ -35,7 +35,7 @@ export const GET = withRoute("/api/skills", "GET", async (req) => {
       take,
       skip,
     }),
-    prisma.skill.count({ where: { workspaceId } }),
+    prisma.skill.count({ where: { workspaceId, deletedAt: null } }),
   ]);
 
   const res = paginatedResponse(skills, total, take, skip);

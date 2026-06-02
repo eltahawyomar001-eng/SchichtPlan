@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     if (addonRequired) return addonRequired;
 
     const locations = await prisma.location.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId: workspace.id, deletedAt: null },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     });

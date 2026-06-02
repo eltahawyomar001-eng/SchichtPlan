@@ -224,7 +224,7 @@ export const GET = withRoute("/api/weather", "GET", async () => {
 
   // Fetch locations (cap at 5 to keep response time reasonable)
   const locations = await prisma.location.findMany({
-    where: { workspaceId },
+    where: { workspaceId, deletedAt: null },
     select: { id: true, name: true, address: true },
     orderBy: { name: "asc" },
     take: 5,

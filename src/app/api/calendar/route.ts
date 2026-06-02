@@ -105,14 +105,14 @@ export const GET = withRoute("/api/calendar", "GET", async (req) => {
 
       // Departments for filter
       prisma.department.findMany({
-        where: { workspaceId },
+        where: { workspaceId, deletedAt: null },
         select: { id: true, name: true, color: true },
         orderBy: { name: "asc" },
       }),
 
       // Projects for filter
       prisma.project.findMany({
-        where: { workspaceId, status: "AKTIV" },
+        where: { workspaceId, status: "AKTIV", deletedAt: null },
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),

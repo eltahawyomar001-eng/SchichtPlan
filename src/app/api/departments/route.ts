@@ -18,7 +18,7 @@ export const GET = withRoute("/api/departments", "GET", async (req) => {
 
   const [departments, total] = await Promise.all([
     prisma.department.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       include: {
         location: { select: { id: true, name: true } },
         _count: { select: { employees: true } },
@@ -27,7 +27,7 @@ export const GET = withRoute("/api/departments", "GET", async (req) => {
       take,
       skip,
     }),
-    prisma.department.count({ where: { workspaceId } }),
+    prisma.department.count({ where: { workspaceId, deletedAt: null } }),
   ]);
 
   const res = paginatedResponse(departments, total, take, skip);

@@ -22,7 +22,10 @@ export const GET = withRoute("/api/projects", "GET", async (req) => {
   const clientId = searchParams.get("clientId");
   const status = searchParams.get("status");
 
-  const where: Record<string, unknown> = { workspaceId: user.workspaceId };
+  const where: Record<string, unknown> = {
+    workspaceId: user.workspaceId,
+    deletedAt: null,
+  };
   if (clientId) where.clientId = clientId;
   if (status) where.status = status;
 

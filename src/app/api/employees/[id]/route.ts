@@ -318,34 +318,18 @@ export async function DELETE(
     const forbidden = requirePermission(user, "employees", "delete");
     if (forbidden) return forbidden;
 
-    // ── Preflight: ArbZG §16 — time records must be retained 2 years ──
-    // TimeEntry.employee FK is now RESTRICT, so the DB would reject the delete
-    // anyway, but we give a human-readable error before hitting the constraint.
-    const [timeEntryCount, futureShiftCount] = await Promise.all([
-      prisma.timeEntry.count({
-        where: { employeeId: id, workspaceId: workspaceId! },
-      }),
-      prisma.shift.count({
-        where: {
-          employeeId: id,
-          workspaceId: workspaceId!,
-          date: { gt: new Date() },
-          status: { notIn: ["CANCELLED", "COMPLETED"] },
-        },
-      }),
-    ]);
-
-    if (timeEntryCount > 0) {
-      return NextResponse.json(
-        {
-          error: "EMPLOYEE_HAS_TIME_RECORDS",
-          message: `Dieser Mitarbeiter hat ${timeEntryCount} Zeiterfassungseinträge und kann nicht gelöscht werden. Gemäß ArbZG §16 müssen Arbeitszeitnachweise 2 Jahre aufbewahrt werden. Bitte archivieren Sie den Mitarbeiter stattdessen.`,
-          messageEn: `This employee has ${timeEntryCount} time tracking record(s) and cannot be deleted. ArbZG §16 requires 2-year retention of working time records. Please archive the employee instead.`,
-          timeEntryCount,
-        },
-        { status: 409 },
-      );
-    }
+    // Soft-delete: just check for future shifts that need reassignment.
+    // Time-entry records are preserved (employee row stays in DB) so the
+    // ArbZG §16 2-year retention constraint is naturally satisfied.
+    const futureShiftCount = await prisma.shift.count({
+      where: {
+        employeeId: id,
+        workspaceId: workspaceId!,
+        date: { gt: new Date() },
+        deletedAt: null,
+        status: { notIn: ["CANCELLED", "COMPLETED"] },
+      },
+    });
 
     if (futureShiftCount > 0) {
       return NextResponse.json(
@@ -359,9 +343,11 @@ export async function DELETE(
       );
     }
 
+    const now = new Date();
     await prisma.$transaction(async (tx) => {
-      await tx.employee.deleteMany({
-        where: { id, workspaceId },
+      await tx.employee.updateMany({
+        where: { id, workspaceId, deletedAt: null },
+        data: { deletedAt: now, isActive: false },
       });
 
       // ── Audit log (atomic) ──

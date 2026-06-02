@@ -71,8 +71,9 @@ export const DELETE = withRoute(
 
     const { id } = params;
 
-    await prisma.shiftTemplate.delete({
+    await prisma.shiftTemplate.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
 
     createAuditLog({

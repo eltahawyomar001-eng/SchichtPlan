@@ -18,12 +18,12 @@ export const GET = withRoute("/api/locations", "GET", async (req) => {
 
   const [locations, total] = await Promise.all([
     prisma.location.findMany({
-      where: { workspaceId },
+      where: { workspaceId, deletedAt: null },
       orderBy: { name: "asc" },
       take,
       skip,
     }),
-    prisma.location.count({ where: { workspaceId } }),
+    prisma.location.count({ where: { workspaceId, deletedAt: null } }),
   ]);
 
   const res = paginatedResponse(locations, total, take, skip);

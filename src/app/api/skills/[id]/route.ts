@@ -76,8 +76,9 @@ export const DELETE = withRoute(
 
     const { id } = params;
 
-    await prisma.skill.delete({
+    await prisma.skill.update({
       where: { id, workspaceId },
+      data: { deletedAt: new Date() },
     });
 
     createAuditLog({

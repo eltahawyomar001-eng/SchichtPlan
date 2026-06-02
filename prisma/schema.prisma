@@ -662,6 +662,7 @@ model Location {
   /// vacation calculator. Falls back to Workspace.bundesland when null.
   bundesland            String?
   createdAt             DateTime                @default(now())
+  deletedAt             DateTime?
   workspaceId           String
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   shifts                Shift[]
@@ -673,6 +674,8 @@ model Location {
   serviceVisits         ServiceVisit[]
   employees             Employee[]
   requiredSkills        LocationRequiredSkill[]
+
+  @@index([workspaceId, deletedAt])
 }
 
 model Department {
@@ -681,6 +684,7 @@ model Department {
   color                String?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
   locationId           String?
   location             Location?             @relation(fields: [locationId], references: [id], onDelete: SetNull)
   workspaceId          String
@@ -689,6 +693,7 @@ model Department {
   staffingRequirements StaffingRequirement[]
 
   @@index([workspaceId])
+  @@index([workspaceId, deletedAt])
 }
 
 model Skill {
@@ -696,6 +701,7 @@ model Skill {
   name                  String
   category              String?
   createdAt             DateTime                @default(now())
+  deletedAt             DateTime?
   workspaceId           String
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   employeeSkills        EmployeeSkill[]
@@ -704,6 +710,7 @@ model Skill {
 
   @@unique([name, workspaceId])
   @@index([workspaceId])
+  @@index([workspaceId, deletedAt])
 }
 
 model LocationRequiredSkill {
@@ -748,10 +755,12 @@ model ShiftTemplate {
   location    Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
+  @@index([workspaceId, deletedAt])
 }
 
 model Shift {
@@ -1176,11 +1185,13 @@ model Client {
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   projects    Project[]
 
   @@index([workspaceId])
+  @@index([workspaceId, deletedAt])
 }
 
 enum ProjectStatus {
@@ -1202,6 +1213,7 @@ model Project {
   endDate       DateTime?       @db.Date
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
   clientId      String?
   client        Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
   workspaceId   String
@@ -1211,6 +1223,7 @@ model Project {
 
   @@index([workspaceId])
   @@index([clientId])
+  @@index([workspaceId, deletedAt])
 }
 
 model ProjectMember {

@@ -72,8 +72,9 @@ export const DELETE = withRoute(
 
     const { id } = params;
 
-    await prisma.department.delete({
+    await prisma.department.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
 
     createAuditLog({

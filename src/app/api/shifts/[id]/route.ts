@@ -354,11 +354,11 @@ export const DELETE = withRoute(
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.shift.deleteMany({
-        where: { id, workspaceId },
+      await tx.shift.updateMany({
+        where: { id, workspaceId, deletedAt: null },
+        data: { deletedAt: new Date() },
       });
 
-      // ── Audit log (atomic) ──
       await createAuditLogTx(tx, {
         action: "DELETE",
         entityType: "shift",

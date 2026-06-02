@@ -123,7 +123,10 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.client.delete({ where: { id } });
+    await prisma.client.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
     createAuditLog({
       action: "DELETE",

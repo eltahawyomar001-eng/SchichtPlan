@@ -83,8 +83,9 @@ export const DELETE = withRoute(
     const forbidden = requirePermission(user, "locations", "delete");
     if (forbidden) return forbidden;
 
-    await prisma.location.deleteMany({
-      where: { id, workspaceId },
+    await prisma.location.updateMany({
+      where: { id, workspaceId, deletedAt: null },
+      data: { deletedAt: new Date() },
     });
 
     createAuditLog({

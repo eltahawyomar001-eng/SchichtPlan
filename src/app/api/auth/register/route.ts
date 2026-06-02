@@ -8,7 +8,7 @@ import { registerSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
-import { initializeTrial } from "@/lib/subscription";
+import { initializeTrial, provisionStripeCustomer } from "@/lib/subscription";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 
 export const POST = withRoute("/api/auth/register", "POST", async (req) => {
@@ -288,6 +288,10 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
 
     return { user, workspace };
   });
+
+  // Create Stripe customer now so stripeCustomerId is available at checkout
+  // (fire & forget — a failure here never blocks registration)
+  void provisionStripeCustomer(result.workspace.id, email, name);
 
   // ── PIN generation for owner employee (fire & forget) ──
   (async () => {

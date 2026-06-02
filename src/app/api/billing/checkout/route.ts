@@ -194,10 +194,31 @@ export const POST = withRoute(
     // Per-seat billing — charge for every active employee already in the
     // workspace. Legacy workspaces moving from free/trial must not skip
     // paying for existing employees. Minimum of 1 seat.
-    const activeEmployeeCount = await prisma.employee.count({
-      where: { workspaceId: user.workspaceId, isActive: true },
-    });
+    const [activeEmployeeCount, workspace] = await Promise.all([
+      prisma.employee.count({
+        where: { workspaceId: user.workspaceId, isActive: true },
+      }),
+      prisma.workspace.findUnique({
+        where: { id: user.workspaceId },
+        select: { createdAt: true },
+      }),
+    ]);
     const initialSeatCount = Math.max(1, activeEmployeeCount);
+
+    // Stripe trial end = workspace.createdAt + plan trial days.
+    // This ensures Stripe picks up only the *remaining* trial time, not a
+    // fresh period on top of the in-app trial the user already consumed.
+    // Stripe requires trial_end to be at least 48 h in the future — if less
+    // than that remains, skip the trial and charge immediately.
+    const TRIAL_GRACE_MS = 48 * 60 * 60 * 1000;
+    const trialEndMs = workspace
+      ? workspace.createdAt.getTime() +
+        planConfig.trialDays * 24 * 60 * 60 * 1000
+      : null;
+    const stripeTrialEnd =
+      trialEndMs && trialEndMs > Date.now() + TRIAL_GRACE_MS
+        ? Math.floor(trialEndMs / 1000)
+        : undefined;
 
     // Derive base URL from the actual request so it's always correct on Vercel,
     // regardless of how NEXTAUTH_URL is configured.
@@ -230,8 +251,8 @@ export const POST = withRoute(
       client_reference_id: user.workspaceId,
       allow_promotion_codes: true,
       tax_id_collection: { enabled: true },
-      ...(planConfig.trialDays > 0
-        ? { subscription_data: { trial_period_days: planConfig.trialDays } }
+      ...(stripeTrialEnd
+        ? { subscription_data: { trial_end: stripeTrialEnd } }
         : {}),
       ...customerParams,
     };

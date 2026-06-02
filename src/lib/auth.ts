@@ -14,7 +14,7 @@ import {
   recordFailedAttempt,
   clearFailedAttempts,
 } from "@/lib/login-lockout";
-import { initializeTrial } from "@/lib/subscription";
+import { initializeTrial, provisionStripeCustomer } from "@/lib/subscription";
 import { log } from "@/lib/logger";
 
 /** Workspace shape that includes the onboardingCompleted field.
@@ -282,10 +282,12 @@ export const authOptions: NextAuthOptions = {
               "-" +
               user.id.slice(-6);
 
+            let newWorkspaceId: string | null = null;
             await prisma.$transaction(async (tx) => {
               const workspace = await tx.workspace.create({
                 data: { name: `${displayName}'s Workspace`, slug },
               });
+              newWorkspaceId = workspace.id;
               await tx.user.update({
                 where: { id: user.id },
                 data: { workspaceId: workspace.id, role: "OWNER" },
@@ -306,6 +308,16 @@ export const authOptions: NextAuthOptions = {
 
               await initializeTrial(tx, workspace.id);
             });
+
+            // Provision Stripe customer now so stripeCustomerId exists at
+            // checkout time (fire & forget — failure never blocks sign-in)
+            if (newWorkspaceId) {
+              void provisionStripeCustomer(
+                newWorkspaceId,
+                dbUser.email ?? "",
+                dbUser.name ?? displayName,
+              ).catch(() => {});
+            }
 
             // Flag as new OAuth user so /oauth-welcome can show "account created" UI
             await cache
@@ -557,6 +569,14 @@ export const authOptions: NextAuthOptions = {
               token.workspaceName = `${displayName}'s Workspace`;
               token.employeeId = newEmployeeId;
               token.onboardingCompleted = false;
+
+              if (newWorkspaceId) {
+                void provisionStripeCustomer(
+                  newWorkspaceId,
+                  dbUser.email ?? "",
+                  dbUser.name ?? displayName,
+                ).catch(() => {});
+              }
             }
           } else {
             token.role = dbUser.role;

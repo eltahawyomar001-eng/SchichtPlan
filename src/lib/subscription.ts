@@ -174,6 +174,49 @@ export async function getHardBlockState(workspaceId: string): Promise<boolean> {
 }
 
 /**
+ * Create a Stripe customer for a workspace and persist stripeCustomerId on
+ * the subscription row. Fire-and-forget safe — caller may not await.
+ *
+ * Called after registration so the customer ID exists at checkout time,
+ * eliminating the checkout-time customer lookup by email.
+ */
+export async function provisionStripeCustomer(
+  workspaceId: string,
+  email: string,
+  name: string,
+): Promise<void> {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key || key.startsWith("sk_test_YOUR") || key === "") return;
+
+  try {
+    const { getStripe } = await import("@/lib/stripe");
+    const stripe = getStripe();
+
+    const customer = await stripe.customers.create({
+      email,
+      name,
+      metadata: { workspaceId },
+    });
+
+    await prisma.subscription.update({
+      where: { workspaceId },
+      data: { stripeCustomerId: customer.id },
+    });
+
+    log.info("[billing] Stripe customer provisioned at signup", {
+      workspaceId,
+      customerId: customer.id,
+    });
+  } catch (err) {
+    // Non-fatal — checkout falls back to customer_email lookup
+    log.warn("[billing] provisionStripeCustomer failed (non-fatal)", {
+      workspaceId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
  * Create a 7-day trial subscription for a newly registered workspace.
  * Called inside the registration transaction right after workspace creation.
  */

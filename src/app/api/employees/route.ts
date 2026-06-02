@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, withWorkspaceContext } from "@/lib/db";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import { requireUserSlot } from "@/lib/subscription-guard";
 import { createEmployeeSchema, validateBody } from "@/lib/validations";
@@ -43,28 +43,34 @@ export async function GET(req: Request) {
     // DSGVO Art. 5(1)(c) data minimisation: wage and contract fields must not
     // be fetched from the DB at all for EMPLOYEE-role requests, not just stripped
     // in JS after the query. pinHash is never returned to any client.
-    const [employees, total] = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma.employee.findMany as any)({
-        where,
-        omit: isEmployee(user)
-          ? { hourlyRate: true, contractType: true, pinHash: true }
-          : { pinHash: true },
-        include: {
-          employeeSkills: {
-            include: { skill: { select: { id: true, name: true } } },
-            orderBy: { createdAt: "asc" },
-          },
-          location: { select: { id: true, name: true } },
-          department: { select: { id: true, name: true } },
-          user: { select: { id: true, role: true } },
-        },
-        orderBy: { lastName: "asc" },
-        take,
-        skip,
-      }),
-      prisma.employee.count({ where }),
-    ]);
+    // withWorkspaceContext: switches to shiftfy_app role (NOBYPASSRLS) so RLS
+    // policies enforce workspace isolation as a second layer after app-level auth.
+    const [employees, total] = await withWorkspaceContext(
+      workspaceId,
+      async (tx) =>
+        Promise.all([
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (tx.employee.findMany as any)({
+            where,
+            omit: isEmployee(user)
+              ? { hourlyRate: true, contractType: true, pinHash: true }
+              : { pinHash: true },
+            include: {
+              employeeSkills: {
+                include: { skill: { select: { id: true, name: true } } },
+                orderBy: { createdAt: "asc" },
+              },
+              location: { select: { id: true, name: true } },
+              department: { select: { id: true, name: true } },
+              user: { select: { id: true, role: true } },
+            },
+            orderBy: { lastName: "asc" },
+            take,
+            skip,
+          }),
+          tx.employee.count({ where }),
+        ]),
+    );
 
     return paginatedResponse(employees, total, take, skip);
   } catch (error) {

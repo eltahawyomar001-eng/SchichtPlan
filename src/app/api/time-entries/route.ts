@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, withWorkspaceContext } from "@/lib/db";
 import { isEmployee } from "@/lib/authorization";
 import {
   validateTimeEntry,
@@ -57,20 +57,22 @@ export const GET = withRoute("/api/time-entries", "GET", async (req) => {
 
   const { take, skip } = parsePagination(req);
 
-  const [entries, total] = await Promise.all([
-    prisma.timeEntry.findMany({
-      where,
-      include: {
-        employee: true,
-        location: true,
-        auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
-      },
-      orderBy: [{ date: "desc" }, { startTime: "desc" }],
-      take,
-      skip,
-    }),
-    prisma.timeEntry.count({ where }),
-  ]);
+  const [entries, total] = await withWorkspaceContext(workspaceId, async (tx) =>
+    Promise.all([
+      tx.timeEntry.findMany({
+        where,
+        include: {
+          employee: true,
+          location: true,
+          auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
+        },
+        orderBy: [{ date: "desc" }, { startTime: "desc" }],
+        take,
+        skip,
+      }),
+      tx.timeEntry.count({ where }),
+    ]),
+  );
 
   return paginatedResponse(entries, total, take, skip);
 });

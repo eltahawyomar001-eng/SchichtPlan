@@ -82,6 +82,7 @@ import {
   type LiveProject,
 } from "./_components/live-projects-card";
 import { MyTasksCard } from "./_components/my-tasks-card";
+import { GettingStartedChecklist } from "./_components/getting-started-checklist";
 import {
   TeamMembersCard,
   type TeamMember,
@@ -487,6 +488,7 @@ async function ManagerDashboardContent({
     liveProjectEntries,
     teamMembers,
     pendingSwapRequests,
+    invitedMemberCount,
   ] = await Promise.all([
     prisma.employee.count({ where: { workspaceId, isActive: true } }),
     prisma.shift.count({ where: { workspaceId, deletedAt: null } }),
@@ -722,6 +724,7 @@ async function ManagerDashboardContent({
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
+    prisma.user.count({ where: { workspaceId, role: { not: "OWNER" } } }),
   ]);
 
   const favorites: string[] = currentUser?.dashboardFavorites
@@ -778,38 +781,42 @@ async function ManagerDashboardContent({
     },
   ];
 
-  const showOnboarding =
-    locationCount === 0 || employeeCount === 0 || shiftCount === 0;
-
-  const onboardingSteps = [
+  const checklistItems = [
     {
-      title: to("step1Title"),
-      desc: to("step1Desc"),
+      id: "location",
+      label: to("step1Title"),
+      description: to("step1Desc"),
       done: locationCount > 0,
       href: "/standorte",
-      icon: MapPinIcon,
-      color: "text-emerald-600",
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
+      icon: "location" as const,
     },
     {
-      title: to("step2Title"),
-      desc: to("step2Desc"),
+      id: "employee",
+      label: to("step2Title"),
+      description: to("step2Desc"),
       done: employeeCount > 0,
       href: "/mitarbeiter",
-      icon: UsersIcon,
-      color: "text-emerald-600",
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
+      icon: "employee" as const,
     },
     {
-      title: to("step3Title"),
-      desc: to("step3Desc"),
+      id: "shift",
+      label: to("step3Title"),
+      description: to("step3Desc"),
       done: shiftCount > 0,
       href: "/schichtplan",
-      icon: CalendarIcon,
-      color: "text-emerald-600",
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
+      icon: "shift" as const,
+    },
+    {
+      id: "invite",
+      label: to("step4Title") || "Teammitglied einladen",
+      description:
+        to("step4Desc") || "Laden Sie Ihr Team ein, auf Shiftfy zuzugreifen",
+      done: invitedMemberCount > 0,
+      href: "/mitarbeiter?invite=1",
+      icon: "invite" as const,
     },
   ];
+  const showOnboarding = checklistItems.some((s) => !s.done);
 
   const totalPending = pendingAbsences + pendingSwaps + pendingTimeEntries;
 
@@ -1335,87 +1342,12 @@ async function ManagerDashboardContent({
    * ══════════════════════════════════════════════════════════ */
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* Onboarding Wizard */}
+      {/* Getting Started Checklist — dismissable, auto-hides when all done */}
       {showOnboarding && (
-        <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-emerald-50/20 overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 p-2 shadow-sm">
-                <RocketIcon className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-lg sm:text-xl">
-                  {to("welcomeTitle")}
-                </CardTitle>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {to("welcomeSubtitle")}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-                <span>{to("progress") || "Fortschritt"}</span>
-                <span>
-                  {onboardingSteps.filter((s) => s.done).length}/
-                  {onboardingSteps.length}
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-                  style={{
-                    width: `${(onboardingSteps.filter((s) => s.done).length / onboardingSteps.length) * 100}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {onboardingSteps.map((step, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-3 sm:gap-4 rounded-xl border p-3.5 sm:p-4 transition-all duration-200 ${
-                    step.done
-                      ? "border-green-100 bg-green-50/40"
-                      : "border-gray-100 bg-white dark:bg-zinc-900 hover:border-emerald-200 hover:shadow-sm"
-                  }`}
-                >
-                  <div
-                    className={`flex-shrink-0 rounded-xl p-2.5 ${step.done ? "bg-green-100" : step.bg}`}
-                  >
-                    {step.done ? (
-                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <step.icon className={`h-5 w-5 ${step.color}`} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`font-medium text-sm ${step.done ? "text-green-700 line-through" : "text-gray-900"}`}
-                    >
-                      {step.title}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{step.desc}</p>
-                  </div>
-                  {step.done ? (
-                    <span className="text-xs font-medium text-green-600 flex-shrink-0">
-                      {to("completed")} ✓
-                    </span>
-                  ) : (
-                    <Link
-                      href={step.href}
-                      className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 flex-shrink-0"
-                    >
-                      <span className="hidden sm:inline">{to("goTo")}</span>
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <GettingStartedChecklist
+          workspaceId={workspaceId}
+          items={checklistItems}
+        />
       )}
 
       {/* Stats Grid */}

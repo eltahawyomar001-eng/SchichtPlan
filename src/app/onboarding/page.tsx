@@ -446,6 +446,7 @@ function CompleteStep() {
     } catch {
       // best-effort
     }
+    localStorage.removeItem(STEP_KEY);
     // Hard redirect so the middleware re-evaluates the session from scratch
     // with the freshly-busted JWT cache. router.push() reuses the stale token.
     window.location.href = "/dashboard";
@@ -585,10 +586,18 @@ function ActivatingScreen({ state }: { state: SubGate }) {
   );
 }
 
+const STEP_KEY = "shiftfy_onboarding_step";
+
+function getSavedStep(): number {
+  if (typeof window === "undefined") return 0;
+  const saved = parseInt(localStorage.getItem(STEP_KEY) ?? "0", 10);
+  return !isNaN(saved) && saved > 0 && saved < STEPS.length - 1 ? saved : 0;
+}
+
 /* ─── Main Wizard ────────────────────────────────────────────── */
 
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(getSavedStep);
   const [subGate, setSubGate] = useState<SubGate>("checking");
   const pollCountRef = useRef(0);
   const t = useTranslations("onboardingWizard");
@@ -639,11 +648,19 @@ export default function OnboardingPage() {
   ];
 
   const goNext = useCallback(() => {
-    setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setCurrentStep((s) => {
+      const next = Math.min(s + 1, STEPS.length - 1);
+      localStorage.setItem(STEP_KEY, String(next));
+      return next;
+    });
   }, []);
 
   const goBack = useCallback(() => {
-    setCurrentStep((s) => Math.max(s - 1, 0));
+    setCurrentStep((s) => {
+      const prev = Math.max(s - 1, 0);
+      localStorage.setItem(STEP_KEY, String(prev));
+      return prev;
+    });
   }, []);
 
   return (

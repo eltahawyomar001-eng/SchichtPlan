@@ -48,7 +48,7 @@ interface EmployeeData {
   firstName: string;
   lastName: string;
   color: string | null;
-  department: { id: string; name: string } | null;
+  departments: { department: { id: string; name: string } }[];
   absences: Absence[];
   balance: VacBalance | null;
   summary: EmployeeSummary;
@@ -184,7 +184,9 @@ export default function JahresplanungSeite() {
   const departments = useMemo(() => {
     const deptMap = new Map<string, string>();
     data.forEach((e) => {
-      if (e.department) deptMap.set(e.department.id, e.department.name);
+      e.departments?.forEach((d) =>
+        deptMap.set(d.department.id, d.department.name),
+      );
     });
     return Array.from(deptMap.entries()).sort((a, b) =>
       a[1].localeCompare(b[1]),
@@ -193,7 +195,9 @@ export default function JahresplanungSeite() {
 
   const filteredEmployees = useMemo(() => {
     if (!departmentFilter) return data;
-    return data.filter((e) => e.department?.id === departmentFilter);
+    return data.filter((e) =>
+      e.departments?.some((d) => d.department.id === departmentFilter),
+    );
   }, [data, departmentFilter]);
 
   // Build a lookup: employeeId → date string → Absence[]
@@ -956,9 +960,11 @@ function SummaryTable({
                           <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                             {emp.firstName} {emp.lastName}
                           </span>
-                          {emp.department && (
+                          {emp.departments?.length > 0 && (
                             <span className="block text-[10px] text-gray-400 dark:text-zinc-500">
-                              {emp.department.name}
+                              {emp.departments
+                                .map((d) => d.department.name)
+                                .join(", ")}
                             </span>
                           )}
                         </div>

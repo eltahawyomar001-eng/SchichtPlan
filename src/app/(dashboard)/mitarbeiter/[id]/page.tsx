@@ -65,7 +65,7 @@ interface EmployeeDetail {
   color: string | null;
   isActive: boolean;
   createdAt: string;
-  department: { id: string; name: string } | null;
+  departments: { department: { id: string; name: string } }[];
   shifts: {
     id: string;
     date: string;
@@ -273,9 +273,10 @@ export default function EmployeeDetailPage({
                         ` · ${emp.weeklyHours}${tc("hrsPerWeek")}`}
                     </span>
                   )}
-                  {emp.department && (
+                  {emp.departments?.length > 0 && (
                     <span className="inline-flex items-center gap-1.5">
-                      {t("department")}: {emp.department.name}
+                      {t("department")}:{" "}
+                      {emp.departments.map((d) => d.department.name).join(", ")}
                     </span>
                   )}
                 </div>

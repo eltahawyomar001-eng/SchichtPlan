@@ -106,7 +106,7 @@ async function main() {
         color: "#059669",
         workspaceId: workspace.id,
         userId: owner.id,
-        departmentId: department.id,
+        departments: { create: [{ departmentId: department.id }] },
       },
     }),
     prisma.employee.create({
@@ -121,7 +121,7 @@ async function main() {
         color: "#3B82F6",
         workspaceId: workspace.id,
         userId: admin.id,
-        departmentId: department.id,
+        departments: { create: [{ departmentId: department.id }] },
       },
     }),
     prisma.employee.create({
@@ -136,7 +136,7 @@ async function main() {
         color: "#F59E0B",
         workspaceId: workspace.id,
         userId: manager.id,
-        departmentId: department.id,
+        departments: { create: [{ departmentId: department.id }] },
       },
     }),
     prisma.employee.create({
@@ -150,7 +150,7 @@ async function main() {
         contractType: "MINIJOB",
         color: "#EF4444",
         workspaceId: workspace.id,
-        departmentId: department.id,
+        departments: { create: [{ departmentId: department.id }] },
       },
     }),
     prisma.employee.create({
@@ -164,7 +164,7 @@ async function main() {
         contractType: "VOLLZEIT",
         color: "#8B5CF6",
         workspaceId: workspace.id,
-        departmentId: department.id,
+        departments: { create: [{ departmentId: department.id }] },
       },
     }),
   ]);

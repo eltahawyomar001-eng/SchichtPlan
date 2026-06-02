@@ -93,13 +93,15 @@ export default function TeamPage() {
             ? json.data
             : [];
         setMembers(data);
+      } else {
+        setInviteMsg({ type: "error", text: t("errorNetwork") });
       }
     } catch {
-      // silent
+      setInviteMsg({ type: "error", text: t("errorNetwork") });
     } finally {
       setLoadingMembers(false);
     }
-  }, []);
+  }, [t]);
 
   const fetchInvitations = useCallback(async () => {
     try {
@@ -113,13 +115,15 @@ export default function TeamPage() {
             ? json.data
             : [];
         setInvitations(data);
+      } else {
+        setInviteMsg({ type: "error", text: t("errorNetwork") });
       }
     } catch {
-      // silent
+      setInviteMsg({ type: "error", text: t("errorNetwork") });
     } finally {
       setLoadingInvites(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchMembers();

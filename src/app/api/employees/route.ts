@@ -61,7 +61,10 @@ export async function GET(req: Request) {
                 orderBy: { createdAt: "asc" },
               },
               location: { select: { id: true, name: true } },
-              department: { select: { id: true, name: true } },
+              departments: {
+                include: { department: { select: { id: true, name: true } } },
+                orderBy: { assignedAt: "asc" },
+              },
               user: { select: { id: true, role: true } },
             },
             orderBy: { lastName: "asc" },
@@ -115,7 +118,7 @@ export async function POST(req: Request) {
       contractType,
       color,
       locationId,
-      departmentId,
+      departmentIds,
       datevPersonnelNumber,
       employmentStartDate,
       dateOfBirth,
@@ -162,7 +165,6 @@ export async function POST(req: Request) {
               .toString(16)
               .padStart(6, "0")}`,
           locationId: locationId || null,
-          departmentId: departmentId || null,
           datevPersonnelNumber: datevPersonnelNumber?.trim() || null,
           employmentStartDate: employmentStartDate
             ? new Date(employmentStartDate)
@@ -175,6 +177,17 @@ export async function POST(req: Request) {
           pinHash,
         },
       });
+
+      // ── Department assignments (many-to-many) ──
+      if (departmentIds && departmentIds.length > 0) {
+        await tx.employeeDepartment.createMany({
+          data: departmentIds.map((departmentId) => ({
+            employeeId: created.id,
+            departmentId,
+          })),
+          skipDuplicates: true,
+        });
+      }
 
       // ── Audit log (atomic) ──
       await createAuditLogTx(tx, {

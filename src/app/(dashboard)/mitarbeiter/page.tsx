@@ -79,8 +79,7 @@ interface Employee {
   employeeSkills?: EmployeeSkill[];
   locationId?: string | null;
   location?: LocationItem | null;
-  departmentId?: string | null;
-  department?: DepartmentItem | null;
+  departments?: { department: DepartmentItem }[];
   user?: { id: string; role: string } | null;
   datevPersonnelNumber?: string | null;
   employmentStartDate?: string | null;
@@ -124,7 +123,7 @@ export default function MitarbeiterPage() {
     flexibleWork: false,
     color: "#10b981",
     locationId: "",
-    departmentId: "",
+    departmentIds: [] as string[],
     role: "",
     datevPersonnelNumber: "",
     employmentStartDate: "",
@@ -279,7 +278,7 @@ export default function MitarbeiterPage() {
       flexibleWork: false,
       color: "#10b981",
       locationId: "",
-      departmentId: "",
+      departmentIds: [] as string[],
       role: "",
       datevPersonnelNumber: "",
       employmentStartDate: "",
@@ -309,7 +308,7 @@ export default function MitarbeiterPage() {
       flexibleWork: emp.flexibleWork ?? false,
       color: emp.color || "#10b981",
       locationId: emp.locationId || "",
-      departmentId: emp.departmentId || "",
+      departmentIds: emp.departments?.map((d) => d.department.id) ?? [],
       role: emp.user?.role || "",
       datevPersonnelNumber: emp.datevPersonnelNumber ?? "",
       employmentStartDate: emp.employmentStartDate
@@ -389,7 +388,7 @@ export default function MitarbeiterPage() {
           flexibleWork: false,
           color: "#10b981",
           locationId: "",
-          departmentId: "",
+          departmentIds: [] as string[],
           role: "",
           datevPersonnelNumber: "",
           employmentStartDate: "",
@@ -813,25 +812,76 @@ export default function MitarbeiterPage() {
               </Select>
             </div>
 
-            {/* Objekt */}
+            {/* Objekt — multi-select */}
             <div className="space-y-2">
-              <Label htmlFor="departmentId">{t("form.object")}</Label>
+              <Label>{t("form.object")}</Label>
+              {/* Selected badges */}
+              {formData.departmentIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {formData.departmentIds.map((id) => {
+                    const dep = departments.find((d) => d.id === id);
+                    if (!dep) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300"
+                      >
+                        {dep.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((p) => ({
+                              ...p,
+                              departmentIds: p.departmentIds.filter(
+                                (d) => d !== id,
+                              ),
+                            }))
+                          }
+                          className="ml-0.5 rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-800 p-0.5 transition-colors"
+                          aria-label={`${dep.name} entfernen`}
+                        >
+                          <svg
+                            className="h-2.5 w-2.5"
+                            viewBox="0 0 10 10"
+                            fill="currentColor"
+                          >
+                            <path d="M6.414 5l2.293-2.293a1 1 0 00-1.414-1.414L5 3.586 2.707 1.293A1 1 0 001.293 2.707L3.586 5 1.293 7.293a1 1 0 001.414 1.414L5 6.414l2.293 2.293a1 1 0 001.414-1.414L6.414 5z" />
+                          </svg>
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+              {/* Dropdown to add */}
               <Select
-                id="departmentId"
-                value={formData.departmentId}
-                onChange={(e) =>
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) return;
                   setFormData((p) => ({
                     ...p,
-                    departmentId: e.target.value,
-                  }))
-                }
+                    departmentIds: p.departmentIds.includes(val)
+                      ? p.departmentIds
+                      : [...p.departmentIds, val],
+                  }));
+                  e.target.value = "";
+                }}
               >
-                <option value="">{t("form.noObject")}</option>
-                {departments.map((dep) => (
-                  <option key={dep.id} value={dep.id}>
-                    {dep.name}
-                  </option>
-                ))}
+                <option value="">
+                  {departments.filter(
+                    (d) => !formData.departmentIds.includes(d.id),
+                  ).length === 0
+                    ? t("form.allObjectsSelected")
+                    : t("form.addObject")}
+                </option>
+                {departments
+                  .filter((d) => !formData.departmentIds.includes(d.id))
+                  .map((dep) => (
+                    <option key={dep.id} value={dep.id}>
+                      {dep.name}
+                    </option>
+                  ))}
               </Select>
             </div>
 
@@ -1177,14 +1227,17 @@ export default function MitarbeiterPage() {
                         </span>
                       </div>
                     )}
-                    {employee.department && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
-                        <BuildingIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-                        <span className="truncate">
-                          {employee.department.name}
-                        </span>
-                      </div>
-                    )}
+                    {employee.departments &&
+                      employee.departments.length > 0 && (
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 min-w-0">
+                          <BuildingIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          <span className="truncate">
+                            {employee.departments
+                              .map((d) => d.department.name)
+                              .join(", ")}
+                          </span>
+                        </div>
+                      )}
                     {employee.hourlyRate && (
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
                         <BriefcaseIcon className="h-4 w-4" />

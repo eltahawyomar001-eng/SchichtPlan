@@ -224,8 +224,11 @@ export default function TeamkalenderSeite() {
     if (selectedEmployee)
       result = result.filter((s) => s.employee?.id === selectedEmployee);
     if (selectedDepartment)
-      result = result.filter(
-        (s) => s.employee?.departmentId === selectedDepartment,
+      result = result.filter((s) =>
+        s.employee?.departments?.some(
+          (d: { departmentId: string }) =>
+            d.departmentId === selectedDepartment,
+        ),
       );
     if (selectedEventType && selectedEventType !== "shift") result = [];
     return result;
@@ -242,8 +245,11 @@ export default function TeamkalenderSeite() {
     if (selectedEmployee)
       result = result.filter((a) => a.employee?.id === selectedEmployee);
     if (selectedDepartment)
-      result = result.filter(
-        (a) => a.employee?.departmentId === selectedDepartment,
+      result = result.filter((a) =>
+        a.employee?.departments?.some(
+          (d: { departmentId: string }) =>
+            d.departmentId === selectedDepartment,
+        ),
       );
     if (selectedEventType) {
       const categoryMap: Record<string, string> = {
@@ -291,7 +297,12 @@ export default function TeamkalenderSeite() {
   const filteredEmployees = useMemo(() => {
     let result = employees;
     if (selectedDepartment)
-      result = result.filter((e) => e.departmentId === selectedDepartment);
+      result = result.filter((e) =>
+        e.departments?.some(
+          (d: { departmentId: string }) =>
+            d.departmentId === selectedDepartment,
+        ),
+      );
     if (selectedEmployee)
       result = result.filter((e) => e.id === selectedEmployee);
     return result;

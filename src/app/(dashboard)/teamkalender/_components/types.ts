@@ -5,7 +5,7 @@ export interface CalendarEmployee {
   firstName: string;
   lastName: string;
   color: string | null;
-  departmentId: string | null;
+  departments: { departmentId: string }[];
 }
 
 export interface CalendarShift {

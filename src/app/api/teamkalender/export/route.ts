@@ -68,7 +68,9 @@ export const GET = withRoute("/api/teamkalender/export", "GET", async (req) => {
         workspaceId,
         date: { gte: from, lte: to },
         ...(employeeId ? { employeeId } : {}),
-        ...(departmentId ? { employee: { departmentId } } : {}),
+        ...(departmentId
+          ? { employee: { departments: { some: { departmentId } } } }
+          : {}),
       },
       include: {
         employee: {
@@ -85,7 +87,9 @@ export const GET = withRoute("/api/teamkalender/export", "GET", async (req) => {
         deletedAt: null,
         status: { in: ["AUSSTEHEND", "GENEHMIGT"] },
         ...(employeeId ? { employeeId } : {}),
-        ...(departmentId ? { employee: { departmentId } } : {}),
+        ...(departmentId
+          ? { employee: { departments: { some: { departmentId } } } }
+          : {}),
       },
       include: {
         employee: {

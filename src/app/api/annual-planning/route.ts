@@ -38,8 +38,9 @@ export const GET = withRoute("/api/annual-planning", "GET", async (req) => {
       firstName: true,
       lastName: true,
       color: true,
-      departmentId: true,
-      department: { select: { id: true, name: true } },
+      departments: {
+        include: { department: { select: { id: true, name: true } } },
+      },
       absenceRequests: {
         where: {
           OR: [
@@ -110,7 +111,7 @@ export const GET = withRoute("/api/annual-planning", "GET", async (req) => {
       firstName: emp.firstName,
       lastName: emp.lastName,
       color: emp.color,
-      department: emp.department,
+      departments: emp.departments,
       absences,
       balance,
       summary: {

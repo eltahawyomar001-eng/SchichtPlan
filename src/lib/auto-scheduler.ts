@@ -130,7 +130,7 @@ export interface EmployeeData {
   weeklyHours: number;
   workDaysPerWeek: number;
   hourlyRate: number;
-  departmentId: string | null;
+  departmentIds: string[];
   skillIds: Set<string>;
   /** Weekday → availability entries */
   availabilityMap: Map<
@@ -589,6 +589,7 @@ async function loadEmployees(
     include: {
       availabilities: true,
       employeeSkills: { include: { skill: true } },
+      departments: { select: { departmentId: true } },
       absenceRequests: {
         where: {
           status: "GENEHMIGT",
@@ -651,7 +652,9 @@ async function loadEmployees(
       weeklyHours: emp.weeklyHours,
       workDaysPerWeek: emp.workDaysPerWeek,
       hourlyRate: emp.hourlyRate ?? 0,
-      departmentId: emp.departmentId,
+      departmentIds: (emp.departments ?? []).map(
+        (d: { departmentId: string }) => d.departmentId,
+      ),
       skillIds,
       availabilityMap,
       absenceDates,
@@ -892,7 +895,7 @@ function scoreEmployee(
   }
 
   // ── D. Staffing: Department/location alignment ──
-  if (slot.locationId && emp.departmentId) {
+  if (slot.locationId && emp.departmentIds.length > 0) {
     score += weights.staffing * 0.5;
     reasons.push("Standort-Match");
   }

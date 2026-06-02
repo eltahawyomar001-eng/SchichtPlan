@@ -47,7 +47,7 @@ export const createEmployeeSchema = z.object({
   flexibleWork: z.boolean().optional(),
   color: optionalString,
   locationId: z.string().optional().nullable(),
-  departmentId: z.string().optional().nullable(),
+  departmentIds: z.array(z.string()).optional(),
   datevPersonnelNumber: optionalString.pipe(z.string().max(20).optional()),
   employmentStartDate: optionalString,
   dateOfBirth: optionalString,
@@ -59,7 +59,7 @@ export const createEmployeeSchema = z.object({
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
   isActive: z.boolean().optional(),
   flexibleWork: z.boolean().optional(),
-  departmentId: z.string().optional().nullable(),
+  departmentIds: z.array(z.string()).optional(),
   role: z.enum(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
   datevPersonnelNumber: optionalString.pipe(z.string().max(20).optional()),
   employmentStartDate: optionalString,

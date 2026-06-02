@@ -47,7 +47,10 @@ export async function GET(
           timeEntries: { orderBy: { date: "desc" }, take: 20 },
           absenceRequests: { orderBy: { startDate: "desc" }, take: 20 },
           vacationBalances: { orderBy: { year: "desc" }, take: 3 },
-          department: { select: { id: true, name: true } },
+          departments: {
+            include: { department: { select: { id: true, name: true } } },
+            orderBy: { assignedAt: "asc" },
+          },
           location: { select: { id: true, name: true } },
         },
       }),
@@ -165,10 +168,6 @@ export async function PATCH(
           isActive: body.isActive,
           locationId:
             body.locationId !== undefined ? body.locationId || null : undefined,
-          departmentId:
-            body.departmentId !== undefined
-              ? body.departmentId || null
-              : undefined,
           datevPersonnelNumber:
             body.datevPersonnelNumber !== undefined
               ? body.datevPersonnelNumber?.trim() || null
@@ -229,6 +228,20 @@ export async function PATCH(
             data: { role: body.role },
           });
           changedUserId = emp.userId;
+        }
+      }
+
+      // ── Department assignments — full replace ──
+      if (body.departmentIds !== undefined) {
+        await tx.employeeDepartment.deleteMany({ where: { employeeId: id } });
+        if (body.departmentIds.length > 0) {
+          await tx.employeeDepartment.createMany({
+            data: body.departmentIds.map((departmentId: string) => ({
+              employeeId: id,
+              departmentId,
+            })),
+            skipDuplicates: true,
+          });
         }
       }
 

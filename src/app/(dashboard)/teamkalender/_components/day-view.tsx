@@ -119,7 +119,7 @@ export function DayView({
                       ? `${s.employee.lastName}, ${s.employee.firstName}`
                       : "–"}
                   </p>
-                  {s.employee?.departmentId && (
+                  {(s.employee?.departments?.length ?? 0) > 0 && (
                     <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
                       {s.status}
                     </p>

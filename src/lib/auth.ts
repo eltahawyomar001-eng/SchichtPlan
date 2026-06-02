@@ -334,6 +334,7 @@ export const authOptions: NextAuthOptions = {
             workspaceId: true,
             hashedPassword: true,
             emailVerified: true,
+            workspace: { select: { createdAt: true } },
           },
         });
 
@@ -379,12 +380,14 @@ export const authOptions: NextAuthOptions = {
               sub.status === "INCOMPLETE" &&
               !sub.stripeSubscriptionId
             ) {
-              const now = new Date();
-              const trialEnd = new Date(now);
+              // Base trial on workspace creation date, not now — prevents
+              // re-gifting a fresh trial to workspaces that already expired.
+              const trialStart = dbUser.workspace?.createdAt ?? new Date();
+              const trialEnd = new Date(trialStart);
               trialEnd.setDate(trialEnd.getDate() + 7);
               await prisma.subscription.update({
                 where: { workspaceId: dbUser.workspaceId },
-                data: { status: "TRIALING", trialStart: now, trialEnd },
+                data: { status: "TRIALING", trialStart, trialEnd },
               });
             }
           } catch (err) {
@@ -603,12 +606,14 @@ export const authOptions: NextAuthOptions = {
                 sub.status === "INCOMPLETE" &&
                 !sub.stripeSubscriptionId
               ) {
-                const now = new Date();
-                const trialEnd = new Date(now);
+                const trialStart =
+                  (dbUser.workspace as { createdAt?: Date } | null)
+                    ?.createdAt ?? new Date();
+                const trialEnd = new Date(trialStart);
                 trialEnd.setDate(trialEnd.getDate() + 7);
                 await prisma.subscription.update({
                   where: { workspaceId: dbUser.workspaceId },
-                  data: { status: "TRIALING", trialStart: now, trialEnd },
+                  data: { status: "TRIALING", trialStart, trialEnd },
                 });
               }
             }

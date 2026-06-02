@@ -74,15 +74,24 @@ export default async function DashboardLayout({
         // directly, never to the dead-end "trial expired" screen.
         const sub = await prisma.subscription.findUnique({
           where: { workspaceId: user.workspaceId },
-          select: { stripeCustomerId: true, stripeSubscriptionId: true },
+          select: {
+            stripeCustomerId: true,
+            stripeSubscriptionId: true,
+            trialEnd: true,
+          },
         });
-        const isLegacyWorkspace =
+        // A workspace is "legacy" only if it has no Stripe IDs AND never went
+        // through a trial — i.e. it pre-dates the Stripe/trial integration.
+        // Workspaces that had a trial but didn't convert are NOT legacy; they
+        // should see the trial-expired paywall, not the legacy billing setup.
+        const hasNoStripeIds =
           !sub ||
           ((!sub.stripeCustomerId || sub.stripeCustomerId.startsWith("sim_")) &&
             (!sub.stripeSubscriptionId ||
               sub.stripeSubscriptionId.startsWith("sim_")));
+        const isLegacyWorkspace = hasNoStripeIds && !sub?.trialEnd;
 
-        if (state === "trial_expired" && !isLegacyWorkspace) {
+        if (state === "trial_expired") {
           redirect("/testphase-abgelaufen");
         }
         if (user.role === "OWNER" || user.role === "ADMIN") {

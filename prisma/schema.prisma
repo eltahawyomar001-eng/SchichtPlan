@@ -2081,3 +2081,20 @@ model EmailJob {
   @@index([nextRetryAt])
   @@index([createdAt])
 }
+
+/// Runtime feature flags — kill switches, gradual rollouts, per-workspace beta access.
+/// Flags are cached in Redis (30 s TTL) so checks are fast without hitting Postgres.
+model FeatureFlag {
+  key            String   @id
+  description    String?
+  /// Global on/off. Per-workspace overrides in enabledFor/disabledFor take priority.
+  enabled        Boolean  @default(false)
+  /// JSON array of workspaceIds that receive this flag regardless of global setting.
+  enabledFor     String   @default("[]") @db.Text
+  /// JSON array of workspaceIds that are excluded regardless of global setting.
+  disabledFor    String   @default("[]") @db.Text
+  /// 0-100 — deterministic % rollout. 0 = use `enabled` field only.
+  rolloutPercent Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

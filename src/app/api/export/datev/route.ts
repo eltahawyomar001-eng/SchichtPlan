@@ -15,6 +15,7 @@ import { requirePdfQuota, recordPdfGeneration } from "@/lib/subscription-guard";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { getLocaleFromCookie } from "@/i18n/locale";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 // ─── GET  /api/export/datev ─────────────────────────────────────
 // Returns a DATEV-compatible CSV for payroll
@@ -34,6 +35,17 @@ export async function GET(req: Request) {
     // Only managers/admins/owners can export
     const forbidden = requirePermission(user, "payroll-export", "read");
     if (forbidden) return forbidden;
+
+    // Feature flag kill-switch (overrides plan gate when flag is disabled)
+    if (!(await isFeatureEnabled("datev_integration", workspaceId))) {
+      return NextResponse.json(
+        {
+          error: "FEATURE_DISABLED",
+          message: "DATEV integration is currently disabled.",
+        },
+        { status: 503 },
+      );
+    }
 
     // Check plan feature
     const planGate = await requirePlanFeature(workspaceId, "datevExport");

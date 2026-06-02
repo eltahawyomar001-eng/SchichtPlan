@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { requirePermission } from "@/lib/authorization";
 import { withRoute } from "@/lib/with-route";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import {
   rankEmployeesForSos,
   notifyEmployeeTier,
@@ -23,6 +24,13 @@ export const POST = withRoute("/api/sos", "POST", async (req) => {
 
   const forbidden = requirePermission(user, "shifts", "update");
   if (forbidden) return forbidden;
+
+  if (!(await isFeatureEnabled("sos_fill", user.workspaceId))) {
+    return NextResponse.json(
+      { error: "FEATURE_DISABLED", message: "SOS fill is currently disabled." },
+      { status: 503 },
+    );
+  }
 
   const _json = await parseJsonBody(req);
   if (!_json.ok) return _json.response;

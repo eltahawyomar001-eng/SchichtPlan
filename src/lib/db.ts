@@ -120,18 +120,18 @@ export class QueryTimeoutError extends Error {
 }
 
 /**
- * Runs `fn` inside a Postgres transaction with two session-local settings:
- *
- *   SET LOCAL ROLE shiftfy_app
- *     Switches to the restricted application role which has NOBYPASSRLS.
- *     RLS policies on workspace-scoped tables are enforced for the duration
- *     of this transaction. After COMMIT/ROLLBACK the role reverts to the
- *     pool's default (service_role / postgres).
+ * Runs `fn` inside a Postgres transaction with the workspace context set.
  *
  *   set_config('app.current_workspace_id', workspaceId, true)
  *     The `true` flag makes the setting transaction-local — it is cleared
  *     automatically on COMMIT/ROLLBACK, which is safe for transaction-mode
  *     poolers (Supavisor / pgBouncer) where connections are shared.
+ *
+ * This sets the workspace context so RLS policies on the shiftfy_app role
+ * enforce workspace isolation when accessed via direct DB connections or
+ * future non-pooler clients. The Supavisor pooler connection (service_role)
+ * bypasses RLS by default — SET LOCAL ROLE was removed because the pooler
+ * user does not have shiftfy_app granted and throws permission denied.
  *
  * Usage — wrap any query that touches workspace data in a user-facing route:
  *
@@ -140,15 +140,13 @@ export class QueryTimeoutError extends Error {
  *   );
  *
  * Cron jobs, webhooks, and Stripe handlers should NOT use this wrapper —
- * they legitimately need cross-workspace access and already run as service_role
- * which bypasses RLS.
+ * they legitimately need cross-workspace access.
  */
 export async function withWorkspaceContext<T>(
   workspaceId: string,
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SET LOCAL ROLE shiftfy_app`;
     await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, true)`;
     return fn(tx);
   });

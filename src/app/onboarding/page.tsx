@@ -517,7 +517,7 @@ type SubGate = "checking" | "active" | "waiting" | "timeout";
 
 const ACTIVE_STATUSES = ["ACTIVE", "TRIALING", "PAST_DUE"];
 const POLL_INTERVAL_MS = 3000;
-const MAX_POLLS = 10;
+const MAX_POLLS = 20;
 
 function ActivatingScreen({ state }: { state: SubGate }) {
   const t = useTranslations("onboardingWizard");

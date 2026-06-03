@@ -1128,10 +1128,10 @@ export default function StempeluhrSeite() {
                           key={m.employee.id}
                           className={`flex items-center gap-3 rounded-xl px-3 py-3 transition-colors ${
                             m.status === "working"
-                              ? "bg-green-50/70"
+                              ? "bg-green-50/70 dark:bg-green-900/20"
                               : m.status === "break"
-                                ? "bg-amber-50/70"
-                                : "bg-[#f2f2f7]/60"
+                                ? "bg-amber-50/70 dark:bg-amber-900/20"
+                                : "bg-[#f2f2f7]/60 dark:bg-zinc-800/60"
                           }`}
                         >
                           {/* Avatar */}
@@ -1146,7 +1146,7 @@ export default function StempeluhrSeite() {
 
                           {/* Info */}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-gray-900">
+                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                               {fullName}
                             </p>
                             <div className="flex items-center gap-1.5">
@@ -1159,7 +1159,7 @@ export default function StempeluhrSeite() {
                                       : "bg-gray-400"
                                 }`}
                               />
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-500 dark:text-slate-300">
                                 {m.status === "working"
                                   ? t("statusWorking")
                                   : m.status === "break"
@@ -1177,7 +1177,7 @@ export default function StempeluhrSeite() {
 
                           {/* Today's total */}
                           {m.totalNetMinutes > 0 && (
-                            <span className="shrink-0 text-xs font-medium text-gray-500">
+                            <span className="shrink-0 text-xs font-medium text-gray-500 dark:text-slate-300">
                               {totalH}h {String(totalM).padStart(2, "0")}m
                             </span>
                           )}
@@ -1326,13 +1326,14 @@ export default function StempeluhrSeite() {
                 {t("earlyClockOut.cancel")}
               </button>
               <button
+                disabled={acting}
                 onClick={() => {
                   setShowClockOutConfirm(false);
                   handleClock("out");
                 }}
-                className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-600/25 transition-colors hover:bg-red-700 active:scale-[0.97]"
+                className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-red-600/25 transition-colors hover:bg-red-700 active:scale-[0.97] disabled:opacity-50"
               >
-                {t("earlyClockOut.confirm")}
+                {acting ? <Spinner /> : t("earlyClockOut.confirm")}
               </button>
             </div>
           </div>

@@ -519,13 +519,13 @@ export const authOptions: NextAuthOptions = {
 
               const invWs = await prisma.workspace.findUnique({
                 where: { id: invitation.workspaceId },
-                select: { name: true },
+                select: { name: true, onboardingCompleted: true },
               });
               token.role = invitation.role;
               token.workspaceId = invitation.workspaceId;
               token.workspaceName = invWs?.name || null;
               token.employeeId = joinedEmployeeId;
-              token.onboardingCompleted = false;
+              token.onboardingCompleted = invWs?.onboardingCompleted ?? false;
             } else {
               // No invitation — create standalone workspace (repair path)
               const slug =

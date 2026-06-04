@@ -1308,6 +1308,7 @@
     "twoFAActive": "2FA ist aktiv",
     "twoFASetup": "2FA einrichten",
     "twoFADisableBtn": "2FA deaktivieren",
+    "twoFADisableCodePlaceholder": "Code oder Wiederherstellungscode",
     "twoFAScanQR": "Scannen Sie den QR-Code mit Ihrer Authenticator-App (z. B. Google Authenticator).",
     "twoFAVerify": "Bestätigen",
     "twoFAEnabled": "Zwei-Faktor-Authentifizierung wurde erfolgreich aktiviert.",

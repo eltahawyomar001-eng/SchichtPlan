@@ -419,31 +419,69 @@ describe("DELETE /api/auth/two-factor", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 200 with { success: true } on success", async () => {
+  const enabledUser = {
+    email: "owner@x.de",
+    twoFactorEnabled: true,
+    twoFactorSecret: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+    twoFactorRecoveryCodes: null,
+  };
+
+  it("returns 400 CODE_REQUIRED when no code is supplied", async () => {
     mockSession.user = buildOwner();
+    mockUserFindUnique.mockResolvedValue(enabledUser);
+
+    const res = await handler.DELETE(
+      new Request("http://localhost/api/auth/two-factor", { method: "DELETE" }),
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("CODE_REQUIRED");
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 INVALID_CODE when the code does not verify", async () => {
+    mockSession.user = buildOwner();
+    mockUserFindUnique.mockResolvedValue(enabledUser);
+    mockTotpValidate.mockReturnValue(null); // wrong TOTP
 
     const res = await handler.DELETE(
       new Request("http://localhost/api/auth/two-factor", {
         method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: "000000" }),
       }),
     );
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toEqual({ success: true });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("INVALID_CODE");
+    expect(mockUserUpdate).not.toHaveBeenCalled();
   });
 
-  it("clears twoFactorEnabled, twoFactorSecret, twoFactorRecoveryCodes in DB", async () => {
+  it("idempotent success (no update) when 2FA already disabled", async () => {
     mockSession.user = buildOwner();
+    mockUserFindUnique.mockResolvedValue({ twoFactorEnabled: false });
 
-    await handler.DELETE(
+    const res = await handler.DELETE(
+      new Request("http://localhost/api/auth/two-factor", { method: "DELETE" }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+
+  it("clears 2FA fields in DB on a valid TOTP code", async () => {
+    mockSession.user = buildOwner();
+    mockUserFindUnique.mockResolvedValue(enabledUser);
+    mockTotpValidate.mockReturnValue(0); // valid
+
+    const res = await handler.DELETE(
       new Request("http://localhost/api/auth/two-factor", {
         method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: "123456" }),
       }),
     );
 
+    expect(res.status).toBe(200);
     expect(mockUserUpdate).toHaveBeenCalledOnce();
-    const updateCall = mockUserUpdate.mock.calls[0][0];
-    expect(updateCall.data).toMatchObject({
+    expect(mockUserUpdate.mock.calls[0][0].data).toMatchObject({
       twoFactorEnabled: false,
       twoFactorSecret: null,
       twoFactorRecoveryCodes: null,

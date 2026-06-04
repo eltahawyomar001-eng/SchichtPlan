@@ -12,6 +12,7 @@ const {
   mockConstructEvent,
   mockStripeEventFindUnique,
   mockStripeEventCreate,
+  mockStripeEventDelete,
   mockSubscriptionFindFirst,
   mockSubscriptionFindUnique,
   mockSubscriptionCreate,
@@ -39,6 +40,7 @@ const {
   mockConstructEvent: vi.fn(),
   mockStripeEventFindUnique: vi.fn(),
   mockStripeEventCreate: vi.fn(),
+  mockStripeEventDelete: vi.fn(),
   mockSubscriptionFindFirst: vi.fn(),
   mockSubscriptionFindUnique: vi.fn(),
   mockSubscriptionCreate: vi.fn(),
@@ -72,6 +74,7 @@ vi.mock("@/lib/db", () => ({
     stripeEvent: {
       findUnique: mockStripeEventFindUnique,
       create: mockStripeEventCreate,
+      delete: mockStripeEventDelete,
     },
     subscription: {
       findUnique: mockSubscriptionFindUnique,
@@ -347,6 +350,24 @@ describe("POST /api/billing/webhook", () => {
 
     expect(mockCancelSubscription).toHaveBeenCalledOnce();
     expect(mockCancelSubscription).toHaveBeenCalledWith("sub_1");
+  });
+
+  it("rolls back the idempotency marker when a handler throws, so Stripe can retry", async () => {
+    mockConstructEvent.mockReturnValue({
+      id: "evt_boom",
+      type: "customer.subscription.deleted",
+      data: { object: { id: "sub_boom" } },
+    });
+    mockStripeEventCreate.mockResolvedValue({ id: "evt_boom" });
+    // Handler fails — must roll the marker back and surface a 500 so Stripe retries.
+    mockCancelSubscription.mockRejectedValueOnce(new Error("db down"));
+    mockStripeEventDelete.mockResolvedValue({ id: "evt_boom" });
+
+    const res = await handler.POST(makeWebhookRequest());
+    expect(res.status).toBe(500);
+    expect(mockStripeEventDelete).toHaveBeenCalledWith({
+      where: { id: "evt_boom" },
+    });
   });
 
   /* ── Unknown event type ───────────────────────────────────── */

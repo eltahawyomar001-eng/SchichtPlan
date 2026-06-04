@@ -142,622 +142,93 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
     return NextResponse.json({ received: true, raceLost: true });
   }
 
-  switch (event.type) {
-    /* ─── Checkout completed → activate subscription ─── */
-    case "checkout.session.completed": {
-      const session = event.data.object;
-      const workspaceId = session.client_reference_id;
-      const subscriptionId =
-        typeof session.subscription === "string"
-          ? session.subscription
-          : session.subscription?.id;
-      const customerId =
-        typeof session.customer === "string"
-          ? session.customer
-          : session.customer?.id;
+  // The idempotency marker is written UP-FRONT as the concurrency gate (it
+  // guarantees gapless GoBD invoice numbering under concurrent delivery). But
+  // several handlers deliberately throw to force a Stripe retry (e.g.
+  // invoice.paid when period sync or the GoBD invoice record fails). If the
+  // marker stayed, that retry would be skipped as a duplicate and the event
+  // would never complete. So on any processing failure we roll the marker back
+  // before rethrowing, restoring retry-ability without losing the gate.
+  try {
+    switch (event.type) {
+      /* ─── Checkout completed → activate subscription ─── */
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const workspaceId = session.client_reference_id;
+        const subscriptionId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+        const customerId =
+          typeof session.customer === "string"
+            ? session.customer
+            : session.customer?.id;
 
-      if (!workspaceId || !subscriptionId || !customerId) {
-        log.warn("[Stripe] Missing data in checkout session");
-        break;
-      }
-
-      // Fetch full subscription details from Stripe
-      const sub = await stripe.subscriptions.retrieve(subscriptionId);
-      const item = sub.items.data[0];
-      const priceId = item?.price.id;
-      const plan = priceId ? getPlanByPriceId(priceId) : undefined;
-
-      await activateSubscription({
-        workspaceId,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        stripePriceId: priceId ?? "",
-        plan: (plan?.id ?? "basic") as PlanId,
-        seatCount: item?.quantity ?? 1,
-        currentPeriodStart: new Date((item?.current_period_start ?? 0) * 1000),
-        currentPeriodEnd: new Date((item?.current_period_end ?? 0) * 1000),
-        trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
-        trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
-        status: sub.status,
-      });
-
-      // Sync usage limits to match the new plan
-      await syncUsageLimits(workspaceId, (plan?.id ?? "basic") as PlanId);
-
-      // Invalidate cached subscription state so the next request re-fetches
-      await Promise.all([
-        invalidateSubscriptionCache(workspaceId),
-        invalidateSchichtplanungAddonCache(workspaceId),
-      ]).catch(() => {});
-
-      log.info(
-        `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
-      );
-
-      // Welcome email — fire-and-forget so a Resend hiccup never breaks the
-      // webhook ack (Stripe will retry on non-2xx).
-      void (async () => {
-        try {
-          const workspace = await prisma.workspace.findUnique({
-            where: { id: workspaceId },
-            select: { name: true },
-          });
-          const owner = await prisma.user.findFirst({
-            where: { workspaceId, role: "OWNER" },
-            select: { email: true, preferredLocale: true },
-          });
-          if (owner?.email) {
-            const locale = owner.preferredLocale === "en" ? "en" : "de";
-            const planName =
-              plan?.id === "professional"
-                ? "Professional"
-                : plan?.id === "enterprise"
-                  ? "Enterprise"
-                  : "Basic";
-            const copy = subscriptionCreatedEmail(
-              locale,
-              workspace?.name ??
-                (locale === "en" ? "your workspace" : "Ihren Arbeitsbereich"),
-              planName,
-            );
-            await sendEmail({
-              to: owner.email,
-              type: "SYSTEM",
-              category: "transactional",
-              title: copy.subject,
-              message: copy.body,
-              link: "/einstellungen/abonnement",
-              locale,
-            });
-          }
-        } catch (err) {
-          log.error("[Stripe] subscription-created email failed", {
-            error: err instanceof Error ? err.message : String(err),
-          });
+        if (!workspaceId || !subscriptionId || !customerId) {
+          log.warn("[Stripe] Missing data in checkout session");
+          break;
         }
-      })();
 
-      break;
-    }
+        // Fetch full subscription details from Stripe
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const item = sub.items.data[0];
+        const priceId = item?.price.id;
+        const plan = priceId ? getPlanByPriceId(priceId) : undefined;
 
-    /* ─── Subscription updated → sync status ─── */
-    case "customer.subscription.updated": {
-      const sub = event.data.object;
-      // Find the MAIN plan item (matches a known plan price ID),
-      // and the TICKETING add-on item (matches a known add-on price ID).
-      let mainItem = sub.items.data[0];
-      let ticketingItemId: string | null = null;
-      let ticketingTier: "NONE" | "STARTER" | "GROWTH" | "BUSINESS" = "NONE";
-      let schichtplanungItemId: string | null = null;
-      let schichtplanungBilling: "monthly" | "annual" | null = null;
-
-      for (const it of sub.items.data) {
-        const itPriceId = it.price.id;
-        const tier = getTicketingTierByPriceId(itPriceId);
-        const schichtplanung = getSchichtplanungBillingByPriceId(itPriceId);
-        if (tier) {
-          ticketingItemId = it.id;
-          ticketingTier = tier;
-        } else if (schichtplanung) {
-          schichtplanungItemId = it.id;
-          schichtplanungBilling = schichtplanung;
-        } else if (getPlanByPriceId(itPriceId)) {
-          mainItem = it;
-        }
-      }
-
-      const priceId = mainItem?.price.id;
-      const stripeCustomerId =
-        typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
-
-      const subscriptionPayload = {
-        stripePriceId: priceId ?? "",
-        status: sub.status,
-        seatCount: mainItem?.quantity ?? 1,
-        currentPeriodStart: new Date(
-          (mainItem?.current_period_start ?? 0) * 1000,
-        ),
-        currentPeriodEnd: new Date((mainItem?.current_period_end ?? 0) * 1000),
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-      };
-
-      // Primary path: update by subscriptionId.
-      // Fallback: if the checkout.session.completed webhook was missed, the DB
-      // row has stripeSubscriptionId=null so the primary update finds nothing
-      // (Prisma P2025). In that case look up by stripeCustomerId and link.
-      try {
-        await updateSubscriptionFromStripe({
-          stripeSubscriptionId: sub.id,
-          ...subscriptionPayload,
+        await activateSubscription({
+          workspaceId,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionId,
+          stripePriceId: priceId ?? "",
+          plan: (plan?.id ?? "basic") as PlanId,
+          seatCount: item?.quantity ?? 1,
+          currentPeriodStart: new Date(
+            (item?.current_period_start ?? 0) * 1000,
+          ),
+          currentPeriodEnd: new Date((item?.current_period_end ?? 0) * 1000),
+          trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
+          trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
+          status: sub.status,
         });
-      } catch (err: unknown) {
-        const isPrismaNotFound =
-          err instanceof Error &&
-          "code" in err &&
-          (err as { code?: string }).code === "P2025";
 
-        if (!isPrismaNotFound) throw err;
+        // Sync usage limits to match the new plan
+        await syncUsageLimits(workspaceId, (plan?.id ?? "basic") as PlanId);
 
-        if (stripeCustomerId) {
-          const linked = await linkSubscriptionByCustomer({
-            stripeCustomerId,
-            stripeSubscriptionId: sub.id,
-            ...subscriptionPayload,
-          });
-          if (linked > 0) {
-            log.info(
-              `[Stripe] Auto-linked subscription ${sub.id} via customerId=${stripeCustomerId}`,
-            );
-          } else {
-            log.warn(
-              `[Stripe] customer.subscription.updated: no DB record for sub=${sub.id} or customer=${stripeCustomerId}`,
-            );
-          }
-        }
-      }
-
-      // Sync usage limits if the plan changed
-      const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
-      const dbSub = await prisma.subscription.findFirst({
-        where: {
-          OR: [
-            { stripeSubscriptionId: sub.id },
-            ...(stripeCustomerId ? [{ stripeCustomerId }] : []),
-          ],
-        },
-        select: {
-          workspaceId: true,
-          ticketingTier: true,
-          ticketingStripeSubscriptionItemId: true,
-          schichtplanungAddonActive: true,
-          schichtplanungAddonBilling: true,
-          schichtplanungStripeSubscriptionItemId: true,
-        },
-      });
-
-      if (dbSub) {
-        if (updatedPlan) {
-          await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
-        }
-
-        // Add-on state: build a single atomic update covering both ticketing
-        // and Schichtplanung so a partial failure never leaves them split.
-        const newSchichtplanungActive = schichtplanungItemId !== null;
-        const ticketingChanged =
-          dbSub.ticketingTier !== ticketingTier ||
-          dbSub.ticketingStripeSubscriptionItemId !== ticketingItemId;
-        const schichtplanungChanged =
-          dbSub.schichtplanungAddonActive !== newSchichtplanungActive ||
-          dbSub.schichtplanungAddonBilling !== schichtplanungBilling ||
-          dbSub.schichtplanungStripeSubscriptionItemId !== schichtplanungItemId;
-
-        if (ticketingChanged || schichtplanungChanged) {
-          await prisma.subscription.update({
-            where: { workspaceId: dbSub.workspaceId },
-            data: {
-              ...(ticketingChanged && {
-                ticketingTier,
-                ticketingStripeSubscriptionItemId: ticketingItemId,
-              }),
-              ...(schichtplanungChanged && {
-                schichtplanungAddonActive: newSchichtplanungActive,
-                schichtplanungAddonBilling: schichtplanungBilling,
-                schichtplanungStripeSubscriptionItemId: schichtplanungItemId,
-              }),
-            },
-          });
-
-          if (ticketingChanged) {
-            await syncTicketingLimits(dbSub.workspaceId, ticketingTier);
-            log.info(
-              `[Stripe] Ticketing add-on synced: workspace=${dbSub.workspaceId} → ${ticketingTier}`,
-            );
-          }
-          if (schichtplanungChanged) {
-            log.info(
-              `[Stripe] Schichtplanung add-on synced: workspace=${dbSub.workspaceId} → active=${newSchichtplanungActive} billing=${schichtplanungBilling}`,
-            );
-          }
-        }
-
-        // Invalidate cached state after any update
+        // Invalidate cached subscription state so the next request re-fetches
         await Promise.all([
-          invalidateSubscriptionCache(dbSub.workspaceId),
-          invalidateSchichtplanungAddonCache(dbSub.workspaceId),
+          invalidateSubscriptionCache(workspaceId),
+          invalidateSchichtplanungAddonCache(workspaceId),
         ]).catch(() => {});
-      }
 
-      log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
-      break;
-    }
+        log.info(
+          `[Stripe] Activated: workspace=${workspaceId} plan=${plan?.id ?? "unknown"}`,
+        );
 
-    /* ─── Subscription deleted → downgrade to free ─── */
-    case "customer.subscription.deleted": {
-      const sub = event.data.object;
-      const cancelled = await cancelSubscription(sub.id);
-      await Promise.all([
-        invalidateSubscriptionCache(cancelled.workspaceId),
-        invalidateSchichtplanungAddonCache(cancelled.workspaceId),
-      ]).catch(() => {});
-      log.info(`[Stripe] Cancelled: ${sub.id}`);
-      break;
-    }
-
-    /* ─── Invoice paid → sync period dates + reset ticketing quota ─── */
-    case "invoice.paid": {
-      const invoice = event.data.object;
-      const customerId =
-        typeof invoice.customer === "string"
-          ? invoice.customer
-          : invoice.customer?.id;
-
-      if (!customerId) break;
-
-      try {
-        let sub = await prisma.subscription.findFirst({
-          where: { stripeCustomerId: customerId },
-          select: {
-            workspaceId: true,
-            ticketingTier: true,
-            stripeSubscriptionId: true,
-            seatCount: true,
-          },
-        });
-
-        // Self-heal: invoice.paid fired but we have no local subscription
-        // for this customer. Common after a missed checkout.session.completed.
-        // Pull the live sub from Stripe and link by customer.
-        // (Stripe API 2024+ exposes the subscription via `parent.subscription_details`.)
-        const linkedSubRef =
-          invoice.parent?.subscription_details?.subscription ?? null;
-        if (!sub && linkedSubRef) {
-          const stripeSubId =
-            typeof linkedSubRef === "string" ? linkedSubRef : linkedSubRef.id;
-          if (stripeSubId) {
-            try {
-              const liveSub = await stripe.subscriptions.retrieve(stripeSubId);
-              const mainItem =
-                liveSub.items.data.find(
-                  (it) =>
-                    !getTicketingTierByPriceId(it.price.id) &&
-                    !getSchichtplanungBillingByPriceId(it.price.id),
-                ) ?? liveSub.items.data[0];
-              const linked = await linkSubscriptionByCustomer({
-                stripeCustomerId: customerId,
-                stripeSubscriptionId: liveSub.id,
-                stripePriceId: mainItem?.price.id ?? "",
-                status: liveSub.status,
-                seatCount: mainItem?.quantity ?? 1,
-                currentPeriodStart: new Date(
-                  (mainItem?.current_period_start ?? 0) * 1000,
-                ),
-                currentPeriodEnd: new Date(
-                  (mainItem?.current_period_end ?? 0) * 1000,
-                ),
-                cancelAtPeriodEnd: liveSub.cancel_at_period_end,
-              });
-              if (linked > 0) {
-                sub = await prisma.subscription.findFirst({
-                  where: { stripeCustomerId: customerId },
-                  select: {
-                    workspaceId: true,
-                    ticketingTier: true,
-                    stripeSubscriptionId: true,
-                    seatCount: true,
-                  },
-                });
-                log.info(
-                  `[Stripe] Auto-linked sub on invoice.paid: customer=${customerId}`,
-                );
-              }
-            } catch (linkErr) {
-              log.warn("[Stripe] invoice.paid auto-link failed", {
-                error:
-                  linkErr instanceof Error ? linkErr.message : String(linkErr),
-              });
-            }
-          }
-        }
-
-        if (sub) {
-          // Sync period dates from live subscription so renewal date is always current.
-          // This is the canonical place to update currentPeriodEnd — every billing
-          // cycle fires invoice.paid before customer.subscription.updated arrives.
-          if (sub.stripeSubscriptionId) {
-            try {
-              const liveSub = await stripe.subscriptions.retrieve(
-                sub.stripeSubscriptionId,
-              );
-              const mainItem =
-                liveSub.items.data.find(
-                  (it) =>
-                    !getTicketingTierByPriceId(it.price.id) &&
-                    !getSchichtplanungBillingByPriceId(it.price.id),
-                ) ?? liveSub.items.data[0];
-
-              await updateSubscriptionFromStripe({
-                stripeSubscriptionId: liveSub.id,
-                stripePriceId: mainItem?.price.id ?? "",
-                status: liveSub.status,
-                seatCount: mainItem?.quantity ?? sub.seatCount,
-                currentPeriodStart: new Date(
-                  (mainItem?.current_period_start ?? 0) * 1000,
-                ),
-                currentPeriodEnd: new Date(
-                  (mainItem?.current_period_end ?? 0) * 1000,
-                ),
-                cancelAtPeriodEnd: liveSub.cancel_at_period_end,
-              });
-              log.info(
-                `[Stripe] Period dates synced on invoice.paid for workspace=${sub.workspaceId}`,
-              );
-            } catch (syncErr) {
-              log.warn("[Stripe] Failed to sync period on invoice.paid", {
-                error:
-                  syncErr instanceof Error ? syncErr.message : String(syncErr),
-              });
-              // Rethrow so Stripe receives a 500 and retries — the only way
-              // to guarantee currentPeriodEnd is always up to date.
-              throw syncErr;
-            }
-          }
-
-          // Reset monthly ticket counter on new billing period
-          if (sub.ticketingTier && sub.ticketingTier !== "NONE") {
-            await prisma.workspaceUsage.updateMany({
-              where: { workspaceId: sub.workspaceId },
-              data: {
-                ticketsCreatedThisMonth: 0,
-                ticketsResetAt: new Date(),
-              },
-            });
-            log.info(
-              `[Stripe] Ticketing quota reset for workspace=${sub.workspaceId}`,
-            );
-          }
-
-          // Renewal/payment confirmation email. Skip the very first invoice —
-          // the welcome email from checkout.session.completed already covers
-          // initial activation. We treat billing_reason === "subscription_cycle"
-          // (or "subscription_update" for upgrades) as renewals.
-          const billingReason = invoice.billing_reason ?? "";
-          const isRenewal =
-            billingReason === "subscription_cycle" ||
-            billingReason === "subscription_update";
-          if (isRenewal && invoice.amount_paid && invoice.amount_paid > 0) {
-            void (async () => {
-              try {
-                const workspace = await prisma.workspace.findUnique({
-                  where: { id: sub.workspaceId },
-                  select: { name: true },
-                });
-                const owner = await prisma.user.findFirst({
-                  where: { workspaceId: sub.workspaceId, role: "OWNER" },
-                  select: { email: true, preferredLocale: true },
-                });
-                if (owner?.email) {
-                  const locale = owner.preferredLocale === "en" ? "en" : "de";
-                  const currency = (invoice.currency ?? "eur").toUpperCase();
-                  const amountFormatted = new Intl.NumberFormat(
-                    locale === "en" ? "en-GB" : "de-DE",
-                    { style: "currency", currency },
-                  ).format((invoice.amount_paid ?? 0) / 100);
-                  const nextDate = invoice.lines?.data?.[0]?.period?.end
-                    ? new Date(
-                        invoice.lines.data[0].period.end * 1000,
-                      ).toLocaleDateString(locale === "en" ? "en-GB" : "de-DE")
-                    : null;
-                  const copy = invoicePaidEmail(
-                    locale,
-                    workspace?.name ??
-                      (locale === "en"
-                        ? "your workspace"
-                        : "Ihren Arbeitsbereich"),
-                    amountFormatted,
-                    nextDate,
-                  );
-                  await sendEmail({
-                    to: owner.email,
-                    type: "SYSTEM",
-                    category: "transactional",
-                    title: copy.subject,
-                    message: copy.body,
-                    link: "/einstellungen/abonnement",
-                    locale,
-                  });
-                }
-              } catch (err) {
-                log.error("[Stripe] invoice-paid email failed", {
-                  error: err instanceof Error ? err.message : String(err),
-                });
-              }
-            })();
-          }
-
-          // GoBD § 147 — persist invoice metadata for 10-year retention
-          // Must be synchronous: if this fails, Stripe will retry the webhook
-          // (preventing silent data loss for compliance-critical records).
+        // Welcome email — fire-and-forget so a Resend hiccup never breaks the
+        // webhook ack (Stripe will retry on non-2xx).
+        void (async () => {
           try {
-            // Fetch recipient identity (frozen snapshot of WorkspaceCustomer at invoice time)
-            const wc = await prisma.workspaceCustomer.findUnique({
-              where: { workspaceId: sub.workspaceId },
-              select: {
-                companyName: true,
-                vatId: true,
-                billingAddress: true,
-                billingCity: true,
-                billingPostalCode: true,
-              },
-            });
-
-            const recipientAddress = [
-              wc?.billingAddress,
-              [wc?.billingPostalCode, wc?.billingCity]
-                .filter(Boolean)
-                .join(" "),
-            ]
-              .filter(Boolean)
-              .join(", ");
-
-            // Atomically increment sequence AND create invoice record in one transaction.
-            // GoBD § 147: if the invoice.upsert fails, the sequence rolls back — no gaps.
-            const invoiceDate = new Date((invoice.created ?? 0) * 1000);
-            const year = invoiceDate.getFullYear();
-
-            // Fetch read-only lookups before the transaction (no side-effects to roll back).
-            const issuerProfile = await prisma.issuerProfile.findFirst({
-              where: { validFrom: { lte: invoiceDate } },
-              orderBy: { validFrom: "desc" },
-            });
-            const issuerName =
-              issuerProfile?.name ?? process.env.SHIFTFY_NAME ?? "Shiftfy GmbH";
-            const issuerVatId =
-              issuerProfile?.vatId ?? process.env.SHIFTFY_VAT_ID ?? null;
-            const issuerAddress =
-              issuerProfile?.address ?? process.env.SHIFTFY_ADDRESS ?? null;
-
-            await prisma.$transaction(async (tx) => {
-              const updated = await tx.invoiceSequence.upsert({
-                where: { workspaceId: sub.workspaceId },
-                update: { lastNumber: { increment: 1 } },
-                create: { workspaceId: sub.workspaceId, lastNumber: 1 },
-                select: { lastNumber: true },
-              });
-              const shiftfyInvoiceNumber = `${year}-${String(updated.lastNumber).padStart(6, "0")}`;
-
-              await tx.invoice.upsert({
-                where: { stripeInvoiceId: invoice.id },
-                update: {},
-                create: {
-                  workspaceId: sub.workspaceId,
-                  stripeInvoiceId: invoice.id,
-                  invoiceNumber: shiftfyInvoiceNumber,
-                  issuedAt: invoiceDate,
-                  amount: invoice.amount_paid ?? 0,
-                  vatAmount:
-                    invoice.total_taxes?.reduce(
-                      (s, t) => s + (t.amount ?? 0),
-                      0,
-                    ) ?? null,
-                  currency: invoice.currency ?? "eur",
-                  pdfUrl:
-                    typeof invoice.invoice_pdf === "string"
-                      ? invoice.invoice_pdf
-                      : null,
-                  hostedUrl:
-                    typeof invoice.hosted_invoice_url === "string"
-                      ? invoice.hosted_invoice_url
-                      : null,
-                  issuerName,
-                  issuerVatId,
-                  issuerAddress,
-                  recipientName: wc?.companyName ?? null,
-                  recipientVatId: wc?.vatId ?? null,
-                  recipientAddress: recipientAddress || null,
-                },
-              });
-            });
-            log.info(`[Stripe] GoBD invoice recorded: ${invoice.id}`);
-          } catch (err) {
-            log.error("[Stripe] GoBD invoice record failed", {
-              error: err instanceof Error ? err.message : String(err),
-            });
-            throw err;
-          }
-        }
-      } catch (err) {
-        log.error("[Stripe] invoice.paid handler failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        // Rethrow so withRoute returns 500 and Stripe retries the webhook.
-        throw err;
-      }
-      break;
-    }
-
-    /* ─── Customer updated → sync email on owner record ─── */
-    case "customer.updated": {
-      const customer = event.data.object;
-      const customerId = customer.id;
-      const newEmail =
-        typeof customer.email === "string" ? customer.email : null;
-
-      if (!customerId || !newEmail) break;
-
-      try {
-        const sub = await prisma.subscription.findFirst({
-          where: { stripeCustomerId: customerId },
-          select: { workspaceId: true },
-        });
-        log.info("[Stripe] customer.updated", {
-          customerId,
-          newEmail,
-          workspaceId: sub?.workspaceId ?? null,
-        });
-      } catch (err) {
-        log.error("[Stripe] customer.updated handler failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-      break;
-    }
-
-    /* ─── Payment failed → notify workspace owner ─── */
-    case "invoice.payment_failed": {
-      const invoice = event.data.object;
-      log.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
-
-      // Find the workspace owner and notify them
-      const customerId =
-        typeof invoice.customer === "string"
-          ? invoice.customer
-          : invoice.customer?.id;
-
-      if (customerId) {
-        try {
-          // Two-step lookup to avoid stale Prisma relation-filter types
-          const sub = await prisma.subscription.findFirst({
-            where: { stripeCustomerId: customerId },
-            select: { workspaceId: true },
-          });
-
-          if (sub) {
             const workspace = await prisma.workspace.findUnique({
-              where: { id: sub.workspaceId },
+              where: { id: workspaceId },
               select: { name: true },
             });
-
             const owner = await prisma.user.findFirst({
-              where: { workspaceId: sub.workspaceId, role: "OWNER" },
-              select: { email: true, name: true, preferredLocale: true },
+              where: { workspaceId, role: "OWNER" },
+              select: { email: true, preferredLocale: true },
             });
-
             if (owner?.email) {
               const locale = owner.preferredLocale === "en" ? "en" : "de";
-              const copy = paymentFailedEmail(
+              const planName =
+                plan?.id === "professional"
+                  ? "Professional"
+                  : plan?.id === "enterprise"
+                    ? "Enterprise"
+                    : "Basic";
+              const copy = subscriptionCreatedEmail(
                 locale,
                 workspace?.name ??
                   (locale === "en" ? "your workspace" : "Ihren Arbeitsbereich"),
+                planName,
               );
               await sendEmail({
                 to: owner.email,
@@ -768,22 +239,586 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                 link: "/einstellungen/abonnement",
                 locale,
               });
+            }
+          } catch (err) {
+            log.error("[Stripe] subscription-created email failed", {
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        })();
+
+        break;
+      }
+
+      /* ─── Subscription updated → sync status ─── */
+      case "customer.subscription.updated": {
+        const sub = event.data.object;
+        // Find the MAIN plan item (matches a known plan price ID),
+        // and the TICKETING add-on item (matches a known add-on price ID).
+        let mainItem = sub.items.data[0];
+        let ticketingItemId: string | null = null;
+        let ticketingTier: "NONE" | "STARTER" | "GROWTH" | "BUSINESS" = "NONE";
+        let schichtplanungItemId: string | null = null;
+        let schichtplanungBilling: "monthly" | "annual" | null = null;
+
+        for (const it of sub.items.data) {
+          const itPriceId = it.price.id;
+          const tier = getTicketingTierByPriceId(itPriceId);
+          const schichtplanung = getSchichtplanungBillingByPriceId(itPriceId);
+          if (tier) {
+            ticketingItemId = it.id;
+            ticketingTier = tier;
+          } else if (schichtplanung) {
+            schichtplanungItemId = it.id;
+            schichtplanungBilling = schichtplanung;
+          } else if (getPlanByPriceId(itPriceId)) {
+            mainItem = it;
+          }
+        }
+
+        const priceId = mainItem?.price.id;
+        const stripeCustomerId =
+          typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+
+        const subscriptionPayload = {
+          stripePriceId: priceId ?? "",
+          status: sub.status,
+          seatCount: mainItem?.quantity ?? 1,
+          currentPeriodStart: new Date(
+            (mainItem?.current_period_start ?? 0) * 1000,
+          ),
+          currentPeriodEnd: new Date(
+            (mainItem?.current_period_end ?? 0) * 1000,
+          ),
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+        };
+
+        // Primary path: update by subscriptionId.
+        // Fallback: if the checkout.session.completed webhook was missed, the DB
+        // row has stripeSubscriptionId=null so the primary update finds nothing
+        // (Prisma P2025). In that case look up by stripeCustomerId and link.
+        try {
+          await updateSubscriptionFromStripe({
+            stripeSubscriptionId: sub.id,
+            ...subscriptionPayload,
+          });
+        } catch (err: unknown) {
+          const isPrismaNotFound =
+            err instanceof Error &&
+            "code" in err &&
+            (err as { code?: string }).code === "P2025";
+
+          if (!isPrismaNotFound) throw err;
+
+          if (stripeCustomerId) {
+            const linked = await linkSubscriptionByCustomer({
+              stripeCustomerId,
+              stripeSubscriptionId: sub.id,
+              ...subscriptionPayload,
+            });
+            if (linked > 0) {
               log.info(
-                `[Stripe] Payment failure notification sent to ${owner.email}`,
+                `[Stripe] Auto-linked subscription ${sub.id} via customerId=${stripeCustomerId}`,
+              );
+            } else {
+              log.warn(
+                `[Stripe] customer.subscription.updated: no DB record for sub=${sub.id} or customer=${stripeCustomerId}`,
               );
             }
           }
-        } catch (notifyErr) {
-          log.error("[Stripe] Failed to send payment failure notification:", {
-            error: notifyErr,
+        }
+
+        // Sync usage limits if the plan changed
+        const updatedPlan = priceId ? getPlanByPriceId(priceId) : undefined;
+        const dbSub = await prisma.subscription.findFirst({
+          where: {
+            OR: [
+              { stripeSubscriptionId: sub.id },
+              ...(stripeCustomerId ? [{ stripeCustomerId }] : []),
+            ],
+          },
+          select: {
+            workspaceId: true,
+            ticketingTier: true,
+            ticketingStripeSubscriptionItemId: true,
+            schichtplanungAddonActive: true,
+            schichtplanungAddonBilling: true,
+            schichtplanungStripeSubscriptionItemId: true,
+          },
+        });
+
+        if (dbSub) {
+          if (updatedPlan) {
+            await syncUsageLimits(dbSub.workspaceId, updatedPlan.id as PlanId);
+          }
+
+          // Add-on state: build a single atomic update covering both ticketing
+          // and Schichtplanung so a partial failure never leaves them split.
+          const newSchichtplanungActive = schichtplanungItemId !== null;
+          const ticketingChanged =
+            dbSub.ticketingTier !== ticketingTier ||
+            dbSub.ticketingStripeSubscriptionItemId !== ticketingItemId;
+          const schichtplanungChanged =
+            dbSub.schichtplanungAddonActive !== newSchichtplanungActive ||
+            dbSub.schichtplanungAddonBilling !== schichtplanungBilling ||
+            dbSub.schichtplanungStripeSubscriptionItemId !==
+              schichtplanungItemId;
+
+          if (ticketingChanged || schichtplanungChanged) {
+            await prisma.subscription.update({
+              where: { workspaceId: dbSub.workspaceId },
+              data: {
+                ...(ticketingChanged && {
+                  ticketingTier,
+                  ticketingStripeSubscriptionItemId: ticketingItemId,
+                }),
+                ...(schichtplanungChanged && {
+                  schichtplanungAddonActive: newSchichtplanungActive,
+                  schichtplanungAddonBilling: schichtplanungBilling,
+                  schichtplanungStripeSubscriptionItemId: schichtplanungItemId,
+                }),
+              },
+            });
+
+            if (ticketingChanged) {
+              await syncTicketingLimits(dbSub.workspaceId, ticketingTier);
+              log.info(
+                `[Stripe] Ticketing add-on synced: workspace=${dbSub.workspaceId} → ${ticketingTier}`,
+              );
+            }
+            if (schichtplanungChanged) {
+              log.info(
+                `[Stripe] Schichtplanung add-on synced: workspace=${dbSub.workspaceId} → active=${newSchichtplanungActive} billing=${schichtplanungBilling}`,
+              );
+            }
+          }
+
+          // Invalidate cached state after any update
+          await Promise.all([
+            invalidateSubscriptionCache(dbSub.workspaceId),
+            invalidateSchichtplanungAddonCache(dbSub.workspaceId),
+          ]).catch(() => {});
+        }
+
+        log.info(`[Stripe] Updated: ${sub.id} → ${sub.status}`);
+        break;
+      }
+
+      /* ─── Subscription deleted → downgrade to free ─── */
+      case "customer.subscription.deleted": {
+        const sub = event.data.object;
+        const cancelled = await cancelSubscription(sub.id);
+        await Promise.all([
+          invalidateSubscriptionCache(cancelled.workspaceId),
+          invalidateSchichtplanungAddonCache(cancelled.workspaceId),
+        ]).catch(() => {});
+        log.info(`[Stripe] Cancelled: ${sub.id}`);
+        break;
+      }
+
+      /* ─── Invoice paid → sync period dates + reset ticketing quota ─── */
+      case "invoice.paid": {
+        const invoice = event.data.object;
+        const customerId =
+          typeof invoice.customer === "string"
+            ? invoice.customer
+            : invoice.customer?.id;
+
+        if (!customerId) break;
+
+        try {
+          let sub = await prisma.subscription.findFirst({
+            where: { stripeCustomerId: customerId },
+            select: {
+              workspaceId: true,
+              ticketingTier: true,
+              stripeSubscriptionId: true,
+              seatCount: true,
+            },
+          });
+
+          // Self-heal: invoice.paid fired but we have no local subscription
+          // for this customer. Common after a missed checkout.session.completed.
+          // Pull the live sub from Stripe and link by customer.
+          // (Stripe API 2024+ exposes the subscription via `parent.subscription_details`.)
+          const linkedSubRef =
+            invoice.parent?.subscription_details?.subscription ?? null;
+          if (!sub && linkedSubRef) {
+            const stripeSubId =
+              typeof linkedSubRef === "string" ? linkedSubRef : linkedSubRef.id;
+            if (stripeSubId) {
+              try {
+                const liveSub =
+                  await stripe.subscriptions.retrieve(stripeSubId);
+                const mainItem =
+                  liveSub.items.data.find(
+                    (it) =>
+                      !getTicketingTierByPriceId(it.price.id) &&
+                      !getSchichtplanungBillingByPriceId(it.price.id),
+                  ) ?? liveSub.items.data[0];
+                const linked = await linkSubscriptionByCustomer({
+                  stripeCustomerId: customerId,
+                  stripeSubscriptionId: liveSub.id,
+                  stripePriceId: mainItem?.price.id ?? "",
+                  status: liveSub.status,
+                  seatCount: mainItem?.quantity ?? 1,
+                  currentPeriodStart: new Date(
+                    (mainItem?.current_period_start ?? 0) * 1000,
+                  ),
+                  currentPeriodEnd: new Date(
+                    (mainItem?.current_period_end ?? 0) * 1000,
+                  ),
+                  cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+                });
+                if (linked > 0) {
+                  sub = await prisma.subscription.findFirst({
+                    where: { stripeCustomerId: customerId },
+                    select: {
+                      workspaceId: true,
+                      ticketingTier: true,
+                      stripeSubscriptionId: true,
+                      seatCount: true,
+                    },
+                  });
+                  log.info(
+                    `[Stripe] Auto-linked sub on invoice.paid: customer=${customerId}`,
+                  );
+                }
+              } catch (linkErr) {
+                log.warn("[Stripe] invoice.paid auto-link failed", {
+                  error:
+                    linkErr instanceof Error
+                      ? linkErr.message
+                      : String(linkErr),
+                });
+              }
+            }
+          }
+
+          if (sub) {
+            // Sync period dates from live subscription so renewal date is always current.
+            // This is the canonical place to update currentPeriodEnd — every billing
+            // cycle fires invoice.paid before customer.subscription.updated arrives.
+            if (sub.stripeSubscriptionId) {
+              try {
+                const liveSub = await stripe.subscriptions.retrieve(
+                  sub.stripeSubscriptionId,
+                );
+                const mainItem =
+                  liveSub.items.data.find(
+                    (it) =>
+                      !getTicketingTierByPriceId(it.price.id) &&
+                      !getSchichtplanungBillingByPriceId(it.price.id),
+                  ) ?? liveSub.items.data[0];
+
+                await updateSubscriptionFromStripe({
+                  stripeSubscriptionId: liveSub.id,
+                  stripePriceId: mainItem?.price.id ?? "",
+                  status: liveSub.status,
+                  seatCount: mainItem?.quantity ?? sub.seatCount,
+                  currentPeriodStart: new Date(
+                    (mainItem?.current_period_start ?? 0) * 1000,
+                  ),
+                  currentPeriodEnd: new Date(
+                    (mainItem?.current_period_end ?? 0) * 1000,
+                  ),
+                  cancelAtPeriodEnd: liveSub.cancel_at_period_end,
+                });
+                log.info(
+                  `[Stripe] Period dates synced on invoice.paid for workspace=${sub.workspaceId}`,
+                );
+              } catch (syncErr) {
+                log.warn("[Stripe] Failed to sync period on invoice.paid", {
+                  error:
+                    syncErr instanceof Error
+                      ? syncErr.message
+                      : String(syncErr),
+                });
+                // Rethrow so Stripe receives a 500 and retries — the only way
+                // to guarantee currentPeriodEnd is always up to date.
+                throw syncErr;
+              }
+            }
+
+            // Reset monthly ticket counter on new billing period
+            if (sub.ticketingTier && sub.ticketingTier !== "NONE") {
+              await prisma.workspaceUsage.updateMany({
+                where: { workspaceId: sub.workspaceId },
+                data: {
+                  ticketsCreatedThisMonth: 0,
+                  ticketsResetAt: new Date(),
+                },
+              });
+              log.info(
+                `[Stripe] Ticketing quota reset for workspace=${sub.workspaceId}`,
+              );
+            }
+
+            // Renewal/payment confirmation email. Skip the very first invoice —
+            // the welcome email from checkout.session.completed already covers
+            // initial activation. We treat billing_reason === "subscription_cycle"
+            // (or "subscription_update" for upgrades) as renewals.
+            const billingReason = invoice.billing_reason ?? "";
+            const isRenewal =
+              billingReason === "subscription_cycle" ||
+              billingReason === "subscription_update";
+            if (isRenewal && invoice.amount_paid && invoice.amount_paid > 0) {
+              void (async () => {
+                try {
+                  const workspace = await prisma.workspace.findUnique({
+                    where: { id: sub.workspaceId },
+                    select: { name: true },
+                  });
+                  const owner = await prisma.user.findFirst({
+                    where: { workspaceId: sub.workspaceId, role: "OWNER" },
+                    select: { email: true, preferredLocale: true },
+                  });
+                  if (owner?.email) {
+                    const locale = owner.preferredLocale === "en" ? "en" : "de";
+                    const currency = (invoice.currency ?? "eur").toUpperCase();
+                    const amountFormatted = new Intl.NumberFormat(
+                      locale === "en" ? "en-GB" : "de-DE",
+                      { style: "currency", currency },
+                    ).format((invoice.amount_paid ?? 0) / 100);
+                    const nextDate = invoice.lines?.data?.[0]?.period?.end
+                      ? new Date(
+                          invoice.lines.data[0].period.end * 1000,
+                        ).toLocaleDateString(
+                          locale === "en" ? "en-GB" : "de-DE",
+                        )
+                      : null;
+                    const copy = invoicePaidEmail(
+                      locale,
+                      workspace?.name ??
+                        (locale === "en"
+                          ? "your workspace"
+                          : "Ihren Arbeitsbereich"),
+                      amountFormatted,
+                      nextDate,
+                    );
+                    await sendEmail({
+                      to: owner.email,
+                      type: "SYSTEM",
+                      category: "transactional",
+                      title: copy.subject,
+                      message: copy.body,
+                      link: "/einstellungen/abonnement",
+                      locale,
+                    });
+                  }
+                } catch (err) {
+                  log.error("[Stripe] invoice-paid email failed", {
+                    error: err instanceof Error ? err.message : String(err),
+                  });
+                }
+              })();
+            }
+
+            // GoBD § 147 — persist invoice metadata for 10-year retention
+            // Must be synchronous: if this fails, Stripe will retry the webhook
+            // (preventing silent data loss for compliance-critical records).
+            try {
+              // Fetch recipient identity (frozen snapshot of WorkspaceCustomer at invoice time)
+              const wc = await prisma.workspaceCustomer.findUnique({
+                where: { workspaceId: sub.workspaceId },
+                select: {
+                  companyName: true,
+                  vatId: true,
+                  billingAddress: true,
+                  billingCity: true,
+                  billingPostalCode: true,
+                },
+              });
+
+              const recipientAddress = [
+                wc?.billingAddress,
+                [wc?.billingPostalCode, wc?.billingCity]
+                  .filter(Boolean)
+                  .join(" "),
+              ]
+                .filter(Boolean)
+                .join(", ");
+
+              // Atomically increment sequence AND create invoice record in one transaction.
+              // GoBD § 147: if the invoice.upsert fails, the sequence rolls back — no gaps.
+              const invoiceDate = new Date((invoice.created ?? 0) * 1000);
+              const year = invoiceDate.getFullYear();
+
+              // Fetch read-only lookups before the transaction (no side-effects to roll back).
+              const issuerProfile = await prisma.issuerProfile.findFirst({
+                where: { validFrom: { lte: invoiceDate } },
+                orderBy: { validFrom: "desc" },
+              });
+              const issuerName =
+                issuerProfile?.name ??
+                process.env.SHIFTFY_NAME ??
+                "Shiftfy GmbH";
+              const issuerVatId =
+                issuerProfile?.vatId ?? process.env.SHIFTFY_VAT_ID ?? null;
+              const issuerAddress =
+                issuerProfile?.address ?? process.env.SHIFTFY_ADDRESS ?? null;
+
+              await prisma.$transaction(async (tx) => {
+                const updated = await tx.invoiceSequence.upsert({
+                  where: { workspaceId: sub.workspaceId },
+                  update: { lastNumber: { increment: 1 } },
+                  create: { workspaceId: sub.workspaceId, lastNumber: 1 },
+                  select: { lastNumber: true },
+                });
+                const shiftfyInvoiceNumber = `${year}-${String(updated.lastNumber).padStart(6, "0")}`;
+
+                await tx.invoice.upsert({
+                  where: { stripeInvoiceId: invoice.id },
+                  update: {},
+                  create: {
+                    workspaceId: sub.workspaceId,
+                    stripeInvoiceId: invoice.id,
+                    invoiceNumber: shiftfyInvoiceNumber,
+                    issuedAt: invoiceDate,
+                    amount: invoice.amount_paid ?? 0,
+                    vatAmount:
+                      invoice.total_taxes?.reduce(
+                        (s, t) => s + (t.amount ?? 0),
+                        0,
+                      ) ?? null,
+                    currency: invoice.currency ?? "eur",
+                    pdfUrl:
+                      typeof invoice.invoice_pdf === "string"
+                        ? invoice.invoice_pdf
+                        : null,
+                    hostedUrl:
+                      typeof invoice.hosted_invoice_url === "string"
+                        ? invoice.hosted_invoice_url
+                        : null,
+                    issuerName,
+                    issuerVatId,
+                    issuerAddress,
+                    recipientName: wc?.companyName ?? null,
+                    recipientVatId: wc?.vatId ?? null,
+                    recipientAddress: recipientAddress || null,
+                  },
+                });
+              });
+              log.info(`[Stripe] GoBD invoice recorded: ${invoice.id}`);
+            } catch (err) {
+              log.error("[Stripe] GoBD invoice record failed", {
+                error: err instanceof Error ? err.message : String(err),
+              });
+              throw err;
+            }
+          }
+        } catch (err) {
+          log.error("[Stripe] invoice.paid handler failed", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          // Rethrow so withRoute returns 500 and Stripe retries the webhook.
+          throw err;
+        }
+        break;
+      }
+
+      /* ─── Customer updated → sync email on owner record ─── */
+      case "customer.updated": {
+        const customer = event.data.object;
+        const customerId = customer.id;
+        const newEmail =
+          typeof customer.email === "string" ? customer.email : null;
+
+        if (!customerId || !newEmail) break;
+
+        try {
+          const sub = await prisma.subscription.findFirst({
+            where: { stripeCustomerId: customerId },
+            select: { workspaceId: true },
+          });
+          log.info("[Stripe] customer.updated", {
+            customerId,
+            newEmail,
+            workspaceId: sub?.workspaceId ?? null,
+          });
+        } catch (err) {
+          log.error("[Stripe] customer.updated handler failed", {
+            error: err instanceof Error ? err.message : String(err),
           });
         }
+        break;
       }
-      break;
-    }
 
-    default:
-      log.info(`[Stripe] Unhandled event: ${event.type}`);
+      /* ─── Payment failed → notify workspace owner ─── */
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        log.error(`[Stripe] Payment failed: invoice=${invoice.id}`);
+
+        // Find the workspace owner and notify them
+        const customerId =
+          typeof invoice.customer === "string"
+            ? invoice.customer
+            : invoice.customer?.id;
+
+        if (customerId) {
+          try {
+            // Two-step lookup to avoid stale Prisma relation-filter types
+            const sub = await prisma.subscription.findFirst({
+              where: { stripeCustomerId: customerId },
+              select: { workspaceId: true },
+            });
+
+            if (sub) {
+              const workspace = await prisma.workspace.findUnique({
+                where: { id: sub.workspaceId },
+                select: { name: true },
+              });
+
+              const owner = await prisma.user.findFirst({
+                where: { workspaceId: sub.workspaceId, role: "OWNER" },
+                select: { email: true, name: true, preferredLocale: true },
+              });
+
+              if (owner?.email) {
+                const locale = owner.preferredLocale === "en" ? "en" : "de";
+                const copy = paymentFailedEmail(
+                  locale,
+                  workspace?.name ??
+                    (locale === "en"
+                      ? "your workspace"
+                      : "Ihren Arbeitsbereich"),
+                );
+                await sendEmail({
+                  to: owner.email,
+                  type: "SYSTEM",
+                  category: "transactional",
+                  title: copy.subject,
+                  message: copy.body,
+                  link: "/einstellungen/abonnement",
+                  locale,
+                });
+                log.info(
+                  `[Stripe] Payment failure notification sent to ${owner.email}`,
+                );
+              }
+            }
+          } catch (notifyErr) {
+            log.error("[Stripe] Failed to send payment failure notification:", {
+              error: notifyErr,
+            });
+          }
+        }
+        break;
+      }
+
+      default:
+        log.info(`[Stripe] Unhandled event: ${event.type}`);
+    }
+  } catch (err) {
+    // Roll back the idempotency marker so Stripe's retry re-processes this
+    // event instead of treating it as already-handled.
+    await prisma.stripeEvent
+      .delete({ where: { id: event.id } })
+      .catch(() => {});
+    if (redis) {
+      await redis.del(`stripe_event:${event.id}`).catch(() => {});
+    }
+    throw err;
   }
 
   return NextResponse.json({ received: true });

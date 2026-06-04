@@ -87,6 +87,7 @@ export default function EinstellungenPage() {
   const [twoFAQr, setTwoFAQr] = useState("");
   const [twoFASecret, setTwoFASecret] = useState("");
   const [twoFAToken, setTwoFAToken] = useState("");
+  const [twoFADisableCode, setTwoFADisableCode] = useState("");
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [twoFAMsg, setTwoFAMsg] = useState<{
     type: "success" | "error";
@@ -396,9 +397,14 @@ export default function EinstellungenPage() {
     setTwoFASaving(true);
     setTwoFAMsg(null);
     try {
-      const res = await fetch("/api/auth/two-factor", { method: "DELETE" });
+      const res = await fetch("/api/auth/two-factor", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: twoFADisableCode.trim() }),
+      });
       if (res.ok) {
         setTwoFAEnabled(false);
+        setTwoFADisableCode("");
         setTwoFAMsg({ type: "success", text: t("twoFADisabled") });
       } else {
         const data = await res.json().catch(() => ({}));
@@ -969,18 +975,31 @@ export default function EinstellungenPage() {
                 )}
 
                 {twoFAEnabled ? (
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <Badge
                       variant="default"
                       className="bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300 dark:border dark:border-green-800/50"
                     >
                       {t("twoFAActive")}
                     </Badge>
+                    {/* Re-verification required to disable: a current TOTP or
+                        recovery code, so a session alone can't strip 2FA. */}
+                    <input
+                      type="text"
+                      inputMode="text"
+                      autoComplete="one-time-code"
+                      value={twoFADisableCode}
+                      onChange={(e) => setTwoFADisableCode(e.target.value)}
+                      placeholder={t("twoFADisableCodePlaceholder")}
+                      className="w-40 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm"
+                    />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleDisable2FA}
-                      disabled={twoFASaving}
+                      disabled={
+                        twoFASaving || twoFADisableCode.trim().length < 6
+                      }
                     >
                       {t("twoFADisableBtn")}
                     </Button>

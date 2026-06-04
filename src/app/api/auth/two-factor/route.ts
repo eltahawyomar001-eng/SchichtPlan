@@ -180,10 +180,69 @@ export const POST = withRoute("/api/auth/two-factor", "POST", async (req) => {
 export const DELETE = withRoute(
   "/api/auth/two-factor",
   "DELETE",
-  async (_req) => {
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user } = auth;
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        email: true,
+        twoFactorEnabled: true,
+        twoFactorSecret: true,
+        twoFactorRecoveryCodes: true,
+      },
+    });
+
+    // Already disabled → idempotent success.
+    if (!dbUser || !dbUser.twoFactorEnabled) {
+      return NextResponse.json({ success: true });
+    }
+
+    // Require re-verification with a current TOTP or recovery code. A valid
+    // session alone must NOT be enough to strip the second factor — otherwise a
+    // hijacked/borrowed session could silently remove 2FA. Mirrors the proof of
+    // possession required to enable it.
+    const parsedBody = await parseJsonBody(req);
+    const rawCode =
+      parsedBody.ok &&
+      typeof (parsedBody.data as { code?: unknown })?.code === "string"
+        ? ((parsedBody.data as { code: string }).code as string)
+        : "";
+    if (!rawCode.trim()) {
+      return NextResponse.json({ error: "CODE_REQUIRED" }, { status: 400 });
+    }
+
+    let verified = false;
+
+    // 1) TOTP code (±30s tolerance)
+    if (dbUser.twoFactorSecret) {
+      const totp = buildTOTP(dbUser.twoFactorSecret, dbUser.email);
+      verified =
+        totp.validate({ token: rawCode.replace(/\s/g, ""), window: 1 }) !==
+        null;
+    }
+
+    // 2) Recovery code fallback (so a lost authenticator can still disable)
+    if (!verified && dbUser.twoFactorRecoveryCodes) {
+      const normalized = rawCode.replace(/[\s-]/g, "").toUpperCase();
+      try {
+        const codes: string[] = JSON.parse(dbUser.twoFactorRecoveryCodes);
+        for (const hashed of codes) {
+          if (await bcrypt.compare(normalized, hashed)) {
+            verified = true;
+            break;
+          }
+        }
+      } catch {
+        /* malformed recovery codes — treat as no match */
+      }
+    }
+
+    if (!verified) {
+      return NextResponse.json({ error: "INVALID_CODE" }, { status: 400 });
+    }
 
     await prisma.user.update({
       where: { id: user.id },

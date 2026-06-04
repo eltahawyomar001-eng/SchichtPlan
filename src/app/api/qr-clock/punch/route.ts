@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { verifyQrToken } from "@/lib/qr-token";
@@ -135,6 +136,17 @@ export const POST = withRoute("/api/qr-clock/punch", "POST", async (req) => {
       );
     } catch (err) {
       if (err instanceof Error && err.message === "ALREADY_CLOCKED_IN") {
+        return NextResponse.json(
+          { error: "ALREADY_CLOCKED_IN" },
+          { status: 409 },
+        );
+      }
+      // Partial unique index rejected a concurrent second punch (double-tap on
+      // the kiosk). Treat as the canonical already-clocked-in conflict.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
         return NextResponse.json(
           { error: "ALREADY_CLOCKED_IN" },
           { status: 409 },

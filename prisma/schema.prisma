@@ -898,6 +898,11 @@ model TimeEntry {
   @@index([workspaceId, employeeId])
   @@index([status])
   @@index([projectId])
+  // DB-level guard (not expressible in Prisma schema — see
+  // prisma/migrations/20260604_timeentry_one_open_live_clock/migration.sql):
+  // a PARTIAL UNIQUE INDEX on (employeeId) WHERE isLiveClock AND clockOutAt IS NULL
+  // enforces at most one open live-clock entry per employee. The clock-in route
+  // relies on this and maps the resulting P2002 to a 409 ALREADY_CLOCKED_IN.
 }
 
 model TimeEntryAudit {

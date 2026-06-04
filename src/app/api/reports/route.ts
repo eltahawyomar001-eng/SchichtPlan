@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth } from "@/lib/api-response";
+import { requireAuth, apiError } from "@/lib/api-response";
 import { parseOptionalDateQueryParam } from "@/lib/validations";
 
 /**
@@ -43,6 +43,28 @@ export const GET = withRoute("/api/reports", "GET", async (req) => {
     startResult.date ?? new Date(now.getFullYear(), now.getMonth(), 1);
   const end =
     endResult.date ?? new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  // Bound the range. Reporting aggregates shifts in application memory, so an
+  // unbounded span (e.g. start=2015 to end=2035) would load tens of thousands
+  // of rows and risk the 15s statement timeout / memory pressure. Cap at
+  // ~13 months so a full year-plus comparison still works.
+  if (end < start) {
+    return apiError(
+      "Das Enddatum muss nach dem Startdatum liegen.",
+      400,
+      "INVALID_RANGE",
+    );
+  }
+  const MAX_RANGE_DAYS = 400;
+  const rangeDays = (end.getTime() - start.getTime()) / 86_400_000;
+  if (rangeDays > MAX_RANGE_DAYS) {
+    return apiError(
+      `Der Berichtszeitraum darf höchstens ${MAX_RANGE_DAYS} Tage umfassen.`,
+      422,
+      "RANGE_TOO_LARGE",
+      { maxDays: MAX_RANGE_DAYS },
+    );
+  }
 
   // Fetch shifts in range
   const shifts = await prisma.shift.findMany({

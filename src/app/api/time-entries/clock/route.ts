@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
   executeCustomRules,
@@ -124,8 +125,15 @@ export const POST = withRoute(
         }
       }
 
-      // Use a serializable transaction to prevent race conditions
-      // (two simultaneous clock-ins both passing the findFirst check)
+      // Two layers guard against a double clock-in:
+      //   1. The findFirst pre-check below is the fast path — it returns a
+      //      friendly 409 in the common (non-concurrent) case.
+      //   2. The PARTIAL UNIQUE INDEX on TimeEntry(employeeId)
+      //      WHERE isLiveClock AND clockOutAt IS NULL is the AUTHORITATIVE
+      //      guard. Under READ COMMITTED two concurrent punches can both pass
+      //      the findFirst check; the index then rejects the losing insert
+      //      with 23505 → Prisma P2002. A row lock / SERIALIZABLE isolation is
+      //      unnecessary because the DB constraint makes the invariant total.
       let entry;
       try {
         entry = await prisma.$transaction(async (tx) => {
@@ -160,6 +168,28 @@ export const POST = withRoute(
           const entryId = msg.split(":")[1];
           return NextResponse.json(
             { error: "ALREADY_CLOCKED_IN", entryId },
+            { status: 409 },
+          );
+        }
+        // The partial unique index rejected a concurrent second clock-in that
+        // slipped past the findFirst check. Resolve the existing open entry so
+        // the client still gets the canonical ALREADY_CLOCKED_IN response
+        // instead of a generic conflict.
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2002"
+        ) {
+          const open = await prisma.timeEntry.findFirst({
+            where: {
+              employeeId,
+              workspaceId,
+              isLiveClock: true,
+              clockOutAt: null,
+            },
+            select: { id: true },
+          });
+          return NextResponse.json(
+            { error: "ALREADY_CLOCKED_IN", entryId: open?.id },
             { status: 409 },
           );
         }

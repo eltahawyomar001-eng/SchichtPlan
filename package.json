@@ -38,6 +38,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "lint:scope": "tsx scripts/check-workspace-scope.ts",
     "postinstall": "prisma generate",
     "prepare": "husky",
     "db:migrate:deploy": "prisma migrate deploy",

@@ -7,9 +7,10 @@ import { createWebhookSchema, validateBody } from "@/lib/validations";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth, parseJsonBody } from "@/lib/api-response";
+import { requireAuth, parseJsonBody, apiError } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { assertPublicWebhookUrl } from "@/lib/webhook-url-guard";
 
 /** GET /api/webhooks — list all webhook endpoints */
 export const GET = withRoute("/api/webhooks", "GET", async (req) => {
@@ -63,6 +64,12 @@ export const POST = withRoute(
     const parsed = validateBody(createWebhookSchema, body);
     if (!parsed.success) return parsed.response;
     const { url, events } = parsed.data;
+
+    // SSRF guard — reject internal/private targets before persisting.
+    const urlCheck = await assertPublicWebhookUrl(url, { requireHttps: true });
+    if (!urlCheck.ok) {
+      return apiError(urlCheck.reason!, 400, "WEBHOOK_URL_BLOCKED");
+    }
 
     const secret = crypto.randomBytes(32).toString("hex");
 

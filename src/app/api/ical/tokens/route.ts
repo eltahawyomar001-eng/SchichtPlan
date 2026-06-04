@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { randomBytes } from "crypto";
+import { generateICalToken } from "@/lib/ical-token";
 import { createICalTokenSchema, validateBody } from "@/lib/validations";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
@@ -62,15 +62,16 @@ export const POST = withRoute(
     if (!parsed.success) return parsed.response;
     const label = parsed.data.label ?? null;
 
-    // 48 random bytes → 64-char hex token (cryptographically strong)
-    const token = randomBytes(48).toString("hex");
+    // 48 random bytes → cryptographically strong token. Only the hash is
+    // persisted; the raw value goes into the feed URL and is shown once.
+    const { raw: token, stored: tokenHash } = generateICalToken();
 
     // Hard expiry at 180 days — tokens rotate at 90 days automatically
     const expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
 
     const record = await prisma.iCalToken.create({
       data: {
-        token,
+        token: tokenHash,
         userId: user.id,
         workspaceId: user.workspaceId,
         label,

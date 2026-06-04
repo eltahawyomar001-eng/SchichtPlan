@@ -4,9 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import ical, { ICalCalendarMethod } from "ical-generator";
-import { randomBytes } from "crypto";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
+import { generateICalToken, icalTokenLookups } from "@/lib/ical-token";
 
 /** Token is valid for 90 days before automatic rotation. */
 const TOKEN_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
@@ -33,8 +33,8 @@ async function resolveUser(req: Request): Promise<{
   const token = searchParams.get("token");
 
   if (token) {
-    const icalToken = await prisma.iCalToken.findUnique({
-      where: { token },
+    const icalToken = await prisma.iCalToken.findFirst({
+      where: { token: { in: icalTokenLookups(token) } },
       include: {
         user: {
           select: {
@@ -62,13 +62,14 @@ async function resolveUser(req: Request): Promise<{
     let rotatedFeedUrl: string | undefined;
 
     if (tokenAge > TOKEN_MAX_AGE_MS) {
-      const newToken = randomBytes(48).toString("hex");
+      // Persist only the hash; the raw token goes into the rotated feed URL.
+      const { raw: newToken, stored: newTokenHash } = generateICalToken();
       const baseUrl = process.env.NEXTAUTH_URL || "https://app.shiftfy.de";
 
       await prisma.iCalToken.update({
         where: { id: icalToken.id },
         data: {
-          token: newToken,
+          token: newTokenHash,
           rotatedAt: new Date(),
           lastUsedAt: new Date(),
         },

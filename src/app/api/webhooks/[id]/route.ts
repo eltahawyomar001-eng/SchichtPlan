@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
-import { requireAuth, parseJsonBody } from "@/lib/api-response";
+import { requireAuth, parseJsonBody, apiError } from "@/lib/api-response";
 import { updateWebhookSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { assertPublicWebhookUrl } from "@/lib/webhook-url-guard";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -32,6 +33,16 @@ export const PATCH = withRoute(
     const parsed = validateBody(updateWebhookSchema, body);
     if (!parsed.success) return parsed.response;
     const { data: validData } = parsed;
+
+    // SSRF guard — re-validate when the URL is being changed.
+    if (validData.url !== undefined) {
+      const urlCheck = await assertPublicWebhookUrl(validData.url, {
+        requireHttps: true,
+      });
+      if (!urlCheck.ok) {
+        return apiError(urlCheck.reason!, 400, "WEBHOOK_URL_BLOCKED");
+      }
+    }
 
     const existing = await prisma.webhookEndpoint.findFirst({
       where: { id, workspaceId: user.workspaceId },

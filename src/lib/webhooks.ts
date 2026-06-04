@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { log } from "@/lib/logger";
 import { withTimeout } from "@/lib/request-timeout";
+import { assertPublicWebhookUrl } from "@/lib/webhook-url-guard";
 import { WebhookFailureStatus } from "@prisma/client";
 
 /**
@@ -46,6 +47,17 @@ export async function dispatchWebhook(
     // Fire-and-forget: single attempt per endpoint, no retries
     await Promise.allSettled(
       matching.map(async (ep: { id: string; url: string; secret: string }) => {
+        // SSRF guard — re-resolve on every delivery to defeat DNS rebinding.
+        const urlCheck = await assertPublicWebhookUrl(ep.url);
+        if (!urlCheck.ok) {
+          log.warn("[webhook] Delivery blocked — unsafe target URL", {
+            endpointId: ep.id,
+            event,
+            reason: urlCheck.reason,
+          });
+          return;
+        }
+
         const body = JSON.stringify({ event, data: payload, ts: Date.now() });
         const signature = crypto
           .createHmac("sha256", ep.secret)

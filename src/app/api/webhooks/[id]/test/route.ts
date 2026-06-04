@@ -5,6 +5,7 @@ import { log } from "@/lib/logger";
 import crypto from "crypto";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
+import { assertPublicWebhookUrl } from "@/lib/webhook-url-guard";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -42,6 +43,15 @@ export const POST = withRoute(
 
     if (!hook) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // SSRF guard — never fetch an internal/private target, even for a test ping.
+    const urlCheck = await assertPublicWebhookUrl(hook.url);
+    if (!urlCheck.ok) {
+      return NextResponse.json(
+        { ok: false, status: null, error: urlCheck.reason },
+        { status: 400 },
+      );
     }
 
     const payload = JSON.stringify({

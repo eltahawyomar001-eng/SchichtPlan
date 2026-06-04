@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { invitationEmail } from "@/lib/notifications/email-i18n";
-import { randomBytes } from "crypto";
+import { generateInvitationToken } from "@/lib/invitation-token";
 import { createInvitationSchema, validateBody } from "@/lib/validations";
 import { requireUserSlot } from "@/lib/subscription-guard";
 import { withRoute } from "@/lib/with-route";
@@ -88,8 +88,9 @@ export const POST = withRoute(
       return NextResponse.json({ error: "ALREADY_INVITED" }, { status: 409 });
     }
 
-    // Generate secure token
-    const token = randomBytes(32).toString("hex");
+    // Generate secure token. Only the hash is persisted; the raw value goes
+    // into the email link and is never stored at rest.
+    const { raw: token, stored: tokenHash } = generateInvitationToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     // Get workspace name for the email
@@ -101,7 +102,7 @@ export const POST = withRoute(
     // Create invitation
     const invitation = await prisma.invitation.create({
       data: {
-        token,
+        token: tokenHash,
         email,
         role,
         status: "PENDING",

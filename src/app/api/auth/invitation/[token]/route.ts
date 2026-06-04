@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
+import { invitationTokenLookups } from "@/lib/invitation-token";
 
 /**
  * GET /api/auth/invitation/[token] — public endpoint to get invitation details
@@ -13,8 +14,8 @@ export const GET = withRoute(
     const params = await context!.params;
     const { token } = params;
 
-    const invitation = await prisma.invitation.findUnique({
-      where: { token },
+    const invitation = await prisma.invitation.findFirst({
+      where: { token: { in: invitationTokenLookups(token) } },
       include: {
         workspace: { select: { name: true } },
         invitedBy: { select: { name: true } },

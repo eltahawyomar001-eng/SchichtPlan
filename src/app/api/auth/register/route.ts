@@ -10,6 +10,7 @@ import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
 import { initializeTrial, provisionStripeCustomer } from "@/lib/subscription";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
+import { invitationTokenLookups } from "@/lib/invitation-token";
 
 export const POST = withRoute("/api/auth/register", "POST", async (req) => {
   const _json = await parseJsonBody(req);
@@ -91,8 +92,8 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
 
   // ── Invitation-based registration ──
   if (invitationToken) {
-    const invitation = await prisma.invitation.findUnique({
-      where: { token: invitationToken },
+    const invitation = await prisma.invitation.findFirst({
+      where: { token: { in: invitationTokenLookups(invitationToken) } },
     });
 
     if (!invitation) {

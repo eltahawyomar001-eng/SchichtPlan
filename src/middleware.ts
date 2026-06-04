@@ -120,7 +120,11 @@ function isTokenPath(pathname: string): boolean {
     pathname.startsWith("/api/pin-reveal") ||
     pathname.startsWith("/api/qr-clock") ||
     pathname.startsWith("/api/station/authorize") ||
-    pathname.startsWith("/api/station/qr-token")
+    pathname.startsWith("/api/station/qr-token") ||
+    // Public invitation token lookup + accept — strict 5/60s to stop anyone
+    // grinding the token space, even though tokens are 256-bit.
+    pathname.startsWith("/api/auth/invitation/") ||
+    pathname.startsWith("/api/invitations/token/")
   );
 }
 

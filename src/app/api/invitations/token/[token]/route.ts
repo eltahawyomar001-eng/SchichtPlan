@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
 import { cache } from "@/lib/cache";
+import { invitationTokenLookups } from "@/lib/invitation-token";
 
 /**
  * GET /api/invitations/token/[token] — get invitation details (public, no auth required)
@@ -16,8 +17,8 @@ export const GET = withRoute(
     const params = await context!.params;
     const { token } = params;
 
-    const invitation = await prisma.invitation.findUnique({
-      where: { token },
+    const invitation = await prisma.invitation.findFirst({
+      where: { token: { in: invitationTokenLookups(token) } },
       include: {
         workspace: { select: { name: true } },
         invitedBy: { select: { name: true } },
@@ -72,8 +73,8 @@ export const POST = withRoute(
 
     const { token } = params;
 
-    const invitation = await prisma.invitation.findUnique({
-      where: { token },
+    const invitation = await prisma.invitation.findFirst({
+      where: { token: { in: invitationTokenLookups(token) } },
       include: {
         workspace: { select: { id: true, name: true } },
       },

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { invitationReminderEmail } from "@/lib/notifications/email-i18n";
-import { randomBytes } from "crypto";
+import { generateInvitationToken } from "@/lib/invitation-token";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { getLocaleFromCookie } from "@/i18n/locale";
@@ -41,13 +41,14 @@ export const POST = withRoute(
       );
     }
 
-    // Generate a new token and extend expiry
-    const newToken = randomBytes(32).toString("hex");
+    // Generate a new token and extend expiry. Persist only the hash; email
+    // the raw value.
+    const { raw: newToken, stored: newTokenHash } = generateInvitationToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await prisma.invitation.update({
       where: { id },
-      data: { token: newToken, expiresAt },
+      data: { token: newTokenHash, expiresAt },
     });
 
     // Send email

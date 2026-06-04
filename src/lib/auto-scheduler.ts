@@ -75,6 +75,9 @@ export interface SchedulerConfig {
     fatigue?: number; // default 10 — consecutive-day penalty
     rotation?: number; // default 5 — bad rotation penalty
   };
+  /** Wall-clock budget for the solve phase (ms). On timeout the solver stops
+   *  assigning and returns remaining slots as unresolved. Default 20s. */
+  timeBudgetMs?: number;
 }
 
 /** Config for the single-shift backfill (instant replacement) */
@@ -181,6 +184,9 @@ export interface SchedulerResult {
   unresolvedCount: number;
   totalCostEstimate: number;
   fairnessScore: number;
+  /** True if the solver hit its wall-clock budget and left remaining slots
+   *  unresolved rather than running unbounded. */
+  timedOut?: boolean;
   /** Per-employee hour distribution */
   employeeHours: Record<
     string,
@@ -424,7 +430,35 @@ export async function runAutoScheduler(
   const unresolvedShifts: UnresolvedShift[] = [];
   let totalCostEstimate = 0;
 
+  // Wall-clock budget: scoring every candidate for every slot is super-linear,
+  // so even within the 31-day route cap a large workspace could run long enough
+  // to risk the serverless function timeout. On deadline we stop solving and
+  // return the remaining slots as unresolved — a partial schedule, never a hang.
+  const deadline = Date.now() + (config.timeBudgetMs ?? 20_000);
+  let timedOut = false;
+
   for (const slot of slots) {
+    if (!timedOut && Date.now() > deadline) {
+      timedOut = true;
+      log.warn(
+        "[auto-scheduler] Time budget exceeded — remaining slots left unresolved",
+        { workspaceId, assignedSoFar: assignments.length },
+      );
+    }
+    if (timedOut) {
+      unresolvedShifts.push({
+        shiftId: slot.shiftId,
+        shiftDate: slot.dateStr,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        locationName: slot.locationName,
+        reason:
+          "Zeitbudget überschritten – bitte kleineren Zeitraum oder Standort wählen",
+        requiredSkill: slot.requiredSkillId || undefined,
+      });
+      continue;
+    }
+
     // Recompute domain to reflect assignments made so far
     const currentDomain = computeDomain(
       slot,
@@ -560,6 +594,7 @@ export async function runAutoScheduler(
     unresolved: unresolvedShifts.length,
     totalCost: Math.round(totalCostEstimate * 100) / 100,
     fairness: fairnessScore,
+    timedOut,
   });
 
   return {
@@ -571,6 +606,7 @@ export async function runAutoScheduler(
     totalCostEstimate: Math.round(totalCostEstimate * 100) / 100,
     fairnessScore,
     employeeHours,
+    timedOut,
   };
 }
 

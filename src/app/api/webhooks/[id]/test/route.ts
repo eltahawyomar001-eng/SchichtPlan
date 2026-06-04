@@ -5,7 +5,10 @@ import { log } from "@/lib/logger";
 import crypto from "crypto";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
-import { assertPublicWebhookUrl } from "@/lib/webhook-url-guard";
+import {
+  assertPublicWebhookUrl,
+  ssrfSafeDispatcher,
+} from "@/lib/webhook-url-guard";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -82,7 +85,9 @@ export const POST = withRoute(
         },
         body: payload,
         signal: AbortSignal.timeout(10_000),
-      });
+        // Pin the connection to the validated public IP (no rebinding).
+        dispatcher: ssrfSafeDispatcher(),
+      } as RequestInit & { dispatcher: ReturnType<typeof ssrfSafeDispatcher> });
 
       remoteStatus = response.status;
       deliveryOk = response.ok;

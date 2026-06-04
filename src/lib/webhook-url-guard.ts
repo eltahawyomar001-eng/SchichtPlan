@@ -1,5 +1,7 @@
 import { lookup } from "dns/promises";
-import { isIP } from "net";
+import { lookup as dnsLookupCb } from "dns";
+import { isIP, type LookupFunction } from "net";
+import { Agent } from "undici";
 
 /**
  * SSRF guard for outbound webhook delivery.
@@ -137,4 +139,48 @@ export async function assertPublicWebhookUrl(
     }
   }
   return { ok: true };
+}
+
+/* ── IP-pinned dispatcher (closes the rebinding TOCTOU at connect time) ── */
+
+/**
+ * A drop-in for dns.lookup that rejects any private/reserved address. Because
+ * undici uses THIS resolution to open the socket, the IP that is validated is
+ * the exact IP that is connected to — there is no second, unchecked resolution,
+ * so DNS rebinding cannot slip a private address past the guard.
+ */
+const ssrfSafeLookup: LookupFunction = (hostname, options, callback) => {
+  dnsLookupCb(hostname, options, (err, address, family) => {
+    if (err) return callback(err, address, family);
+    const blocked = Array.isArray(address)
+      ? address.find((a) => isPrivateOrReservedIp(a.address))?.address
+      : isPrivateOrReservedIp(address)
+        ? address
+        : undefined;
+    if (blocked) {
+      return callback(
+        Object.assign(
+          new Error(`Blocked private address ${blocked} for ${hostname}`),
+          { code: "ESSRFBLOCKED" },
+        ),
+        Array.isArray(address) ? [] : "",
+        family,
+      );
+    }
+    return callback(null, address, family);
+  });
+};
+
+let pinnedAgent: Agent | undefined;
+
+/**
+ * Shared undici dispatcher that pins connections to a validated public IP.
+ * Pass as `{ dispatcher: ssrfSafeDispatcher() }` to fetch() for outbound
+ * webhook delivery.
+ */
+export function ssrfSafeDispatcher(): Agent {
+  if (!pinnedAgent) {
+    pinnedAgent = new Agent({ connect: { lookup: ssrfSafeLookup } });
+  }
+  return pinnedAgent;
 }

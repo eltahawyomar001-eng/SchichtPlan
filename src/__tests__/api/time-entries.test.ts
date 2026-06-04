@@ -172,8 +172,12 @@ describe("GET /api/time-entries", () => {
   });
 
   it("EMPLOYEE scoped to own entries via email lookup", async () => {
-    const emp = buildEmployee({ employeeId: "emp-1" });
-    mockSession.user = emp;
+    // No employeeId on the session → the ownership helper falls back to an
+    // email lookup to resolve the employee, then scopes the query to it.
+    // (The where-clause scoping itself is unit-tested in ownership.test.ts;
+    // the query here runs inside withWorkspaceContext which this harness does
+    // not mock, so we assert the lookup path is taken.)
+    mockSession.user = buildEmployee({ employeeId: null });
     mockEmployeeFindFirst.mockResolvedValue({ id: "emp-1" });
     mockTimeEntryFindMany.mockResolvedValue([]);
     mockTimeEntryCount.mockResolvedValue(0);

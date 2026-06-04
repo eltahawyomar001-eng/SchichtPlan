@@ -153,6 +153,7 @@ export const POST = withRoute(
       assignments: result.assignments,
       unresolvedShifts: result.unresolvedShifts,
       employeeHours: result.employeeHours,
+      timedOut: result.timedOut ?? false,
     });
   },
   { idempotent: true },

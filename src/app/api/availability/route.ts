@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isEmployee } from "@/lib/authorization";
+import {
+  resolveOwnEmployeeScope,
+  applyOwnEmployeeScope,
+} from "@/lib/ownership";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createAvailabilitySchema, validateBody } from "@/lib/validations";
@@ -25,6 +29,13 @@ export const GET = withRoute("/api/availability", "GET", async (req) => {
   if (employeeId) where.employeeId = employeeId;
 
   const { take, skip } = parsePagination(req);
+
+  // EMPLOYEE may only read their own availability — overrides any employeeId
+  // param, and returns nothing if they have no linked employee profile.
+  const scope = await resolveOwnEmployeeScope(user, workspaceId);
+  if (!applyOwnEmployeeScope(where, scope)) {
+    return paginatedResponse([], 0, take, skip);
+  }
 
   const [availabilities, total] = await Promise.all([
     prisma.availability.findMany({

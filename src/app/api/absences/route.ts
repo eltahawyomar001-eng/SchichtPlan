@@ -8,6 +8,10 @@ import {
 } from "@/lib/automations";
 import { requirePlanFeature } from "@/lib/subscription";
 import { dispatchWebhook } from "@/lib/webhooks";
+import {
+  resolveOwnEmployeeScope,
+  applyOwnEmployeeScope,
+} from "@/lib/ownership";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createAbsenceSchema, validateBody } from "@/lib/validations";
@@ -88,12 +92,15 @@ export const GET = withRoute("/api/absences", "GET", async (req) => {
     };
   }
 
-  // EMPLOYEE can only see their own absences
-  if (isEmployee(user) && user.employeeId) {
-    where.employeeId = user.employeeId;
-  }
-
   const { take, skip } = parsePagination(req);
+
+  // EMPLOYEE may only see their own absences — overrides the employeeId param
+  // and returns nothing if they have no linked employee profile (the previous
+  // check silently no-op'd in that case, exposing all absences).
+  const scope = await resolveOwnEmployeeScope(user, workspaceId);
+  if (!applyOwnEmployeeScope(where, scope)) {
+    return paginatedResponse([], 0, take, skip);
+  }
 
   const [absences, total] = await Promise.all([
     prisma.absenceRequest.findMany({

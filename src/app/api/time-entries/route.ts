@@ -9,6 +9,10 @@ import {
 } from "@/lib/time-utils";
 import { ensureLegalBreak } from "@/lib/automations";
 import { dispatchWebhook } from "@/lib/webhooks";
+import {
+  resolveOwnEmployeeScope,
+  applyOwnEmployeeScope,
+} from "@/lib/ownership";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
@@ -47,15 +51,15 @@ export const GET = withRoute("/api/time-entries", "GET", async (req) => {
   if (employeeId) where.employeeId = employeeId;
   if (status) where.status = status;
 
-  // Employees can only see their own entries
-  if (user.role === "EMPLOYEE") {
-    const employee = await prisma.employee.findFirst({
-      where: { workspaceId, email: user.email ?? undefined },
-    });
-    if (employee) where.employeeId = employee.id;
-  }
-
   const { take, skip } = parsePagination(req);
+
+  // Employees can only see their own entries — overrides any employeeId param,
+  // and (unlike the previous inline check) returns nothing rather than falling
+  // through to all entries when the employee has no linked profile.
+  const scope = await resolveOwnEmployeeScope(user, workspaceId);
+  if (!applyOwnEmployeeScope(where, scope)) {
+    return paginatedResponse([], 0, take, skip);
+  }
 
   const [entries, total] = await withWorkspaceContext(workspaceId, async (tx) =>
     Promise.all([

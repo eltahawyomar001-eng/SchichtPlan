@@ -2,7 +2,10 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { log } from "@/lib/logger";
 import { withTimeout } from "@/lib/request-timeout";
-import { assertPublicWebhookUrl } from "@/lib/webhook-url-guard";
+import {
+  assertPublicWebhookUrl,
+  ssrfSafeDispatcher,
+} from "@/lib/webhook-url-guard";
 import { WebhookFailureStatus } from "@prisma/client";
 
 /**
@@ -74,6 +77,10 @@ export async function dispatchWebhook(
                 "X-Shiftfy-Event": event,
               },
               body,
+              // Pin the connection to the validated public IP (no rebinding).
+              dispatcher: ssrfSafeDispatcher(),
+            } as RequestInit & {
+              dispatcher: ReturnType<typeof ssrfSafeDispatcher>;
             }),
             DELIVERY_TIMEOUT,
             `webhook ${ep.url}`,

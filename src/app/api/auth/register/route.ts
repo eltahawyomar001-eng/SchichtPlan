@@ -133,6 +133,18 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
     // workspace, and adopt the role from the invitation.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.$transaction(async (tx: any) => {
+      // Race-safe: claim the invitation atomically before any account writes.
+      // If a concurrent request (or the OAuth createUser path) already consumed
+      // it, count === 0 and we abort — no orphan user is created against a
+      // spent invitation.
+      const claim = await tx.invitation.updateMany({
+        where: { id: invitation.id, status: "PENDING" },
+        data: { status: "ACCEPTED" },
+      });
+      if (claim.count === 0) {
+        return null;
+      }
+
       const user =
         claimingExistingUser && existingUser
           ? await tx.user.update({
@@ -155,11 +167,6 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
                 consentGivenAt: new Date(),
               },
             });
-
-      await tx.invitation.update({
-        where: { id: invitation.id },
-        data: { status: "ACCEPTED" },
-      });
 
       // Auto-link Employee↔User if an employee with
       // the same email exists in this workspace
@@ -192,6 +199,13 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
 
       return { user };
     });
+
+    if (!result) {
+      return NextResponse.json(
+        { error: "Diese Einladung ist nicht mehr gültig." },
+        { status: 410 },
+      );
+    }
 
     // ── PIN generation (fire & forget) ──
     (async () => {

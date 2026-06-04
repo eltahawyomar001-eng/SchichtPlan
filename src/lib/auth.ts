@@ -227,16 +227,23 @@ export const authOptions: NextAuthOptions = {
             // Join the inviting workspace instead of bootstrapping a standalone one
             const nameParts = displayName.trim().split(/\s+/);
             await prisma.$transaction(async (tx) => {
+              // Race-safe claim: only the request that flips PENDING→ACCEPTED
+              // proceeds. If a concurrent flow (e.g. the credentials register
+              // route) already consumed this invitation, abort — the JWT
+              // callback repair path re-evaluates and assigns a workspace.
+              const claim = await tx.invitation.updateMany({
+                where: { id: invitation.id, status: "PENDING" },
+                data: { status: "ACCEPTED" },
+              });
+              if (claim.count === 0) {
+                throw new Error("INVITATION_RACE_LOST");
+              }
               await tx.user.update({
                 where: { id: user.id },
                 data: {
                   workspaceId: invitation.workspaceId,
                   role: invitation.role,
                 },
-              });
-              await tx.invitation.update({
-                where: { id: invitation.id },
-                data: { status: "ACCEPTED" },
               });
               // Link to existing pre-created employee or create one
               const existing = await tx.employee.findFirst({
@@ -477,17 +484,24 @@ export const authOptions: NextAuthOptions = {
               // Join invited workspace
               let joinedEmployeeId: string | null = null;
               const nameParts = (dbUser.name || "").trim().split(/\s+/);
-              await prisma.$transaction(async (tx) => {
+              // Race-safe claim. Returns false if a concurrent flow already
+              // consumed this invitation — in that case the winner has already
+              // set this user's workspace, so we re-read instead of throwing
+              // (throwing here would abort sign-in) or creating a standalone.
+              const joined = await prisma.$transaction(async (tx) => {
+                const claim = await tx.invitation.updateMany({
+                  where: { id: invitation.id, status: "PENDING" },
+                  data: { status: "ACCEPTED" },
+                });
+                if (claim.count === 0) {
+                  return false;
+                }
                 await tx.user.update({
                   where: { id: token.sub as string },
                   data: {
                     workspaceId: invitation.workspaceId,
                     role: invitation.role,
                   },
-                });
-                await tx.invitation.update({
-                  where: { id: invitation.id },
-                  data: { status: "ACCEPTED" },
                 });
                 const existing = await tx.employee.findFirst({
                   where: {
@@ -515,17 +529,37 @@ export const authOptions: NextAuthOptions = {
                   });
                   joinedEmployeeId = emp.id;
                 }
+                return true;
               });
 
-              const invWs = await prisma.workspace.findUnique({
-                where: { id: invitation.workspaceId },
-                select: { name: true, onboardingCompleted: true },
-              });
-              token.role = invitation.role;
-              token.workspaceId = invitation.workspaceId;
-              token.workspaceName = invWs?.name || null;
-              token.employeeId = joinedEmployeeId;
-              token.onboardingCompleted = invWs?.onboardingCompleted ?? false;
+              if (joined) {
+                const invWs = await prisma.workspace.findUnique({
+                  where: { id: invitation.workspaceId },
+                  select: { name: true, onboardingCompleted: true },
+                });
+                token.role = invitation.role;
+                token.workspaceId = invitation.workspaceId;
+                token.workspaceName = invWs?.name || null;
+                token.employeeId = joinedEmployeeId;
+                token.onboardingCompleted = invWs?.onboardingCompleted ?? false;
+              } else {
+                // Lost the race — re-read the workspace the winner assigned.
+                const fresh = await prisma.user.findUnique({
+                  where: { id: token.sub as string },
+                  include: {
+                    workspace: {
+                      select: { name: true, onboardingCompleted: true },
+                    },
+                    employee: { select: { id: true } },
+                  },
+                });
+                token.role = fresh?.role ?? invitation.role;
+                token.workspaceId = fresh?.workspaceId ?? null;
+                token.workspaceName = fresh?.workspace?.name ?? null;
+                token.employeeId = fresh?.employee?.id ?? null;
+                token.onboardingCompleted =
+                  fresh?.workspace?.onboardingCompleted ?? false;
+              }
             } else {
               // No invitation — create standalone workspace (repair path)
               const slug =

@@ -27,7 +27,7 @@ export default function EinladungPage() {
   const router = useRouter();
   const params = useParams();
   const token = params.token as string;
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus, update } = useSession();
   const t = useTranslations("invitation");
 
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
@@ -35,6 +35,8 @@ export default function EinladungPage() {
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  // Guards the one-shot auto-accept so it can't re-fire on re-render.
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   // Pre-check: does the signed-in email match the invitation?
   const isEmailMatch =
@@ -94,9 +96,24 @@ export default function EinladungPage() {
 
       if (res.ok) {
         setAccepted(true);
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 2000);
+        // Force NextAuth to re-issue the JWT from the (now updated) DB row so
+        // the dashboard reflects the new workspace/role immediately — no logout
+        // required. The accept route already busted the 60s JWT cache, so this
+        // update() reads fresh state.
+        try {
+          await update();
+        } catch {
+          /* best-effort — the 60s JWT refresh is the fallback */
+        }
+        router.push("/dashboard");
+      } else if (data.error === "INVITATION_ACCEPTED") {
+        // Already a member (e.g. a concurrent accept won the race) — just go in.
+        try {
+          await update();
+        } catch {
+          /* best-effort */
+        }
+        router.replace("/dashboard");
       } else {
         setError(data.message || data.error || "ACCEPT_FAILED");
       }
@@ -106,6 +123,35 @@ export default function EinladungPage() {
       setAccepting(false);
     }
   };
+
+  // State A (existing user, correct email): accept automatically the moment the
+  // invitation loads for a signed-in matching user — no manual button click —
+  // then redirect straight to the workspace dashboard.
+  useEffect(() => {
+    if (
+      !loading &&
+      sessionStatus === "authenticated" &&
+      invitation &&
+      isEmailMatch &&
+      !accepting &&
+      !accepted &&
+      !autoTriggered
+    ) {
+      setAutoTriggered(true);
+      void handleAccept();
+    }
+    // handleAccept is stable enough for this guarded one-shot; deps cover the
+    // gating conditions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    loading,
+    sessionStatus,
+    invitation,
+    isEmailMatch,
+    accepting,
+    accepted,
+    autoTriggered,
+  ]);
 
   // Sign out and redirect back to this invitation page to sign in
   // with the correct account

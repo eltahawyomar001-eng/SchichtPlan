@@ -4,6 +4,7 @@ import type { SessionUser } from "@/lib/types";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { generateUniquePin, hashPin, sendPinEmail } from "@/lib/employee-pin";
+import { cache } from "@/lib/cache";
 
 /**
  * GET /api/invitations/token/[token] — get invitation details (public, no auth required)
@@ -123,20 +124,29 @@ export const POST = withRoute(
       // will expire naturally.
     }
 
-    // Accept: update user workspace + role, link/create employee, mark invitation as accepted
+    // Accept: update user workspace + role, link/create employee, mark invitation as accepted.
+    // Race-safe: the status check above is a TOCTOU pre-check only. The authoritative
+    // guard is the conditional updateMany INSIDE the transaction — only one concurrent
+    // request can flip PENDING→ACCEPTED, and the loser (count === 0) aborts before any
+    // user/employee writes run. Prevents a double-click or two browser tabs from both
+    // joining and emitting two PINs.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await prisma.$transaction(async (tx: any) => {
+    const accepted = await prisma.$transaction(async (tx: any) => {
+      const claim = await tx.invitation.updateMany({
+        where: { id: invitation.id, status: "PENDING" },
+        data: { status: "ACCEPTED" },
+      });
+      if (claim.count === 0) {
+        // Another request already accepted this invitation — bail out, no writes.
+        return false;
+      }
+
       await tx.user.update({
         where: { id: user.id },
         data: {
           workspaceId: invitation.workspaceId,
           role: invitation.role,
         },
-      });
-
-      await tx.invitation.update({
-        where: { id: invitation.id },
-        data: { status: "ACCEPTED" },
       });
 
       // Auto-link or create an Employee record
@@ -167,7 +177,24 @@ export const POST = withRoute(
           },
         });
       }
+      return true;
     });
+
+    if (!accepted) {
+      // Lost the accept race — the invitation was already consumed by a
+      // concurrent request. The user is (or is about to be) in the workspace,
+      // so surface a clear, non-fatal status rather than a 500.
+      return NextResponse.json(
+        { error: "INVITATION_ACCEPTED" },
+        { status: 409 },
+      );
+    }
+
+    // Invalidate the cached JWT so the next session read reflects the new
+    // workspace/role immediately instead of serving the stale 60s-TTL entry.
+    // The client also calls session.update(), but busting here makes the new
+    // workspace authoritative even for concurrent server-side reads.
+    await cache.del(`jwt:${user.id}`).catch(() => {});
 
     // ── PIN generation (fire & forget) ──
     (async () => {

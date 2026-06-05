@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // passes that next build runs internally to cut build CPU significantly
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  experimental: {
+    // Rewrite barrel imports (date-fns in 18 files, recharts, framer-motion)
+    // into direct module paths — faster compile and smaller client bundles
+    optimizePackageImports: ["date-fns", "recharts", "framer-motion"],
+  },
   async headers() {
     return [
       {

@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build && next-sitemap",
+    "build": "prisma generate && next build --turbopack && ([ \"$VERCEL_ENV\" = \"production\" ] && next-sitemap || true)",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",

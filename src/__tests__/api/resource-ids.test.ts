@@ -280,7 +280,7 @@ describe("DELETE /api/locations/[id]", () => {
   it("deletes location scoped by workspaceId", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
-    mockPrisma.location.deleteMany.mockResolvedValue({ count: 1 });
+    mockPrisma.location.updateMany.mockResolvedValue({ count: 1 });
     const req = new Request("http://localhost/api/locations/l1", {
       method: "DELETE",
     });
@@ -288,8 +288,10 @@ describe("DELETE /api/locations/[id]", () => {
       params: Promise.resolve({ id: "l1" }),
     });
     expect(res.status).toBe(200);
-    expect(mockPrisma.location.deleteMany).toHaveBeenCalledWith({
-      where: { id: "l1", workspaceId: owner.workspaceId },
+    // DELETE is a soft delete: sets deletedAt rather than removing the row.
+    expect(mockPrisma.location.updateMany).toHaveBeenCalledWith({
+      where: { id: "l1", workspaceId: owner.workspaceId, deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
     });
   });
 });

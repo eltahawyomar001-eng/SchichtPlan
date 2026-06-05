@@ -3,6 +3,10 @@ import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  // CI already runs tsc --noEmit and eslint separately — skip the redundant
+  // passes that next build runs internally to cut build CPU significantly
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   async headers() {
     return [
       {
@@ -23,10 +27,29 @@ const nextConfig: NextConfig = {
 const withNextIntl = createNextIntlPlugin();
 
 export default withSentryConfig(withNextIntl(nextConfig), {
-  // Suppress noisy source-map upload logs during build
   silent: true,
-  // Upload source maps for better stack traces in Sentry
-  widenClientFileUpload: true,
-  // Automatically tree-shake Sentry logger in production
+  telemetry: false,
+  widenClientFileUpload: false,
+  hideSourceMaps: true,
   disableLogger: true,
+  automaticVercelMonitors: false,
+  // Consolidate source map upload into one post-build operation instead of
+  // uploading during each webpack pass (client + server + edge = 3x → 1x)
+  useRunAfterProductionCompileHook: true,
+  // Tree-shake unused Sentry code from the client bundle
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
+  // Skip Sentry auto-instrumentation for cron, health, and admin routes —
+  // these don't need per-route error wrapping and skipping them reduces
+  // the number of files the webpack plugin must process
+  excludeServerRoutes: [
+    /^\/api\/automations\//,
+    /^\/api\/cron\//,
+    /^\/api\/health/,
+    /^\/api\/admin\//,
+  ],
 });

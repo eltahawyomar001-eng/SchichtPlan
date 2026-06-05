@@ -133,10 +133,17 @@ jobs:
         run: npx prisma migrate deploy
 
       - name: Build Next.js
-        run: npx next build
+        run: npx next build --turbopack
         env:
           NEXTAUTH_SECRET: ci-test-secret
           NEXTAUTH_URL: http://localhost:3000
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: .next/
+          retention-days: 1
 
   e2e:
     name: E2E Tests
@@ -175,14 +182,14 @@ jobs:
       - name: Apply database migrations
         run: npx prisma migrate deploy
 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: .next/
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-
-      - name: Build application
-        run: npx next build
-        env:
-          NEXTAUTH_SECRET: ci-test-secret
-          NEXTAUTH_URL: http://localhost:3000
 
       - name: Run E2E tests
         run: npx playwright test

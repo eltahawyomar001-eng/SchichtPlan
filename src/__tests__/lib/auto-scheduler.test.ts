@@ -36,7 +36,7 @@ function buildEmployee(overrides: Partial<EmployeeData> = {}): EmployeeData {
     weeklyHours: 40,
     workDaysPerWeek: 5,
     hourlyRate: 15,
-    departmentId: null,
+    departmentIds: [],
     skillIds: new Set<string>(),
     availabilityMap: new Map(),
     absenceDates: new Set<string>(),

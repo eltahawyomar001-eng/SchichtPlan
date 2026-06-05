@@ -94,9 +94,6 @@ const employeeUser: SessionUser = {
   role: "EMPLOYEE",
   employeeId: "emp1",
   name: "Emp",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 const noProfileUser: SessionUser = {

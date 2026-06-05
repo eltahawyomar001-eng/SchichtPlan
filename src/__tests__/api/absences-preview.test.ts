@@ -80,9 +80,6 @@ const manager: SessionUser = {
   role: "MANAGER",
   employeeId: null,
   name: "Manager",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 const EMP_CUID = "clxbbbbbbbbbbbbbbbbbbbbbb";
@@ -94,9 +91,6 @@ const employee: SessionUser = {
   role: "EMPLOYEE",
   employeeId: EMP_CUID,
   name: "Emp",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 function makeReq(body: object) {

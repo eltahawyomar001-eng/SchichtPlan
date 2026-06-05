@@ -81,9 +81,6 @@ const admin: SessionUser = {
   role: "ADMIN",
   employeeId: null,
   name: "Admin",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 const manager: SessionUser = { ...admin, id: "u2", role: "MANAGER" };
 const emp: SessionUser = {

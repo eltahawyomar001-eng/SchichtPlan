@@ -76,9 +76,6 @@ const user: SessionUser = {
   role: "MANAGER",
   employeeId: null,
   name: "User",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 describe("POST /api/account/accept-tos", () => {

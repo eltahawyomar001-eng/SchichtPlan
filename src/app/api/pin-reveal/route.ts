@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { consumePinRevealToken } from "@/lib/pin-reveal";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * GET /api/pin-reveal?token={uuid}
@@ -8,7 +9,7 @@ import { consumePinRevealToken } from "@/lib/pin-reveal";
  * The token is deleted after the first successful read (one-time use).
  * Expires automatically after 15 minutes via cache TTL.
  */
-export async function GET(req: Request) {
+export const GET = withRoute("/api/pin-reveal", "GET", async (req) => {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");
 
@@ -25,4 +26,4 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({ pin });
-}
+});

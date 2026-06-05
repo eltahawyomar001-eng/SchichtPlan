@@ -14,10 +14,11 @@ import {
   generateState,
   buildAuthorizationUrl,
 } from "@/lib/datev-oidc";
+import { withRoute } from "@/lib/with-route";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withRoute("/api/auth/datev/connect", "GET", async () => {
   const auth = await requireAuth();
   if (!auth.ok) {
     return NextResponse.redirect(
@@ -53,4 +54,4 @@ export async function GET() {
   });
 
   return NextResponse.redirect(authUrl);
-}
+});

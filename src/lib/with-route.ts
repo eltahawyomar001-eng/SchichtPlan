@@ -116,7 +116,9 @@ export function withRoute(
           );
         }
       }
-      rlog.error(`${method} ${route} failed`, { error });
+      // sentry:false — captureRouteError below already reports this with
+      // richer route/method context; avoid a duplicate Sentry event.
+      rlog.error(`${method} ${route} failed`, { error, sentry: false });
       captureRouteError(error, { route, method });
       return NextResponse.json(
         { error: "Internal server error" },

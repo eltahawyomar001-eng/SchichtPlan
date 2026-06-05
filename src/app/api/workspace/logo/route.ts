@@ -8,10 +8,11 @@ import {
   MAX_LOGO_BYTES,
   ALLOWED_LOGO_TYPES,
 } from "@/lib/workspace-logo";
+import { withRoute } from "@/lib/with-route";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+export const POST = withRoute("/api/workspace/logo", "POST", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { user, workspaceId } = auth;
@@ -52,9 +53,9 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ logo: url });
-}
+});
 
-export async function DELETE(req: Request) {
+export const DELETE = withRoute("/api/workspace/logo", "DELETE", async () => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { user, workspaceId } = auth;
@@ -77,4 +78,4 @@ export async function DELETE(req: Request) {
   });
 
   return NextResponse.json({ success: true });
-}
+});

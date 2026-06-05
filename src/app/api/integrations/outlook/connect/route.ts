@@ -17,6 +17,7 @@ import {
   getOutlookRedirectUri,
   isOutlookConfigured,
 } from "@/lib/outlook";
+import { withRoute } from "@/lib/with-route";
 
 export const dynamic = "force-dynamic";
 
@@ -25,31 +26,35 @@ function settingsRedirect(result: string): NextResponse {
   return NextResponse.redirect(`${base}/einstellungen?outlook=${result}`);
 }
 
-export async function GET() {
-  if (!isOutlookConfigured()) {
-    return settingsRedirect("not_configured");
-  }
+export const GET = withRoute(
+  "/api/integrations/outlook/connect",
+  "GET",
+  async () => {
+    if (!isOutlookConfigured()) {
+      return settingsRedirect("not_configured");
+    }
 
-  const auth = await requireAuth();
-  if (!auth.ok) {
-    return settingsRedirect("auth_required");
-  }
-  const { user, workspaceId } = auth;
+    const auth = await requireAuth();
+    if (!auth.ok) {
+      return settingsRedirect("auth_required");
+    }
+    const { user, workspaceId } = auth;
 
-  const { verifier, challenge } = generatePKCE();
-  const state = generateState();
+    const { verifier, challenge } = generatePKCE();
+    const state = generateState();
 
-  // Persist verifier in DB so it survives across Vercel function invocations.
-  // Consumed and deleted by the callback (one-time use → replay-safe).
-  await prisma.outlookOAuthState.create({
-    data: { state, verifier, workspaceId, userId: user.id },
-  });
+    // Persist verifier in DB so it survives across Vercel function invocations.
+    // Consumed and deleted by the callback (one-time use → replay-safe).
+    await prisma.outlookOAuthState.create({
+      data: { state, verifier, workspaceId, userId: user.id },
+    });
 
-  const authUrl = buildAuthorizationUrl({
-    state,
-    codeChallenge: challenge,
-    redirectUri: getOutlookRedirectUri(),
-  });
+    const authUrl = buildAuthorizationUrl({
+      state,
+      codeChallenge: challenge,
+      redirectUri: getOutlookRedirectUri(),
+    });
 
-  return NextResponse.redirect(authUrl);
-}
+    return NextResponse.redirect(authUrl);
+  },
+);

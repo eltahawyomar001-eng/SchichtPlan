@@ -19,9 +19,17 @@
      rlog.info("Processing request");
    ═══════════════════════════════════════════════════════════════ */
 
+import * as Sentry from "@sentry/nextjs";
+
 type LogLevel = "info" | "warn" | "error";
 
 interface LogPayload {
+  /**
+   * Set `sentry: false` to suppress automatic Sentry capture for an error
+   * log. Used by call sites (e.g. withRoute) that already capture the error
+   * separately with richer context, to avoid duplicate Sentry events.
+   */
+  sentry?: false;
   [key: string]: unknown;
 }
 
@@ -47,6 +55,25 @@ function emit(level: LogLevel, message: string, data?: LogPayload): void {
     // Serialize any `error` field automatically
     ...(data?.error !== undefined ? { error: serialize(data.error) } : {}),
   };
+
+  // Ship error-level logs to Sentry so handled-but-logged failures (which
+  // never throw and so never reach withRoute's capture) are still visible.
+  // Opt out with `{ sentry: false }` when the caller captures separately.
+  if (
+    level === "error" &&
+    data?.sentry !== false &&
+    process.env.NEXT_PUBLIC_SENTRY_DSN
+  ) {
+    const err = data?.error;
+    if (err instanceof Error) {
+      Sentry.captureException(err, { extra: { msg: message, ...data } });
+    } else {
+      Sentry.captureMessage(message, {
+        level: "error",
+        extra: { ...data },
+      });
+    }
+  }
 
   if (IS_PRODUCTION) {
     // Structured JSON — one line per log entry

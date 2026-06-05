@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-response";
-import { getStripe } from "@/lib/stripe";
-import {
-  linkSubscriptionByCustomer,
-  updateSubscriptionFromStripe,
-  getSubscription,
-} from "@/lib/subscription";
-import { getTicketingTierByPriceId } from "@/lib/ticketing-addon";
-import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
+import { reconcileWorkspaceFromStripe } from "@/lib/billing-reconcile";
 import { withRoute } from "@/lib/with-route";
 import { log } from "@/lib/logger";
 
@@ -18,6 +11,10 @@ import { log } from "@/lib/logger";
  * to the database. Call this after a successful Stripe Checkout redirect to
  * immediately unlock features without waiting for the webhook.
  *
+ * `allowDowngrade` is intentionally OFF here: a user calling sync on their own
+ * session should never have their access revoked mid-flight. The scheduled
+ * cron (/api/cron/reconcile-subscriptions) owns the churned-customer downgrade.
+ *
  * Rate-limited: max 3 calls per hour per workspace (enforced by withRoute).
  */
 export const POST = withRoute("/api/billing/sync", "POST", async () => {
@@ -25,78 +22,23 @@ export const POST = withRoute("/api/billing/sync", "POST", async () => {
   if (!auth.ok) return auth.response;
   const { workspaceId } = auth;
 
-  const sub = await getSubscription(workspaceId);
-  if (!sub?.stripeCustomerId) {
-    return NextResponse.json({ synced: false, reason: "NO_CUSTOMER" });
-  }
-
-  const stripe = getStripe();
-
   try {
-    // Fetch all non-canceled subscriptions so past_due and unpaid states
-    // are also handled — a customer recovering from a failed payment must
-    // not be stuck on a stale status just because the sync ignores their
-    // current subscription state.
-    const allSubs = await stripe.subscriptions.list({
-      customer: sub.stripeCustomerId,
-      status: "all",
-      limit: 5,
-      expand: ["data.items"],
+    const result = await reconcileWorkspaceFromStripe(workspaceId, {
+      allowDowngrade: false,
     });
 
-    const SYNCABLE = ["active", "trialing", "past_due", "unpaid"];
-    const ranked = allSubs.data
-      .filter((s) => SYNCABLE.includes(s.status))
-      .sort((a, b) => {
-        const rank = (s: string) =>
-          s === "active" ? 0 : s === "trialing" ? 1 : s === "past_due" ? 2 : 3;
-        return rank(a.status) - rank(b.status);
+    if (result.action === "synced") {
+      log.info("[Billing:Sync] manual sync completed", {
+        workspaceId,
+        status: result.status,
       });
-
-    if (ranked.length === 0) {
-      return NextResponse.json({ synced: false, reason: "NO_ACTIVE_SUB" });
+      return NextResponse.json({ synced: true, status: result.status });
     }
 
-    const liveSub = ranked[0];
-    const mainItem =
-      liveSub.items.data.find(
-        (it) =>
-          !getTicketingTierByPriceId(it.price.id) &&
-          !getSchichtplanungBillingByPriceId(it.price.id),
-      ) ?? liveSub.items.data[0];
-
-    if (sub.stripeSubscriptionId && sub.stripeSubscriptionId === liveSub.id) {
-      await updateSubscriptionFromStripe({
-        stripeSubscriptionId: liveSub.id,
-        stripePriceId: mainItem?.price.id ?? "",
-        status: liveSub.status,
-        seatCount: mainItem?.quantity ?? sub.seatCount,
-        currentPeriodStart: new Date(
-          (mainItem?.current_period_start ?? 0) * 1000,
-        ),
-        currentPeriodEnd: new Date((mainItem?.current_period_end ?? 0) * 1000),
-        cancelAtPeriodEnd: liveSub.cancel_at_period_end,
-      });
-    } else {
-      await linkSubscriptionByCustomer({
-        stripeCustomerId: sub.stripeCustomerId,
-        stripeSubscriptionId: liveSub.id,
-        stripePriceId: mainItem?.price.id ?? "",
-        status: liveSub.status,
-        seatCount: mainItem?.quantity ?? sub.seatCount,
-        currentPeriodStart: new Date(
-          (mainItem?.current_period_start ?? 0) * 1000,
-        ),
-        currentPeriodEnd: new Date((mainItem?.current_period_end ?? 0) * 1000),
-        cancelAtPeriodEnd: liveSub.cancel_at_period_end,
-      });
-    }
-
-    log.info("[Billing:Sync] manual sync completed", {
-      workspaceId,
-      subId: liveSub.id,
+    return NextResponse.json({
+      synced: false,
+      reason: result.reason ?? "NO_ACTIVE_SUB",
     });
-    return NextResponse.json({ synced: true, status: liveSub.status });
   } catch (err) {
     log.error("[Billing:Sync] sync failed", { err, workspaceId });
     return NextResponse.json(

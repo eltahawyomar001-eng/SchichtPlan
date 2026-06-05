@@ -5,6 +5,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendMonthlyBillingEmail } from "@/lib/billing-audit-email";
+import { withRoute } from "@/lib/with-route";
 import type { SessionUser } from "@/lib/types";
 
 const updateSchema = z.object({
@@ -17,7 +18,7 @@ const updateSchema = z.object({
   billingCountry: z.string().length(2).optional(),
 });
 
-export async function GET() {
+export const GET = withRoute("/api/billing/customer-info", "GET", async () => {
   const session = await getServerSession(authOptions);
   if (!session)
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
@@ -34,53 +35,57 @@ export async function GET() {
   });
 
   return NextResponse.json(record ?? {});
-}
+});
 
-export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session)
-    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+export const PUT = withRoute(
+  "/api/billing/customer-info",
+  "PUT",
+  async (req) => {
+    const session = await getServerSession(authOptions);
+    if (!session)
+      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
-  const user = session.user as SessionUser;
-  if (!user.workspaceId)
-    return NextResponse.json({ error: "NO_WORKSPACE" }, { status: 400 });
-  if (user.role !== "OWNER" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
-  }
+    const user = session.user as SessionUser;
+    if (!user.workspaceId)
+      return NextResponse.json({ error: "NO_WORKSPACE" }, { status: 400 });
+    if (user.role !== "OWNER" && user.role !== "ADMIN") {
+      return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
+    }
 
-  const _json = await parseJsonBody(req);
-  if (!_json.ok) return _json.response;
-  const body = _json.data;
-  const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
-      { status: 422 },
-    );
-  }
+    const _json = await parseJsonBody(req);
+    if (!_json.ok) return _json.response;
+    const body = _json.data;
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
+        { status: 422 },
+      );
+    }
 
-  const data = parsed.data;
-  const workspaceId = user.workspaceId;
+    const data = parsed.data;
+    const workspaceId = user.workspaceId;
 
-  const record = await prisma.workspaceCustomer.upsert({
-    where: { workspaceId },
-    update: { ...data, updatedAt: new Date() },
-    create: { workspaceId, ...data },
-  });
+    const record = await prisma.workspaceCustomer.upsert({
+      where: { workspaceId },
+      update: { ...data, updatedAt: new Date() },
+      create: { workspaceId, ...data },
+    });
 
-  // Determine which billing email to send the audit confirmation to.
-  // Use the just-saved value if provided; fall back to the persisted record.
-  const billingEmail =
-    (typeof data.billingEmail === "string" && data.billingEmail) ||
-    record.billingEmail ||
-    null;
+    // Determine which billing email to send the audit confirmation to.
+    // Use the just-saved value if provided; fall back to the persisted record.
+    const billingEmail =
+      (typeof data.billingEmail === "string" && data.billingEmail) ||
+      record.billingEmail ||
+      null;
 
-  let emailStatus: string = "no_email";
+    let emailStatus: string = "no_email";
 
-  if (billingEmail) {
-    const result = await sendMonthlyBillingEmail(workspaceId, billingEmail);
-    emailStatus = result.status;
-  }
+    if (billingEmail) {
+      const result = await sendMonthlyBillingEmail(workspaceId, billingEmail);
+      emailStatus = result.status;
+    }
 
-  return NextResponse.json({ ...record, emailStatus });
-}
+    return NextResponse.json({ ...record, emailStatus });
+  },
+);

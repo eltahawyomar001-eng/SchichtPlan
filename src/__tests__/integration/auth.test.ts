@@ -67,6 +67,7 @@ vi.mock("@/lib/utils", () => ({
 
 vi.mock("@/lib/subscription", () => ({
   initializeTrial: vi.fn().mockResolvedValue(undefined),
+  provisionStripeCustomer: vi.fn().mockResolvedValue(undefined),
 }));
 
 /* ═══════════════════════════════════════════════════════════════

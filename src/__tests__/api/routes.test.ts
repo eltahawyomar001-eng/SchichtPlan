@@ -131,7 +131,15 @@ vi.mock("@/lib/db", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     $transaction: vi.fn((cb: (tx: any) => Promise<any>) => cb(mockPrisma)),
   };
-  return { prisma: mockPrisma };
+  return {
+    prisma: mockPrisma,
+    // Route reads run inside withWorkspaceContext; delegate to the same mock
+    // so tx.* resolves to the mocked Prisma methods.
+    withWorkspaceContext: (
+      _workspaceId: string,
+      fn: (tx: typeof mockPrisma) => unknown,
+    ) => fn(mockPrisma),
+  };
 });
 
 vi.mock("@/lib/audit", () => ({

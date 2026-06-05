@@ -44,8 +44,8 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
 }));
-vi.mock("@/lib/db", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => {
+  const prisma = {
     timeEntry: {
       findMany: mockTimeEntryFindMany,
       count: mockTimeEntryCount,
@@ -57,8 +57,17 @@ vi.mock("@/lib/db", () => ({
     },
     auditLog: { create: vi.fn().mockResolvedValue({ id: "a1" }) },
     $transaction: mockTransaction,
-  },
-}));
+  };
+  return {
+    prisma,
+    // The route runs its workspace-scoped reads inside withWorkspaceContext;
+    // delegate to the same prisma mock so tx.* resolves to the mocked methods.
+    withWorkspaceContext: (
+      _workspaceId: string,
+      fn: (tx: typeof prisma) => unknown,
+    ) => fn(prisma),
+  };
+});
 vi.mock("@/lib/api-response", async (importOriginal) => {
   const orig = await importOriginal<typeof import("@/lib/api-response")>();
   return {

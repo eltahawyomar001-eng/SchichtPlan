@@ -62,6 +62,11 @@ vi.mock("next/headers", () => ({
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),
 }));
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/feature-flags", () => ({
+  // The route gates on isFeatureEnabled("datev_integration"); without this mock
+  // the real impl returns false in tests and the route 503s before validation.
+  isFeatureEnabled: vi.fn().mockResolvedValue(true),
+}));
 vi.mock("@/lib/subscription", () => ({
   requirePlanFeature: vi.fn(() => null),
 }));

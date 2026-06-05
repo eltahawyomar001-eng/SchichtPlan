@@ -38,6 +38,7 @@ import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { DATEVConnectCard } from "@/components/settings/datev-connect-card";
+import { OutlookConnectCard } from "@/components/settings/outlook-connect-card";
 import { DATEVNumbersCard } from "@/components/settings/datev-numbers-card";
 import { BetriebsnummerCard } from "@/components/settings/betriebsnummer-card";
 import { WorkspaceLogoCard } from "@/components/settings/workspace-logo-card";
@@ -1122,6 +1123,9 @@ export default function EinstellungenPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Calendar Integration */}
+        <OutlookConnectCard />
 
         {/* DATEV Integration */}
         <DATEVConnectCard />

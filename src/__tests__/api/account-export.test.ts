@@ -72,9 +72,6 @@ const user: SessionUser = {
   role: "EMPLOYEE",
   employeeId: "emp1",
   name: "User",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 const dbUser = {

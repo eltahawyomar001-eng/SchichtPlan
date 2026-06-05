@@ -84,9 +84,6 @@ const admin: SessionUser = {
   role: "ADMIN",
   employeeId: null,
   name: "Admin",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 const manager: SessionUser = {
   id: "u1",
@@ -95,9 +92,6 @@ const manager: SessionUser = {
   role: "MANAGER",
   employeeId: null,
   name: "Mgr",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 const emp: SessionUser = {
   ...manager,

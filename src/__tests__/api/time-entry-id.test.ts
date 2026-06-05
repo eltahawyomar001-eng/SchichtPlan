@@ -71,9 +71,6 @@ const managerUser: SessionUser = {
   role: "MANAGER",
   employeeId: null,
   name: "Manager",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 const employeeUser: SessionUser = {
@@ -83,9 +80,6 @@ const employeeUser: SessionUser = {
   role: "EMPLOYEE",
   employeeId: "emp1",
   name: "Employee",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 const makeCtx = (id = "te1") => ({

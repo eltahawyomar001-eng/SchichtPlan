@@ -97,9 +97,6 @@ const manager: SessionUser = {
   role: "MANAGER",
   employeeId: "mgr-emp",
   name: "Manager",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 const targetEmployee: SessionUser = {
   id: "u2",
@@ -108,9 +105,6 @@ const targetEmployee: SessionUser = {
   role: "EMPLOYEE",
   employeeId: "target-emp",
   name: "Target",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 const requesterEmployee: SessionUser = {
   id: "u3",
@@ -119,9 +113,6 @@ const requesterEmployee: SessionUser = {
   role: "EMPLOYEE",
   employeeId: "req-emp",
   name: "Requester",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 
 const openSwap = {

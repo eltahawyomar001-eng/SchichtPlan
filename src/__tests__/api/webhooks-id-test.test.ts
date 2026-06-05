@@ -77,9 +77,6 @@ const owner: SessionUser = {
   role: "OWNER",
   employeeId: null,
   name: "Owner",
-  subscriptionStatus: "ACTIVE",
-  planId: "pro",
-  trialEndsAt: null,
 };
 const manager: SessionUser = { ...owner, id: "u2", role: "MANAGER" };
 

@@ -1205,6 +1205,24 @@
     "disconnect": "Disconnect",
     "disconnecting": "Disconnecting…"
   },
+  "outlookConnect": {
+    "title": "Outlook Calendar",
+    "description": "Connect your Microsoft account to see your Outlook events directly in the calendar.",
+    "statusConnected": "Connected",
+    "connectedOn": "Connected on",
+    "connect": "Connect Outlook",
+    "reconnect": "Reconnect",
+    "disconnect": "Disconnect",
+    "disconnecting": "Disconnecting…",
+    "panelTitle": "Outlook events",
+    "notConnected": "Outlook is not connected. Link your account in settings.",
+    "reauthRequired": "Outlook connection expired — please reconnect in settings.",
+    "loadError": "Could not load Outlook events.",
+    "noEvents": "No Outlook events in this period.",
+    "allDay": "All day",
+    "show": "Show Outlook",
+    "hide": "Hide Outlook"
+  },
   "locationsPage": {
     "title": "Locations",
     "description": "Manage and edit your locations",

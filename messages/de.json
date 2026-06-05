@@ -1205,6 +1205,24 @@
     "disconnect": "Trennen",
     "disconnecting": "Wird getrennt…"
   },
+  "outlookConnect": {
+    "title": "Outlook-Kalender",
+    "description": "Verbinden Sie Ihr Microsoft-Konto, um Ihre Outlook-Termine direkt im Kalender anzuzeigen.",
+    "statusConnected": "Verbunden",
+    "connectedOn": "Verbunden am",
+    "connect": "Mit Outlook verbinden",
+    "reconnect": "Erneut verbinden",
+    "disconnect": "Trennen",
+    "disconnecting": "Wird getrennt…",
+    "panelTitle": "Outlook-Termine",
+    "notConnected": "Outlook ist nicht verbunden. Verbinden Sie Ihr Konto in den Einstellungen.",
+    "reauthRequired": "Outlook-Verbindung abgelaufen — bitte in den Einstellungen erneut verbinden.",
+    "loadError": "Outlook-Termine konnten nicht geladen werden.",
+    "noEvents": "Keine Outlook-Termine in diesem Zeitraum.",
+    "allDay": "Ganztägig",
+    "show": "Outlook anzeigen",
+    "hide": "Outlook ausblenden"
+  },
   "locationsPage": {
     "title": "Standorte",
     "description": "Standorte verwalten und bearbeiten",

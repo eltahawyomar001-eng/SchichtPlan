@@ -38,6 +38,7 @@ model User {
   pushSubscriptions       PushSubscription[]
   autoScheduleRuns        AutoScheduleRun[]
   icalTokens              ICalToken[]
+  outlookConnection       OutlookConnection?
   notifications           Notification[]
   ticketsCreated          Ticket[]                 @relation("TicketCreator")
   ticketsAssigned         Ticket[]                 @relation("TicketAssignee")
@@ -249,6 +250,33 @@ model DatevOAuthState {
   verifier    String   @db.Text
   workspaceId String
   userId      String
+  createdAt   DateTime @default(now())
+}
+
+/// Per-user Microsoft Outlook (Microsoft Graph) calendar connection.
+/// accessToken/refreshToken are AES-256-GCM encrypted at rest (see lib/encryption.ts).
+/// One connection per user (single-workspace model: the connection belongs to
+/// the person, not the workspace).
+model OutlookConnection {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken    String   @db.Text
+  refreshToken   String   @db.Text
+  tokenExpiresAt DateTime
+  microsoftEmail String
+  scope          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+/// Short-lived CSRF/PKCE state for the Outlook OAuth handshake. One-time use,
+/// consumed and deleted by the callback. Mirrors DatevOAuthState.
+model OutlookOAuthState {
+  state       String   @id
+  verifier    String   @db.Text
+  userId      String
+  workspaceId String
   createdAt   DateTime @default(now())
 }
 

@@ -23,8 +23,10 @@ import {
   ChevronRightIcon,
   DownloadIcon,
   RefreshIcon,
+  CalendarIcon,
 } from "@/components/icons";
 import { CalendarGrid } from "./_components/calendar-grid";
+import { OutlookEventsPanel } from "./_components/outlook-events-panel";
 import { WeekView } from "./_components/week-view";
 import { DayView } from "./_components/day-view";
 import { EmployeePlannerGrid } from "./_components/employee-planner-grid";
@@ -93,6 +95,7 @@ const LEGEND_ITEMS: { key: string; label: string; colorClass: string }[] = [
 export default function TeamkalenderSeite() {
   const t = useTranslations("teamCalendar");
   const tc = useTranslations("common");
+  const tOutlook = useTranslations("outlookConnect");
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeViewTab, setActiveViewTab] = useState<ViewTab>("calendar");
@@ -108,6 +111,7 @@ export default function TeamkalenderSeite() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showOutlook, setShowOutlook] = useState(false);
 
   // Dropdown filters
   const [selectedProject, setSelectedProject] = useState("");
@@ -344,6 +348,17 @@ export default function TeamkalenderSeite() {
         {/* ─── Top action buttons ─────────────────────────────── */}
         <div className="flex justify-end gap-3">
           <button
+            onClick={() => setShowOutlook((v) => !v)}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+              showOutlook
+                ? "bg-[#0078d4]/10 text-[#0078d4]"
+                : "text-[#0078d4] hover:bg-[#0078d4]/10"
+            }`}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            {showOutlook ? tOutlook("hide") : tOutlook("show")}
+          </button>
+          <button
             onClick={handleExport}
             className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
           >
@@ -361,6 +376,11 @@ export default function TeamkalenderSeite() {
             {t("syncCalendar")}
           </button>
         </div>
+
+        {/* ─── Outlook personal events (opt-in overlay) ───────── */}
+        {showOutlook && (
+          <OutlookEventsPanel start={dateRange.start} end={dateRange.end} />
+        )}
 
         {/* ─── Filter bar ─────────────────────────────────────── */}
         <CalendarFilters

@@ -3,10 +3,10 @@ import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // CI already runs tsc --noEmit and eslint separately — skip the redundant
-  // passes that next build runs internally to cut build CPU significantly
+  // CI already runs tsc --noEmit separately — skip the redundant type-check
+  // pass that next build runs internally to cut build CPU significantly.
+  // (Next 16 no longer runs ESLint during build, so no eslint key is needed.)
   typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
   experimental: {
     // Rewrite barrel imports (date-fns in 18 files, recharts, framer-motion)
     // into direct module paths — faster compile and smaller client bundles
@@ -35,7 +35,6 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   silent: true,
   telemetry: false,
   widenClientFileUpload: false,
-  hideSourceMaps: true,
   disableLogger: true,
   automaticVercelMonitors: false,
   // Consolidate source map upload into one post-build operation instead of

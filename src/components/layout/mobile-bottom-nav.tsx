@@ -202,9 +202,9 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
       aria-label="Main navigation"
     >
       {/* iOS-style frosted glass — no visible top border, pure blur */}
-      <div className="absolute inset-0 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-[1.8] [-webkit-backdrop-filter:saturate(180%)_blur(20px)]" />
-      {/* Hairline separator — 0.5px like iOS */}
-      <div className="absolute inset-x-0 top-0 h-px bg-black/[0.08] dark:bg-white/[0.08]" />
+      <div className="absolute inset-0 bg-[color-mix(in_oklab,var(--surface)_82%,transparent)] backdrop-blur-2xl backdrop-saturate-[1.8] [-webkit-backdrop-filter:saturate(180%)_blur(20px)]" />
+      {/* Hairline separator */}
+      <div className="absolute inset-x-0 top-0 h-px bg-border" />
 
       <div className="relative flex items-stretch justify-around px-2 pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5">
         {tabs.map((tab) => {
@@ -218,9 +218,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 min-h-[50px] transition-all duration-150",
                 "active:opacity-60",
-                active
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-gray-400 dark:text-zinc-500",
+                active ? "text-brand" : "text-text-3",
               )}
             >
               <Icon className="h-[22px] w-[22px]" />
@@ -228,8 +226,8 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
                 className={cn(
                   "text-[10px] leading-tight tracking-wide",
                   active
-                    ? "font-semibold text-emerald-600 dark:text-emerald-400"
-                    : "font-medium text-gray-400 dark:text-zinc-500",
+                    ? "font-semibold text-brand"
+                    : "font-medium text-text-3",
                 )}
               >
                 {t(tab.key)}
@@ -247,9 +245,7 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
           className={cn(
             "flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 min-h-[50px] transition-all duration-150",
             "active:opacity-60",
-            moreActive
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-gray-400 dark:text-zinc-500",
+            moreActive ? "text-brand" : "text-text-3",
           )}
         >
           {moreActive ? (
@@ -261,8 +257,8 @@ export function MobileBottomNav({ onMoreTap }: MobileBottomNavProps) {
             className={cn(
               "text-[10px] leading-tight tracking-wide",
               moreActive
-                ? "font-semibold text-emerald-600 dark:text-emerald-400"
-                : "font-medium text-gray-400 dark:text-zinc-500",
+                ? "font-semibold text-brand"
+                : "font-medium text-text-3",
             )}
           >
             {t("more")}

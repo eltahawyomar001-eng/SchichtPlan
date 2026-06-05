@@ -278,7 +278,8 @@
 
 /* ── Dark Mode overrides for hardcoded Tailwind colors ── */
 .dark .bg-dashboard {
-  background-color: #0a0a0a;
+  /* Obsidian canvas (tracks --background) */
+  background-color: var(--background);
   background-image: none;
 }
 .dark .glass,
@@ -1182,12 +1183,12 @@ body {
 
 /* Dashboard page background — flat iOS system bg on mobile, subtle dot pattern on desktop */
 .bg-dashboard {
-  background-color: #f2f2f7;
+  background-color: var(--background);
 }
 
 @media (min-width: 1024px) {
   .bg-dashboard {
-    background-color: #f8fafb;
+    background-color: var(--background);
     background-image: radial-gradient(
       circle,
       rgba(5, 150, 105, 0.025) 1px,

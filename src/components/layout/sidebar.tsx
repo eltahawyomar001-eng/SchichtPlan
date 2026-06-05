@@ -503,9 +503,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           ["--sb-w" as string]: `${width}px`,
         }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 lg:w-[var(--sb-w,16rem)] flex-col bg-white dark:bg-zinc-900",
+          "fixed inset-y-0 left-0 z-50 flex w-64 lg:w-[var(--sb-w,16rem)] flex-col bg-sidebar-bg text-sidebar-text",
           !resizing && "transition-transform duration-300 ease-in-out",
-          "border-r border-gray-100 dark:border-zinc-800 shadow-[1px_0_8px_rgba(0,0,0,0.04)]",
+          "border-r border-sidebar-border",
           "lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
@@ -525,22 +525,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           }}
           className="hidden lg:block absolute top-0 right-0 h-full w-1.5 -mr-0.5 cursor-col-resize group z-10"
         >
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-emerald-400 transition-colors" />
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-brand transition-colors" />
         </div>
         {/* Logo */}
-        <div className="flex items-center justify-between px-5 flex-shrink-0 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm">
-              <ShiftfyMark className="h-5 w-5 text-white" />
+        <div className="flex items-center justify-between px-5 flex-shrink-0 py-4 pt-[max(1.25rem,env(safe-area-inset-top))]">
+          <div className="flex items-center gap-3">
+            <div className="grid h-[42px] w-[42px] place-items-center rounded-[12px] bg-gradient-to-br from-brand-500 to-brand-700 shadow-[var(--sh-brand)]">
+              <ShiftfyMark className="h-6 w-6 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-              Shift<span className="text-gradient">fy</span>
+            <span className="text-[22px] font-extrabold tracking-[-0.03em] text-sidebar-text">
+              Shift<span className="text-brand">fy</span>
             </span>
           </div>
           <button
             onClick={onClose}
             aria-label="Menü schließen"
-            className="rounded-xl p-2.5 text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 active:bg-gray-200 dark:active:bg-zinc-700 lg:hidden"
+            className="rounded-[var(--r-sm)] p-2.5 text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text active:scale-95 transition-colors lg:hidden"
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -549,8 +549,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Workspace identity */}
         {workspaceLogo && (
           <div className="px-4 pb-3">
-            <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50">
-              <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex-shrink-0 shadow-sm">
+            <div className="flex items-center gap-3 rounded-[var(--r-md)] px-3 py-2.5 bg-white/5 border border-sidebar-border">
+              <div className="relative h-12 w-12 rounded-[var(--r-sm)] overflow-hidden border border-sidebar-border bg-white/10 flex-shrink-0">
                 <img
                   src={workspaceLogo}
                   alt=""
@@ -558,7 +558,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 />
               </div>
               {workspaceName && (
-                <span className="text-sm font-semibold text-gray-800 dark:text-zinc-200 truncate leading-tight">
+                <span className="text-sm font-semibold text-sidebar-text truncate leading-tight">
                   {workspaceName}
                 </span>
               )}
@@ -569,18 +569,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Search bar */}
         <div className="px-3 pb-2">
           <div className="relative">
-            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 pointer-events-none" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sidebar-text-muted pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("sidebarSearch")}
-              className="w-full rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50 pl-8 pr-3 py-1.5 text-xs text-gray-700 dark:text-zinc-300 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              className="w-full rounded-[var(--r-sm)] border border-sidebar-border bg-white/5 pl-9 pr-3 h-[38px] text-[var(--t-sm)] text-sidebar-text placeholder:text-sidebar-text-muted focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/60 transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sidebar-text-muted hover:text-sidebar-text"
               >
                 <XIcon className="w-3 h-3" />
               </button>
@@ -595,10 +595,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="mb-4">
               <div className="mb-2 flex items-center gap-2 px-3">
                 <StarIcon className="w-3 h-3 text-amber-400" />
-                <p className="text-[11px] font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-sidebar-text-muted">
                   {t("favorites")}
                 </p>
-                <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+                <div className="h-px flex-1 bg-sidebar-border" />
               </div>
               <div className="space-y-0.5">
                 {pinnedItems.map((item) => {
@@ -648,16 +648,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 {group.labelKey ? (
                   <button
                     onClick={() => !query && toggleGroup(groupIdx)}
-                    className="w-full mb-1.5 flex items-center gap-2 px-3 group/header"
+                    className="w-full mb-1.5 flex items-center gap-2 px-3 pt-2 group/header"
                   >
-                    <p className="text-[11px] font-semibold tracking-wider text-gray-400 dark:text-zinc-500 group-hover/header:text-gray-600 dark:group-hover/header:text-zinc-300 transition-colors">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-sidebar-text-muted group-hover/header:text-sidebar-text transition-colors">
                       {t(group.labelKey)}
                     </p>
-                    <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+                    <div className="h-px flex-1 bg-sidebar-border" />
                     {!query && (
                       <ChevronDownIcon
                         className={cn(
-                          "w-3 h-3 text-gray-300 dark:text-zinc-600 transition-transform duration-200",
+                          "w-3 h-3 text-sidebar-text-muted transition-transform duration-200",
                           isCollapsed && "-rotate-90",
                         )}
                       />
@@ -665,7 +665,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   </button>
                 ) : groupIdx > 0 ? (
                   <div className="mb-1.5 px-3">
-                    <div className="h-px bg-gray-100 dark:bg-zinc-800" />
+                    <div className="h-px bg-sidebar-border" />
                   </div>
                 ) : null}
 
@@ -710,32 +710,32 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer — user info + logout */}
-        <div className="border-t border-gray-100 dark:border-zinc-800 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex-shrink-0 space-y-1.5">
+        <div className="border-t border-sidebar-border p-3 pb-[max(0.875rem,env(safe-area-inset-bottom))] flex-shrink-0 space-y-1.5">
           {/* User info row */}
           {userName && (
-            <div className="flex items-center gap-3 rounded-xl px-3 py-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-xs font-semibold text-white">
+            <div className="flex items-center gap-3 rounded-[var(--r-md)] border border-sidebar-border bg-white/5 px-3 py-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white flex-shrink-0">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-zinc-100">
+                <p className="truncate text-[var(--t-sm)] font-[650] text-sidebar-text">
                   {userName}
                 </p>
                 {userEmail && (
-                  <p className="truncate text-xs text-gray-400 dark:text-zinc-400">
+                  <p className="truncate text-[var(--t-xs)] text-sidebar-text-muted">
                     {userEmail}
                   </p>
                 )}
               </div>
             </div>
           )}
-          <div className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400">
+          <div className="flex items-center gap-3 rounded-[var(--r-sm)] px-3 py-2 text-sm text-sidebar-text-muted">
             <CookieSettingsButton />
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             aria-label={t("logout")}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 active:bg-red-100 dark:active:bg-red-900/30 active:scale-[0.98] transition-colors"
+            className="flex w-full items-center gap-3 rounded-[var(--r-sm)] px-3 py-2.5 text-sm font-medium text-sidebar-text-muted hover:bg-red-500/10 hover:text-red-400 active:scale-[0.98] transition-colors"
           >
             <LogOutIcon className="h-[18px] w-[18px]" />
             {t("logout")}
@@ -769,23 +769,21 @@ function NavLink({
         onClick={onClick}
         aria-current={isActive ? "page" : undefined}
         className={cn(
-          "flex flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 min-w-0 active:scale-[0.98]",
+          "relative flex flex-1 items-center gap-3 rounded-[var(--r-sm)] px-3 h-10 text-[var(--t-base)] transition-colors duration-[var(--d-fast)] min-w-0",
           isActive
-            ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-emerald-100 dark:shadow-emerald-900/30 sidebar-active-glow"
-            : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-200 active:bg-gray-100 dark:active:bg-zinc-700",
+            ? "bg-brand/15 text-brand-300 font-semibold before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-[3px] before:bg-brand"
+            : "font-medium text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text",
         )}
       >
         <item.icon
           className={cn(
-            "h-[18px] w-[18px] flex-shrink-0 transition-colors",
-            isActive
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-gray-400 dark:text-zinc-500",
+            "h-[19px] w-[19px] flex-shrink-0 transition-colors",
+            isActive ? "text-brand-300" : "text-sidebar-text-muted opacity-90",
           )}
         />
         <span className="truncate">{t(item.key)}</span>
         {item.badge && (
-          <span className="ml-auto rounded-full bg-amber-100 dark:bg-amber-900/40 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          <span className="ml-auto rounded-full bg-warning-soft px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-warning">
             {item.badge}
           </span>
         )}
@@ -802,8 +800,8 @@ function NavLink({
         className={cn(
           "absolute right-1.5 p-1 rounded-md transition-all",
           isFavorite
-            ? "opacity-100 text-amber-400 hover:text-amber-500"
-            : "opacity-0 group-hover/nav:opacity-100 text-gray-300 dark:text-zinc-600 hover:text-amber-400 dark:hover:text-amber-400",
+            ? "opacity-100 text-amber-400 hover:text-amber-300"
+            : "opacity-0 group-hover/nav:opacity-100 text-sidebar-text-muted hover:text-amber-400",
         )}
       >
         <StarIcon className={cn("w-3 h-3", isFavorite && "fill-amber-400")} />

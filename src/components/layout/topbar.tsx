@@ -71,7 +71,7 @@ export function Topbar({
               </div>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <h1 className="text-[34px] font-bold tracking-tight text-gray-900 dark:text-zinc-100 leading-[1.1] truncate min-w-0 flex-1">
+              <h1 className="text-[34px] font-extrabold tracking-[-0.03em] text-foreground leading-[1.1] truncate min-w-0 flex-1">
                 {title}
               </h1>
               {/* Page-specific actions inline with title */}
@@ -82,7 +82,7 @@ export function Topbar({
               )}
             </div>
             {description && (
-              <p className="text-[15px] text-gray-500 dark:text-zinc-400 mt-1 line-clamp-2">
+              <p className="text-[15px] text-muted-foreground mt-1 line-clamp-2">
                 {description}
               </p>
             )}
@@ -91,26 +91,26 @@ export function Topbar({
       )}
 
       {/* ── Classic desktop bar — lg+ only ── */}
-      <header className="sticky top-0 z-30 hidden lg:block bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl backdrop-saturate-[1.8] [-webkit-backdrop-filter:saturate(180%)_blur(20px)] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        {/* Hairline bottom border — 0.5px like iOS */}
-        <div className="absolute inset-x-0 bottom-0 h-px bg-black/[0.06] dark:bg-white/[0.08]" />
+      <header className="sticky top-0 z-30 hidden lg:block bg-[color-mix(in_oklab,var(--background)_78%,transparent)] backdrop-blur-xl backdrop-saturate-[1.6] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        {/* Hairline bottom border */}
+        <div className="absolute inset-x-0 bottom-0 h-px bg-border" />
 
-        <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3">
+        <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3 min-h-[60px]">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={openSidebar}
               aria-label="Menü öffnen"
-              className="hidden rounded-xl p-2 text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors lg:hidden"
+              className="hidden rounded-[var(--r-sm)] p-2 text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors lg:hidden"
             >
               <MenuIcon className="h-5 w-5" />
             </button>
 
             <div className="min-w-0">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-zinc-100 truncate">
+              <h1 className="text-[var(--t-xl)] font-extrabold tracking-[-0.025em] text-foreground truncate leading-[1.1]">
                 {title}
               </h1>
               {description && (
-                <p className="text-sm text-gray-500 dark:text-zinc-400 truncate mt-0.5">
+                <p className="text-[var(--t-sm)] text-muted-foreground truncate mt-0.5">
                   {description}
                 </p>
               )}
@@ -126,22 +126,22 @@ export function Topbar({
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen((o) => !o)}
-                  className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Avatar
                     name={session.user.name}
                     size="sm"
-                    className="ring-2 ring-gray-100 dark:ring-zinc-700 cursor-pointer hover:ring-emerald-200 dark:hover:ring-emerald-800 transition-all"
+                    className="ring-2 ring-border cursor-pointer hover:ring-brand/40 transition-all"
                   />
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1 z-50">
-                    <div className="px-4 py-3 border-b border-gray-100 dark:border-zinc-800">
-                      <p className="text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
+                  <div className="absolute right-0 mt-2 w-56 rounded-[var(--r-md)] border border-border bg-elevated shadow-[var(--sh-lg)] py-1 z-50">
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="text-sm font-[650] text-foreground truncate">
                         {session.user.name}
                       </p>
                       {session.user.email && (
-                        <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
+                        <p className="text-xs text-muted-foreground truncate">
                           {session.user.email}
                         </p>
                       )}
@@ -151,25 +151,25 @@ export function Topbar({
                         setProfileOpen(false);
                         router.push("/einstellungen");
                       }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-surface-hover transition-colors"
                     >
-                      <SettingsIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+                      <SettingsIcon className="h-4 w-4 text-muted-foreground" />
                       {t("settings")}
                     </button>
                     <button
                       onClick={toggleTheme}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-surface-hover transition-colors"
                     >
                       {theme === "dark" ? (
-                        <SunIcon className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+                        <SunIcon className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <MoonIcon className="h-4 w-4 text-gray-400" />
+                        <MoonIcon className="h-4 w-4 text-muted-foreground" />
                       )}
                       {theme === "dark" ? t("lightMode") : t("darkMode")}
                     </button>
                     <button
                       onClick={() => signOut({ callbackUrl: "/login" })}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-danger-soft transition-colors"
                     >
                       <LogOutIcon className="h-4 w-4" />
                       {t("logout")}

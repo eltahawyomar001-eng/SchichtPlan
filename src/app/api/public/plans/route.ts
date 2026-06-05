@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PLANS, PLAN_ORDER } from "@/lib/stripe";
 import { TICKETING_ADDON } from "@/lib/ticketing-addon";
 import { SCHICHTPLANUNG_ADDON } from "@/lib/schichtplanung-addon";
+import { withRoute } from "@/lib/with-route";
 
 /**
  * GET /api/public/plans
@@ -11,7 +12,7 @@ import { SCHICHTPLANUNG_ADDON } from "@/lib/schichtplanung-addon";
  * Used by the pricing page and the billing settings page so that displayed
  * prices always match the server-side PLANS source of truth.
  */
-export const GET = async () => {
+export const GET = withRoute("/api/public/plans", "GET", async () => {
   const plans = PLAN_ORDER.map((id) => {
     const p = PLANS[id];
     return {
@@ -48,4 +49,4 @@ export const GET = async () => {
       },
     },
   );
-};
+});

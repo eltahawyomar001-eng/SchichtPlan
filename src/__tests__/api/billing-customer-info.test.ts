@@ -79,14 +79,18 @@ describe("GET /api/billing/customer-info", () => {
 
   it("returns 401 when unauthenticated", async () => {
     const { GET } = await import("@/app/api/billing/customer-info/route");
-    const res = await GET();
+    const res = await GET(
+      new Request("http://localhost/api/billing/customer-info"),
+    );
     expect(res.status).toBe(401);
   });
 
   it("returns 403 when MANAGER calls", async () => {
     mockSession.user = manager;
     const { GET } = await import("@/app/api/billing/customer-info/route");
-    const res = await GET();
+    const res = await GET(
+      new Request("http://localhost/api/billing/customer-info"),
+    );
     expect(res.status).toBe(403);
   });
 
@@ -94,7 +98,9 @@ describe("GET /api/billing/customer-info", () => {
     mockSession.user = admin;
     mockFindUnique.mockResolvedValue(null);
     const { GET } = await import("@/app/api/billing/customer-info/route");
-    const res = await GET();
+    const res = await GET(
+      new Request("http://localhost/api/billing/customer-info"),
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({});
@@ -104,7 +110,9 @@ describe("GET /api/billing/customer-info", () => {
     mockSession.user = admin;
     mockFindUnique.mockResolvedValue(customerRecord);
     const { GET } = await import("@/app/api/billing/customer-info/route");
-    const res = await GET();
+    const res = await GET(
+      new Request("http://localhost/api/billing/customer-info"),
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.companyName).toBe("Test GmbH");

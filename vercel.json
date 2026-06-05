@@ -54,6 +54,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/cron/reconcile-subscriptions",
+      "schedule": "30 5 * * *"
+    },
+    {
       "path": "/api/cron/purge-deleted",
       "schedule": "0 4 * * *"
     }

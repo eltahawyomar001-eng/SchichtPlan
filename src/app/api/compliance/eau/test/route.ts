@@ -17,10 +17,11 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/authorization";
 import { requestEau, isDatevSandbox } from "@/lib/sv-gateway";
+import { withRoute } from "@/lib/with-route";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export const GET = withRoute("/api/compliance/eau/test", "GET", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { user, workspaceId } = auth;
@@ -64,4 +65,4 @@ export async function GET(req: Request) {
     input: { consultantNumber, clientNumber, personnelNumber, date, source },
     result,
   });
-}
+});

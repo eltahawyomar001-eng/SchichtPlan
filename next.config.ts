@@ -7,11 +7,6 @@ const nextConfig: NextConfig = {
   // pass that next build runs internally to cut build CPU significantly.
   // (Next 16 no longer runs ESLint during build, so no eslint key is needed.)
   typescript: { ignoreBuildErrors: true },
-  experimental: {
-    // Rewrite barrel imports (date-fns in 18 files, recharts, framer-motion)
-    // into direct module paths — faster compile and smaller client bundles
-    optimizePackageImports: ["date-fns", "recharts", "framer-motion"],
-  },
   async headers() {
     return [
       {

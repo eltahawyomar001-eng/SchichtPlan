@@ -31,6 +31,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.95,
     },
+    // Industry landing pages — target high-intent niche queries the site
+    // already ranks page-2 for (see Search Console).
+    {
+      url: `${SITE_URL}/schichtplanung-sicherheitsdienst`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${SITE_URL}/zeiterfassung-logistik`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
     {
       url: `${SITE_URL}/blog`,
       lastModified: now,

@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "overrides": {
+    "postcss": ">=8.5.10",
     "exceljs": {
       "uuid": ">=11.1.1"
     },
     "next": {
-      "postcss": ">=8.4.48"
+      "postcss": ">=8.5.10"
     },
     "next-auth": {
       "uuid": ">=11.1.1",
@@ -120,7 +121,7 @@
     "@types/uuid": "^10.0.0",
     "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.0",
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
@@ -132,6 +133,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   }
 }

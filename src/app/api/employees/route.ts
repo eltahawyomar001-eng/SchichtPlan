@@ -9,8 +9,8 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
-import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
-import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
+import { requireAuth, parseJsonBody } from "@/lib/api-response";
+import { withRoute } from "@/lib/with-route";
 import { sendEmail } from "@/lib/notifications/email";
 import { invitationEmail } from "@/lib/notifications/email-i18n";
 import { getLocaleFromCookie } from "@/i18n/locale";
@@ -21,74 +21,66 @@ import { reconcileSeatsFromEmployees } from "@/lib/billing-seats";
 /** MiLoG statutory minimum wage (€/h), 2026 value — updated annually. */
 const MILOG_MIN_WAGE = 13.9;
 
-export async function GET(req: Request) {
-  try {
-    const auth = await requireAuth();
-    if (!auth.ok) return auth.response;
-    const { workspaceId, user } = auth;
+export const GET = withRoute("/api/employees", "GET", async (req) => {
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const { workspaceId, user } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search");
-    const { take, skip } = parsePagination(req);
+  const { searchParams } = new URL(req.url);
+  const search = searchParams.get("search");
+  const { take, skip } = parsePagination(req);
 
-    const where: Record<string, unknown> = { workspaceId };
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    // DSGVO Art. 5(1)(c) data minimisation: wage and contract fields must not
-    // be fetched from the DB at all for EMPLOYEE-role requests, not just stripped
-    // in JS after the query. pinHash is never returned to any client.
-    // withWorkspaceContext: switches to shiftfy_app role (NOBYPASSRLS) so RLS
-    // policies enforce workspace isolation as a second layer after app-level auth.
-    const [employees, total] = await withWorkspaceContext(
-      workspaceId,
-      async (tx) =>
-        Promise.all([
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (tx.employee.findMany as any)({
-            where,
-            omit: isEmployee(user)
-              ? { hourlyRate: true, contractType: true, pinHash: true }
-              : { pinHash: true },
-            include: {
-              employeeSkills: {
-                include: { skill: { select: { id: true, name: true } } },
-                orderBy: { createdAt: "asc" },
-              },
-              location: { select: { id: true, name: true } },
-              departments: {
-                include: { department: { select: { id: true, name: true } } },
-                orderBy: { assignedAt: "asc" },
-              },
-              user: { select: { id: true, role: true } },
-            },
-            orderBy: { lastName: "asc" },
-            take,
-            skip,
-          }),
-          tx.employee.count({ where }),
-        ]),
-    );
-
-    return paginatedResponse(employees, total, take, skip);
-  } catch (error) {
-    log.error("Error fetching employees:", { error: error });
-    captureRouteError(error, { route: "/api/employees", method: "GET" });
-    return serverError("Error loading");
+  const where: Record<string, unknown> = { workspaceId };
+  if (search) {
+    where.OR = [
+      { firstName: { contains: search, mode: "insensitive" } },
+      { lastName: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
   }
-}
 
-export async function POST(req: Request) {
-  try {
-    // ── Idempotency check (prevents duplicate employee creation) ──
-    const cached = await checkIdempotency(req);
-    if (cached) return cached;
+  // DSGVO Art. 5(1)(c) data minimisation: wage and contract fields must not
+  // be fetched from the DB at all for EMPLOYEE-role requests, not just stripped
+  // in JS after the query. pinHash is never returned to any client.
+  // withWorkspaceContext: switches to shiftfy_app role (NOBYPASSRLS) so RLS
+  // policies enforce workspace isolation as a second layer after app-level auth.
+  const [employees, total] = await withWorkspaceContext(
+    workspaceId,
+    async (tx) =>
+      Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (tx.employee.findMany as any)({
+          where,
+          omit: isEmployee(user)
+            ? { hourlyRate: true, contractType: true, pinHash: true }
+            : { pinHash: true },
+          include: {
+            employeeSkills: {
+              include: { skill: { select: { id: true, name: true } } },
+              orderBy: { createdAt: "asc" },
+            },
+            location: { select: { id: true, name: true } },
+            departments: {
+              include: { department: { select: { id: true, name: true } } },
+              orderBy: { assignedAt: "asc" },
+            },
+            user: { select: { id: true, role: true } },
+          },
+          orderBy: { lastName: "asc" },
+          take,
+          skip,
+        }),
+        tx.employee.count({ where }),
+      ]),
+  );
 
+  return paginatedResponse(employees, total, take, skip);
+});
+
+export const POST = withRoute(
+  "/api/employees",
+  "POST",
+  async (req) => {
     const auth = await requireAuth();
     if (!auth.ok) return auth.response;
     const { user, workspaceId } = auth;
@@ -360,11 +352,7 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
-    await cacheIdempotentResponse(req, response);
     return response;
-  } catch (error) {
-    log.error("Error creating employee:", { error: error });
-    captureRouteError(error, { route: "/api/employees", method: "POST" });
-    return serverError("Error creating resource");
-  }
-}
+  },
+  { idempotent: true },
+);

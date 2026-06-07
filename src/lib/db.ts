@@ -1,6 +1,7 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { scopeExtension } from "@/lib/workspace-scope";
 
 /**
  * Connection-pooling strategy
@@ -68,7 +69,12 @@ function getClient(): PrismaClient {
     });
 
     const adapter = new PrismaPg(pool);
-    globalForPrisma.prisma = new PrismaClient({ adapter });
+    // Apply the workspace-scope backstop extension. The extended client
+    // keeps the same surface (model delegates, $transaction, $executeRaw),
+    // so the cast back to PrismaClient is safe for all existing call sites.
+    globalForPrisma.prisma = new PrismaClient({ adapter }).$extends(
+      scopeExtension,
+    ) as unknown as PrismaClient;
   }
   return globalForPrisma.prisma;
 }
@@ -127,17 +133,16 @@ export class QueryTimeoutError extends Error {
  *     automatically on COMMIT/ROLLBACK, which is safe for transaction-mode
  *     poolers (Supavisor / pgBouncer) where connections are shared.
  *
- * This sets the workspace context so RLS policies on the shiftfy_app role
- * enforce workspace isolation when accessed via direct DB connections or
- * future non-pooler clients. The Supavisor pooler connection (service_role)
- * bypasses RLS by default — SET LOCAL ROLE was removed because the pooler
- * user does not have shiftfy_app granted and throws permission denied.
- *
- * Usage — wrap any query that touches workspace data in a user-facing route:
- *
- *   const employees = await withWorkspaceContext(workspaceId, (tx) =>
- *     tx.employee.findMany({ where: { workspaceId } })
- *   );
+ * This sets a transaction-local GUC for any RLS policy that reads
+ * `app.current_workspace_id`. NOTE: in production the app connects through
+ * the Supavisor pooler as a BYPASSRLS role, so RLS is not actually enforced
+ * on these queries — this wrapper is therefore NOT the tenant-isolation
+ * mechanism. The real guards are, in order of strength:
+ *   1. Explicit `where: { workspaceId }` on every query (primary).
+ *   2. The runtime Prisma scope backstop in `@/lib/workspace-scope`, which
+ *      auto-injects workspaceId for requests bound via `requireAuth`.
+ *   3. The CI lint `npm run lint:scope`.
+ * Keep using explicit workspace filters regardless of this wrapper.
  *
  * Cron jobs, webhooks, and Stripe handlers should NOT use this wrapper —
  * they legitimately need cross-workspace access.

@@ -1,11 +1,17 @@
 /**
  * Multi-tenancy scope guard (CI lint).
  * ────────────────────────────────────
- * Production tenant isolation in this app is enforced ONLY at the application
+ * Production tenant isolation in this app is enforced at the application
  * layer: every query on a workspace-scoped model must filter by `workspaceId`.
- * RLS is bypassed by the Supavisor service_role pooler in production, so there
- * is no database backstop — a single forgotten `workspaceId` is a cross-tenant
- * data leak. This script converts that convention into an enforced invariant.
+ * RLS is bypassed by the Supavisor BYPASSRLS pooler role in production, so the
+ * database does not enforce it. Defense in depth comes in two complementary
+ * layers that this lint sits alongside:
+ *   - Static (this script): a missing inline `where: { workspaceId }` fails CI.
+ *   - Runtime (`@/lib/workspace-scope`): a Prisma client extension auto-injects
+ *     workspaceId for any request bound via `requireAuth`, catching the cases
+ *     this static check can only flag for "manual review" (prebuilt where vars).
+ * A single forgotten `workspaceId` is a cross-tenant data leak; these layers
+ * convert the convention into an enforced invariant.
  *
  * What it does:
  *   1. Reads prisma/schema.prisma and collects every model that has a

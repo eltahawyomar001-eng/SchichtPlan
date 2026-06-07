@@ -3,12 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "overrides": {
-    "postcss": ">=8.5.10",
     "exceljs": {
       "uuid": ">=11.1.1"
     },
     "next": {
-      "postcss": ">=8.5.10"
+      "postcss": ">=8.4.48"
     },
     "next-auth": {
       "uuid": ">=11.1.1",

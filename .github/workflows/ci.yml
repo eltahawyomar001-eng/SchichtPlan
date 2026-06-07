@@ -92,6 +92,13 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # Match the npm version used to generate the lockfile (as every other job
+      # does). Without this the job runs the runner's default npm, which resolves
+      # the dependency tree differently and fails `npm ci` with spurious
+      # "Missing: <pkg> from lock file" errors.
+      - name: Upgrade npm to match lockfile version
+        run: npm install -g npm@11
+
       - run: npm ci
 
       # Production deps: stricter — fail on any high+ vulnerability.

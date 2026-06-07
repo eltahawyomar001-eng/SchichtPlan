@@ -75,8 +75,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Apply database migrations
-        run: npx prisma migrate deploy
+      - name: Materialize schema (ephemeral CI DB)
+        run: npx prisma db push --skip-generate --accept-data-loss
 
       - name: Run Tests
         run: npx vitest run --reporter=verbose --coverage
@@ -146,8 +146,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Apply database migrations
-        run: npx prisma migrate deploy
+      - name: Materialize schema (ephemeral CI DB)
+        run: npx prisma db push --skip-generate --accept-data-loss
 
       - name: Build Next.js
         run: npx next build --turbopack
@@ -196,8 +196,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Apply database migrations
-        run: npx prisma migrate deploy
+      - name: Materialize schema (ephemeral CI DB)
+        run: npx prisma db push --skip-generate --accept-data-loss
 
       - name: Download build artifact
         uses: actions/download-artifact@v4

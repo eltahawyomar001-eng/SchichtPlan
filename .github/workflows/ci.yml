@@ -199,20 +199,31 @@ jobs:
       - name: Materialize schema (ephemeral CI DB)
         run: npx prisma db push --accept-data-loss
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: nextjs-build
-          path: .next/
+      # Build in-job rather than relying on the cross-job artifact, which was
+      # fragile ("Artifact not found"). The `needs: [build]` gate still ensures
+      # we don't run E2E when the build is broken.
+      - name: Build app
+        run: npx next build --turbopack
+        env:
+          NEXTAUTH_SECRET: ci-test-secret
+          NEXTAUTH_URL: http://localhost:3000
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests
-        run: npx playwright test
+      # Start the production server in the background and wait until it answers.
+      # playwright.config.ts has no webServer in CI, so the app must be running
+      # for any spec to pass.
+      - name: Start app & run E2E tests
+        run: |
+          npx next start -p 3000 &
+          echo "SERVER_PID=$!" >> "$GITHUB_ENV"
+          npx wait-on -t 60000 http://localhost:3000/api/health/live || \
+            npx wait-on -t 60000 http://localhost:3000
+          npx playwright test
         env:
           CI: true
-          E2E_BASE_URL: ${{ vars.E2E_BASE_URL || '' }}
+          E2E_BASE_URL: http://localhost:3000
           NEXTAUTH_SECRET: ci-test-secret
           NEXTAUTH_URL: http://localhost:3000
 

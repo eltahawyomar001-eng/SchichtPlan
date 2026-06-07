@@ -35,6 +35,7 @@ import { getServerSession } from "next-auth";
 import { jwtVerify } from "jose";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { enterWorkspaceScope } from "@/lib/workspace-scope";
 import type { SessionUser } from "@/lib/types";
 
 /* ── Types ──────────────────────────────────────────────────── */
@@ -140,6 +141,9 @@ export async function requireAuth(
         return { ok: false, response: unauthorized("Session invalidated") };
       }
     }
+    // Bind this request to the workspace so the Prisma scope backstop
+    // auto-injects workspaceId into scoped queries (defense in depth).
+    if (user.workspaceId) enterWorkspaceScope(user.workspaceId);
     return { ok: true, user, workspaceId: user.workspaceId as string };
   }
 
@@ -196,6 +200,8 @@ export async function requireAuth(
         return { ok: false, response: noWorkspace() };
       }
 
+      // Bind this request to the workspace (mobile/Bearer path).
+      if (user.workspaceId) enterWorkspaceScope(user.workspaceId);
       return { ok: true, user, workspaceId: user.workspaceId as string };
     } catch {
       return { ok: false, response: unauthorized() };

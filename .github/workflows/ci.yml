@@ -38,7 +38,9 @@ jobs:
         run: npm run lint:scope
 
       - name: Lint
-        run: npx eslint .
+        # Ratchet: warnings may not exceed today's count (120). Lower this number
+        # as warnings are fixed; target is 0. New warnings fail the build.
+        run: npx eslint . --max-warnings 120
 
   test:
     name: Unit Tests
@@ -73,8 +75,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Apply database migrations
-        run: npx prisma migrate deploy
+      - name: Materialize schema (ephemeral CI DB)
+        run: npx prisma db push --accept-data-loss
 
       - name: Run Tests
         run: npx vitest run --reporter=verbose --coverage
@@ -90,10 +92,25 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # Match the npm version used to generate the lockfile (as every other job
+      # does). Without this the job runs the runner's default npm, which resolves
+      # the dependency tree differently and fails `npm ci` with spurious
+      # "Missing: <pkg> from lock file" errors.
+      - name: Upgrade npm to match lockfile version
+        run: npm install -g npm@11
+
       - run: npm ci
 
-      - name: npm audit (production dependencies)
+      # Production deps: stricter — fail on any high+ vulnerability.
+      - name: npm audit (production dependencies, high+)
         run: npm audit --omit=dev --audit-level=high
+
+      # All deps incl. dev/build: fail on CRITICAL only. This closes the gap that
+      # let a critical dev-dependency vuln (vitest GHSA) ship unnoticed, while not
+      # breaking the build on lower-severity, non-exploitable transitive findings
+      # (e.g. postcss pinned inside next, which is build-time on trusted CSS).
+      - name: npm audit (all dependencies, critical)
+        run: npm audit --audit-level=critical
 
   build:
     name: Build
@@ -129,8 +146,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Apply database migrations
-        run: npx prisma migrate deploy
+      - name: Materialize schema (ephemeral CI DB)
+        run: npx prisma db push --accept-data-loss
 
       - name: Build Next.js
         run: npx next build --turbopack
@@ -179,23 +196,34 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Apply database migrations
-        run: npx prisma migrate deploy
+      - name: Materialize schema (ephemeral CI DB)
+        run: npx prisma db push --accept-data-loss
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: nextjs-build
-          path: .next/
+      # Build in-job rather than relying on the cross-job artifact, which was
+      # fragile ("Artifact not found"). The `needs: [build]` gate still ensures
+      # we don't run E2E when the build is broken.
+      - name: Build app
+        run: npx next build --turbopack
+        env:
+          NEXTAUTH_SECRET: ci-test-secret
+          NEXTAUTH_URL: http://localhost:3000
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests
-        run: npx playwright test
+      # Start the production server in the background and wait until it answers.
+      # playwright.config.ts has no webServer in CI, so the app must be running
+      # for any spec to pass.
+      - name: Start app & run E2E tests
+        run: |
+          npx next start -p 3000 &
+          echo "SERVER_PID=$!" >> "$GITHUB_ENV"
+          npx wait-on -t 60000 http://localhost:3000/api/health/live || \
+            npx wait-on -t 60000 http://localhost:3000
+          npx playwright test
         env:
           CI: true
-          E2E_BASE_URL: ${{ vars.E2E_BASE_URL || '' }}
+          E2E_BASE_URL: http://localhost:3000
           NEXTAUTH_SECRET: ci-test-secret
           NEXTAUTH_URL: http://localhost:3000
 

@@ -38,7 +38,9 @@ jobs:
         run: npm run lint:scope
 
       - name: Lint
-        run: npx eslint .
+        # Ratchet: warnings may not exceed today's count (120). Lower this number
+        # as warnings are fixed; target is 0. New warnings fail the build.
+        run: npx eslint . --max-warnings 120
 
   test:
     name: Unit Tests
@@ -92,8 +94,16 @@ jobs:
 
       - run: npm ci
 
-      - name: npm audit (production dependencies)
+      # Production deps: stricter — fail on any high+ vulnerability.
+      - name: npm audit (production dependencies, high+)
         run: npm audit --omit=dev --audit-level=high
+
+      # All deps incl. dev/build: fail on CRITICAL only. This closes the gap that
+      # let a critical dev-dependency vuln (vitest GHSA) ship unnoticed, while not
+      # breaking the build on lower-severity, non-exploitable transitive findings
+      # (e.g. postcss pinned inside next, which is build-time on trusted CSS).
+      - name: npm audit (all dependencies, critical)
+        run: npm audit --audit-level=critical
 
   build:
     name: Build

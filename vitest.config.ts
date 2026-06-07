@@ -23,12 +23,14 @@ export default defineConfig({
         "src/**/__mocks__/**",
       ],
       thresholds: {
-        // Current baseline (2026-06): enforced as a floor so we never regress.
-        // Raise these numbers as new tests are added.
-        lines: 20,
-        functions: 15,
-        branches: 17,
-        statements: 20,
+        // Ratchet floor (2026-06-07): set just below the actual measured
+        // coverage so it can ONLY go up — any PR that drops coverage fails CI.
+        // Actual at set time: stmts 36.74 / branch 30.84 / funcs 31.32 / lines 37.6.
+        // Raise toward the 75% enterprise target as tests are added; never lower.
+        lines: 37,
+        functions: 31,
+        branches: 30,
+        statements: 36,
       },
     },
   },

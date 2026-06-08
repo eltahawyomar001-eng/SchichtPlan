@@ -389,6 +389,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   // Works-council members may be regular employees — surface the portal link
   // for them even though it lives in the management nav group.
   const [brMember, setBrMember] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [workspaceLogo, setWorkspaceLogo] = useState<string | null>(null);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
 
@@ -403,6 +404,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         }
       })
       .catch(() => {});
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    fetch("/api/super-admin/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setIsSuperAdmin(Boolean(d.isSuperAdmin));
+      })
+      .catch(() => {
+        /* fail-quiet: link simply won't show */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [session]);
 
   useEffect(() => {
@@ -728,6 +745,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 )}
               </div>
             </div>
+          )}
+          {isSuperAdmin && (
+            <Link
+              href="/super-admin"
+              onClick={onClose}
+              aria-current={
+                pathname.startsWith("/super-admin") ? "page" : undefined
+              }
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                pathname.startsWith("/super-admin")
+                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300"
+                  : "text-gray-500 dark:text-zinc-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 hover:text-purple-600 dark:hover:text-purple-400",
+              )}
+            >
+              <ShieldCheckIcon className="h-[18px] w-[18px] flex-shrink-0" />
+              Super Admin
+            </Link>
           )}
           <div className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400">
             <CookieSettingsButton />

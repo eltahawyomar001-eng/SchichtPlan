@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireSuperAdmin } from "@/lib/super-admin-auth";
+import {
+  requireSuperAdmin,
+  getSuperAdminIdentity,
+} from "@/lib/super-admin-auth";
+import { createAuditLog } from "@/lib/audit";
 import { withRoute, type RouteContext } from "@/lib/with-route";
 
 export const POST = withRoute(
@@ -9,6 +13,7 @@ export const POST = withRoute(
   async (req: Request, context?: RouteContext) => {
     const denied = await requireSuperAdmin();
     if (denied) return denied;
+    const admin = await getSuperAdminIdentity();
 
     const { id: workspaceId } = await context!.params;
 
@@ -43,6 +48,20 @@ export const POST = withRoute(
         status: "TRIALING",
       },
       select: { trialEnd: true, status: true },
+    });
+
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Subscription",
+      entityId: workspaceId,
+      userId: admin?.userId,
+      userEmail: admin?.email,
+      workspaceId,
+      changes: {
+        trialEnd: { from: sub.trialEnd, to: updated.trialEnd },
+        status: { from: sub.status, to: updated.status },
+      },
+      metadata: { superAdminAction: "extend-trial", days },
     });
 
     return NextResponse.json(updated);

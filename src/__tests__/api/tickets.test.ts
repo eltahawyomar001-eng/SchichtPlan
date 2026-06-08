@@ -41,6 +41,22 @@ vi.mock("next-auth", () => ({
 vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
+
+// `after()` from next/server can only run inside a real request context; in
+// the unit-test environment it throws. The routes use it to dispatch
+// notifications post-response, so stub it to invoke the callback inline while
+// keeping the rest of next/server (NextResponse, etc.) intact.
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: (cb: unknown) => {
+      if (typeof cb === "function") {
+        void Promise.resolve((cb as () => unknown)()).catch(() => {});
+      }
+    },
+  };
+});
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })),

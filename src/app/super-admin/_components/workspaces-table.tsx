@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { WorkspaceDrawer } from "./workspace-drawer";
 
 type Plan = "BASIC" | "PROFESSIONAL" | "ENTERPRISE";
 type Status =
@@ -88,11 +89,13 @@ function WorkspaceRow({
   w,
   onExtendTrial,
   onChangePlan,
+  onView,
   loading,
 }: {
   w: Workspace;
   onExtendTrial: (id: string, days: number) => void;
   onChangePlan: (id: string, plan: Plan) => void;
+  onView: (id: string) => void;
   loading: string | null;
 }) {
   const sub = w.subscription;
@@ -225,6 +228,14 @@ function WorkspaceRow({
           Actions
         </span>
 
+        {/* View details */}
+        <button
+          onClick={() => onView(w.id)}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+        >
+          View
+        </button>
+
         {/* Extend trial */}
         {([7, 14] as const).map((days) => (
           <button
@@ -268,6 +279,7 @@ export function WorkspacesTable({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [viewing, setViewing] = useState<string | null>(null);
 
   async function extendTrial(workspaceId: string, days: number) {
     setLoading(`${workspaceId}-trial`);
@@ -449,6 +461,7 @@ export function WorkspacesTable({
             w={w}
             onExtendTrial={extendTrial}
             onChangePlan={changePlan}
+            onView={setViewing}
             loading={loading}
           />
         ))}
@@ -458,6 +471,13 @@ export function WorkspacesTable({
         <div className="py-16 text-center text-sm text-zinc-400 dark:text-zinc-500">
           No workspaces match your search.
         </div>
+      )}
+
+      {viewing && (
+        <WorkspaceDrawer
+          workspaceId={viewing}
+          onClose={() => setViewing(null)}
+        />
       )}
     </div>
   );

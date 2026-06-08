@@ -18,6 +18,25 @@ export async function isSuperAdmin(): Promise<boolean> {
   return getSuperAdminEmails().has(session.user.email.toLowerCase());
 }
 
+/** The authenticated super-admin's identity, or null if the caller isn't one. */
+export interface SuperAdminIdentity {
+  userId?: string;
+  email: string;
+}
+
+/**
+ * Returns the calling super-admin's identity (for audit trails), or null.
+ * Use in routes that need to record *who* performed a privileged action.
+ */
+export async function getSuperAdminIdentity(): Promise<SuperAdminIdentity | null> {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
+  if (!email) return null;
+  if (!getSuperAdminEmails().has(email.toLowerCase())) return null;
+  const userId = (session.user as { id?: string }).id;
+  return { userId, email };
+}
+
 /**
  * API route guard — returns 401/403 if the caller is not a super-admin.
  * Returns null when the check passes.

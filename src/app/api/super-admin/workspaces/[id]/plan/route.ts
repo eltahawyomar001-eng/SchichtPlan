@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireSuperAdmin } from "@/lib/super-admin-auth";
+import {
+  requireSuperAdmin,
+  getSuperAdminIdentity,
+} from "@/lib/super-admin-auth";
+import { createAuditLog } from "@/lib/audit";
 import { withRoute, type RouteContext } from "@/lib/with-route";
 
 const VALID_PLANS = new Set(["BASIC", "PROFESSIONAL", "ENTERPRISE"]);
@@ -11,6 +15,7 @@ export const PATCH = withRoute(
   async (req: Request, context?: RouteContext) => {
     const denied = await requireSuperAdmin();
     if (denied) return denied;
+    const admin = await getSuperAdminIdentity();
 
     const { id: workspaceId } = await context!.params;
 
@@ -37,6 +42,17 @@ export const PATCH = withRoute(
       where: { workspaceId },
       data: { plan: plan as "BASIC" | "PROFESSIONAL" | "ENTERPRISE" },
       select: { plan: true },
+    });
+
+    createAuditLog({
+      action: "UPDATE",
+      entityType: "Subscription",
+      entityId: workspaceId,
+      userId: admin?.userId,
+      userEmail: admin?.email,
+      workspaceId,
+      changes: { plan: { from: sub.plan, to: updated.plan } },
+      metadata: { superAdminAction: "change-plan" },
     });
 
     return NextResponse.json(updated);

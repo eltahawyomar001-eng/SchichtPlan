@@ -6,11 +6,6 @@ updates:
   # npm dependencies
   - package-ecosystem: "npm"
     directory: "/"
-    # Open PRs against `staging`, NOT the default branch (`main`).
-    # `main` auto-deploys to PRODUCTION via Vercel, so dependency bumps must
-    # first land on `staging` (preview deploy via .github/workflows/deploy-staging.yml)
-    # where they can be validated before being promoted to production.
-    target-branch: "staging"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -48,8 +43,6 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    # Same rationale as npm: target the preview branch, not production `main`.
-    target-branch: "staging"
     schedule:
       interval: "weekly"
       day: "monday"

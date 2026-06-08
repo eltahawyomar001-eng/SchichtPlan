@@ -2,12 +2,20 @@
  * Ticket Notification Helper
  *
  * Creates in-app notifications for ticket events using the existing
- * Notification model. All functions are fire-and-forget to avoid
- * blocking the main request flow.
+ * Notification model and dispatches the matching email + push.
+ *
+ * IMPORTANT — serverless lifetime:
+ * Every exported function returns a `Promise<void>` and MUST be awaited
+ * inside Next.js `after()` at the call site. Bare fire-and-forget (`void
+ * notifyTicketAssigned(...)`) is NOT safe on Vercel: once the route returns
+ * its response the function instance is frozen/terminated and any unawaited
+ * background promise — including the assignee email — is dropped. That was
+ * the root cause of assignment emails intermittently never arriving.
  */
 
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import { captureRouteError } from "@/lib/sentry";
 import { dispatchExternalNotification } from "@/lib/notifications";
 
 // ─── Helpers ────────────────────────────────────────────────────
@@ -20,24 +28,50 @@ async function createNotificationSafe(data: {
   message: string;
   link?: string;
 }): Promise<void> {
-  try {
-    await prisma.notification.create({ data });
-
-    // Also dispatch email + push notification
-    await dispatchExternalNotification({
-      userId: data.userId,
-      type: data.type,
-      title: data.title,
-      message: data.message,
-      link: data.link ?? null,
+  // The in-app notification row and the external dispatch (email + push) are
+  // INDEPENDENT side effects. Previously they shared one try-block, so a throw
+  // in `notification.create` skipped the email entirely. Run them separately
+  // and capture each failure to Sentry so nothing fails silently again.
+  const inApp = prisma.notification
+    .create({ data })
+    .then(() => undefined)
+    .catch((error) => {
+      log.error("Failed to create in-app ticket notification", {
+        userId: data.userId,
+        type: data.type,
+        error,
+      });
+      captureRouteError(error, {
+        route: "lib/ticket-notifications#notification.create",
+        method: "DISPATCH",
+        userId: data.userId,
+        workspaceId: data.workspaceId,
+        extra: { type: data.type },
+      });
     });
-  } catch (error) {
-    log.error("Failed to create ticket notification", {
+
+  const external = dispatchExternalNotification({
+    userId: data.userId,
+    type: data.type,
+    title: data.title,
+    message: data.message,
+    link: data.link ?? null,
+  }).catch((error) => {
+    log.error("Failed to dispatch ticket email/push notification", {
       userId: data.userId,
       type: data.type,
       error,
     });
-  }
+    captureRouteError(error, {
+      route: "lib/ticket-notifications#dispatchExternal",
+      method: "DISPATCH",
+      userId: data.userId,
+      workspaceId: data.workspaceId,
+      extra: { type: data.type },
+    });
+  });
+
+  await Promise.allSettled([inApp, external]);
 }
 
 // ─── Assignment Notification ────────────────────────────────────
@@ -52,8 +86,8 @@ export function notifyTicketAssigned(opts: {
   ticketNumber: string;
   subject: string;
   assignedByName: string;
-}): void {
-  void createNotificationSafe({
+}): Promise<void> {
+  return createNotificationSafe({
     userId: opts.assigneeId,
     workspaceId: opts.workspaceId,
     type: "TICKET_ASSIGNED",
@@ -86,7 +120,7 @@ export function notifyStatusChanged(opts: {
   newStatus: string;
   creatorId: string | null;
   assigneeId: string | null;
-}): void {
+}): Promise<void> {
   const statusLabel = STATUS_LABELS[opts.newStatus] ?? opts.newStatus;
   const recipientIds = new Set<string>();
 
@@ -97,16 +131,18 @@ export function notifyStatusChanged(opts: {
     recipientIds.add(opts.assigneeId);
   }
 
-  for (const userId of recipientIds) {
-    void createNotificationSafe({
-      userId,
-      workspaceId: opts.workspaceId,
-      type: "TICKET_STATUS_CHANGED",
-      title: `Ticket ${opts.ticketNumber}: ${statusLabel}`,
-      message: `${opts.actorName} hat den Status von „${opts.subject}" auf „${statusLabel}" geändert.`,
-      link: `/tickets/${opts.ticketId}`,
-    });
-  }
+  return Promise.allSettled(
+    [...recipientIds].map((userId) =>
+      createNotificationSafe({
+        userId,
+        workspaceId: opts.workspaceId,
+        type: "TICKET_STATUS_CHANGED",
+        title: `Ticket ${opts.ticketNumber}: ${statusLabel}`,
+        message: `${opts.actorName} hat den Status von „${opts.subject}" auf „${statusLabel}" geändert.`,
+        link: `/tickets/${opts.ticketId}`,
+      }),
+    ),
+  ).then(() => undefined);
 }
 
 // ─── Comment Notification ───────────────────────────────────────
@@ -127,7 +163,7 @@ export function notifyCommentAdded(opts: {
   isInternal: boolean;
   creatorId: string | null;
   assigneeId: string | null;
-}): void {
+}): Promise<void> {
   const recipientIds = new Set<string>();
 
   // Internal notes should NOT notify the ticket creator (they're internal)
@@ -140,16 +176,18 @@ export function notifyCommentAdded(opts: {
     recipientIds.add(opts.assigneeId);
   }
 
-  for (const userId of recipientIds) {
-    void createNotificationSafe({
-      userId,
-      workspaceId: opts.workspaceId,
-      type: "TICKET_COMMENT",
-      title: `Neuer Kommentar: ${opts.ticketNumber}`,
-      message: `${opts.authorName} hat einen Kommentar zu „${opts.subject}" hinzugefügt.`,
-      link: `/tickets/${opts.ticketId}`,
-    });
-  }
+  return Promise.allSettled(
+    [...recipientIds].map((userId) =>
+      createNotificationSafe({
+        userId,
+        workspaceId: opts.workspaceId,
+        type: "TICKET_COMMENT",
+        title: `Neuer Kommentar: ${opts.ticketNumber}`,
+        message: `${opts.authorName} hat einen Kommentar zu „${opts.subject}" hinzugefügt.`,
+        link: `/tickets/${opts.ticketId}`,
+      }),
+    ),
+  ).then(() => undefined);
 }
 
 // ─── New Ticket Notification ────────────────────────────────────
@@ -165,8 +203,8 @@ export function notifyNewTicket(opts: {
   ticketNumber: string;
   subject: string;
   creatorName: string;
-}): void {
-  void (async () => {
+}): Promise<void> {
+  return (async () => {
     try {
       // Fetch all management users in the workspace
       const managers = await prisma.user.findMany({
@@ -207,6 +245,12 @@ export function notifyNewTicket(opts: {
       log.error("Failed to notify managers of new ticket", {
         ticketId: opts.ticketId,
         error,
+      });
+      captureRouteError(error, {
+        route: "lib/ticket-notifications#notifyNewTicket",
+        method: "DISPATCH",
+        workspaceId: opts.workspaceId,
+        extra: { ticketId: opts.ticketId },
       });
     }
   })();

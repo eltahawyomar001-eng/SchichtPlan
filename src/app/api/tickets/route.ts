@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { isEmployee, requirePermission } from "@/lib/authorization";
 import type { TicketCategory, TicketPriority } from "@prisma/client";
@@ -373,24 +373,30 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
     }),
   );
 
-  notifyNewTicket({
-    creatorId: user.id,
-    workspaceId,
-    ticketId: ticket.id,
-    ticketNumber: ticket.ticketNumber,
-    subject: ticket.subject,
-    creatorName: user.name ?? "Mitarbeiter",
-  });
-
-  if (assignedToId) {
-    notifyTicketAssigned({
-      assigneeId: assignedToId,
+  // Dispatch via `after()` so notifications/emails survive the serverless
+  // freeze that follows returning the response.
+  after(() =>
+    notifyNewTicket({
+      creatorId: user.id,
       workspaceId,
       ticketId: ticket.id,
       ticketNumber: ticket.ticketNumber,
       subject: ticket.subject,
-      assignedByName: user.name ?? "System",
-    });
+      creatorName: user.name ?? "Mitarbeiter",
+    }),
+  );
+
+  if (assignedToId) {
+    after(() =>
+      notifyTicketAssigned({
+        assigneeId: assignedToId,
+        workspaceId,
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        assignedByName: user.name ?? "System",
+      }),
+    );
   }
 
   return NextResponse.json(

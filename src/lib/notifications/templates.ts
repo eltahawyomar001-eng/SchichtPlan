@@ -78,6 +78,10 @@ function getCtaLabel(type: string, locale: string): string {
       de: "Leistungsnachweis ansehen",
       en: "View service proof",
     },
+    INVOICE_RECEIPT: {
+      de: "Rechnung & Beleg ansehen",
+      en: "View invoice & receipt",
+    },
   };
   const entry = labels[type];
   if (entry) return locale === "de" ? entry.de : entry.en;

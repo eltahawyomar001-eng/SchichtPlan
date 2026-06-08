@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   isEmployee,
@@ -88,17 +88,19 @@ export async function POST(
         data: { status: "IN_BEARBEITUNG" },
       });
       logStatusChanged(ticket.id, actor, "OFFEN", "IN_BEARBEITUNG");
-      notifyStatusChanged({
-        actorId: user.id,
-        workspaceId,
-        ticketId: ticket.id,
-        ticketNumber: ticket.ticketNumber,
-        subject: ticket.subject,
-        actorName: user.name ?? "System",
-        newStatus: "IN_BEARBEITUNG",
-        creatorId: ticket.createdById,
-        assigneeId: ticket.assignedToId,
-      });
+      after(() =>
+        notifyStatusChanged({
+          actorId: user.id,
+          workspaceId,
+          ticketId: ticket.id,
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          actorName: user.name ?? "System",
+          newStatus: "IN_BEARBEITUNG",
+          creatorId: ticket.createdById,
+          assigneeId: ticket.assignedToId,
+        }),
+      );
     }
 
     // Auto-reopen if ticket was closed and creator adds a comment
@@ -111,34 +113,38 @@ export async function POST(
         },
       });
       logStatusChanged(ticket.id, actor, "GESCHLOSSEN", "OFFEN");
-      notifyStatusChanged({
-        actorId: user.id,
-        workspaceId,
-        ticketId: ticket.id,
-        ticketNumber: ticket.ticketNumber,
-        subject: ticket.subject,
-        actorName: user.name ?? "System",
-        newStatus: "OFFEN",
-        creatorId: ticket.createdById,
-        assigneeId: ticket.assignedToId,
-      });
+      after(() =>
+        notifyStatusChanged({
+          actorId: user.id,
+          workspaceId,
+          ticketId: ticket.id,
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          actorName: user.name ?? "System",
+          newStatus: "OFFEN",
+          creatorId: ticket.createdById,
+          assigneeId: ticket.assignedToId,
+        }),
+      );
     }
 
     // Audit trail
     logCommentAdded(ticket.id, actor, { isInternal });
 
     // Notify creator + assignee about the new comment
-    notifyCommentAdded({
-      authorId: user.id,
-      workspaceId,
-      ticketId: ticket.id,
-      ticketNumber: ticket.ticketNumber,
-      subject: ticket.subject,
-      authorName: user.name ?? "System",
-      isInternal,
-      creatorId: ticket.createdById,
-      assigneeId: ticket.assignedToId,
-    });
+    after(() =>
+      notifyCommentAdded({
+        authorId: user.id,
+        workspaceId,
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        authorName: user.name ?? "System",
+        isInternal,
+        creatorId: ticket.createdById,
+        assigneeId: ticket.assignedToId,
+      }),
+    );
 
     log.info("Ticket comment added", {
       ticketId: id,

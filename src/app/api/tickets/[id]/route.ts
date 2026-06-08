@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   isEmployee,
@@ -226,17 +226,22 @@ export async function PATCH(
         logTicketClosed(ticket.id, actor);
       }
 
-      notifyStatusChanged({
-        actorId: user.id,
-        workspaceId,
-        ticketId: ticket.id,
-        ticketNumber: ticket.ticketNumber,
-        subject: ticket.subject,
-        actorName: user.name ?? "System",
-        newStatus: finalStatus,
-        creatorId: existing.createdById,
-        assigneeId: ticket.assignedToId,
-      });
+      // Run after the response is sent, but via `after()` so Vercel keeps the
+      // function alive until the email/push dispatch finishes. A bare
+      // fire-and-forget here is dropped when the serverless instance freezes.
+      after(() =>
+        notifyStatusChanged({
+          actorId: user.id,
+          workspaceId,
+          ticketId: ticket.id,
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          actorName: user.name ?? "System",
+          newStatus: finalStatus,
+          creatorId: existing.createdById,
+          assigneeId: ticket.assignedToId,
+        }),
+      );
     }
 
     // ── Audit trail + Notifications: assignment change ──────────
@@ -251,16 +256,19 @@ export async function PATCH(
         ticket.assignedTo?.name ?? body.assignedToId,
       );
 
-      // Notify the new assignee
+      // Notify the new assignee — keep the function alive via `after()` so the
+      // assignment email is guaranteed to be dispatched on serverless.
       if (body.assignedToId) {
-        notifyTicketAssigned({
-          assigneeId: body.assignedToId,
-          workspaceId,
-          ticketId: ticket.id,
-          ticketNumber: ticket.ticketNumber,
-          subject: ticket.subject,
-          assignedByName: user.name ?? "System",
-        });
+        after(() =>
+          notifyTicketAssigned({
+            assigneeId: body.assignedToId!,
+            workspaceId,
+            ticketId: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            subject: ticket.subject,
+            assignedByName: user.name ?? "System",
+          }),
+        );
       }
     }
 

@@ -1,0 +1,222 @@
+/* ═══════════════════════════════════════════════════════════════
+   SHIFTFY — Premium Design System · Tokens
+   Emerald brand · strict 4/8pt spacing · dual theme
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand — emerald ── */
+  --brand-50: #ecfdf5;
+  --brand-100: #d1fae5;
+  --brand-200: #a7f3d0;
+  --brand-300: #6ee7b7;
+  --brand-400: #34d399;
+  --brand-500: #10b981;
+  --brand-600: #059669;
+  --brand-700: #047857;
+  --brand-800: #065f46;
+  --brand-900: #064e3b;
+  --brand: var(--brand-600);
+  --brand-strong: var(--brand-700);
+
+  /* ── Semantic ── */
+  --success: #059669;
+  --success-soft: #ecfdf5;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+
+  /* ── Neutrals — faint cool tint for a premium feel ── */
+  --n-0: #ffffff;
+  --n-25: #fcfcfd;
+  --n-50: #f8fafc;
+  --n-100: #f1f5f9;
+  --n-150: #e9eef4;
+  --n-200: #e2e8f0;
+  --n-300: #cbd5e1;
+  --n-400: #94a3b8;
+  --n-500: #64748b;
+  --n-600: #475569;
+  --n-700: #334155;
+  --n-800: #1e293b;
+  --n-900: #0f172a;
+
+  /* ── Surfaces / Text (light) ── */
+  --bg: #f4f6f9; /* app canvas */
+  --surface: #ffffff; /* cards */
+  --surface-2: #f8fafc; /* insets, table heads */
+  --surface-hover: #f1f5f9;
+  --elevated: #ffffff; /* sheets, popovers */
+  --text: #0f172a;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+  --border: #e7ecf2;
+  --border-strong: #d8dfe8;
+  --ring: rgba(5, 150, 105, 0.35);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e7ecf2;
+
+  --on-brand: #ffffff;
+
+  /* ── Spacing — strict 4pt scale (the consistency backbone) ── */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+
+  /* canonical paddings */
+  --pad-card: 20px; /* mobile card */
+  --pad-card-lg: 24px; /* desktop card */
+  --gap-card: 16px; /* between cards */
+  --page-x: 16px; /* mobile gutters */
+
+  /* ── Radius ── */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-full: 9999px;
+
+  /* ── Type ── */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-num:
+    "Inter Tight", "Inter", system-ui, sans-serif; /* tighter for metrics */
+  --font-mono:
+    "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-base: 14px;
+  --t-md: 15px;
+  --t-lg: 17px;
+  --t-xl: 20px;
+  --t-2xl: 24px;
+  --t-3xl: 30px;
+  --t-4xl: 38px;
+  --t-5xl: 48px;
+
+  /* ── Elevation — soft, layered, low-contrast ── */
+  --sh-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --sh-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --sh-md:
+    0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 20px -6px rgba(15, 23, 42, 0.1);
+  --sh-lg:
+    0 4px 8px rgba(15, 23, 42, 0.05), 0 18px 40px -12px rgba(15, 23, 42, 0.18);
+  --sh-xl:
+    0 8px 16px rgba(15, 23, 42, 0.06), 0 32px 64px -16px rgba(15, 23, 42, 0.28);
+  --sh-brand: 0 6px 18px -6px rgba(5, 150, 105, 0.45);
+  --ring-focus: 0 0 0 3px var(--ring);
+
+  /* ── Motion ── */
+  --e-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --e-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --d-fast: 130ms;
+  --d-base: 220ms;
+  --d-slow: 360ms;
+}
+
+/* ───────────────────────── Dark — obsidian ───────────────────────── */
+:root.dark {
+  --bg: #0a0d12;
+  --surface: #12161d;
+  --surface-2: #161b23;
+  --surface-hover: #1b212b;
+  --elevated: #171c25;
+  --text: #f1f5f9;
+  --text-2: #9aa6b6;
+  --text-3: #5e6b7e;
+  --border: #232a35;
+  --border-strong: #2c3543;
+  --ring: rgba(16, 185, 129, 0.45);
+
+  --sidebar-bg: #0d1117;
+  --sidebar-border: #1d242f;
+
+  --brand: #10b981;
+  --brand-strong: #34d399;
+
+  --success-soft: #06251c;
+  --warning-soft: #2a1e06;
+  --danger-soft: #2a1112;
+  --info-soft: #0e1a33;
+
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --sh-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px -6px rgba(0, 0, 0, 0.55);
+  --sh-lg: 0 4px 8px rgba(0, 0, 0, 0.45), 0 18px 40px -12px rgba(0, 0, 0, 0.7);
+  --sh-xl: 0 8px 16px rgba(0, 0, 0, 0.5), 0 32px 64px -16px rgba(0, 0, 0, 0.8);
+  --sh-brand: 0 6px 22px -6px rgba(16, 185, 129, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+  letter-spacing: -0.011em;
+  transition: background var(--d-base) var(--e-out);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--brand) 30%, transparent);
+}
+
+/* thin scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--n-400);
+  background-clip: padding-box;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Safety net: icons default to a sane size; component classes override as needed */
+svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}

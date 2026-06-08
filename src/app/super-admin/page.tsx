@@ -3,6 +3,7 @@ import { isSuperAdmin } from "@/lib/super-admin-auth";
 import { prisma } from "@/lib/db";
 import { WorkspacesTable } from "./_components/workspaces-table";
 import { FlagsTable } from "./_components/flags-table";
+import { AuditTable } from "./_components/audit-table";
 import { AdminShell } from "./_components/admin-shell";
 
 export default async function SuperAdminPage() {
@@ -57,6 +58,7 @@ export default async function SuperAdminPage() {
           flagCount={flags.length}
           workspacesSlot={<WorkspacesTable workspaces={workspaces} />}
           flagsSlot={<FlagsTable flags={flags} />}
+          auditSlot={<AuditTable />}
         />
       </div>
     </div>

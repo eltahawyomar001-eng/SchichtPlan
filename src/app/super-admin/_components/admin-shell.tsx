@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 
-type Tab = "workspaces" | "flags";
+type Tab = "workspaces" | "flags" | "audit";
 
 export function AdminShell({
   workspacesSlot,
   flagsSlot,
+  auditSlot,
   flagCount,
 }: {
   workspacesSlot: React.ReactNode;
   flagsSlot: React.ReactNode;
+  auditSlot: React.ReactNode;
   flagCount: number;
 }) {
   const [tab, setTab] = useState<Tab>("workspaces");
@@ -21,6 +23,7 @@ export function AdminShell({
       id: "flags",
       label: `Feature Flags${flagCount ? ` (${flagCount})` : ""}`,
     },
+    { id: "audit", label: "Audit Log" },
   ];
 
   return (
@@ -45,6 +48,9 @@ export function AdminShell({
         {workspacesSlot}
       </div>
       <div className={tab === "flags" ? "" : "hidden"}>{flagsSlot}</div>
+      {/* Mount the audit tab lazily — it fetches on mount, so only render
+          when first opened to avoid a network call on every page load. */}
+      {tab === "audit" && <div>{auditSlot}</div>}
     </div>
   );
 }

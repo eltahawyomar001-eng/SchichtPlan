@@ -575,6 +575,17 @@ export default withAuth(
         const { pathname } = req.nextUrl;
         // Auth routes don't require authentication
         if (pathname.startsWith("/api/auth")) return true;
+        // Mobile app (BFF pattern): API requests carry a Bearer JWT instead of
+        // a NextAuth cookie. Let them through to the route handlers, where
+        // requireAuth() verifies the token (signature, expiry, type) — without
+        // this, mobile calls get 307-redirected to the HTML login page.
+        // No-cookie attackers gain nothing: routes still 401 invalid tokens.
+        if (
+          pathname.startsWith("/api/") &&
+          req.headers.get("authorization")?.startsWith("Bearer ")
+        ) {
+          return true;
+        }
         // Stripe webhook is called server-to-server (no session)
         if (pathname === "/api/billing/webhook") return true;
         // Vercel Cron jobs — no browser session; auth is the CRON_SECRET header

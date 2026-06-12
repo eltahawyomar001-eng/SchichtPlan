@@ -48,6 +48,11 @@ function normalizeName(input: string): string {
     .trim();
 }
 
+/** Normalize a personnel number for matching (strip spaces/punctuation, lower). */
+function normalizePnr(input: string): string {
+  return input.replace(/[^a-z0-9]/gi, "").toLowerCase();
+}
+
 export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
@@ -97,33 +102,59 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
     return serverError("Timesheet extraction failed. Please try again.");
   }
 
-  // ── Match extracted names against ACTIVE workspace employees ──────
+  // ── Resolve each row's identity against ACTIVE workspace employees ──
+  // Identity priority: per-row name (multi-employee rosters) → document
+  // header. Match by Personal-Nr. (datevPersonnelNumber) first, then name.
+  const { employee: header, rows } = extraction;
   return withWorkspaceContext(workspaceId, async (tx) => {
     const employees = await tx.employee.findMany({
       where: { workspaceId, isActive: true, deletedAt: null },
-      select: { id: true, firstName: true, lastName: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        datevPersonnelNumber: true,
+      },
     });
 
-    // Build lookup for "First Last" and "Last First" orderings.
-    const byName = new Map<string, string>(); // normalized name -> employeeId
+    // Lookups: name ("First Last" + "Last First") and personnel number.
+    const byName = new Map<string, string>();
+    const byPnr = new Map<string, string>();
     for (const e of employees) {
-      const full = `${e.firstName} ${e.lastName}`;
-      const reversed = `${e.lastName} ${e.firstName}`;
-      byName.set(normalizeName(full), e.id);
-      byName.set(normalizeName(reversed), e.id);
+      byName.set(normalizeName(`${e.firstName} ${e.lastName}`), e.id);
+      byName.set(normalizeName(`${e.lastName} ${e.firstName}`), e.id);
+      if (e.datevPersonnelNumber) {
+        byPnr.set(normalizePnr(e.datevPersonnelNumber), e.id);
+      }
     }
+
+    const headerName = header.name?.trim() || null;
+    const headerPnr = header.personnelNumber?.trim() || null;
 
     const matched: Array<{ row: ExtractedRow; employeeId: string }> = [];
     const missingSet = new Set<string>();
 
-    for (const row of extraction.rows) {
-      const employeeId = byName.get(normalizeName(row.employeeName));
+    for (const row of rows) {
+      // Per-row name overrides the header (multi-employee sheets); otherwise
+      // the whole sheet belongs to the header employee.
+      const rowName = row.employeeName?.trim() || null;
+      const identityName = rowName ?? headerName;
+      // Personnel number only applies to the header identity.
+      const identityPnr = rowName ? null : headerPnr;
+
+      const employeeId =
+        (identityPnr ? byPnr.get(normalizePnr(identityPnr)) : undefined) ??
+        (identityName ? byName.get(normalizeName(identityName)) : undefined);
+
       if (employeeId) {
         matched.push({ row, employeeId });
       } else {
-        // Block unknown people; surface the (already-on-document) name so the
-        // manager can invite them. This is not new PII — it is on the sheet.
-        missingSet.add(row.employeeName.trim());
+        // Block unknown people; surface the on-document label so the manager
+        // can invite them. Not new PII — it is on the sheet.
+        const label =
+          identityName ??
+          (identityPnr ? `Personal-Nr. ${identityPnr}` : "Unbekannt");
+        missingSet.add(label);
       }
     }
     const missingEmployees = [...missingSet];
@@ -144,8 +175,10 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
             startTime: row.shiftStart,
             endTime: row.shiftEnd,
             breakMinutes: row.breakMinutes,
+            // Overall row confidence folds in the identity (header) confidence
+            // for header-named rows so an unclear name surfaces in the % shown.
             confidence: Math.min(
-              row.confidenceScores.employeeName,
+              row.employeeName ? 1 : header.confidence,
               row.confidenceScores.date,
               row.confidenceScores.shiftStart,
               row.confidenceScores.shiftEnd,

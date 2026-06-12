@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  *
- * POST /api/timesheet/ocr — extract, match employees, stage PENDING_REVIEW.
+ * POST /api/timesheet/ocr — extract, match/suggest, stage every row.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SessionUser } from "@/lib/types";
@@ -11,12 +11,14 @@ const {
   mockUserFindUnique,
   mockEmployeeFindMany,
   mockImportCreate,
+  mockEntryCreateMany,
   mockExtract,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockUserFindUnique: vi.fn(),
   mockEmployeeFindMany: vi.fn(),
   mockImportCreate: vi.fn(),
+  mockEntryCreateMany: vi.fn(),
   mockExtract: vi.fn(),
 }));
 
@@ -39,6 +41,7 @@ vi.mock("@/lib/db", () => {
     user: { findUnique: mockUserFindUnique },
     employee: { findMany: mockEmployeeFindMany },
     timesheetImport: { create: mockImportCreate },
+    timesheetImportEntry: { createManyAndReturn: mockEntryCreateMany },
   };
   return {
     prisma,
@@ -81,37 +84,49 @@ const ROW = {
   breakMinutes: 30,
   confidenceScores: cs,
 };
-const STAGED_ENTRY = {
-  id: "ie1",
-  employeeId: "e1",
-  date: new Date("2026-06-10T00:00:00Z"),
-  startTime: "08:00",
-  endTime: "16:30",
-  breakMinutes: 30,
-  confidence: 0.9,
-  confidenceScores: JSON.stringify(cs),
-  employee: { id: "e1", firstName: "Max", lastName: "Mustermann" },
-};
+
+function extractionWithHeader(
+  name: string | null,
+  personnelNumber: string | null,
+) {
+  return {
+    source: "MOCK",
+    employee: { name, personnelNumber, confidence: 0.95 },
+    rows: [ROW],
+  };
+}
 
 describe("POST /api/timesheet/ocr", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSession.user = MANAGER;
     mockUserFindUnique.mockResolvedValue({ workspaceId: "w1" });
+    mockImportCreate.mockResolvedValue({
+      id: "imp1",
+      status: "PENDING_REVIEW",
+      source: "MOCK",
+    });
+    // Echo the staged rows back in input order, as createManyAndReturn does.
+    mockEntryCreateMany.mockImplementation(({ data }) =>
+      Promise.resolve(
+        data.map((d: Record<string, unknown>, i: number) => ({
+          id: `ie${i}`,
+          ...d,
+        })),
+      ),
+    );
   });
 
   it("rejects non-management users", async () => {
     mockSession.user = { ...MANAGER, role: "EMPLOYEE" } as SessionUser;
-    const res = await POST(makeRequest());
-    expect(res.status).toBe(403);
+    expect((await POST(makeRequest())).status).toBe(403);
   });
 
   it("400s when no file is supplied", async () => {
-    const res = await POST(makeRequest(false));
-    expect(res.status).toBe(400);
+    expect((await POST(makeRequest(false))).status).toBe(400);
   });
 
-  it("matches the header employee by NAME and stages nameless rows", async () => {
+  it("matches the header employee by name and returns the employee list", async () => {
     mockEmployeeFindMany.mockResolvedValue([
       {
         id: "e1",
@@ -120,35 +135,20 @@ describe("POST /api/timesheet/ocr", () => {
         datevPersonnelNumber: null,
       },
     ]);
-    // Common single-employee sheet: name in header, rows carry no name.
-    mockExtract.mockResolvedValue({
-      source: "MOCK",
-      employee: {
-        name: "Max Mustermann",
-        personnelNumber: null,
-        confidence: 0.95,
-      },
-      rows: [ROW, { ...ROW, date: "2026-06-11" }],
-    });
-    mockImportCreate.mockResolvedValue({
-      id: "imp1",
-      status: "PENDING_REVIEW",
-      source: "MOCK",
-      entries: [STAGED_ENTRY],
-    });
+    mockExtract.mockResolvedValue(extractionWithHeader("Max Mustermann", null));
 
     const res = await POST(makeRequest());
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.importId).toBe("imp1");
-    expect(body.entries).toHaveLength(1);
+    expect(body.entries[0].employeeId).toBe("e1");
+    expect(body.entries[0].matchKind).toBe("matched");
     expect(body.missingEmployees).toEqual([]);
-    // Both nameless rows resolved to the header employee → staged together.
-    const created = mockImportCreate.mock.calls[0][0];
-    expect(created.data.entries.create).toHaveLength(2);
+    expect(body.workspaceEmployees).toEqual([
+      { id: "e1", name: "Max Mustermann" },
+    ]);
   });
 
-  it("matches the header employee by PERSONAL-NR even when the name differs", async () => {
+  it("matches by Personal-Nr. even when the name differs", async () => {
     mockEmployeeFindMany.mockResolvedValue([
       {
         id: "e1",
@@ -157,33 +157,37 @@ describe("POST /api/timesheet/ocr", () => {
         datevPersonnelNumber: "123456",
       },
     ]);
-    mockExtract.mockResolvedValue({
-      source: "MOCK",
-      // Name misread, but the personnel number is unambiguous.
-      employee: {
-        name: "Maxx Mustermn",
-        personnelNumber: "123456",
-        confidence: 0.6,
-      },
-      rows: [ROW],
-    });
-    mockImportCreate.mockResolvedValue({
-      id: "imp2",
-      status: "PENDING_REVIEW",
-      source: "MOCK",
-      entries: [STAGED_ENTRY],
-    });
-
-    const res = await POST(makeRequest());
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.missingEmployees).toEqual([]);
-    expect(mockImportCreate.mock.calls[0][0].data.entries.create).toHaveLength(
-      1,
+    mockExtract.mockResolvedValue(
+      extractionWithHeader("Maxx Mustermn", "123456"),
     );
+
+    const body = await (await POST(makeRequest())).json();
+    expect(body.entries[0].employeeId).toBe("e1");
+    expect(body.missingEmployees).toEqual([]);
   });
 
-  it("blocks an unknown header employee and reports them for invite", async () => {
+  it("stages an unmatched-but-close name as a SUGGESTION (not blocked)", async () => {
+    mockEmployeeFindMany.mockResolvedValue([
+      {
+        id: "e2",
+        firstName: "Marie",
+        lastName: "antointe",
+        datevPersonnelNumber: null,
+      },
+    ]);
+    mockExtract.mockResolvedValue(
+      extractionWithHeader("Marie Antoinette", null),
+    );
+
+    const body = await (await POST(makeRequest())).json();
+    expect(body.entries[0].employeeId).toBeNull();
+    expect(body.entries[0].suggestedEmployeeId).toBe("e2");
+    expect(body.entries[0].matchKind).toBe("suggested");
+    // Suggested ≠ missing — manager confirms in the picker.
+    expect(body.missingEmployees).toEqual([]);
+  });
+
+  it("reports a genuinely unknown name as missing (for invite)", async () => {
     mockEmployeeFindMany.mockResolvedValue([
       {
         id: "e1",
@@ -192,36 +196,19 @@ describe("POST /api/timesheet/ocr", () => {
         datevPersonnelNumber: null,
       },
     ]);
-    mockExtract.mockResolvedValue({
-      source: "MOCK",
-      employee: {
-        name: "Erika Unbekannt",
-        personnelNumber: null,
-        confidence: 0.9,
-      },
-      rows: [ROW],
-    });
-    mockImportCreate.mockResolvedValue({
-      id: "imp3",
-      status: "PENDING_REVIEW",
-      source: "MOCK",
-      entries: [],
-    });
-
-    const res = await POST(makeRequest());
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.entries).toHaveLength(0);
-    expect(body.missingEmployees).toEqual(["Erika Unbekannt"]);
-    // No rows matched → none staged.
-    expect(mockImportCreate.mock.calls[0][0].data.entries.create).toHaveLength(
-      0,
+    mockExtract.mockResolvedValue(
+      extractionWithHeader("Zacharias Unbekannt", null),
     );
+
+    const body = await (await POST(makeRequest())).json();
+    expect(body.entries[0].employeeId).toBeNull();
+    expect(body.entries[0].matchKind).toBe("unmatched");
+    expect(body.missingEmployees).toEqual(["Zacharias Unbekannt"]);
   });
 
   it("500s when extraction fails", async () => {
+    mockEmployeeFindMany.mockResolvedValue([]);
     mockExtract.mockRejectedValue(new Error("extraction_failed"));
-    const res = await POST(makeRequest());
-    expect(res.status).toBe(500);
+    expect((await POST(makeRequest())).status).toBe(500);
   });
 });

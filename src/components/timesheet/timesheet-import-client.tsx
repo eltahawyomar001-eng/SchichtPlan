@@ -43,6 +43,7 @@ export function TimesheetImportClient() {
         <TimesheetReview
           importId={result.importId}
           initialEntries={result.entries}
+          workspaceEmployees={result.workspaceEmployees}
           onEdit={reset}
           onConfirmed={(count) => {
             setSuccessCount(count);

@@ -2205,8 +2205,13 @@ model TimesheetImportEntry {
   import              TimesheetImport       @relation(fields: [importId], references: [id], onDelete: Cascade)
   workspaceId         String
   workspace           Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  employeeId          String
-  employee            Employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  // Nullable: a row may be staged before the manager assigns an employee
+  // (auto-match failed). Assignment happens on the Review & Edit screen.
+  employeeId          String?
+  employee            Employee?             @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  /// Raw identity name extracted from the sheet (header or row), retained so
+  /// the manager can assign the right employee when auto-match failed.
+  extractedName       String?
   date                DateTime              @db.Date
   startTime           String
   endTime             String

@@ -32,19 +32,20 @@ import {
 
 const IMAGE = { base64: "AAAA", mimeType: "image/jpeg" };
 
+const HEADER = {
+  name: "Max Mustermann",
+  personnelNumber: "123456",
+  confidence: 0.95,
+};
 const ROW = {
-  employeeName: "Max Mustermann",
+  employeeName: null,
   date: "2026-06-10",
   shiftStart: "08:00",
   shiftEnd: "16:30",
   breakMinutes: 30,
-  confidenceScores: {
-    employeeName: 0.9,
-    date: 0.9,
-    shiftStart: 0.9,
-    shiftEnd: 0.9,
-  },
+  confidenceScores: { date: 0.9, shiftStart: 0.9, shiftEnd: 0.9 },
 };
+const RESULT = { employee: HEADER, rows: [ROW] };
 
 describe("timesheet-vision", () => {
   beforeEach(() => {
@@ -57,7 +58,7 @@ describe("timesheet-vision", () => {
   describe("schemas", () => {
     it("ConfidenceScoresSchema fills defaults", () => {
       const parsed = ConfidenceScoresSchema.parse({});
-      expect(parsed.employeeName).toBe(1);
+      expect(parsed.date).toBe(1);
       expect(parsed.shiftEnd).toBe(1);
     });
 
@@ -67,8 +68,8 @@ describe("timesheet-vision", () => {
       ).toThrow();
     });
 
-    it("ExtractedRowSchema accepts a valid row", () => {
-      expect(ExtractedRowSchema.parse(ROW).employeeName).toBe("Max Mustermann");
+    it("ExtractedRowSchema accepts a nameless row (single-employee sheet)", () => {
+      expect(ExtractedRowSchema.parse(ROW).employeeName).toBeNull();
     });
   });
 
@@ -79,12 +80,14 @@ describe("timesheet-vision", () => {
       expect(isMockMode()).toBe(true);
     });
 
-    it("returns deterministic MOCK rows without calling any vendor", async () => {
+    it("returns a header employee + nameless rows without calling any vendor", async () => {
       process.env.TIMESHEET_OCR_MOCK = "true";
       const out = await extractTimesheet(IMAGE);
       expect(out.source).toBe("MOCK");
+      expect(out.employee.name).toBe("Max Mustermann");
+      expect(out.employee.personnelNumber).toBe("123456");
       expect(out.rows.length).toBeGreaterThan(0);
-      // Includes a low-confidence field to exercise the review UI.
+      expect(out.rows.every((r) => r.employeeName === null)).toBe(true);
       expect(out.rows.some((r) => r.confidenceScores.date < 0.75)).toBe(true);
       expect(anthropicCreate).not.toHaveBeenCalled();
       expect(openaiCreate).not.toHaveBeenCalled();
@@ -94,10 +97,11 @@ describe("timesheet-vision", () => {
   describe("provider path", () => {
     it("uses Anthropic (primary) on success", async () => {
       anthropicCreate.mockResolvedValue({
-        content: [{ type: "tool_use", input: { rows: [ROW] } }],
+        content: [{ type: "tool_use", input: RESULT }],
       });
       const out = await extractTimesheet(IMAGE);
       expect(out.source).toBe("ANTHROPIC");
+      expect(out.employee.name).toBe("Max Mustermann");
       expect(out.rows).toHaveLength(1);
       expect(openaiCreate).not.toHaveBeenCalled();
     });
@@ -107,7 +111,7 @@ describe("timesheet-vision", () => {
         Object.assign(new Error("rate"), { status: 429 }),
       );
       openaiCreate.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify({ rows: [ROW] }) } }],
+        choices: [{ message: { content: JSON.stringify(RESULT) } }],
       });
       const out = await extractTimesheet(IMAGE);
       expect(out.source).toBe("OPENAI");
@@ -129,7 +133,7 @@ describe("timesheet-vision", () => {
         content: [{ type: "text", text: "nope" }],
       });
       openaiCreate.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify({ rows: [ROW] }) } }],
+        choices: [{ message: { content: JSON.stringify(RESULT) } }],
       });
       const out = await extractTimesheet(IMAGE);
       expect(out.source).toBe("OPENAI");

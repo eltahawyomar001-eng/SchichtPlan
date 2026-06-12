@@ -3,10 +3,24 @@
 /** Below this AI confidence a field is flagged and MUST be verified. */
 export const LOW_CONFIDENCE_THRESHOLD = 0.75;
 
+export type MatchKind = "matched" | "suggested" | "unmatched";
+
+export interface WorkspaceEmployeeOption {
+  id: string;
+  name: string;
+}
+
 export interface StagedEntry {
   id: string;
-  employeeId: string;
-  employeeName: string;
+  /** Confidently matched employee, or null when the manager must assign one. */
+  employeeId: string | null;
+  employeeName: string | null;
+  /** Raw name read off the sheet — shown so the manager can assign correctly. */
+  extractedName: string | null;
+  /** Best fuzzy guess to pre-select in the picker (manager confirms). */
+  suggestedEmployeeId: string | null;
+  suggestedEmployeeName: string | null;
+  matchKind: MatchKind;
   /** YYYY-MM-DD */
   date: string;
   /** HH:mm */
@@ -23,16 +37,10 @@ export interface OcrResponse {
   status: string;
   source: string;
   missingEmployees: string[];
+  /** Options for the per-row employee picker. */
+  workspaceEmployees: WorkspaceEmployeeOption[];
   entries: StagedEntry[];
 }
-
-/** Map a field name from confidenceScores to the editable entry field. */
-export const CONFIDENCE_FIELD_MAP: Record<string, keyof StagedEntry> = {
-  date: "date",
-  shiftStart: "shiftStart",
-  shiftEnd: "shiftEnd",
-  employeeName: "employeeName",
-};
 
 export function isLowConfidence(score: number | undefined): boolean {
   return typeof score === "number" && score < LOW_CONFIDENCE_THRESHOLD;

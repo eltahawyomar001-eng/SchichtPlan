@@ -34,6 +34,8 @@ const ApproveBodySchema = z.object({
     .array(
       z.object({
         id: z.string().min(1),
+        // The manager's confirmed employee assignment for this row.
+        employeeId: z.string().min(1),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         shiftStart: z.string().regex(/^\d{2}:\d{2}$/),
         shiftEnd: z.string().regex(/^\d{2}:\d{2}$/),
@@ -81,11 +83,28 @@ export const POST = withRoute(
           if (!stagedIds.has(editId)) return { kind: "bad_entry" as const };
         }
 
+        // Every assigned employee must be an active member of THIS workspace
+        // (a manager could otherwise be tricked into assigning a foreign id).
+        const validEmployees = await tx.employee.findMany({
+          where: {
+            workspaceId,
+            isActive: true,
+            deletedAt: null,
+            id: { in: [...new Set(body.entries.map((e) => e.employeeId))] },
+          },
+          select: { id: true },
+        });
+        const validIds = new Set(validEmployees.map((e) => e.id));
+        for (const e of body.entries) {
+          if (!validIds.has(e.employeeId))
+            return { kind: "bad_employee" as const };
+        }
+
         let materialized = 0;
         for (const entry of imp.entries) {
           const edit = editById.get(entry.id);
-          // If the manager didn't include a staged entry, skip it (treat as
-          // unresolved — only explicitly confirmed rows become shifts).
+          // Only rows the manager explicitly confirmed (with an assigned
+          // employee) become shifts; unassigned rows are left in staging.
           if (!edit) continue;
 
           const date = new Date(`${edit.date}T00:00:00.000Z`);
@@ -93,7 +112,7 @@ export const POST = withRoute(
           const shift = await tx.shift.create({
             data: {
               workspaceId,
-              employeeId: entry.employeeId,
+              employeeId: edit.employeeId,
               date,
               startTime: edit.shiftStart,
               endTime: edit.shiftEnd,
@@ -106,6 +125,7 @@ export const POST = withRoute(
           await tx.timesheetImportEntry.update({
             where: { id: entry.id },
             data: {
+              employeeId: edit.employeeId,
               date,
               startTime: edit.shiftStart,
               endTime: edit.shiftEnd,
@@ -135,6 +155,9 @@ export const POST = withRoute(
       }
       if (result.kind === "bad_entry") {
         return badRequest("An entry does not belong to this import");
+      }
+      if (result.kind === "bad_employee") {
+        return badRequest("An assigned employee is not in this workspace");
       }
 
       createAuditLog({

@@ -4,16 +4,16 @@
    Shared endpoint for BOTH web (drag-drop) and mobile (camera) uploads.
    Accepts a multipart/form-data image + workspace_id, runs server-side
    AI vision extraction (mock-able, with Anthropic→OpenAI failover),
-   matches names against active employees in the caller's workspace, and
-   STAGES the result as PENDING_REVIEW with a full audit trail.
+   resolves the employee, and STAGES every row as PENDING_REVIEW.
 
-   Privacy / Datenschutz:
-     • All AI processing is server-side only (never the client).
-     • The image is processed in memory and never written to disk — there
-       is no temp file to leak; only a SHA-256 documentRef is retained.
-     • No PII (names, hours, raw text) is ever logged.
-     • Tenant isolation: the authenticated workspace wins; a mismatched
-       client-supplied workspace_id is rejected.
+   Matching is best-effort: Personal-Nr. → exact name → fuzzy suggestion.
+   Rows that don't confidently match are still staged (employeeId = null)
+   so the manager can ASSIGN the right employee on the Review screen —
+   instead of being forced to invite someone who already exists.
+
+   Privacy / Datenschutz: server-side only, image processed in memory (no
+   temp file), only a SHA-256 documentRef retained, no PII logged, tenant
+   isolation enforced (authenticated workspace wins).
    ───────────────────────────────────────────────────────────────── */
 
 import { createHash } from "node:crypto";
@@ -31,27 +31,13 @@ import { requireManagement } from "@/lib/authorization";
 import { createAuditLog } from "@/lib/audit";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
-import { extractTimesheet, type ExtractedRow } from "@/lib/ai/timesheet-vision";
+import { extractTimesheet } from "@/lib/ai/timesheet-vision";
+import { buildEmployeeIndex, matchIdentity } from "@/lib/timesheet-match";
 
 export const runtime = "nodejs";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-/** Normalize a person name for tolerant matching (case/space/diacritics-insensitive). */
-function normalizeName(input: string): string {
-  return input
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip diacritics
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** Normalize a personnel number for matching (strip spaces/punctuation, lower). */
-function normalizePnr(input: string): string {
-  return input.replace(/[^a-z0-9]/gi, "").toLowerCase();
-}
 
 export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
   const auth = await requireAuth();
@@ -98,14 +84,13 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
   try {
     extraction = await extractTimesheet({ base64, mimeType: file.type });
   } catch {
-    // extractTimesheet already logged PII-free failure details.
     return serverError("Timesheet extraction failed. Please try again.");
   }
 
-  // ── Resolve each row's identity against ACTIVE workspace employees ──
-  // Identity priority: per-row name (multi-employee rosters) → document
-  // header. Match by Personal-Nr. (datevPersonnelNumber) first, then name.
   const { employee: header, rows } = extraction;
+  const headerName = header.name?.trim() || null;
+  const headerPnr = header.personnelNumber?.trim() || null;
+
   return withWorkspaceContext(workspaceId, async (tx) => {
     const employees = await tx.employee.findMany({
       where: { workspaceId, isActive: true, deletedAt: null },
@@ -115,49 +100,43 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
         lastName: true,
         datevPersonnelNumber: true,
       },
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
     });
 
-    // Lookups: name ("First Last" + "Last First") and personnel number.
-    const byName = new Map<string, string>();
-    const byPnr = new Map<string, string>();
-    for (const e of employees) {
-      byName.set(normalizeName(`${e.firstName} ${e.lastName}`), e.id);
-      byName.set(normalizeName(`${e.lastName} ${e.firstName}`), e.id);
-      if (e.datevPersonnelNumber) {
-        byPnr.set(normalizePnr(e.datevPersonnelNumber), e.id);
-      }
-    }
+    const index = buildEmployeeIndex(employees);
+    const nameById = new Map(
+      employees.map((e) => [e.id, `${e.firstName} ${e.lastName}`]),
+    );
 
-    const headerName = header.name?.trim() || null;
-    const headerPnr = header.personnelNumber?.trim() || null;
-
-    const matched: Array<{ row: ExtractedRow; employeeId: string }> = [];
-    const missingSet = new Set<string>();
-
-    for (const row of rows) {
-      // Per-row name overrides the header (multi-employee sheets); otherwise
-      // the whole sheet belongs to the header employee.
+    // Resolve each row's identity. Per-row name (multi-employee rosters)
+    // overrides the document header; Personal-Nr. only applies to the header.
+    const prepared = rows.map((row) => {
       const rowName = row.employeeName?.trim() || null;
       const identityName = rowName ?? headerName;
-      // Personnel number only applies to the header identity.
       const identityPnr = rowName ? null : headerPnr;
+      const match = matchIdentity(
+        { name: identityName, personnelNumber: identityPnr },
+        index,
+      );
+      const extractedName =
+        identityName ?? (identityPnr ? `Personal-Nr. ${identityPnr}` : null);
+      const confidence = Math.min(
+        rowName ? 1 : header.confidence,
+        row.confidenceScores.date,
+        row.confidenceScores.shiftStart,
+        row.confidenceScores.shiftEnd,
+      );
+      return { row, match, extractedName, confidence };
+    });
 
-      const employeeId =
-        (identityPnr ? byPnr.get(normalizePnr(identityPnr)) : undefined) ??
-        (identityName ? byName.get(normalizeName(identityName)) : undefined);
-
-      if (employeeId) {
-        matched.push({ row, employeeId });
-      } else {
-        // Block unknown people; surface the on-document label so the manager
-        // can invite them. Not new PII — it is on the sheet.
-        const label =
-          identityName ??
-          (identityPnr ? `Personal-Nr. ${identityPnr}` : "Unbekannt");
-        missingSet.add(label);
-      }
-    }
-    const missingEmployees = [...missingSet];
+    // Genuinely unknown names (no match AND no fuzzy suggestion) → invite hint.
+    const missingEmployees = [
+      ...new Set(
+        prepared
+          .filter((p) => p.match.kind === "unmatched" && p.extractedName)
+          .map((p) => p.extractedName as string),
+      ),
+    ];
 
     // ── Stage as PENDING_REVIEW with audit trail ───────────────────
     const created = await tx.timesheetImport.create({
@@ -167,35 +146,38 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
         documentRef,
         missingEmployees: JSON.stringify(missingEmployees),
         importedByUserId: user.id,
-        entries: {
-          create: matched.map(({ row, employeeId }) => ({
-            workspaceId,
-            employeeId,
-            date: new Date(`${row.date}T00:00:00.000Z`),
-            startTime: row.shiftStart,
-            endTime: row.shiftEnd,
-            breakMinutes: row.breakMinutes,
-            // Overall row confidence folds in the identity (header) confidence
-            // for header-named rows so an unclear name surfaces in the % shown.
-            confidence: Math.min(
-              row.employeeName ? 1 : header.confidence,
-              row.confidenceScores.date,
-              row.confidenceScores.shiftStart,
-              row.confidenceScores.shiftEnd,
-            ),
-            confidenceScores: JSON.stringify(row.confidenceScores),
-          })),
-        },
       },
-      include: {
-        entries: {
-          include: {
-            employee: { select: { id: true, firstName: true, lastName: true } },
-          },
-          orderBy: [{ date: "asc" }, { startTime: "asc" }],
-        },
+      select: { id: true, status: true, source: true },
+    });
+
+    // createManyAndReturn preserves input order → safe to zip with `prepared`.
+    const createdEntries = await tx.timesheetImportEntry.createManyAndReturn({
+      data: prepared.map((p) => ({
+        importId: created.id,
+        workspaceId,
+        employeeId: p.match.employeeId,
+        extractedName: p.extractedName,
+        date: new Date(`${p.row.date}T00:00:00.000Z`),
+        startTime: p.row.shiftStart,
+        endTime: p.row.shiftEnd,
+        breakMinutes: p.row.breakMinutes,
+        confidence: p.confidence,
+        confidenceScores: JSON.stringify(p.row.confidenceScores),
+      })),
+      select: {
+        id: true,
+        employeeId: true,
+        extractedName: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        breakMinutes: true,
+        confidence: true,
+        confidenceScores: true,
       },
     });
+
+    const matchedCount = prepared.filter((p) => p.match.employeeId).length;
 
     createAuditLog({
       action: "CREATE",
@@ -204,10 +186,10 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
       userId: user.id,
       userEmail: user.email ?? undefined,
       workspaceId,
-      // Counts only — no names/hours.
       metadata: {
         source: extraction.source,
-        entryCount: created.entries.length,
+        entryCount: createdEntries.length,
+        matchedCount,
         missingCount: missingEmployees.length,
         documentRef,
       },
@@ -216,8 +198,33 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
     log.info("timesheet.ocr.staged", {
       importId: created.id,
       source: extraction.source,
-      entries: created.entries.length,
+      entries: createdEntries.length,
+      matched: matchedCount,
       missing: missingEmployees.length,
+    });
+
+    const entries = createdEntries.map((e, i) => {
+      const sug = prepared[i].match.suggestedEmployeeId;
+      return {
+        id: e.id,
+        employeeId: e.employeeId,
+        employeeName: e.employeeId
+          ? (nameById.get(e.employeeId) ?? null)
+          : null,
+        extractedName: e.extractedName,
+        suggestedEmployeeId: sug,
+        suggestedEmployeeName: sug ? (nameById.get(sug) ?? null) : null,
+        matchKind: prepared[i].match.kind,
+        date: e.date.toISOString().slice(0, 10),
+        shiftStart: e.startTime,
+        shiftEnd: e.endTime,
+        breakMinutes: e.breakMinutes,
+        confidence: e.confidence,
+        confidenceScores: JSON.parse(e.confidenceScores) as Record<
+          string,
+          number
+        >,
+      };
     });
 
     return NextResponse.json(
@@ -226,20 +233,12 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
         status: created.status,
         source: created.source,
         missingEmployees,
-        entries: created.entries.map((e) => ({
+        // Options for the Review-screen employee picker.
+        workspaceEmployees: employees.map((e) => ({
           id: e.id,
-          employeeId: e.employeeId,
-          employeeName: `${e.employee.firstName} ${e.employee.lastName}`,
-          date: e.date.toISOString().slice(0, 10),
-          shiftStart: e.startTime,
-          shiftEnd: e.endTime,
-          breakMinutes: e.breakMinutes,
-          confidence: e.confidence,
-          confidenceScores: JSON.parse(e.confidenceScores) as Record<
-            string,
-            number
-          >,
+          name: `${e.firstName} ${e.lastName}`,
         })),
+        entries,
       },
       { status: 201 },
     );

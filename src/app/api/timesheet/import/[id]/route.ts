@@ -27,20 +27,31 @@ export const GET = withRoute(
 
     const { id } = await context!.params;
 
-    const imp = await withWorkspaceContext(workspaceId, (tx) =>
-      tx.timesheetImport.findFirst({
-        where: { id, workspaceId },
-        include: {
-          entries: {
-            include: {
-              employee: {
-                select: { id: true, firstName: true, lastName: true },
+    const { imp, employees } = await withWorkspaceContext(
+      workspaceId,
+      async (tx) => {
+        const imp = await tx.timesheetImport.findFirst({
+          where: { id, workspaceId },
+          include: {
+            entries: {
+              include: {
+                employee: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
               },
+              orderBy: [{ date: "asc" }, { startTime: "asc" }],
             },
-            orderBy: [{ date: "asc" }, { startTime: "asc" }],
           },
-        },
-      }),
+        });
+        const employees = imp
+          ? await tx.employee.findMany({
+              where: { workspaceId, isActive: true, deletedAt: null },
+              select: { id: true, firstName: true, lastName: true },
+              orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+            })
+          : [];
+        return { imp, employees };
+      },
     );
 
     if (!imp) return notFound("Import not found");
@@ -50,10 +61,21 @@ export const GET = withRoute(
       status: imp.status,
       source: imp.source,
       missingEmployees: JSON.parse(imp.missingEmployees) as string[],
+      workspaceEmployees: employees.map((e) => ({
+        id: e.id,
+        name: `${e.firstName} ${e.lastName}`,
+      })),
       entries: imp.entries.map((e) => ({
         id: e.id,
         employeeId: e.employeeId,
-        employeeName: `${e.employee.firstName} ${e.employee.lastName}`,
+        employeeName: e.employee
+          ? `${e.employee.firstName} ${e.employee.lastName}`
+          : null,
+        extractedName: e.extractedName,
+        // Suggestions are computed at scan time and not persisted.
+        suggestedEmployeeId: null,
+        suggestedEmployeeName: null,
+        matchKind: e.employeeId ? "matched" : "unmatched",
         date: e.date.toISOString().slice(0, 10),
         shiftStart: e.startTime,
         shiftEnd: e.endTime,

@@ -1,4 +1,43 @@
 {
+  "timesheetImport": {
+    "title": "Stundenzettel-Import",
+    "subtitle": "Stundenzettel scannen und per KI auslesen",
+    "upload": {
+      "dropTitle": "Stundenzettel hierher ziehen",
+      "dropHint": "oder klicken, um eine Datei auszuwählen (JPEG, PNG, WebP · max. 10 MB)",
+      "browse": "Datei auswählen",
+      "processing": "Stundenzettel wird ausgelesen …",
+      "processingHint": "Die KI verarbeitet das Dokument. Das kann einen Moment dauern.",
+      "errorGeneric": "Auslesen fehlgeschlagen. Bitte erneut versuchen.",
+      "fileTooLarge": "Das Bild überschreitet das Limit von 10 MB.",
+      "unsupportedType": "Nicht unterstütztes Format. Bitte JPEG, PNG oder WebP verwenden."
+    },
+    "missing": {
+      "title": "Unbekannte Mitarbeiter",
+      "body": "Die folgenden Mitarbeiter aus dem Stundenzettel existieren nicht in diesem Workspace. Sie müssen diese Personen einladen und die Einladung muss angenommen werden, bevor ihre Zeiten per Upload verarbeitet werden können.",
+      "inviteCta": "Mitarbeiter einladen",
+      "continue": "Mit den übrigen fortfahren",
+      "close": "Schließen"
+    },
+    "review": {
+      "title": "Prüfen & Bestätigen",
+      "subtitle": "Bitte prüfen Sie die ausgelesenen Daten. Felder mit geringer KI-Sicherheit sind markiert und müssen bestätigt werden.",
+      "lowConfidence": "Geringe Sicherheit – bitte prüfen",
+      "resolveHint": "Bitte alle markierten Felder prüfen, bevor Sie bestätigen.",
+      "employee": "Mitarbeiter",
+      "date": "Datum",
+      "start": "Beginn",
+      "end": "Ende",
+      "break": "Pause (Min.)",
+      "noEntries": "Keine verwertbaren Einträge gefunden.",
+      "edit": "Bearbeiten",
+      "back": "Zurück",
+      "confirm": "Bestätigen & Übernehmen",
+      "submitting": "Wird übernommen …",
+      "success": "{count} Schicht(en) als „Zur Prüfung“ übernommen.",
+      "error": "Übernahme fehlgeschlagen. Bitte erneut versuchen."
+    }
+  },
   "common": {
     "features": "Funktionen",
     "loading": "Laden…",
@@ -67,6 +106,7 @@
     "shiftPlan": "Schichtplan",
     "sos": "Notfall-Besetzung",
     "timeTracking": "Zeiterfassung",
+    "timesheetImport": "Stundenzettel-Import",
     "absences": "Abwesenheiten",
     "availability": "Verfügbarkeiten",
     "shiftSwap": "Schichttausch",

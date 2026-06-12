@@ -1,4 +1,43 @@
 {
+  "timesheetImport": {
+    "title": "Timesheet Import",
+    "subtitle": "Scan a Stundenzettel and extract it with AI",
+    "upload": {
+      "dropTitle": "Drag the timesheet here",
+      "dropHint": "or click to select a file (JPEG, PNG, WebP · max 10 MB)",
+      "browse": "Select file",
+      "processing": "Reading the timesheet …",
+      "processingHint": "The AI is processing the document. This may take a moment.",
+      "errorGeneric": "Extraction failed. Please try again.",
+      "fileTooLarge": "The image exceeds the 10 MB limit.",
+      "unsupportedType": "Unsupported format. Please use JPEG, PNG or WebP."
+    },
+    "missing": {
+      "title": "Unknown employees",
+      "body": "The following employees from the Stundenzettel do not exist in this workspace. You must invite them and have them accept the invitation to create an account before their timesheet can be processed via upload.",
+      "inviteCta": "Invite employees",
+      "continue": "Continue with the rest",
+      "close": "Close"
+    },
+    "review": {
+      "title": "Review & Confirm",
+      "subtitle": "Please review the extracted data. Fields with low AI confidence are highlighted and must be verified.",
+      "lowConfidence": "Low confidence – please verify",
+      "resolveHint": "Please verify all highlighted fields before confirming.",
+      "employee": "Employee",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "break": "Break (min)",
+      "noEntries": "No usable entries found.",
+      "edit": "Edit",
+      "back": "Back",
+      "confirm": "Confirm & Submit",
+      "submitting": "Submitting …",
+      "success": "{count} shift(s) staged for review.",
+      "error": "Submission failed. Please try again."
+    }
+  },
   "common": {
     "features": "Features",
     "loading": "Loading…",
@@ -67,6 +106,7 @@
     "shiftPlan": "Shift Plan",
     "sos": "Emergency Fill",
     "timeTracking": "Time Tracking",
+    "timesheetImport": "Timesheet Import",
     "absences": "Absences",
     "availability": "Availability",
     "shiftSwap": "Shift Swap",

@@ -40,6 +40,7 @@ import {
   StarIcon,
   ChevronDownIcon,
   AlertCircleIcon,
+  SparklesIcon,
 } from "@/components/icons";
 import { CookieSettingsButton } from "@/components/cookie-banner";
 import { cn } from "@/lib/utils";
@@ -108,6 +109,12 @@ const navGroups: NavGroup[] = [
         key: "employees",
         href: "/mitarbeiter",
         icon: UsersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
+      {
+        key: "timesheetImport",
+        href: "/stundenzettel-import",
+        icon: SparklesIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
       {

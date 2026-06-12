@@ -116,6 +116,8 @@ export const SCOPED_MODELS: ReadonlySet<string> = new Set([
   "TicketCategoryDef",
   "TimeAccount",
   "TimeEntry",
+  "TimesheetImport",
+  "TimesheetImportEntry",
   "User",
   "UserTask",
   "VacationBalance",

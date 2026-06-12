@@ -25,6 +25,7 @@ import {
 } from "@/lib/login-lockout";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { getMobileEntitlements } from "@/lib/mobile-entitlements";
 import { mobileLoginSchema, validateBody } from "@/lib/validations";
 
 function getJwtSecret(): Uint8Array {
@@ -189,6 +190,8 @@ export const POST = withRoute("/api/auth/mobile/login", "POST", async (req) => {
 
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
+  const entitlements = await getMobileEntitlements(user.workspaceId);
+
   log.info("Mobile login successful", {
     userId: user.id,
     email: user.email,
@@ -209,6 +212,7 @@ export const POST = withRoute("/api/auth/mobile/login", "POST", async (req) => {
       onboardingCompleted:
         (user.workspace as unknown as { onboardingCompleted?: boolean })
           ?.onboardingCompleted ?? false,
+      ...entitlements,
     },
   });
 });

@@ -11,6 +11,7 @@ import * as jose from "jose";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
+import { getMobileEntitlements } from "@/lib/mobile-entitlements";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || "fallback-secret-change-me",
@@ -62,6 +63,8 @@ export const GET = withRoute("/api/auth/mobile/profile", "GET", async (req) => {
     );
   }
 
+  const entitlements = await getMobileEntitlements(user.workspaceId);
+
   log.info("Mobile profile fetch", { userId: user.id });
 
   return NextResponse.json({
@@ -75,5 +78,6 @@ export const GET = withRoute("/api/auth/mobile/profile", "GET", async (req) => {
     onboardingCompleted:
       (user.workspace as unknown as { onboardingCompleted?: boolean })
         ?.onboardingCompleted ?? false,
+    ...entitlements,
   });
 });

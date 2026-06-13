@@ -12,10 +12,12 @@
  */
 import {
   getSubscriptionState,
+  canAddEmployee,
   type SubscriptionState,
 } from "@/lib/subscription";
 import { hasTicketingAddon } from "@/lib/ticketing-addon";
 import { hasSchichtplanungAddon } from "@/lib/schichtplanung-addon";
+import { hasTimesheetScannerAddon } from "@/lib/timesheet-scanner-addon";
 
 export interface MobileEntitlements {
   /** "active" | "trial_expired" | "inactive" — drives the blocking paywall. */
@@ -24,6 +26,10 @@ export interface MobileEntitlements {
   ticketingActive: boolean;
   /** Shift-planning add-on active (or Enterprise plan). */
   schichtplanungActive: boolean;
+  /** Timesheet-scanner (paid OCR) add-on active. */
+  timesheetScannerActive: boolean;
+  /** False once the plan's employee limit is reached (gates "invite employee"). */
+  canAddEmployee: boolean;
 }
 
 export async function getMobileEntitlements(
@@ -34,15 +40,30 @@ export async function getMobileEntitlements(
       subscriptionState: "inactive",
       ticketingActive: false,
       schichtplanungActive: false,
+      timesheetScannerActive: false,
+      canAddEmployee: false,
     };
   }
 
-  const [subscriptionState, ticketingActive, schichtplanungActive] =
-    await Promise.all([
-      getSubscriptionState(workspaceId),
-      hasTicketingAddon(workspaceId),
-      hasSchichtplanungAddon(workspaceId),
-    ]);
+  const [
+    subscriptionState,
+    ticketingActive,
+    schichtplanungActive,
+    timesheetScannerActive,
+    employeeSlotAvailable,
+  ] = await Promise.all([
+    getSubscriptionState(workspaceId),
+    hasTicketingAddon(workspaceId),
+    hasSchichtplanungAddon(workspaceId),
+    hasTimesheetScannerAddon(workspaceId),
+    canAddEmployee(workspaceId),
+  ]);
 
-  return { subscriptionState, ticketingActive, schichtplanungActive };
+  return {
+    subscriptionState,
+    ticketingActive,
+    schichtplanungActive,
+    timesheetScannerActive,
+    canAddEmployee: employeeSlotAvailable,
+  };
 }

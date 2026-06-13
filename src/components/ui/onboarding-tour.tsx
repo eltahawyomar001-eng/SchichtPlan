@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon, CheckCircleIcon, XIcon } from "@/components/icons";
 
@@ -18,7 +19,8 @@ interface TourStep {
 
 const STORAGE_KEY = "shiftfy-tour-completed";
 
-const TOUR_STEPS: TourStep[] = [
+/** Tour for workspace owners/admins/managers (planning + administration). */
+const MANAGER_TOUR_STEPS: TourStep[] = [
   {
     target: null,
     title: "Willkommen bei Shiftfy!",
@@ -71,6 +73,55 @@ const TOUR_STEPS: TourStep[] = [
 ];
 
 /**
+ * Tour for employees (joined via invitation). Usage-oriented: see your plan,
+ * track time, request absences — no planning/administration steps.
+ */
+const EMPLOYEE_TOUR_STEPS: TourStep[] = [
+  {
+    target: null,
+    title: "Willkommen im Team!",
+    description:
+      "Schön, dass du dabei bist. Wir zeigen dir kurz, wie du Shiftfy im Alltag nutzt. Du kannst die Tour jederzeit überspringen.",
+    placement: "center",
+  },
+  {
+    target: '[aria-label="Hauptnavigation"]',
+    title: "Navigation",
+    description:
+      "Hier findest du deinen Dienstplan, die Zeiterfassung und deine Abwesenheiten. Auf dem Handy nutze die untere Navigationsleiste.",
+    placement: "right",
+  },
+  {
+    target: '[href="/schichtplan"]',
+    title: "Deine Schichten",
+    description:
+      "Sieh deinen Dienstplan und kommende Schichten auf einen Blick — immer aktuell.",
+    placement: "right",
+  },
+  {
+    target: '[href="/zeiterfassung"]',
+    title: "Zeiterfassung",
+    description:
+      "Stemple zu Schichtbeginn ein und am Ende wieder aus. Deine erfassten Zeiten siehst du jederzeit hier.",
+    placement: "right",
+  },
+  {
+    target: '[href="/abwesenheiten"]',
+    title: "Abwesenheiten",
+    description:
+      "Beantrage Urlaub oder melde dich krank — schnell und papierlos. Den Status siehst du direkt hier.",
+    placement: "right",
+  },
+  {
+    target: null,
+    title: "Du bist startklar!",
+    description:
+      "Das war's! Bei Fragen wende dich an deine Teamleitung oder schau in die Hilfe in den Einstellungen.",
+    placement: "center",
+  },
+];
+
+/**
  * Interactive product tour overlay.
  *
  * Shows a spotlight + tooltip walkthrough on the first visit to the dashboard.
@@ -80,10 +131,16 @@ const TOUR_STEPS: TourStep[] = [
  */
 export function OnboardingTour() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const rafRef = useRef<number>(0);
+
+  // Role-based content: planners (owner/admin/manager) vs invited employees.
+  const role = (session?.user as { role?: string } | undefined)?.role ?? "";
+  const isManager = ["OWNER", "ADMIN", "MANAGER"].includes(role);
+  const steps = isManager ? MANAGER_TOUR_STEPS : EMPLOYEE_TOUR_STEPS;
 
   // Only show on dashboard, only if not yet completed
   useEffect(() => {
@@ -100,7 +157,7 @@ export function OnboardingTour() {
   useEffect(() => {
     if (!active) return;
 
-    const currentStep = TOUR_STEPS[step];
+    const currentStep = steps[step];
     if (!currentStep?.target) {
       rafRef.current = requestAnimationFrame(() => setTargetRect(null));
       return () => cancelAnimationFrame(rafRef.current);
@@ -139,12 +196,12 @@ export function OnboardingTour() {
   }, []);
 
   const next = useCallback(() => {
-    if (step < TOUR_STEPS.length - 1) {
+    if (step < steps.length - 1) {
       setStep((s) => s + 1);
     } else {
       dismiss();
     }
-  }, [step, dismiss]);
+  }, [step, dismiss, steps.length]);
 
   const prev = useCallback(() => {
     if (step > 0) setStep((s) => s - 1);
@@ -164,8 +221,8 @@ export function OnboardingTour() {
 
   if (!active) return null;
 
-  const currentStep = TOUR_STEPS[step];
-  const isLast = step === TOUR_STEPS.length - 1;
+  const currentStep = steps[step];
+  const isLast = step === steps.length - 1;
   const isCenter = currentStep.placement === "center" || !targetRect;
 
   // Calculate tooltip position
@@ -240,7 +297,7 @@ export function OnboardingTour() {
         {/* Progress dots */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
-            {TOUR_STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <div
                 key={i}
                 className={cn(
@@ -313,7 +370,7 @@ export function OnboardingTour() {
 
         {/* Step counter */}
         <p className="mt-3 text-[11px] text-gray-400 dark:text-zinc-500 text-center">
-          Schritt {step + 1} von {TOUR_STEPS.length}
+          Schritt {step + 1} von {steps.length}
         </p>
       </div>
     </div>

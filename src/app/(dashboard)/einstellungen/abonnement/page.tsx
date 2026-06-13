@@ -26,6 +26,7 @@ import {
   TicketIcon,
 } from "@/components/icons";
 import { SchichtplanungAddonCard } from "@/components/billing/schichtplanung-addon-card";
+import { TimesheetScannerAddonCard } from "@/components/billing/timesheet-scanner-addon-card";
 import { UsageDashboard } from "@/components/billing/usage-dashboard";
 import { WorkspaceBillingInfo } from "@/components/billing/workspace-billing-info";
 import type { SessionUser } from "@/lib/types";
@@ -1292,6 +1293,13 @@ function BillingContent() {
           className="scroll-mt-6"
         >
           <SchichtplanungAddonCard
+            hasStripeSubscription={subscription?.hasStripeSubscription ?? false}
+          />
+        </div>
+
+        {/* ─── AI Timesheet Scanner Add-on Section ─── */}
+        <div id="timesheet-scanner-addon" className="scroll-mt-6">
+          <TimesheetScannerAddonCard
             hasStripeSubscription={subscription?.hasStripeSubscription ?? false}
           />
         </div>

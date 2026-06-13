@@ -524,6 +524,12 @@ model Subscription {
   schichtplanungStripeSubscriptionItemId String?
   /// Billing cycle for the schichtplanung add-on: "monthly" or "annual" (null when inactive)
   schichtplanungAddonBilling             String?
+  /// AI Timesheet Scanner add-on (€24.99/mo) — premium quota (600 scans/mo).
+  timesheetScannerAddonActive            Boolean            @default(false)
+  /// Stripe Subscription Item ID for the timesheet-scanner add-on line.
+  timesheetScannerStripeSubscriptionItemId String?
+  /// Billing cycle for the timesheet-scanner add-on: "monthly" (null when inactive)
+  timesheetScannerAddonBilling           String?
   /// Set when seat count exceeds plan limit; hard-block activates 30 days after this date.
   overLimitSince                         DateTime?
   createdAt                              DateTime           @default(now())
@@ -607,6 +613,12 @@ model WorkspaceUsage {
   ticketStorageBytesLimit BigInt    @default(0)
   /// When the ticket counters were last reset (beginning of add-on billing period)
   ticketsResetAt          DateTime  @default(now())
+  /// AI timesheet scans performed this billing period (counts against the quota)
+  scansThisMonth          Int       @default(0)
+  /// Max scans per month (free tier=30, timesheet-scanner add-on=600)
+  scansMonthlyLimit       Int       @default(30)
+  /// When the scan counter was last reset (beginning of the scan billing period)
+  scansResetAt            DateTime  @default(now())
   /// Transactional emails sent this billing period (PIN assignments, notifications)
   emailsSentThisMonth     Int       @default(0)
   /// Maximum emails allowed per billing period (Basic=100, Professional=500, Enterprise=unlimited=-1)

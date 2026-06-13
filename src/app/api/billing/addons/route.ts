@@ -8,6 +8,11 @@ import {
   SCHICHTPLANUNG_ADDON,
   hasSchichtplanungAddon,
 } from "@/lib/schichtplanung-addon";
+import {
+  TIMESHEET_SCANNER_ADDON,
+  hasTimesheetScannerAddon,
+} from "@/lib/timesheet-scanner-addon";
+import { getScanQuota } from "@/lib/timesheet-scanner-quota";
 
 /**
  * GET /api/billing/addons
@@ -22,7 +27,14 @@ export async function GET() {
     if (!auth.ok) return auth.response;
     const { workspaceId } = auth;
 
-    const [tier, usage, sub, schichtplanungActive] = await Promise.all([
+    const [
+      tier,
+      usage,
+      sub,
+      schichtplanungActive,
+      timesheetScannerActive,
+      scanQuota,
+    ] = await Promise.all([
       getTicketingTier(workspaceId),
       prisma.workspaceUsage.findUnique({
         where: { workspaceId },
@@ -44,6 +56,8 @@ export async function GET() {
         },
       }),
       hasSchichtplanungAddon(workspaceId),
+      hasTimesheetScannerAddon(workspaceId),
+      getScanQuota(workspaceId),
     ]);
 
     const rawTierConfig = tier === "NONE" ? null : TICKETING_ADDON[tier];
@@ -91,6 +105,21 @@ export async function GET() {
         perUserAnnualCents: SCHICHTPLANUNG_ADDON.perUserAnnualCents,
         // Current seat count drives the per-user quantity on Stripe
         seatCount: sub?.seatCount ?? 1,
+      },
+      timesheetScanner: {
+        active: timesheetScannerActive,
+        // Free with the Enterprise plan (premium quota included).
+        freeWithPlan: sub?.plan === "ENTERPRISE",
+        priceMonthlyCents: TIMESHEET_SCANNER_ADDON.priceMonthlyCents,
+        freeScansPerMonth: TIMESHEET_SCANNER_ADDON.freeScansPerMonth,
+        premiumScansPerMonth: TIMESHEET_SCANNER_ADDON.premiumScansPerMonth,
+        usage: {
+          tier: scanQuota.tier,
+          used: scanQuota.used,
+          limit: scanQuota.limit,
+          remaining: scanQuota.remaining,
+          resetAt: scanQuota.resetAt.toISOString(),
+        },
       },
     });
   } catch (error) {

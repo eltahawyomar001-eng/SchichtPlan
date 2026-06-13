@@ -33,6 +33,11 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { extractTimesheet } from "@/lib/ai/timesheet-vision";
 import { buildEmployeeIndex, matchIdentity } from "@/lib/timesheet-match";
+import {
+  getScanQuota,
+  consumeScan,
+  quotaExceededPayload,
+} from "@/lib/timesheet-scanner-quota";
 
 export const runtime = "nodejs";
 
@@ -71,6 +76,14 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
   }
   if (file.size > MAX_BYTES) {
     return payloadTooLarge("Image exceeds the 10 MB limit");
+  }
+
+  // ── Quota gate ───────────────────────────────────────────────────
+  // Enforce the monthly scan cap BEFORE the (paid) AI call. Free tier
+  // blocks with an upsell; premium tier blocks with a fair-use notice.
+  const quota = await getScanQuota(workspaceId);
+  if (quota.blocked) {
+    return NextResponse.json(quotaExceededPayload(quota), { status: 402 });
   }
 
   // Read bytes in memory — nothing is written to disk.
@@ -194,6 +207,9 @@ export const POST = withRoute("/api/timesheet/ocr", "POST", async (req) => {
         documentRef,
       },
     });
+
+    // Count this scan against the monthly quota only after a successful stage.
+    await consumeScan(workspaceId);
 
     log.info("timesheet.ocr.staged", {
       importId: created.id,

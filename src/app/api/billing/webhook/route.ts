@@ -16,6 +16,12 @@ import {
   syncTicketingLimits,
 } from "@/lib/ticketing-addon";
 import { getSchichtplanungBillingByPriceId } from "@/lib/schichtplanung-addon";
+import {
+  isTimesheetScannerPriceId,
+  invalidateTimesheetScannerAddonCache,
+  FREE_SCANS_PER_MONTH,
+  PREMIUM_SCANS_PER_MONTH,
+} from "@/lib/timesheet-scanner-addon";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import {
@@ -198,6 +204,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
         await Promise.all([
           invalidateSubscriptionCache(workspaceId),
           invalidateSchichtplanungAddonCache(workspaceId),
+          invalidateTimesheetScannerAddonCache(workspaceId),
         ]).catch(() => {});
 
         log.info(
@@ -260,6 +267,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
         let ticketingTier: "NONE" | "STARTER" | "GROWTH" | "BUSINESS" = "NONE";
         let schichtplanungItemId: string | null = null;
         let schichtplanungBilling: "monthly" | "annual" | null = null;
+        let timesheetScannerItemId: string | null = null;
 
         for (const it of sub.items.data) {
           const itPriceId = it.price.id;
@@ -271,6 +279,8 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
           } else if (schichtplanung) {
             schichtplanungItemId = it.id;
             schichtplanungBilling = schichtplanung;
+          } else if (isTimesheetScannerPriceId(itPriceId)) {
+            timesheetScannerItemId = it.id;
           } else if (getPlanByPriceId(itPriceId)) {
             mainItem = it;
           }
@@ -344,6 +354,8 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             schichtplanungAddonActive: true,
             schichtplanungAddonBilling: true,
             schichtplanungStripeSubscriptionItemId: true,
+            timesheetScannerAddonActive: true,
+            timesheetScannerStripeSubscriptionItemId: true,
           },
         });
 
@@ -363,8 +375,13 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
             dbSub.schichtplanungAddonBilling !== schichtplanungBilling ||
             dbSub.schichtplanungStripeSubscriptionItemId !==
               schichtplanungItemId;
+          const newScannerActive = timesheetScannerItemId !== null;
+          const scannerChanged =
+            dbSub.timesheetScannerAddonActive !== newScannerActive ||
+            dbSub.timesheetScannerStripeSubscriptionItemId !==
+              timesheetScannerItemId;
 
-          if (ticketingChanged || schichtplanungChanged) {
+          if (ticketingChanged || schichtplanungChanged || scannerChanged) {
             await prisma.subscription.update({
               where: { workspaceId: dbSub.workspaceId },
               data: {
@@ -376,6 +393,14 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                   schichtplanungAddonActive: newSchichtplanungActive,
                   schichtplanungAddonBilling: schichtplanungBilling,
                   schichtplanungStripeSubscriptionItemId: schichtplanungItemId,
+                }),
+                ...(scannerChanged && {
+                  timesheetScannerAddonActive: newScannerActive,
+                  timesheetScannerAddonBilling: newScannerActive
+                    ? "monthly"
+                    : null,
+                  timesheetScannerStripeSubscriptionItemId:
+                    timesheetScannerItemId,
                 }),
               },
             });
@@ -391,12 +416,29 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                 `[Stripe] Schichtplanung add-on synced: workspace=${dbSub.workspaceId} → active=${newSchichtplanungActive} billing=${schichtplanungBilling}`,
               );
             }
+            if (scannerChanged) {
+              // Keep the displayed scan cap in step with the entitlement.
+              await prisma.workspaceUsage
+                .updateMany({
+                  where: { workspaceId: dbSub.workspaceId },
+                  data: {
+                    scansMonthlyLimit: newScannerActive
+                      ? PREMIUM_SCANS_PER_MONTH
+                      : FREE_SCANS_PER_MONTH,
+                  },
+                })
+                .catch(() => {});
+              log.info(
+                `[Stripe] Timesheet-scanner add-on synced: workspace=${dbSub.workspaceId} → active=${newScannerActive}`,
+              );
+            }
           }
 
           // Invalidate cached state after any update
           await Promise.all([
             invalidateSubscriptionCache(dbSub.workspaceId),
             invalidateSchichtplanungAddonCache(dbSub.workspaceId),
+            invalidateTimesheetScannerAddonCache(dbSub.workspaceId),
           ]).catch(() => {});
         }
 
@@ -411,6 +453,7 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
         await Promise.all([
           invalidateSubscriptionCache(cancelled.workspaceId),
           invalidateSchichtplanungAddonCache(cancelled.workspaceId),
+          invalidateTimesheetScannerAddonCache(cancelled.workspaceId),
         ]).catch(() => {});
         log.info(`[Stripe] Cancelled: ${sub.id}`);
         break;
@@ -454,7 +497,8 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                   liveSub.items.data.find(
                     (it) =>
                       !getTicketingTierByPriceId(it.price.id) &&
-                      !getSchichtplanungBillingByPriceId(it.price.id),
+                      !getSchichtplanungBillingByPriceId(it.price.id) &&
+                      !isTimesheetScannerPriceId(it.price.id),
                   ) ?? liveSub.items.data[0];
                 const linked = await linkSubscriptionByCustomer({
                   stripeCustomerId: customerId,
@@ -508,7 +552,8 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
                   liveSub.items.data.find(
                     (it) =>
                       !getTicketingTierByPriceId(it.price.id) &&
-                      !getSchichtplanungBillingByPriceId(it.price.id),
+                      !getSchichtplanungBillingByPriceId(it.price.id) &&
+                      !isTimesheetScannerPriceId(it.price.id),
                   ) ?? liveSub.items.data[0];
 
                 await updateSubscriptionFromStripe({

@@ -2,6 +2,7 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import AppleProvider from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import * as OTPAuth from "otpauth";
@@ -81,6 +82,20 @@ export const authOptions: NextAuthOptions = {
             clientId: process.env.AZURE_AD_CLIENT_ID,
             clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
             tenantId: process.env.AZURE_AD_TENANT_ID || "common",
+          }),
+        ]
+      : []),
+
+    // OAuth: Sign in with Apple (web). Uses a "Services ID" as the client id
+    // and a pre-generated ES256 client-secret JWT (see APPLE setup in the env
+    // docs; rotate the secret before its ≤6-month expiry). A new Apple account
+    // flows through the same createUser path as Google/Azure → a workspace is
+    // auto-provisioned and the user becomes OWNER.
+    ...(process.env.APPLE_ID && process.env.APPLE_SECRET
+      ? [
+          AppleProvider({
+            clientId: process.env.APPLE_ID,
+            clientSecret: process.env.APPLE_SECRET,
           }),
         ]
       : []),

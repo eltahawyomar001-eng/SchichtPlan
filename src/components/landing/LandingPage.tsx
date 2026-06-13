@@ -1882,30 +1882,64 @@ function NativeAppSection() {
       />
       <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Phone mockup with camera viewport */}
+          {/* Phone mockup — iPhone 17 Pro Max showing the app's auth screen */}
           <div className="order-2 lg:order-1 flex justify-center">
-            <div className="relative w-[260px] h-[540px] rounded-[2.75rem] border-[6px] border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden">
-              {/* notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-32 rounded-b-2xl bg-zinc-800" />
-              {/* camera viewport */}
-              <div className="absolute inset-0 flex flex-col">
-                <div className="flex-1 relative bg-zinc-900">
-                  <ScanFrame />
-                  <div className="absolute top-4 left-0 right-0 text-center">
-                    <span className="text-xs font-medium text-zinc-400">
-                      {t("nativeAppMockTitle")}
-                    </span>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="px-8 text-center text-sm text-zinc-500">
-                      {t("nativeAppMockHint")}
-                    </p>
-                  </div>
-                </div>
-                {/* shutter */}
-                <div className="h-24 bg-black flex items-center justify-center">
-                  <div className="h-16 w-16 rounded-full border-4 border-white/80 flex items-center justify-center">
-                    <div className="h-12 w-12 rounded-full bg-white" />
+            <div className="relative">
+              {/* Ambient glow behind the device */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 -z-10 mx-auto h-4/5 w-3/4 self-center rounded-full bg-emerald-500/20 blur-3xl"
+              />
+              {/* Titanium frame */}
+              <div className="relative w-[270px] rounded-[3rem] bg-gradient-to-b from-zinc-500 via-zinc-800 to-zinc-900 p-[3px] shadow-[0_30px_90px_-20px_rgba(0,0,0,0.85)]">
+                {/* Black bezel */}
+                <div className="rounded-[2.85rem] bg-black p-2">
+                  {/* Screen */}
+                  <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2.45rem] bg-zinc-950">
+                    {/* Dynamic Island */}
+                    <div className="absolute left-1/2 top-3 z-20 h-[26px] w-[88px] -translate-x-1/2 rounded-full bg-black" />
+
+                    {/* Status bar */}
+                    <div className="flex items-center justify-between px-7 pt-3.5 text-[11px] font-semibold text-white">
+                      <span>9:41</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-white/80" />
+                        <span className="inline-block h-2.5 w-4 rounded-[3px] border border-white/70" />
+                      </span>
+                    </div>
+
+                    {/* Auth screen */}
+                    <div className="flex h-[calc(100%-2.5rem)] flex-col px-6 pb-9 pt-6">
+                      <div className="flex flex-1 flex-col items-center justify-center">
+                        <ShiftfyMark className="h-16 w-16 rounded-2xl" />
+                        <h3 className="mt-5 text-lg font-bold text-white">
+                          {t("nativeAppMockAuthTitle")}
+                        </h3>
+                        <p className="mt-2 max-w-[200px] text-center text-xs leading-relaxed text-zinc-400">
+                          {t("nativeAppMockAuthSubtitle")}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="rounded-xl bg-emerald-500 py-3 text-center text-[13px] font-semibold text-white">
+                          {t("nativeAppMockSignIn")}
+                        </div>
+                        <div className="rounded-xl border border-white/15 py-3 text-center text-[13px] font-semibold text-white">
+                          {t("nativeAppMockCreate")}
+                        </div>
+                        <div className="flex items-center gap-2 py-0.5">
+                          <span className="h-px flex-1 bg-white/10" />
+                          <span className="text-[10px] text-zinc-500">
+                            {t("nativeAppMockOr")}
+                          </span>
+                          <span className="h-px flex-1 bg-white/10" />
+                        </div>
+                        <div className="flex items-center justify-center gap-2 rounded-xl bg-white py-3 text-[13px] font-semibold text-black">
+                          <AppleLogo className="h-4 w-4 text-black" />
+                          Apple
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -2220,7 +2220,12 @@
     "nativeAppStoreLabelTop": "Laden im",
     "nativeAppStoreLabelBottom": "App Store",
     "nativeAppComingSoonBadge": "Bald verfügbar",
-    "nativeAppComingSoonNote": "Die App-Store-Links werden gerade finalisiert und gehen in Kürze live — dann laden Sie Shiftfy direkt auf Ihr iPhone."
+    "nativeAppComingSoonNote": "Die App-Store-Links werden gerade finalisiert und gehen in Kürze live — dann laden Sie Shiftfy direkt auf Ihr iPhone.",
+    "nativeAppMockAuthTitle": "Willkommen bei Shiftfy",
+    "nativeAppMockAuthSubtitle": "Deine Schichten, Zeiterfassung und dein Team – an einem Ort.",
+    "nativeAppMockSignIn": "Anmelden",
+    "nativeAppMockCreate": "Konto erstellen",
+    "nativeAppMockOr": "oder"
   },
   "calculator": {
     "pageTitle": "Ersparnisrechner",

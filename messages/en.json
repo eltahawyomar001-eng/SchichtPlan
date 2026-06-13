@@ -2220,7 +2220,12 @@
     "nativeAppStoreLabelTop": "Download on the",
     "nativeAppStoreLabelBottom": "App Store",
     "nativeAppComingSoonBadge": "Coming soon",
-    "nativeAppComingSoonNote": "App Store links are being finalized and will go live shortly — then you can download Shiftfy straight to your iPhone."
+    "nativeAppComingSoonNote": "App Store links are being finalized and will go live shortly — then you can download Shiftfy straight to your iPhone.",
+    "nativeAppMockAuthTitle": "Welcome to Shiftfy",
+    "nativeAppMockAuthSubtitle": "Your shifts, time tracking and your team — in one place.",
+    "nativeAppMockSignIn": "Sign in",
+    "nativeAppMockCreate": "Create account",
+    "nativeAppMockOr": "or"
   },
   "calculator": {
     "pageTitle": "Savings Calculator",

@@ -34,6 +34,8 @@ import {
   AlertCircleIcon,
   ScaleIcon,
   FileCheckIcon,
+  SparklesIcon,
+  EyeIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -72,10 +74,12 @@ export function LandingPage() {
       <main id="main-content">
         <HeroSection />
         <FeatureTabsSection />
+        <AiScannerSection />
         <SosFeatureSection />
         <ComplianceFeatureSection />
         <BenefitsSection />
         <AppShowcaseSection />
+        <NativeAppSection />
         <TrustSection />
         <RoiCalculatorSection />
         <PricingSection />
@@ -1682,6 +1686,287 @@ function AppShowcaseSection() {
               {b}
             </span>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── AI Timesheet Scanner — premium dark spotlight ─── */
+function AiScannerSection() {
+  const t = useTranslations("landing");
+
+  const pillars = [
+    {
+      icon: ClockIcon,
+      title: t("aiScannerPillar1Title"),
+      desc: t("aiScannerPillar1Desc"),
+    },
+    {
+      icon: ZapIcon,
+      title: t("aiScannerPillar2Title"),
+      desc: t("aiScannerPillar2Desc"),
+    },
+    {
+      icon: ShieldCheckIcon,
+      title: t("aiScannerPillar3Title"),
+      desc: t("aiScannerPillar3Desc"),
+    },
+  ];
+
+  return (
+    <section className="relative overflow-hidden bg-zinc-950 py-20 sm:py-28">
+      {/* Ambient emerald glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"
+      />
+      <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Copy */}
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+              <SparklesIcon className="w-4 h-4" />
+              {t("aiScannerBadge")}
+            </span>
+            <h2 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-[1.1]">
+              {t("aiScannerTitle")}
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-zinc-400">
+              {t("aiScannerSubtitle")}
+            </p>
+
+            <div className="mt-10 space-y-6">
+              {pillars.map((p) => {
+                const Icon = p.icon;
+                return (
+                  <div key={p.title} className="flex gap-4">
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-white">
+                        {p.title}
+                      </h3>
+                      <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                        {p.desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Visual: scan → review mockup */}
+          <div className="relative">
+            <div className="rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
+              {/* Scan viewport with corner brackets */}
+              <div className="relative aspect-[4/3] rounded-2xl bg-zinc-950 overflow-hidden">
+                <ScanFrame />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+                    <SparklesIcon className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <p className="text-sm font-medium text-zinc-300">
+                    {t("aiScannerMockCapture")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Review-before-save panel */}
+              <div className="mt-5 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400">
+                    <EyeIcon className="w-4 h-4 text-emerald-400" />
+                    {t("aiScannerMockReviewTitle")}
+                  </span>
+                  <span className="text-[11px] font-medium text-emerald-400">
+                    {t("aiScannerMockReviewStatus")}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
+                        <div className="h-2.5 w-24 rounded-full bg-zinc-700" />
+                      </div>
+                      <div className="h-2.5 w-12 rounded-full bg-zinc-800" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Minimalist scanner viewport: four corner brackets (custom SVG). */
+function ScanFrame() {
+  return (
+    <svg
+      aria-hidden
+      className="absolute inset-0 h-full w-full text-emerald-400/60"
+      fill="none"
+      viewBox="0 0 100 75"
+      preserveAspectRatio="none"
+    >
+      {/* top-left */}
+      <path
+        d="M10 22 V14 a4 4 0 0 1 4-4 H22"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      {/* top-right */}
+      <path
+        d="M90 22 V14 a4 4 0 0 0 -4-4 H78"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      {/* bottom-left */}
+      <path
+        d="M10 53 V61 a4 4 0 0 0 4 4 H22"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      {/* bottom-right */}
+      <path
+        d="M90 53 V61 a4 4 0 0 1 -4 4 H78"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Apple logo (custom inline SVG — no raster asset, no emoji). */
+function AppleLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 384 512"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+    </svg>
+  );
+}
+
+/* ─── Native iOS App announcement — premium dark spotlight ─── */
+function NativeAppSection() {
+  const t = useTranslations("landing");
+
+  const features = [
+    { icon: SmartphoneIcon, text: t("nativeAppFeature1") },
+    { icon: EyeIcon, text: t("nativeAppFeature2") },
+    { icon: ZapIcon, text: t("nativeAppFeature3") },
+  ];
+
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-zinc-900 to-zinc-950 py-20 sm:py-28">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 right-0 h-[32rem] w-[32rem] rounded-full bg-emerald-500/10 blur-3xl"
+      />
+      <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Phone mockup with camera viewport */}
+          <div className="order-2 lg:order-1 flex justify-center">
+            <div className="relative w-[260px] h-[540px] rounded-[2.75rem] border-[6px] border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden">
+              {/* notch */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-32 rounded-b-2xl bg-zinc-800" />
+              {/* camera viewport */}
+              <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative bg-zinc-900">
+                  <ScanFrame />
+                  <div className="absolute top-4 left-0 right-0 text-center">
+                    <span className="text-xs font-medium text-zinc-400">
+                      {t("nativeAppMockTitle")}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="px-8 text-center text-sm text-zinc-500">
+                      {t("nativeAppMockHint")}
+                    </p>
+                  </div>
+                </div>
+                {/* shutter */}
+                <div className="h-24 bg-black flex items-center justify-center">
+                  <div className="h-16 w-16 rounded-full border-4 border-white/80 flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-full bg-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Copy */}
+          <div className="order-1 lg:order-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+              <SmartphoneIcon className="w-4 h-4" />
+              {t("nativeAppBadge")}
+            </span>
+            <h2 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-[1.1]">
+              {t("nativeAppTitle")}
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-zinc-400">
+              {t("nativeAppSubtitle")}
+            </p>
+
+            <ul className="mt-8 space-y-4">
+              {features.map((f) => {
+                const Icon = f.icon;
+                return (
+                  <li key={f.text} className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <span className="text-sm text-zinc-300">{f.text}</span>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* App Store button + Coming Soon */}
+            <div className="mt-10">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div
+                  role="button"
+                  aria-disabled="true"
+                  className="inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.04] px-5 py-3 opacity-80 cursor-default select-none"
+                >
+                  <AppleLogo className="h-7 w-7 text-white" />
+                  <span className="text-left leading-tight">
+                    <span className="block text-[10px] uppercase tracking-wide text-zinc-400">
+                      {t("nativeAppStoreLabelTop")}
+                    </span>
+                    <span className="block text-base font-semibold text-white">
+                      {t("nativeAppStoreLabelBottom")}
+                    </span>
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 border border-emerald-400/30 px-3 py-1.5 text-xs font-semibold text-emerald-300">
+                  <ClockIcon className="w-3.5 h-3.5" />
+                  {t("nativeAppComingSoonBadge")}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-zinc-500">
+                {t("nativeAppComingSoonNote")}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

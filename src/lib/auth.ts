@@ -53,9 +53,42 @@ interface JwtCacheEntry {
   onboardingCompleted: boolean;
 }
 
+/**
+ * `allowDangerousEmailAccountLinking` (set on the OAuth providers below) lets a
+ * web OAuth sign-in attach to an existing user that shares the provider's
+ * VERIFIED email — needed so accounts created by the iOS app (stored by email,
+ * with NO NextAuth Account row) can sign in on the web.
+ *
+ * That flag also disables NextAuth's built-in guard against an OAuth login
+ * auto-claiming an account with the same email. We re-add the important half of
+ * that guard here, at `linkAccount` (which runs BEFORE signIn and creates the
+ * Account row): OAuth may auto-link only to password-less users (the OAuth /
+ * iOS-created ones) — never silently take over a CREDENTIALS (password)
+ * account. Adding OAuth to a password account stays an explicit, deliberate
+ * action, not a side effect of signing in.
+ */
+const baseAdapter = PrismaAdapter(prisma);
+type LinkAccountArg = Parameters<
+  NonNullable<typeof baseAdapter.linkAccount>
+>[0];
+const adapter: NextAuthOptions["adapter"] = {
+  ...baseAdapter,
+  linkAccount: async (account: LinkAccountArg) => {
+    const owner = await prisma.user.findUnique({
+      where: { id: account.userId },
+      select: { hashedPassword: true },
+    });
+    if (owner?.hashedPassword) {
+      // Surfaces as /login?error=OAuthAccountNotLinked — same as stock NextAuth.
+      throw new Error("OAuthAccountNotLinked");
+    }
+    return baseAdapter.linkAccount!(account);
+  },
+} as NextAuthOptions["adapter"];
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
-  adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
+  adapter,
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 /* 1 hour */,
@@ -418,15 +451,12 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // OAuth-claiming-credentials protection is handled by NextAuth itself:
-        // when getUserByEmail finds an existing user but getUserByAccount finds
-        // no Account for this provider, NextAuth returns OAuthAccountNotLinked
-        // BEFORE signIn is called — so no further check is needed here.
-        //
-        // WARNING: if allowDangerousEmailAccountLinking is ever added to the
-        // NextAuth config, that protection disappears and must be re-implemented
-        // at the adapter level (override linkAccount, not here in signIn, because
-        // the Account row is created before signIn fires).
+        // OAuth-claiming-credentials protection: `allowDangerousEmailAccountLinking`
+        // IS enabled on the providers (so iOS-created, password-less accounts can
+        // sign in on web), which removes NextAuth's stock guard. We re-implement
+        // the credentials half of it in the adapter's `linkAccount` override (see
+        // the `adapter` definition above) — OAuth never auto-claims a password
+        // account. Nothing further is needed here.
 
         if (dbUser?.workspaceId) {
           // Wrapped in try/catch: a transient DB error here must never block

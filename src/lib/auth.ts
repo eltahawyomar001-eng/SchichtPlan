@@ -71,6 +71,12 @@ export const authOptions: NextAuthOptions = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            // The iOS app creates OAuth users by verified email only (no NextAuth
+            // Account row — see findOrCreateOAuthUser). Without this, a web
+            // "Continue with Google" for an iOS-created account throws
+            // OAuthAccountNotLinked and bounces back to /login. Google verifies
+            // the email, so linking by it is safe.
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -82,6 +88,30 @@ export const authOptions: NextAuthOptions = {
             clientId: process.env.AZURE_AD_CLIENT_ID,
             clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
             tenantId: process.env.AZURE_AD_TENANT_ID || "common",
+            // Link to an existing verified-email user (e.g. created by the iOS
+            // app) instead of throwing OAuthAccountNotLinked. See Google above.
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+
+    // OAuth: Sign in with Apple (web). Uses a "Services ID" as the client id
+    // and a pre-generated ES256 client-secret JWT (see APPLE setup in the env
+    // docs; rotate the secret before its ≤6-month expiry). A new Apple account
+    // flows through the same createUser path as Google/Azure → a workspace is
+    // auto-provisioned and the user becomes OWNER.
+    ...(process.env.APPLE_ID && process.env.APPLE_SECRET
+      ? [
+          AppleProvider({
+            clientId: process.env.APPLE_ID,
+            clientSecret: process.env.APPLE_SECRET,
+            // Accounts created via the iOS app's native Apple sign-in exist as a
+            // verified-email user with NO NextAuth Account row. Without this,
+            // "Continue with Apple" on web throws OAuthAccountNotLinked and
+            // silently redirects back to /login. Apple verifies the email (and
+            // the private-relay address is stable per developer team), so
+            // linking by it is safe. See Google above.
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),

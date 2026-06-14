@@ -161,99 +161,118 @@ export function TimesheetReview({
         </div>
       )}
 
-      <div className="space-y-3">
-        {rows.map((e) => {
+      <div className="space-y-2.5">
+        {rows.map((e, idx) => {
           const needsAssign = !e.assignedEmployeeId;
           const isSuggested = !e.employeeId && !!e.suggestedEmployeeId;
           return (
-            <Card key={e.id}>
-              <CardContent className="space-y-3 p-4">
-                {/* Employee assignment */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <UserIcon className="h-3.5 w-3.5 text-gray-400" />
-                    <label className="text-xs font-medium text-gray-500 dark:text-zinc-400">
-                      {t("employee")}
-                    </label>
-                    {needsAssign && (
-                      <span title={t("assignHint")}>
-                        <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500" />
+            <Card
+              key={e.id}
+              className={
+                needsAssign
+                  ? "ring-1 ring-amber-300/70 dark:ring-amber-500/30"
+                  : undefined
+              }
+            >
+              <CardContent className="p-3.5 sm:p-4">
+                {/* One compact, table-like row: employee + the shift fields
+                    inline on desktop; gracefully stacked on smaller screens. */}
+                <div className="grid grid-cols-2 items-start gap-x-3 gap-y-3 sm:grid-cols-4 lg:grid-cols-12">
+                  {/* Employee */}
+                  <div className="col-span-2 space-y-1 sm:col-span-4 lg:col-span-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="grid h-4 w-4 place-items-center rounded bg-gray-100 text-[10px] font-semibold text-gray-500 dark:bg-zinc-800 dark:text-zinc-400">
+                        {idx + 1}
                       </span>
+                      <label className="text-xs font-medium text-gray-500 dark:text-zinc-400">
+                        {t("employee")}
+                      </label>
+                      {needsAssign && (
+                        <span title={t("assignHint")}>
+                          <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-500" />
+                        </span>
+                      )}
+                    </div>
+                    <Select
+                      value={e.assignedEmployeeId}
+                      onChange={(ev) => assign(e.id, ev.target.value)}
+                      className={
+                        needsAssign
+                          ? "border-amber-400 ring-2 ring-amber-400/30"
+                          : undefined
+                      }
+                    >
+                      <option value="">{t("assignPlaceholder")}</option>
+                      {workspaceEmployees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name}
+                        </option>
+                      ))}
+                    </Select>
+                    {/* Context: what was read off the sheet, and any suggestion. */}
+                    {e.extractedName && (
+                      <p className="truncate text-xs text-gray-400">
+                        {t("scanned")}: {e.extractedName}
+                        {isSuggested && e.suggestedEmployeeName
+                          ? ` · ${t("suggested")}: ${e.suggestedEmployeeName}`
+                          : ""}
+                      </p>
+                    )}
+                    {needsAssign && (
+                      <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                        {t("willSkip")}
+                      </p>
                     )}
                   </div>
-                  <Select
-                    value={e.assignedEmployeeId}
-                    onChange={(ev) => assign(e.id, ev.target.value)}
-                    className={
-                      needsAssign
-                        ? "border-amber-400 ring-2 ring-amber-400/30"
-                        : undefined
-                    }
-                  >
-                    <option value="">{t("assignPlaceholder")}</option>
-                    {workspaceEmployees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name}
-                      </option>
-                    ))}
-                  </Select>
-                  {/* Context: what was read off the sheet, and any suggestion. */}
-                  {e.extractedName && (
-                    <p className="text-xs text-gray-400">
-                      {t("scanned")}: {e.extractedName}
-                      {isSuggested && e.suggestedEmployeeName
-                        ? ` · ${t("suggested")}: ${e.suggestedEmployeeName}`
-                        : ""}
-                    </p>
-                  )}
-                  {needsAssign && (
-                    <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                      {t("willSkip")}
-                    </p>
-                  )}
-                </div>
 
-                {/* Shift fields */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <ReviewField
-                    label={t("date")}
-                    type="date"
-                    value={e.date}
-                    flagged={isLowConfidence(e.confidenceScores.date)}
-                    resolved={acked.has(ackKey(e.id, "date"))}
-                    warnLabel={t("lowConfidence")}
-                    onChange={(v) => updateField(e.id, "date", v)}
-                    onAck={() =>
-                      setAcked((p) => new Set(p).add(ackKey(e.id, "date")))
-                    }
-                  />
-                  <ReviewField
-                    label={t("start")}
-                    type="time"
-                    value={e.shiftStart}
-                    flagged={isLowConfidence(e.confidenceScores.shiftStart)}
-                    resolved={acked.has(ackKey(e.id, "shiftStart"))}
-                    warnLabel={t("lowConfidence")}
-                    onChange={(v) => updateField(e.id, "shiftStart", v)}
-                    onAck={() =>
-                      setAcked((p) =>
-                        new Set(p).add(ackKey(e.id, "shiftStart")),
-                      )
-                    }
-                  />
-                  <ReviewField
-                    label={t("end")}
-                    type="time"
-                    value={e.shiftEnd}
-                    flagged={isLowConfidence(e.confidenceScores.shiftEnd)}
-                    resolved={acked.has(ackKey(e.id, "shiftEnd"))}
-                    warnLabel={t("lowConfidence")}
-                    onChange={(v) => updateField(e.id, "shiftEnd", v)}
-                    onAck={() =>
-                      setAcked((p) => new Set(p).add(ackKey(e.id, "shiftEnd")))
-                    }
-                  />
-                  <div className="space-y-1">
+                  {/* Shift fields */}
+                  <div className="lg:col-span-2">
+                    <ReviewField
+                      label={t("date")}
+                      type="date"
+                      value={e.date}
+                      flagged={isLowConfidence(e.confidenceScores.date)}
+                      resolved={acked.has(ackKey(e.id, "date"))}
+                      warnLabel={t("lowConfidence")}
+                      onChange={(v) => updateField(e.id, "date", v)}
+                      onAck={() =>
+                        setAcked((p) => new Set(p).add(ackKey(e.id, "date")))
+                      }
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <ReviewField
+                      label={t("start")}
+                      type="time"
+                      value={e.shiftStart}
+                      flagged={isLowConfidence(e.confidenceScores.shiftStart)}
+                      resolved={acked.has(ackKey(e.id, "shiftStart"))}
+                      warnLabel={t("lowConfidence")}
+                      onChange={(v) => updateField(e.id, "shiftStart", v)}
+                      onAck={() =>
+                        setAcked((p) =>
+                          new Set(p).add(ackKey(e.id, "shiftStart")),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <ReviewField
+                      label={t("end")}
+                      type="time"
+                      value={e.shiftEnd}
+                      flagged={isLowConfidence(e.confidenceScores.shiftEnd)}
+                      resolved={acked.has(ackKey(e.id, "shiftEnd"))}
+                      warnLabel={t("lowConfidence")}
+                      onChange={(v) => updateField(e.id, "shiftEnd", v)}
+                      onAck={() =>
+                        setAcked((p) =>
+                          new Set(p).add(ackKey(e.id, "shiftEnd")),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1 lg:col-span-2">
                     <label className="text-xs font-medium text-gray-500 dark:text-zinc-400">
                       {t("break")}
                     </label>

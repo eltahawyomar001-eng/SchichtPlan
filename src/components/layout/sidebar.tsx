@@ -397,21 +397,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   // for them even though it lives in the management nav group.
   const [brMember, setBrMember] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [workspaceLogo, setWorkspaceLogo] = useState<string | null>(null);
-  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!session) return;
-    fetch("/api/workspace")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d) {
-          setWorkspaceLogo(d.logo ?? null);
-          setWorkspaceName(d.name ?? null);
-        }
-      })
-      .catch(() => {});
-  }, [session]);
 
   useEffect(() => {
     if (!session) return;
@@ -570,25 +555,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Workspace identity */}
-        {workspaceLogo && (
-          <div className="px-4 pb-3">
-            <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50">
-              <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex-shrink-0 shadow-sm">
-                <img
-                  src={workspaceLogo}
-                  alt=""
-                  className="h-full w-full object-contain p-1"
-                />
-              </div>
-              {workspaceName && (
-                <span className="text-sm font-semibold text-gray-800 dark:text-zinc-200 truncate leading-tight">
-                  {workspaceName}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Workspace logo now lives centered in the top nav (see Topbar). */}
 
         {/* Search bar */}
         <div className="px-3 pb-2">

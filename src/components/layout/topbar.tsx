@@ -42,6 +42,28 @@ export function Topbar({
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  // Workspace branding — shown centered in the bar so people instantly see
+  // their own company's logo (premium, "this is your space" feel).
+  const [workspaceLogo, setWorkspaceLogo] = useState<string | null>(null);
+  const [workspaceName, setWorkspaceName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    fetch("/api/workspace")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && d) {
+          setWorkspaceLogo(d.logo ?? null);
+          setWorkspaceName(d.name ?? null);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (
@@ -95,7 +117,8 @@ export function Topbar({
         {/* Hairline bottom border — 0.5px like iOS */}
         <div className="absolute inset-x-0 bottom-0 h-px bg-black/[0.06] dark:bg-white/[0.08]" />
 
-        <div className="flex items-center justify-between py-2.5 sm:py-3 gap-2 sm:gap-3">
+        <div className="flex items-center py-2.5 sm:py-3 gap-3">
+          {/* Left — page title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={openSidebar}
@@ -117,7 +140,26 @@ export function Topbar({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Center — workspace logo (the client's own brand, front and center) */}
+          {workspaceLogo && (
+            <div className="flex items-center gap-2.5 flex-shrink-0 px-2">
+              <div className="flex h-10 items-center justify-center rounded-xl bg-white px-2 ring-1 ring-black/[0.07] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+                <img
+                  src={workspaceLogo}
+                  alt={workspaceName ?? "Workspace"}
+                  className="h-7 w-auto max-w-[140px] object-contain"
+                />
+              </div>
+              {workspaceName && (
+                <span className="hidden xl:block max-w-[200px] truncate text-[15px] font-semibold tracking-tight text-gray-900 dark:text-zinc-100">
+                  {workspaceName}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Right — utilities */}
+          <div className="flex items-center gap-2 flex-shrink-0 flex-1 justify-end">
             {actions}
             <TimeClockPopover />
             <LanguageSwitcher />

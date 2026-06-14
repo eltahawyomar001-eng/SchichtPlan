@@ -140,18 +140,18 @@ export function Topbar({
             </div>
           </div>
 
-          {/* Center — workspace logo (the client's own brand, front and center) */}
+          {/* Center — workspace brand (the client's own logo, front and center) */}
           {workspaceLogo && (
-            <div className="flex items-center gap-2.5 flex-shrink-0 px-2">
-              <div className="flex h-10 items-center justify-center rounded-xl bg-white px-2 ring-1 ring-black/[0.07] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div className="flex flex-shrink-0 items-center gap-2.5 px-2">
+              <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-[10px] bg-white shadow-[0_2px_10px_-3px_rgba(16,24,40,0.18)] ring-1 ring-gray-900/[0.04] dark:ring-white/10">
                 <img
                   src={workspaceLogo}
                   alt={workspaceName ?? "Workspace"}
-                  className="h-7 w-auto max-w-[140px] object-contain"
+                  className="h-full w-full object-contain p-[5px]"
                 />
               </div>
               {workspaceName && (
-                <span className="hidden xl:block max-w-[200px] truncate text-[15px] font-semibold tracking-tight text-gray-900 dark:text-zinc-100">
+                <span className="hidden max-w-[220px] truncate text-[15px] font-semibold tracking-tight text-gray-800 dark:text-zinc-100 lg:block">
                   {workspaceName}
                 </span>
               )}

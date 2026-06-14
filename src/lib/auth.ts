@@ -149,20 +149,6 @@ export const authOptions: NextAuthOptions = {
         ]
       : []),
 
-    // OAuth: Sign in with Apple (web). Uses a "Services ID" as the client id
-    // and a pre-generated ES256 client-secret JWT (see APPLE setup in the env
-    // docs; rotate the secret before its ≤6-month expiry). A new Apple account
-    // flows through the same createUser path as Google/Azure → a workspace is
-    // auto-provisioned and the user becomes OWNER.
-    ...(process.env.APPLE_ID && process.env.APPLE_SECRET
-      ? [
-          AppleProvider({
-            clientId: process.env.APPLE_ID,
-            clientSecret: process.env.APPLE_SECRET,
-          }),
-        ]
-      : []),
-
     CredentialsProvider({
       name: "credentials",
       credentials: {

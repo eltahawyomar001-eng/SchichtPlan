@@ -96,3 +96,11 @@ ALTER TABLE "QuoteItem" ADD CONSTRAINT "QuoteItem_quoteId_fkey" FOREIGN KEY ("qu
 ALTER TABLE "CustomerInvoice" ADD CONSTRAINT "CustomerInvoice_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "CustomerInvoice" ADD CONSTRAINT "CustomerInvoice_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "CustomerInvoiceItem" ADD CONSTRAINT "CustomerInvoiceItem_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "CustomerInvoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Match the workspace-wide RLS posture (app-level scoping is the real guard;
+-- Prisma connects via a privileged role, so enabling RLS without policies is
+-- consistent with the existing tables and silences the Supabase advisor).
+ALTER TABLE "Quote" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "QuoteItem" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "CustomerInvoice" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "CustomerInvoiceItem" ENABLE ROW LEVEL SECURITY;

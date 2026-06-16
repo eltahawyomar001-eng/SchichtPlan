@@ -213,6 +213,8 @@ model Workspace {
   ticketCategoryDefs   TicketCategoryDef[]
   workspaceCustomer    WorkspaceCustomer?
   invoices             Invoice[]
+  quotes               Quote[]
+  customerInvoices     CustomerInvoice[]
   feedback             Feedback[]
   invoiceSequence      InvoiceSequence?
   stationSessions      StationSession[]
@@ -1249,6 +1251,8 @@ model Client {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   projects    Project[]
+  quotes      Quote[]
+  customerInvoices CustomerInvoice[]
 
   @@index([workspaceId])
   @@index([workspaceId, deletedAt])
@@ -2242,4 +2246,121 @@ model TimesheetImportEntry {
   @@index([workspaceId, status])
   @@index([importId])
   @@index([employeeId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FINANCIAL LOOP — Quotes → Invoices (customer-facing billing)
+// (distinct from the Stripe subscription "Invoice" model above)
+// ═══════════════════════════════════════════════════════════════
+
+enum QuoteStatus {
+  ENTWURF
+  GESENDET
+  ANGENOMMEN
+  ABGELEHNT
+  STORNIERT
+}
+
+enum CustomerInvoiceStatus {
+  ENTWURF
+  GESENDET
+  BEZAHLT
+  UEBERFAELLIG
+  STORNIERT
+}
+
+/// Recurrence cadence for recurring customer invoices. KEINE = one-off.
+enum RecurringInterval {
+  KEINE
+  MONATLICH
+  QUARTALSWEISE
+  JAEHRLICH
+}
+
+model Quote {
+  id                 String      @id @default(cuid())
+  workspaceId        String
+  clientId           String?
+  number             String
+  status             QuoteStatus @default(ENTWURF)
+  title              String?
+  notes              String?     @db.Text
+  issueDate          DateTime    @db.Date
+  validUntil         DateTime?   @db.Date
+  vatRate            Float       @default(19)
+  /// Opaque token for the public one-click acceptance page. Null until sent.
+  acceptToken        String?     @unique
+  acceptedAt         DateTime?
+  declinedAt         DateTime?
+  /// Set when the quote has been converted into an invoice.
+  convertedInvoiceId String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  deletedAt          DateTime?
+  items              QuoteItem[]
+  client             Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  workspace          Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, number])
+  @@index([workspaceId, status])
+  @@index([clientId])
+}
+
+model QuoteItem {
+  id             String @id @default(cuid())
+  quoteId        String
+  description    String
+  quantity       Float  @default(1)
+  unitPriceCents Int    @default(0)
+  position       Int    @default(0)
+  quote          Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+}
+
+model CustomerInvoice {
+  id                String                @id @default(cuid())
+  workspaceId       String
+  clientId          String?
+  quoteId           String?
+  number            String
+  status            CustomerInvoiceStatus @default(ENTWURF)
+  title             String?
+  notes             String?               @db.Text
+  issueDate         DateTime              @db.Date
+  dueDate           DateTime              @db.Date
+  vatRate           Float                 @default(19)
+  paidAt            DateTime?
+  sentAt            DateTime?
+  // ── Recurring billing ──
+  recurring         RecurringInterval     @default(KEINE)
+  /// Next date a recurring child invoice should be generated. Null = inactive.
+  recurringNextRun  DateTime?             @db.Date
+  recurringActive   Boolean               @default(false)
+  /// For generated children: points back to the recurring template invoice.
+  recurringParentId String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  deletedAt         DateTime?
+  items             CustomerInvoiceItem[]
+  client            Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  workspace         Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, number])
+  @@index([workspaceId, status])
+  @@index([workspaceId, dueDate])
+  @@index([recurringActive, recurringNextRun])
+  @@index([clientId])
+}
+
+model CustomerInvoiceItem {
+  id             String          @id @default(cuid())
+  invoiceId      String
+  description    String
+  quantity       Float           @default(1)
+  unitPriceCents Int             @default(0)
+  position       Int             @default(0)
+  invoice        CustomerInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
 }

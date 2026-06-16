@@ -431,6 +431,45 @@ export const updateClientSchema = createClientSchema.partial().extend({
   isActive: z.boolean().optional(),
 });
 
+// ── Financial loop: Quotes & Customer Invoices ──────────────────
+const lineItemSchema = z.object({
+  description: requiredString.max(500, "Maximal 500 Zeichen"),
+  quantity: z.number().positive("Menge muss größer als 0 sein").max(1_000_000),
+  unitPriceCents: z.number().int().min(0, "Preis darf nicht negativ sein"),
+});
+
+export const createQuoteSchema = z.object({
+  clientId: optionalString.nullable(),
+  title: optionalString.pipe(z.string().max(300).optional()).nullable(),
+  notes: optionalString.pipe(z.string().max(2000).optional()).nullable(),
+  issueDate: dateString,
+  validUntil: optionalString.nullable(),
+  vatRate: z.number().min(0).max(100).optional(),
+  items: z
+    .array(lineItemSchema)
+    .min(1, "Mindestens eine Position erforderlich"),
+});
+
+export const updateQuoteSchema = createQuoteSchema.partial();
+
+export const createInvoiceSchema = z.object({
+  clientId: optionalString.nullable(),
+  quoteId: optionalString.nullable(),
+  title: optionalString.pipe(z.string().max(300).optional()).nullable(),
+  notes: optionalString.pipe(z.string().max(2000).optional()).nullable(),
+  issueDate: dateString,
+  dueDate: dateString,
+  vatRate: z.number().min(0).max(100).optional(),
+  recurring: z
+    .enum(["KEINE", "MONATLICH", "QUARTALSWEISE", "JAEHRLICH"])
+    .optional(),
+  items: z
+    .array(lineItemSchema)
+    .min(1, "Mindestens eine Position erforderlich"),
+});
+
+export const updateInvoiceSchema = createInvoiceSchema.partial();
+
 // ── Push Subscription ───────────────────────────────────────────
 export const createPushSubscriptionSchema = z.object({
   endpoint: requiredString.url("Ungültige Endpoint-URL"),

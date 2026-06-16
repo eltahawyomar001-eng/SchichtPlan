@@ -171,6 +171,12 @@ const navGroups: NavGroup[] = [
         icon: UsersIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
+      {
+        key: "invoicing",
+        href: "/rechnungen",
+        icon: CreditCardIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
     ],
   },
   {

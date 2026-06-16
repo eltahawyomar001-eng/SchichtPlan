@@ -2289,6 +2289,14 @@ function Footer() {
               </li>
               <li>
                 <Link
+                  href="/sicherheit"
+                  className="hover:text-gray-700 transition-colors"
+                >
+                  {t("footerSecurity")}
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/widerruf"
                   className="hover:text-gray-700 transition-colors"
                 >

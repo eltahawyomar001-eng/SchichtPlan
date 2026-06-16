@@ -219,6 +219,12 @@ export default function ImpressumPage() {
               AVV
             </Link>
             <Link
+              href="/sicherheit"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              Sicherheit
+            </Link>
+            <Link
               href="/widerruf"
               className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >

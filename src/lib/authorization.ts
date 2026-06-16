@@ -84,6 +84,7 @@ export type Resource =
   | "reports"
   | "clients"
   | "projects"
+  | "billing"
   | "webhooks"
   | "month-close"
   | "service-visits"
@@ -257,6 +258,13 @@ const permissionMatrix: Record<Resource, Record<Action, Role[]>> = {
   },
   projects: {
     read: ["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"],
+    create: ["OWNER", "ADMIN", "MANAGER"],
+    update: ["OWNER", "ADMIN", "MANAGER"],
+    delete: ["OWNER", "ADMIN"],
+    approve: [],
+  },
+  billing: {
+    read: ["OWNER", "ADMIN", "MANAGER"],
     create: ["OWNER", "ADMIN", "MANAGER"],
     update: ["OWNER", "ADMIN", "MANAGER"],
     delete: ["OWNER", "ADMIN"],

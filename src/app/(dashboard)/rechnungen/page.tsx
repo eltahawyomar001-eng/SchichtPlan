@@ -18,6 +18,7 @@ import {
   TrashIcon,
   FileExportIcon,
   CheckCircleIcon,
+  DownloadIcon,
 } from "@/components/icons";
 
 type DocKind = "invoice" | "quote";
@@ -372,6 +373,16 @@ function InvoiceTable({
               </td>
               <td className="px-4 py-2.5">
                 <div className="flex justify-end gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="PDF"
+                    onClick={() =>
+                      window.open(`/api/invoices/${inv.id}/pdf`, "_blank")
+                    }
+                  >
+                    <DownloadIcon className="h-3.5 w-3.5" />
+                  </Button>
                   {inv.status === "ENTWURF" && (
                     <Button
                       size="sm"
@@ -457,6 +468,16 @@ function QuoteTable({
               </td>
               <td className="px-4 py-2.5">
                 <div className="flex justify-end gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="PDF"
+                    onClick={() =>
+                      window.open(`/api/quotes/${q.id}/pdf`, "_blank")
+                    }
+                  >
+                    <DownloadIcon className="h-3.5 w-3.5" />
+                  </Button>
                   {(q.status === "ENTWURF" || q.status === "GESENDET") && (
                     <Button
                       size="sm"

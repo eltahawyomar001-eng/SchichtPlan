@@ -201,6 +201,22 @@ export default function StempeluhrSeite() {
     fetchStatus();
   }, [fetchStatus]);
 
+  // Keep the personal punch state in sync with clock events that happen
+  // elsewhere — e.g. clocking in/out at the QR station or on another device.
+  // Without this, an idle page never learns it was clocked in (it only polled
+  // while already active). Polls every 15s + immediately on tab focus.
+  useEffect(() => {
+    const iv = setInterval(fetchStatus, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchStatus();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [fetchStatus]);
+
   // ── Fetch team data (management) ──
   useEffect(() => {
     fetchTeam();

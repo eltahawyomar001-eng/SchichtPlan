@@ -75,7 +75,7 @@ interface Employee {
   flexibleWork: boolean;
   color: string | null;
   isActive: boolean;
-  pinHash: string | null;
+  hasPin: boolean;
   employeeSkills?: EmployeeSkill[];
   locationId?: string | null;
   location?: LocationItem | null;
@@ -173,7 +173,7 @@ export default function MitarbeiterPage() {
       const data = await res.json();
       const list: Employee[] = data.data ?? data;
       setEmployees(list);
-      setUnpinnedCount(list.filter((e) => !e.pinHash && e.isActive).length);
+      setUnpinnedCount(list.filter((e) => !e.hasPin && e.isActive).length);
     } catch {
       setError(tc("loadError"));
     } finally {
@@ -258,6 +258,19 @@ export default function MitarbeiterPage() {
       })
       .catch(() => {});
   }, [fetchEmployees, fetchLocations, fetchDepartments, fetchTeamStatus]);
+
+  // Near-real-time live status dots (5s, matches the punch-clock overview).
+  useEffect(() => {
+    const iv = setInterval(fetchTeamStatus, 5000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchTeamStatus();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [fetchTeamStatus]);
 
   // Auto-open edit form when navigated from detail page with ?edit=<id>
   // (placed after openEditForm so it can reference it)
@@ -1170,10 +1183,10 @@ export default function MitarbeiterPage() {
                   {/* ── PIN status + Send PIN ── */}
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <Badge
-                      variant={employee.pinHash ? "success" : "outline"}
+                      variant={employee.hasPin ? "success" : "outline"}
                       className="text-xs"
                     >
-                      {employee.pinHash ? tq("pinAssigned") : tq("noPin")}
+                      {employee.hasPin ? tq("pinAssigned") : tq("noPin")}
                     </Badge>
                     {employee.email && (
                       <Button
@@ -1192,8 +1205,10 @@ export default function MitarbeiterPage() {
                             );
                             if (res.status === 429) {
                               alert(tq("emailLimitReached"));
-                            } else {
+                            } else if (res.ok) {
                               setPinSentId(employee.id);
+                              // Refresh so the PIN badge flips to "aktiv".
+                              fetchEmployees();
                               setTimeout(
                                 () =>
                                   setPinSentId((id) =>

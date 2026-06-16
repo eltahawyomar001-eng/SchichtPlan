@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { log } from "@/lib/logger";
-import { createPinRevealToken } from "@/lib/pin-reveal";
 
 function getSecret(): string {
   const s = process.env.PIN_SECRET ?? process.env.NEXTAUTH_SECRET;
@@ -53,17 +52,6 @@ export async function sendPinEmail({
   rawPin: string;
   workspaceName: string;
 }): Promise<void> {
-  const appUrl = (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
-    "https://app.shiftfy.de"
-  )
-    .trim()
-    .replace(/\/+$/, "");
-
-  const revealToken = await createPinRevealToken(rawPin);
-  const revealLink = `${appUrl}/pin-reveal?token=${revealToken}`;
-
   const result = await sendEmail({
     to,
     type: "pin_assigned",
@@ -71,18 +59,16 @@ export async function sendPinEmail({
     title: `Ihre Stempeluhr-PIN – ${workspaceName}`,
     message:
       `Guten Tag ${firstName},\n\n` +
-      `Für die QR-Stempelstation von ${workspaceName} wurde Ihnen eine persönliche ` +
-      `4-stellige PIN zugewiesen.\n\n` +
-      `Klicken Sie auf den folgenden Link, um Ihre PIN einmalig anzuzeigen ` +
-      `(gültig 15 Minuten):\n\n` +
+      `für die QR-Stempelstation von ${workspaceName} wurde Ihnen eine ` +
+      `persönliche 4-stellige PIN zugewiesen:\n\n` +
+      `🔑 Ihre PIN: ${rawPin}\n\n` +
       `So nutzen Sie die Stempelstation:\n` +
       `1. Scannen Sie den QR-Code am Eingang mit Ihrer Handykamera.\n` +
-      `2. Geben Sie Ihre 4-stellige PIN ein.\n` +
+      `2. Geben Sie Ihre 4-stellige PIN (${rawPin}) ein.\n` +
       `3. Tippen Sie auf „REIN" oder „RAUS".\n\n` +
-      `Bitte teilen Sie Ihre PIN nicht mit Kolleginnen und Kollegen, ` +
-      `da sie Ihnen persönlich zugeordnet ist.\n\n` +
+      `Bitte bewahren Sie Ihre PIN sicher auf und teilen Sie sie nicht mit ` +
+      `Kolleginnen und Kollegen, da sie Ihnen persönlich zugeordnet ist.\n\n` +
       `Bei Problemen wenden Sie sich an Ihren Vorgesetzten.`,
-    link: revealLink,
   });
   if (!result.success) {
     log.warn("[employee-pin] PIN email not sent", { error: result.error });

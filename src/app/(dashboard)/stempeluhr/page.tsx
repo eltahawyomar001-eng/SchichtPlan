@@ -204,10 +204,19 @@ export default function StempeluhrSeite() {
   // ── Fetch team data (management) ──
   useEffect(() => {
     fetchTeam();
-    // Auto-refresh every 30s
     if (isManager) {
-      const iv = setInterval(fetchTeam, 30000);
-      return () => clearInterval(iv);
+      // Near-real-time live overview (matches the SOS 5s cadence). Also refresh
+      // immediately when the admin returns to the tab so re-clock-in / break /
+      // clock-out transitions surface without waiting for the next tick.
+      const iv = setInterval(fetchTeam, 5000);
+      const onVisible = () => {
+        if (document.visibilityState === "visible") fetchTeam();
+      };
+      document.addEventListener("visibilitychange", onVisible);
+      return () => {
+        clearInterval(iv);
+        document.removeEventListener("visibilitychange", onVisible);
+      };
     }
   }, [fetchTeam, isManager]);
 

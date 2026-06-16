@@ -51,9 +51,11 @@ export const GET = withRoute("/api/employees", "GET", async (req) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (tx.employee.findMany as any)({
           where,
+          // pinHash is fetched so we can derive a `hasPin` boolean below, then
+          // stripped before the response — the hash itself never reaches a client.
           omit: isEmployee(user)
-            ? { hourlyRate: true, contractType: true, pinHash: true }
-            : { pinHash: true },
+            ? { hourlyRate: true, contractType: true }
+            : undefined,
           include: {
             employeeSkills: {
               include: { skill: { select: { id: true, name: true } } },
@@ -74,7 +76,14 @@ export const GET = withRoute("/api/employees", "GET", async (req) => {
       ]),
   );
 
-  return paginatedResponse(employees, total, take, skip);
+  // Derive a client-safe `hasPin` flag and strip the hash from the payload.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sanitized = (employees as any[]).map((e) => {
+    const { pinHash, ...rest } = e;
+    return { ...rest, hasPin: !!pinHash };
+  });
+
+  return paginatedResponse(sanitized, total, take, skip);
 });
 
 export const POST = withRoute(

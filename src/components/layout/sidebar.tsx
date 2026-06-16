@@ -202,6 +202,12 @@ const navGroups: NavGroup[] = [
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
       {
+        key: "payroll",
+        href: "/lohnabrechnung",
+        icon: CreditCardIcon,
+        roles: ["OWNER", "ADMIN"],
+      },
+      {
         key: "payrollExport",
         href: "/lohnexport",
         icon: FileExportIcon,

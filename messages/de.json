@@ -112,6 +112,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "invoicing": "Rechnungen",
+    "payroll": "Lohnabrechnung",
     "shiftPlan": "Schichtplan",
     "sos": "Notfall-Besetzung",
     "timeTracking": "Zeiterfassung",
@@ -1185,6 +1186,38 @@
     "description": "Der AVV nach Art. 28 DSGVO regelt die Verarbeitung personenbezogener Daten Ihrer Beschäftigten durch Shiftfy.",
     "concluded": "Mit der Registrierung abgeschlossen",
     "view": "AVV ansehen / drucken"
+  },
+  "payroll": {
+    "title": "Lohnabrechnung",
+    "description": "Vollständige Brutto-Lohnberechnung: Grundlohn, Zuschläge und Entgeltfortzahlung.",
+    "month": "Monat",
+    "year": "Jahr",
+    "compute": "Berechnen",
+    "computing": "Berechne…",
+    "estimateNote": "Schätzung zur Prüfung und DATEV-Übergabe — ersetzt keine endgültige Lohnabrechnung durch den Steuerberater. Entgeltfortzahlung wird nach dem Lohnausfallprinzip näherungsweise berechnet.",
+    "base": "Grundlohn",
+    "surcharges": "Zuschläge",
+    "continuedPay": "Entgeltfortzahlung",
+    "totalGross": "Brutto gesamt",
+    "gross": "Brutto",
+    "noData": "Keine Daten für diesen Zeitraum.",
+    "employee": "Mitarbeiter",
+    "hourlyRate": "Stundensatz",
+    "workedHours": "Std. gearbeitet",
+    "months": {
+      "1": "Januar",
+      "2": "Februar",
+      "3": "März",
+      "4": "April",
+      "5": "Mai",
+      "6": "Juni",
+      "7": "Juli",
+      "8": "August",
+      "9": "September",
+      "10": "Oktober",
+      "11": "November",
+      "12": "Dezember"
+    }
   },
   "invoicing": {
     "title": "Rechnungen & Angebote",

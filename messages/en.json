@@ -112,6 +112,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "invoicing": "Invoices",
+    "payroll": "Payroll",
     "shiftPlan": "Shift Plan",
     "sos": "Emergency Fill",
     "timeTracking": "Time Tracking",
@@ -1185,6 +1186,38 @@
     "description": "The DPA under Art. 28 GDPR governs the processing of your employees' personal data by Shiftfy.",
     "concluded": "Concluded upon registration",
     "view": "View / print DPA"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "description": "Full gross-wage calculation: base pay, surcharges and continued pay.",
+    "month": "Month",
+    "year": "Year",
+    "compute": "Compute",
+    "computing": "Computing…",
+    "estimateNote": "Estimate for review and DATEV hand-off — not a substitute for your tax advisor's final payroll. Continued pay is approximated using the lost-earnings principle.",
+    "base": "Base pay",
+    "surcharges": "Surcharges",
+    "continuedPay": "Continued pay",
+    "totalGross": "Total gross",
+    "gross": "Gross",
+    "noData": "No data for this period.",
+    "employee": "Employee",
+    "hourlyRate": "Hourly rate",
+    "workedHours": "Hours worked",
+    "months": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    }
   },
   "invoicing": {
     "title": "Invoices & Quotes",

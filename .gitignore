@@ -58,3 +58,7 @@ __pycache__/
 
 # Root-level generator scripts (use scripts/ instead)
 /generate_*.py
+
+# Apple Sign in with Apple private keys — NEVER commit
+AuthKey_*
+*.p8

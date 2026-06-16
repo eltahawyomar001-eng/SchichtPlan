@@ -37,10 +37,10 @@ import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StatusBanner } from "@/components/ui/status-banner";
-import { DATEVConnectCard } from "@/components/settings/datev-connect-card";
 import { OutlookConnectCard } from "@/components/settings/outlook-connect-card";
 import { DATEVNumbersCard } from "@/components/settings/datev-numbers-card";
 import { BetriebsnummerCard } from "@/components/settings/betriebsnummer-card";
+import { AvvCard } from "@/components/settings/avv-card";
 import { WorkspaceLogoCard } from "@/components/settings/workspace-logo-card";
 
 export default function EinstellungenPage() {
@@ -1128,10 +1128,12 @@ export default function EinstellungenPage() {
         <OutlookConnectCard />
 
         {/* DATEV Integration */}
-        <DATEVConnectCard />
         <WorkspaceLogoCard />
         <DATEVNumbersCard />
         <BetriebsnummerCard />
+
+        {/* AVV (Auftragsverarbeitungsvertrag, Art. 28 DSGVO) */}
+        <AvvCard />
 
         {/* DSGVO: Data Privacy & Account Card */}
         <Card>

@@ -213,6 +213,12 @@ export default function ImpressumPage() {
               AGB
             </Link>
             <Link
+              href="/avv"
+              className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              AVV
+            </Link>
+            <Link
               href="/widerruf"
               className="hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
             >

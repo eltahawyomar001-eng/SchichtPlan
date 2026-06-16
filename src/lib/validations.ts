@@ -640,41 +640,6 @@ export const updateEmployeeSkillSchema = z.object({
   issuedAt: optionalString.nullable(),
 });
 
-// ── eAU (electronic sick note) ──────────────────────────────────
-export const createEauRequestSchema = z.object({
-  employeeId: requiredString,
-  absenceRequestId: optionalString,
-  incapacityDate: dateString,
-  isInitial: z.boolean().optional(),
-  insuranceNumber: optionalString,
-  krankenkasseIk: optionalString,
-});
-
-export const updateEauRequestSchema = z.object({
-  status: z.enum(["RETRIEVED", "NOT_FOUND", "ERROR", "MANUAL"]).optional(),
-  auFrom: optionalString.nullable(),
-  auTo: optionalString.nullable(),
-  isInitial: z.boolean().nullable().optional(),
-  issuedDate: optionalString.nullable(),
-  krankenkasse: optionalString.nullable(),
-  reference: optionalString.nullable(),
-  message: optionalString.nullable(),
-  /** When true, copy auFrom/auTo onto the linked absence record. */
-  applyToAbsence: z.boolean().optional(),
-});
-
-// ── SV-Meldeverfahren (gateway: eAU + Sofortmeldung) ────────────
-export const svEauSchema = z.object({
-  employeeId: requiredString,
-  sicknessStartDate: dateString,
-});
-
-export const svSofortmeldungSchema = z.object({
-  employeeId: requiredString,
-  // Optional override; otherwise the employee's employmentStartDate is used.
-  employmentStartDate: optionalString,
-});
-
 // ── Betriebsrat (works council) — BetrVG §87 ────────────────────
 export const addBetriebsratMemberSchema = z.object({
   userId: requiredString,

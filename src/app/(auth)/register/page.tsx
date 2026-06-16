@@ -423,6 +423,14 @@ function RegisterForm() {
                 >
                   {t("terms")}
                 </Link>{" "}
+                {t("avvAnd")}{" "}
+                <Link
+                  href="/avv"
+                  target="_blank"
+                  className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] underline"
+                >
+                  {t("avv")}
+                </Link>{" "}
                 {t("consentTextEnd")}
               </label>
             </div>

@@ -11,7 +11,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { PageContent } from "@/components/ui/page-content";
 import { fmtNum } from "@/lib/utils";
 import { CertificateManager } from "@/components/employees/certificate-manager";
-import { SofortmeldungCard } from "@/components/employees/sofortmeldung-card";
 import {
   ChevronLeftIcon,
   MailIcon,
@@ -576,9 +575,6 @@ export default function EmployeeDetailPage({
             </CardContent>
           </Card>
         )}
-
-        {/* ── Sofortmeldung (SV-Meldeverfahren) ── */}
-        <SofortmeldungCard employeeId={emp.id} />
 
         {/* ── Created at footer ── */}
         <p className="text-xs text-gray-400 dark:text-zinc-500 text-center">

@@ -333,13 +333,13 @@ function HeroSection() {
         <div className="mt-14 sm:mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
           <div className="text-center">
             <div className="mx-auto mb-2 w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <ShieldCheckIcon className="w-5 h-5 text-emerald-600" />
+              <DownloadIcon className="w-5 h-5 text-emerald-600" />
             </div>
             <div className="text-sm font-semibold text-gray-900">
-              {t("heroHighlight1")}
+              {t("heroHighlight4")}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
-              {t("heroHighlight1Desc")}
+              {t("heroHighlight4Desc")}
             </div>
           </div>
           <div className="text-center">
@@ -366,13 +366,13 @@ function HeroSection() {
           </div>
           <div className="text-center">
             <div className="mx-auto mb-2 w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <DownloadIcon className="w-5 h-5 text-emerald-600" />
+              <ShieldCheckIcon className="w-5 h-5 text-emerald-600" />
             </div>
             <div className="text-sm font-semibold text-gray-900">
-              {t("heroHighlight4")}
+              {t("heroHighlight1")}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
-              {t("heroHighlight4Desc")}
+              {t("heroHighlight1Desc")}
             </div>
           </div>
         </div>
@@ -1370,8 +1370,8 @@ function ComplianceFeatureSection() {
     },
     {
       icon: FileCheckIcon,
-      title: t("complianceEauTitle"),
-      desc: t("complianceEauDesc"),
+      title: t("compliancePruefungTitle"),
+      desc: t("compliancePruefungDesc"),
     },
   ];
 
@@ -1556,7 +1556,6 @@ function FAQSection() {
     { q: t("faq3Q"), a: t("faq3A") },
     { q: t("faq4Q"), a: t("faq4A") },
     { q: t("faq5Q"), a: t("faq5A") },
-    { q: t("faqEau"), a: t("faqEauAnswer") },
     { q: t("faqDatevConnect"), a: t("faqDatevConnectAnswer") },
   ];
 

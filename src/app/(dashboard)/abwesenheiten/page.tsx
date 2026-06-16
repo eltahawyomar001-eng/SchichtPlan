@@ -20,7 +20,6 @@ import {
   CalendarOffIcon,
 } from "@/components/icons";
 import { ESignatureBadge } from "@/components/e-signature-badge";
-import { EauPanel } from "@/components/absences/eau-panel";
 import { format } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
@@ -494,13 +493,6 @@ export default function AbwesenheitenPage() {
                             <ESignatureBadge
                               entityType="AbsenceRequest"
                               entityId={absence.id}
-                            />
-                          )}
-                          {canManage && absence.category === "KRANK" && (
-                            <EauPanel
-                              absenceId={absence.id}
-                              employeeId={absence.employee.id}
-                              startDate={absence.startDate}
                             />
                           )}
                         </div>

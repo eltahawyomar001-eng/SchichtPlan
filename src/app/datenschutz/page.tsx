@@ -458,6 +458,69 @@ export default function DatenschutzPage() {
               und der Auftragsverarbeitungsvertrag wie unter a) Vercel
               beschrieben. Die Daten werden auf EU-Servern gespeichert.
             </p>
+
+            <h3 className="text-base font-medium text-gray-800 dark:text-zinc-200 mt-3 mb-1">
+              h) Anthropic, PBC — KI-gestützte Stundenzettel-Erkennung
+            </h3>
+            <p>
+              Sitz: San Francisco, USA. Einsatz ausschließlich für die optionale
+              Funktion &bdquo;Stundenzettel-Scanner&ldquo;: Beim Hochladen eines
+              Stundenzettels wird das Dokumentbild zur automatischen
+              Texterkennung (OCR) an die Anthropic-API (Claude) übermittelt.
+              Dabei können personenbezogene Daten der erfassten Beschäftigten
+              (Name, Arbeits- und Pausenzeiten) verarbeitet werden. Anthropic
+              verarbeitet API-Eingaben <strong>nicht</strong> zum Training
+              seiner Modelle und löscht sie nach kurzer Vorhaltefrist
+              (Zero-Data-Retention bzw. Standard-API-Bedingungen).
+              Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs.
+              2 lit. c DSGVO). Ein Auftragsverarbeitungsvertrag (DPA) gemäß Art.
+              28 DSGVO besteht.{" "}
+              <a
+                href="https://www.anthropic.com/legal/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Datenschutzerklärung von Anthropic
+              </a>
+              .
+            </p>
+
+            <h3 className="text-base font-medium text-gray-800 dark:text-zinc-200 mt-3 mb-1">
+              i) OpenAI, L.L.C. — KI-Texterkennung (Ausfallsicherung)
+            </h3>
+            <p>
+              Sitz: San Francisco, USA. Einsatz ausschließlich als
+              Ausfall-Absicherung für die Funktion
+              &bdquo;Stundenzettel-Scanner&ldquo;: Ist die primäre KI nicht
+              verfügbar, wird das Dokumentbild ersatzweise zur Texterkennung an
+              die OpenAI-API übermittelt. Es gelten dieselben Datenkategorien
+              wie unter h). OpenAI verarbeitet über die API übermittelte Daten
+              <strong> nicht</strong> zum Training seiner Modelle.
+              Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs.
+              2 lit. c DSGVO). Ein Auftragsverarbeitungsvertrag (DPA) gemäß Art.
+              28 DSGVO besteht.{" "}
+              <a
+                href="https://openai.com/policies/row-privacy-policy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Datenschutzerklärung von OpenAI
+              </a>
+              .
+            </p>
+
+            <p className="mt-3 text-gray-600 dark:text-zinc-400">
+              <strong>Einsatz von künstlicher Intelligenz:</strong> KI kommt
+              ausschließlich bei der optionalen Stundenzettel-Erkennung zum
+              Einsatz und nur dann, wenn Sie aktiv ein Dokument hochladen. Es
+              findet keine automatisierte Entscheidung mit rechtlicher Wirkung
+              im Sinne des Art. 22 DSGVO statt — die erkannten Daten werden
+              Ihnen vor der Übernahme stets zur Prüfung und Korrektur angezeigt.
+              Wird der Scanner nicht genutzt, werden keine Daten an die
+              genannten KI-Anbieter übermittelt.
+            </p>
           </section>
 
           {/* 7. Cookies */}

@@ -12,6 +12,7 @@ import {
   ArrowRightIcon,
   ChevronLeftIcon,
   BuildingIcon,
+  UploadCloudIcon,
 } from "@/components/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -271,12 +272,85 @@ function LocationStep({ onNext, onBack }: StepProps) {
 
 function EmployeeStep({ onNext, onBack }: StepProps) {
   const t = useTranslations("onboardingWizard");
+  const [mode, setMode] = useState<"single" | "bulk">("single");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [position, setPosition] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ── Bulk CSV/Excel import state ──
+  const [file, setFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState<{
+    created: number;
+    skipped: number;
+    duplicates: number;
+  } | null>(null);
+
+  const switchMode = (next: "single" | "bulk") => {
+    setMode(next);
+    setError("");
+  };
+
+  const handleBulkImport = async () => {
+    if (!file) {
+      setError(t("bulkNoFile"));
+      return;
+    }
+    setImporting(true);
+    setError("");
+    setResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", "employees");
+      const res = await fetch("/api/import", { method: "POST", body: fd });
+      if (!res.ok) {
+        // 403 PLAN_LIMIT during a trial is expected — surface the server's
+        // German message and let the user fall back to single-add or skip
+        // rather than dead-ending onboarding.
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || data.error || t("genericError"));
+        setImporting(false);
+        return;
+      }
+      const { jobId } = (await res.json()) as { jobId: string };
+
+      // Poll the async import job until it finishes.
+      const poll = async (): Promise<void> => {
+        try {
+          const sres = await fetch(
+            `/api/import/status?jobId=${encodeURIComponent(jobId)}`,
+          );
+          const job = await sres.json();
+          if (job.status === "done") {
+            setResult({
+              created: job.created ?? 0,
+              skipped: job.skipped ?? 0,
+              duplicates: job.duplicates ?? 0,
+            });
+            setImporting(false);
+            return;
+          }
+          if (job.status === "error") {
+            setError(job.error || t("genericError"));
+            setImporting(false);
+            return;
+          }
+          setTimeout(poll, 1000);
+        } catch {
+          setError(t("networkError"));
+          setImporting(false);
+        }
+      };
+      poll();
+    } catch {
+      setError(t("networkError"));
+      setImporting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,113 +396,219 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
           {t("employeeTitle")}
         </h2>
         <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">
-          {t("employeeDesc")}
+          {mode === "single" ? t("employeeDesc") : t("bulkDesc")}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label
-              htmlFor="emp-first"
-              className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
-            >
-              {t("firstName")} *
-            </label>
-            <input
-              id="emp-first"
-              type="text"
-              value={firstName}
-              onChange={(e) => {
-                setFirstName(e.target.value);
-                setError("");
-              }}
-              placeholder={t("firstNamePlaceholder")}
-              className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
-              autoFocus
-              maxLength={100}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="emp-last"
-              className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
-            >
-              {t("lastName")} *
-            </label>
-            <input
-              id="emp-last"
-              type="text"
-              value={lastName}
-              onChange={(e) => {
-                setLastName(e.target.value);
-                setError("");
-              }}
-              placeholder={t("lastNamePlaceholder")}
-              className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
-              maxLength={100}
-            />
-          </div>
-        </div>
-        <div>
-          <label
-            htmlFor="emp-email"
-            className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
-          >
-            {t("emailLabel")}
-          </label>
-          <input
-            id="emp-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t("emailPlaceholder")}
-            className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="emp-pos"
-            className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
-          >
-            {t("positionLabel")}
-          </label>
-          <input
-            id="emp-pos"
-            type="text"
-            value={position}
-            onChange={(e) => setPosition(e.target.value)}
-            placeholder={t("positionPlaceholder")}
-            className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
-            maxLength={100}
-          />
-        </div>
+      {/* Single vs bulk import toggle */}
+      <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 dark:bg-zinc-800 p-1">
+        <button
+          type="button"
+          onClick={() => switchMode("single")}
+          className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            mode === "single"
+              ? "bg-white dark:bg-zinc-700 text-gray-900 dark:text-zinc-100 shadow-sm"
+              : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
+          }`}
+        >
+          {t("addModeSingle")}
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode("bulk")}
+          className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            mode === "bulk"
+              ? "bg-white dark:bg-zinc-700 text-gray-900 dark:text-zinc-100 shadow-sm"
+              : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
+          }`}
+        >
+          {t("addModeBulk")}
+        </button>
+      </div>
 
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-lg px-3 py-2">
-            {error}
+      {mode === "single" && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="emp-first"
+                className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
+              >
+                {t("firstName")} *
+              </label>
+              <input
+                id="emp-first"
+                type="text"
+                value={firstName}
+                onChange={(e) => {
+                  setFirstName(e.target.value);
+                  setError("");
+                }}
+                placeholder={t("firstNamePlaceholder")}
+                className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
+                autoFocus
+                maxLength={100}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="emp-last"
+                className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
+              >
+                {t("lastName")} *
+              </label>
+              <input
+                id="emp-last"
+                type="text"
+                value={lastName}
+                onChange={(e) => {
+                  setLastName(e.target.value);
+                  setError("");
+                }}
+                placeholder={t("lastNamePlaceholder")}
+                className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
+                maxLength={100}
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              htmlFor="emp-email"
+              className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
+            >
+              {t("emailLabel")}
+            </label>
+            <input
+              id="emp-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("emailPlaceholder")}
+              className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="emp-pos"
+              className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5"
+            >
+              {t("positionLabel")}
+            </label>
+            <input
+              id="emp-pos"
+              type="text"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder={t("positionPlaceholder")}
+              className="flex h-10 sm:h-11 w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-transparent"
+              maxLength={100}
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+              {t("back")}
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !firstName.trim() || !lastName.trim()}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+            >
+              {loading ? t("saving") : t("next")}
+              {!loading && <ArrowRightIcon className="h-4 w-4" />}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {mode === "bulk" && (
+        <div className="space-y-4">
+          <p className="text-xs text-gray-500 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800/60 rounded-lg px-3 py-2.5">
+            {t("bulkColumnsHint")}
           </p>
-        )}
 
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+          <label
+            htmlFor="emp-csv"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-8 text-center hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors"
           >
-            <ChevronLeftIcon className="h-4 w-4" />
-            {t("back")}
-          </button>
-          <button
-            type="submit"
-            disabled={loading || !firstName.trim() || !lastName.trim()}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
-          >
-            {loading ? t("saving") : t("next")}
-            {!loading && <ArrowRightIcon className="h-4 w-4" />}
-          </button>
+            <UploadCloudIcon className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+              {file ? file.name : t("bulkChooseFile")}
+            </span>
+            <span className="text-xs text-gray-400 dark:text-zinc-500">
+              CSV, XLSX
+            </span>
+            <input
+              id="emp-csv"
+              type="file"
+              accept=".csv,.xlsx"
+              className="sr-only"
+              onChange={(e) => {
+                setFile(e.target.files?.[0] ?? null);
+                setError("");
+                setResult(null);
+              }}
+            />
+          </label>
+
+          {result && (
+            <p className="text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-lg px-3 py-2">
+              {t("bulkResult", {
+                created: result.created,
+                skipped: result.skipped,
+                duplicates: result.duplicates,
+              })}
+            </p>
+          )}
+
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+              {t("back")}
+            </button>
+            {result ? (
+              <button
+                type="button"
+                onClick={onNext}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+              >
+                {t("next")}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleBulkImport}
+                disabled={importing || !file}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+              >
+                {importing ? t("bulkImporting") : t("bulkImportButton")}
+              </button>
+            )}
+          </div>
         </div>
-      </form>
+      )}
     </div>
   );
 }

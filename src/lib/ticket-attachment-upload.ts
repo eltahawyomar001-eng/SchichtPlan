@@ -10,9 +10,6 @@
 
 "use client";
 
-import { StorageClient } from "@supabase/storage-js";
-import { TICKET_BUCKET } from "@/lib/ticket-file-validation";
-
 export interface UploadedAttachment {
   path: string;
   fileName: string;
@@ -22,23 +19,11 @@ export interface UploadedAttachment {
 interface SignedUpload {
   path: string;
   token: string;
+  /** Absolute signed upload URL (already carries the upload token). */
   signedUrl: string;
   fileName: string;
   fileType: string;
   fileSize: number;
-}
-
-let _client: StorageClient | null = null;
-function browserStorage(): StorageClient {
-  if (_client) return _client;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url) throw new Error("Supabase URL ist nicht konfiguriert.");
-  _client = new StorageClient(`${url}/storage/v1`, {
-    apikey: anon ?? "",
-    Authorization: `Bearer ${anon ?? ""}`,
-  });
-  return _client;
 }
 
 /** Request signed upload URLs from a signing endpoint. */
@@ -69,24 +54,38 @@ async function requestSignedUploads(
   return uploads;
 }
 
-/** PUT each file straight to storage via its signed URL. */
+/**
+ * PUT each file straight to storage via its absolute signed URL. Uses plain
+ * fetch (no Supabase client) so the browser needs no Supabase env vars — the
+ * signed URL minted server-side already carries the upload token.
+ */
 async function putToSignedUrls(
   files: File[],
   uploads: SignedUpload[],
 ): Promise<UploadedAttachment[]> {
-  const storage = browserStorage();
   const attached: UploadedAttachment[] = [];
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const u = uploads[i];
-    const { error } = await storage
-      .from(TICKET_BUCKET)
-      .uploadToSignedUrl(u.path, u.token, file, {
-        contentType: file.type || "application/octet-stream",
+    // Mirror @supabase/storage-js' browser upload contract exactly: multipart
+    // FormData with the file under the empty key, no explicit content-type so
+    // the browser sets the multipart boundary. The signed URL carries the token.
+    const form = new FormData();
+    form.append("cacheControl", "3600");
+    form.append("", file);
+    let res: Response;
+    try {
+      res = await fetch(u.signedUrl, {
+        method: "PUT",
+        headers: { "x-upsert": "false" },
+        body: form,
       });
-    if (error) {
+    } catch {
+      throw new Error(`${file.name}: Datei-Upload fehlgeschlagen.`);
+    }
+    if (!res.ok) {
       throw new Error(
-        `${file.name}: ${error.message || "Datei-Upload fehlgeschlagen."}`,
+        `${file.name}: Datei-Upload fehlgeschlagen (${res.status}).`,
       );
     }
     attached.push({ path: u.path, fileName: file.name, fileType: file.type });

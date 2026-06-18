@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
 import { can, isManagement } from "@/lib/authorization";
+import { uploadTicketAttachments } from "@/lib/ticket-attachment-upload";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -241,11 +242,23 @@ export default function TicketDetailPage() {
     setUploading(true);
     setUploadError(null);
     try {
-      const fd = new FormData();
-      for (const f of list) fd.append("file", f);
+      // Upload directly to storage (bypasses the serverless body-size limit),
+      // then register the uploaded objects with the ticket.
+      let attachments;
+      try {
+        attachments = await uploadTicketAttachments(list, id);
+      } catch (uploadErr) {
+        setUploadError(
+          uploadErr instanceof Error
+            ? uploadErr.message
+            : t("attachments.uploadFailed"),
+        );
+        return;
+      }
       const res = await fetch(`/api/tickets/${id}/attachments`, {
         method: "POST",
-        body: fd,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attachments }),
       });
       const data: {
         message?: string;

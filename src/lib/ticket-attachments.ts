@@ -12,21 +12,30 @@ import { StorageClient } from "@supabase/storage-js";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import {
+  checkMagicBytes as _checkMagicBytes,
+  validateFile as _validateFile,
+} from "@/lib/ticket-file-validation";
 
 export {
   MAX_ATTACHMENT_BYTES,
   MAX_ATTACHMENTS_PER_TICKET,
+  MAX_EXTERNAL_FILE_BYTES,
+  MAX_EXTERNAL_FILES_PER_REQUEST,
   ALLOWED_MIME_TYPES,
+  TICKET_BUCKET,
   validateFile,
   checkMagicBytes,
 } from "@/lib/ticket-file-validation";
+
+import { TICKET_BUCKET } from "@/lib/ticket-file-validation";
 export type { FileValidationResult } from "@/lib/ticket-file-validation";
 
 /* ═══════════════════════════════════════════════════════════════
    Supabase Storage client
    ═══════════════════════════════════════════════════════════════ */
 
-const BUCKET = "ticket-attachments";
+const BUCKET = TICKET_BUCKET;
 
 /**
  * Resolve the Supabase project URL.
@@ -151,6 +160,180 @@ export async function deleteBlob(fileUrl: string): Promise<void> {
   } catch (err) {
     log.warn("[ticket-attachments] deleteBlob threw", { fileUrl, err });
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Direct browser → storage uploads (signed upload URLs)
+
+   Vercel Serverless Functions hard-reject request bodies larger than
+   ~4.5 MB at the platform edge — long before the route handler runs and
+   regardless of `runtime = "nodejs"`. Routing multi-megabyte attachments
+   through /api/tickets therefore fails silently for any file (or batch)
+   over that limit. To honour the advertised 25 MB/file ceiling we issue a
+   short-lived signed upload URL and let the browser PUT the bytes straight
+   to Supabase Storage, then send only lightweight metadata to the API.
+   ═══════════════════════════════════════════════════════════════ */
+
+export interface SignedUpload {
+  /** Storage object path (workspace-scoped). Echoed back at finalize time. */
+  path: string;
+  /** One-time upload token bound to `path`. */
+  token: string;
+  /** Full signed URL the browser uploads to. */
+  signedUrl: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+}
+
+/**
+ * Create one signed upload URL per file. Paths are workspace-scoped so the
+ * finalize step can reject any attempt to attach an object from outside the
+ * caller's workspace.
+ */
+export async function createSignedUploadUrls(
+  workspaceId: string,
+  files: Array<{ fileName: string; fileType: string; fileSize: number }>,
+): Promise<SignedUpload[]> {
+  const storage = getStorageClient();
+  const out: SignedUpload[] = [];
+  for (const f of files) {
+    const path = buildStoragePath(workspaceId, "uploads", f.fileName);
+    const { data, error } = await storage
+      .from(BUCKET)
+      .createSignedUploadUrl(path);
+    if (error || !data) {
+      log.error("[ticket-attachments] createSignedUploadUrl error", {
+        message: error?.message,
+        path,
+      });
+      throw new Error(
+        `SUPABASE_SIGN_ERROR: ${error?.message ?? "unknown error"}`,
+      );
+    }
+    out.push({
+      path,
+      token: data.token,
+      signedUrl: data.signedUrl,
+      fileName: f.fileName,
+      fileType: f.fileType,
+      fileSize: f.fileSize,
+    });
+  }
+  return out;
+}
+
+export interface FinalizedAttachment {
+  path: string;
+  fileName: string;
+  fileType: string;
+  /** Authoritative size read back from storage (not client-supplied). */
+  size: number;
+  publicUrl: string;
+}
+
+export interface AttachmentRejection {
+  fileName: string;
+  code: string;
+  message: string;
+}
+
+/**
+ * Verify objects a client claims to have uploaded directly to storage, before
+ * linking them to a ticket. Guards against:
+ *   • cross-workspace / arbitrary paths (prefix check)
+ *   • objects that don't actually exist
+ *   • size / type / extension violations (authoritative size from storage)
+ *   • content that doesn't match the declared type (magic-byte sniff)
+ *
+ * Returns the validated attachments plus per-file rejections. Rejected objects
+ * are deleted best-effort so they don't linger as orphans.
+ */
+export async function finalizeDirectUploads(
+  workspaceId: string,
+  claims: Array<{ path: string; fileName: string; fileType: string }>,
+): Promise<{
+  valid: FinalizedAttachment[];
+  rejections: AttachmentRejection[];
+}> {
+  const storage = getStorageClient();
+  const valid: FinalizedAttachment[] = [];
+  const rejections: AttachmentRejection[] = [];
+  const prefix = `${workspaceId}/`;
+
+  for (const claim of claims) {
+    const reject = async (code: string, message: string) => {
+      rejections.push({ fileName: claim.fileName, code, message });
+      // Best-effort cleanup of an object we won't be linking.
+      if (claim.path.startsWith(prefix))
+        await deleteBlob(publicUrl(claim.path));
+    };
+
+    // ── Workspace scoping: never link an object outside this workspace. ──
+    if (!claim.path.startsWith(prefix) || claim.path.includes("..")) {
+      rejections.push({
+        fileName: claim.fileName,
+        code: "INVALID_PATH",
+        message: "Ungültiger Datei-Pfad.",
+      });
+      continue;
+    }
+
+    // ── Authoritative size + existence from storage metadata. ──
+    let size = 0;
+    try {
+      const { data: meta, error } = await storage.from(BUCKET).info(claim.path);
+      if (error || !meta) {
+        await reject("UPLOAD_NOT_FOUND", "Hochgeladene Datei nicht gefunden.");
+        continue;
+      }
+      size = Number((meta as { size?: number }).size ?? 0);
+    } catch {
+      await reject("UPLOAD_NOT_FOUND", "Hochgeladene Datei nicht gefunden.");
+      continue;
+    }
+
+    // ── Same size/type/extension rules as the direct multipart path. ──
+    const v = _validateFile({
+      name: claim.fileName,
+      type: claim.fileType,
+      size,
+    });
+    if (!v.ok) {
+      await reject(v.code ?? "INVALID_FILE", v.message ?? "Datei abgelehnt.");
+      continue;
+    }
+
+    // ── Magic-byte sniff: read the first bytes back from the public object. ──
+    try {
+      const res = await fetch(publicUrl(claim.path), {
+        headers: { Range: "bytes=0-15" },
+      });
+      if (res.ok || res.status === 206) {
+        const head = new Uint8Array(await res.arrayBuffer());
+        if (!_checkMagicBytes(head, claim.fileType)) {
+          await reject(
+            "MAGIC_BYTES_MISMATCH",
+            `Der Inhalt von "${claim.fileName}" stimmt nicht mit dem deklarierten Dateityp überein.`,
+          );
+          continue;
+        }
+      }
+    } catch {
+      // Network blip reading back the head — fail open on the sniff only;
+      // size/type/extension already validated above.
+    }
+
+    valid.push({
+      path: claim.path,
+      fileName: claim.fileName,
+      fileType: claim.fileType,
+      size,
+      publicUrl: publicUrl(claim.path),
+    });
+  }
+
+  return { valid, rejections };
 }
 
 /* ═══════════════════════════════════════════════════════════════

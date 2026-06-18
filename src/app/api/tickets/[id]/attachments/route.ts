@@ -2,8 +2,10 @@
  * Ticket Attachments — upload (POST) and list (GET).
  *
  * POST  /api/tickets/[id]/attachments
- *   Multipart form-data with one or more "file" fields.
- *   Optional "commentId" field to associate with a specific comment.
+ *   JSON { attachments: [{ path, fileName, fileType }], commentId? } referencing
+ *   objects already uploaded to storage via signed URLs (see
+ *   /api/tickets/attachments/sign). Optional "commentId" associates the
+ *   attachments with a specific comment.
  *
  * GET   /api/tickets/[id]/attachments
  *   Returns all attachments for the ticket the caller has access to.
@@ -23,8 +25,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isEmployee, requirePermission } from "@/lib/authorization";
 
-// Force Node.js runtime so multipart streaming works with files >4 MB.
-// Default Next.js App Router body limit is too small for our 25 MB/file ceiling.
+// Attachments are uploaded directly to storage from the browser (signed URLs),
+// so this route only handles small JSON metadata — but we keep the Node.js
+// runtime for the Supabase service-role storage client used at finalize time.
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -41,11 +44,10 @@ import { requireTicketingAddon } from "@/lib/ticketing-addon";
 import { logAttachmentAdded } from "@/lib/ticket-events";
 import {
   MAX_ATTACHMENTS_PER_TICKET,
-  validateFile,
   requireStorageQuota,
   recordStorageUsage,
-  uploadToBlob,
   deleteBlob,
+  finalizeDirectUploads,
 } from "@/lib/ticket-attachments";
 
 // ─── POST  /api/tickets/[id]/attachments ───────────────────────
@@ -105,24 +107,28 @@ export async function POST(
       return forbidden("Kein Zugriff auf dieses Ticket");
     }
 
-    // Parse multipart body
-    let formData: FormData;
+    // Body: JSON { attachments: [{ path, fileName, fileType }], commentId? }
+    // referencing objects the browser already uploaded straight to storage via
+    // signed URLs (see /api/tickets/attachments/sign). This bypasses Vercel's
+    // ~4.5 MB Serverless request-body limit. Multipart bodies are no longer
+    // accepted here since they fail at the platform edge for large files.
+    let parsed: {
+      attachments?: Array<{ path: string; fileName: string; fileType: string }>;
+      commentId?: string | null;
+    };
     try {
-      formData = await req.formData();
+      parsed = await req.json();
     } catch {
-      return badRequest("Anfrage muss multipart/form-data sein");
+      return badRequest("Ungültige Anfrage");
     }
 
-    const files = formData
-      .getAll("file")
-      .filter((v): v is File => v instanceof File);
-    const commentIdRaw = formData.get("commentId");
+    const claims = Array.isArray(parsed.attachments) ? parsed.attachments : [];
     const commentId =
-      typeof commentIdRaw === "string" && commentIdRaw.length > 0
-        ? commentIdRaw
+      typeof parsed.commentId === "string" && parsed.commentId.length > 0
+        ? parsed.commentId
         : null;
 
-    if (files.length === 0) {
+    if (claims.length === 0) {
       return badRequest("Keine Datei hochgeladen");
     }
 
@@ -139,7 +145,7 @@ export async function POST(
     const existingCount = await prisma.ticketAttachment.count({
       where: { ticketId: id },
     });
-    if (existingCount + files.length > MAX_ATTACHMENTS_PER_TICKET) {
+    if (existingCount + claims.length > MAX_ATTACHMENTS_PER_TICKET) {
       return NextResponse.json(
         {
           error: "TOO_MANY_ATTACHMENTS",
@@ -149,35 +155,14 @@ export async function POST(
       );
     }
 
-    // Validate each file before any side-effects. Collect per-file results so
-    // the UI can show which file failed (and why) instead of just "Upload
-    // fehlgeschlagen".
-    let totalBytes = 0;
-    const rejections: Array<{
-      fileName: string;
-      code: string;
-      message: string;
-    }> = [];
-    const validFiles: File[] = [];
-    for (const file of files) {
-      const v = validateFile({
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
-      if (!v.ok) {
-        rejections.push({
-          fileName: file.name,
-          code: v.code ?? "INVALID_FILE",
-          message: v.message ?? "Datei abgelehnt.",
-        });
-        continue;
-      }
-      validFiles.push(file);
-      totalBytes += file.size;
-    }
+    // Verify the uploaded objects exist, are in this workspace, and match their
+    // declared size/type. Authoritative sizes come back from storage.
+    const { valid, rejections } = await finalizeDirectUploads(
+      workspaceId,
+      claims,
+    );
 
-    if (validFiles.length === 0) {
+    if (valid.length === 0) {
       return NextResponse.json(
         {
           error: "ALL_FILES_REJECTED",
@@ -190,11 +175,17 @@ export async function POST(
       );
     }
 
-    // Quota check (single shot for the whole batch)
-    const quotaErr = await requireStorageQuota(workspaceId, totalBytes);
-    if (quotaErr) return quotaErr;
+    let totalBytes = 0;
+    for (const a of valid) totalBytes += a.size;
 
-    // Upload + persist
+    // Quota check (single shot for the whole batch) with authoritative sizes.
+    const quotaErr = await requireStorageQuota(workspaceId, totalBytes);
+    if (quotaErr) {
+      for (const a of valid) await deleteBlob(a.publicUrl);
+      return quotaErr;
+    }
+
+    // Persist rows for the verified objects.
     const created: Array<{
       id: string;
       fileName: string;
@@ -207,33 +198,26 @@ export async function POST(
       commentId: string | null;
     }> = [];
 
-    const uploadedUrls: string[] = []; // for rollback if DB fails
+    const persistedUrls: string[] = []; // for rollback if DB fails
+    let recordedBytes = 0;
 
     try {
-      for (const file of validFiles) {
-        const arrayBuf = await file.arrayBuffer();
-        const blob = await uploadToBlob({
-          workspaceId,
-          ticketId: id,
-          fileName: file.name,
-          contentType: file.type,
-          body: arrayBuf,
-        });
-        uploadedUrls.push(blob.url);
-
+      for (const a of valid) {
         const row = await prisma.ticketAttachment.create({
           data: {
             ticketId: id,
             commentId,
-            fileName: file.name,
-            fileUrl: blob.url,
-            fileType: file.type,
-            fileSize: BigInt(file.size),
+            fileName: a.fileName,
+            fileUrl: a.publicUrl,
+            fileType: a.fileType,
+            fileSize: BigInt(a.size),
             uploadedById: user.id,
             uploaderName: user.name ?? null,
             workspaceId,
           },
         });
+        persistedUrls.push(a.publicUrl);
+        recordedBytes += a.size;
 
         created.push({
           id: row.id,
@@ -259,10 +243,10 @@ export async function POST(
         );
       }
 
-      await recordStorageUsage(workspaceId, totalBytes);
+      await recordStorageUsage(workspaceId, recordedBytes);
     } catch (err) {
-      // Best-effort rollback of any uploaded blobs
-      for (const url of uploadedUrls) {
+      // Best-effort rollback of any objects we linked.
+      for (const url of persistedUrls) {
         await deleteBlob(url);
       }
       throw err;

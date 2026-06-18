@@ -1,17 +1,20 @@
 /**
- * External Ticket Attachments — POST upload (no auth, token-based).
+ * External Ticket Attachments — finalize upload (no auth, token-based).
  *
  * POST /api/tickets/external/[token]/attachments
- *   Multipart form-data with one or more "file" fields.
+ *   JSON { attachments: [{ path, fileName, fileType }] } referencing objects the
+ *   browser already uploaded to storage via signed URLs (see the sibling
+ *   /sign route). Direct uploads bypass Vercel's ~4.5 MB Serverless request-body
+ *   limit, which otherwise silently breaks larger external uploads.
  *
  * Hardening for the public endpoint:
  *   • Rejects non-EXTERN tickets and tickets in a closed state.
- *   • Per-file size limited to MAX_EXTERNAL_FILE_BYTES (10 MB, half the
- *     internal cap to discourage abuse).
+ *   • Per-file size limited to MAX_EXTERNAL_FILE_BYTES (10 MB).
  *   • Per-request file count capped at MAX_EXTERNAL_FILES_PER_REQUEST (3).
  *   • Per-ticket cap MAX_ATTACHMENTS_PER_TICKET still applies.
- *   • Workspace storage quota enforced.
- *   • In-memory sliding window rate limit per token (5 uploads / minute).
+ *   • Uploaded objects re-verified (workspace path, size, type, magic bytes).
+ *   • Workspace storage quota enforced with authoritative sizes.
+ *   • Shared in-memory sliding-window rate limit per token.
  *   • Uploader identity recorded as ticket.externalSubmitterName.
  */
 
@@ -23,39 +26,17 @@ import { serverError, notFound, badRequest } from "@/lib/api-response";
 import { logAttachmentAdded } from "@/lib/ticket-events";
 import {
   MAX_ATTACHMENTS_PER_TICKET,
-  validateFile,
+  MAX_EXTERNAL_FILE_BYTES,
+  MAX_EXTERNAL_FILES_PER_REQUEST,
   requireStorageQuota,
   recordStorageUsage,
-  uploadToBlob,
   deleteBlob,
+  finalizeDirectUploads,
 } from "@/lib/ticket-attachments";
+import { externalUploadRateLimit } from "@/lib/external-upload-ratelimit";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
 export const dynamic = "force-dynamic";
-
-const MAX_EXTERNAL_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
-const MAX_EXTERNAL_FILES_PER_REQUEST = 3;
-
-// In-memory rate limit (best-effort; falls back to allow under restart).
-// 5 uploads per token per 60 s.
-const RATE_WINDOW_MS = 60_000;
-const RATE_LIMIT = 5;
-const rateBuckets = new Map<string, number[]>();
-
-function rateLimit(token: string): boolean {
-  const now = Date.now();
-  const arr = (rateBuckets.get(token) ?? []).filter(
-    (t) => now - t < RATE_WINDOW_MS,
-  );
-  if (arr.length >= RATE_LIMIT) {
-    rateBuckets.set(token, arr);
-    return false;
-  }
-  arr.push(now);
-  rateBuckets.set(token, arr);
-  return true;
-}
 
 export async function POST(
   req: Request,
@@ -68,7 +49,7 @@ export async function POST(
       return notFound("Ticket nicht gefunden");
     }
 
-    if (!rateLimit(token)) {
+    if (!externalUploadRateLimit(token)) {
       return NextResponse.json(
         { error: "RATE_LIMITED", message: "Zu viele Anfragen. Bitte warten." },
         { status: 429 },
@@ -99,22 +80,20 @@ export async function POST(
       );
     }
 
-    // Multipart parse
-    let formData: FormData;
+    let parsed: {
+      attachments?: Array<{ path: string; fileName: string; fileType: string }>;
+    };
     try {
-      formData = await req.formData();
+      parsed = await req.json();
     } catch {
-      return badRequest("Anfrage muss multipart/form-data sein");
+      return badRequest("Ungültige Anfrage");
     }
 
-    const files = formData
-      .getAll("file")
-      .filter((v): v is File => v instanceof File);
-
-    if (files.length === 0) {
+    const claims = Array.isArray(parsed.attachments) ? parsed.attachments : [];
+    if (claims.length === 0) {
       return badRequest("Keine Datei hochgeladen");
     }
-    if (files.length > MAX_EXTERNAL_FILES_PER_REQUEST) {
+    if (claims.length > MAX_EXTERNAL_FILES_PER_REQUEST) {
       return NextResponse.json(
         {
           error: "TOO_MANY_FILES",
@@ -128,7 +107,7 @@ export async function POST(
     const existingCount = await prisma.ticketAttachment.count({
       where: { ticketId: ticket.id },
     });
-    if (existingCount + files.length > MAX_ATTACHMENTS_PER_TICKET) {
+    if (existingCount + claims.length > MAX_ATTACHMENTS_PER_TICKET) {
       return NextResponse.json(
         {
           error: "TOO_MANY_ATTACHMENTS",
@@ -138,34 +117,48 @@ export async function POST(
       );
     }
 
-    // Validate each file (with stricter external size)
-    let totalBytes = 0;
-    for (const file of files) {
-      if (file.size > MAX_EXTERNAL_FILE_BYTES) {
-        return NextResponse.json(
-          {
-            error: "FILE_TOO_LARGE",
-            message: `Datei ist zu groß. Maximal ${MAX_EXTERNAL_FILE_BYTES / 1024 / 1024} MB für externe Uploads.`,
-          },
-          { status: 400 },
-        );
+    // Verify uploaded objects (workspace path, existence, size, type, magic).
+    const { valid, rejections } = await finalizeDirectUploads(
+      ticket.workspaceId,
+      claims,
+    );
+
+    // Enforce the stricter external per-file size cap on top of validation.
+    const accepted: typeof valid = [];
+    for (const a of valid) {
+      if (a.size > MAX_EXTERNAL_FILE_BYTES) {
+        rejections.push({
+          fileName: a.fileName,
+          code: "FILE_TOO_LARGE",
+          message: `Datei ist zu groß. Maximal ${MAX_EXTERNAL_FILE_BYTES / 1024 / 1024} MB für externe Uploads.`,
+        });
+        await deleteBlob(a.publicUrl);
+        continue;
       }
-      const v = validateFile({
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
-      if (!v.ok) {
-        return NextResponse.json(
-          { error: v.code, message: v.message },
-          { status: 400 },
-        );
-      }
-      totalBytes += file.size;
+      accepted.push(a);
     }
 
+    if (accepted.length === 0) {
+      return NextResponse.json(
+        {
+          error: "ALL_FILES_REJECTED",
+          message:
+            rejections[0]?.message ??
+            "Keine der Dateien konnte hochgeladen werden.",
+          rejections,
+        },
+        { status: 400 },
+      );
+    }
+
+    let totalBytes = 0;
+    for (const a of accepted) totalBytes += a.size;
+
     const quotaErr = await requireStorageQuota(ticket.workspaceId, totalBytes);
-    if (quotaErr) return quotaErr;
+    if (quotaErr) {
+      for (const a of accepted) await deleteBlob(a.publicUrl);
+      return quotaErr;
+    }
 
     const created: Array<{
       id: string;
@@ -177,32 +170,25 @@ export async function POST(
       createdAt: Date;
     }> = [];
 
-    const uploadedUrls: string[] = [];
+    const persistedUrls: string[] = [];
+    let recordedBytes = 0;
 
     try {
-      for (const file of files) {
-        const arrayBuf = await file.arrayBuffer();
-        const blob = await uploadToBlob({
-          workspaceId: ticket.workspaceId,
-          ticketId: ticket.id,
-          fileName: file.name,
-          contentType: file.type,
-          body: arrayBuf,
-        });
-        uploadedUrls.push(blob.url);
-
+      for (const a of accepted) {
         const row = await prisma.ticketAttachment.create({
           data: {
             ticketId: ticket.id,
-            fileName: file.name,
-            fileUrl: blob.url,
-            fileType: file.type,
-            fileSize: BigInt(file.size),
+            fileName: a.fileName,
+            fileUrl: a.publicUrl,
+            fileType: a.fileType,
+            fileSize: BigInt(a.size),
             uploadedById: null,
             uploaderName: ticket.externalSubmitterName ?? "Externer Absender",
             workspaceId: ticket.workspaceId,
           },
         });
+        persistedUrls.push(a.publicUrl);
+        recordedBytes += a.size;
 
         created.push({
           id: row.id,
@@ -229,15 +215,18 @@ export async function POST(
         );
       }
 
-      await recordStorageUsage(ticket.workspaceId, totalBytes);
+      await recordStorageUsage(ticket.workspaceId, recordedBytes);
     } catch (err) {
-      for (const url of uploadedUrls) {
+      for (const url of persistedUrls) {
         await deleteBlob(url);
       }
       throw err;
     }
 
-    return NextResponse.json({ data: created }, { status: 201 });
+    return NextResponse.json(
+      { data: created, rejections: rejections.length ? rejections : undefined },
+      { status: 201 },
+    );
   } catch (error) {
     log.error("[external ticket attachments POST] failed", { error });
     captureRouteError(error, {

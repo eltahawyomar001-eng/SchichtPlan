@@ -966,6 +966,18 @@ export const createTicketSchema = z.object({
     .or(z.literal("")),
   /// Optional initial assignee — any user in the workspace.
   assignedToId: z.string().cuid().optional().nullable(),
+  /// Attachments uploaded directly to storage (signed-URL flow). Each entry
+  /// references a storage object that the server re-verifies before linking.
+  attachments: z
+    .array(
+      z.object({
+        path: z.string().min(1).max(500),
+        fileName: z.string().min(1).max(255),
+        fileType: z.string().min(1).max(200),
+      }),
+    )
+    .max(20)
+    .optional(),
 });
 
 export const updateTicketSchema = z.object({

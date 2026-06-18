@@ -7,11 +7,20 @@
  * these so existing callers keep working.
  */
 
+/** Supabase Storage bucket holding ticket attachments. */
+export const TICKET_BUCKET = "ticket-attachments";
+
 /** Max bytes for a single file (25 MB). */
 export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 /** Max attachments per ticket (industry standard cap). */
 export const MAX_ATTACHMENTS_PER_TICKET = 20;
+
+/** Stricter per-file cap for unauthenticated external uploads (10 MB). */
+export const MAX_EXTERNAL_FILE_BYTES = 10 * 1024 * 1024;
+
+/** Max files per request for unauthenticated external uploads. */
+export const MAX_EXTERNAL_FILES_PER_REQUEST = 3;
 
 /** MIME types that may be uploaded. Add cautiously. */
 export const ALLOWED_MIME_TYPES: ReadonlyArray<string> = [

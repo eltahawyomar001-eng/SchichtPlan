@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { uploadExternalTicketAttachments } from "@/lib/ticket-attachment-upload";
 
 interface AttachmentDTO {
   id: string;
@@ -92,11 +93,29 @@ export default function ExternalTicketStatusPage() {
     setUploading(true);
     setUploadError(null);
     try {
-      const fd = new FormData();
-      for (const f of Array.from(files)) fd.append("file", f);
+      // Upload directly to storage (bypasses the serverless body-size limit),
+      // then register the uploaded objects with the ticket.
+      let attachments;
+      try {
+        attachments = await uploadExternalTicketAttachments(
+          Array.from(files),
+          params.token,
+        );
+      } catch (uploadErr) {
+        setUploadError(
+          uploadErr instanceof Error
+            ? uploadErr.message
+            : "Upload fehlgeschlagen.",
+        );
+        return;
+      }
       const res = await fetch(
         `/api/tickets/external/${params.token}/attachments`,
-        { method: "POST", body: fd },
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ attachments }),
+        },
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

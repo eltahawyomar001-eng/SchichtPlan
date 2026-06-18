@@ -26,9 +26,13 @@ import {
   recordStorageUsage,
   uploadToBlob,
   deleteBlob,
+  finalizeDirectUploads,
+  type AttachmentRejection,
 } from "@/lib/ticket-attachments";
 
-// Multi-file upload at creation can push past the default body parser size.
+// Attachments are uploaded directly to storage from the browser (signed URLs);
+// this route receives only JSON metadata. Node.js runtime is kept for the
+// Supabase service-role storage client used when verifying those uploads.
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -134,6 +138,7 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
     location?: string | null;
     objectAddress?: string | null;
     assignedToId?: string | null;
+    attachments?: Array<{ path: string; fileName: string; fileType: string }>;
   };
   let rawBody: Record<string, unknown> = {};
   let files: File[] = [];
@@ -209,16 +214,22 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
     categoryDefId = cat.id;
   }
 
-  // ── Pre-validate files BEFORE creating the ticket so we don't end up
+  // ── Pre-validate attachments BEFORE creating the ticket so we don't end up
   //    with a ghost ticket if uploads are about to fail. ──
-  const rejections: Array<{
-    fileName: string;
-    code: string;
-    message: string;
-  }> = [];
+  //
+  // Two paths converge here:
+  //   1. Direct uploads (preferred): the browser already PUT the bytes to
+  //      storage via a signed URL and sends back lightweight metadata. This is
+  //      the only path that works for files/batches over Vercel's ~4.5 MB
+  //      Serverless request-body limit.
+  //   2. Legacy multipart: small inline `file` parts (kept for backwards
+  //      compatibility with older clients).
+  const rejections: AttachmentRejection[] = [];
   const validFiles: File[] = [];
   let totalBytes = 0;
-  if (files.length > MAX_ATTACHMENTS_PER_TICKET) {
+
+  const directClaims = body.attachments ?? [];
+  if (directClaims.length + files.length > MAX_ATTACHMENTS_PER_TICKET) {
     return NextResponse.json(
       {
         error: "TOO_MANY_ATTACHMENTS",
@@ -227,6 +238,15 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
       { status: 400 },
     );
   }
+
+  // Verify direct-upload objects exist, are in this workspace, and match their
+  // declared size/type. Authoritative sizes come back from storage.
+  const finalized = directClaims.length
+    ? await finalizeDirectUploads(workspaceId, directClaims)
+    : { valid: [], rejections: [] };
+  rejections.push(...finalized.rejections);
+  for (const a of finalized.valid) totalBytes += a.size;
+
   for (const file of files) {
     const v = validateFile({
       name: file.name,
@@ -246,7 +266,11 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
   }
   if (totalBytes > 0) {
     const quotaErr = await requireStorageQuota(workspaceId, totalBytes);
-    if (quotaErr) return quotaErr;
+    if (quotaErr) {
+      // Drop any directly-uploaded objects we won't be linking.
+      for (const a of finalized.valid) await deleteBlob(a.publicUrl);
+      return quotaErr;
+    }
   }
 
   // ── Create the ticket row ──
@@ -279,9 +303,54 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
     },
   );
 
-  // ── Upload attachments (after the ticket exists) ──
+  // ── Link direct-upload attachments (already in storage, just verified) ──
+  // Track bytes actually persisted so the storage quota counter stays accurate
+  // even when some attachments are rejected.
+  let recordedBytes = 0;
+  for (const a of finalized.valid) {
+    try {
+      const row = await prisma.ticketAttachment.create({
+        data: {
+          ticketId: ticket.id,
+          fileName: a.fileName,
+          fileUrl: a.publicUrl,
+          fileType: a.fileType,
+          fileSize: BigInt(a.size),
+          uploadedById: user.id,
+          uploaderName: user.name ?? null,
+          workspaceId,
+        },
+      });
+      recordedBytes += a.size;
+      logAttachmentAdded(
+        ticket.id,
+        { id: user.id, name: user.name ?? "System" },
+        {
+          fileName: row.fileName,
+          fileSize: row.fileSize,
+          fileType: row.fileType,
+          commentId: null,
+        },
+      );
+    } catch (err) {
+      await deleteBlob(a.publicUrl);
+      log.error("[tickets POST] direct attachment link failed", {
+        err,
+        ticketId: ticket.id,
+        fileName: a.fileName,
+      });
+      rejections.push({
+        fileName: a.fileName,
+        code: "ATTACHMENT_LINK_FAILED",
+        message: "Anhang konnte nicht verknüpft werden.",
+      });
+    }
+  }
+
+  // ── Upload legacy inline (multipart) attachments (after the ticket exists) ──
   const uploadedUrls: string[] = [];
   if (validFiles.length > 0) {
+    let legacyBytes = 0;
     try {
       for (const file of validFiles) {
         const arrayBuf = await file.arrayBuffer();
@@ -316,6 +385,7 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
             workspaceId,
           },
         });
+        legacyBytes += file.size;
         logAttachmentAdded(
           ticket.id,
           { id: user.id, name: user.name ?? "System" },
@@ -327,7 +397,7 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
           },
         );
       }
-      await recordStorageUsage(workspaceId, totalBytes);
+      recordedBytes += legacyBytes;
     } catch (err) {
       // Best-effort rollback of any uploaded blobs.
       for (const url of uploadedUrls) await deleteBlob(url);
@@ -348,6 +418,9 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
     }
   }
 
+  // Increment the workspace storage counter once, for everything we persisted.
+  if (recordedBytes > 0) await recordStorageUsage(workspaceId, recordedBytes);
+
   // Fire-and-forget: audit trail
   logTicketCreated(
     ticket.id,
@@ -363,7 +436,7 @@ export const POST = withRoute("/api/tickets", "POST", async (req) => {
     ticketNumber: ticket.ticketNumber,
     userId: user.id,
     workspaceId,
-    attachmentCount: validFiles.length,
+    attachmentCount: finalized.valid.length + validFiles.length,
   });
 
   recordTicketCreation(workspaceId).catch((err) =>

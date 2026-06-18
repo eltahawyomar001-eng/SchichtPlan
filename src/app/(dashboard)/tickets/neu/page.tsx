@@ -15,6 +15,7 @@ import {
   MAX_ATTACHMENT_BYTES,
   validateFile,
 } from "@/lib/ticket-file-validation";
+import { uploadTicketAttachments } from "@/lib/ticket-attachment-upload";
 
 interface LocationItem {
   id: string;
@@ -180,19 +181,24 @@ export default function NewTicketPage() {
       };
       if (categoryDefId) payload.categoryDefId = categoryDefId;
 
-      let res: Response;
+      // Upload attachments straight to storage first (bypasses the serverless
+      // request-body size limit), then send only their metadata with the ticket.
       if (files.length > 0) {
-        const form = new FormData();
-        form.append("payload", JSON.stringify(payload));
-        for (const f of files) form.append("file", f);
-        res = await fetch("/api/tickets", { method: "POST", body: form });
-      } else {
-        res = await fetch("/api/tickets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        try {
+          payload.attachments = await uploadTicketAttachments(files);
+        } catch (uploadErr) {
+          setError(
+            uploadErr instanceof Error ? uploadErr.message : t("createError"),
+          );
+          return;
+        }
       }
+
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
       if (res.ok) {

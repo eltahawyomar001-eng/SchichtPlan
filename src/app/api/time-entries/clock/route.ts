@@ -371,6 +371,10 @@ export const POST = withRoute(
               breakMinutes: capped.breakMinutes,
               grossMinutes: capped.cappedGross,
               netMinutes: capped.cappedNet,
+              // Clocking out submits the entry for manager review. Without this
+              // the entry stays in ENTWURF forever and never reaches approval.
+              status: "EINGEREICHT",
+              submittedAt: now,
               ...(capped.wasCapped
                 ? {
                     remarks: "ArbZG §3: Arbeitszeit auf 10h-Tageslimit gekappt",
@@ -515,6 +519,9 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
           breakMinutes: capped.breakMinutes,
           grossMinutes: capped.cappedGross,
           netMinutes: capped.cappedNet,
+          // Auto clock-out also submits the entry for manager review.
+          status: "EINGEREICHT",
+          submittedAt: cappedClockOut,
           remarks:
             "ArbZG §3: Automatisch ausgestempelt — Höchstarbeitszeit von 10h erreicht",
         },

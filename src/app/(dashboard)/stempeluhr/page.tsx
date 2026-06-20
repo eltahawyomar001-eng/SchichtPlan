@@ -18,6 +18,7 @@ import {
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import { haptics } from "@/lib/haptics";
+import { ensurePushSubscribed } from "@/lib/notifications/push-client";
 
 interface ClockEntry {
   id: string;
@@ -450,16 +451,18 @@ export default function StempeluhrSeite() {
     setError("");
     setRestPeriodWarning(null);
 
-    // Request browser notification permission when the user starts a break.
-    // This is the natural moment of intent — we never auto-prompt on load.
+    // Offer push notifications at a natural moment of intent (first clock-in or
+    // break start) with a soft pre-prompt, then actually subscribe the device.
+    // We never auto-prompt on page load.
     if (
-      action === "break-start" &&
+      (action === "in" || action === "break-start") &&
       typeof window !== "undefined" &&
       "Notification" in window &&
-      Notification.permission === "default"
+      Notification.permission === "default" &&
+      window.confirm(t("pushPrePrompt"))
     ) {
       try {
-        await Notification.requestPermission();
+        await ensurePushSubscribed();
       } catch {
         /* noop — user may have blocked, that's fine */
       }

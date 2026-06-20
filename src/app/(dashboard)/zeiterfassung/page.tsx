@@ -140,6 +140,7 @@ export default function ZeiterfassungPage() {
   // Action states
   const [actionComment, setActionComment] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   // ─── Data Fetching ──────────────────────────────────────────
 
@@ -288,6 +289,31 @@ export default function ZeiterfassungPage() {
     }
   };
 
+  const handleBulkApprove = async () => {
+    const ids = filteredEntries
+      .filter((e) => e.status === "EINGEREICHT")
+      .map((e) => e.id);
+    if (ids.length === 0) return;
+    setBulkApproving(true);
+    try {
+      const res = await fetch("/api/time-entries/bulk-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, action: "approve" }),
+      });
+      if (res.ok) {
+        fetchEntries();
+      } else {
+        const data = await res.json();
+        setLoadError(data.message || data.error || tc("errorOccurred"));
+      }
+    } catch {
+      setLoadError(tc("errorOccurred"));
+    } finally {
+      setBulkApproving(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     setDeleteTarget(id);
   };
@@ -355,6 +381,21 @@ export default function ZeiterfassungPage() {
         description={t("description")}
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {isManager && pendingCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkApprove}
+                disabled={bulkApproving}
+                className="justify-center text-center"
+              >
+                <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span className="hidden sm:inline">
+                  {t("approveAll", { count: pendingCount })}
+                </span>
+                <span className="sm:hidden">{pendingCount}</span>
+              </Button>
+            )}
             {isManager && (
               <Button
                 variant="outline"

@@ -643,7 +643,8 @@
       "location": "Location",
       "status": "Status",
       "remarks": "Remarks"
-    }
+    },
+    "approveAll": "Approve {count}"
   },
   "userRoles": {
     "OWNER": "Owner",
@@ -2840,7 +2841,8 @@
       "consequence3": "If you have questions, please contact your supervisor.",
       "cancel": "Cancel",
       "confirm": "Clock out anyway"
-    }
+    },
+    "pushPrePrompt": "Would you like to enable push notifications (e.g. shift and break reminders)?"
   },
   "projects": {
     "title": "Projects",

@@ -42,6 +42,10 @@ import { DATEVNumbersCard } from "@/components/settings/datev-numbers-card";
 import { BetriebsnummerCard } from "@/components/settings/betriebsnummer-card";
 import { AvvCard } from "@/components/settings/avv-card";
 import { WorkspaceLogoCard } from "@/components/settings/workspace-logo-card";
+import {
+  ensurePushSubscribed,
+  unsubscribePush,
+} from "@/lib/notifications/push-client";
 
 export default function EinstellungenPage() {
   const { data: session, update: updateSession } = useSession();
@@ -421,56 +425,24 @@ export default function EinstellungenPage() {
     }
   };
 
-  // Push notification handlers
-  function urlBase64ToUint8Array(base64String: string) {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-    const raw = atob(base64);
-    const arr = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-    return arr;
-  }
-
+  // Push notification handlers — shared subscribe/unsubscribe path so the
+  // time-clock and this page behave identically.
   const handleTogglePush = async () => {
     if (!pushSupported) return;
     setPushLoading(true);
     try {
       if (pushEnabled) {
-        // Unsubscribe
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          await fetch("/api/push-subscriptions", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ endpoint: sub.endpoint }),
-          });
-          await sub.unsubscribe();
-        }
+        await unsubscribePush();
         setPushEnabled(false);
       } else {
-        // Subscribe
-        const permission = await Notification.requestPermission();
-        if (permission === "denied") {
+        const result = await ensurePushSubscribed();
+        if (result === "denied") {
           setPushDenied(true);
           return;
         }
-        if (permission !== "granted") return;
-        const reg = await navigator.serviceWorker.ready;
-        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        if (!vapidKey) return;
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
-        });
-        await fetch("/api/push-subscriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(sub.toJSON()),
-        });
-        setPushEnabled(true);
+        if (result === "subscribed" || result === "already") {
+          setPushEnabled(true);
+        }
       }
     } catch (err) {
       console.error("[push] toggle error:", err);

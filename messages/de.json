@@ -643,7 +643,8 @@
       "location": "Standort",
       "status": "Status",
       "remarks": "Bemerkung"
-    }
+    },
+    "approveAll": "{count} genehmigen"
   },
   "userRoles": {
     "OWNER": "Inhaber",
@@ -2840,7 +2841,8 @@
       "consequence3": "Bei Fragen wenden Sie sich an Ihre Vorgesetzte bzw. Ihren Vorgesetzten.",
       "cancel": "Abbrechen",
       "confirm": "Trotzdem ausstempeln"
-    }
+    },
+    "pushPrePrompt": "Möchten Sie Push-Benachrichtigungen aktivieren (z. B. Schicht- und Pausenerinnerungen)?"
   },
   "projects": {
     "title": "Projekte",

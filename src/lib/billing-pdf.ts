@@ -161,14 +161,32 @@ export function generateBillingPdf(doc_: BillingPdfDoc): ArrayBuffer {
     doc.text(value, valX, ty, { align: "right" });
     ty += bold ? 7 : 5.5;
   };
-  totalRow("Nettobetrag", euro(doc_.totals.netCents));
-  totalRow(`zzgl. MwSt. (${doc_.vatRate}%)`, euro(doc_.totals.vatCents));
-  doc.setDrawColor(...LGREY);
-  doc.line(labelX, ty - 2, valX, ty - 2);
-  totalRow("Gesamtbetrag", euro(doc_.totals.grossCents), true);
+  // § 19 UStG (Kleinunternehmer): no VAT is charged, so omit the MwSt. row
+  // and show the legally required note below. Inferred from a 0% rate so no
+  // caller change is needed; flips automatically once a real VAT rate is set.
+  const isKleinunternehmer = doc_.vatRate === 0;
+  if (isKleinunternehmer) {
+    totalRow("Gesamtbetrag", euro(doc_.totals.grossCents), true);
+  } else {
+    totalRow("Nettobetrag", euro(doc_.totals.netCents));
+    totalRow(`zzgl. MwSt. (${doc_.vatRate}%)`, euro(doc_.totals.vatCents));
+    doc.setDrawColor(...LGREY);
+    doc.line(labelX, ty - 2, valX, ty - 2);
+    totalRow("Gesamtbetrag", euro(doc_.totals.grossCents), true);
+  }
 
   // ── Notes / payment terms ──
   ty += 6;
+  if (isKleinunternehmer) {
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MED);
+    const note =
+      "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).";
+    const wrappedNote = doc.splitTextToSize(note, pw - ml - mr);
+    doc.text(wrappedNote, ml, ty);
+    ty += wrappedNote.length * 4 + 4;
+  }
   if (doc_.notes) {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");

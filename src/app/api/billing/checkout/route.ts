@@ -109,6 +109,11 @@ export const POST = withRoute(
     // ── Real Stripe checkout ──
     const stripe = getStripe();
 
+    // VAT collection is opt-in. Off while operating under § 19 UStG
+    // (Kleinunternehmer — no VAT). Flip STRIPE_TAX_ENABLED=true after VAT
+    // registration to turn on Stripe automatic tax.
+    const stripeTaxEnabled = process.env.STRIPE_TAX_ENABLED === "true";
+
     const planConfig = PLANS[planId];
     const priceId =
       billingCycle === "annual"
@@ -251,6 +256,24 @@ export const POST = withRoute(
       client_reference_id: user.workspaceId,
       allow_promotion_codes: true,
       tax_id_collection: { enabled: true },
+      // Stripe Tax (VAT) — DISABLED by default because the business currently
+      // operates under the German small-business rule (§ 19 UStG / Kleinunter-
+      // nehmer) and must NOT show VAT on invoices. Once the § 19 threshold is
+      // crossed and VAT registration happens, set STRIPE_TAX_ENABLED=true (and
+      // enable Stripe Tax + add registrations in the dashboard) to switch on
+      // automatic VAT calculation without a code change.
+      ...(stripeTaxEnabled ? { automatic_tax: { enabled: true } } : {}),
+      // Persist the address (and name) collected at checkout back onto the
+      // Stripe customer — only needed when Stripe Tax is on (for renewal
+      // invoices) and only valid when an existing customer is reused.
+      ...(stripeTaxEnabled && customerParams.customer
+        ? {
+            customer_update: {
+              address: "auto" as const,
+              name: "auto" as const,
+            },
+          }
+        : {}),
       ...(stripeTrialEnd
         ? { subscription_data: { trial_end: stripeTrialEnd } }
         : {}),
@@ -290,6 +313,9 @@ export const POST = withRoute(
         const retryParams = {
           ...sessionParams,
           customer: undefined,
+          // customer_update is only valid alongside an existing `customer`;
+          // strip it here since we fall back to customer_email.
+          customer_update: undefined,
           customer_email: user.email,
         };
         try {

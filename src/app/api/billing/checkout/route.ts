@@ -248,7 +248,13 @@ export const POST = withRoute(
 
     const sessionParams = {
       mode: "subscription" as const,
-      payment_method_types: ["card", "sepa_debit"] as ["card", "sepa_debit"],
+      // Don't hardcode payment_method_types — let Stripe offer whatever is
+      // enabled in the dashboard (Settings → Payment methods). Hardcoding
+      // ["card","sepa_debit"] made every checkout fail with "sepa_debit is
+      // invalid" whenever SEPA wasn't activated on the account. Omitting it
+      // enables Stripe's automatic payment methods, so card works now and SEPA
+      // (or any other method) appears automatically once it's switched on —
+      // no code change needed.
       line_items: [{ price: priceId, quantity: initialSeatCount }],
       billing_address_collection: "required" as const,
       success_url: successUrl,

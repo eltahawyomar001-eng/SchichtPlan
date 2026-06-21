@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import {
   ShiftfyMark,
@@ -617,18 +618,23 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
 
 function CompleteStep() {
   const t = useTranslations("onboardingWizard");
+  const { update } = useSession();
   const [loading, setLoading] = useState(false);
 
   const handleFinish = async () => {
     setLoading(true);
     try {
-      await fetch("/api/onboarding/complete", { method: "POST" });
+      const res = await fetch("/api/onboarding/complete", { method: "POST" });
+      // Re-issue the NextAuth cookie with the fresh onboardingCompleted=true
+      // BEFORE navigating. Without this the middleware onboarding gate reads
+      // the stale cookie and bounces /dashboard back to /onboarding (loop).
+      if (res.ok) {
+        await update();
+      }
     } catch {
       // best-effort
     }
     localStorage.removeItem(STEP_KEY);
-    // Hard redirect so the middleware re-evaluates the session from scratch
-    // with the freshly-busted JWT cache. router.push() reuses the stale token.
     window.location.href = "/dashboard";
   };
 
@@ -781,6 +787,7 @@ export default function OnboardingPage() {
   const [subGate, setSubGate] = useState<SubGate>("checking");
   const pollCountRef = useRef(0);
   const t = useTranslations("onboardingWizard");
+  const { update } = useSession();
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -860,12 +867,18 @@ export default function OnboardingPage() {
             <button
               onClick={async () => {
                 try {
-                  await fetch("/api/onboarding/complete", { method: "POST" });
+                  const res = await fetch("/api/onboarding/complete", {
+                    method: "POST",
+                  });
+                  // Refresh the cookie before navigating so the middleware
+                  // onboarding gate sees onboardingCompleted=true (avoids the
+                  // /dashboard → /onboarding redirect loop).
+                  if (res.ok) {
+                    await update();
+                  }
                 } catch {
                   // best-effort
                 }
-                // Hard redirect so the middleware re-evaluates the session
-                // from scratch with the freshly-busted JWT cache.
                 window.location.href = "/dashboard";
               }}
               className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"

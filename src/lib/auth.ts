@@ -486,16 +486,18 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, account, trigger, session: updateData }) {
-      // Client-side session update (e.g. profile name change)
-      if (trigger === "update" && updateData) {
-        if (updateData.name !== undefined) {
-          token.name = updateData.name;
-        }
-        // Bust the JWT cache so stale data doesn't overwrite
-        if (token.sub) {
-          await cache.del(`jwt:${token.sub}`);
-        }
-        return token;
+      // Client-side session update (profile name change or onboarding
+      // completion). We must NOT return early here: returning the existing
+      // token left a stale `onboardingCompleted` in the re-issued cookie, so
+      // the middleware onboarding gate kept redirecting /dashboard back to
+      // /onboarding. Instead, bust the 60s JWT cache and fall through to the
+      // DB-refresh block below so the re-issued cookie reflects fresh DB state.
+      const sessionNameOverride =
+        trigger === "update" && updateData
+          ? (updateData as { name?: string }).name
+          : undefined;
+      if (trigger === "update" && token.sub) {
+        await cache.del(`jwt:${token.sub}`);
       }
 
       // Initial sign-in via credentials — seed the token
@@ -784,6 +786,12 @@ export const authOptions: NextAuthOptions = {
             );
           }
         }
+      }
+
+      // A client-supplied name from update({ name }) wins over the DB read
+      // above, in case the profile write hasn't propagated within this request.
+      if (sessionNameOverride !== undefined) {
+        token.name = sessionNameOverride;
       }
 
       return token;

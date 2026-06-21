@@ -269,14 +269,16 @@ export const POST = withRoute(
       // enable Stripe Tax + add registrations in the dashboard) to switch on
       // automatic VAT calculation without a code change.
       ...(stripeTaxEnabled ? { automatic_tax: { enabled: true } } : {}),
-      // Persist the address (and name) collected at checkout back onto the
-      // Stripe customer — only needed when Stripe Tax is on (for renewal
-      // invoices) and only valid when an existing customer is reused.
-      ...(stripeTaxEnabled && customerParams.customer
+      // customer_update is REQUIRED whenever we reuse an existing customer
+      // together with tax_id_collection (Stripe: "Tax ID collection requires
+      // updating business name on the customer … set customer_update[name] to
+      // auto"). It also persists the billing address for invoices / future
+      // Stripe Tax. Only valid when a `customer` (not customer_email) is set.
+      ...(customerParams.customer
         ? {
             customer_update: {
-              address: "auto" as const,
               name: "auto" as const,
+              address: "auto" as const,
             },
           }
         : {}),

@@ -93,7 +93,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     perUserAnnual: 249, // €2.49 per user (saves ~17%)
     stripePriceIdMonthly: process.env.STRIPE_PRICE_BASIC_MONTHLY ?? null,
     stripePriceIdAnnual: process.env.STRIPE_PRICE_BASIC_ANNUAL ?? null,
-    trialDays: 7,
+    trialDays: 14,
     limits: {
       maxEmployees: 15,
       maxLocations: 1,
@@ -125,7 +125,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
     perUserAnnual: 399, // €3.99 per user (saves ~20%)
     stripePriceIdMonthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY ?? null,
     stripePriceIdAnnual: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL ?? null,
-    trialDays: 7,
+    trialDays: 14,
     limits: {
       maxEmployees: 100,
       maxLocations: 10,

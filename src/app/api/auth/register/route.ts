@@ -298,7 +298,8 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
       },
     });
 
-    // Start the 7-day trial immediately — no checkout required to enter the app.
+    // Start the no-card free trial immediately — full features, no checkout
+    // required to enter the app (see TRIAL_DAYS / initializeTrial).
     await initializeTrial(tx, workspace.id);
 
     return { user, workspace };

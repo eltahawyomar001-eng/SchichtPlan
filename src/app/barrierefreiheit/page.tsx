@@ -52,7 +52,7 @@ export default function BarrierefreiheitPage() {
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              7 Tage testen
+              14 Tage testen
             </Link>
           </div>
         </div>

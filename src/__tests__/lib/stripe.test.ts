@@ -54,9 +54,9 @@ describe("PLANS config", () => {
     expect(PLANS.enterprise.trialDays).toBe(0);
   });
 
-  it("basic and professional plans have a 7-day trial", () => {
-    expect(PLANS.basic.trialDays).toBe(7);
-    expect(PLANS.professional.trialDays).toBe(7);
+  it("basic and professional plans have a 14-day trial", () => {
+    expect(PLANS.basic.trialDays).toBe(14);
+    expect(PLANS.professional.trialDays).toBe(14);
   });
 
   it("basic plan maxEmployees is 15", () => {

@@ -88,7 +88,7 @@ export default function OGImage() {
           marginTop: 16,
         }}
       >
-        DSGVO-konform · Made in Germany · 7 Tage testen
+        DSGVO-konform · Made in Germany · 14 Tage testen
       </div>
     </div>,
     { ...size },

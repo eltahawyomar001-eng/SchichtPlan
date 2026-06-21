@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title:
     "Shiftfy – Schichtplanung & Zeiterfassung Software | Dienstplan online erstellen",
   description:
-    "Shiftfy ist die intelligente Software für Schichtplanung, Zeiterfassung und Personalmanagement. Ideal für Sicherheitsdienste, Gastronomie, Einzelhandel & Dienstleister. DSGVO-konform, 7 Tage testen.",
+    "Shiftfy ist die intelligente Software für Schichtplanung, Zeiterfassung und Personalmanagement. Ideal für Sicherheitsdienste, Gastronomie, Einzelhandel & Dienstleister. DSGVO-konform, 14 Tage testen.",
   alternates: {
     canonical: "/",
   },

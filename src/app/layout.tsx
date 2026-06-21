@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s | Shiftfy",
   },
   description:
-    "Shiftfy ist die intelligente Software für Schichtplanung, Zeiterfassung und Personalmanagement. Ideal für Sicherheitsdienste, Gastronomie, Einzelhandel & Dienstleister. DSGVO-konform, 7 Tage testen.",
+    "Shiftfy ist die intelligente Software für Schichtplanung, Zeiterfassung und Personalmanagement. Ideal für Sicherheitsdienste, Gastronomie, Einzelhandel & Dienstleister. DSGVO-konform, 14 Tage testen.",
   keywords: [
     "Schichtplanung",
     "Schichtplan erstellen",
@@ -88,13 +88,13 @@ export const metadata: Metadata = {
     siteName: "Shiftfy",
     title: "Shiftfy – Schichtplanung & Zeiterfassung Software",
     description:
-      "Digitale Schichtplanung, Zeiterfassung und Personalmanagement – alles in einer App. 7 Tage testen, DSGVO-konform, made in Germany.",
+      "Digitale Schichtplanung, Zeiterfassung und Personalmanagement – alles in einer App. 14 Tage testen, DSGVO-konform, made in Germany.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Shiftfy – Schichtplanung & Zeiterfassung Software",
     description:
-      "Digitale Schichtplanung, Zeiterfassung und Personalmanagement. 7 Tage testen.",
+      "Digitale Schichtplanung, Zeiterfassung und Personalmanagement. 14 Tage testen.",
   },
   robots: {
     index: true,

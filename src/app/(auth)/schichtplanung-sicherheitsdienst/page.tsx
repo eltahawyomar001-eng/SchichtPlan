@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title:
     "Schichtplanung Sicherheitsdienst – Dienstplan & Zeiterfassung | Shiftfy",
   description:
-    "Schichtplanung für Sicherheitsdienste: Dienstpläne für Objektschutz & Wachdienst erstellen, §34a-Qualifikationen prüfen, Nachtzuschläge automatisch berechnen, Zeiterfassung per App. 7 Tage testen, DSGVO-konform.",
+    "Schichtplanung für Sicherheitsdienste: Dienstpläne für Objektschutz & Wachdienst erstellen, §34a-Qualifikationen prüfen, Nachtzuschläge automatisch berechnen, Zeiterfassung per App. 14 Tage testen, DSGVO-konform.",
   keywords: [
     "Schichtplanung Sicherheitsdienst",
     "Schichtplan Sicherheitsdienst",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Schichtplanung Sicherheitsdienst – Dienstplan & Zeiterfassung",
     description:
-      "Dienstpläne für Objektschutz & Wachdienst, §34a-Qualifikationen, Nacht- & Feiertagszuschläge automatisch. 7 Tage testen.",
+      "Dienstpläne für Objektschutz & Wachdienst, §34a-Qualifikationen, Nacht- & Feiertagszuschläge automatisch. 14 Tage testen.",
     url: "https://www.shiftfy.de/schichtplanung-sicherheitsdienst",
   },
 };
@@ -149,7 +149,7 @@ export default function SchichtplanungSicherheitsdienstPage() {
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              7 Tage testen
+              14 Tage testen
             </Link>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function SchichtplanungSicherheitsdienstPage() {
                 href="/register"
                 className="bg-brand-gradient text-white font-bold px-8 py-3.5 rounded-full hover:shadow-xl hover:shadow-emerald-200/50 transition-all flex items-center gap-2"
               >
-                7 Tage testen
+                14 Tage testen
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
               <Link
@@ -193,7 +193,7 @@ export default function SchichtplanungSicherheitsdienstPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-gray-400">
-              7 Tage Testphase · Jederzeit kündbar · DSGVO-konform · Server in
+              14 Tage Testphase · Jederzeit kündbar · DSGVO-konform · Server in
               der EU
             </p>
           </div>
@@ -319,7 +319,7 @@ export default function SchichtplanungSicherheitsdienstPage() {
                   Dienstplanung für Ihren Sicherheitsdienst digitalisieren
                 </h2>
                 <p className="mt-4 text-emerald-200 text-lg max-w-xl mx-auto">
-                  7 Tage testen — danach ab 2,99 €/Nutzer/Monat. Jederzeit
+                  14 Tage testen — danach ab 2,99 €/Nutzer/Monat. Jederzeit
                   kündbar.
                 </p>
                 <div className="mt-8">
@@ -327,7 +327,7 @@ export default function SchichtplanungSicherheitsdienstPage() {
                     href="/register"
                     className="bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all inline-flex items-center gap-2"
                   >
-                    7 Tage testen
+                    14 Tage testen
                     <ArrowRightIcon className="w-5 h-5" />
                   </Link>
                 </div>

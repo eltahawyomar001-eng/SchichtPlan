@@ -60,9 +60,10 @@ export async function getSubscription(workspaceId: string) {
  * Statuses that grant access to the application.
  *
  * - ACTIVE: paid and current
- * - TRIALING: Stripe trial granted by checkout (we don't auto-create trials,
- *   but Stripe-side promotional trials are honoured if the customer reaches
- *   checkout with a Stripe coupon that includes a trial period)
+ * - TRIALING: in the no-card free trial. Auto-created at registration
+ *   (see initializeTrial) for TRIAL_DAYS, and also used for Stripe-side
+ *   trials granted at checkout. Access ends when trialEnd passes (see
+ *   getSubscriptionState → "trial_expired").
  * - PAST_DUE: keep access for the dunning grace window so the user can
  *   update payment in the billing portal; switch to read-only banner UX
  */
@@ -220,6 +221,10 @@ export async function provisionStripeCustomer(
  * Create a 7-day trial subscription for a newly registered workspace.
  * Called inside the registration transaction right after workspace creation.
  */
+/** Length of the no-card free trial, in days. Industry norm for this vertical
+ *  (Crewmeister 14, Planday 30); 14 fits the German SMB market. */
+export const TRIAL_DAYS = 14;
+
 export async function initializeTrial(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,
@@ -227,8 +232,14 @@ export async function initializeTrial(
 ) {
   const now = new Date();
   const trialEnd = new Date(now);
-  trialEnd.setDate(trialEnd.getDate() + 7);
+  trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS);
 
+  // No-card free trial (matches Planday/Clockify/Crewmeister): the workspace
+  // gets immediate, full-feature access for TRIAL_DAYS with no payment method.
+  // When the trial ends the paywall (/testphase-abgelaufen) gates the app until
+  // the owner completes Stripe Checkout. Plan stays BASIC for display; the
+  // trial feature set is widened in TRIAL_LIMIT_OVERRIDES so users can evaluate
+  // everything during the trial.
   return tx.subscription.create({
     data: {
       workspaceId,
@@ -516,20 +527,27 @@ export type FeatureKey = keyof PlanConfig["limits"];
  * was a major bug that let unbilled workspaces use the app.
  */
 /**
- * Hard limits applied while a workspace is TRIALING.
- * Keeps Resend/Supabase/Vercel costs near zero during the free week.
+ * Limits applied while a workspace is on the no-card free trial.
+ *
+ * Industry-standard trials (Clockify, Crewmeister) let users evaluate the FULL
+ * product, so every functional feature flag is enabled. We keep only generous
+ * *fair-use* numeric caps (storage / monthly PDFs / seats) to bound infra cost
+ * and abuse during the unverified trial — not to cripple the evaluation.
+ * Enterprise-only perks (priority support, SSO/SAML, dedicated SLA, custom
+ * integrations) stay off because they are human/contract-bound, not self-serve.
  */
 const TRIAL_LIMIT_OVERRIDES: Partial<PlanConfig["limits"]> = {
-  maxEmployees: 5,
-  maxLocations: 1,
-  storageMb: 50,
-  pdfMonthlyLimit: 3,
-  datevExport: false,
-  datevOnlineUpload: false,
-  autoScheduling: false,
-  eSignatures: false,
-  apiWebhooks: false,
-  analytics: false,
+  maxEmployees: 25,
+  maxLocations: 3,
+  storageMb: 500,
+  pdfMonthlyLimit: 30,
+  datevExport: true,
+  datevOnlineUpload: true,
+  autoScheduling: true,
+  eSignatures: true,
+  apiWebhooks: true,
+  customRoles: true,
+  analytics: true,
   prioritySupport: false,
   ssoSaml: false,
   dedicatedSla: false,

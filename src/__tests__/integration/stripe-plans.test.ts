@@ -98,8 +98,8 @@ describe("stripe plan config", () => {
     });
 
     it("trial period config matches stripe.ts", () => {
-      expect(PLANS.basic.trialDays).toBe(7);
-      expect(PLANS.professional.trialDays).toBe(7);
+      expect(PLANS.basic.trialDays).toBe(14);
+      expect(PLANS.professional.trialDays).toBe(14);
       expect(PLANS.enterprise.trialDays).toBe(0);
     });
   });

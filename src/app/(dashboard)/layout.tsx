@@ -55,10 +55,12 @@ export default async function DashboardLayout({
   }
 
   // ── Subscription gate ─────────────────────────────────────────────
-  // No mocks, no trials: the workspace MUST have an active Stripe
-  // subscription before any dashboard route (other than billing) is
-  // accessible. OWNER/ADMIN are sent to the billing page; everyone else
-  // sees an "inactive workspace" notice (they cannot self-subscribe).
+  // The workspace must be in an access-granting state — an in-progress
+  // no-card free trial (TRIALING, trialEnd in the future) OR a paid Stripe
+  // subscription — before any dashboard route (other than billing) is
+  // accessible. When the trial expires or a subscription lapses, OWNER/ADMIN
+  // are sent to the billing page; everyone else sees an "inactive workspace"
+  // notice (they cannot self-subscribe).
   if (user.workspaceId) {
     const hdrs = await headers();
     const pathname = hdrs.get("x-pathname") ?? "";

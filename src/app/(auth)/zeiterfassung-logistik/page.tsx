@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title:
     "Zeiterfassung Logistik – Schichtplanung für Lager & Transport | Shiftfy",
   description:
-    "Zeiterfassung & Schichtplanung für die Logistik: Arbeitszeiten im Lager per App erfassen, Schichten für Kommissionierung & Versand planen, Nacht- und Wochenendzuschläge automatisch berechnen. 7 Tage testen, DSGVO-konform.",
+    "Zeiterfassung & Schichtplanung für die Logistik: Arbeitszeiten im Lager per App erfassen, Schichten für Kommissionierung & Versand planen, Nacht- und Wochenendzuschläge automatisch berechnen. 14 Tage testen, DSGVO-konform.",
   keywords: [
     "Zeiterfassung Logistik",
     "Schichtplanung Logistik",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Zeiterfassung Logistik – Schichtplanung für Lager & Transport",
     description:
-      "Arbeitszeiten im Lager per App erfassen, Schichten planen, Zuschläge automatisch berechnen. 7 Tage testen.",
+      "Arbeitszeiten im Lager per App erfassen, Schichten planen, Zuschläge automatisch berechnen. 14 Tage testen.",
     url: "https://www.shiftfy.de/zeiterfassung-logistik",
   },
 };
@@ -144,7 +144,7 @@ export default function ZeiterfassungLogistikPage() {
               href="/register"
               className="bg-brand-gradient text-white text-sm font-semibold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transition-all"
             >
-              7 Tage testen
+              14 Tage testen
             </Link>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function ZeiterfassungLogistikPage() {
                 href="/register"
                 className="bg-brand-gradient text-white font-bold px-8 py-3.5 rounded-full hover:shadow-xl hover:shadow-emerald-200/50 transition-all flex items-center gap-2"
               >
-                7 Tage testen
+                14 Tage testen
                 <ArrowRightIcon className="w-5 h-5" />
               </Link>
               <Link
@@ -187,7 +187,7 @@ export default function ZeiterfassungLogistikPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-gray-400">
-              7 Tage Testphase · Jederzeit kündbar · DSGVO-konform · Server in
+              14 Tage Testphase · Jederzeit kündbar · DSGVO-konform · Server in
               der EU
             </p>
           </div>
@@ -311,7 +311,7 @@ export default function ZeiterfassungLogistikPage() {
                   Zeiterfassung im Lager jetzt digitalisieren
                 </h2>
                 <p className="mt-4 text-emerald-200 text-lg max-w-xl mx-auto">
-                  7 Tage testen — danach ab 2,99 €/Nutzer/Monat. Jederzeit
+                  14 Tage testen — danach ab 2,99 €/Nutzer/Monat. Jederzeit
                   kündbar.
                 </p>
                 <div className="mt-8">
@@ -319,7 +319,7 @@ export default function ZeiterfassungLogistikPage() {
                     href="/register"
                     className="bg-white text-emerald-700 font-bold px-8 py-3.5 rounded-full hover:shadow-xl transition-all inline-flex items-center gap-2"
                   >
-                    7 Tage testen
+                    14 Tage testen
                     <ArrowRightIcon className="w-5 h-5" />
                   </Link>
                 </div>

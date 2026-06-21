@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/authorization";
 import { getStripe, getPlanByPriceId, PLANS } from "@/lib/stripe";
@@ -288,12 +289,19 @@ export const POST = withRoute(
       ...customerParams,
     };
 
-    // Deterministic idempotency key: same workspace + plan + cycle within a
-    // 24-hour bucket = same checkout session. A rapid double-click on the
-    // Subscribe button now produces the same session URL, so Stripe will
-    // never create two parallel subscriptions for the same intent.
-    const dayBucket = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-    const stripeIdempotencyKey = `checkout:${user.workspaceId}:${planId}:${billingCycle}:${dayBucket}`;
+    // Idempotency key derived from a hash of the ACTUAL session params. A rapid
+    // double-click with identical params dedupes to one session (Stripe replays
+    // the first result), but as soon as the params change — a different cycle,
+    // or a code deploy that drops a payment method / adds customer_update — the
+    // key changes too. The previous day-bucket key collided here: earlier failed
+    // attempts registered the key with old params, and the retry with new params
+    // hit "Keys for idempotent requests can only be used with the same parameters
+    // they were first used with."
+    const paramsHash = createHash("sha256")
+      .update(JSON.stringify(sessionParams))
+      .digest("hex")
+      .slice(0, 24);
+    const stripeIdempotencyKey = `checkout:${user.workspaceId}:${planId}:${billingCycle}:${paramsHash}`;
 
     try {
       const checkoutSession = await stripe.checkout.sessions.create(

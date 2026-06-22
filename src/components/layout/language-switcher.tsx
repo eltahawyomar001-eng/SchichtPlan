@@ -1,19 +1,13 @@
 "use client";
 
-import { useState, type ComponentType, type SVGProps } from "react";
+import { useState } from "react";
 import { useLocale } from "next-intl";
 import { setLocale } from "@/i18n/locale";
-import { DEFlagIcon, GBFlagIcon } from "@/components/icons";
 import type { Locale } from "@/i18n/request";
 
-const LOCALES: {
-  value: Locale;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
-  label: string;
-  short: string;
-}[] = [
-  { value: "de", icon: DEFlagIcon, label: "Deutsch", short: "DE" },
-  { value: "en", icon: GBFlagIcon, label: "English", short: "EN" },
+const LOCALES: { value: Locale; short: string; label: string }[] = [
+  { value: "de", short: "DE", label: "Deutsch" },
+  { value: "en", short: "EN", label: "English" },
 ];
 
 export function LanguageSwitcher() {
@@ -34,24 +28,29 @@ export function LanguageSwitcher() {
 
   return (
     <div
-      className={`inline-flex items-center rounded-full border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 p-0.5 ${isPending ? "opacity-50 pointer-events-none" : ""}`}
+      role="group"
+      aria-label="Language"
+      className={`inline-flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-zinc-700 dark:bg-zinc-800/60 ${
+        isPending ? "pointer-events-none opacity-50" : ""
+      }`}
     >
       {LOCALES.map((l) => {
         const isActive = locale === l.value;
         return (
           <button
             key={l.value}
+            type="button"
             onClick={() => handleChange(l.value)}
             disabled={isPending}
+            aria-pressed={isActive}
             title={l.label}
-            className={`relative flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-200 ${
+            className={`rounded-md px-2.5 py-1 text-xs font-bold tracking-wide transition-colors duration-200 ${
               isActive
-                ? "bg-white dark:bg-zinc-700 text-gray-900 dark:text-zinc-100 shadow-sm ring-1 ring-gray-200 dark:ring-zinc-600"
-                : "text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300"
+                ? "bg-white text-gray-900 shadow-sm dark:bg-zinc-700 dark:text-white"
+                : "text-gray-400 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-200"
             }`}
           >
-            <l.icon className="h-3.5 w-[18px] flex-shrink-0" />
-            <span className="hidden sm:inline">{l.short}</span>
+            {l.short}
           </button>
         );
       })}

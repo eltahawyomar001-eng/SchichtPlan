@@ -33,7 +33,7 @@ import {
   getCalendarWeek,
   STATUS_COLORS,
 } from "@/lib/time-utils";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
 
@@ -114,6 +114,16 @@ export default function ZeiterfassungPage() {
   // Filters
   const [filterStatus, setFilterStatus] = useState("");
   const [filterEmployee, setFilterEmployee] = useState("");
+  // Date range — defaults to the current month so payroll/Abrechnung opens on
+  // the period being processed. Adjustable to view earlier months. Previously
+  // there was no date filter at all and the list silently showed only the 50
+  // most-recent entries, hiding older history (e.g. late-May entries).
+  const [filterStart, setFilterStart] = useState(
+    format(startOfMonth(new Date()), "yyyy-MM-dd"),
+  );
+  const [filterEnd, setFilterEnd] = useState(
+    format(endOfMonth(new Date()), "yyyy-MM-dd"),
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -149,6 +159,12 @@ export default function ZeiterfassungPage() {
       const params = new URLSearchParams();
       if (filterStatus) params.set("status", filterStatus);
       if (filterEmployee) params.set("employeeId", filterEmployee);
+      if (filterStart) params.set("start", filterStart);
+      if (filterEnd) params.set("end", filterEnd);
+      // Load the entire selected period in one page. The API caps at 200 rows;
+      // a single month is well under that. Without an explicit limit the API
+      // returned only the default 50 newest rows, truncating the history.
+      params.set("limit", "200");
 
       const res = await fetch(`/api/time-entries?${params.toString()}`);
       const data = await res.json();
@@ -158,7 +174,7 @@ export default function ZeiterfassungPage() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterEmployee]);
+  }, [filterStatus, filterEmployee, filterStart, filterEnd]);
 
   const fetchMasterData = useCallback(async () => {
     try {
@@ -539,6 +555,28 @@ export default function ZeiterfassungPage() {
           <Card>
             <CardContent className="py-4 sm:py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-gray-500 mb-1">
+                    {tc("from")}
+                  </Label>
+                  <Input
+                    type="date"
+                    value={filterStart}
+                    max={filterEnd || undefined}
+                    onChange={(e) => setFilterStart(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 mb-1">
+                    {tc("to")}
+                  </Label>
+                  <Input
+                    type="date"
+                    value={filterEnd}
+                    min={filterStart || undefined}
+                    onChange={(e) => setFilterEnd(e.target.value)}
+                  />
+                </div>
                 <div>
                   <Label className="text-xs text-gray-500 mb-1">
                     {tc("status")}

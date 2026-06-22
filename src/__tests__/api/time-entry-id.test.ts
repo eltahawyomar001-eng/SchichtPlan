@@ -35,6 +35,7 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     timeEntry: {
       findFirst: mockFindFirst,
+      findMany: vi.fn().mockResolvedValue([]), // overlap-guard lookup → no conflicts
       update: mockUpdate,
     },
     auditLog: { create: mockAuditCreate },

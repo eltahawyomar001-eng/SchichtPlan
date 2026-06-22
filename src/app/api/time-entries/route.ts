@@ -115,11 +115,14 @@ export const POST = withRoute(
       return NextResponse.json({ errors }, { status: 400 });
     }
 
-    // Overlap check
+    // Overlap check — only against LIVE entries. deletedAt:null is essential:
+    // a soft-deleted (e.g. cleaned-up duplicate) entry must not block creating a
+    // new legitimate entry on the same day.
     const existingEntries = await prisma.timeEntry.findMany({
       where: {
         employeeId: data.employeeId,
         date: new Date(data.date),
+        deletedAt: null,
         status: { not: "ZURUECKGEWIESEN" },
       },
     });

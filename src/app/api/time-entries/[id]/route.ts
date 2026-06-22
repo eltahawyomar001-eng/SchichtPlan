@@ -162,6 +162,32 @@ export const PATCH = withRoute(
     );
     const netMinutes = calcNetMinutes(grossMinutes, breakMins);
 
+    // Overlap guard: edited times/date must not collide with another LIVE entry
+    // for the same employee on that day (excludes this entry, soft-deleted, and
+    // rejected). Mirrors the create-route guard so an edit can't reintroduce the
+    // kind of overlapping duplicate we just cleaned up.
+    const effectiveDate = body.date ? new Date(body.date) : existing.date;
+    const sameDayEntries = await prisma.timeEntry.findMany({
+      where: {
+        employeeId: existing.employeeId,
+        date: effectiveDate,
+        deletedAt: null,
+        status: { not: "ZURUECKGEWIESEN" },
+        id: { not: id },
+      },
+      select: { startTime: true, endTime: true },
+    });
+    if (
+      sameDayEntries.some((e) =>
+        timesOverlap(e.startTime, e.endTime, startTime, endTime),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Overlap with existing entry" },
+        { status: 409 },
+      );
+    }
+
     // "" (No location selected) must become null — passing "" as a FK violates
     // the constraint and causes a 500. Only fall back to existing when omitted.
     const newLocationId =
@@ -299,3 +325,23 @@ export const DELETE = withRoute(
     return NextResponse.json({ success: true });
   },
 );
+
+/** True if two HH:MM ranges overlap (handles overnight ranges where end <= start). */
+function timesOverlap(
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string,
+): boolean {
+  const toMin = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const a0 = toMin(aStart);
+  let a1 = toMin(aEnd);
+  if (a1 <= a0) a1 += 1440;
+  const b0 = toMin(bStart);
+  let b1 = toMin(bEnd);
+  if (b1 <= b0) b1 += 1440;
+  return a0 < b1 && b0 < a1;
+}

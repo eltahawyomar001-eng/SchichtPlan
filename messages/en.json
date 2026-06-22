@@ -1205,6 +1205,7 @@
     "compute": "Compute",
     "computing": "Computing…",
     "estimateNote": "Estimate for review and DATEV hand-off — not a substitute for your tax advisor's final payroll. Continued pay is approximated using the lost-earnings principle.",
+    "draftHint": "{count, plural, one {# time entry in this period is still a draft and won't enter payroll until it is submitted and approved.} other {# time entries in this period are still drafts and won't enter payroll until they are submitted and approved.}}",
     "base": "Base pay",
     "surcharges": "Surcharges",
     "continuedPay": "Continued pay",

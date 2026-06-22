@@ -1205,6 +1205,7 @@
     "compute": "Berechnen",
     "computing": "Berechne…",
     "estimateNote": "Schätzung zur Prüfung und DATEV-Übergabe — ersetzt keine endgültige Lohnabrechnung durch den Steuerberater. Entgeltfortzahlung wird nach dem Lohnausfallprinzip näherungsweise berechnet.",
+    "draftHint": "{count, plural, one {# Zeiteintrag in diesem Zeitraum ist noch ein Entwurf und fließt erst nach Einreichung und Freigabe in die Abrechnung ein.} other {# Zeiteinträge in diesem Zeitraum sind noch Entwürfe und fließen erst nach Einreichung und Freigabe in die Abrechnung ein.}}",
     "base": "Grundlohn",
     "surcharges": "Zuschläge",
     "continuedPay": "Entgeltfortzahlung",

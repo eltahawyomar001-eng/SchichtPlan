@@ -34,6 +34,7 @@ interface Result {
     grossCents: number;
     employees: number;
   };
+  draftCount: number;
   generatedAt: string;
 }
 
@@ -177,6 +178,15 @@ export default function LohnabrechnungPage() {
           </div>
         ) : result ? (
           <>
+            {/* Draft-entries warning — drafts in this period are NOT in payroll
+                until employees submit / a manager approves them. */}
+            {result.draftCount > 0 && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3 text-sm text-amber-800 dark:text-amber-300">
+                <span aria-hidden>⚠️</span>
+                <span>{t("draftHint", { count: result.draftCount })}</span>
+              </div>
+            )}
+
             {/* Summary */}
             <div className="grid gap-4 sm:grid-cols-4">
               <SummaryCard

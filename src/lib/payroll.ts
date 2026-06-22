@@ -44,6 +44,12 @@ export interface PayrollResult {
     grossCents: number;
     employees: number;
   };
+  /**
+   * Number of ENTWURF (draft) time entries in this period that are NOT yet
+   * counted in payroll. Drafts only enter payroll once submitted/approved
+   * (PAYABLE_STATUSES). Surfaced so admins know unfinished entries exist.
+   */
+  draftCount: number;
   generatedAt: string;
 }
 
@@ -93,7 +99,7 @@ export async function computePayroll(
   const periodEnd = new Date(year, month, 0); // last day of month
   periodEnd.setHours(23, 59, 59, 999);
 
-  const [employees, entries, absences] = await Promise.all([
+  const [employees, entries, absences, draftCount] = await Promise.all([
     prisma.employee.findMany({
       where: { workspaceId, isActive: true, deletedAt: null },
       select: {
@@ -128,6 +134,16 @@ export async function computePayroll(
         endDate: true,
         halfDayStart: true,
         halfDayEnd: true,
+      },
+    }),
+    // Draft (ENTWURF) entries in the period — not yet payable. Counted so the
+    // Abrechnung can warn admins that unfinished entries exist for the period.
+    prisma.timeEntry.count({
+      where: {
+        workspaceId,
+        deletedAt: null,
+        status: "ENTWURF",
+        date: { gte: periodStart, lte: periodEnd },
       },
     }),
   ]);
@@ -240,6 +256,7 @@ export async function computePayroll(
     periodEnd: periodEnd.toLocaleDateString("en-CA"),
     lines,
     totals,
+    draftCount,
     generatedAt: new Date().toISOString(),
   };
 }

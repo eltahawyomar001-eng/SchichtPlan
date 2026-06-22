@@ -592,23 +592,40 @@ export async function generateTimeEntriesFromShifts(workspaceId: string) {
     // Skip open shifts with no employee assigned
     if (!shift.employeeId) continue;
 
-    // Check if a time entry already exists for this shift
-    const existing = await prisma.timeEntry.findFirst({
+    // (1) Idempotency: this shift already produced an entry — never recreate on
+    // re-run. No deletedAt filter on purpose: if a generated entry was later
+    // cleaned up, we still must not regenerate it.
+    const existingForShift = await prisma.timeEntry.findFirst({
       where: { shiftId: shift.id },
+      select: { id: true },
     });
-    if (existing) continue;
+    if (existingForShift) continue;
 
-    // Also check by employee+date+time to avoid duplicates
-    const duplicate = await prisma.timeEntry.findFirst({
+    // (2) Actual beats planned: skip if the employee already has a live
+    // (non-deleted, non-rejected) entry that OVERLAPS this shift's window on the
+    // same day. The previous check required an EXACT start/end match, so a real
+    // clock-in at 08:07 never matched a planned 08:00 shift and a duplicate was
+    // created. Overlap (not exact match) catches that while still allowing
+    // legitimate, non-overlapping split shifts on the same day.
+    const sameDayEntries = await prisma.timeEntry.findMany({
       where: {
         employeeId: shift.employeeId,
         date: shift.date,
-        startTime: shift.startTime,
-        endTime: shift.endTime,
+        deletedAt: null,
         status: { not: "ZURUECKGEWIESEN" },
       },
+      select: { startTime: true, endTime: true },
     });
-    if (duplicate) continue;
+    const toMin = (t: string) => {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+    const shiftStart = toMin(shift.startTime);
+    const shiftEnd = toMin(shift.endTime);
+    const overlapsExisting = sameDayEntries.some(
+      (e) => toMin(e.startTime) < shiftEnd && shiftStart < toMin(e.endTime),
+    );
+    if (overlapsExisting) continue;
 
     // Calculate break using ArbZG rules
     const grossMinutes = calcGrossMinutes(shift.startTime, shift.endTime);

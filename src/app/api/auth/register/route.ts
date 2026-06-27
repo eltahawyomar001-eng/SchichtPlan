@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/verification";
 import { registerSchema, validateBody } from "@/lib/validations";
+import { normalizeEmail } from "@/lib/auth-credentials";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { withRoute } from "@/lib/with-route";
@@ -21,12 +22,16 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
 
   const {
     name,
-    email,
+    email: rawEmail,
     password,
     workspaceName,
     invitationToken,
     consentGiven,
   } = parsed.data;
+
+  // Store the email canonicalized (trimmed + lowercased) so it always matches
+  // the normalized lookup performed at login. See @/lib/auth-credentials.
+  const email = normalizeEmail(rawEmail);
 
   // Suppress unused var warning — consentGiven is validated by Zod (must be true)
   void consentGiven;

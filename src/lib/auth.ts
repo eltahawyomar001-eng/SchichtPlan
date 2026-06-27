@@ -16,6 +16,7 @@ import {
   clearFailedAttempts,
 } from "@/lib/login-lockout";
 import { initializeTrial, provisionStripeCustomer } from "@/lib/subscription";
+import { normalizeEmail, normalizePassword } from "@/lib/auth-credentials";
 import { log } from "@/lib/logger";
 
 /** Workspace shape that includes the onboardingCompleted field.
@@ -159,12 +160,15 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = normalizeEmail(credentials.email);
+        const password = normalizePassword(credentials.password);
+
         // ── Brute-force lockout check (DSGVO Art. 32) ──
-        const lockedSeconds = await isLockedOut(credentials.email);
+        const lockedSeconds = await isLockedOut(email);
         if (lockedSeconds > 0) return null;
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
           include: {
             workspace: true,
             employee: { select: { id: true } },
@@ -172,17 +176,14 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.hashedPassword) {
-          await recordFailedAttempt(credentials.email);
+          await recordFailedAttempt(email);
           return null;
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword,
-        );
+        const isValid = await bcrypt.compare(password, user.hashedPassword);
 
         if (!isValid) {
-          await recordFailedAttempt(credentials.email);
+          await recordFailedAttempt(email);
           return null;
         }
 

@@ -8,6 +8,7 @@ import {
   clearFailedAttempts,
 } from "@/lib/login-lockout";
 import { preLoginSchema, validateBody } from "@/lib/validations";
+import { normalizeEmail, normalizePassword } from "@/lib/auth-credentials";
 import { withRoute } from "@/lib/with-route";
 
 /**
@@ -26,7 +27,8 @@ export const POST = withRoute("/api/auth/pre-login", "POST", async (req) => {
   if (!_json.ok) return _json.response;
   const parsed = validateBody(preLoginSchema, _json.data);
   if (!parsed.success) return parsed.response;
-  const { email, password } = parsed.data;
+  const email = normalizeEmail(parsed.data.email);
+  const password = normalizePassword(parsed.data.password);
 
   // ── Brute-force lockout check ──
   const lockedSeconds = await isLockedOut(email);

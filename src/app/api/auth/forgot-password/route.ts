@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/notifications/email";
 import { passwordResetEmail } from "@/lib/notifications/email-i18n";
 import { forgotPasswordSchema, validateBody } from "@/lib/validations";
+import { normalizeEmail } from "@/lib/auth-credentials";
 import { withRoute } from "@/lib/with-route";
 import { getLocaleFromCookie } from "@/i18n/locale";
 import { log } from "@/lib/logger";
@@ -17,7 +18,7 @@ export const POST = withRoute(
     if (!_json.ok) return _json.response;
     const parsed = validateBody(forgotPasswordSchema, _json.data);
     if (!parsed.success) return parsed.response;
-    const { email } = parsed.data;
+    const email = normalizeEmail(parsed.data.email);
 
     // Always return success to prevent email enumeration.
     // NOTE: if no User row exists for this email (e.g. employee who never

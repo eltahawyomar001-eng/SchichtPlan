@@ -108,7 +108,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       // Only the request owner (or management) can edit, and only while pending.
       if (existing.status !== "AUSSTEHEND") {
         return NextResponse.json(
-          { error: "ONLY_PENDING_CAN_BE_EDITED" },
+          {
+            error: "ONLY_PENDING_CAN_BE_EDITED",
+            code: "ONLY_PENDING_CAN_BE_EDITED",
+          },
           { status: 409 },
         );
       }
@@ -122,7 +125,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       const newEnd = edits.endDate ? new Date(edits.endDate) : existing.endDate;
       if (newEnd < newStart) {
         return NextResponse.json(
-          { error: "END_BEFORE_START" },
+          { error: "END_BEFORE_START", code: "END_BEFORE_START" },
           { status: 400 },
         );
       }
@@ -201,6 +204,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
             {
               error:
                 "Sie können Ihren eigenen Abwesenheitsantrag nicht genehmigen.",
+              code: "CANNOT_REVIEW_OWN",
             },
             { status: 403 },
           );
@@ -227,6 +231,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
           {
             error:
               "Nur ausstehende Anträge können genehmigt oder abgelehnt werden.",
+            code: "ONLY_PENDING_CAN_BE_REVIEWED",
           },
           { status: 409 },
         );
@@ -238,7 +243,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       if (body.status === "STORNIERT") {
         if (existing.status !== "AUSSTEHEND") {
           return NextResponse.json(
-            { error: "ONLY_PENDING_CAN_BE_CANCELLED" },
+            {
+              error: "ONLY_PENDING_CAN_BE_CANCELLED",
+              code: "ONLY_PENDING_CAN_BE_CANCELLED",
+            },
             { status: 409 },
           );
         }

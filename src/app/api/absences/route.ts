@@ -151,7 +151,7 @@ export const POST = withRoute(
     if (isEmployee(user) && user.employeeId) {
       if (body.employeeId !== user.employeeId) {
         return NextResponse.json(
-          { error: "ONLY_OWN_ABSENCES" },
+          { error: "ONLY_OWN_ABSENCES", code: "ONLY_OWN_ABSENCES" },
           { status: 403 },
         );
       }
@@ -161,7 +161,10 @@ export const POST = withRoute(
     const end = new Date(body.endDate);
     if (end < start) {
       return NextResponse.json(
-        { error: "End date must be after start date" },
+        {
+          error: "End date must be after start date",
+          code: "END_BEFORE_START",
+        },
         { status: 400 },
       );
     }
@@ -174,7 +177,7 @@ export const POST = withRoute(
 
     if (!employeeForBundesland) {
       return NextResponse.json(
-        { error: "Employee not found" },
+        { error: "Employee not found", code: "EMPLOYEE_NOT_FOUND" },
         { status: 404 },
       );
     }
@@ -234,6 +237,7 @@ export const POST = withRoute(
         {
           error:
             "Für diesen Zeitraum existiert bereits ein genehmigter Abwesenheitsantrag.",
+          code: "OVERLAP",
         },
         { status: 409 },
       );

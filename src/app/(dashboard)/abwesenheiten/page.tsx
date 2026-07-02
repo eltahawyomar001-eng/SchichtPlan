@@ -93,6 +93,9 @@ export default function AbwesenheitenPage() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
 
   const [formData, setFormData] = useState({
@@ -157,6 +160,7 @@ export default function AbwesenheitenPage() {
     if (!canManage && user?.employeeId) {
       setFormData((prev) => ({ ...prev, employeeId: user.employeeId! }));
     }
+    setFormError(null);
     setShowForm(true);
   }, [canManage, user]);
 
@@ -213,8 +217,33 @@ export default function AbwesenheitenPage() {
 
   // ── Handlers ────────────────────────────────────────────────
 
+  // Stable error codes the API can return — mapped to localized messages.
+  const KNOWN_ERROR_CODES = new Set([
+    "END_BEFORE_START",
+    "EMPLOYEE_NOT_FOUND",
+    "OVERLAP",
+    "ONLY_OWN_ABSENCES",
+    "ONLY_PENDING_CAN_BE_EDITED",
+    "ONLY_PENDING_CAN_BE_CANCELLED",
+    "ONLY_PENDING_CAN_BE_REVIEWED",
+    "CANNOT_REVIEW_OWN",
+  ]);
+
+  function apiErrorMessage(data: {
+    code?: string;
+    error?: string;
+    message?: string;
+  }): string {
+    const code = data.code ?? data.error;
+    if (code && KNOWN_ERROR_CODES.has(code)) return t(`errors.${code}`);
+    return data.message || data.error || tc("errorOccurred");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setFormError(null);
     try {
       const res = await fetch("/api/absences", {
         method: "POST",
@@ -235,15 +264,18 @@ export default function AbwesenheitenPage() {
       } else {
         const isPlanLimit = await handlePlanLimit(res);
         if (isPlanLimit) return;
-        const data = await res.json();
-        setLoadError(data.message || data.error || tc("errorOccurred"));
+        const data = await res.json().catch(() => ({}));
+        setFormError(apiErrorMessage(data));
       }
     } catch {
-      setLoadError(tc("errorOccurred"));
+      setFormError(t("errors.NETWORK"));
+    } finally {
+      setSubmitting(false);
     }
   }
 
   function openEdit(absence: AbsenceRequest) {
+    setEditError(null);
     setEditingAbsence(absence);
     setEditForm({
       category: absence.category,
@@ -259,6 +291,7 @@ export default function AbwesenheitenPage() {
     if (!editingAbsence) return;
     const id = editingAbsence.id;
     setActionLoading((prev) => ({ ...prev, [id]: true }));
+    setEditError(null);
     try {
       const res = await fetch(`/api/absences/${id}`, {
         method: "PATCH",
@@ -267,13 +300,13 @@ export default function AbwesenheitenPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setLoadError(data.message || data.error || tc("errorOccurred"));
+        setEditError(apiErrorMessage(data));
       } else {
         setEditingAbsence(null);
         fetchAbsences();
       }
     } catch {
-      setLoadError(tc("errorOccurred"));
+      setEditError(t("errors.NETWORK"));
     } finally {
       setActionLoading((prev) => ({ ...prev, [id]: false }));
     }
@@ -290,7 +323,7 @@ export default function AbwesenheitenPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setLoadError(data.message || data.error || tc("errorOccurred"));
+        setLoadError(apiErrorMessage(data));
       }
       setReviewNotes((prev) => {
         const next = { ...prev };
@@ -344,7 +377,7 @@ export default function AbwesenheitenPage() {
       <PageContent>
         {/* Load/action error */}
         {loadError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
             {loadError}
           </div>
         )}
@@ -597,8 +630,8 @@ export default function AbwesenheitenPage() {
             >
               {tc("cancel")}
             </Button>
-            <Button type="submit" form="new-absence-form">
-              {t("form.submit")}
+            <Button type="submit" form="new-absence-form" disabled={submitting}>
+              {submitting ? tc("loading") : t("form.submit")}
             </Button>
           </div>
         }
@@ -608,6 +641,14 @@ export default function AbwesenheitenPage() {
           onSubmit={handleSubmit}
           className="space-y-4"
         >
+          {formError && (
+            <div
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {formError}
+            </div>
+          )}
           {canManage ? (
             <div>
               <Label>{t("form.employee")}</Label>
@@ -775,6 +816,14 @@ export default function AbwesenheitenPage() {
           onSubmit={handleEditSubmit}
           className="space-y-4"
         >
+          {editError && (
+            <div
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {editError}
+            </div>
+          )}
           <div>
             <Label>{t("form.category")}</Label>
             <Select

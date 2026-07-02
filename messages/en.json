@@ -734,7 +734,18 @@
     "edit": "Edit",
     "withdraw": "Withdraw",
     "cancelConfirm": "Withdraw this request?",
-    "editRequest": "Edit request"
+    "editRequest": "Edit request",
+    "errors": {
+      "END_BEFORE_START": "The end date must not be before the start date.",
+      "EMPLOYEE_NOT_FOUND": "Employee not found. Please reload the page.",
+      "OVERLAP": "An approved absence request already exists for this period.",
+      "ONLY_OWN_ABSENCES": "You can only submit requests for yourself.",
+      "ONLY_PENDING_CAN_BE_EDITED": "Only pending requests can be edited.",
+      "ONLY_PENDING_CAN_BE_CANCELLED": "Only pending requests can be withdrawn.",
+      "ONLY_PENDING_CAN_BE_REVIEWED": "Only pending requests can be approved or rejected.",
+      "CANNOT_REVIEW_OWN": "You cannot approve your own absence request.",
+      "NETWORK": "Connection error. Please check your internet connection and try again."
+    }
   },
   "availability": {
     "title": "Availability",

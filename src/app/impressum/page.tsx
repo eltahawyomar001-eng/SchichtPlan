@@ -89,7 +89,7 @@ export default function ImpressumPage() {
             <p>
               Telefon: +49 176 30365636
               <br />
-              E-Mail: info@bashabsheh-vergabepartner.de
+              E-Mail: Kontakt@shiftfy.info
             </p>
           </section>
 

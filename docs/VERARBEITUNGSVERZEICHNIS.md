@@ -2,7 +2,7 @@
 
 > **Verantwortlicher:** Bashabsheh Vergabepartner, Inhaber Mohammad Bashabsheh  
 > **Anschrift:** c/o VirtualOfficeBerlin, Kolonnenstraße 8, 10827 Berlin  
-> **Datenschutz-Ansprechpartner:** Mohammad Bashabsheh — datenschutz@bashabsheh-vergabepartner.de  
+> **Datenschutz-Ansprechpartner:** Mohammad Bashabsheh — Kontakt@shiftfy.info  
 > **Software:** Shiftfy (SchichtPlan) — SaaS für Schichtplanung, Zeiterfassung und Personalverwaltung  
 > **Stand:** <!-- Datum wird bei Pflege aktualisiert --> Juni 2025
 

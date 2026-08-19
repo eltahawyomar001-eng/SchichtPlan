@@ -1133,7 +1133,7 @@ function PricingSection() {
         tp("featureEnt8"),
       ],
       cta: tp("contactSales"),
-      href: "mailto:info@bashabsheh-vergabepartner.de?subject=Enterprise%20Plan%20Anfrage",
+      href: "mailto:Kontakt@shiftfy.info?subject=Enterprise%20Plan%20Anfrage",
       highlighted: false,
       isEnterprise: true,
     },
@@ -2240,7 +2240,7 @@ function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:info@bashabsheh-vergabepartner.de"
+                  href="mailto:Kontakt@shiftfy.info"
                   className="hover:text-gray-700 transition-colors"
                 >
                   {t("footerContact")}

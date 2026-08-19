@@ -9,7 +9,7 @@ import { sendEmail } from "@/lib/notifications/email";
 const TECHNICAL_INBOX =
   process.env.FEEDBACK_EMAIL_TECHNICAL ?? "omarragehfulda@gmail.com";
 const PRODUCT_INBOX =
-  process.env.FEEDBACK_EMAIL_PRODUCT ?? "info@bashabsheh-vergabepartner.de";
+  process.env.FEEDBACK_EMAIL_PRODUCT ?? "Kontakt@shiftfy.info";
 
 const TECHNICAL_CATEGORIES = new Set(["BUG", "QUESTION"]);
 

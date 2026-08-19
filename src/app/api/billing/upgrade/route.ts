@@ -60,7 +60,7 @@ export const POST = withRoute(
         {
           error: "ENTERPRISE_CONTACT_SALES",
           message:
-            "Enterprise-Pläne werden individuell konfiguriert. Bitte wenden Sie sich an info@bashabsheh-vergabepartner.de.",
+            "Enterprise-Pläne werden individuell konfiguriert. Bitte wenden Sie sich an Kontakt@shiftfy.info.",
         },
         { status: 422 },
       );

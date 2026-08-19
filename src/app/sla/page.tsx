@@ -284,10 +284,10 @@ export default function SLAPage() {
               Bei Fragen zu diesem SLA oder zur Beantragung von Gutschriften
               wenden Sie sich bitte an:{" "}
               <a
-                href="mailto:info@bashabsheh-vergabepartner.de"
+                href="mailto:Kontakt@shiftfy.info"
                 className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 underline"
               >
-                info@bashabsheh-vergabepartner.de
+                Kontakt@shiftfy.info
               </a>
             </p>
           </section>

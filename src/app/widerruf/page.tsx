@@ -102,7 +102,7 @@ export default function WiderrufPage() {
               <br />
               Kolonnenstraße 8, 10827 Berlin, Deutschland
               <br />
-              E-Mail: info@bashabsheh-vergabepartner.de
+              E-Mail: Kontakt@shiftfy.info
               <br />
               Telefon: +49 176 30365636
             </p>
@@ -176,7 +176,7 @@ export default function WiderrufPage() {
                 <br />
                 Kolonnenstraße 8, 10827 Berlin
                 <br />
-                E-Mail: info@bashabsheh-vergabepartner.de
+                E-Mail: Kontakt@shiftfy.info
               </p>
               <p>
                 Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*)

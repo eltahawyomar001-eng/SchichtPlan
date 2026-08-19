@@ -1035,7 +1035,7 @@ function BillingContent() {
                     </div>
                   ) : plan.isEnterprise ? (
                     <a
-                      href="mailto:info@bashabsheh-vergabepartner.de"
+                      href="mailto:Kontakt@shiftfy.info"
                       className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:shadow-md"
                     >
                       <StarIcon className="h-4 w-4" />

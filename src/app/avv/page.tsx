@@ -74,7 +74,7 @@ export default function AvvPage() {
               <br />
               Kolonnenstraße 8, 10827 Berlin, Deutschland
               <br />
-              E-Mail: info@bashabsheh-vergabepartner.de
+              E-Mail: Kontakt@shiftfy.info
             </p>
           </section>
 

@@ -162,10 +162,10 @@ export default function BarrierefreiheitPage() {
             <p className="mt-2">
               E-Mail:{" "}
               <a
-                href="mailto:info@bashabsheh-vergabepartner.de"
+                href="mailto:Kontakt@shiftfy.info"
                 className="text-emerald-600 hover:text-emerald-700 underline"
               >
-                info@bashabsheh-vergabepartner.de
+                Kontakt@shiftfy.info
               </a>
             </p>
             <p className="mt-2">

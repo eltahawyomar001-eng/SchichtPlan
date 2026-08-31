@@ -27,12 +27,17 @@ import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import {
-  checkArbZg5RestPeriod,
-  checkArbZg4BreakRequirement,
   suggestBreakForGross,
   shiftGrossMinutes,
+  requiredBreakForNet,
 } from "@/lib/arbzg";
-import { requireLocationCertifications } from "@/lib/certification-check";
+import {
+  assertShiftCompliance,
+  evaluateShiftCompliance,
+  recordComplianceOverrides,
+  isComplianceError,
+  type PendingOverride,
+} from "@/lib/compliance-gate";
 
 export const GET = withRoute("/api/shifts", "GET", async (req) => {
   const auth = await requireAuth();
@@ -134,30 +139,23 @@ export const POST = withRoute(
       repeatWeeks,
       endDate,
       selectedDays,
+      overrideRules,
+      overrideReason,
     } = parsed.data;
 
     // ArbZG §4 — resolve the planned break. When the client supplies no break,
     // auto-insert the statutory minimum so a non-compliant shift can never be
-    // saved. When it supplies one that is too short, hard-block below.
+    // saved. A break that is too short is hard-blocked by the compliance gate.
     const gross = shiftGrossMinutes(startTime, endTime);
     const breakMinutes =
       parsed.data.breakMinutes ?? suggestBreakForGross(gross);
-    const break4 = checkArbZg4BreakRequirement(
-      startTime,
-      endTime,
-      breakMinutes,
-    );
-    if (break4.violation) {
-      return NextResponse.json(
-        {
-          error: "ARBZG_4_VIOLATION",
-          message: break4.message,
-          messageEn: break4.messageEn,
-          minBreakMinutes: break4.minBreakMinutes,
-        },
-        { status: 422 },
-      );
-    }
+
+    // Audited release of a hard block. The gate itself re-checks the role, so
+    // a non-management caller sending these flags simply stays blocked.
+    const bypassFlags =
+      overrideRules && overrideRules.length > 0 && overrideReason
+        ? { rules: overrideRules, reason: overrideReason, user }
+        : undefined;
 
     /* ══════════════════════════════════════════════════════════
      * BULK MODE — create shifts across a date range
@@ -243,33 +241,31 @@ export const POST = withRoute(
               cursor.setDate(cursor.getDate() + 1);
               continue;
             }
+          }
 
-            // ArbZG §5 — 11h minimum rest (hard block per day in bulk)
-            const rest = await checkArbZg5RestPeriod({
+          // ── Compliance gate (§34a + ArbZG §3/§4/§5) ──
+          // Bulk uses the non-throwing evaluation: one bad day skips that day
+          // and reports why, rather than aborting the whole range. §34a is a
+          // property of the employee, not the day, so a certification failure
+          // will skip every day — which is the correct outcome.
+          const dayViolations = await evaluateShiftCompliance(
+            {
               employeeId,
+              locationId,
               date: dateStr,
               startTime,
               endTime,
-              workspaceId,
-            });
-            if (rest.violation) {
-              skipped++;
-              conflicts.push(
-                `${new Date(dateStr).toLocaleDateString("de-DE")}: ${rest.message}`,
-              );
-              cursor.setDate(cursor.getDate() + 1);
-              continue;
-            }
-
-            // §34a / certification hard block (bulk: skip days, collect reason)
-            const certErr = await requireLocationCertifications(
-              employeeId,
-              locationId,
+              breakMinutes,
+            },
+            workspaceId,
+          );
+          if (dayViolations.length > 0) {
+            skipped++;
+            conflicts.push(
+              `${new Date(dateStr).toLocaleDateString("de-DE")}: ${dayViolations[0].message}`,
             );
-            if (certErr) {
-              // Return immediately — cert violation blocks the whole bulk, not just one day
-              return certErr;
-            }
+            cursor.setDate(cursor.getDate() + 1);
+            continue;
           }
 
           // Surcharges
@@ -348,32 +344,29 @@ export const POST = withRoute(
           { status: 409 },
         );
       }
+    }
 
-      // ArbZG §5 — 11h minimum rest between shifts (hard block)
-      const rest = await checkArbZg5RestPeriod({
-        employeeId,
-        date,
-        startTime,
-        endTime,
+    // ── Compliance gate (§34a + ArbZG §3/§4/§5) ──
+    // Runs for unassigned shifts too: §4 applies to the shift itself, so an
+    // OPEN shift can never be parked with an unlawful break and then filled.
+    let pendingOverrides: PendingOverride[] = [];
+    try {
+      const gate = await assertShiftCompliance(
+        {
+          employeeId,
+          locationId,
+          date,
+          startTime,
+          endTime,
+          breakMinutes,
+        },
         workspaceId,
-      });
-      if (rest.violation) {
-        return NextResponse.json(
-          {
-            error: "ARBZG_5_VIOLATION",
-            message: rest.message,
-            messageEn: rest.messageEn,
-          },
-          { status: 422 },
-        );
-      }
-
-      // §34a / certification hard block
-      const certErr = await requireLocationCertifications(
-        employeeId,
-        locationId,
+        bypassFlags,
       );
-      if (certErr) return certErr;
+      pendingOverrides = gate.pendingOverrides;
+    } catch (e) {
+      if (isComplianceError(e)) return e.toResponse();
+      throw e;
     }
 
     // ── Auto-detect surcharges ──
@@ -419,6 +412,17 @@ export const POST = withRoute(
           location: true,
         },
       });
+
+      // ── Audited compliance overrides (atomic with the shift) ──
+      // The shift id only exists now, so the releases recorded by the gate are
+      // written here — same transaction, so a shift can never exist without
+      // the override that justifies it.
+      await recordComplianceOverrides(
+        tx,
+        "Shift",
+        createdShift.id,
+        pendingOverrides,
+      );
 
       // ── Audit log (atomic) ──
       await createAuditLogTx(tx, {
@@ -518,7 +522,7 @@ export const POST = withRoute(
             code: "ARBZG_4_BREAK_AUTO",
             message: `ArbZG §4: ${breakMinutes} Minuten Pause wurden automatisch eingeplant.`,
             messageEn: `ArbZG §4: a ${breakMinutes}-minute break was automatically scheduled.`,
-            minBreakMinutes: break4.minBreakMinutes,
+            minBreakMinutes: requiredBreakForNet(gross - breakMinutes),
             breakMinutes,
           },
         ]

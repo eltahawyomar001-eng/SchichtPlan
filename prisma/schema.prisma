@@ -168,6 +168,14 @@ model Workspace {
   /// Betriebsnummer (8-digit employer number from the Bundesagentur für Arbeit).
   /// Required for Sofortmeldung and eAU transmission via the SV gateway.
   betriebsnummer         String?
+  /// Zoll-Shield strictness. When true, §34a is required for EVERY assigned
+  /// shift by default rather than only where a LocationRequiredSkill row
+  /// exists, and a valid Bewacherregister entry becomes mandatory.
+  ///
+  /// Defaults to FALSE deliberately: inverting the §34a default is a breaking
+  /// change for every non-security workspace, so it is an explicit opt-in and
+  /// is NOT inferred from the free-text `industry` field.
+  securitySectorMode     Boolean                @default(false)
   logo                   String?
   datevConsultantNumber  String?
   datevClientNumber      String?
@@ -790,6 +798,11 @@ model Location {
   /// When `latitude`/`longitude` were last resolved — lets a re-geocode job
   /// find stale rows after an address edit.
   geocodedAt           DateTime?
+  /// Explicit §34a exemption for this object. Only meaningful when the
+  /// workspace has securitySectorMode on: an inner-office or logistics site
+  /// inside a security company does not need a certified guard. Exempting is a
+  /// deliberate act, which is why the default is false (no exemption).
+  certificationExempt  Boolean                 @default(false)
   createdAt            DateTime                @default(now())
   deletedAt            DateTime?
   workspaceId          String

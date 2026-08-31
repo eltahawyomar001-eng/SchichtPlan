@@ -18,19 +18,21 @@ import { updateShiftSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
 import {
-  checkArbZg5RestPeriod,
   checkArbZg4BreakRequirement,
   shiftGrossMinutes,
   suggestBreakForGross,
   requiredBreakForNet,
 } from "@/lib/arbzg";
 import {
+  assertShiftCompliance,
+  isComplianceError,
+} from "@/lib/compliance-gate";
+import {
   isPublicHoliday,
   isSunday,
   isNightShift,
   calculateSurcharge,
 } from "@/lib/holidays";
-import { requireLocationCertifications } from "@/lib/certification-check";
 
 export const PATCH = withRoute(
   "/api/shifts/[id]",
@@ -105,39 +107,51 @@ export const PATCH = withRoute(
         );
       }
 
-      // ArbZG §5 — 11h minimum rest between shifts (hard block)
-      const restDate =
+      // ── Compliance gate (§34a + ArbZG §3/§4/§5) ──
+      // excludeShiftId keeps the shift being edited out of the §3 daily total
+      // and the §5 adjacency scan, so an edit is not blocked by itself.
+      const gateDate =
         body.date ||
         new Date(currentShift.date).toLocaleDateString("en-CA", {
           timeZone: "Europe/Berlin",
         });
-      const rest = await checkArbZg5RestPeriod({
-        employeeId: resolvedEmployeeId,
-        date: restDate,
-        startTime: body.startTime || currentShift.startTime,
-        endTime: body.endTime || currentShift.endTime,
-        workspaceId: workspaceId!,
-        excludeShiftId: id,
-      });
-      if (rest.violation) {
-        return NextResponse.json(
-          {
-            error: "ARBZG_5_VIOLATION",
-            message: rest.message,
-            messageEn: rest.messageEn,
-          },
-          { status: 422 },
-        );
-      }
-
-      // §34a / certification hard block
       const resolvedLocationId =
         "locationId" in body ? body.locationId : currentShift.locationId;
-      const certErr = await requireLocationCertifications(
-        resolvedEmployeeId,
-        resolvedLocationId,
-      );
-      if (certErr) return certErr;
+
+      const gateBreak =
+        body.breakMinutes != null
+          ? body.breakMinutes
+          : currentShift.breakMinutes;
+
+      const bypassFlags =
+        body.overrideRules &&
+        body.overrideRules.length > 0 &&
+        body.overrideReason
+          ? {
+              rules: body.overrideRules,
+              reason: body.overrideReason,
+              user: session.user as SessionUser,
+            }
+          : undefined;
+
+      try {
+        await assertShiftCompliance(
+          {
+            employeeId: resolvedEmployeeId,
+            locationId: resolvedLocationId,
+            date: gateDate,
+            startTime: body.startTime || currentShift.startTime,
+            endTime: body.endTime || currentShift.endTime,
+            breakMinutes: gateBreak,
+            excludeShiftId: id,
+          },
+          workspaceId!,
+          bypassFlags,
+        );
+      } catch (e) {
+        if (isComplianceError(e)) return e.toResponse();
+        throw e;
+      }
     }
 
     // ── ArbZG §4 — mandatory break enforcement (hard block) ──

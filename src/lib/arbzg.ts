@@ -13,6 +13,9 @@ import { prisma } from "@/lib/db";
 export const ARBZG_REST_HOURS = 11;
 const REST_MS = ARBZG_REST_HOURS * 60 * 60 * 1000;
 
+/** ArbZG §3 absolute daily ceiling for *working* time (Arbeitszeit), minutes. */
+export const ARBZG_3_MAX_DAILY_MINUTES = 10 * 60; // 600
+
 function toDateTime(date: Date, timeStr: string): Date {
   const [h, m] = timeStr.split(":").map(Number);
   const dt = new Date(date);
@@ -113,6 +116,94 @@ export async function checkArbZg5RestPeriod(params: {
   }
 
   return { violation: false };
+}
+
+/**
+ * ArbZG §3 — maximum daily working time (HARD BLOCK).
+ *
+ * §5 already guards the gap BETWEEN shifts, but nothing stopped a dispatcher
+ * from stacking several shifts onto the same day until the total exceeded the
+ * 10h ceiling. This closes that: the check is on the employee's whole day, not
+ * on the single shift being saved.
+ *
+ * `plannedMinutes` is the NET working time of the shift being added or edited
+ * (gross attendance minus its planned break) — the same quantity §3 governs.
+ * Existing shifts are netted the same way, so a 12h attendance window with a
+ * 45min break counts as 11h15 of working time, not 12h.
+ *
+ * TODO: implement 6-month rolling average. §3 permits up to 10h/day only while
+ * the average stays at 8h across 24 weeks (or 6 months). Enforcing the daily
+ * ceiling alone accepts schedules that are still unlawful in aggregate, so a
+ * workspace can pass this check and still fail an FKS audit. Needs a windowed
+ * aggregate over TimeEntry actuals (not planned shifts) plus a
+ * Workspace-level setting for which averaging basis the employer relies on.
+ */
+export async function checkArbZg3MaxDaily(
+  employeeId: string,
+  targetDate: string | Date,
+  plannedMinutes: number,
+  opts: { workspaceId?: string; excludeShiftId?: string } = {},
+): Promise<{
+  violation: boolean;
+  existingMinutes: number;
+  totalMinutes: number;
+  maxMinutes: number;
+  message?: string;
+  messageEn?: string;
+}> {
+  const { workspaceId, excludeShiftId } = opts;
+
+  // Normalise to the calendar day, matching Shift.date which is @db.Date.
+  const day =
+    typeof targetDate === "string"
+      ? new Date(targetDate)
+      : new Date(targetDate);
+  day.setHours(0, 0, 0, 0);
+  const nextDay = new Date(day);
+  nextDay.setDate(nextDay.getDate() + 1);
+
+  const sameDay = await prisma.shift.findMany({
+    where: {
+      employeeId,
+      deletedAt: null,
+      date: { gte: day, lt: nextDay },
+      ...(workspaceId ? { workspaceId } : {}),
+      ...(excludeShiftId ? { id: { not: excludeShiftId } } : {}),
+    },
+    select: { startTime: true, endTime: true, breakMinutes: true },
+  });
+
+  const existingMinutes = sameDay.reduce((sum, s) => {
+    const gross = shiftGrossMinutes(s.startTime, s.endTime);
+    return sum + Math.max(0, gross - (s.breakMinutes ?? 0));
+  }, 0);
+
+  const totalMinutes = existingMinutes + Math.max(0, plannedMinutes);
+
+  if (totalMinutes <= ARBZG_3_MAX_DAILY_MINUTES) {
+    return {
+      violation: false,
+      existingMinutes,
+      totalMinutes,
+      maxMinutes: ARBZG_3_MAX_DAILY_MINUTES,
+    };
+  }
+
+  const fmt = (m: number) => `${Math.floor(m / 60)}h ${m % 60}min`;
+  return {
+    violation: true,
+    existingMinutes,
+    totalMinutes,
+    maxMinutes: ARBZG_3_MAX_DAILY_MINUTES,
+    message:
+      `ArbZG §3: Die tägliche Arbeitszeit darf 10 Stunden nicht überschreiten. ` +
+      `Bereits verplant sind ${fmt(existingMinutes)}, diese Schicht ergäbe ` +
+      `insgesamt ${fmt(totalMinutes)}.`,
+    messageEn:
+      `ArbZG §3: Daily working time may not exceed 10 hours. ` +
+      `${fmt(existingMinutes)} is already scheduled; this shift would bring the ` +
+      `total to ${fmt(totalMinutes)}.`,
+  };
 }
 
 /** Gross attendance window (start→end) in minutes, handling overnight shifts. */

@@ -105,8 +105,10 @@ vi.mock("@/lib/arbzg", () => ({
   checkArbZg4BreakRequirement: vi
     .fn()
     .mockResolvedValue({ violation: false, suggestedBreak: 0 }),
+  checkArbZg3MaxDaily: vi.fn().mockResolvedValue({ violation: false }),
   suggestBreakForGross: vi.fn().mockReturnValue(0),
   shiftGrossMinutes: vi.fn().mockReturnValue(480),
+  requiredBreakForNet: vi.fn().mockReturnValue(0),
 }));
 
 vi.mock("@/lib/holidays", () => ({
@@ -118,6 +120,17 @@ vi.mock("@/lib/holidays", () => ({
 
 vi.mock("@/lib/certification-check", () => ({
   requireLocationCertifications: vi.fn().mockResolvedValue(null),
+  checkLocationCertifications: vi.fn().mockResolvedValue([]),
+  describeCertViolations: vi.fn().mockReturnValue(""),
+}));
+
+vi.mock("@/lib/compliance-gate", () => ({
+  assertShiftCompliance: vi
+    .fn()
+    .mockResolvedValue({ overridden: [], pendingOverrides: [] }),
+  evaluateShiftCompliance: vi.fn().mockResolvedValue([]),
+  recordComplianceOverrides: vi.fn().mockResolvedValue(undefined),
+  isComplianceError: vi.fn().mockReturnValue(false),
 }));
 
 import { buildOwner, buildEmployee } from "../helpers/factories";

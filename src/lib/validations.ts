@@ -93,6 +93,18 @@ export const createShiftSchema = z.object({
     .array(z.coerce.number().int().min(1).max(7))
     .max(7)
     .optional(),
+  /**
+   * Compliance hard blocks the dispatcher is consciously releasing, with a
+   * mandatory justification. Management roles only; every release is written
+   * to ComplianceOverride. See @/lib/compliance-gate.
+   */
+  overrideRules: z
+    .array(
+      z.enum(["ARBZG_3", "ARBZG_4", "ARBZG_5", "SACHKUNDE_34A", "GEOFENCE"]),
+    )
+    .max(5)
+    .optional(),
+  overrideReason: z.string().trim().min(10).max(1000).optional(),
 });
 
 // ── Auto-Schedule ───────────────────────────────────────────────
@@ -707,6 +719,14 @@ export const updateShiftSchema = z.object({
   notes: optionalString.pipe(z.string().max(1000).optional()),
   breakMinutes: z.coerce.number().int().min(0).max(480).optional(),
   status: z.enum(["SCHEDULED", "OPEN", "COMPLETED", "CANCELLED"]).optional(),
+  /** Audited release of a compliance hard block — see createShiftSchema. */
+  overrideRules: z
+    .array(
+      z.enum(["ARBZG_3", "ARBZG_4", "ARBZG_5", "SACHKUNDE_34A", "GEOFENCE"]),
+    )
+    .max(5)
+    .optional(),
+  overrideReason: z.string().trim().min(10).max(1000).optional(),
 });
 
 // ── Location (update) ───────────────────────────────────────────

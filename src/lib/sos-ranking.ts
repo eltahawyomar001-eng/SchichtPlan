@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { sendPushNotification } from "@/lib/notifications/push";
 import { sendEmail } from "@/lib/notifications/email";
+import { evaluateShiftCompliance } from "@/lib/compliance-gate";
+import { log } from "@/lib/logger";
 import { randomUUID, createHash } from "crypto";
 import type { Shift } from "@prisma/client";
 
@@ -105,6 +107,41 @@ export async function rankEmployeesForSos(
       tier: 0,
     });
   }
+
+  /* ── Compliance filter (§34a + ArbZG §3/§4/§5) ──────────────────
+     An SOS blast is an offer to work. Offering a shift to a guard who may not
+     legally take it produces exactly the wrong outcome under pressure: the
+     guard accepts, the shift is written, and the breach is now a fact with a
+     paper trail showing the employer initiated it. Filtering here means such a
+     guard is never asked. `sos/respond` re-checks on acceptance, because the
+     roster can change between the blast and the answer.                     */
+  const shiftDateStr = new Date(shift.date).toLocaleDateString("en-CA");
+  const compliant: RankedEmployee[] = [];
+  for (const cand of scored) {
+    const violations = await evaluateShiftCompliance(
+      {
+        employeeId: cand.id,
+        locationId: shift.locationId,
+        date: shiftDateStr,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        breakMinutes: shift.breakMinutes,
+        excludeShiftId: shift.id,
+      },
+      workspaceId,
+    );
+    if (violations.length === 0) {
+      compliant.push(cand);
+    } else {
+      log.info("[sos] candidate excluded by compliance gate", {
+        shiftId: shift.id,
+        employeeId: cand.id,
+        code: violations[0].code,
+      });
+    }
+  }
+  scored.length = 0;
+  scored.push(...compliant);
 
   scored.sort((a, b) => {
     if (b.reliabilityScore !== a.reliabilityScore)

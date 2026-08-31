@@ -167,6 +167,18 @@ vi.mock("@/lib/audit", () => ({
   createAuditLog: vi.fn(),
 }));
 
+// Auto-fill now screens every backfill candidate through the compliance gate.
+// Default to "compliant" so these tests keep asserting the fill logic itself;
+// the gate has its own coverage.
+vi.mock("@/lib/compliance-gate", () => ({
+  evaluateShiftCompliance: vi.fn().mockResolvedValue([]),
+  assertShiftCompliance: vi
+    .fn()
+    .mockResolvedValue({ overridden: [], pendingOverrides: [] }),
+  recordComplianceOverrides: vi.fn().mockResolvedValue(undefined),
+  isComplianceError: vi.fn().mockReturnValue(false),
+}));
+
 vi.mock("@/lib/schichtplanung-addon", () => ({
   requireSchichtplanungAddon: vi.fn().mockResolvedValue(null),
 }));

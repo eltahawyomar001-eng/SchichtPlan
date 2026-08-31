@@ -78,6 +78,7 @@ export const SCOPED_MODELS: ReadonlySet<string> = new Set([
   "Availability",
   "BetriebsratMember",
   "Client",
+  "ComplianceOverride",
   "CustomRole",
   "DATEVToken",
   "DatevOAuthState",

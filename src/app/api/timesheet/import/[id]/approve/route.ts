@@ -23,6 +23,10 @@ import {
   serverError,
 } from "@/lib/api-response";
 import { requireManagement } from "@/lib/authorization";
+import {
+  evaluateShiftCompliance,
+  type ComplianceViolation,
+} from "@/lib/compliance-gate";
 import { createAuditLog } from "@/lib/audit";
 import { captureRouteError } from "@/lib/sentry";
 import { log } from "@/lib/logger";
@@ -63,6 +67,97 @@ export const POST = withRoute(
       body = ApproveBodySchema.parse(await req.json());
     } catch {
       return badRequest("Invalid approval payload");
+    }
+
+    /* ── Compliance gate (§34a + ArbZG §3/§4/§5) ──────────────────
+       OCR import used to be a hole in the guarantee: approved rows were
+       written straight into `Shift` with no checks, so a scanned timesheet
+       could materialise shifts that the shift API would have refused.
+
+       Checked BEFORE the transaction, for two reasons: the checks read
+       committed state and would not see rows created earlier in the same
+       transaction, and a long-running transaction around per-row queries is
+       needlessly expensive. Approval is all-or-nothing — a partially imported
+       sheet is worse than a rejected one, because the manager cannot tell
+       which rows landed.                                                    */
+    const batchViolations: {
+      entryId: string;
+      violations: ComplianceViolation[];
+    }[] = [];
+
+    // Intra-batch §3: two rows for the same employee on the same day are each
+    // lawful alone but may breach 10h together. The per-row check reads only
+    // committed shifts, so the batch's own totals are accumulated here.
+    const batchMinutesByEmployeeDay = new Map<string, number>();
+    for (const e of body.entries) {
+      const [sh, sm] = e.shiftStart.split(":").map(Number);
+      const [eh, em] = e.shiftEnd.split(":").map(Number);
+      let gross = eh * 60 + em - (sh * 60 + sm);
+      if (gross <= 0) gross += 24 * 60; // overnight
+      const net = Math.max(0, gross - e.breakMinutes);
+      const key = `${e.employeeId}:${e.date}`;
+      batchMinutesByEmployeeDay.set(
+        key,
+        (batchMinutesByEmployeeDay.get(key) ?? 0) + net,
+      );
+    }
+
+    for (const e of body.entries) {
+      const violations = await evaluateShiftCompliance(
+        {
+          employeeId: e.employeeId,
+          locationId: null,
+          date: e.date,
+          startTime: e.shiftStart,
+          endTime: e.shiftEnd,
+          breakMinutes: e.breakMinutes,
+        },
+        workspaceId,
+      );
+      if (violations.length > 0) {
+        batchViolations.push({ entryId: e.id, violations });
+      }
+    }
+
+    for (const [key, minutes] of batchMinutesByEmployeeDay) {
+      if (minutes > 600) {
+        const [, day] = key.split(":");
+        const already = batchViolations.some((b) =>
+          b.violations.some((v) => v.rule === "ARBZG_3"),
+        );
+        if (!already) {
+          batchViolations.push({
+            entryId: key,
+            violations: [
+              {
+                rule: "ARBZG_3",
+                code: "ARBZG_3_OVER_DAILY_MAX_IN_BATCH",
+                message:
+                  `ArbZG §3: Die importierten Zeilen ergeben für den ${day} zusammen ` +
+                  `${Math.floor(minutes / 60)}h ${minutes % 60}min Arbeitszeit und ` +
+                  `überschreiten damit die zulässigen 10 Stunden.`,
+                messageEn:
+                  `ArbZG §3: the imported rows total ${Math.floor(minutes / 60)}h ` +
+                  `${minutes % 60}min of working time on ${day}, exceeding the 10-hour limit.`,
+                details: { totalMinutes: minutes, maxMinutes: 600 },
+              },
+            ],
+          });
+        }
+      }
+    }
+
+    if (batchViolations.length > 0) {
+      return NextResponse.json(
+        {
+          error: "COMPLIANCE_VIOLATION",
+          message:
+            "Der Import kann nicht übernommen werden — mindestens eine Zeile " +
+            "verletzt geltendes Arbeitsrecht oder die §34a-Pflicht.",
+          entries: batchViolations,
+        },
+        { status: 422 },
+      );
     }
 
     try {

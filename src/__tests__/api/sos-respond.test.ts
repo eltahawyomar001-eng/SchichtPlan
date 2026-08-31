@@ -23,8 +23,23 @@ vi.mock("@/lib/db", () => ({
       findUnique: mockNotifFindUnique,
       update: mockNotifUpdate,
     },
+    // Acceptance re-checks compliance against the shift before claiming it.
+    shift: {
+      findUnique: vi.fn().mockResolvedValue({
+        id: "shift-1",
+        date: new Date("2026-09-01"),
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: 30,
+        locationId: null,
+        workspaceId: "ws-1",
+      }),
+    },
     $transaction: mockTransaction,
   },
+}));
+vi.mock("@/lib/compliance-gate", () => ({
+  evaluateShiftCompliance: vi.fn().mockResolvedValue([]),
 }));
 vi.mock("@/lib/sos-events", () => ({ emitSosEvent: mockEmitSos }));
 vi.mock("@/lib/sentry", () => ({ captureRouteError: vi.fn() }));

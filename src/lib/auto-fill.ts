@@ -23,6 +23,7 @@ import { prisma } from "@/lib/db";
 import { runBackfill } from "@/lib/auto-scheduler";
 import { createSystemNotification } from "@/lib/automations";
 import { createAuditLog } from "@/lib/audit";
+import { evaluateShiftCompliance } from "@/lib/compliance-gate";
 import { log } from "@/lib/logger";
 
 // ═══════════════════════════════════════════════════════════════
@@ -167,8 +168,62 @@ export async function findAndAssignReplacement(
       });
     }
 
-    // 7. Auto-assign the top candidate
-    const bestCandidate = backfillResult.candidates[0];
+    /* 7. Pick the best COMPLIANT candidate.
+       The backfill scorer ranks on fit, not on legality, so the top candidate
+       can still breach §34a or ArbZG. This path runs unattended, with no
+       dispatcher to justify anything, so it never overrides: a candidate that
+       fails is skipped, and if every candidate fails we fall through to the
+       no-one-available protocol rather than assigning someone unlawfully.   */
+    const shiftDateStrIso = shiftDate.toLocaleDateString("en-CA");
+    let bestCandidate: (typeof backfillResult.candidates)[number] | null = null;
+    const rejected: { employeeId: string; code: string }[] = [];
+
+    for (const candidate of backfillResult.candidates) {
+      const violations = await evaluateShiftCompliance(
+        {
+          employeeId: candidate.employeeId,
+          locationId: shift.locationId,
+          date: shiftDateStrIso,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+          breakMinutes: shift.breakMinutes,
+          excludeShiftId: shiftId,
+        },
+        workspaceId,
+      );
+      if (violations.length === 0) {
+        bestCandidate = candidate;
+        break;
+      }
+      rejected.push({
+        employeeId: candidate.employeeId,
+        code: violations[0].code,
+      });
+    }
+
+    if (!bestCandidate) {
+      log.warn("[auto-fill] all candidates blocked by compliance", {
+        shiftId,
+        rejected,
+      });
+      return await handleNoOneAvailable({
+        fillLogId: fillLog.id,
+        shiftId,
+        shift,
+        reason,
+        isEmergency,
+        candidatesEvaluated,
+        workspaceId,
+      });
+    }
+
+    if (rejected.length > 0) {
+      log.info("[auto-fill] skipped non-compliant candidates", {
+        shiftId,
+        skipped: rejected,
+        assigned: bestCandidate.employeeId,
+      });
+    }
 
     await prisma.shift.update({
       where: { id: shiftId },

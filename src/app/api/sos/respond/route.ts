@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { prisma } from "@/lib/db";
 import { withRoute } from "@/lib/with-route";
 import { emitSosEvent } from "@/lib/sos-events";
+import { evaluateShiftCompliance } from "@/lib/compliance-gate";
 import { log } from "@/lib/logger";
 
 function hashSosToken(token: string): string {
@@ -180,6 +181,65 @@ export const POST = withRoute("/api/sos/respond", "POST", async (req) => {
     });
     log.info(`[SOS] ${employeeFullName} declined SOS ${sos.id}`);
     return NextResponse.json({ ok: true, accepted: false });
+  }
+
+  /* ── ACCEPT: compliance re-check before the claim ────────────────
+     The ranking filter already excluded non-compliant guards when the blast
+     went out, but an SOS can sit open for hours: in the meantime the guard may
+     have picked up another shift (breaching §3 or §5) or their §34a
+     certificate may have lapsed. Re-checking here means the last word before
+     the shift is written is a legal one. No override path exists — the
+     responder is the guard, not a dispatcher.                              */
+  const acceptShift = await prisma.shift.findUnique({
+    where: { id: sos.shiftId },
+    select: {
+      id: true,
+      date: true,
+      startTime: true,
+      endTime: true,
+      breakMinutes: true,
+      locationId: true,
+      workspaceId: true,
+    },
+  });
+
+  if (acceptShift) {
+    const violations = await evaluateShiftCompliance(
+      {
+        employeeId: notif.employeeId,
+        locationId: acceptShift.locationId,
+        date: new Date(acceptShift.date).toLocaleDateString("en-CA"),
+        startTime: acceptShift.startTime,
+        endTime: acceptShift.endTime,
+        breakMinutes: acceptShift.breakMinutes,
+        excludeShiftId: acceptShift.id,
+      },
+      acceptShift.workspaceId,
+    );
+
+    if (violations.length > 0) {
+      log.warn("[SOS] acceptance blocked by compliance gate", {
+        sosId: sos.id,
+        employeeId: notif.employeeId,
+        code: violations[0].code,
+      });
+      // Mark the notification resolved so the guard is not re-prompted, and
+      // leave the SOS OPEN so escalation continues to other candidates.
+      await prisma.sosNotification.update({
+        where: { id: notif.id },
+        data: { response: "EXPIRED", respondedAt: now },
+      });
+      return NextResponse.json(
+        {
+          error: "COMPLIANCE_VIOLATION",
+          accepted: false,
+          message: violations[0].message,
+          messageEn: violations[0].messageEn,
+          violations,
+        },
+        { status: 422 },
+      );
+    }
   }
 
   // ── ACCEPT: race-safe compare-and-swap claim ───────────────────

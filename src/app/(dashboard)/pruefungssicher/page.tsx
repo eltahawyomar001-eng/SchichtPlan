@@ -76,6 +76,34 @@ interface DossierRow {
   generatedAt: string;
 }
 
+/** A hard block that a manager consciously released. */
+interface OverrideRow {
+  id: string;
+  rule: string;
+  entityType: string;
+  entityId: string;
+  reason: string;
+  overriddenAt: string;
+  overriddenBy: string;
+  overriddenByName: string | null;
+  entity: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    employeeName: string | null;
+    locationName: string | null;
+  } | null;
+}
+
+/** German labels for the rules an override can release. */
+const OVERRIDE_RULE_LABEL: Record<string, string> = {
+  ARBZG_3: "ArbZG §3 — Höchstarbeitszeit",
+  ARBZG_4: "ArbZG §4 — Pause",
+  ARBZG_5: "ArbZG §5 — Ruhezeit",
+  SACHKUNDE_34A: "§34a GewO — Sachkunde",
+  GEOFENCE: "Geofence — Standort",
+};
+
 const CATEGORY_ICON: Record<CategoryKey, typeof ShieldCheckIcon> = {
   ARBZG_3: ClockIcon,
   ARBZG_4: ClockIcon,
@@ -116,6 +144,7 @@ export default function PruefungssicherPage() {
   const [archivedView, setArchivedView] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [justArchived, setJustArchived] = useState<string | null>(null);
+  const [overrides, setOverrides] = useState<OverrideRow[]>([]);
   const archiveRef = useRef<HTMLDivElement>(null);
 
   const fetchReadiness = useCallback(async () => {
@@ -147,6 +176,14 @@ export default function PruefungssicherPage() {
     if (res.ok) setDossiers(await res.json());
   }, []);
 
+  const fetchOverrides = useCallback(async () => {
+    const res = await fetch(
+      `/api/compliance/overrides?from=${from}&to=${to}`,
+    ).catch(() => null);
+    if (res?.ok) setOverrides(await res.json());
+    else setOverrides([]);
+  }, [from, to]);
+
   const fetchMinWage = useCallback(async () => {
     const res = await fetch("/api/compliance/min-wage");
     if (res.ok) {
@@ -159,6 +196,7 @@ export default function PruefungssicherPage() {
     fetchReadiness();
     fetchDossiers();
     fetchMinWage();
+    fetchOverrides();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -293,7 +331,16 @@ export default function PruefungssicherPage() {
                 className="w-auto"
               />
             </div>
-            <Button onClick={fetchReadiness} disabled={loading}>
+            <Button
+              onClick={() => {
+                fetchReadiness();
+                // Overrides are scoped to the same period, so they must move
+                // with it — otherwise the table silently describes a different
+                // date range than the score above it.
+                fetchOverrides();
+              }}
+              disabled={loading}
+            >
               {loading ? t("checking") : t("refresh")}
             </Button>
             {isAdmin && (
@@ -545,6 +592,94 @@ export default function PruefungssicherPage() {
 
         {/* Archived dossiers — always visible so a freshly archived dossier is
             never "lost" at the bottom of a long report. */}
+        {/* ── Released compliance blocks ──
+            Written since Phase 2 but never readable. An override that nobody
+            can inspect is not an audit trail, so this is the surface an FKS
+            auditor is pointed at. Kept visible in print: the released blocks
+            are exactly what an auditor will ask about. */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheckIcon className="h-4 w-4 text-amber-600" />
+              {t("overridesTitle")}
+              {overrides.length > 0 && (
+                <Badge className="ml-1 border-amber-200 bg-amber-100 text-amber-700 text-[10px]">
+                  {t("overridesCount", { count: overrides.length })}
+                </Badge>
+              )}
+            </CardTitle>
+            <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+              {t("overridesDesc")}
+            </p>
+          </CardHeader>
+          <CardContent>
+            {overrides.length === 0 ? (
+              <p className="py-4 text-center text-sm text-gray-400">
+                {t("overridesEmpty")}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-gray-500 dark:border-zinc-800 dark:text-zinc-400">
+                      <th className="py-2 pr-3 font-medium">{t("colRule")}</th>
+                      <th className="py-2 pr-3 font-medium">
+                        {t("colEntity")}
+                      </th>
+                      <th className="py-2 pr-3 font-medium">{t("colWho")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("colWhen")}</th>
+                      <th className="py-2 font-medium">{t("colReason")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {overrides.map((o) => (
+                      <tr
+                        key={o.id}
+                        className="border-b border-gray-50 align-top dark:border-zinc-800/60"
+                      >
+                        <td className="py-2.5 pr-3">
+                          <span className="font-medium text-amber-700 dark:text-amber-400">
+                            {OVERRIDE_RULE_LABEL[o.rule] ?? o.rule}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-3 text-gray-700 dark:text-zinc-300">
+                          {o.entity ? (
+                            <>
+                              <span className="block">
+                                {o.entity.employeeName ?? "—"}
+                              </span>
+                              <span className="block text-xs text-gray-400">
+                                {fmtDate(o.entity.date)} · {o.entity.startTime}–
+                                {o.entity.endTime}
+                                {o.entity.locationName
+                                  ? ` · ${o.entity.locationName}`
+                                  : ""}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-xs italic text-gray-400">
+                              {o.entityType} · {t("entityDeleted")}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-3 text-gray-700 dark:text-zinc-300">
+                          {o.overriddenByName ?? o.overriddenBy}
+                        </td>
+                        <td className="py-2.5 pr-3 text-xs text-gray-500 dark:text-zinc-400">
+                          {new Date(o.overriddenAt).toLocaleString("de-DE")}
+                        </td>
+                        <td className="py-2.5 text-gray-700 dark:text-zinc-300">
+                          {o.reason}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="print:hidden" ref={archiveRef}>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -594,13 +729,24 @@ export default function PruefungssicherPage() {
                         {new Date(d.generatedAt).toLocaleString("de-DE")}
                       </span>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => viewArchived(d.id)}
-                    >
-                      {t("open")}
-                    </Button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => viewArchived(d.id)}
+                      >
+                        {t("open")}
+                      </Button>
+                      {/* Server-rendered PDF, not window.print(): an auditor
+                          needs one stable artifact, not a browser printout. */}
+                      <a
+                        href={`/api/compliance/dossier/${d.id}/pdf`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800/50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                      >
+                        <DownloadIcon className="h-3.5 w-3.5" />
+                        {t("downloadPdf")}
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>

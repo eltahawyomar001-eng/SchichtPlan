@@ -1207,7 +1207,19 @@
       "CERT_EXPIRING": "Zertifikat läuft bald ab: {skill} (gültig bis {expiresAt}).",
       "WAGE_BELOW_MIN": "Stundenlohn {rate} € unterschreitet den Mindestlohn von {min} € (MiLoG).",
       "WAGE_UNDOCUMENTED": "Kein Stundenlohn hinterlegt — Mindestlohn nicht nachweisbar."
-    }
+    },
+    "overridesTitle": "Aufgehobene Compliance-Sperren",
+    "overridesDesc": "Jede bewusst aufgehobene Sperre im gewählten Zeitraum — mit Verantwortlichem und Begründung.",
+    "overridesEmpty": "Im gewählten Zeitraum wurde keine Sperre aufgehoben.",
+    "overridesCount": "{count, plural, one {# Freigabe} other {# Freigaben}}",
+    "colRule": "Regel",
+    "colEntity": "Betrifft",
+    "colWho": "Freigegeben von",
+    "colWhen": "Zeitpunkt",
+    "colReason": "Begründung",
+    "entityDeleted": "Datensatz gelöscht",
+    "downloadPdf": "FKS-PDF herunterladen",
+    "generatingPdf": "PDF wird erstellt …"
   },
   "datevNumbers": {
     "title": "DATEV-Zugangsdaten",
@@ -1386,7 +1398,23 @@
       "namePlaceholder": "z. B. Hauptstandort",
       "address": "Adresse",
       "addressPlaceholder": "z. B. Musterstraße 1, 36037 Fulda",
-      "addressTip": "Format: Straße Nr., PLZ Stadt — wird für die Wetteranzeige im Dashboard verwendet"
+      "addressTip": "Format: Straße Nr., PLZ Stadt — wird für die Wetteranzeige im Dashboard verwendet",
+      "geofenceSection": "Geofence (Zoll-Shield)",
+      "geofenceHint": "Legt fest, ob sich Mitarbeiter nur vor Ort einstempeln können. Ohne Koordinaten ist keine Prüfung möglich.",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad",
+      "resolveCoords": "Koordinaten ermitteln",
+      "resolving": "Wird ermittelt …",
+      "coordsResolved": "Koordinaten übernommen.",
+      "noCoords": "Noch keine Koordinaten hinterlegt",
+      "geocodedAt": "Zuletzt ermittelt am {date}",
+      "radius": "Radius (Meter)",
+      "radiusHint": "Standard 50 m. In Innenstädten oder bei Objekten mit Tiefgarage empfiehlt sich ein größerer Wert.",
+      "enforced": "Geofence erzwingen",
+      "enforcedHint": "Aktiv: Einstempeln wird außerhalb des Radius abgelehnt. Inaktiv: Standort wird nur protokolliert.",
+      "enforcedNoCoordsWarning": "Ohne Koordinaten wird der Geofence nicht geprüft, auch wenn er aktiviert ist.",
+      "certExempt": "Von §34a-Pflicht ausnehmen",
+      "certExemptHint": "Nur relevant im Sicherheitsgewerbe-Modus: z. B. für Innendienst-Objekte ohne Bewachungsaufgabe."
     },
     "cert": {
       "cardLabel": "Pflicht-Zertifikate",

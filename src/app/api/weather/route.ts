@@ -2,6 +2,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth, apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { cache } from "@/lib/cache";
+import { resolveAndPersistLocationGeo } from "@/lib/geocode";
 import { log } from "@/lib/logger";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -33,100 +34,13 @@ interface WeatherResult {
 }
 
 const WEATHER_CACHE_TTL = 1800; // 30 min — weather results per workspace
-const GEO_CACHE_TTL = 604800; // 7 days — geocode results per location
 const FETCH_TIMEOUT = 5000; // 5s per external request
 
-/* ── Geocoding: Open-Meteo (primary) ───────────────────────── */
-
-/**
- * Open-Meteo geocoding — same provider as the weather API.
- * No rate limit, no IP blocking, can be called in parallel.
- * https://open-meteo.com/en/docs/geocoding-api
- */
-async function geocodeOpenMeteo(query: string): Promise<GeoResult | null> {
-  try {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de&format=json`;
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const hit = data?.results?.[0];
-    if (hit?.latitude && hit?.longitude) {
-      return { lat: hit.latitude, lon: hit.longitude };
-    }
-    return null;
-  } catch (err) {
-    log.warn("Open-Meteo geocode failed", { query, error: String(err) });
-    return null;
-  }
-}
-
-/* ── Geocoding: Nominatim (fallback) ──────────────────────── */
-
-async function geocodeNominatim(query: string): Promise<GeoResult | null> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Shiftfy-SaaS/1.0 (kontakt@shiftfy.de)",
-      },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data?.[0]?.lat && data?.[0]?.lon) {
-      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-    }
-    return null;
-  } catch (err) {
-    log.warn("Nominatim geocode failed", { query, error: String(err) });
-    return null;
-  }
-}
-
-/* ── Geocode a single location (cached) ───────────────────── */
-
-async function geocodeLocation(
-  locationId: string,
-  address: string | null,
-  name: string,
-): Promise<GeoResult | null> {
-  // Check per-location geocode cache first
-  const geoCacheKey = `geo:${locationId}`;
-  const cached = await cache.get<GeoResult>(geoCacheKey);
-  if (cached) return cached;
-
-  // Build search terms — most specific first
-  const queries: string[] = [];
-  if (address) queries.push(address);
-  queries.push(name);
-
-  // Try Open-Meteo geocoding (primary — no rate limit)
-  for (const q of queries) {
-    const geo = await geocodeOpenMeteo(q);
-    if (geo) {
-      await cache.set(geoCacheKey, geo, GEO_CACHE_TTL);
-      return geo;
-    }
-  }
-
-  // Fallback: Nominatim (may be rate-limited on shared IPs)
-  for (const q of queries) {
-    const geo = await geocodeNominatim(q);
-    if (geo) {
-      await cache.set(geoCacheKey, geo, GEO_CACHE_TTL);
-      return geo;
-    }
-  }
-
-  log.info("Weather: could not geocode location", {
-    locationId,
-    name,
-    address,
-  });
-  return null;
-}
+/* ── Geocoding ─────────────────────────────────────────────
+   Delegated to @/lib/geocode, which also PERSISTS the resolved coordinates
+   onto the Location row. They used to live only in Redis and expire after 7
+   days; the geofence needs a durable reference point, so resolving here now
+   backfills the database as a side effect. ── */
 
 /* ── WMO weather code → condition + emoji ─────────────────── */
 
@@ -237,7 +151,7 @@ export const GET = withRoute("/api/weather", "GET", async () => {
   // Phase 1: Geocode all locations IN PARALLEL
   // (Open-Meteo geocoding has no rate limit; per-location cache avoids repeat calls)
   const geoResults = await Promise.all(
-    locations.map((loc) => geocodeLocation(loc.id, loc.address, loc.name)),
+    locations.map((loc) => resolveAndPersistLocationGeo(loc.id)),
   );
 
   // Phase 2: Fetch weather for all geocoded locations IN PARALLEL

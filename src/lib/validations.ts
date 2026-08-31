@@ -745,6 +745,18 @@ export const updateShiftSchema = z.object({
 export const updateLocationSchema = z.object({
   name: optionalString.pipe(z.string().max(200).optional()),
   address: optionalString.pipe(z.string().max(500).optional()),
+  /** Geofence reference point. Nullable so a manager can clear a bad fix. */
+  latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
+  longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
+  /**
+   * Check-in radius in metres. Floored at 20 m because consumer GPS in an
+   * urban canyon is routinely worse than that — a tighter circle would refuse
+   * guards who are genuinely standing at the door.
+   */
+  geofenceRadiusMeters: z.coerce.number().int().min(20).max(5000).optional(),
+  geofenceEnforced: z.boolean().optional(),
+  /** Explicit §34a exemption for this object (Zoll-Shield mode only). */
+  certificationExempt: z.boolean().optional(),
 });
 
 // ── Automation Settings ─────────────────────────────────────────

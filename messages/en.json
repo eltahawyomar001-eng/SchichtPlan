@@ -1207,7 +1207,19 @@
       "CERT_EXPIRING": "Certificate expiring soon: {skill} (valid until {expiresAt}).",
       "WAGE_BELOW_MIN": "Hourly rate {rate} € is below the minimum wage of {min} € (MiLoG).",
       "WAGE_UNDOCUMENTED": "No hourly rate on file — minimum wage cannot be evidenced."
-    }
+    },
+    "overridesTitle": "Released compliance blocks",
+    "overridesDesc": "Every hard block consciously released in the selected period, with the responsible manager and their justification.",
+    "overridesEmpty": "No block was released in the selected period.",
+    "overridesCount": "{count, plural, one {# release} other {# releases}}",
+    "colRule": "Rule",
+    "colEntity": "Affects",
+    "colWho": "Released by",
+    "colWhen": "Time",
+    "colReason": "Justification",
+    "entityDeleted": "Record deleted",
+    "downloadPdf": "Download FKS PDF",
+    "generatingPdf": "Generating PDF …"
   },
   "datevNumbers": {
     "title": "DATEV Credentials",
@@ -1386,7 +1398,23 @@
       "namePlaceholder": "e.g. Main Office",
       "address": "Address",
       "addressPlaceholder": "e.g. 123 Main St, Berlin",
-      "addressTip": "Format: Street No., Postal Code City — used for the weather widget on your dashboard"
+      "addressTip": "Format: Street No., Postal Code City — used for the weather widget on your dashboard",
+      "geofenceSection": "Geofence (Zoll-Shield)",
+      "geofenceHint": "Controls whether staff can only punch in on site. Without coordinates no check is possible.",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "resolveCoords": "Resolve coordinates",
+      "resolving": "Resolving …",
+      "coordsResolved": "Coordinates applied.",
+      "noCoords": "No coordinates set yet",
+      "geocodedAt": "Last resolved on {date}",
+      "radius": "Radius (metres)",
+      "radiusHint": "Default 50 m. A larger value is advisable in city centres or at sites with underground parking.",
+      "enforced": "Enforce geofence",
+      "enforcedHint": "On: punches outside the radius are refused. Off: the location is only recorded.",
+      "enforcedNoCoordsWarning": "Without coordinates the geofence is not checked, even when enabled.",
+      "certExempt": "Exempt from §34a requirement",
+      "certExemptHint": "Only relevant in security-sector mode, e.g. for back-office sites with no guarding duty."
     },
     "cert": {
       "cardLabel": "Required certifications",

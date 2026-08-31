@@ -40,6 +40,24 @@ export const PATCH = withRoute(
       address: parsed.data.address || null,
     };
 
+    // Geofence settings — only touched when the client actually sent them, so
+    // a partial update from another surface cannot silently disable a fence.
+    if (parsed.data.latitude !== undefined)
+      data.latitude = parsed.data.latitude;
+    if (parsed.data.longitude !== undefined)
+      data.longitude = parsed.data.longitude;
+    if (
+      parsed.data.latitude !== undefined ||
+      parsed.data.longitude !== undefined
+    )
+      data.geocodedAt = new Date();
+    if (parsed.data.geofenceRadiusMeters !== undefined)
+      data.geofenceRadiusMeters = parsed.data.geofenceRadiusMeters;
+    if (parsed.data.geofenceEnforced !== undefined)
+      data.geofenceEnforced = parsed.data.geofenceEnforced;
+    if (parsed.data.certificationExempt !== undefined)
+      data.certificationExempt = parsed.data.certificationExempt;
+
     const location = await prisma.location.updateMany({
       where: { id, workspaceId },
       data,

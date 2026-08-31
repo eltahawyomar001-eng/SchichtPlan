@@ -27,6 +27,12 @@ interface Location {
   name: string;
   address: string | null;
   createdAt: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  geocodedAt?: string | null;
+  geofenceRadiusMeters?: number | null;
+  geofenceEnforced?: boolean;
+  certificationExempt?: boolean;
 }
 
 interface Skill {
@@ -57,7 +63,18 @@ export default function StandortePage() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", address: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    latitude: "" as string,
+    longitude: "" as string,
+    geofenceRadiusMeters: 50,
+    geofenceEnforced: false,
+    certificationExempt: false,
+  });
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeNotice, setGeocodeNotice] = useState<string | null>(null);
+  const [geocodedAt, setGeocodedAt] = useState<string | null>(null);
 
   // Certification management state
   const [certModalLocationId, setCertModalLocationId] = useState<string | null>(
@@ -123,16 +140,72 @@ export default function StandortePage() {
 
   const openCreateForm = () => {
     setEditingLocation(null);
-    setFormData({ name: "", address: "" });
+    setFormData({
+      name: "",
+      address: "",
+      latitude: "",
+      longitude: "",
+      geofenceRadiusMeters: 50,
+      geofenceEnforced: false,
+      certificationExempt: false,
+    });
+    setGeocodeNotice(null);
+    setGeocodedAt(null);
     setFormError(null);
     setShowForm(true);
   };
 
   const openEditForm = (loc: Location) => {
     setEditingLocation(loc);
-    setFormData({ name: loc.name, address: loc.address || "" });
+    setFormData({
+      name: loc.name,
+      address: loc.address || "",
+      latitude: loc.latitude != null ? String(loc.latitude) : "",
+      longitude: loc.longitude != null ? String(loc.longitude) : "",
+      geofenceRadiusMeters: loc.geofenceRadiusMeters ?? 50,
+      geofenceEnforced: loc.geofenceEnforced ?? false,
+      certificationExempt: loc.certificationExempt ?? false,
+    });
+    setGeocodeNotice(null);
+    setGeocodedAt(loc.geocodedAt ?? null);
     setFormError(null);
     setShowForm(true);
+  };
+
+  /**
+   * Resolve the typed address to coordinates.
+   *
+   * Only available while editing: the endpoint geocodes a persisted row, so a
+   * location has to exist before it can be resolved. Saving the address first
+   * and then resolving is one extra click but avoids a second geocoding path
+   * that would have to guess at an unsaved address.
+   */
+  const handleResolveCoordinates = async () => {
+    if (!editingLocation || geocoding) return;
+    setGeocoding(true);
+    setGeocodeNotice(null);
+    setFormError(null);
+    try {
+      const res = await fetch(`/api/locations/${editingLocation.id}/geocode`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFormError(data.message || data.error || t("saveError"));
+        return;
+      }
+      setFormData((p) => ({
+        ...p,
+        latitude: String(data.latitude),
+        longitude: String(data.longitude),
+      }));
+      setGeocodedAt(data.geocodedAt ?? null);
+      setGeocodeNotice(t("form.coordsResolved"));
+    } catch {
+      setFormError(t("networkError"));
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,13 +222,34 @@ export default function StandortePage() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          address: formData.address,
+          // Text inputs so a manager can clear a bad fix; "" means null.
+          latitude:
+            formData.latitude.trim() === "" ? null : Number(formData.latitude),
+          longitude:
+            formData.longitude.trim() === ""
+              ? null
+              : Number(formData.longitude),
+          geofenceRadiusMeters: formData.geofenceRadiusMeters,
+          geofenceEnforced: formData.geofenceEnforced,
+          certificationExempt: formData.certificationExempt,
+        }),
       });
 
       if (res.ok) {
         setShowForm(false);
         setEditingLocation(null);
-        setFormData({ name: "", address: "" });
+        setFormData({
+          name: "",
+          address: "",
+          latitude: "",
+          longitude: "",
+          geofenceRadiusMeters: 50,
+          geofenceEnforced: false,
+          certificationExempt: false,
+        });
         fetchLocations();
         window.dispatchEvent(new Event("shiftfy:usage-changed"));
       } else {
@@ -356,6 +450,144 @@ export default function StandortePage() {
                 {t("form.addressTip")}
               </p>
             </div>
+
+            {/* ── Geofence (Zoll-Shield) ── */}
+            <fieldset className="space-y-3 rounded-xl border border-gray-200 p-3.5 dark:border-zinc-700">
+              <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                {t("form.geofenceSection")}
+              </legend>
+              <p className="text-[11px] text-gray-500 dark:text-zinc-400">
+                {t("form.geofenceHint")}
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="latitude">{t("form.latitude")}</Label>
+                  <Input
+                    id="latitude"
+                    inputMode="decimal"
+                    value={formData.latitude}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, latitude: e.target.value }))
+                    }
+                    placeholder="52.516275"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="longitude">{t("form.longitude")}</Label>
+                  <Input
+                    id="longitude"
+                    inputMode="decimal"
+                    value={formData.longitude}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, longitude: e.target.value }))
+                    }
+                    placeholder="13.377704"
+                  />
+                </div>
+              </div>
+
+              {editingLocation && (
+                <div className="space-y-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResolveCoordinates}
+                    disabled={geocoding || !formData.address.trim()}
+                    className="gap-1.5"
+                  >
+                    <MapPinIcon className="h-3.5 w-3.5" />
+                    {geocoding ? t("form.resolving") : t("form.resolveCoords")}
+                  </Button>
+                  {geocodeNotice && (
+                    <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      {geocodeNotice}
+                    </p>
+                  )}
+                  {geocodedAt && (
+                    <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                      {t("form.geocodedAt", {
+                        date: new Date(geocodedAt).toLocaleDateString("de-DE"),
+                      })}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="radius">{t("form.radius")}</Label>
+                <Input
+                  id="radius"
+                  type="number"
+                  min={20}
+                  max={5000}
+                  value={formData.geofenceRadiusMeters}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      geofenceRadiusMeters: Number(e.target.value),
+                    }))
+                  }
+                />
+                <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                  {t("form.radiusHint")}
+                </p>
+              </div>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.geofenceEnforced}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      geofenceEnforced: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-800"
+                />
+                <span className="text-sm">
+                  <span className="font-medium text-gray-900 dark:text-zinc-100">
+                    {t("form.enforced")}
+                  </span>
+                  <span className="block text-[11px] text-gray-500 dark:text-zinc-400">
+                    {t("form.enforcedHint")}
+                  </span>
+                </span>
+              </label>
+
+              {/* Enforcement without a reference point silently does nothing —
+                  say so rather than letting a manager believe it is active. */}
+              {formData.geofenceEnforced &&
+                (!formData.latitude.trim() || !formData.longitude.trim()) && (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+                    {t("form.enforcedNoCoordsWarning")}
+                  </p>
+                )}
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.certificationExempt}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      certificationExempt: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-800"
+                />
+                <span className="text-sm">
+                  <span className="font-medium text-gray-900 dark:text-zinc-100">
+                    {t("form.certExempt")}
+                  </span>
+                  <span className="block text-[11px] text-gray-500 dark:text-zinc-400">
+                    {t("form.certExemptHint")}
+                  </span>
+                </span>
+              </label>
+            </fieldset>
 
             {formError && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">

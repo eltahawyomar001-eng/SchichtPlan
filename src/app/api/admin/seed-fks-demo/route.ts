@@ -12,32 +12,41 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * POST /api/admin/seed-fks-demo
+ * GET /api/admin/seed-fks-demo
  *
  * Builds a complete, PDF-ready Zoll-Shield scenario and attaches it to the
  * calling user, so an FKS dossier can be exported immediately without hand-
  * entering a month of data.
  *
- * ── Why this is more than a session check ──
- * This product is single-workspace-per-user: identity lives on
- * `User.workspaceId`, with no membership join table. Moving the caller into
- * the demo workspace therefore DETACHES them from their real one. Behind a
- * bare session check, any logged-in employee at a customer could call this and
- * lose access to their employer's schedule, which is a production incident
- * rather than a demo.
+ * GET so the demo can be triggered by opening the URL in a logged-in browser.
  *
- * So, on top of the required authenticated session:
+ * ── This is a MUTATING GET; treat the URL as dangerous ──
+ * HTTP assumes GET is safe, and a lot of software acts on that assumption:
+ * browser and Next.js link prefetch, Slack/WhatsApp/iMessage link unfurling,
+ * mail scanners, and `<img src="…">` on any third-party page. Any of those can
+ * fire this endpoint without the user ever deciding to run it, and because a
+ * cookie session rides along, an authenticated admin who merely visits a
+ * hostile page can be silently moved into a demo workspace — which, under this
+ * product's single-workspace-per-user model, detaches them from their real
+ * one. A POST would not be reachable that way.
+ *
+ * Do not link to this URL from anywhere, do not paste it into a chat client,
+ * and remove the route once the demo is done.
+ *
+ * ── Guards ──
+ * On top of the required authenticated session:
  *   - the caller must hold a management role (OWNER/ADMIN/MANAGER), which
  *     keeps the blast radius to people who already administer a workspace;
  *   - the previous workspaceId is returned as `previousWorkspaceId` and logged,
  *     so the move is reversible;
  *   - nothing in any existing workspace is read, modified or deleted — the
- *     scenario is built entirely from new rows.
+ *     scenario is built entirely from new rows;
+ *   - the response is sent no-store, so no browser or CDN can replay it.
  *
  * Restore afterwards with:
  *   UPDATE "User" SET "workspaceId" = '<previousWorkspaceId>' WHERE id = '<userId>';
  */
-export const POST = withRoute("/api/admin/seed-fks-demo", "POST", async () => {
+export const GET = withRoute("/api/admin/seed-fks-demo", "GET", async () => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
   const { user } = auth;
@@ -422,17 +431,28 @@ export const POST = withRoute("/api/admin/seed-fks-demo", "POST", async () => {
     previousWorkspaceId,
   });
 
-  return NextResponse.json({
-    ok: true,
-    message:
-      "FKS-Demo-Workspace erstellt. Sie wurden diesem Workspace als OWNER zugeordnet.",
-    workspaceId: result.workspaceId,
-    previousWorkspaceId,
-    dossierId,
-    pdfUrl: dossierId ? `/api/compliance/dossier/${dossierId}/pdf` : null,
-    restoreHint: previousWorkspaceId
-      ? `Zum Zurückwechseln: UPDATE "User" SET "workspaceId" = '${previousWorkspaceId}' WHERE id = '${user.id}';`
-      : null,
-    created: result,
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      message:
+        "FKS-Demo-Workspace erstellt. Sie wurden diesem Workspace als OWNER zugeordnet.",
+      workspaceId: result.workspaceId,
+      previousWorkspaceId,
+      dossierId,
+      pdfUrl: dossierId ? `/api/compliance/dossier/${dossierId}/pdf` : null,
+      restoreHint: previousWorkspaceId
+        ? `Zum Zurückwechseln: UPDATE "User" SET "workspaceId" = '${previousWorkspaceId}' WHERE id = '${user.id}';`
+        : null,
+      created: result,
+    },
+    {
+      headers: {
+        // A GET that mutates must never be cached or replayed: a stored copy
+        // would hand a stale workspaceId to a later request, and a revalidation
+        // hit would seed a second workspace.
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        Pragma: "no-cache",
+      },
+    },
+  );
 });

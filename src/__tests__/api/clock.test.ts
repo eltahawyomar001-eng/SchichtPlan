@@ -92,6 +92,15 @@ vi.mock("@/lib/db", () => {
         .fn()
         .mockResolvedValue({ id: "ws-1", defaultBreakMinutes: 30 }),
     },
+    // Geofence resolution: no object is bound to these punches, so the gate
+    // sees no target and lets them through while still recording evidence.
+    location: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
+    shift: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
   };
   return {
     prisma: {

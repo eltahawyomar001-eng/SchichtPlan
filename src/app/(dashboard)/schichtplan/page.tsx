@@ -100,6 +100,22 @@ interface Shift {
   location: Location | null;
 }
 
+/** Rules the compliance gate can block on — mirrors the Prisma ComplianceRule enum. */
+type ComplianceRuleKey =
+  | "ARBZG_3"
+  | "ARBZG_4"
+  | "ARBZG_5"
+  | "SACHKUNDE_34A"
+  | "GEOFENCE";
+
+/** One violation as returned by a 422 COMPLIANCE_VIOLATION response. */
+interface ComplianceViolationDto {
+  rule: ComplianceRuleKey;
+  code: string;
+  message: string;
+  messageEn: string;
+}
+
 export default function SchichtplanPage() {
   const t = useTranslations("shiftPlan");
   const tc = useTranslations("common");
@@ -127,6 +143,15 @@ export default function SchichtplanPage() {
   const [pendingHolidayName, setPendingHolidayName] = useState<string | null>(
     null,
   );
+  // ── Compliance override (Zoll-Shield) ──
+  // Populated from a 422 COMPLIANCE_VIOLATION so the dispatcher can see which
+  // hard blocks fired and, with a written justification, release them.
+  const [complianceViolations, setComplianceViolations] = useState<
+    ComplianceViolationDto[] | null
+  >(null);
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+  const [overrideSubmitting, setOverrideSubmitting] = useState(false);
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [detailShift, setDetailShift] = useState<Shift | null>(null);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
@@ -423,14 +448,27 @@ export default function SchichtplanPage() {
       }
     }
     setPendingHolidayName(null);
+    await submitShift();
+  };
 
+  /**
+   * Send the shift to the API.
+   *
+   * `override` re-fires the exact same request with the bypass payload after
+   * the dispatcher has justified the release, so the server re-runs every check
+   * and decides — the client never assumes the release will be accepted.
+   */
+  const submitShift = async (override?: {
+    rules: ComplianceRuleKey[];
+    reason: string;
+  }) => {
     try {
       const url = editingShift
         ? `/api/shifts/${editingShift.id}`
         : "/api/shifts";
       const method = editingShift ? "PATCH" : "POST";
       const isBulk = !editingShift && !!formData.endDate;
-      const payload = editingShift
+      const base = editingShift
         ? {
             ...formData,
             repeatWeeks: undefined,
@@ -443,6 +481,13 @@ export default function SchichtplanPage() {
             selectedDays: isBulk ? formData.selectedDays : undefined,
             repeatWeeks: isBulk ? 0 : formData.repeatWeeks,
           };
+      const payload = override
+        ? {
+            ...base,
+            overrideRules: override.rules,
+            overrideReason: override.reason,
+          }
+        : base;
 
       const res = await fetch(url, {
         method,
@@ -456,6 +501,9 @@ export default function SchichtplanPage() {
         setFormError(null);
         setHolidayConfirmed(false);
         setPendingHolidayName(null);
+        setComplianceViolations(null);
+        setOverrideReason("");
+        setOverrideError(null);
         setFormData({
           date: "",
           startTime: "08:00",
@@ -469,20 +517,69 @@ export default function SchichtplanPage() {
           selectedDays: [1, 2, 3, 4, 5],
         });
         fetchData();
-      } else {
-        const data = await res.json();
-        if (res.status === 409 && data.conflicts) {
-          const messages = data.conflicts.map(
-            (c: { message: string }) => c.message,
-          );
-          setFormError(messages.join("\n"));
-        } else {
-          setFormError(data.message || data.error || t("saveError"));
-        }
+        return true;
       }
+
+      const data = await res.json();
+
+      // ── Compliance hard block (Zoll-Shield) ──
+      // Open the override modal instead of collapsing the structured
+      // violations into one error line, so the dispatcher can see exactly
+      // which rules fired and decide per case.
+      if (
+        res.status === 422 &&
+        data.error === "COMPLIANCE_VIOLATION" &&
+        Array.isArray(data.violations)
+      ) {
+        if (override) {
+          // The server refused the release itself (insufficient role, or a
+          // rule we did not name). Keep the modal open and say so.
+          setOverrideError(t("compliance.overrideFailed"));
+          setComplianceViolations(data.violations);
+        } else {
+          setComplianceViolations(data.violations);
+          setOverrideReason("");
+          setOverrideError(null);
+        }
+        return false;
+      }
+
+      if (res.status === 409 && data.conflicts) {
+        const messages = data.conflicts.map(
+          (c: { message: string }) => c.message,
+        );
+        setFormError(messages.join("\n"));
+      } else {
+        setFormError(data.message || data.error || t("saveError"));
+      }
+      return false;
     } catch (error) {
       console.error("Error:", error);
       setFormError(t("networkError"));
+      return false;
+    }
+  };
+
+  /** Confirm the override: re-fire the save, releasing exactly the rules that fired. */
+  const handleConfirmOverride = async () => {
+    if (!complianceViolations) return;
+    const reason = overrideReason.trim();
+    if (reason.length < 10) {
+      setOverrideError(t("compliance.reasonTooShort"));
+      return;
+    }
+    setOverrideSubmitting(true);
+    setOverrideError(null);
+    try {
+      // Release only the rules the server actually raised — never a blanket
+      // bypass, so a violation that appears between the two requests still
+      // blocks.
+      const rules = Array.from(
+        new Set(complianceViolations.map((v) => v.rule)),
+      );
+      await submitShift({ rules, reason });
+    } finally {
+      setOverrideSubmitting(false);
     }
   };
 
@@ -1808,6 +1905,95 @@ export default function SchichtplanPage() {
           </form>
         </AdaptiveModal>
       </PageContent>
+
+      {/* ── Compliance override modal (Zoll-Shield) ──
+          Shown when the API answers 422 COMPLIANCE_VIOLATION. Lists every rule
+          that fired and takes a written justification before the save is
+          re-fired with the bypass payload. */}
+      <AdaptiveModal
+        open={!!complianceViolations}
+        onClose={() => {
+          setComplianceViolations(null);
+          setOverrideReason("");
+          setOverrideError(null);
+        }}
+        title={t("compliance.title")}
+        size="lg"
+        footer={
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setComplianceViolations(null);
+                setOverrideReason("");
+                setOverrideError(null);
+              }}
+              disabled={overrideSubmitting}
+            >
+              {t("compliance.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmOverride}
+              disabled={overrideSubmitting || overrideReason.trim().length < 10}
+            >
+              {t("compliance.confirm")}
+            </Button>
+          </ModalFooter>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-zinc-400">
+            {t("compliance.intro", {
+              count: complianceViolations?.length ?? 0,
+            })}
+          </p>
+
+          <ul className="space-y-2">
+            {complianceViolations?.map((v, i) => (
+              <li
+                key={`${v.rule}-${i}`}
+                className="rounded-xl border border-red-200 bg-red-50 p-3.5 dark:border-red-900/50 dark:bg-red-950/30"
+              >
+                <p className="text-sm font-semibold text-red-900 dark:text-red-300">
+                  {t(`compliance.rule.${v.rule}`)}
+                </p>
+                {/* The server message carries the concrete numbers (hours
+                    planned, gap in minutes, which certificate), so it is shown
+                    alongside the localized rule label rather than instead. */}
+                <p className="mt-1 text-xs text-red-800/90 dark:text-red-400/90">
+                  {locale === "en" && v.messageEn ? v.messageEn : v.message}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="override-reason">
+              {t("compliance.reasonLabel")}
+            </Label>
+            <textarea
+              id="override-reason"
+              rows={3}
+              value={overrideReason}
+              onChange={(e) => {
+                setOverrideReason(e.target.value);
+                if (overrideError) setOverrideError(null);
+              }}
+              placeholder={t("compliance.reasonPlaceholder")}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-zinc-400">
+              {t("compliance.reasonHint")}
+            </p>
+            {overrideError && (
+              <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                {overrideError}
+              </p>
+            )}
+          </div>
+        </div>
+      </AdaptiveModal>
 
       {/* Delete Confirmation Dialog (management only) */}
       {canManage && (

@@ -15,6 +15,7 @@ import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
+import { evaluateGeofence, type GeofenceStatus } from "@/lib/geofence";
 
 /**
  * POST /api/time-entries/clock
@@ -44,7 +45,16 @@ export const POST = withRoute(
     const parsed = validateBody(clockActionSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
-    const { action, timezone, bypassRestPeriod } = parsed.data;
+    const {
+      action,
+      timezone,
+      bypassRestPeriod,
+      latitude,
+      longitude,
+      accuracyM,
+      mocked,
+      locationId: clientLocationId,
+    } = parsed.data;
     const now = new Date();
     const tz = timezone || "Europe/Berlin";
     const timeStr = now.toLocaleTimeString("de-DE", {
@@ -125,6 +135,88 @@ export const POST = withRoute(
         }
       }
 
+      /* ── Geofence gate (Zoll-Shield) ────────────────────────────────
+         Resolve which object this punch belongs to, then decide server-side.
+         Resolution order: the object the client names (verified against the
+         workspace), else the location of today's scheduled shift, else the
+         employee's home object. Binding the punch to a Location is what makes
+         the distance meaningful — before this, TimeEntry.locationId was never
+         populated at all.                                                   */
+      let geoLocation: {
+        id: string;
+        latitude: number | null;
+        longitude: number | null;
+        geofenceRadiusMeters: number | null;
+        geofenceEnforced: boolean;
+      } | null = null;
+
+      const geoSelect = {
+        id: true,
+        latitude: true,
+        longitude: true,
+        geofenceRadiusMeters: true,
+        geofenceEnforced: true,
+      } as const;
+
+      if (clientLocationId) {
+        geoLocation = await prisma.location.findFirst({
+          where: { id: clientLocationId, workspaceId, deletedAt: null },
+          select: geoSelect,
+        });
+      }
+      if (!geoLocation) {
+        const todayShift = await prisma.shift.findFirst({
+          where: {
+            employeeId,
+            workspaceId,
+            date: dateOnly,
+            deletedAt: null,
+            locationId: { not: null },
+          },
+          select: { location: { select: geoSelect } },
+          orderBy: { startTime: "asc" },
+        });
+        geoLocation = todayShift?.location ?? null;
+      }
+      if (!geoLocation) {
+        const emp = await prisma.employee.findFirst({
+          where: { id: employeeId, workspaceId },
+          select: { location: { select: geoSelect } },
+        });
+        geoLocation = emp?.location ?? null;
+      }
+
+      const geo = evaluateGeofence(geoLocation, {
+        latitude,
+        longitude,
+        accuracyM,
+        mocked,
+      });
+
+      if (geo.blocked) {
+        log.warn("[geofence] clock-in refused", {
+          employeeId,
+          workspaceId,
+          locationId: geoLocation?.id,
+          code: geo.code,
+          distanceM: geo.distanceM,
+          radiusM: geo.radiusM,
+        });
+        return NextResponse.json(
+          {
+            error: geo.code,
+            message: geo.message,
+            messageEn: geo.messageEn,
+            distanceM: geo.distanceM,
+            radiusM: geo.radiusM,
+            // The QR station at the object is the sanctioned fallback when the
+            // device cannot prove presence on its own.
+            fallback: "QR_STATION",
+          },
+          { status: 422 },
+        );
+      }
+
       // Two layers guard against a double clock-in:
       //   1. The findFirst pre-check below is the fast path — it returns a
       //      friendly 409 in the common (non-concurrent) case.
@@ -159,6 +251,17 @@ export const POST = withRoute(
               employeeId,
               workspaceId,
               status: "ENTWURF",
+              // ── Geofence evidence ──
+              // Recorded whether or not the object enforces a geofence: an
+              // audit answers "where was this punch made", and that question
+              // is only answerable if the data was kept from the start.
+              locationId: geoLocation?.id ?? null,
+              checkInLatitude: latitude ?? null,
+              checkInLongitude: longitude ?? null,
+              checkInAccuracyM: accuracyM ?? null,
+              checkInDistanceM: geo.distanceM,
+              geofenceStatus: geo.status as GeofenceStatus,
+              locationMocked: mocked === true,
             },
           });
         });
@@ -375,6 +478,32 @@ export const POST = withRoute(
               // the entry stays in ENTWURF forever and never reaches approval.
               status: "EINGEREICHT",
               submittedAt: now,
+              // ── Geofence evidence at clock-out ──
+              // Recorded but never blocking: refusing a clock-out would leave
+              // the guard clocked in indefinitely and inflate their hours,
+              // which is a worse outcome than an out-of-range exit. The
+              // distance is measured against the object the punch was bound
+              // to at clock-in.
+              ...(latitude != null && longitude != null
+                ? {
+                    checkOutLatitude: latitude,
+                    checkOutLongitude: longitude,
+                    checkOutDistanceM: open.locationId
+                      ? evaluateGeofence(
+                          await tx.location.findUnique({
+                            where: { id: open.locationId },
+                            select: {
+                              latitude: true,
+                              longitude: true,
+                              geofenceRadiusMeters: true,
+                              geofenceEnforced: true,
+                            },
+                          }),
+                          { latitude, longitude, accuracyM, mocked },
+                        ).distanceM
+                      : null,
+                  }
+                : {}),
               ...(capped.wasCapped
                 ? {
                     remarks: "ArbZG §3: Arbeitszeit auf 10h-Tageslimit gekappt",

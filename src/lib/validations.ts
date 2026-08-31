@@ -263,6 +263,18 @@ export const clockActionSchema = z.object({
   }),
   timezone: optionalString.pipe(z.string().max(100).optional()),
   bypassRestPeriod: z.boolean().optional(),
+  /**
+   * Device position for the geofence check. Advisory input only — the server
+   * recomputes the distance and decides. `locationId` lets the client name the
+   * object it believes it is at; the server still verifies it belongs to the
+   * workspace and falls back to the scheduled shift's location.
+   */
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  accuracyM: z.number().min(0).max(100000).optional(),
+  /** Android reports mock/simulated fixes; iOS has no equivalent. */
+  mocked: z.boolean().optional(),
+  locationId: optionalString,
 });
 
 // ── Time Entry Status Update ────────────────────────────────────

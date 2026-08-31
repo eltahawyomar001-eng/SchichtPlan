@@ -560,7 +560,25 @@
     "holidayBadge": "Holiday",
     "holidayWarning": "⚠ Holiday: {name}",
     "holidayShiftWarning": "Shift on a public holiday ({name})",
-    "dayAbbrev": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    "dayAbbrev": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "compliance": {
+      "title": "Compliance block",
+      "intro": "This shift breaches {count, plural, one {one rule} other {# rules}}. As a responsible manager you may release the block — the release is recorded in the audit trail.",
+      "reasonLabel": "Justification for the release",
+      "reasonPlaceholder": "Why is this shift being scheduled despite the block? (min. 10 characters)",
+      "reasonHint": "The justification is stored with your name and a timestamp, and is visible during an FKS audit.",
+      "reasonTooShort": "Please give a justification of at least 10 characters.",
+      "confirm": "Release block and save",
+      "cancel": "Adjust shift",
+      "overrideFailed": "The release was refused. You may not hold the required permissions.",
+      "rule": {
+        "ARBZG_3": "ArbZG §3 — daily maximum of 10 hours exceeded",
+        "ARBZG_4": "ArbZG §4 — mandatory break too short",
+        "ARBZG_5": "ArbZG §5 — 11-hour rest period not met",
+        "SACHKUNDE_34A": "§34a GewO — §34a qualification or Bewacherregister entry missing or invalid",
+        "GEOFENCE": "Geofence — location outside the permitted radius"
+      }
+    }
   },
   "timeTracking": {
     "title": "Time Tracking",

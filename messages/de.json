@@ -560,7 +560,25 @@
     "holidayBadge": "Feiertag",
     "holidayWarning": "⚠ Feiertag: {name}",
     "holidayShiftWarning": "Schicht an einem Feiertag ({name})",
-    "dayAbbrev": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+    "dayAbbrev": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+    "compliance": {
+      "title": "Compliance-Sperre",
+      "intro": "Diese Schicht verstößt gegen {count, plural, one {eine Vorschrift} other {# Vorschriften}}. Sie können die Sperre als verantwortliche Führungskraft aufheben — die Freigabe wird revisionssicher protokolliert.",
+      "reasonLabel": "Begründung der Freigabe",
+      "reasonPlaceholder": "Warum wird diese Schicht trotz der Sperre geplant? (mind. 10 Zeichen)",
+      "reasonHint": "Die Begründung wird mit Ihrem Namen und Zeitstempel gespeichert und ist bei einer FKS-Prüfung einsehbar.",
+      "reasonTooShort": "Bitte geben Sie eine Begründung mit mindestens 10 Zeichen an.",
+      "confirm": "Sperre aufheben und speichern",
+      "cancel": "Schicht anpassen",
+      "overrideFailed": "Die Freigabe wurde abgelehnt. Möglicherweise fehlen Ihnen die nötigen Rechte.",
+      "rule": {
+        "ARBZG_3": "ArbZG §3 — Höchstarbeitszeit von 10 Stunden überschritten",
+        "ARBZG_4": "ArbZG §4 — vorgeschriebene Pause zu kurz",
+        "ARBZG_5": "ArbZG §5 — Ruhezeit von 11 Stunden unterschritten",
+        "SACHKUNDE_34A": "§34a GewO — Sachkunde bzw. Bewacherregister-Eintrag fehlt oder ist ungültig",
+        "GEOFENCE": "Geofence — Standort außerhalb des zulässigen Radius"
+      }
+    }
   },
   "timeTracking": {
     "title": "Zeiterfassung",

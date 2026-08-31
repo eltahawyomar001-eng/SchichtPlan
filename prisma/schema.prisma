@@ -7,66 +7,66 @@ datasource db {
 }
 
 model User {
-  id                      String                   @id @default(cuid())
-  name                    String?
-  email                   String                   @unique
-  phone                   String?
-  emailVerified           DateTime?
-  hashedPassword          String?
-  image                   String?
-  role                    Role                     @default(OWNER)
-  consentGivenAt          DateTime?
-  twoFactorEnabled        Boolean                  @default(false)
-  twoFactorSecret         String?
-  twoFactorRecoveryCodes  String?
-  dashboardFavorites      String                   @default("[]") @db.Text
-  preferredLocale         String                   @default("de")
+  id                       String                   @id @default(cuid())
+  name                     String?
+  email                    String                   @unique
+  phone                    String?
+  emailVerified            DateTime?
+  hashedPassword           String?
+  image                    String?
+  role                     Role                     @default(OWNER)
+  consentGivenAt           DateTime?
+  twoFactorEnabled         Boolean                  @default(false)
+  twoFactorSecret          String?
+  twoFactorRecoveryCodes   String?
+  dashboardFavorites       String                   @default("[]") @db.Text
+  preferredLocale          String                   @default("de")
   // GDPR/legal: track which AGB/Datenschutz version the user accepted and when
-  tosVersion              String?
-  tosAcceptedAt           DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  workspaceId             String?
-  workspace               Workspace?               @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  customRoleId            String?
-  customRole              CustomRole?              @relation("UserCustomRole", fields: [customRoleId], references: [id], onDelete: SetNull)
-  accounts                Account[]
-  sessions                Session[]
-  notificationPreferences NotificationPreference[]
-  invitationsSent         Invitation[]
-  employee                Employee?
-  pushSubscriptions       PushSubscription[]
-  autoScheduleRuns        AutoScheduleRun[]
-  icalTokens              ICalToken[]
-  outlookConnection       OutlookConnection?
-  notifications           Notification[]
-  ticketsCreated          Ticket[]                 @relation("TicketCreator")
-  ticketsAssigned         Ticket[]                 @relation("TicketAssignee")
-  ticketsTrashed          Ticket[]                 @relation("TicketTrasher")
-  ticketComments          TicketComment[]
-  ticketAttachments       TicketAttachment[]
-  feedback                Feedback[]
-  userTasks               UserTask[]
-  sosRequestsCreated      SosRequest[]             @relation("SosCreatedBy")
-  betriebsratMembership   BetriebsratMember?
-  approvalsSubmitted      ShiftPlanApproval[]      @relation("ApprovalSubmitter")
-  approvalsReviewed       ShiftPlanApproval[]      @relation("ApprovalReviewer")
-  timesheetImports        TimesheetImport[]        @relation("TimesheetImporter")
-  timesheetImportsReviewed TimesheetImport[]       @relation("TimesheetReviewer")
+  tosVersion               String?
+  tosAcceptedAt            DateTime?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  workspaceId              String?
+  workspace                Workspace?               @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  customRoleId             String?
+  customRole               CustomRole?              @relation("UserCustomRole", fields: [customRoleId], references: [id], onDelete: SetNull)
+  accounts                 Account[]
+  sessions                 Session[]
+  notificationPreferences  NotificationPreference[]
+  invitationsSent          Invitation[]
+  employee                 Employee?
+  pushSubscriptions        PushSubscription[]
+  autoScheduleRuns         AutoScheduleRun[]
+  icalTokens               ICalToken[]
+  outlookConnection        OutlookConnection?
+  notifications            Notification[]
+  ticketsCreated           Ticket[]                 @relation("TicketCreator")
+  ticketsAssigned          Ticket[]                 @relation("TicketAssignee")
+  ticketsTrashed           Ticket[]                 @relation("TicketTrasher")
+  ticketComments           TicketComment[]
+  ticketAttachments        TicketAttachment[]
+  feedback                 Feedback[]
+  userTasks                UserTask[]
+  sosRequestsCreated       SosRequest[]             @relation("SosCreatedBy")
+  betriebsratMembership    BetriebsratMember?
+  approvalsSubmitted       ShiftPlanApproval[]      @relation("ApprovalSubmitter")
+  approvalsReviewed        ShiftPlanApproval[]      @relation("ApprovalReviewer")
+  timesheetImports         TimesheetImport[]        @relation("TimesheetImporter")
+  timesheetImportsReviewed TimesheetImport[]        @relation("TimesheetReviewer")
 }
 
 /// Personal to-do list shown on the dashboard "My Tasks" card.
 /// Scoped to a single user; deleted when the user is removed.
 model UserTask {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   workspaceId String
   title       String
-  done        Boolean  @default(false)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  done        Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -154,81 +154,82 @@ model Invitation {
 }
 
 model Workspace {
-  id                   String                @id @default(cuid())
-  name                 String
-  slug                 String                @unique
-  industry             String?
-  bundesland           String?
+  id                     String                 @id @default(cuid())
+  name                   String
+  slug                   String                 @unique
+  industry               String?
+  bundesland             String?
   /// Default/target break duration in minutes shown as countdown on the punch clock.
   /// German default per ArbZG §4: 30 min for 6–9h shifts, 45 min for >9h shifts.
-  defaultBreakMinutes  Int                   @default(30)
+  defaultBreakMinutes    Int                    @default(30)
   /// Applicable minimum hourly wage in cents, for the MiLoG audit check.
   /// Default = statutory minimum 2026 (€13.90); raise for branch/Tarif minimums.
-  minHourlyWageCents   Int                   @default(1390)
+  minHourlyWageCents     Int                    @default(1390)
   /// Betriebsnummer (8-digit employer number from the Bundesagentur für Arbeit).
   /// Required for Sofortmeldung and eAU transmission via the SV gateway.
-  betriebsnummer       String?
-  logo                 String?
-  datevConsultantNumber String?
-  datevClientNumber     String?
-  onboardingCompleted  Boolean               @default(false)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  members              User[]
-  employees            Employee[]
-  shifts               Shift[]
-  locations            Location[]
-  departments          Department[]
-  timeEntries          TimeEntry[]
-  absenceRequests      AbsenceRequest[]
-  availabilities       Availability[]
-  shiftSwaps           ShiftSwapRequest[]
-  shiftChangeRequests  ShiftChangeRequest[]
-  timeAccounts         TimeAccount[]
-  automationSettings   AutomationSetting[]
-  invitations          Invitation[]
-  vacationBalances     VacationBalance[]
-  skills               Skill[]
-  shiftTemplates       ShiftTemplate[]
-  clients              Client[]
-  projects             Project[]
-  monthCloses          MonthClose[]
-  exportJobs           ExportJob[]
-  webhookEndpoints     WebhookEndpoint[]
-  webhookFailures      WebhookFailure[]
-  automationRules      AutomationRule[]
-  auditLogs            AuditLog[]
-  eSignatures          ESignature[]
-  subscription         Subscription?
-  usage                WorkspaceUsage?
-  staffingRequirements StaffingRequirement[]
-  autoScheduleRuns     AutoScheduleRun[]
-  autoFillLogs         AutoFillLog[]
-  managerAlerts        ManagerAlert[]
-  serviceVisits        ServiceVisit[]
-  serviceReports       ServiceReport[]
-  notifications        Notification[]
-  tickets              Ticket[]
-  ticketAttachments    TicketAttachment[]
-  ticketCategoryDefs   TicketCategoryDef[]
-  workspaceCustomer    WorkspaceCustomer?
-  invoices             Invoice[]
-  quotes               Quote[]
-  customerInvoices     CustomerInvoice[]
-  feedback             Feedback[]
-  invoiceSequence      InvoiceSequence?
-  stationSessions      StationSession[]
-  customRoles          CustomRole[]
-  userTasks            UserTask[]
-  sosRequests          SosRequest[]
-  betriebsratMembers   BetriebsratMember[]
-  shiftPlanApprovals   ShiftPlanApproval[]
-  eauRequests          EauRequest[]
-  auditDossiers        AuditDossier[]
-  svSubmissions        SvSubmission[]
-  datevToken           DATEVToken?
-  timesheetImports     TimesheetImport[]
+  betriebsnummer         String?
+  logo                   String?
+  datevConsultantNumber  String?
+  datevClientNumber      String?
+  onboardingCompleted    Boolean                @default(false)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  members                User[]
+  employees              Employee[]
+  shifts                 Shift[]
+  locations              Location[]
+  departments            Department[]
+  timeEntries            TimeEntry[]
+  absenceRequests        AbsenceRequest[]
+  availabilities         Availability[]
+  shiftSwaps             ShiftSwapRequest[]
+  shiftChangeRequests    ShiftChangeRequest[]
+  timeAccounts           TimeAccount[]
+  automationSettings     AutomationSetting[]
+  invitations            Invitation[]
+  vacationBalances       VacationBalance[]
+  skills                 Skill[]
+  shiftTemplates         ShiftTemplate[]
+  clients                Client[]
+  projects               Project[]
+  monthCloses            MonthClose[]
+  exportJobs             ExportJob[]
+  webhookEndpoints       WebhookEndpoint[]
+  webhookFailures        WebhookFailure[]
+  automationRules        AutomationRule[]
+  auditLogs              AuditLog[]
+  eSignatures            ESignature[]
+  subscription           Subscription?
+  usage                  WorkspaceUsage?
+  staffingRequirements   StaffingRequirement[]
+  autoScheduleRuns       AutoScheduleRun[]
+  autoFillLogs           AutoFillLog[]
+  managerAlerts          ManagerAlert[]
+  serviceVisits          ServiceVisit[]
+  serviceReports         ServiceReport[]
+  notifications          Notification[]
+  tickets                Ticket[]
+  ticketAttachments      TicketAttachment[]
+  ticketCategoryDefs     TicketCategoryDef[]
+  workspaceCustomer      WorkspaceCustomer?
+  invoices               Invoice[]
+  quotes                 Quote[]
+  customerInvoices       CustomerInvoice[]
+  feedback               Feedback[]
+  invoiceSequence        InvoiceSequence?
+  stationSessions        StationSession[]
+  customRoles            CustomRole[]
+  userTasks              UserTask[]
+  sosRequests            SosRequest[]
+  betriebsratMembers     BetriebsratMember[]
+  shiftPlanApprovals     ShiftPlanApproval[]
+  eauRequests            EauRequest[]
+  auditDossiers          AuditDossier[]
+  svSubmissions          SvSubmission[]
+  datevToken             DATEVToken?
+  timesheetImports       TimesheetImport[]
   timesheetImportEntries TimesheetImportEntry[]
+  complianceOverrides    ComplianceOverride[]
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -309,29 +310,29 @@ enum SvSubmissionStatus {
 /// One transmission to the SV gateway (eAU lookup or Sofortmeldung). Stores the
 /// request/response payloads + the gateway tracking ID for audit purposes.
 model SvSubmission {
-  id            String             @id @default(cuid())
-  workspaceId   String
-  workspace     Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  employeeId    String
-  employee      Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  type          SvSubmissionType
-  status        SvSubmissionStatus @default(PENDING)
+  id              String             @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type            SvSubmissionType
+  status          SvSubmissionStatus @default(PENDING)
   /// Meldegrund (e.g. "20" for Sofortmeldung). Null for eAU.
-  meldegrund    String?
+  meldegrund      String?
   /// Gateway-issued reference / tracking id.
-  trackingId    String?
+  trackingId      String?
   /// Whether this ran against the sandbox environment.
-  sandbox       Boolean            @default(true)
+  sandbox         Boolean            @default(true)
   requestPayload  Json?
   responsePayload Json?
-  errorCode     String?
-  errorMessage  String?            @db.Text
+  errorCode       String?
+  errorMessage    String?            @db.Text
   /// eAU result fields (mirror of EauRequest for the gateway path).
-  auFrom        DateTime?          @db.Date
-  auTo          DateTime?          @db.Date
-  submittedById String?
-  submittedAt   DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  auFrom          DateTime?          @db.Date
+  auTo            DateTime?          @db.Date
+  submittedById   String?
+  submittedAt     DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@index([workspaceId, type])
   @@index([employeeId])
@@ -365,6 +366,43 @@ model AuditDossier {
   @@index([workspaceId, generatedAt])
 }
 
+/// The compliance rules that can be enforced as a hard block.
+enum ComplianceRule {
+  ARBZG_3
+  ARBZG_4
+  ARBZG_5
+  SACHKUNDE_34A
+  GEOFENCE
+}
+
+/// A deliberate, justified bypass of a hard block.
+///
+/// The generic AuditLog records THAT a shift was created; it cannot answer an
+/// FKS auditor asking why a guard was scheduled without a valid Sachkunde, or
+/// why a check-in 800 m from the object was accepted. Every override is written
+/// here with a mandatory reason, so "we blocked it and a named manager
+/// consciously released it" is provable rather than inferred.
+model ComplianceOverride {
+  id           String         @id @default(cuid())
+  rule         ComplianceRule
+  /// The kind of record the block was raised on, e.g. "Shift" or "TimeEntry".
+  entityType   String
+  /// Id of that record. Intentionally NOT a foreign key: the override must
+  /// survive deletion of the shift or time entry it justifies.
+  entityId     String
+  /// Mandatory justification supplied by the overriding manager.
+  reason       String         @db.Text
+  /// User id of the manager who released the block.
+  overriddenBy String
+  overriddenAt DateTime       @default(now())
+  workspaceId  String
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, overriddenAt])
+  @@index([entityType, entityId])
+  @@index([workspaceId, rule])
+}
+
 // ═══════════════════════════════════════════════════════════════
 // BETRIEBSRAT (WORKS COUNCIL) CO-DETERMINATION — BetrVG §87
 // ═══════════════════════════════════════════════════════════════
@@ -395,26 +433,26 @@ enum ShiftPlanApprovalStatus {
 /// A shift schedule (period + optional location scope) submitted to the works
 /// council for co-determination per BetrVG §87. Tracks a response deadline.
 model ShiftPlanApproval {
-  id           String                  @id @default(cuid())
-  workspaceId  String
-  workspace    Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  title        String
-  periodStart  DateTime                @db.Date
-  periodEnd    DateTime                @db.Date
-  locationId   String?
+  id            String                  @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title         String
+  periodStart   DateTime                @db.Date
+  periodEnd     DateTime                @db.Date
+  locationId    String?
   /// Snapshot of the schedule scope at submission (shift/employee counts).
-  shiftCount   Int                     @default(0)
-  status       ShiftPlanApprovalStatus @default(PENDING)
+  shiftCount    Int                     @default(0)
+  status        ShiftPlanApprovalStatus @default(PENDING)
   /// Statutory response deadline (default: submittedAt + 3 days).
-  deadline     DateTime
-  decisionNote String?                 @db.Text
+  deadline      DateTime
+  decisionNote  String?                 @db.Text
   submittedById String
-  submittedBy   User                   @relation("ApprovalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
-  reviewedById String?
-  reviewedBy   User?                   @relation("ApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
-  reviewedAt   DateTime?
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
+  submittedBy   User                    @relation("ApprovalSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+  reviewedById  String?
+  reviewedBy    User?                   @relation("ApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt    DateTime?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
 
   @@index([workspaceId, status])
   @@index([workspaceId, periodStart])
@@ -503,41 +541,41 @@ enum TicketingAddonTier {
 }
 
 model Subscription {
-  id                                     String             @id @default(cuid())
-  plan                                   SubscriptionPlan   @default(BASIC)
-  status                                 SubscriptionStatus @default(ACTIVE)
-  stripeCustomerId                       String?            @unique
-  stripeSubscriptionId                   String?            @unique
-  stripePriceId                          String?
-  seatCount                              Int                @default(1)
-  currentPeriodStart                     DateTime?
-  currentPeriodEnd                       DateTime?
-  cancelAtPeriodEnd                      Boolean            @default(false)
-  trialStart                             DateTime?
-  trialEnd                               DateTime?
+  id                                       String             @id @default(cuid())
+  plan                                     SubscriptionPlan   @default(BASIC)
+  status                                   SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId                         String?            @unique
+  stripeSubscriptionId                     String?            @unique
+  stripePriceId                            String?
+  seatCount                                Int                @default(1)
+  currentPeriodStart                       DateTime?
+  currentPeriodEnd                         DateTime?
+  cancelAtPeriodEnd                        Boolean            @default(false)
+  trialStart                               DateTime?
+  trialEnd                                 DateTime?
   /// Ticketing add-on tier (NONE = not purchased)
-  ticketingTier                          TicketingAddonTier @default(NONE)
+  ticketingTier                            TicketingAddonTier @default(NONE)
   /// Stripe Subscription Item ID for the ticketing add-on line on the parent subscription
-  ticketingStripeSubscriptionItemId      String?
+  ticketingStripeSubscriptionItemId        String?
   /// Schichtplanung add-on active flag (gates the entire shift planning module on Basic/Professional plans).
   /// Enterprise plan always has access regardless of this flag.
-  schichtplanungAddonActive              Boolean            @default(false)
+  schichtplanungAddonActive                Boolean            @default(false)
   /// Stripe Subscription Item ID for the schichtplanung add-on line on the parent subscription
-  schichtplanungStripeSubscriptionItemId String?
+  schichtplanungStripeSubscriptionItemId   String?
   /// Billing cycle for the schichtplanung add-on: "monthly" or "annual" (null when inactive)
-  schichtplanungAddonBilling             String?
+  schichtplanungAddonBilling               String?
   /// AI Timesheet Scanner add-on (€24.99/mo) — premium quota (600 scans/mo).
-  timesheetScannerAddonActive            Boolean            @default(false)
+  timesheetScannerAddonActive              Boolean            @default(false)
   /// Stripe Subscription Item ID for the timesheet-scanner add-on line.
   timesheetScannerStripeSubscriptionItemId String?
   /// Billing cycle for the timesheet-scanner add-on: "monthly" (null when inactive)
-  timesheetScannerAddonBilling           String?
+  timesheetScannerAddonBilling             String?
   /// Set when seat count exceeds plan limit; hard-block activates 30 days after this date.
-  overLimitSince                         DateTime?
-  createdAt                              DateTime           @default(now())
-  updatedAt                              DateTime           @updatedAt
-  workspaceId                            String             @unique
-  workspace                              Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  overLimitSince                           DateTime?
+  createdAt                                DateTime           @default(now())
+  updatedAt                                DateTime           @updatedAt
+  workspaceId                              String             @unique
+  workspace                                Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
@@ -635,64 +673,84 @@ model WorkspaceUsage {
   @@index([workspaceId])
 }
 
+/// Status of the guard in the Bewacherregister (§11b GewO). Distinct from
+/// holding a §34a certificate: a guard can be registered but not yet cleared,
+/// and only GEPRUEFT means the Zuverlässigkeitsüberprüfung actually passed.
+enum BewacherRegisterStatus {
+  ANGEMELDET
+  GEPRUEFT
+  ABGELEHNT
+  ABGEMELDET
+}
+
 model Employee {
-  id                String               @id @default(cuid())
-  firstName         String
-  lastName          String
-  email             String?
-  phone             String?
-  position          String?
-  hourlyRate        Float?
-  weeklyHours       Float?
-  workDaysPerWeek   Float                @default(5)
-  contractType      ContractType         @default(VOLLZEIT)
-  flexibleWork      Boolean              @default(false)
-  color             String?
-  isActive          Boolean              @default(true)
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  deletedAt         DateTime?
-  workspaceId       String
-  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  userId            String?              @unique
-  user              User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
-  departments       EmployeeDepartment[]
-  shifts            Shift[]
-  timeEntries       TimeEntry[]
-  absenceRequests   AbsenceRequest[]
-  availabilities    Availability[]
-  swapsRequested    ShiftSwapRequest[]   @relation("SwapRequester")
-  swapsOffered      ShiftSwapRequest[]   @relation("SwapTarget")
-  changeRequests    ShiftChangeRequest[]
-  timeAccount       TimeAccount?
-  vacationBalances  VacationBalance[]
-  employeeSkills    EmployeeSkill[]
-  eauRequests       EauRequest[]
-  projectMembers    ProjectMember[]
-  autoFillsVacated  AutoFillLog[]        @relation("AutoFillVacated")
-  autoFillsAssigned AutoFillLog[]        @relation("AutoFillAssigned")
+  id                     String                  @id @default(cuid())
+  firstName              String
+  lastName               String
+  email                  String?
+  phone                  String?
+  position               String?
+  hourlyRate             Float?
+  weeklyHours            Float?
+  workDaysPerWeek        Float                   @default(5)
+  contractType           ContractType            @default(VOLLZEIT)
+  flexibleWork           Boolean                 @default(false)
+  color                  String?
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  deletedAt              DateTime?
+  workspaceId            String
+  workspace              Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId                 String?                 @unique
+  user                   User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  departments            EmployeeDepartment[]
+  shifts                 Shift[]
+  timeEntries            TimeEntry[]
+  absenceRequests        AbsenceRequest[]
+  availabilities         Availability[]
+  swapsRequested         ShiftSwapRequest[]      @relation("SwapRequester")
+  swapsOffered           ShiftSwapRequest[]      @relation("SwapTarget")
+  changeRequests         ShiftChangeRequest[]
+  timeAccount            TimeAccount?
+  vacationBalances       VacationBalance[]
+  employeeSkills         EmployeeSkill[]
+  eauRequests            EauRequest[]
+  projectMembers         ProjectMember[]
+  autoFillsVacated       AutoFillLog[]           @relation("AutoFillVacated")
+  autoFillsAssigned      AutoFillLog[]           @relation("AutoFillAssigned")
   timesheetImportEntries TimesheetImportEntry[]
-  serviceVisits     ServiceVisit[]
-  sosNotifications  SosNotification[]
-  sosFilled         SosRequest[]         @relation("SosFilledBy")
-  locationId        String?
-  location          Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  pinHash           String?
-  pinEmailFailed    Boolean              @default(false)
+  serviceVisits          ServiceVisit[]
+  sosNotifications       SosNotification[]
+  sosFilled              SosRequest[]            @relation("SosFilledBy")
+  locationId             String?
+  location               Location?               @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  pinHash                String?
+  pinEmailFailed         Boolean                 @default(false)
   // ── Sozialversicherung (eAU / Sofortmeldung) metadata ──
   /// Geburtsdatum — required for eAU lookups and Sofortmeldung.
-  dateOfBirth          DateTime?         @db.Date
+  dateOfBirth            DateTime?               @db.Date
   /// Versicherungsnummer (SV-Nummer / Rentenversicherungsnummer), 12 chars.
-  socialSecurityNumber String?
+  socialSecurityNumber   String?
   /// Geburtsort — fallback identifier for Sofortmeldung when SV-Nr. is missing.
-  birthPlace           String?
+  birthPlace             String?
   /// Staatsangehörigkeit — fallback identifier for Sofortmeldung.
-  nationality          String?
+  nationality            String?
   /// Eintrittsdatum (employment entry) — the Sofortmeldung reference timestamp.
-  employmentStartDate  DateTime?         @db.Date
+  employmentStartDate    DateTime?               @db.Date
   /// DATEV LODAS/LUG identifiers — required for hr:eau eAU requests via DATEV API.
-  datevPersonnelNumber  String?
-  svSubmissions        SvSubmission[]
+  datevPersonnelNumber   String?
+  svSubmissions          SvSubmission[]
+  // ── §34a GewO / Bewacherregister (Zoll-Shield) ──
+  /// Bewacherregister-ID (§11b GewO). A per-PERSON registry identifier, which
+  /// is why it lives here and not on EmployeeSkill.certificateNumber.
+  bewacherId             String?
+  bewacherRegisterStatus BewacherRegisterStatus?
+  /// When the Bewacher-ID was last checked against the register. No public API
+  /// exists, so this is set by a human doing the lookup.
+  bewacherValidatedAt    DateTime?
+  /// Date the Zuverlässigkeitsüberprüfung (§34a Abs. 1) was confirmed.
+  reliabilityCheckedAt   DateTime?
 
   @@unique([email, workspaceId])
   @@unique([workspaceId, pinHash])
@@ -712,25 +770,39 @@ model EmployeeDepartment {
 }
 
 model Location {
-  id                    String                  @id @default(cuid())
-  name                  String
-  address               String?
+  id                   String                  @id @default(cuid())
+  name                 String
+  address              String?
   /// 2-letter Bundesland code (BE, BY, NW, …). Used by the holiday-aware
   /// vacation calculator. Falls back to Workspace.bundesland when null.
-  bundesland            String?
-  createdAt             DateTime                @default(now())
-  deletedAt             DateTime?
-  workspaceId           String
-  workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  shifts                Shift[]
-  timeEntries           TimeEntry[]
-  departments           Department[]
-  shiftTemplates        ShiftTemplate[]
-  staffingRequirements  StaffingRequirement[]
-  autoScheduleRuns      AutoScheduleRun[]
-  serviceVisits         ServiceVisit[]
-  employees             Employee[]
-  requiredSkills        LocationRequiredSkill[]
+  bundesland           String?
+  // ── Geofence (Zoll-Shield) ──
+  /// WGS84 coordinates of the guarded object. Resolved from `address` by the
+  /// geocoder (Open-Meteo → Nominatim fallback) or set manually by the planner.
+  latitude             Float?
+  longitude            Float?
+  /// Check-in radius in metres. 50 m is the product default; widen per object
+  /// where urban GPS accuracy or indoor posts make the default unworkable.
+  geofenceRadiusMeters Int                     @default(50)
+  /// Per-object opt-in. When false the punch clock records coordinates for the
+  /// audit trail but never blocks a check-in.
+  geofenceEnforced     Boolean                 @default(false)
+  /// When `latitude`/`longitude` were last resolved — lets a re-geocode job
+  /// find stale rows after an address edit.
+  geocodedAt           DateTime?
+  createdAt            DateTime                @default(now())
+  deletedAt            DateTime?
+  workspaceId          String
+  workspace            Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shifts               Shift[]
+  timeEntries          TimeEntry[]
+  departments          Department[]
+  shiftTemplates       ShiftTemplate[]
+  staffingRequirements StaffingRequirement[]
+  autoScheduleRuns     AutoScheduleRun[]
+  serviceVisits        ServiceVisit[]
+  employees            Employee[]
+  requiredSkills       LocationRequiredSkill[]
 
   @@index([workspaceId, deletedAt])
 }
@@ -754,16 +826,16 @@ model Department {
 }
 
 model Skill {
-  id                    String                  @id @default(cuid())
-  name                  String
-  category              String?
-  createdAt             DateTime                @default(now())
-  deletedAt             DateTime?
-  workspaceId           String
-  workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  employeeSkills        EmployeeSkill[]
-  staffingRequirements  StaffingRequirement[]
-  locationRequirements  LocationRequiredSkill[]
+  id                   String                  @id @default(cuid())
+  name                 String
+  category             String?
+  createdAt            DateTime                @default(now())
+  deletedAt            DateTime?
+  workspaceId          String
+  workspace            Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employeeSkills       EmployeeSkill[]
+  staffingRequirements StaffingRequirement[]
+  locationRequirements LocationRequiredSkill[]
 
   @@unique([name, workspaceId])
   @@index([workspaceId])
@@ -784,8 +856,8 @@ model LocationRequiredSkill {
 }
 
 model EmployeeSkill {
-  id         String    @id @default(cuid())
-  expiresAt  DateTime? @db.Date
+  id                String    @id @default(cuid())
+  expiresAt         DateTime? @db.Date
   /// §34a / Sachkunde: the actual certificate identity, not just a label.
   certificateNumber String?
   issuingAuthority  String?
@@ -793,11 +865,11 @@ model EmployeeSkill {
   /// Public URL of the uploaded certificate scan (Supabase Storage).
   documentUrl       String?
   documentName      String?
-  createdAt  DateTime  @default(now())
-  employeeId String
-  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  skillId    String
-  skill      Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  employeeId        String
+  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  skillId           String
+  skill             Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, skillId])
 }
@@ -892,10 +964,21 @@ model VacationBalance {
   workspaceId      String
   workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  version          Int       @default(0)
+  version Int @default(0)
 
   @@unique([employeeId, year])
   @@index([workspaceId])
+}
+
+/// Outcome of the server-side geofence evaluation at check-in.
+/// UNAVAILABLE covers the legitimate no-fix cases (permission denied, GPS off,
+/// underground or indoor post) and is deliberately distinct from OUTSIDE so an
+/// FKS auditor can tell "could not measure" from "measured and too far".
+enum GeofenceStatus {
+  INSIDE
+  OUTSIDE
+  OVERRIDDEN
+  UNAVAILABLE
 }
 
 enum TimeEntryStatus {
@@ -908,48 +991,71 @@ enum TimeEntryStatus {
 }
 
 model TimeEntry {
-  id           String           @id @default(cuid())
-  date         DateTime         @db.Date
-  startTime    String
-  endTime      String
-  breakStart   String?
-  breakEnd     String?
-  breakMinutes Int              @default(0)
-  grossMinutes Int              @default(0)
-  netMinutes   Int              @default(0)
-  remarks      String?
-  status       TimeEntryStatus  @default(ENTWURF)
-  submittedAt  DateTime?
-  confirmedAt  DateTime?
-  confirmedBy  String?
-  clockInAt    DateTime?
-  clockOutAt   DateTime?
-  isLiveClock  Boolean          @default(false)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  deletedAt    DateTime?
-  employeeId   String
+  id                     String           @id @default(cuid())
+  date                   DateTime         @db.Date
+  startTime              String
+  endTime                String
+  breakStart             String?
+  breakEnd               String?
+  breakMinutes           Int              @default(0)
+  grossMinutes           Int              @default(0)
+  netMinutes             Int              @default(0)
+  remarks                String?
+  status                 TimeEntryStatus  @default(ENTWURF)
+  submittedAt            DateTime?
+  confirmedAt            DateTime?
+  confirmedBy            String?
+  clockInAt              DateTime?
+  clockOutAt             DateTime?
+  isLiveClock            Boolean          @default(false)
+  // ── Geofence evidence (Zoll-Shield) ──
+  // Coordinates are supplied by the device but the DISTANCE is always computed
+  // server-side from Location.latitude/longitude — a client-reported distance
+  // or in/out verdict is never trusted.
+  checkInLatitude        Float?
+  checkInLongitude       Float?
+  /// Reported horizontal accuracy of the fix in metres. A fix coarser than the
+  /// object radius cannot prove presence and must not count as INSIDE.
+  checkInAccuracyM       Float?
+  /// Server-computed haversine distance to the object at check-in, in metres.
+  /// This is the auditable evidence, retained even when the geofence is off.
+  checkInDistanceM       Float?
+  checkOutLatitude       Float?
+  checkOutLongitude      Float?
+  checkOutDistanceM      Float?
+  geofenceStatus         GeofenceStatus?
+  /// True when the OS flagged the fix as mock/simulated (Android exposes this;
+  /// iOS does not, so absence of the flag is not proof of authenticity).
+  locationMocked         Boolean          @default(false)
+  /// User id of the manager who released a blocked check-in, plus their
+  /// mandatory justification. Both set together with geofenceStatus=OVERRIDDEN.
+  geofenceOverrideBy     String?
+  geofenceOverrideReason String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  deletedAt              DateTime?
+  employeeId             String
   // RESTRICT: cannot delete employee with time records (ArbZG §16: 2yr working-time retention)
-  employee     Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
-  locationId   String?
-  location     Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  shiftId      String?
-  projectId    String?
-  project      Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  workspaceId  String
-  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  auditLog     TimeEntryAudit[]
+  employee               Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  locationId             String?
+  location               Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  shiftId                String?
+  projectId              String?
+  project                Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  workspaceId            String
+  workspace              Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  auditLog               TimeEntryAudit[]
+  // DB-level guard (not expressible in Prisma schema — see
+  // prisma/migrations/20260604_timeentry_one_open_live_clock/migration.sql):
+  // a PARTIAL UNIQUE INDEX on (employeeId) WHERE isLiveClock AND clockOutAt IS NULL
+  // enforces at most one open live-clock entry per employee. The clock-in route
+  // relies on this and maps the resulting P2002 to a 409 ALREADY_CLOCKED_IN.
 
   @@index([workspaceId, date])
   @@index([employeeId, date])
   @@index([workspaceId, employeeId])
   @@index([status])
   @@index([projectId])
-  // DB-level guard (not expressible in Prisma schema — see
-  // prisma/migrations/20260604_timeentry_one_open_live_clock/migration.sql):
-  // a PARTIAL UNIQUE INDEX on (employeeId) WHERE isLiveClock AND clockOutAt IS NULL
-  // enforces at most one open live-clock entry per employee. The clock-in route
-  // relies on this and maps the resulting P2002 to a 409 ALREADY_CLOCKED_IN.
 }
 
 model TimeEntryAudit {
@@ -1238,20 +1344,20 @@ model PushSubscription {
 // ═══════════════════════════════════════════════════════════════
 
 model Client {
-  id          String    @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  address     String?   @db.Text
-  notes       String?   @db.Text
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  projects    Project[]
-  quotes      Quote[]
+  id               String            @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  address          String?           @db.Text
+  notes            String?           @db.Text
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  workspaceId      String
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projects         Project[]
+  quotes           Quote[]
   customerInvoices CustomerInvoice[]
 
   @@index([workspaceId])
@@ -2065,17 +2171,17 @@ model SosRequest {
 /// Per-employee notification record for an SosRequest, including their
 /// response and a unique token for one-click email response links.
 model SosNotification {
-  id              String      @id @default(cuid())
-  sosRequestId    String
-  employeeId      String
-  tier            Int         @default(1)
-  notifiedAt      DateTime    @default(now())
-  response        SosResponse @default(PENDING)
-  respondedAt     DateTime?
-  responseToken   String      @unique
-  linkOpenedAt    DateTime?
-  sosRequest      SosRequest  @relation(fields: [sosRequestId], references: [id], onDelete: Cascade)
-  employee        Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  sosRequestId  String
+  employeeId    String
+  tier          Int         @default(1)
+  notifiedAt    DateTime    @default(now())
+  response      SosResponse @default(PENDING)
+  respondedAt   DateTime?
+  responseToken String      @unique
+  linkOpenedAt  DateTime?
+  sosRequest    SosRequest  @relation(fields: [sosRequestId], references: [id], onDelete: Cascade)
+  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([sosRequestId, employeeId])
   @@index([sosRequestId])

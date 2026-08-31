@@ -124,6 +124,8 @@ export const POST = withRoute(
       employmentStartDate,
       dateOfBirth,
       socialSecurityNumber,
+      bewacherId,
+      bewacherRegisterStatus,
       birthPlace,
       nationality,
     } = parsed.data;
@@ -174,6 +176,8 @@ export const POST = withRoute(
           socialSecurityNumber: socialSecurityNumber?.trim() || null,
           birthPlace: birthPlace?.trim() || null,
           nationality: nationality?.trim() || null,
+          bewacherId: bewacherId?.trim() || null,
+          bewacherRegisterStatus: bewacherRegisterStatus || null,
           workspaceId,
           pinHash,
         },

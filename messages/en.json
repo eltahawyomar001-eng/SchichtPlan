@@ -974,7 +974,18 @@
       "noLinkedUser": "No linked user account",
       "discardTitle": "Discard changes?",
       "discardMessage": "Are you sure you want to discard your changes? All unsaved data will be lost.",
-      "discardConfirm": "Discard"
+      "discardConfirm": "Discard",
+      "bewacherSection": "§34a GewO / Bewacherregister",
+      "bewacherId": "Bewacher ID",
+      "bewacherIdPlaceholder": "e.g. BWR-789012",
+      "bewacherIdHint": "Identification number from the German guard register (§11b GewO).",
+      "bewacherRegisterStatus": "Register status",
+      "bewacherStatusNone": "Not recorded",
+      "bewacherStatus_ANGEMELDET": "Registered (check in progress)",
+      "bewacherStatus_GEPRUEFT": "Cleared",
+      "bewacherStatus_ABGELEHNT": "Rejected",
+      "bewacherStatus_ABGEMELDET": "Deregistered",
+      "bewacherStatusHint": "Only \"Cleared\" permits deployment. In security-sector mode any other value counts as a violation."
     },
     "liveStatus": {
       "workingSince": "Working since {time}",

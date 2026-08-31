@@ -196,6 +196,16 @@ export async function PATCH(
             body.nationality !== undefined
               ? body.nationality?.trim() || null
               : undefined,
+          bewacherId:
+            body.bewacherId !== undefined
+              ? body.bewacherId?.trim() || null
+              : undefined,
+          // "" is the UI's "not recorded" option and must clear the column,
+          // not fail enum validation.
+          bewacherRegisterStatus:
+            body.bewacherRegisterStatus !== undefined
+              ? body.bewacherRegisterStatus || null
+              : undefined,
         },
       });
 

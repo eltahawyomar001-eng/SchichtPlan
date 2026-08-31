@@ -87,6 +87,18 @@ const makeCtx = (id = "te1") => ({
   params: Promise.resolve({ id }),
 });
 
+/**
+ * A date inside the backdating window the PATCH route enforces (managers may
+ * correct up to 30 days back). Computed rather than hardcoded: a literal date
+ * silently rots out of the window as time passes and turns a passing suite
+ * red for reasons unrelated to the code under test.
+ */
+function recentDateISO(daysAgo = 1): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toLocaleDateString("en-CA");
+}
+
 const draftEntry = {
   id: "te1",
   employeeId: "emp1",
@@ -97,7 +109,7 @@ const draftEntry = {
   grossMinutes: 480,
   netMinutes: 450,
   breakMinutes: 30,
-  date: new Date("2026-01-15"),
+  date: new Date(recentDateISO(2)),
   employee: { firstName: "A", lastName: "B" },
   location: null,
   auditLog: [],
@@ -226,7 +238,7 @@ describe("PATCH /api/time-entries/[id]", () => {
       body: JSON.stringify({
         startTime: "09:00",
         endTime: "17:00",
-        date: "2026-05-30",
+        date: recentDateISO(1),
       }),
     });
     const res = await PATCH(req, makeCtx());
@@ -248,7 +260,7 @@ describe("PATCH /api/time-entries/[id]", () => {
       body: JSON.stringify({
         startTime: "09:00",
         endTime: "17:00",
-        date: "2026-05-30",
+        date: recentDateISO(1),
       }),
     });
     const res = await PATCH(req, makeCtx());

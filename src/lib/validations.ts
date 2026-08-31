@@ -54,6 +54,11 @@ export const createEmployeeSchema = z.object({
   socialSecurityNumber: optionalString.pipe(z.string().max(20).optional()),
   birthPlace: optionalString.pipe(z.string().max(100).optional()),
   nationality: optionalString.pipe(z.string().max(50).optional()),
+  bewacherId: optionalString.pipe(z.string().max(40).optional()),
+  /** Empty string clears the status; anything else must be a valid enum member. */
+  bewacherRegisterStatus: z
+    .enum(["ANGEMELDET", "GEPRUEFT", "ABGELEHNT", "ABGEMELDET", ""])
+    .optional(),
 });
 
 export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
@@ -67,6 +72,11 @@ export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
   socialSecurityNumber: optionalString.pipe(z.string().max(20).optional()),
   birthPlace: optionalString.pipe(z.string().max(100).optional()),
   nationality: optionalString.pipe(z.string().max(50).optional()),
+  bewacherId: optionalString.pipe(z.string().max(40).optional()),
+  /** Empty string clears the status; anything else must be a valid enum member. */
+  bewacherRegisterStatus: z
+    .enum(["ANGEMELDET", "GEPRUEFT", "ABGELEHNT", "ABGEMELDET", ""])
+    .optional(),
 });
 
 // ── Location ────────────────────────────────────────────────────

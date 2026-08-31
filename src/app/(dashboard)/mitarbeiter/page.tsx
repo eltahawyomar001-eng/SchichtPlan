@@ -85,6 +85,8 @@ interface Employee {
   employmentStartDate?: string | null;
   dateOfBirth?: string | null;
   socialSecurityNumber?: string | null;
+  bewacherId?: string | null;
+  bewacherRegisterStatus?: string | null;
   birthPlace?: string | null;
   nationality?: string | null;
 }
@@ -131,6 +133,8 @@ export default function MitarbeiterPage() {
     socialSecurityNumber: "",
     birthPlace: "",
     nationality: "",
+    bewacherId: "",
+    bewacherRegisterStatus: "",
   });
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const initialFormDataRef = useRef(formData);
@@ -299,6 +303,8 @@ export default function MitarbeiterPage() {
       socialSecurityNumber: "",
       birthPlace: "",
       nationality: "",
+      bewacherId: "",
+      bewacherRegisterStatus: "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -331,6 +337,8 @@ export default function MitarbeiterPage() {
       socialSecurityNumber: emp.socialSecurityNumber ?? "",
       birthPlace: emp.birthPlace ?? "",
       nationality: emp.nationality ?? "",
+      bewacherId: emp.bewacherId ?? "",
+      bewacherRegisterStatus: emp.bewacherRegisterStatus ?? "",
     };
     setFormData(initial);
     initialFormDataRef.current = initial;
@@ -409,6 +417,8 @@ export default function MitarbeiterPage() {
           socialSecurityNumber: "",
           birthPlace: "",
           nationality: "",
+          bewacherId: "",
+          bewacherRegisterStatus: "",
         });
         fetchEmployees();
         window.dispatchEvent(new Event("shiftfy:usage-changed"));
@@ -911,6 +921,56 @@ export default function MitarbeiterPage() {
                   className="h-9 w-12 rounded-lg border border-gray-200 dark:border-zinc-700 cursor-pointer p-0.5"
                 />
               </div>
+            </div>
+
+            {/* ── §34a GewO / Bewacherregister ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <p className="text-xs font-semibold tracking-wider text-gray-400 dark:text-zinc-500">
+                {t("form.bewacherSection")}
+              </p>
+              <div className="h-px flex-1 bg-gray-100 dark:bg-zinc-800" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bewacherId">{t("form.bewacherId")}</Label>
+              <Input
+                id="bewacherId"
+                value={formData.bewacherId}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, bewacherId: e.target.value }))
+                }
+                placeholder={t("form.bewacherIdPlaceholder")}
+                maxLength={40}
+              />
+              <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                {t("form.bewacherIdHint")}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bewacherRegisterStatus">
+                {t("form.bewacherRegisterStatus")}
+              </Label>
+              <Select
+                id="bewacherRegisterStatus"
+                value={formData.bewacherRegisterStatus}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    bewacherRegisterStatus: e.target.value,
+                  }))
+                }
+              >
+                <option value="">{t("form.bewacherStatusNone")}</option>
+                {(
+                  ["ANGEMELDET", "GEPRUEFT", "ABGELEHNT", "ABGEMELDET"] as const
+                ).map((v) => (
+                  <option key={v} value={v}>
+                    {t(`form.bewacherStatus_${v}`)}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                {t("form.bewacherStatusHint")}
+              </p>
             </div>
 
             {/* ── DATEV ── */}

@@ -257,12 +257,27 @@ export const POST = withRoute(
       // (or any other method) appears automatically once it's switched on —
       // no code change needed.
       line_items: [{ price: priceId, quantity: initialSeatCount }],
+      // Address stays REQUIRED on purpose: § 14 UStG obliges a German invoice
+      // to carry the recipient's full name and address, and the webhook builds
+      // Invoice.recipientAddress from exactly this field. Dropping it to cut
+      // checkout friction would produce non-compliant invoices.
       billing_address_collection: "required" as const,
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: user.workspaceId,
       allow_promotion_codes: true,
-      tax_id_collection: { enabled: true },
+      // tax_id_collection deliberately NOT enabled.
+      //
+      // It was costing conversions: all five real checkout sessions (Jul-Aug
+      // 2026) were abandoned, and every one asked a German small business for a
+      // USt-IdNr in order to pay €0.00 that day. Kleinunternehmer under § 19
+      // UStG generally do not have one, and the field reads as a blocker even
+      // though Stripe treats it as optional.
+      //
+      // Nothing depends on it while the business is under § 19: invoices carry
+      // no VAT (see STRIPE_TAX_ENABLED below). Re-enable it together with
+      // automatic_tax at VAT registration, when a customer VAT ID starts
+      // affecting the amount charged (reverse charge for EU B2B).
       // Stripe Tax (VAT) — DISABLED by default because the business currently
       // operates under the German small-business rule (§ 19 UStG / Kleinunter-
       // nehmer) and must NOT show VAT on invoices. Once the § 19 threshold is
@@ -270,11 +285,12 @@ export const POST = withRoute(
       // enable Stripe Tax + add registrations in the dashboard) to switch on
       // automatic VAT calculation without a code change.
       ...(stripeTaxEnabled ? { automatic_tax: { enabled: true } } : {}),
-      // customer_update is REQUIRED whenever we reuse an existing customer
-      // together with tax_id_collection (Stripe: "Tax ID collection requires
-      // updating business name on the customer … set customer_update[name] to
-      // auto"). It also persists the billing address for invoices / future
-      // Stripe Tax. Only valid when a `customer` (not customer_email) is set.
+      // customer_update persists the collected billing address back onto the
+      // customer, which is what the webhook reads to build the invoice
+      // recipient. Still needed now that tax_id_collection is off (it was
+      // originally added because Stripe demands it alongside tax IDs, but the
+      // address half is what invoices actually depend on). Only valid when a
+      // `customer` (not customer_email) is set.
       ...(customerParams.customer
         ? {
             customer_update: {

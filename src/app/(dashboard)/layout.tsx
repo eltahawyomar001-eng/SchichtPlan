@@ -4,7 +4,11 @@ import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { getSubscriptionState, getHardBlockState } from "@/lib/subscription";
+import {
+  getSubscriptionState,
+  getHardBlockState,
+  requiresPaymentMethodSetup,
+} from "@/lib/subscription";
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 
@@ -104,6 +108,35 @@ export default async function DashboardLayout({
           );
         }
         redirect("/workspace-inaktiv");
+      }
+
+      /* ── Card-at-signup (industry standard) ────────────────────────
+         A card-less trial ends in a decision the user can simply never make,
+         and the numbers bear that out: of eleven workspaces that reached the
+         end of a card-less trial, none converted, and the four that opened
+         Stripe Checkout all abandoned it because nothing was due that day.
+
+         With a card on file the trial is Stripe-managed: `trial_end` is
+         already passed to Checkout, so nothing is charged today and the first
+         real invoice is raised automatically when the trial lapses. Conversion
+         stops depending on the customer remembering to act.
+
+         Gated behind REQUIRE_CARD_AT_SIGNUP because flipping it affects every
+         existing trial immediately. The billing page is on the allowlist above,
+         so the owner can always reach checkout, and employees keep punch-clock
+         access because /stempel lives outside this route group. */
+      if (requiresPaymentMethodSetup(user.role)) {
+        const trialSub = await prisma.subscription.findUnique({
+          where: { workspaceId: user.workspaceId },
+          select: { status: true, stripeSubscriptionId: true },
+        });
+        const trialWithoutCard =
+          trialSub?.status === "TRIALING" &&
+          (!trialSub.stripeSubscriptionId ||
+            trialSub.stripeSubscriptionId.startsWith("sim_"));
+        if (trialWithoutCard) {
+          redirect("/einstellungen/abonnement?startTrial=1");
+        }
       }
 
       // Hard-block: 30 days over seat limit → block all admin features.

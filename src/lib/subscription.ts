@@ -225,6 +225,26 @@ export async function provisionStripeCustomer(
  *  (Crewmeister 14, Planday 30); 14 fits the German SMB market. */
 export const TRIAL_DAYS = 14;
 
+/**
+ * Card-at-signup switch.
+ *
+ * When REQUIRE_CARD_AT_SIGNUP=true, a TRIALING workspace with no real Stripe
+ * subscription cannot use the dashboard until an owner or admin completes
+ * Checkout. Nothing is charged at that point: Checkout forwards the remaining
+ * trial as `trial_end`, so the card is merely on file and Stripe raises the
+ * first invoice automatically when the trial lapses.
+ *
+ * Only OWNER/ADMIN are gated. Nobody else can subscribe, so blocking them
+ * would strand employees with no way out.
+ *
+ * Default OFF. Turning it on takes effect immediately for every workspace
+ * currently on a card-less trial, so enable it deliberately.
+ */
+export function requiresPaymentMethodSetup(role?: string | null): boolean {
+  if (process.env.REQUIRE_CARD_AT_SIGNUP !== "true") return false;
+  return role === "OWNER" || role === "ADMIN";
+}
+
 export async function initializeTrial(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,

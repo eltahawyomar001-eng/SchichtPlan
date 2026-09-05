@@ -135,7 +135,13 @@ export default async function DashboardLayout({
           (!trialSub.stripeSubscriptionId ||
             trialSub.stripeSubscriptionId.startsWith("sim_"));
         if (trialWithoutCard) {
-          redirect("/einstellungen/abonnement?startTrial=1");
+          // `required=1` so the page treats this as a mandatory step rather
+          // than a casual visit to settings; `startTrial=1` swaps the amber
+          // "subscription lapsed" warning for copy that explains nothing is
+          // charged today. The first version sent only startTrial=1, which the
+          // page did not read at all, so a new signup landed on an ordinary
+          // pricing screen with no indication a card was needed.
+          redirect("/einstellungen/abonnement?required=1&startTrial=1");
         }
       }
 

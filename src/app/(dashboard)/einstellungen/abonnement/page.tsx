@@ -91,6 +91,9 @@ interface PlanOption {
    Fallback tiers (used when /api/public/plans fails to load)
    ═══════════════════════════════════════════════════════════════ */
 
+/** Mirrors TRIAL_DAYS in @/lib/subscription (server-only, so not imported here). */
+const TRIAL_DAYS_DISPLAY = 14;
+
 const FALLBACK_TICKETING_TIERS: TicketingTierData[] = [
   {
     id: "STARTER",
@@ -444,6 +447,13 @@ function BillingContent() {
 
   const currentPlan = subscription?.plan?.toLowerCase() ?? "basic";
   const isRequired = searchParams.get("required") === "1";
+  /**
+   * Sent here by the card-at-signup gate (REQUIRE_CARD_AT_SIGNUP) rather than
+   * by a lapsed subscription. The distinction matters: nothing is wrong with
+   * this account and nothing is charged today, so the amber "subscription
+   * required" warning would misdescribe the situation and read as a dead end.
+   */
+  const isStartTrial = searchParams.get("startTrial") === "1";
 
   // Map server-side error codes to localized fallbacks so German-only API
   // messages don't leak into the English UI.
@@ -701,7 +711,19 @@ function BillingContent() {
       <Topbar title={t("title")} description={t("description")} />
       <PageContent>
         {/* Subscription required banner (redirected from dashboard gate) */}
-        {isRequired && (
+        {isStartTrial && (
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-sm text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-200">
+            <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <div>
+              <p className="text-base font-semibold">{t("startTrialTitle")}</p>
+              <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">
+                {t("startTrialDescription", { days: TRIAL_DAYS_DISPLAY })}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {isRequired && !isStartTrial && (
           <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-300 px-4 py-4 text-sm text-amber-900">
             <AlertTriangleIcon className="h-5 w-5 shrink-0 mt-0.5 text-amber-600" />
             <div>

@@ -20,12 +20,35 @@ const staticHeaders: Record<string, string> = {
   "X-API-Version": "1",
 };
 
-/** Build CSP header with per-request nonce */
-function buildCsp(nonce: string): string {
+/** Build the CSP header. No nonce: see the script-src note below. */
+function buildCsp(): string {
   return [
     "default-src 'self'",
-    // 'strict-dynamic' propagates trust from nonce to dynamically loaded scripts; 'unsafe-inline' removed
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://vercel.live`,
+    /* script-src: nonce + 'strict-dynamic' REMOVED — it broke every
+       client-side navigation in the App Router.
+
+       The nonce is regenerated per request, but a browser enforces the CSP of
+       the DOCUMENT it loaded. On a client-side navigation Next.js streams a
+       new RSC payload whose inline scripts carry the *new* request's nonce,
+       which the already-loaded document does not trust, so Chrome blocks them
+       with "Executing inline script violates the following Content Security
+       Policy directive". React then never renders the incoming tree and the
+       user gets a blank page that only a hard refresh clears, because a full
+       document load re-issues the CSP and the nonce matches again.
+
+       Reproduced against production with Playwright: after client navigation
+       the body held 393 characters (cookie banner only); after reload, 4636.
+
+       'unsafe-inline' only takes effect when NO nonce is present — CSP Level 3
+       makes browsers ignore it otherwise — so the nonce has to go with it.
+       This is what Next.js ships by default without a custom CSP.
+
+       The rest of the policy still does the heavy lifting: frame-ancestors
+       'none' (clickjacking), base-uri and form-action 'self' (injection and
+       exfiltration), and a locked-down connect-src. Restoring nonce-based
+       protection means making the nonce stable for the lifetime of a document
+       rather than per request; worth doing, but not while the app is blank. */
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://vercel.live`,
     // Use 'unsafe-inline' only for styles — no nonce, so it is respected by all browsers
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
@@ -164,7 +187,6 @@ const MAX_UPLOAD_BODY_BYTES = 10_485_760; // 10 MB
 /** Return 503 when the Redis rate-limiter is temporarily unavailable. */
 function rateLimitUnavailable(
   staticHeaders: Record<string, string>,
-  nonce: string,
 ): NextResponse {
   return new NextResponse(
     JSON.stringify({
@@ -178,7 +200,7 @@ function rateLimitUnavailable(
         "Content-Type": "application/json",
         "Retry-After": "30",
         ...staticHeaders,
-        "Content-Security-Policy": buildCsp(nonce),
+        "Content-Security-Policy": buildCsp(),
       },
     },
   );
@@ -233,7 +255,7 @@ export default withAuth(
     // Request tracing header
     res.headers.set("X-Request-Id", requestId);
     // Apply nonce-based CSP
-    res.headers.set("Content-Security-Policy", buildCsp(nonce));
+    res.headers.set("Content-Security-Policy", buildCsp());
     // Pass nonce to Next.js for inline scripts (server components)
     res.headers.set("x-nonce", nonce);
     // Expose current pathname to server components / layouts (for subscription gate, etc.)
@@ -333,7 +355,7 @@ export default withAuth(
             headers: {
               "Content-Type": "application/json",
               ...staticHeaders,
-              "Content-Security-Policy": buildCsp(nonce),
+              "Content-Security-Policy": buildCsp(),
             },
           },
         );
@@ -369,7 +391,7 @@ export default withAuth(
               headers: {
                 "Content-Type": "application/json",
                 ...staticHeaders,
-                "Content-Security-Policy": buildCsp(nonce),
+                "Content-Security-Policy": buildCsp(),
               },
             },
           );
@@ -402,13 +424,13 @@ export default withAuth(
                     Math.ceil((result.reset - Date.now()) / 1000),
                   ),
                   ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
+                  "Content-Security-Policy": buildCsp(),
                 },
               },
             );
           }
         } catch {
-          return rateLimitUnavailable(staticHeaders, nonce);
+          return rateLimitUnavailable(staticHeaders);
         }
       }
     }
@@ -438,13 +460,13 @@ export default withAuth(
                     Math.ceil((result.reset - Date.now()) / 1000),
                   ),
                   ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
+                  "Content-Security-Policy": buildCsp(),
                 },
               },
             );
           }
         } catch {
-          return rateLimitUnavailable(staticHeaders, nonce);
+          return rateLimitUnavailable(staticHeaders);
         }
       }
     }
@@ -474,13 +496,13 @@ export default withAuth(
                     Math.ceil((result.reset - Date.now()) / 1000),
                   ),
                   ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
+                  "Content-Security-Policy": buildCsp(),
                 },
               },
             );
           }
         } catch {
-          return rateLimitUnavailable(staticHeaders, nonce);
+          return rateLimitUnavailable(staticHeaders);
         }
       }
     }
@@ -511,13 +533,13 @@ export default withAuth(
                     Math.ceil((result.reset - Date.now()) / 1000),
                   ),
                   ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
+                  "Content-Security-Policy": buildCsp(),
                 },
               },
             );
           }
         } catch {
-          return rateLimitUnavailable(staticHeaders, nonce);
+          return rateLimitUnavailable(staticHeaders);
         }
       }
     }
@@ -551,13 +573,13 @@ export default withAuth(
                     Math.ceil((result.reset - Date.now()) / 1000),
                   ),
                   ...staticHeaders,
-                  "Content-Security-Policy": buildCsp(nonce),
+                  "Content-Security-Policy": buildCsp(),
                 },
               },
             );
           }
         } catch {
-          return rateLimitUnavailable(staticHeaders, nonce);
+          return rateLimitUnavailable(staticHeaders);
         }
       }
     }

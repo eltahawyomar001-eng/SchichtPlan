@@ -975,7 +975,21 @@ function BillingContent() {
         {/* ─── Plan Cards ─── */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {plans.map((plan) => {
-            const isCurrentPlan = currentPlan === plan.id;
+            /* "Current plan" must mean actually subscribed, not merely
+               matching the placeholder tier.
+
+               Registration seeds every workspace with plan=BASIC/TRIALING and
+               no Stripe subscription. Comparing on `plan` alone made the Basic
+               card render an inert "Aktueller Plan" badge instead of a
+               subscribe button, so a Basic trial user was told they already
+               had Basic while the gate locked them out of the app — with no
+               way to pay for Basic at all. Their only options were paying more
+               for Professional or emailing sales.
+
+               hasStripeSubscription is false until Checkout completes, which
+               is the real signal for ownership. */
+            const isCurrentPlan =
+              currentPlan === plan.id && !!subscription?.hasStripeSubscription;
             const perUserCents =
               billingCycle === "annual"
                 ? plan.perUserAnnualCents

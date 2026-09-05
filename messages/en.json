@@ -1879,9 +1879,7 @@
     "auditEmailNoInvoices": "Saved. Confirmation sent — no paid invoices found for the current billing period yet.",
     "auditEmailQuotaExceeded": "Saved, but the confirmation email could not be sent — monthly email limit reached.",
     "auditEmailNoEmail": "Saved. Add a billing email to automatically receive invoice confirmations.",
-    "auditEmailError": "Saved, but the confirmation email could not be delivered.",
-    "startTrialTitle": "Add a payment method to get started",
-    "startTrialDescription": "Choose a plan and add a payment method. Nothing is charged today: your {days}-day trial continues in full and the first invoice is only issued afterwards. You can cancel any time before then."
+    "auditEmailError": "Saved, but the confirmation email could not be delivered."
   },
   "addon": {
     "ticketsName": "Ticketing",

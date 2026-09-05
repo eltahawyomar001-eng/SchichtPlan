@@ -1879,7 +1879,9 @@
     "auditEmailNoInvoices": "Gespeichert. Bestätigung versendet – für den aktuellen Abrechnungszeitraum liegen noch keine bezahlten Rechnungen vor.",
     "auditEmailQuotaExceeded": "Gespeichert, aber die Bestätigungs-E-Mail konnte nicht versendet werden – monatliches E-Mail-Limit erreicht.",
     "auditEmailNoEmail": "Gespeichert. Fügen Sie eine Rechnungs-E-Mail hinzu, um automatisch Rechnungsbestätigungen zu erhalten.",
-    "auditEmailError": "Gespeichert, aber die Bestätigungs-E-Mail konnte nicht zugestellt werden."
+    "auditEmailError": "Gespeichert, aber die Bestätigungs-E-Mail konnte nicht zugestellt werden.",
+    "startTrialTitle": "Zahlungsmethode hinterlegen, um zu starten",
+    "startTrialDescription": "Wählen Sie einen Tarif und hinterlegen Sie eine Zahlungsmethode. Heute wird nichts abgebucht: Ihre {days} Tage Testphase laufen vollständig weiter, und die erste Abrechnung erfolgt erst danach. Sie können jederzeit vorher kündigen."
   },
   "addon": {
     "ticketsName": "Ticketsystem",

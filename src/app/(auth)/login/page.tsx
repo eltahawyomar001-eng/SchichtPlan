@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
@@ -17,8 +17,33 @@ import {
   StarIcon,
 } from "@/components/icons";
 
+/**
+ * Navigate after a successful sign-in.
+ *
+ * Deliberately a FULL document load rather than `router.push`.
+ *
+ * `signIn(..., { redirect: false })` sets the session cookie, but the App
+ * Router still holds the RSC cache it built while the user was signed out. A
+ * client-side push into a protected route then renders that route from the
+ * pre-auth tree: the dashboard layout's server-side session and subscription
+ * checks do not re-run against the new cookie, React commits nothing, and the
+ * user is left on a blank page with the destination URL in the address bar.
+ * Only a manual hard refresh recovered it.
+ *
+ * Verified against production with Playwright: after `router.push` the body
+ * held 393 characters (the root layout's cookie banner and nothing else);
+ * after a full load of the identical URL, 4636. In-app navigation once loaded
+ * was never affected, which is why this looked like a billing-page bug rather
+ * than a login bug.
+ *
+ * A full load costs one extra request at sign-in and guarantees the server
+ * renders with the session that was just established.
+ */
+function goAfterSignIn(destination: string) {
+  window.location.assign(destination);
+}
+
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("auth");
   const justRegistered = searchParams.get("registered") === "true";
@@ -84,7 +109,7 @@ function LoginForm() {
           setTotpCode("");
         } else {
           const storedPlan = localStorage.getItem("shiftfy_selected_plan");
-          router.push(storedPlan ? "/einstellungen/abonnement" : callbackUrl);
+          goAfterSignIn(storedPlan ? "/einstellungen/abonnement" : callbackUrl);
           return;
         }
         setLoading(false);
@@ -133,7 +158,7 @@ function LoginForm() {
         setError(t("invalidCredentials"));
       } else {
         const storedPlan = localStorage.getItem("shiftfy_selected_plan");
-        router.push(storedPlan ? "/einstellungen/abonnement" : callbackUrl);
+        goAfterSignIn(storedPlan ? "/einstellungen/abonnement" : callbackUrl);
         return;
       }
     } catch {

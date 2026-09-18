@@ -1674,7 +1674,9 @@
     "dayWe": "We",
     "dayTh": "Th",
     "dayFr": "Fr",
-    "dayOff": "Off"
+    "dayOff": "Off",
+    "emailAlreadyExists": "An account with this email already exists. Please sign in, or use “Forgot password” if you no longer have your password.",
+    "emailLinkedToProvider": "This email is already linked to {provider}. Please sign in using “{action}”."
   },
   "verification": {
     "verifyingTitle": "Verifying your email…",

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { routeMessage } from "@/lib/route-message";
 import { parseJsonBody } from "@/lib/api-response";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
@@ -79,9 +80,17 @@ export const POST = withRoute("/api/auth/register", "POST", async (req) => {
       // so we don't tell an OAuth-only user to "reset their password" when
       // they never set one.
       const provider = oauthAccounts[0]?.provider;
+      // Localised via the same "locale" cookie the rest of the app reads, so
+      // this no longer answers an English-speaking signup in German.
       const message = provider
-        ? `Diese E-Mail ist bereits mit ${provider === "google" ? "Google" : provider} verknüpft. Bitte melden Sie sich über „${provider === "google" ? "Weiter mit Google" : provider}“ an.`
-        : "Ein Konto mit dieser E-Mail existiert bereits. Bitte melden Sie sich an oder nutzen Sie „Passwort vergessen“, falls Sie Ihr Passwort vergessen haben.";
+        ? await routeMessage("auth", "emailLinkedToProvider", {
+            provider: provider === "google" ? "Google" : provider,
+            action:
+              provider === "google"
+                ? await routeMessage("auth", "continueWithGoogle")
+                : provider,
+          })
+        : await routeMessage("auth", "emailAlreadyExists");
       return NextResponse.json(
         {
           error: "EMAIL_ALREADY_EXISTS",

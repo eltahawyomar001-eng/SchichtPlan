@@ -1674,7 +1674,9 @@
     "dayWe": "Mi",
     "dayTh": "Do",
     "dayFr": "Fr",
-    "dayOff": "Frei"
+    "dayOff": "Frei",
+    "emailAlreadyExists": "Ein Konto mit dieser E-Mail existiert bereits. Bitte melden Sie sich an oder nutzen Sie „Passwort vergessen“, falls Sie Ihr Passwort vergessen haben.",
+    "emailLinkedToProvider": "Diese E-Mail ist bereits mit {provider} verknüpft. Bitte melden Sie sich über „{action}“ an."
   },
   "verification": {
     "verifyingTitle": "E-Mail wird bestätigt…",

@@ -3855,5 +3855,43 @@
     "statusPending": "Waiting",
     "statusAccepted": "Accepted",
     "statusDeclined": "Declined"
+  },
+  "publicPages": {
+    "navHome": "Home",
+    "navPricing": "Pricing",
+    "navBlog": "Blog",
+    "navLogin": "Log in",
+    "navCta": "Try 14 days free",
+    "footerRights": "© {year} Shiftfy. All rights reserved.",
+    "footerPrivacy": "Privacy",
+    "footerImprint": "Legal notice",
+    "footerTerms": "Terms",
+    "footerWithdrawal": "Right of withdrawal",
+    "footerAccessibility": "Accessibility",
+    "footerSla": "SLA",
+    "legalTranslationNotice": "This is a convenience translation. Only the German version is legally binding."
+  },
+  "legalImprint": {
+    "metaTitle": "Legal notice",
+    "metaDescription": "Legal notice and provider identification for Shiftfy – Bashabsheh Vergabepartner.",
+    "title": "Legal notice",
+    "detailsHeading": "Information pursuant to § 5 DDG",
+    "ownerLabel": "Owner",
+    "country": "Germany",
+    "contactHeading": "Contact",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "vatHeading": "VAT",
+    "vatBody": "Small business under § 19 UStG (German VAT Act) — no VAT is shown.",
+    "responsibleHeading": "Responsible for content pursuant to § 18 (2) MStV",
+    "liabilityContentHeading": "Liability for content",
+    "liabilityContentBody": "As a service provider we are responsible under § 7 (1) DDG for our own content on these pages in accordance with general law. Under §§ 8 to 10 DDG, however, we are not obliged as a service provider to monitor transmitted or stored third-party information, or to investigate circumstances that indicate unlawful activity.",
+    "liabilityLinksHeading": "Liability for links",
+    "liabilityLinksBody": "Our site contains links to external third-party websites over whose content we have no influence. The respective provider or operator of the linked pages is always responsible for their content. No unlawful content was apparent at the time the links were created.",
+    "copyrightHeading": "Copyright",
+    "copyrightBody": "Content and works created by the site operator on these pages are subject to German copyright law. Reproduction, adaptation, distribution and any kind of exploitation outside the limits of copyright require the written consent of the respective author or creator.",
+    "odrHeading": "Online dispute resolution (ODR)",
+    "odrBody": "The European Commission provides a platform for online dispute resolution (ODR):",
+    "odrNotParticipating": "We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board."
   }
 }

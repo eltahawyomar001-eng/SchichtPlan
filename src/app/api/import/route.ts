@@ -7,6 +7,7 @@ import { log } from "@/lib/logger";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { cache } from "@/lib/cache";
+import { normalizeHeader } from "@/lib/import-headers";
 
 // ── Import limits ──────────────────────────────────────────────
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -101,9 +102,7 @@ export const POST = withRoute(
 
     const headers: string[] = [];
     sheet.getRow(1).eachCell((cell, colNumber) => {
-      headers[colNumber - 1] = String(cell.value || "")
-        .trim()
-        .toLowerCase();
+      headers[colNumber - 1] = normalizeHeader(cell.value);
     });
 
     const rows: Record<string, string>[] = [];

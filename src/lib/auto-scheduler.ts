@@ -38,7 +38,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { calcGrossMinutes } from "@/lib/time-utils";
+import { calcGrossMinutes, calcNetMinutes } from "@/lib/time-utils";
 import {
   isPublicHoliday,
   isSunday,
@@ -303,7 +303,7 @@ export async function runAutoScheduler(
       dateStr,
       startTime: shift.startTime,
       endTime: shift.endTime,
-      durationMinutes: calcGrossMinutes(shift.startTime, shift.endTime),
+      durationMinutes: shiftWorkingMinutes(shift),
       locationId: shift.locationId,
       locationName: shift.location?.name || null,
       isNight: night,
@@ -330,7 +330,7 @@ export async function runAutoScheduler(
   for (const shift of existingShifts) {
     if (!shift.employeeId) continue;
     const dateStr = toBerlinDateStr(shift.date);
-    const minutes = calcGrossMinutes(shift.startTime, shift.endTime);
+    const minutes = shiftWorkingMinutes(shift);
 
     addMinutes(employeeDayMinutes, shift.employeeId, dateStr, minutes);
     addMinutes(
@@ -469,13 +469,21 @@ export async function runAutoScheduler(
     );
 
     if (currentDomain.length === 0) {
+      // "No available employee" is true but useless when the shift itself is
+      // the problem: if its working time already exceeds the legal daily
+      // maximum, no employee could ever be eligible, and no amount of hiring
+      // or availability would change that. Name that case so the planner can
+      // fix the shift instead of hunting for a staffing explanation.
+      const exceedsDailyLimit = slot.durationMinutes > MAX_DAILY_MINUTES;
       unresolvedShifts.push({
         shiftId: slot.shiftId,
         shiftDate: slot.dateStr,
         startTime: slot.startTime,
         endTime: slot.endTime,
         locationName: slot.locationName,
-        reason: "Kein verfügbarer Mitarbeiter gefunden",
+        reason: exceedsDailyLimit
+          ? `Schicht überschreitet die gesetzliche Höchstarbeitszeit von ${MAX_DAILY_HOURS} Stunden (${Math.floor(slot.durationMinutes / 60)}:${String(slot.durationMinutes % 60).padStart(2, "0")} h Arbeitszeit ohne Pause) — ArbZG § 3`
+          : "Kein verfügbarer Mitarbeiter gefunden",
         requiredSkill: slot.requiredSkillId || undefined,
       });
       continue;
@@ -757,6 +765,34 @@ async function loadStaffingRequirements(
 // DOMAIN COMPUTATION (HARD CONSTRAINTS)
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * Working time for a shift, in minutes — the quantity the ArbZG limits govern.
+ *
+ * ArbZG §3 caps *Arbeitszeit*, and §4 excludes Ruhepausen from it. The gross
+ * span is therefore the wrong number to test: a 06:30–17:00 shift with a
+ * 45-minute break is 630 minutes of span but only 585 minutes of working time
+ * — legal, yet it fails a 600-minute cap applied to the span. Every candidate
+ * for such a shift was rejected, so the scheduler returned "no available
+ * employee found" for a roster that was perfectly assignable.
+ *
+ * The rest of the codebase already measures it this way (see arbzg.ts and
+ * audit-readiness.ts); the scheduler was the outlier.
+ *
+ * Note this is only for the minute *budgets*. Overlap and rest-period checks
+ * deliberately keep using the gross start/end, because an employee is still at
+ * work during their break.
+ */
+function shiftWorkingMinutes(shift: {
+  startTime: string;
+  endTime: string;
+  breakMinutes?: number | null;
+}): number {
+  return calcNetMinutes(
+    calcGrossMinutes(shift.startTime, shift.endTime),
+    shift.breakMinutes ?? 0,
+  );
+}
+
 function computeDomain(
   slot: ShiftSlot,
   employees: EmployeeData[],
@@ -831,9 +867,17 @@ function computeDomain(
     );
     // Use a generous cap of 120% during domain filtering
     // (stricter penalty applied in scoring)
-    const contractCap = emp.weeklyHours * 60 * periodWeeks * 1.2;
-    const totalMin = getWeekMinutes(weekMinutes, emp.id, weekKey);
-    if (totalMin + slot.durationMinutes > contractCap) continue;
+    //
+    // weeklyHours is nullable in the database. `null * 60 * 1.2` is 0, which
+    // made the cap zero and rejected the employee from every shift forever —
+    // someone with no contracted hours recorded could never be scheduled at
+    // all. Absent contract hours means "no contractual ceiling", not "zero
+    // ceiling"; the ArbZG daily and weekly limits above still bound them.
+    const contractCap = (emp.weeklyHours ?? 0) * 60 * periodWeeks * 1.2;
+    if (contractCap > 0) {
+      const totalMin = getWeekMinutes(weekMinutes, emp.id, weekKey);
+      if (totalMin + slot.durationMinutes > contractCap) continue;
+    }
 
     eligible.push(emp.id);
   }
@@ -1299,7 +1343,7 @@ export async function runBackfill(
     dateStr,
     startTime: shift.startTime,
     endTime: shift.endTime,
-    durationMinutes: calcGrossMinutes(shift.startTime, shift.endTime),
+    durationMinutes: shiftWorkingMinutes(shift),
     locationId: shift.locationId,
     locationName: shift.location?.name || null,
     isNight: night,
@@ -1351,7 +1395,7 @@ export async function runBackfill(
   for (const s of existingShifts) {
     if (!s.employeeId) continue;
     const sDateStr = toBerlinDateStr(s.date);
-    const minutes = calcGrossMinutes(s.startTime, s.endTime);
+    const minutes = shiftWorkingMinutes(s);
 
     addMinutes(employeeDayMinutes, s.employeeId, sDateStr, minutes);
     addMinutes(employeeWeekMinutes, s.employeeId, getWeekKey(s.date), minutes);
@@ -1473,6 +1517,7 @@ export async function runBackfill(
 
 export const _testing = {
   toMinutes,
+  shiftWorkingMinutes,
   timesOverlap,
   getWeekKey,
   calculateFairnessScore,

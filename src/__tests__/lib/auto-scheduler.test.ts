@@ -8,6 +8,7 @@ import {
 
 const {
   toMinutes,
+  shiftWorkingMinutes,
   timesOverlap,
   getWeekKey,
   calculateFairnessScore,
@@ -884,5 +885,106 @@ describe("getRotationPenalty", () => {
   it("returns small penalty for OTHER transitions", () => {
     expect(getRotationPenalty("OTHER", "FRUEH")).toBe(0.2);
     expect(getRotationPenalty("FRUEH", "OTHER")).toBe(0.2);
+  });
+});
+
+describe("ArbZG working time vs. shift span", () => {
+  it("excludes the break when measuring working time", () => {
+    // 06:30–17:00 is 630 minutes of span, but with a 45-minute break only
+    // 585 minutes of Arbeitszeit. ArbZG §3 caps working time and §4 excludes
+    // Ruhepausen from it, so 585 is the number the 10-hour limit applies to.
+    expect(
+      shiftWorkingMinutes({
+        startTime: "06:30",
+        endTime: "17:00",
+        breakMinutes: 45,
+      }),
+    ).toBe(585);
+  });
+
+  it("treats a missing break as no break", () => {
+    expect(shiftWorkingMinutes({ startTime: "08:00", endTime: "16:00" })).toBe(
+      480,
+    );
+    expect(
+      shiftWorkingMinutes({
+        startTime: "08:00",
+        endTime: "16:00",
+        breakMinutes: null,
+      }),
+    ).toBe(480);
+  });
+
+  it("handles overnight shifts", () => {
+    expect(
+      shiftWorkingMinutes({
+        startTime: "22:00",
+        endTime: "06:00",
+        breakMinutes: 30,
+      }),
+    ).toBe(450);
+  });
+
+  it("assigns a 06:30-17:00 shift with a 45-minute break", () => {
+    // The exact roster that produced nine unassigned shifts: measured as a
+    // 630-minute span it breached the 600-minute daily cap, so every employee
+    // was filtered out of every shift.
+    const emp = buildEmployee({ id: "emp-1" });
+    const slot = buildSlot({
+      startTime: "06:30",
+      endTime: "17:00",
+      durationMinutes: shiftWorkingMinutes({
+        startTime: "06:30",
+        endTime: "17:00",
+        breakMinutes: 45,
+      }),
+    });
+
+    const result = computeDomain(slot, [emp], new Map(), new Map(), new Map());
+    expect(result).toContain("emp-1");
+  });
+
+  it("still refuses a shift that is genuinely over the daily limit", () => {
+    // 06:00–18:00 with a 30-minute break is 690 minutes of working time —
+    // over the 600-minute cap however you measure it.
+    const emp = buildEmployee({ id: "emp-1" });
+    const slot = buildSlot({
+      startTime: "06:00",
+      endTime: "18:00",
+      durationMinutes: shiftWorkingMinutes({
+        startTime: "06:00",
+        endTime: "18:00",
+        breakMinutes: 30,
+      }),
+    });
+
+    const result = computeDomain(slot, [emp], new Map(), new Map(), new Map());
+    expect(result).not.toContain("emp-1");
+  });
+});
+
+describe("employees without contracted hours", () => {
+  it("can still be scheduled", () => {
+    // weeklyHours is nullable. `null * 60 * 1.2` is 0, which made the contract
+    // cap zero and excluded the employee from every shift permanently.
+    const emp = buildEmployee({
+      id: "emp-no-contract",
+      weeklyHours: null as unknown as number,
+    });
+    const slot = buildSlot();
+
+    const result = computeDomain(slot, [emp], new Map(), new Map(), new Map());
+    expect(result).toContain("emp-no-contract");
+  });
+
+  it("is still bound by the ArbZG daily limit", () => {
+    const emp = buildEmployee({
+      id: "emp-no-contract",
+      weeklyHours: null as unknown as number,
+    });
+    const slot = buildSlot({ durationMinutes: 660 }); // 11 h working time
+
+    const result = computeDomain(slot, [emp], new Map(), new Map(), new Map());
+    expect(result).not.toContain("emp-no-contract");
   });
 });

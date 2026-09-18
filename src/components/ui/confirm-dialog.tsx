@@ -33,18 +33,50 @@ export function ConfirmDialog({
 
   useEffect(() => {
     if (!open) return;
+    /**
+     * Capture phase + stopImmediatePropagation, so Escape dismisses only this
+     * dialog.
+     *
+     * Modal attaches its own Escape handler to window. When a confirmation is
+     * opened from inside a modal, the modal mounted first, so its bubble-phase
+     * listener also ran — one Escape closed the confirmation AND the modal
+     * beneath it, throwing the user out of the thing they were part-way
+     * through. A capture listener on window runs before any bubble listener on
+     * window, so the topmost dialog gets to consume the key.
+     */
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
+      if (e.key !== "Escape") return;
+      e.stopImmediatePropagation();
+      onCancel();
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
   }, [open, onCancel]);
 
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      /**
+       * z-[80] — above the base overlay layer, not level with it.
+       *
+       * Modal, BottomSheet, UpgradeModal, CommandPalette and this dialog all
+       * sat at z-[60]. With equal z-index the winner is whichever renders last
+       * in the DOM, so a confirmation opened FROM a modal landed underneath the
+       * modal that opened it: the user had to close the thing they were
+       * confirming in order to see the confirmation. Pages happened to get it
+       * right or wrong purely by the order they listed their overlays in.
+       *
+       * A confirmation is always secondary to whatever opened it, so it belongs
+       * on its own layer above them. Overlay scale in use:
+       *   40  sidebar backdrop
+       *   60  modals, sheets, command palette  (base overlay layer)
+       *   70  onboarding tour coach-marks
+       *   80  confirmations                    (this)
+       *  100  blocking ToS re-acceptance
+       *  9997+ transient chrome: toasts, connectivity banner
+       */
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top, 0px))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",

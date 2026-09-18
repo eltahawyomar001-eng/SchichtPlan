@@ -1908,7 +1908,8 @@
     "schichtplanungName": "Shift Planning",
     "lockedTitle": "{feature} is not active",
     "lockedDescription": "This feature is part of a paid add-on that isn't currently active for your workspace.",
-    "contactAdmin": "Please contact your administrator to request access."
+    "contactAdmin": "Please contact your administrator to request access.",
+    "unlockCta": "Unlock {feature}"
   },
   "roles": {
     "title": "Roles and Permissions",

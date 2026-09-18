@@ -1908,7 +1908,8 @@
     "schichtplanungName": "Schichtplanung",
     "lockedTitle": "{feature} ist nicht aktiviert",
     "lockedDescription": "Diese Funktion ist Teil eines kostenpflichtigen Add-ons, das in Ihrem Arbeitsbereich derzeit nicht aktiv ist.",
-    "contactAdmin": "Bitte wenden Sie sich an Ihren Administrator, um Zugang zu erhalten."
+    "contactAdmin": "Bitte wenden Sie sich an Ihren Administrator, um Zugang zu erhalten.",
+    "unlockCta": "{feature} freischalten"
   },
   "roles": {
     "title": "Rollen und Berechtigungen",

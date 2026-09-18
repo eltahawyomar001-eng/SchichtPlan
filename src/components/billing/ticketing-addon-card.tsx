@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import {
   Card,
@@ -68,6 +69,7 @@ function formatPrice(cents: number, locale: string): string {
 }
 
 export function TicketingAddonCard() {
+  const router = useRouter();
   const t = useTranslations("billing");
   const locale = useLocale();
   const [data, setData] = useState<AddonsResponse | null>(null);
@@ -105,6 +107,12 @@ export function TicketingAddonCard() {
           setError(t("ticketingAddonError"));
         } else {
           await load();
+          // Purge the client Router Cache so every server component that gates
+          // on this add-on re-reads the database. The POST above has already
+          // written the entitlement, so the data is authoritative — without
+          // this, only THIS card knew about it and the feature's own route
+          // still rendered its pre-purchase payload.
+          router.refresh();
         }
       } catch {
         setError(t("ticketingAddonError"));
@@ -112,7 +120,7 @@ export function TicketingAddonCard() {
         setPendingTier(null);
       }
     },
-    [t, load],
+    [t, load, router],
   );
 
   if (loading) {

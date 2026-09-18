@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import {
   Card,
@@ -39,6 +40,7 @@ export function SchichtplanungAddonCard({
 }: {
   hasStripeSubscription?: boolean;
 }) {
+  const router = useRouter();
   const t = useTranslations("billing");
   const locale = useLocale();
   const [data, setData] = useState<SchichtplanungState | null>(null);
@@ -84,6 +86,12 @@ export function SchichtplanungAddonCard({
           setError(t("schichtplanungAddonError"));
         } else {
           await load();
+          // Purge the client Router Cache so every server component that gates
+          // on this add-on re-reads the database. The POST above has already
+          // written the entitlement, so the data is authoritative — without
+          // this, only THIS card knew about it and the feature's own route
+          // still rendered its pre-purchase payload.
+          router.refresh();
           if (!body.active) {
             setSuccess(t("schichtplanungAddonDeactivated"));
           } else {
@@ -97,7 +105,7 @@ export function SchichtplanungAddonCard({
         setConfirmCancel(false);
       }
     },
-    [t, load],
+    [t, load, router],
   );
 
   const handleSubscribe = useCallback(

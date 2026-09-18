@@ -7,14 +7,12 @@ import { AddonLocked } from "@/components/billing/addon-locked";
 import type { SessionUser } from "@/lib/types";
 
 /**
- * Schichtplan section gate. The shift planning UI is only available when the
- * workspace has the Schichtplanung add-on active (or is on the Enterprise plan,
- * which includes it at no extra charge).
+ * Schichtplan section gate. Available only when the workspace has the add-on.
  *
- * Behaviour when the add-on is missing:
- * - OWNER / ADMIN: redirected to the billing page so they can subscribe.
- * - MANAGER / EMPLOYEE: shown a locked-feature view (they cannot manage
- *   subscriptions, so the billing page would just bounce them).
+ * Nobody is redirected away any more. An admin used to be sent to the billing
+ * page, which is precisely what made a fresh purchase look like it had failed:
+ * you click the feature and land back on Settings → Subscription. Now the
+ * locked state renders in place, with the purchase one click away.
  */
 export default async function SchichtplanLayout({
   children,
@@ -29,10 +27,9 @@ export default async function SchichtplanLayout({
 
   const hasAddon = await hasSchichtplanungAddon(user.workspaceId);
   if (!hasAddon) {
-    if (isAdmin(user)) {
-      redirect("/einstellungen/abonnement?addon=schichtplanung");
-    }
-    return <AddonLocked feature="schichtplanung" />;
+    return (
+      <AddonLocked feature="schichtplanung" canSubscribe={isAdmin(user)} />
+    );
   }
 
   return <>{children}</>;

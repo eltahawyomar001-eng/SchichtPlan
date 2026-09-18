@@ -7,13 +7,12 @@ import { AddonLocked } from "@/components/billing/addon-locked";
 import type { SessionUser } from "@/lib/types";
 
 /**
- * Tickets section gate. The ticket UI is only available when the workspace
- * has purchased the Ticketing add-on (see /lib/ticketing-addon.ts).
+ * Tickets section gate. Available only when the workspace has the add-on.
  *
- * Behaviour when the add-on is missing:
- * - OWNER / ADMIN: redirected to the billing page so they can subscribe.
- * - MANAGER / EMPLOYEE: shown a locked-feature view (they cannot manage
- *   subscriptions, so the billing page would just bounce them).
+ * Nobody is redirected away any more. An admin used to be sent to the billing
+ * page, which is precisely what made a fresh purchase look like it had failed:
+ * you click the feature and land back on Settings → Subscription. Now the
+ * locked state renders in place, with the purchase one click away.
  */
 export default async function TicketsLayout({
   children,
@@ -28,10 +27,7 @@ export default async function TicketsLayout({
 
   const hasAddon = await hasTicketingAddon(user.workspaceId);
   if (!hasAddon) {
-    if (isAdmin(user)) {
-      redirect("/einstellungen/abonnement?addon=ticketing");
-    }
-    return <AddonLocked feature="tickets" />;
+    return <AddonLocked feature="tickets" canSubscribe={isAdmin(user)} />;
   }
 
   return <>{children}</>;

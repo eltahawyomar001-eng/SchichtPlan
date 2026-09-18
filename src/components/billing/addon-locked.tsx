@@ -1,19 +1,38 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
-import { LockIcon } from "@/components/icons";
+import { LockIcon, ArrowRightIcon } from "@/components/icons";
+
+type Feature = "tickets" | "schichtplanung";
 
 interface Props {
-  feature: "tickets" | "schichtplanung";
+  feature: Feature;
+  /**
+   * OWNER / ADMIN get a link to the add-on on the billing page. Everyone else
+   * gets "ask your administrator", since they cannot manage subscriptions.
+   */
+  canSubscribe?: boolean;
 }
 
+/** Anchor of the add-on's card on the billing page, so the link lands on it. */
+const BILLING_HREF: Record<Feature, string> = {
+  tickets: "/einstellungen/abonnement?addon=ticketing#ticketing-addon",
+  schichtplanung:
+    "/einstellungen/abonnement?addon=schichtplanung#schichtplanung-addon",
+};
+
 /**
- * Rendered to non-admin users (MANAGER / EMPLOYEE) when their workspace lacks
- * the required add-on. Admins are redirected to the billing page instead so
- * they can subscribe; non-admins see this informational view since they do
- * not have permission to manage subscriptions.
+ * Shown in place of a feature the workspace has not bought.
+ *
+ * Admins used to be `redirect()`ed to the billing page from the route's layout
+ * instead. That is what made buying an add-on feel broken: the click landed
+ * back on the subscription page, which reads as "your purchase didn't work"
+ * rather than "you don't own this yet". Rendering the state where the user
+ * asked for it — with the purchase one click away — keeps them oriented, and
+ * means a stale gate degrades into a visible panel instead of a bounce.
  */
-export async function AddonLocked({ feature }: Props) {
+export async function AddonLocked({ feature, canSubscribe = false }: Props) {
   const t = await getTranslations("addon");
   const featureName = t(`${feature}Name`);
 
@@ -32,9 +51,20 @@ export async function AddonLocked({ feature }: Props) {
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
               {t("lockedDescription", { feature: featureName })}
             </p>
-            <div className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gray-50 dark:bg-zinc-800 px-4 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-300">
-              {t("contactAdmin")}
-            </div>
+
+            {canSubscribe ? (
+              <Link
+                href={BILLING_HREF[feature]}
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+              >
+                {t("unlockCta", { feature: featureName })}
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            ) : (
+              <div className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gray-50 dark:bg-zinc-800 px-4 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                {t("contactAdmin")}
+              </div>
+            )}
           </div>
         </div>
       </PageContent>

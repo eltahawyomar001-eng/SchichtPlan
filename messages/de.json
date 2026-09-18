@@ -421,7 +421,8 @@
     "planRedirecting": "Weiterleitung zu Stripe …",
     "planSecuredByStripe": "Sichere Zahlung über Stripe. Jederzeit kündbar.",
     "planCheckoutError": "Die Zahlung konnte nicht gestartet werden. Bitte erneut versuchen.",
-    "planCheckoutCancelled": "Die Zahlung wurde abgebrochen. Wählen Sie einen Tarif, um die Einrichtung abzuschließen."
+    "planCheckoutCancelled": "Die Zahlung wurde abgebrochen. Wählen Sie einen Tarif, um die Einrichtung abzuschließen.",
+    "bulkTimeout": "Der Import dauert ungewöhnlich lange. Bitte laden Sie die Seite neu und prüfen Sie, ob die Mitarbeiter angelegt wurden."
   },
   "shiftPlan": {
     "title": "Schichtplan",

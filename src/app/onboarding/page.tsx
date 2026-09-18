@@ -328,12 +328,30 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
       const { jobId } = (await res.json()) as { jobId: string };
 
       // Poll the async import job until it finishes.
+      //
+      // Every exit has to be accounted for. The first version only acted on
+      // job.status "done"/"error" and re-polled on anything else — so a 404
+      // ("Job not found or expired", which carries no `status` field at all)
+      // matched neither branch and re-polled every second forever. The spinner
+      // span indefinitely and the real error was never shown.
+      let attempts = 0;
+      const MAX_POLL_ATTEMPTS = 150; // 150 × 1s = 2.5 min, well past any import
       const poll = async (): Promise<void> => {
         try {
           const sres = await fetch(
             `/api/import/status?jobId=${encodeURIComponent(jobId)}`,
           );
-          const job = await sres.json();
+          const job = await sres.json().catch(() => ({}));
+          if (!sres.ok) {
+            setError(job.error || job.message || t("genericError"));
+            setImporting(false);
+            return;
+          }
+          if (++attempts > MAX_POLL_ATTEMPTS) {
+            setError(t("bulkTimeout"));
+            setImporting(false);
+            return;
+          }
           if (job.status === "done") {
             setResult({
               created: job.created ?? 0,

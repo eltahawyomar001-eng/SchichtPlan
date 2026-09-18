@@ -421,7 +421,8 @@
     "planRedirecting": "Redirecting to Stripe …",
     "planSecuredByStripe": "Secure payment via Stripe. Cancel any time.",
     "planCheckoutError": "Payment could not be started. Please try again.",
-    "planCheckoutCancelled": "Payment was cancelled. Choose a plan to finish setting up."
+    "planCheckoutCancelled": "Payment was cancelled. Choose a plan to finish setting up.",
+    "bulkTimeout": "The import is taking unusually long. Please reload the page and check whether the employees were created."
   },
   "shiftPlan": {
     "title": "Shift Plan",

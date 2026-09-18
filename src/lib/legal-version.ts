@@ -15,10 +15,14 @@ export const CURRENT_TOS_VERSION = "2026-05-07";
 export const LEGAL_LAST_UPDATED_ISO = CURRENT_TOS_VERSION;
 
 export function formatLegalDateDe(iso: string): string {
+  return formatLegalDate(iso, "de");
+}
+
+/** Locale-aware variant — the legal pages render in whichever locale is set. */
+export function formatLegalDate(iso: string, locale: "de" | "en"): string {
   const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return new Date(y, m - 1, d).toLocaleDateString(
+    locale === "en" ? "en-GB" : "de-DE",
+    { day: "2-digit", month: "long", year: "numeric" },
+  );
 }

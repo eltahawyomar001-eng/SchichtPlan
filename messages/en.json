@@ -3896,5 +3896,448 @@
     "odrHeading": "Online dispute resolution (ODR)",
     "odrBody": "The European Commission provides a platform for online dispute resolution (ODR):",
     "odrNotParticipating": "We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board."
+  },
+  "legalPrivacy": {
+    "metaTitle": "Privacy policy",
+    "metaDescription": "Privacy policy for the Shiftfy software. Information on the handling of personal data under the GDPR.",
+    "title": "Privacy policy",
+    "versionLine": "Last updated: {date} · Version {version}",
+    "sections": [
+      {
+        "heading": "1. Privacy at a glance",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The following notes give a simple overview of what happens to your personal data when you visit this website. Personal data is any data by which you can be personally identified."
+          }
+        ]
+      },
+      {
+        "heading": "2. Controller",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "The controller for data processing on this website is:"
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Bashabsheh Vergabepartner",
+              "Owner: Mohammad Bashabsheh",
+              "Kolonnenstraße 8",
+              "10827 Berlin, Germany",
+              "Phone: +49 176 30365636",
+              "Email: Kontakt@shiftfy.info"
+            ]
+          },
+          {
+            "type": "p",
+            "text": "The controller is the natural or legal person who alone or jointly with others determines the purposes and means of the processing of personal data."
+          }
+        ]
+      },
+      {
+        "heading": "3. Legal basis for processing",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Your personal data is processed on the following legal bases:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Art. 6 (1) (a) GDPR (consent):",
+                "text": "Registration and use of the application — on registration you actively agree to the privacy policy and the terms and conditions."
+              },
+              {
+                "lead": "Art. 6 (1) (b) GDPR (performance of a contract):",
+                "text": "Provision of the shift planning features, working time recording, absence management and other contractually agreed services."
+              },
+              {
+                "lead": "Art. 6 (1) (f) GDPR (legitimate interest):",
+                "text": "Security of the application, prevention of misuse and technical operation (e.g. session cookies, error logging)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "4. Data collection on this website",
+        "blocks": [
+          {
+            "type": "h3",
+            "text": "What data is collected?"
+          },
+          {
+            "type": "p",
+            "text": "We collect personal data that you knowingly provide to us:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "text": "On registration: name, email address, company name, password (stored hashed)"
+              },
+              {
+                "text": "During use: shift data, working hours, absences, availability"
+              },
+              {
+                "text": "Employee profiles: name, email, phone, position, hourly rate (created by the employer/manager)"
+              },
+              {
+                "text": "Digital signatures: Base64-encoded signature images, cryptographically linked to a timestamp and visit ID (SHA-256 hash)"
+              },
+              {
+                "text": "Device information: user agent, device ID (anonymised) — for the security and audit integrity of the audit logs"
+              }
+            ]
+          },
+          {
+            "type": "h3",
+            "text": "What is your data used for?"
+          },
+          {
+            "type": "p",
+            "text": "The data is collected solely to provide the shift planning features. Some of the data is required to ensure the website is delivered without errors."
+          }
+        ]
+      },
+      {
+        "heading": "5. Data storage and retention periods",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Your data is stored for as long as your user account is active and is needed to provide the service. In accordance with Art. 5 (1) (e) GDPR (storage limitation) we have implemented an automated deletion concept that irreversibly deletes personal data once the applicable retention period has expired."
+          },
+          {
+            "type": "h3",
+            "text": "Automatic data clean-up"
+          },
+          {
+            "type": "p",
+            "text": "The overview below shows the specific retention periods per data type. The automatic clean-up runs weekly (Sundays, 04:30 UTC) via a cron job:"
+          },
+          {
+            "type": "table",
+            "headers": ["Data type", "Retention", "Legal basis"],
+            "rows": [
+              ["Verification tokens", "7 days", "No statutory obligation"],
+              ["Password reset tokens", "7 days", "No statutory obligation"],
+              ["Sessions (expired)", "30 days", "Art. 6(1)(b) GDPR"],
+              ["Invitations (expired)", "30 days", "No statutory obligation"],
+              [
+                "Notifications, export jobs, auto-fill logs, manager alerts",
+                "90 days",
+                "No statutory obligation"
+              ],
+              [
+                "Auto-scheduling runs, push subscriptions",
+                "180 days",
+                "No statutory obligation"
+              ],
+              ["Audit logs", "365 days", "Art. 6(1)(f) — legitimate interest"],
+              [
+                "E-signatures, visit audit logs, working time checks",
+                "**10 years**",
+                "§ 147 AO (German Fiscal Code), eIDAS Regulation"
+              ]
+            ]
+          },
+          {
+            "type": "h3",
+            "text": "Account deletion (Art. 17 GDPR)"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Account data:",
+                "text": "Until you delete your account (possible at any time in the settings)."
+              },
+              {
+                "lead": "Working time data:",
+                "text": "In accordance with statutory retention obligations (§ 16 (2) ArbZG: 2 years after recording; § 147 AO: 10 years for payroll accounting)."
+              },
+              {
+                "lead": "Server logs:",
+                "text": "Automatically deleted after 30 days."
+              }
+            ]
+          },
+          {
+            "type": "p",
+            "text": "The workspace owner can trigger a complete and irreversible deletion of all workspace data from the settings (cascading deletion of all related tables). Unless statutory retention obligations apply, all personal data is deleted immediately."
+          }
+        ]
+      },
+      {
+        "heading": "6. Hosting and processors",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "We use the following service providers, with whom data processing agreements (DPAs) under Art. 28 GDPR are in place:"
+          },
+          {
+            "type": "h3",
+            "text": "a) Vercel Inc. — hosting"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Server location: EU (Frankfurt am Main). Data may be transferred to the USA during support or maintenance access. Transfer safeguard: EU-US Data Privacy Framework (European Commission adequacy decision of 10 July 2023, Art. 45 GDPR) and, in addition, EU standard contractual clauses (SCCs, Art. 46 (2) (c) GDPR).",
+            "link": {
+              "label": "Vercel privacy policy",
+              "href": "https://vercel.com/legal/privacy-policy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "b) Supabase Inc. — database (PostgreSQL)"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Server location: EU (Frankfurt am Main, AWS eu-central-1). All database data is processed and stored exclusively in the EU. Administrative access from the USA is possible. Transfer safeguard: EU-US Data Privacy Framework and EU standard contractual clauses (SCCs).",
+            "link": {
+              "label": "Supabase privacy policy",
+              "href": "https://supabase.com/privacy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "c) Resend Inc. — email delivery"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Delivery of system emails (shift notifications, absence approvals, verification). Email content is processed in the USA. Transfer safeguard: EU standard contractual clauses (SCCs, Art. 46 (2) (c) GDPR). You can disable email notifications at any time in your settings.",
+            "link": {
+              "label": "Resend privacy policy",
+              "href": "https://resend.com/legal/privacy-policy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "d) Stripe, Inc. — payment processing"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. European processing via Stripe Payments Europe, Ltd. (Dublin, Ireland). Handling of subscription payments (credit card, SEPA direct debit). Card numbers are never stored on our servers. Transfer safeguard: EU-US Data Privacy Framework (adequacy decision, Art. 45 GDPR) and EU standard contractual clauses (SCCs). Stripe is PCI DSS Level 1 certified.",
+            "link": {
+              "label": "Stripe privacy policy",
+              "href": "https://stripe.com/de/privacy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "e) Sentry (Functional Software, Inc.) — error monitoring"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Server location: EU (Frankfurt am Main). Collection of application errors for quality assurance. Technical data (error messages, browser, operating system) is transmitted — no personal content. Transfer safeguard: EU-US Data Privacy Framework and EU standard contractual clauses (SCCs). It is activated only with your consent via the cookie banner (Art. 6 (1) (a) GDPR).",
+            "link": {
+              "label": "Sentry privacy policy",
+              "href": "https://sentry.io/privacy/"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "f) Upstash, Inc. — rate limiting (Redis)"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Server location: EU (Frankfurt am Main, AWS eu-central-1). Used for IP-based rate limiting to protect the API endpoints. Only hashed IP addresses with short-lived counters are stored (TTL: 60 seconds). No personal content. Transfer safeguard: EU standard contractual clauses (SCCs, Art. 46 (2) (c) GDPR). Legal basis: Art. 6 (1) (f) GDPR (legitimate interest in security and the prevention of misuse).",
+            "link": {
+              "label": "Upstash privacy policy",
+              "href": "https://upstash.com/trust/privacy.pdf"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "g) Vercel Blob — file storage"
+          },
+          {
+            "type": "p",
+            "text": "Part of the Vercel platform (see above). Storage of user-generated file uploads (e.g. profile pictures, exported reports). The same transfer safeguards and data processing agreement apply as described under a) Vercel. The data is stored on EU servers."
+          },
+          {
+            "type": "h3",
+            "text": "h) Anthropic, PBC — AI-assisted timesheet recognition"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Used exclusively for the optional “timesheet scanner” feature: when a timesheet is uploaded, the document image is transmitted to the Anthropic API (Claude) for automatic text recognition (OCR). This may involve processing personal data of the employees recorded (name, working and break times). Anthropic does **not** use API input to train its models and deletes it after a short retention period (zero data retention or standard API terms). Transfer safeguard: EU standard contractual clauses (SCCs, Art. 46 (2) (c) GDPR). A data processing agreement (DPA) under Art. 28 GDPR is in place.",
+            "link": {
+              "label": "Anthropic privacy policy",
+              "href": "https://www.anthropic.com/legal/privacy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "i) OpenAI, L.L.C. — AI text recognition (failover)"
+          },
+          {
+            "type": "p",
+            "text": "Registered office: San Francisco, USA. Used exclusively as a failover for the “timesheet scanner” feature: if the primary AI is unavailable, the document image is sent to the OpenAI API for text recognition instead. The same data categories apply as under h). OpenAI does **not** use data submitted via the API to train its models. Transfer safeguard: EU standard contractual clauses (SCCs, Art. 46 (2) (c) GDPR). A data processing agreement (DPA) under Art. 28 GDPR is in place.",
+            "link": {
+              "label": "OpenAI privacy policy",
+              "href": "https://openai.com/policies/row-privacy-policy/"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "p",
+            "tone": "muted",
+            "lead": "Use of artificial intelligence:",
+            "text": "AI is used exclusively for the optional timesheet recognition, and only when you actively upload a document. No automated decision with legal effect within the meaning of Art. 22 GDPR takes place — the recognised data is always shown to you for review and correction before it is accepted. If the scanner is not used, no data is transmitted to the AI providers named above."
+          }
+        ]
+      },
+      {
+        "heading": "7. Cookies",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "This website uses only technically necessary cookies:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Session cookie:",
+                "text": "For authentication (automatically deleted on logout or on expiry)."
+              },
+              {
+                "lead": "Language preference:",
+                "text": "Stores your preferred language (German/English)."
+              }
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Technically necessary cookies (session, language preference) are set without consent (§ 25 (2) no. 2 TDDDG). For optional analytics cookies (e.g. Sentry error monitoring) we obtain your express consent via our cookie banner (Art. 6 (1) (a) GDPR, § 25 (1) TDDDG). You can change your settings at any time via the “Cookie settings” link in the footer."
+          }
+        ]
+      },
+      {
+        "heading": "8. Your rights (GDPR)",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "You have the following rights regarding your personal data:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Right of access (Art. 15 GDPR):",
+                "text": "You may request information about the data we hold about you at any time."
+              },
+              {
+                "lead": "Right to rectification (Art. 16 GDPR):",
+                "text": "You can correct inaccurate data yourself in your settings."
+              },
+              {
+                "lead": "Right to erasure (Art. 17 GDPR):",
+                "text": "You can delete your account at any time in the settings. All data is irreversibly removed."
+              },
+              {
+                "lead": "Right to restriction of processing (Art. 18 GDPR):",
+                "text": "Contact us to restrict processing."
+              },
+              {
+                "lead": "Right to data portability (Art. 20 GDPR):",
+                "text": "You can export your data as a JSON file at any time in the settings."
+              },
+              {
+                "lead": "Right to object (Art. 21 GDPR):",
+                "text": "You may object to processing at any time."
+              },
+              {
+                "lead": "Right to withdraw consent:",
+                "text": "You may withdraw your consent at any time — the lawfulness of processing carried out up to the withdrawal remains unaffected."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "9. Right to lodge a complaint with a supervisory authority",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "If you believe that the processing of your data infringes the GDPR, you have the right to lodge a complaint with a data protection supervisory authority (Art. 77 GDPR)."
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Competent supervisory authority:",
+              "Berliner Beauftragte für Datenschutz und Informationsfreiheit",
+              "Friedrichstr. 219",
+              "10969 Berlin",
+              "Phone: +49 30 13889-0",
+              "Email: mailbox@datenschutz-berlin.de"
+            ],
+            "link": {
+              "label": "www.datenschutz-berlin.de",
+              "href": "https://www.datenschutz-berlin.de"
+            }
+          }
+        ]
+      },
+      {
+        "heading": "10. Data protection contact",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "For questions about the processing of your personal data or about exercising your data subject rights, our voluntary data protection contact is available to you:"
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Mohammad Bashabsheh",
+              "Bashabsheh Vergabepartner",
+              "Kolonnenstraße 8, 10827 Berlin",
+              "Email: Kontakt@shiftfy.info",
+              "Phone: +49 176 30365636"
+            ]
+          },
+          {
+            "type": "p",
+            "tone": "muted",
+            "text": "Note: a data protection officer will be formally appointed under Art. 37 GDPR in conjunction with § 38 BDSG as soon as the statutory conditions are met (in particular the employee threshold, or a core activity involving extensive regular and systematic monitoring)."
+          }
+        ]
+      },
+      {
+        "heading": "11. Contact for data protection enquiries",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "To exercise your rights, or for any data protection questions, please contact:"
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Bashabsheh Vergabepartner",
+              "Mohammad Bashabsheh",
+              "Kolonnenstraße 8, 10827 Berlin",
+              "Email: Kontakt@shiftfy.info",
+              "Phone: +49 176 30365636"
+            ]
+          },
+          {
+            "type": "p",
+            "tone": "small",
+            "text": "We will deal with your request as quickly as possible, and within one month at the latest (Art. 12 (3) GDPR)."
+          }
+        ]
+      }
+    ]
   }
 }

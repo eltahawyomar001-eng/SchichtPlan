@@ -3896,5 +3896,448 @@
     "odrHeading": "Online-Streitbeilegung (OS)",
     "odrBody": "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:",
     "odrNotParticipating": "Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen."
+  },
+  "legalPrivacy": {
+    "metaTitle": "Datenschutzerklärung",
+    "metaDescription": "Datenschutzerklärung der Shiftfy Software. Informationen zum Umgang mit personenbezogenen Daten gemäß DSGVO.",
+    "title": "Datenschutzerklärung",
+    "versionLine": "Stand: {date} · Version {version}",
+    "sections": [
+      {
+        "heading": "1. Datenschutz auf einen Blick",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können."
+          }
+        ]
+      },
+      {
+        "heading": "2. Verantwortliche Stelle",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:"
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Bashabsheh Vergabepartner",
+              "Inhaber: Mohammad Bashabsheh",
+              "Kolonnenstraße 8",
+              "10827 Berlin, Deutschland",
+              "Telefon: +49 176 30365636",
+              "E-Mail: Kontakt@shiftfy.info"
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet."
+          }
+        ]
+      },
+      {
+        "heading": "3. Rechtsgrundlage der Datenverarbeitung",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Die Verarbeitung Ihrer personenbezogenen Daten erfolgt auf Grundlage der folgenden Rechtsgrundlagen:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Art. 6 Abs. 1 lit. a DSGVO (Einwilligung):",
+                "text": "Registrierung und Nutzung der Anwendung — Sie stimmen bei der Registrierung der Datenschutzerklärung und den AGB aktiv zu."
+              },
+              {
+                "lead": "Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung):",
+                "text": "Bereitstellung der Schichtplanungsfunktionen, Arbeitszeiterfassung, Abwesenheitsverwaltung und sonstige vertraglich vereinbarte Leistungen."
+              },
+              {
+                "lead": "Art. 6 Abs. 1 lit. f DSGVO (Berechtigtes Interesse):",
+                "text": "Sicherheit der Anwendung, Missbrauchsprävention und technische Betriebsführung (z.B. Session-Cookies, Fehler-Logging)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "4. Datenerfassung auf dieser Website",
+        "blocks": [
+          {
+            "type": "h3",
+            "text": "Welche Daten werden erfasst?"
+          },
+          {
+            "type": "p",
+            "text": "Wir erheben personenbezogene Daten, die Sie uns bewusst mitteilen:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "text": "Bei der Registrierung: Name, E-Mail-Adresse, Firmenname, Passwort (gehasht gespeichert)"
+              },
+              {
+                "text": "Bei der Nutzung: Schichtdaten, Arbeitszeiten, Abwesenheiten, Verfügbarkeiten"
+              },
+              {
+                "text": "Mitarbeiterprofile: Name, E-Mail, Telefon, Position, Stundensatz (durch Arbeitgeber/Manager angelegt)"
+              },
+              {
+                "text": "Digitale Unterschriften: Base64-codierte Signaturbilder, kryptographisch mit Zeitstempel und Besuchs-ID verknüpft (SHA-256-Hash)"
+              },
+              {
+                "text": "Geräte-Informationen: User-Agent, Geräte-ID (anonymisiert) — zur Sicherheit und Revisionssicherheit der Audit-Logs"
+              }
+            ]
+          },
+          {
+            "type": "h3",
+            "text": "Wofür werden Ihre Daten genutzt?"
+          },
+          {
+            "type": "p",
+            "text": "Die Daten werden ausschließlich zur Bereitstellung der Schichtplanungsfunktionen erhoben. Ein Teil der Daten wird benötigt, um eine fehlerfreie Bereitstellung der Website zu gewährleisten."
+          }
+        ]
+      },
+      {
+        "heading": "5. Datenspeicherung und Aufbewahrungsfristen",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Ihre Daten werden so lange gespeichert, wie Ihr Benutzerkonto aktiv ist und zur Bereitstellung des Dienstes benötigt wird. Gemäß Art. 5 Abs. 1 lit. e DSGVO (Speicherbegrenzung) haben wir ein automatisiertes Löschkonzept implementiert, das personenbezogene Daten nach Ablauf der jeweiligen Aufbewahrungsfrist unwiderruflich löscht."
+          },
+          {
+            "type": "h3",
+            "text": "Automatische Datenbereinigung"
+          },
+          {
+            "type": "p",
+            "text": "Die folgende Übersicht zeigt die konkreten Aufbewahrungsfristen je Datentyp. Die automatische Bereinigung erfolgt wöchentlich (sonntags, 04:30 UTC) über einen Cron-Job:"
+          },
+          {
+            "type": "table",
+            "headers": ["Datentyp", "Aufbewahrung", "Rechtsgrundlage"],
+            "rows": [
+              ["Verifizierungs-Token", "7 Tage", "Keine gesetzl. Pflicht"],
+              ["Passwort-Reset-Token", "7 Tage", "Keine gesetzl. Pflicht"],
+              ["Sessions (abgelaufen)", "30 Tage", "Art. 6(1)(b) DSGVO"],
+              ["Einladungen (abgelaufen)", "30 Tage", "Keine gesetzl. Pflicht"],
+              [
+                "Benachrichtigungen, Export-Jobs, AutoFill-Logs, Manager-Alerts",
+                "90 Tage",
+                "Keine gesetzl. Pflicht"
+              ],
+              [
+                "Auto-Planungsläufe, Push-Abonnements",
+                "180 Tage",
+                "Keine gesetzl. Pflicht"
+              ],
+              ["Audit-Logs", "365 Tage", "Art. 6(1)(f) — berecht. Interesse"],
+              [
+                "E-Signaturen, Besuchs-Audit-Logs, Arbeitszeitprüfung",
+                "**10 Jahre**",
+                "§ 147 AO, eIDAS-Verordnung"
+              ]
+            ]
+          },
+          {
+            "type": "h3",
+            "text": "Kontolöschung (Art. 17 DSGVO)"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Kontodaten:",
+                "text": "Bis zur Löschung Ihres Kontos (jederzeit in den Einstellungen möglich)."
+              },
+              {
+                "lead": "Arbeitszeitdaten:",
+                "text": "Gemäß gesetzlicher Aufbewahrungspflichten (§ 16 Abs. 2 ArbZG: 2 Jahre nach Erfassung; § 147 AO: 10 Jahre für Lohnbuchhaltung)."
+              },
+              {
+                "lead": "Server-Logs:",
+                "text": "Automatische Löschung nach 30 Tagen."
+              }
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Der Workspace-Inhaber kann über die Einstellungen eine vollständige und unwiderrufliche Löschung aller Workspace-Daten auslösen (kaskadierendes Löschen aller zugehörigen Tabellen). Sofern keine gesetzlichen Aufbewahrungspflichten bestehen, werden alle personenbezogenen Daten sofort gelöscht."
+          }
+        ]
+      },
+      {
+        "heading": "6. Hosting und Auftragsverarbeiter",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Wir setzen folgende Dienstleister ein, mit denen Auftragsverarbeitungsverträge (AVV) gemäß Art. 28 DSGVO bestehen:"
+          },
+          {
+            "type": "h3",
+            "text": "a) Vercel Inc. — Hosting"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main). Datenübermittlung in die USA kann bei Support-/Wartungszugriffen erfolgen. Transfergarantie: EU-US Data Privacy Framework (Angemessenheitsbeschluss der EU-Kommission vom 10.07.2023, Art. 45 DSGVO) sowie ergänzend EU-Standardvertragsklauseln (SCCs, Art. 46 Abs. 2 lit. c DSGVO).",
+            "link": {
+              "label": "Datenschutzerklärung von Vercel",
+              "href": "https://vercel.com/legal/privacy-policy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "b) Supabase Inc. — Datenbank (PostgreSQL)"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main, AWS eu-central-1). Alle Datenbankdaten werden ausschließlich in der EU verarbeitet und gespeichert. Administrativer Zugriff aus den USA möglich. Transfergarantie: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln (SCCs).",
+            "link": {
+              "label": "Datenschutzerklärung von Supabase",
+              "href": "https://supabase.com/privacy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "c) Resend Inc. — E-Mail-Versand"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Versand von System-E-Mails (Schichtbenachrichtigungen, Abwesenheitsgenehmigungen, Verifizierung). E-Mail-Inhalte werden in den USA verarbeitet. Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs. 2 lit. c DSGVO). Sie können E-Mail-Benachrichtigungen jederzeit in Ihren Einstellungen deaktivieren.",
+            "link": {
+              "label": "Datenschutzerklärung von Resend",
+              "href": "https://resend.com/legal/privacy-policy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "d) Stripe, Inc. — Zahlungsabwicklung"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Europäische Verarbeitung über Stripe Payments Europe, Ltd. (Dublin, Irland). Abwicklung von Abonnement-Zahlungen (Kreditkarte, SEPA-Lastschrift). Kartennummern werden nie auf unseren Servern gespeichert. Transfergarantie: EU-US Data Privacy Framework (Angemessenheitsbeschluss, Art. 45 DSGVO) sowie EU-Standardvertragsklauseln (SCCs). Stripe ist PCI DSS Level 1 zertifiziert.",
+            "link": {
+              "label": "Datenschutzerklärung von Stripe",
+              "href": "https://stripe.com/de/privacy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "e) Sentry (Functional Software, Inc.) — Fehlerüberwachung"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main). Erfassung von Anwendungsfehlern zur Qualitätssicherung. Es werden technische Daten (Fehlermeldungen, Browser, Betriebssystem) übermittelt — keine personenbezogenen Inhalte. Transfergarantie: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln (SCCs). Die Aktivierung erfolgt nur mit Ihrer Einwilligung über den Cookie-Banner (Art. 6 Abs. 1 lit. a DSGVO).",
+            "link": {
+              "label": "Datenschutzerklärung von Sentry",
+              "href": "https://sentry.io/privacy/"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "f) Upstash, Inc. — Rate Limiting (Redis)"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main, AWS eu-central-1). Einsatz für IP-basiertes Rate Limiting zum Schutz der API-Endpunkte. Es werden ausschließlich gehashte IP-Adressen mit kurzlebigen Zählern gespeichert (TTL: 60 Sekunden). Keine personenbezogenen Inhalte. Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs. 2 lit. c DSGVO). Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Sicherheit und Missbrauchsprävention).",
+            "link": {
+              "label": "Datenschutzerklärung von Upstash",
+              "href": "https://upstash.com/trust/privacy.pdf"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "g) Vercel Blob — Dateispeicher"
+          },
+          {
+            "type": "p",
+            "text": "Teil der Vercel-Plattform (siehe oben). Speicherung von nutzergeneriertem Datei-Upload (z. B. Profilbilder, exportierte Berichte). Es gelten die gleichen Transfergarantien und der Auftragsverarbeitungsvertrag wie unter a) Vercel beschrieben. Die Daten werden auf EU-Servern gespeichert."
+          },
+          {
+            "type": "h3",
+            "text": "h) Anthropic, PBC — KI-gestützte Stundenzettel-Erkennung"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Einsatz ausschließlich für die optionale Funktion „Stundenzettel-Scanner“: Beim Hochladen eines Stundenzettels wird das Dokumentbild zur automatischen Texterkennung (OCR) an die Anthropic-API (Claude) übermittelt. Dabei können personenbezogene Daten der erfassten Beschäftigten (Name, Arbeits- und Pausenzeiten) verarbeitet werden. Anthropic verarbeitet API-Eingaben **nicht** zum Training seiner Modelle und löscht sie nach kurzer Vorhaltefrist (Zero-Data-Retention bzw. Standard-API-Bedingungen). Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs. 2 lit. c DSGVO). Ein Auftragsverarbeitungsvertrag (DPA) gemäß Art. 28 DSGVO besteht.",
+            "link": {
+              "label": "Datenschutzerklärung von Anthropic",
+              "href": "https://www.anthropic.com/legal/privacy"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "h3",
+            "text": "i) OpenAI, L.L.C. — KI-Texterkennung (Ausfallsicherung)"
+          },
+          {
+            "type": "p",
+            "text": "Sitz: San Francisco, USA. Einsatz ausschließlich als Ausfall-Absicherung für die Funktion „Stundenzettel-Scanner“: Ist die primäre KI nicht verfügbar, wird das Dokumentbild ersatzweise zur Texterkennung an die OpenAI-API übermittelt. Es gelten dieselben Datenkategorien wie unter h). OpenAI verarbeitet über die API übermittelte Daten **nicht** zum Training seiner Modelle. Transfergarantie: EU-Standardvertragsklauseln (SCCs, Art. 46 Abs. 2 lit. c DSGVO). Ein Auftragsverarbeitungsvertrag (DPA) gemäß Art. 28 DSGVO besteht.",
+            "link": {
+              "label": "Datenschutzerklärung von OpenAI",
+              "href": "https://openai.com/policies/row-privacy-policy/"
+            },
+            "suffix": "."
+          },
+          {
+            "type": "p",
+            "tone": "muted",
+            "lead": "Einsatz von künstlicher Intelligenz:",
+            "text": "KI kommt ausschließlich bei der optionalen Stundenzettel-Erkennung zum Einsatz und nur dann, wenn Sie aktiv ein Dokument hochladen. Es findet keine automatisierte Entscheidung mit rechtlicher Wirkung im Sinne des Art. 22 DSGVO statt — die erkannten Daten werden Ihnen vor der Übernahme stets zur Prüfung und Korrektur angezeigt. Wird der Scanner nicht genutzt, werden keine Daten an die genannten KI-Anbieter übermittelt."
+          }
+        ]
+      },
+      {
+        "heading": "7. Cookies",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Diese Website verwendet ausschließlich technisch notwendige Cookies:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Session-Cookie:",
+                "text": "Für die Authentifizierung (wird beim Abmelden oder nach Ablauf automatisch gelöscht)."
+              },
+              {
+                "lead": "Spracheinstellung:",
+                "text": "Speichert Ihre bevorzugte Sprache (Deutsch/Englisch)."
+              }
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Technisch notwendige Cookies (Session, Spracheinstellung) werden ohne Einwilligung gesetzt (§ 25 Abs. 2 Nr. 2 TDDDG). Für optionale Analyse-Cookies (z. B. Sentry Fehlerüberwachung) holen wir Ihre ausdrückliche Einwilligung über unseren Cookie-Banner ein (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG). Sie können Ihre Einstellungen jederzeit über den Link „Cookie-Einstellungen“ in der Fußzeile ändern."
+          }
+        ]
+      },
+      {
+        "heading": "8. Ihre Rechte (DSGVO)",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Sie haben folgende Rechte bezüglich Ihrer personenbezogenen Daten:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              {
+                "lead": "Recht auf Auskunft (Art. 15 DSGVO):",
+                "text": "Sie können jederzeit Auskunft über Ihre gespeicherten Daten verlangen."
+              },
+              {
+                "lead": "Recht auf Berichtigung (Art. 16 DSGVO):",
+                "text": "Unrichtige Daten können Sie in Ihren Einstellungen selbst korrigieren."
+              },
+              {
+                "lead": "Recht auf Löschung (Art. 17 DSGVO):",
+                "text": "Sie können Ihr Konto jederzeit in den Einstellungen löschen. Alle Daten werden unwiderruflich entfernt."
+              },
+              {
+                "lead": "Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO):",
+                "text": "Kontaktieren Sie uns, um die Verarbeitung einzuschränken."
+              },
+              {
+                "lead": "Recht auf Datenübertragbarkeit (Art. 20 DSGVO):",
+                "text": "Sie können Ihre Daten jederzeit als JSON-Datei in den Einstellungen exportieren."
+              },
+              {
+                "lead": "Recht auf Widerspruch (Art. 21 DSGVO):",
+                "text": "Sie können der Verarbeitung jederzeit widersprechen."
+              },
+              {
+                "lead": "Recht auf Widerruf der Einwilligung:",
+                "text": "Sie können Ihre Einwilligung jederzeit widerrufen — die Rechtmäßigkeit der bis zum Widerruf erfolgten Verarbeitung bleibt davon unberührt."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "9. Beschwerderecht bei einer Aufsichtsbehörde",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten gegen die DSGVO verstößt, haben Sie das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO)."
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Zuständige Aufsichtsbehörde:",
+              "Berliner Beauftragte für Datenschutz und Informationsfreiheit",
+              "Friedrichstr. 219",
+              "10969 Berlin",
+              "Telefon: +49 30 13889-0",
+              "E-Mail: mailbox@datenschutz-berlin.de"
+            ],
+            "link": {
+              "label": "www.datenschutz-berlin.de",
+              "href": "https://www.datenschutz-berlin.de"
+            }
+          }
+        ]
+      },
+      {
+        "heading": "10. Datenschutz-Ansprechpartner",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Für Fragen zur Verarbeitung Ihrer personenbezogenen Daten oder zur Ausübung Ihrer Betroffenenrechte steht Ihnen unser freiwilliger Datenschutz-Ansprechpartner zur Verfügung:"
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Mohammad Bashabsheh",
+              "Bashabsheh Vergabepartner",
+              "Kolonnenstraße 8, 10827 Berlin",
+              "E-Mail: Kontakt@shiftfy.info",
+              "Telefon: +49 176 30365636"
+            ]
+          },
+          {
+            "type": "p",
+            "tone": "muted",
+            "text": "Hinweis: Eine formelle Benennung eines Datenschutzbeauftragten gemäß Art. 37 DSGVO i. V. m. § 38 BDSG erfolgt, sobald die gesetzlichen Voraussetzungen (insbesondere die Beschäftigtenschwelle oder eine Kerntätigkeit in umfangreicher regelmäßiger und systematischer Überwachung) vorliegen."
+          }
+        ]
+      },
+      {
+        "heading": "11. Kontakt für Datenschutzfragen",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Zur Ausübung Ihrer Rechte oder bei Fragen zum Datenschutz wenden Sie sich bitte an:"
+          },
+          {
+            "type": "lines",
+            "lines": [
+              "Bashabsheh Vergabepartner",
+              "Mohammad Bashabsheh",
+              "Kolonnenstraße 8, 10827 Berlin",
+              "E-Mail: Kontakt@shiftfy.info",
+              "Telefon: +49 176 30365636"
+            ]
+          },
+          {
+            "type": "p",
+            "tone": "small",
+            "text": "Wir werden Ihr Anliegen schnellstmöglich, spätestens innerhalb eines Monats (Art. 12 Abs. 3 DSGVO), bearbeiten."
+          }
+        ]
+      }
+    ]
   }
 }

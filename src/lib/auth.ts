@@ -136,6 +136,23 @@ export const authOptions: NextAuthOptions = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            /**
+             * Force Google's account chooser on every sign-in.
+             *
+             * Without `prompt`, Google silently reuses whichever Google account
+             * is already active in the browser and returns THAT identity. The
+             * user picks "Continue with Google" intending one address and is
+             * signed into another, with nothing on screen to say so — it reads
+             * as the app redirecting them to someone else's account. Anyone
+             * signed into more than one Google account can hit this, so it is
+             * not specific to any pair of accounts.
+             *
+             * `select_account` makes the choice explicit and re-authorisation
+             * free (unlike `consent`, which re-prompts for scopes every time).
+             */
+            authorization: {
+              params: { prompt: "select_account" },
+            },
             // The iOS app creates OAuth users by verified email only (no NextAuth
             // Account row — see findOrCreateOAuthUser). Without this, a web
             // "Continue with Google" for an iOS-created account throws
@@ -153,6 +170,11 @@ export const authOptions: NextAuthOptions = {
             clientId: process.env.AZURE_AD_CLIENT_ID,
             clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
             tenantId: process.env.AZURE_AD_TENANT_ID || "common",
+            // Same reason as Google: without this, Microsoft silently reuses
+            // the browser's active work/school account.
+            authorization: {
+              params: { prompt: "select_account" },
+            },
             // Link to an existing verified-email user (e.g. created by the iOS
             // app) instead of throwing OAuthAccountNotLinked. See Google above.
             allowDangerousEmailAccountLinking: true,
@@ -441,17 +463,57 @@ export const authOptions: NextAuthOptions = {
     // Runs after PrismaAdapter upserts the user, before any JWT is issued.
     // For OAuth sign-ins, guarantees a subscription row exists so the user
     // never freezes on the onboarding activation screen.
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.type === "oauth") {
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
           select: {
+            email: true,
             workspaceId: true,
             hashedPassword: true,
             emailVerified: true,
             workspace: { select: { createdAt: true } },
           },
         });
+
+        /**
+         * Last line of defence: the account you land in must be the account you
+         * authenticated as.
+         *
+         * Everything upstream decides WHICH user row an OAuth identity maps to
+         * — the Account table, `allowDangerousEmailAccountLinking`, the
+         * linkAccount guard. If any of that is wrong, or was wrong historically
+         * and left a bad Account row behind, the user is silently signed into
+         * somebody else's workspace. Nothing else in the flow would notice.
+         *
+         * So we check the one invariant that cannot be argued with: the email
+         * the provider just vouched for has to equal the email on the row we
+         * resolved to. A mismatch means the mapping is corrupt, and the only
+         * safe answer is to refuse rather than hand over the wrong account.
+         *
+         * Only enforced when both sides are present — Apple can withhold the
+         * address on subsequent sign-ins, and an absent email is not evidence
+         * of a mismatch.
+         */
+        const providerEmail = (profile as { email?: string } | undefined)
+          ?.email;
+        if (providerEmail && dbUser?.email) {
+          const sameIdentity =
+            providerEmail.trim().toLowerCase() ===
+            dbUser.email.trim().toLowerCase();
+          if (!sameIdentity) {
+            log.error(
+              "[auth] BLOCKED sign-in: provider identity does not match the resolved account",
+              {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                resolvedUserId: user.id,
+                // Addresses are deliberately not logged.
+              },
+            );
+            return false;
+          }
+        }
 
         // OAuth providers (Google, Azure AD) verify the user's email address before
         // issuing a token. NextAuth's callback-handler.js creates every OAuth user with

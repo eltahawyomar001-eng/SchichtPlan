@@ -204,6 +204,8 @@ const MAX_WEEKLY_HOURS = 48;
 const MAX_DAILY_MINUTES = MAX_DAILY_HOURS * 60;
 const MAX_WEEKLY_MINUTES = MAX_WEEKLY_HOURS * 60;
 const MIN_REST_MINUTES = MIN_REST_HOURS * 60;
+/** Scores closer than this count as tied — they are floats built from weights. */
+const SCORE_EPSILON = 0.01;
 
 // Fatigue thresholds (consecutive working days)
 const FATIGUE_WARN_DAYS = 5; // mild penalty starts
@@ -245,13 +247,15 @@ export async function runAutoScheduler(
   });
 
   // ── 1. Load all data ──
-  const [employees, openShifts, existingShifts, staffingReqs] =
+  const [rawEmployees, openShifts, existingShifts, staffingReqs] =
     await Promise.all([
       loadEmployees(workspaceId, startDate, endDate),
       loadOpenShifts(workspaceId, startDate, endDate, locationId),
       loadExistingShifts(workspaceId, startDate, endDate),
       loadStaffingRequirements(workspaceId, locationId),
     ]);
+
+  const employees = withEffectiveWeeklyHours(rawEmployees);
 
   if (openShifts.length === 0) {
     return {
@@ -506,7 +510,27 @@ export async function runAutoScheduler(
         );
         return { empId, emp, score, reasons };
       })
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => {
+        // Ties are the common case, not the exception: on a roster of
+        // identical shifts with no stated preferences, every eligible
+        // colleague scores the same. Sorting on score alone left the order
+        // to Array.prototype.sort's stability, i.e. to whatever order the
+        // employees came back from the database — so the same person won
+        // every tie and the work piled onto them.
+        //
+        // Break ties by who is carrying the least so far. That is the
+        // standard least-loaded rule, and it is what makes an even spread
+        // the default rather than something the weights have to fight for.
+        if (Math.abs(a.score - b.score) > SCORE_EPSILON) {
+          return b.score - a.score;
+        }
+        const loadA = totalScheduledMinutes.get(a.empId) ?? 0;
+        const loadB = totalScheduledMinutes.get(b.empId) ?? 0;
+        if (loadA !== loadB) return loadA - loadB;
+        // Last resort: stable and independent of database ordering, so the
+        // same input always produces the same roster.
+        return a.empId.localeCompare(b.empId);
+      });
 
     const best = scored[0];
     const emp = best.emp;
@@ -793,6 +817,45 @@ function shiftWorkingMinutes(shift: {
   );
 }
 
+/** Fallback when a workspace has recorded no contract hours for anyone. */
+const FALLBACK_WEEKLY_HOURS = 40;
+
+/**
+ * Give every employee a usable contract target.
+ *
+ * `weeklyHours` is nullable, and fairness is scored as `1 - scheduled/target`.
+ * With target 0 the code fell back to `utilization = 0`, so the fairness score
+ * stayed pinned at its maximum no matter how much work the person was already
+ * given — and the overtime penalty, guarded by `target > 0`, never fired
+ * either. One employee with no contract hours therefore out-scored all twelve
+ * colleagues on every single shift and took the entire roster until the
+ * weekly ArbZG ceiling stopped them. Eight shifts to one person, one to
+ * another, eleven people untouched.
+ *
+ * Missing contract hours means "unknown", not "infinite capacity". The median
+ * of the colleagues who do have hours is the closest honest estimate, and it
+ * keeps such an employee inside the same fairness and contract arithmetic as
+ * everyone else.
+ */
+function withEffectiveWeeklyHours(employees: EmployeeData[]): EmployeeData[] {
+  const known = employees
+    .map((e) => e.weeklyHours)
+    .filter((h): h is number => typeof h === "number" && h > 0)
+    .sort((a, b) => a - b);
+
+  const median = known.length
+    ? known.length % 2 === 1
+      ? known[(known.length - 1) / 2]
+      : (known[known.length / 2 - 1] + known[known.length / 2]) / 2
+    : FALLBACK_WEEKLY_HOURS;
+
+  return employees.map((e) =>
+    typeof e.weeklyHours === "number" && e.weeklyHours > 0
+      ? e
+      : { ...e, weeklyHours: median },
+  );
+}
+
 function computeDomain(
   slot: ShiftSlot,
   employees: EmployeeData[],
@@ -1061,17 +1124,27 @@ function calculateFairnessScore(
 
   if (ratios.length === 0) return 1.0;
 
-  // Fairness = 1 - coefficient of variation (std dev / mean)
-  const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
-  if (mean === 0) return 1.0;
+  /**
+   * Jain's fairness index: (Σx)² / (n · Σx²).
+   *
+   * Previously this was 1 − coefficient of variation, which misreports the
+   * normal case. With nine shifts and thirteen employees somebody must go
+   * without, so several ratios are zero; the CV then blows up and a perfectly
+   * even one-shift-each roster scored 0.25 — indistinguishable from the
+   * genuinely broken eight-to-one roster it replaced.
+   *
+   * Jain's index is the standard measure for exactly this: bounded 0–1,
+   * independent of team size and of the unit being shared, and equal to 1 only
+   * when everyone gets the same share. It still reports partial fairness when
+   * some people get nothing, which is honest, but it degrades gracefully
+   * instead of collapsing.
+   */
+  const sum = ratios.reduce((a, b) => a + b, 0);
+  if (sum === 0) return 1.0;
+  const sumSquares = ratios.reduce((acc, r) => acc + r * r, 0);
+  const jain = (sum * sum) / (ratios.length * sumSquares);
 
-  const variance =
-    ratios.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / ratios.length;
-  const stdDev = Math.sqrt(variance);
-  const cv = stdDev / mean;
-
-  // Score from 0 to 1 (1 = perfectly fair)
-  return Math.max(0, Math.min(1, Math.round((1 - cv) * 100) / 100));
+  return Math.max(0, Math.min(1, Math.round(jain * 100) / 100));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1518,6 +1591,7 @@ export async function runBackfill(
 export const _testing = {
   toMinutes,
   shiftWorkingMinutes,
+  withEffectiveWeeklyHours,
   timesOverlap,
   getWeekKey,
   calculateFairnessScore,

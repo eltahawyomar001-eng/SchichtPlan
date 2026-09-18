@@ -9,6 +9,7 @@ import {
 const {
   toMinutes,
   shiftWorkingMinutes,
+  withEffectiveWeeklyHours,
   timesOverlap,
   getWeekKey,
   calculateFairnessScore,
@@ -224,8 +225,20 @@ describe("calculateFairnessScore", () => {
       ["b", 0], // Nothing
     ]);
     const score = calculateFairnessScore(employees, scheduled, 7);
-    expect(score).toBeLessThan(0.5);
-    expect(score).toBeGreaterThanOrEqual(0);
+    // Jain's index floors at 1/n when one person holds everything — 0.5 for a
+    // team of two. That is the worst achievable value here, not a near-miss.
+    expect(score).toBeCloseTo(0.5, 2);
+    // Still strictly worse than an even split, which scores 1.0.
+    expect(score).toBeLessThan(
+      calculateFairnessScore(
+        employees,
+        new Map([
+          ["a", 2400],
+          ["b", 2400],
+        ]),
+        7,
+      ),
+    );
   });
 
   it("returns moderate score for slight imbalance", () => {
@@ -986,5 +999,71 @@ describe("employees without contracted hours", () => {
 
     const result = computeDomain(slot, [emp], new Map(), new Map(), new Map());
     expect(result).not.toContain("emp-no-contract");
+  });
+});
+
+describe("employees with no contracted hours do not monopolise the roster", () => {
+  it("gives them the team median instead of a zero target", () => {
+    const team = [
+      buildEmployee({ id: "a", weeklyHours: 40 }),
+      buildEmployee({ id: "b", weeklyHours: 40 }),
+      buildEmployee({ id: "c", weeklyHours: 20 }),
+      buildEmployee({ id: "d", weeklyHours: null as unknown as number }),
+    ];
+    const out = withEffectiveWeeklyHours(team);
+    expect(out.find((e) => e.id === "d")!.weeklyHours).toBe(40); // median of 20,40,40
+    // everyone else is left exactly as they were
+    expect(out.find((e) => e.id === "c")!.weeklyHours).toBe(20);
+  });
+
+  it("falls back to a default when nobody has contracted hours", () => {
+    const team = [
+      buildEmployee({ id: "a", weeklyHours: null as unknown as number }),
+      buildEmployee({ id: "b", weeklyHours: 0 }),
+    ];
+    const out = withEffectiveWeeklyHours(team);
+    expect(out.every((e) => e.weeklyHours > 0)).toBe(true);
+  });
+
+  it("scores a zero-target employee's fairness as if they had a target", () => {
+    // The bug: utilization was forced to 0 whenever target was 0, so the
+    // fairness score stayed pinned at maximum however much work they had.
+    const scheduled = new Map<string, number>([["x", 10_000]]);
+
+    const noTarget = buildEmployee({
+      id: "x",
+      weeklyHours: null as unknown as number,
+    });
+    const withTarget = withEffectiveWeeklyHours([
+      noTarget,
+      buildEmployee({ id: "y", weeklyHours: 40 }),
+    ])[0];
+
+    const before = scoreEmployee(
+      noTarget,
+      buildSlot(),
+      scheduled,
+      7,
+      DEFAULT_WEIGHTS,
+      [],
+      new Map(),
+      new Map(),
+      new Map(),
+    ).score;
+
+    const after = scoreEmployee(
+      withTarget,
+      buildSlot(),
+      scheduled,
+      7,
+      DEFAULT_WEIGHTS,
+      [],
+      new Map(),
+      new Map(),
+      new Map(),
+    ).score;
+
+    // Heavily loaded, so once they have a real target they must score lower.
+    expect(after).toBeLessThan(before);
   });
 });

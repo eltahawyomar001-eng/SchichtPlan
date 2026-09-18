@@ -210,12 +210,18 @@ export default function SchichtplanPage() {
     startDate: string;
     endDate: string;
   } | null>(null);
+  // Every weight the solver reads must be here. Previously fatigue and
+  // rotation were missing, so the API fell back to its own defaults (10 and 5)
+  // and the planner was silently overridden on two of the seven objectives —
+  // including after deliberately setting everything else to zero.
   const [autoScheduleWeights, setAutoScheduleWeights] = useState({
     fairness: 40,
     preference: 20,
     cost: 20,
     continuity: 10,
     staffing: 10,
+    fatigue: 10,
+    rotation: 5,
   });
   const [showWeightsConfig, setShowWeightsConfig] = useState(false);
   const [showEmployeeHours, setShowEmployeeHours] = useState(false);
@@ -2682,6 +2688,14 @@ export default function SchichtplanPage() {
                         {
                           key: "staffing",
                           label: t("autoScheduleWeightStaffing"),
+                        },
+                        {
+                          key: "fatigue",
+                          label: t("autoScheduleWeightFatigue"),
+                        },
+                        {
+                          key: "rotation",
+                          label: t("autoScheduleWeightRotation"),
                         },
                       ] as const
                     ).map(({ key, label }) => (

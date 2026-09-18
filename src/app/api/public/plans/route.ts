@@ -20,6 +20,9 @@ export const GET = withRoute("/api/public/plans", "GET", async () => {
       name: p.name,
       perUserMonthlyCents: p.perUserMonthly,
       perUserAnnualCents: p.perUserAnnual,
+      // Carried so client components (the onboarding plan step) can state the
+      // trial length without importing lib/subscription, which pulls in prisma.
+      trialDays: p.trialDays,
       limits: p.limits,
     };
   });

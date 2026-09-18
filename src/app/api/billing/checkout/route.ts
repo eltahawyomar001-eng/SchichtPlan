@@ -39,6 +39,16 @@ export const POST = withRoute(
     const billingCycle: "monthly" | "annual" =
       body.billingCycle === "monthly" ? "monthly" : "annual";
 
+    // Where Stripe sends the customer back. A checkout started from the
+    // onboarding wizard must return *into the wizard*, not into Settings →
+    // Subscription: dropping a brand-new owner onto a settings screen is what
+    // made card-at-signup read as "go configure your billing" instead of
+    // "finish setting up your account".
+    const returnPath =
+      body.returnTo === "onboarding"
+        ? "/onboarding"
+        : "/einstellungen/abonnement";
+
     if (!planId || !PLANS[planId]) {
       return NextResponse.json(
         {
@@ -88,7 +98,7 @@ export const POST = withRoute(
             : "http://localhost:3000");
 
       return NextResponse.json({
-        url: `${baseUrl}/einstellungen/abonnement?billing=success`,
+        url: `${baseUrl}${returnPath}?billing=success`,
         simulation: true,
       });
     }
@@ -235,8 +245,8 @@ export const POST = withRoute(
       new URL(req.url).host;
     const baseUrl = `${proto}://${host}`;
 
-    const successUrl = `${baseUrl}/einstellungen/abonnement?billing=success`;
-    const cancelUrl = `${baseUrl}/einstellungen/abonnement?billing=cancel`;
+    const successUrl = `${baseUrl}${returnPath}?billing=success`;
+    const cancelUrl = `${baseUrl}${returnPath}?billing=cancel`;
 
     log.info("[Stripe] creating checkout session", {
       plan: planId,

@@ -135,13 +135,17 @@ export default async function DashboardLayout({
           (!trialSub.stripeSubscriptionId ||
             trialSub.stripeSubscriptionId.startsWith("sim_"));
         if (trialWithoutCard) {
-          // `required=1` so the page treats this as a mandatory step rather
-          // than a casual visit to settings; `startTrial=1` swaps the amber
-          // "subscription lapsed" warning for copy that explains nothing is
-          // charged today. The first version sent only startTrial=1, which the
-          // page did not read at all, so a new signup landed on an ordinary
-          // pricing screen with no indication a card was needed.
-          redirect("/einstellungen/abonnement?required=1&startTrial=1");
+          // Back into the onboarding wizard's plan step, NOT into Settings →
+          // Subscription. Any route into the card-less state (skipping setup,
+          // a direct /dashboard visit, an abandoned checkout) now lands on the
+          // same guided step instead of a settings screen.
+          //
+          // This used to send `?required=1&startTrial=1` to the billing page.
+          // Even with copy explaining that nothing is charged today, a brand-new
+          // owner was being dropped onto a four-plan settings screen with a
+          // billing-cycle toggle, add-on cards and a usage dashboard — it read
+          // as "go configure your billing", not "finish setting up your account".
+          redirect("/onboarding?step=plan");
         }
       }
 

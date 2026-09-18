@@ -14,6 +14,8 @@ import {
   ChevronLeftIcon,
   BuildingIcon,
   UploadCloudIcon,
+  CreditCardIcon,
+  ShieldCheckIcon,
 } from "@/components/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -24,9 +26,15 @@ interface StepProps {
   onBack?: () => void;
 }
 
-type OnboardingStep = "welcome" | "location" | "employee" | "complete";
+type OnboardingStep = "welcome" | "location" | "employee" | "plan" | "complete";
 
-const STEPS: OnboardingStep[] = ["welcome", "location", "employee", "complete"];
+const STEPS: OnboardingStep[] = [
+  "welcome",
+  "location",
+  "employee",
+  "plan",
+  "complete",
+];
 
 /* ─── Step indicator ─────────────────────────────────────────── */
 
@@ -616,6 +624,268 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
 
 /* ─── Step 4: Complete ───────────────────────────────────────── */
 
+/* ─── Plan + card step ───────────────────────────────────────── */
+
+const SELF_SERVE_PLANS = ["basic", "professional"] as const;
+type SelfServePlan = (typeof SELF_SERVE_PLANS)[number];
+
+type PublicPlan = {
+  id: string;
+  perUserMonthlyCents: number;
+  perUserAnnualCents: number;
+  trialDays: number;
+};
+
+/**
+ * The step that used to be a `redirect()` into Settings → Subscription.
+ *
+ * It sits *after* location and employee setup on purpose: the owner has
+ * already built something in the workspace by the time money is mentioned,
+ * which is what the comparable self-serve products (Papershift, Planday) do.
+ * Checkout is started with `returnTo: "onboarding"` so Stripe sends them back
+ * into this wizard rather than into a settings screen.
+ */
+function PlanStep({ onNext, onBack }: StepProps) {
+  const t = useTranslations("onboardingWizard");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
+    "annual",
+  );
+  const [selected, setSelected] = useState<SelfServePlan>("basic");
+  const [prices, setPrices] = useState<PublicPlan[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  // Cancelled Stripe Checkout returns here — read straight from the URL at
+  // init so the notice is present on first paint, with no setState-in-effect.
+  const [error, setError] = useState<string | null>(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("billing") === "cancel"
+      ? t("planCheckoutCancelled")
+      : null,
+  );
+
+  // A workspace that already carries a real Stripe subscription reached this
+  // step some other way (e.g. /register?plan=basic went straight to Checkout).
+  // Asking it to pay twice is exactly what the duplicate guard in the checkout
+  // route refuses, so skip the step instead of showing a dead button.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/billing/subscription");
+        if (res.ok) {
+          const data = await res.json();
+          if (
+            !cancelled &&
+            (data.hasStripeSubscription || data.simulationMode)
+          ) {
+            onNext();
+            return;
+          }
+        }
+      } catch {
+        // fall through and let the owner choose a plan
+      }
+      if (!cancelled) setChecking(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [onNext]);
+
+  // Prices come from /api/public/plans so they always match lib/stripe.ts.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/public/plans")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.plans) setPrices(d.plans);
+      })
+      .catch(() => {
+        /* prices render as "—" rather than blocking the step */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // TRIAL_DAYS lives in lib/subscription, which imports prisma and so cannot
+  // be pulled into a client bundle — the value rides along on /api/public/plans.
+  const trialDays = prices.find((p) => p.id === selected)?.trialDays ?? 14;
+
+  const centsFor = (planId: string) => {
+    const p = prices.find((pl) => pl.id === planId);
+    if (!p) return null;
+    return billingCycle === "annual"
+      ? p.perUserAnnualCents
+      : p.perUserMonthlyCents;
+  };
+
+  const formatCents = (cents: number) =>
+    new Intl.NumberFormat("de-DE", {
+      style: "currency",
+      currency: "EUR",
+    }).format(cents / 100);
+
+  const handleContinue = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: selected,
+          billingCycle,
+          returnTo: "onboarding",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setError(data.message || t("planCheckoutError"));
+    } catch {
+      setError(t("planCheckoutError"));
+    }
+    setLoading(false);
+  };
+
+  if (checking) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-2xl px-4">
+      <div className="text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 mb-5">
+          <CreditCardIcon className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-zinc-100">
+          {t("planTitle")}
+        </h2>
+        <p className="mt-2 text-sm sm:text-base text-gray-500 dark:text-zinc-400 leading-relaxed">
+          {t("planDesc", { days: trialDays })}
+        </p>
+      </div>
+
+      {/* Nothing-is-charged-today reassurance. This is the sentence that makes
+          a card request survivable; without it the step reads as a paywall. */}
+      <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-950/30 p-3.5">
+        <ShieldCheckIcon className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+        <p className="text-sm text-gray-700 dark:text-zinc-300 leading-relaxed">
+          {t("planNoChargeToday", { days: trialDays })}
+        </p>
+      </div>
+
+      {/* Billing cycle */}
+      <div className="mt-6 flex justify-center">
+        <div
+          role="radiogroup"
+          aria-label={t("planBillingCycle")}
+          className="inline-flex rounded-xl border border-gray-200 dark:border-zinc-700 p-1 bg-gray-50 dark:bg-zinc-900"
+        >
+          {(["monthly", "annual"] as const).map((cycle) => (
+            <button
+              key={cycle}
+              type="button"
+              role="radio"
+              aria-checked={billingCycle === cycle}
+              onClick={() => setBillingCycle(cycle)}
+              className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                billingCycle === cycle
+                  ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 shadow-sm"
+                  : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
+              }`}
+            >
+              {cycle === "monthly" ? t("planMonthly") : t("planAnnual")}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Plans */}
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {SELF_SERVE_PLANS.map((planId) => {
+          const cents = centsFor(planId);
+          const isSelected = selected === planId;
+          return (
+            <button
+              key={planId}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              onClick={() => setSelected(planId)}
+              className={`rounded-2xl border p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                isSelected
+                  ? "border-emerald-600 dark:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
+                  : "border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-900 dark:text-zinc-100">
+                  {planId === "basic" ? t("planBasicName") : t("planProName")}
+                </span>
+                {isSelected && (
+                  <CheckCircleIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                )}
+              </div>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tabular-nums">
+                  {cents === null ? "—" : formatCents(cents)}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-zinc-400">
+                  {t("planPerUserMonth")}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
+                {planId === "basic" ? t("planBasicHint") : t("planProHint")}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      {error && (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-300"
+        >
+          {error}
+        </p>
+      )}
+
+      <button
+        onClick={handleContinue}
+        disabled={loading}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-colors"
+      >
+        {loading ? t("planRedirecting") : t("planContinue")}
+        {!loading && <ArrowRightIcon className="h-4 w-4" />}
+      </button>
+
+      <p className="mt-3 text-center text-xs text-gray-400 dark:text-zinc-500">
+        {t("planSecuredByStripe")}
+      </p>
+
+      {onBack && (
+        <button
+          onClick={onBack}
+          disabled={loading}
+          className="mt-4 flex w-full items-center justify-center gap-1.5 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 disabled:opacity-50 transition-colors"
+        >
+          <ChevronLeftIcon className="h-4 w-4" />
+          {t("back")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function CompleteStep() {
   const t = useTranslations("onboardingWizard");
   const { update } = useSession();
@@ -624,6 +894,10 @@ function CompleteStep() {
   const handleFinish = async () => {
     setLoading(true);
     try {
+      // Force a pull from Stripe first: checkout's webhook may not have landed
+      // yet, and the dashboard's card-at-signup gate reads that subscription
+      // row. Without this the owner can pay and still get bounced to billing.
+      await fetch("/api/billing/subscription?reconcile=1").catch(() => {});
       const res = await fetch("/api/onboarding/complete", { method: "POST" });
       // Re-issue the NextAuth cookie with the fresh onboardingCompleted=true
       // BEFORE navigating. Without this the middleware onboarding gate reads
@@ -776,6 +1050,12 @@ const STEP_KEY = "shiftfy_onboarding_step";
 
 function getSavedStep(): number {
   if (typeof window === "undefined") return 0;
+  const params = new URLSearchParams(window.location.search);
+  // Back from a completed Stripe Checkout: the card is on file, so jump to the
+  // final step rather than the plan step localStorage still remembers.
+  if (params.get("billing") === "success") return STEPS.length - 1;
+  // Sent here by the card-at-signup gate in the dashboard layout.
+  if (params.get("step") === "plan") return STEPS.indexOf("plan");
   const saved = parseInt(localStorage.getItem(STEP_KEY) ?? "0", 10);
   return !isNaN(saved) && saved > 0 && saved < STEPS.length - 1 ? saved : 0;
 }
@@ -831,6 +1111,7 @@ export default function OnboardingPage() {
     t("stepStart"),
     t("stepLocation"),
     t("stepEmployee"),
+    t("stepPlan"),
     t("stepDone"),
   ];
 
@@ -907,7 +1188,8 @@ export default function OnboardingPage() {
             {currentStep === 2 && (
               <EmployeeStep onNext={goNext} onBack={goBack} />
             )}
-            {currentStep === 3 && <CompleteStep />}
+            {currentStep === 3 && <PlanStep onNext={goNext} onBack={goBack} />}
+            {currentStep === 4 && <CompleteStep />}
           </div>
         </>
       )}

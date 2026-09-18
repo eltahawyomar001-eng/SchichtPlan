@@ -1676,7 +1676,10 @@
     "dayFr": "Fr",
     "dayOff": "Off",
     "emailAlreadyExists": "An account with this email already exists. Please sign in, or use “Forgot password” if you no longer have your password.",
-    "emailLinkedToProvider": "This email is already linked to {provider}. Please sign in using “{action}”."
+    "emailLinkedToProvider": "This email is already linked to {provider}. Please sign in using “{action}”.",
+    "oauthIdentityRelinked": "This Google account was linked to a different account by an earlier fault. That link has been removed — please click “Continue with Google” again.",
+    "oauthIdentityMismatch": "The email address on this provider account does not match the account on file. Please contact support.",
+    "oauthAccessDenied": "Sign-in was cancelled or refused. Please try again."
   },
   "verification": {
     "verifyingTitle": "Verifying your email…",

@@ -12,15 +12,23 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockUserFindUnique, mockSubFindUnique } = vi.hoisted(() => ({
+const {
+  mockUserFindUnique,
+  mockSubFindUnique,
+  mockAccountCount,
+  mockAccountDeleteMany,
+} = vi.hoisted(() => ({
   mockUserFindUnique: vi.fn(),
   mockSubFindUnique: vi.fn(),
+  mockAccountCount: vi.fn(),
+  mockAccountDeleteMany: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: { findUnique: mockUserFindUnique, update: vi.fn() },
     subscription: { findUnique: mockSubFindUnique },
+    account: { count: mockAccountCount, deleteMany: mockAccountDeleteMany },
   },
 }));
 vi.mock("@next-auth/prisma-adapter", () => ({ PrismaAdapter: () => ({}) }));
@@ -47,10 +55,15 @@ beforeEach(async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signIn = (authOptions.callbacks as any).signIn;
   mockSubFindUnique.mockResolvedValue({ status: "ACTIVE" });
+  mockAccountCount.mockResolvedValue(0);
+  mockAccountDeleteMany.mockResolvedValue({ count: 1 });
 });
 
 describe("OAuth identity must match the resolved account", () => {
-  it("refuses when the provider email differs from the account's email", async () => {
+  it("refuses, and unlinks nothing, when the row is not a duplicate", async () => {
+    // Not a duplicate: likelier a stale address on our side. Unlinking would
+    // orphan the user's workspace, so the guard must not touch the data.
+    mockAccountCount.mockResolvedValue(0);
     mockUserFindUnique.mockResolvedValue({
       email: "vaayutechgmbh@gmail.com",
       workspaceId: "ws_1",
@@ -59,13 +72,41 @@ describe("OAuth identity must match the resolved account", () => {
       workspace: { createdAt: new Date() },
     });
 
-    const allowed = await signIn({
+    const result = await signIn({
       user: { id: "user_vaayu" },
       account: OAUTH,
       profile: { email: "jamalbowman99@gmail.com" },
     });
 
-    expect(allowed).toBe(false);
+    expect(result).toBe("/login?error=OAuthIdentityMismatch");
+    expect(mockAccountDeleteMany).not.toHaveBeenCalled();
+  });
+
+  it("unlinks a duplicate identity so the rightful owner can register", async () => {
+    // The resolved user already holds another google account — the shape the
+    // old linking bug produced. The identity is freed and the retry resolves.
+    mockAccountCount.mockResolvedValue(1);
+    mockUserFindUnique.mockResolvedValue({
+      email: "vaayutechgmbh@gmail.com",
+      workspaceId: "ws_1",
+      hashedPassword: null,
+      emailVerified: new Date(),
+      workspace: { createdAt: new Date() },
+    });
+
+    const result = await signIn({
+      user: { id: "user_vaayu" },
+      account: OAUTH,
+      profile: { email: "jamalbowman99@gmail.com" },
+    });
+
+    expect(result).toBe("/login?error=OAuthIdentityRelinked");
+    expect(mockAccountDeleteMany).toHaveBeenCalledWith({
+      where: {
+        provider: "google",
+        providerAccountId: OAUTH.providerAccountId,
+      },
+    });
   });
 
   it("allows the matching identity", async () => {

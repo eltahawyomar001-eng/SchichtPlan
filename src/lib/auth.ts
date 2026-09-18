@@ -484,12 +484,11 @@ export const authOptions: NextAuthOptions = {
          * — the Account table, `allowDangerousEmailAccountLinking`, the
          * linkAccount guard. If any of that is wrong, or was wrong historically
          * and left a bad Account row behind, the user is silently signed into
-         * somebody else's workspace. Nothing else in the flow would notice.
+         * somebody else's workspace, and nothing else in the flow notices.
          *
          * So we check the one invariant that cannot be argued with: the email
          * the provider just vouched for has to equal the email on the row we
-         * resolved to. A mismatch means the mapping is corrupt, and the only
-         * safe answer is to refuse rather than hand over the wrong account.
+         * resolved to.
          *
          * Only enforced when both sides are present — Apple can withhold the
          * address on subsequent sign-ins, and an absent email is not evidence
@@ -501,17 +500,68 @@ export const authOptions: NextAuthOptions = {
           const sameIdentity =
             providerEmail.trim().toLowerCase() ===
             dbUser.email.trim().toLowerCase();
+
           if (!sameIdentity) {
+            /**
+             * Refusing is safe but it is a dead end: the identity stays welded
+             * to the wrong account, so the rightful owner can never sign in OR
+             * register — registration resolves through the same Account row and
+             * is denied too.
+             *
+             * Repair it when — and only when — the row is provably a duplicate:
+             * the resolved user already holds ANOTHER account for this same
+             * provider. That is the shape the old linking bug produced, and it
+             * cannot be a legitimate state: one user, one identity per provider.
+             * The OAuth handshake just proved the caller controls this identity,
+             * so a row pointing it at a different address is the wrong half.
+             * Dropping it frees the identity, and the retry resolves cleanly.
+             *
+             * When it is NOT a duplicate, the likelier explanation is a stale
+             * address on our side (the user changed their Google email), and
+             * unlinking would orphan their workspace. So: refuse, change
+             * nothing, and let a human sort it out.
+             */
+            const duplicateForProvider = await prisma.account.count({
+              where: {
+                userId: user.id,
+                provider: account.provider,
+                NOT: { providerAccountId: account.providerAccountId },
+              },
+            });
+
+            if (duplicateForProvider > 0) {
+              await prisma.account
+                .deleteMany({
+                  where: {
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                  },
+                })
+                .catch(() => {});
+              log.warn(
+                "[auth] unlinked a duplicate provider identity from a mismatched account",
+                {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  previousUserId: user.id,
+                  // Addresses are deliberately not logged.
+                },
+              );
+              // NextAuth has already resolved the (wrong) user for this
+              // request, so the repair cannot be applied mid-flight. Send them
+              // back with a reason; the next attempt resolves correctly.
+              return "/login?error=OAuthIdentityRelinked";
+            }
+
             log.error(
               "[auth] BLOCKED sign-in: provider identity does not match the resolved account",
               {
                 provider: account.provider,
                 providerAccountId: account.providerAccountId,
                 resolvedUserId: user.id,
-                // Addresses are deliberately not logged.
               },
             );
-            return false;
+            return "/login?error=OAuthIdentityMismatch";
           }
         }
 

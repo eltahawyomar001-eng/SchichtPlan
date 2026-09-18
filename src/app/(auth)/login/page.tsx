@@ -55,8 +55,16 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const urlError = searchParams.get("error");
+  // Map NextAuth's error codes to something a person can act on. Without this
+  // they land on a bare "AccessDenied" with no idea what to do next.
+  const OAUTH_ERRORS: Record<string, string> = {
+    OAuthAccountNotLinked: t("oauthAccountNotLinked"),
+    OAuthIdentityRelinked: t("oauthIdentityRelinked"),
+    OAuthIdentityMismatch: t("oauthIdentityMismatch"),
+    AccessDenied: t("oauthAccessDenied"),
+  };
   const [error, setError] = useState(
-    urlError === "OAuthAccountNotLinked" ? t("oauthAccountNotLinked") : "",
+    (urlError && OAUTH_ERRORS[urlError]) || "",
   );
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

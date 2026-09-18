@@ -1676,7 +1676,10 @@
     "dayFr": "Fr",
     "dayOff": "Frei",
     "emailAlreadyExists": "Ein Konto mit dieser E-Mail existiert bereits. Bitte melden Sie sich an oder nutzen Sie „Passwort vergessen“, falls Sie Ihr Passwort vergessen haben.",
-    "emailLinkedToProvider": "Diese E-Mail ist bereits mit {provider} verknüpft. Bitte melden Sie sich über „{action}“ an."
+    "emailLinkedToProvider": "Diese E-Mail ist bereits mit {provider} verknüpft. Bitte melden Sie sich über „{action}“ an.",
+    "oauthIdentityRelinked": "Dieses Google-Konto war durch einen früheren Fehler mit einem anderen Konto verknüpft. Die Verknüpfung wurde aufgehoben — bitte klicken Sie erneut auf „Weiter mit Google“.",
+    "oauthIdentityMismatch": "Die E-Mail-Adresse dieses Anbieter-Kontos stimmt nicht mit dem hinterlegten Konto überein. Bitte wenden Sie sich an den Support.",
+    "oauthAccessDenied": "Die Anmeldung wurde abgebrochen oder abgelehnt. Bitte versuchen Sie es erneut."
   },
   "verification": {
     "verifyingTitle": "E-Mail wird bestätigt…",

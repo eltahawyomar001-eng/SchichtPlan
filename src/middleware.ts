@@ -2,6 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { isOnboardingAllowed } from "@/lib/onboarding-allowlist";
 
 /* ──────────────────────────────────────────────────────────────
  * Security headers (DSGVO Art. 32 — appropriate technical measures)
@@ -275,25 +276,14 @@ export default withAuth(
     // fetches, SWR preflight, or routes added later without the layout check).
     //
     // Allow-list: paths an incomplete workspace legitimately needs to access.
-    const ONBOARDING_ALLOWLIST = [
-      "/onboarding",
-      "/api/onboarding",
-      "/api/billing",
-      "/api/auth",
-      "/api/health",
-      "/einstellungen/abonnement",
-      "/workspace-inaktiv",
-      "/testphase-abgelaufen",
-      "/hard-block",
-      "/api/profile", // profile update (name, locale)
-      "/api/push-subscriptions", // service-worker registration
-    ];
+    // Source of truth lives in @/lib/onboarding-allowlist so a test can
+    // assert it covers every endpoint the wizard actually fetches.
     const token = req.nextauth?.token;
     if (
       token &&
       token.onboardingCompleted === false &&
       (token.role === "OWNER" || token.role === "ADMIN") &&
-      !ONBOARDING_ALLOWLIST.some((p) => pathname.startsWith(p)) &&
+      !isOnboardingAllowed(pathname) &&
       !pathname.startsWith("/api/auth") &&
       // public/unauthenticated routes (already excluded by authorized())
       !pathname.startsWith("/sos/respond") &&
@@ -436,7 +426,13 @@ export default withAuth(
     }
 
     // ── Import endpoint — strict rate limit (5 req / 60s) ──
-    if (pathname.startsWith("/api/import")) {
+    // Uploads only. /api/import/status is polled once a second while a job
+    // runs, so charging it to a 5-per-minute budget meant every import that
+    // took longer than about four seconds was killed by a 429 mid-poll.
+    if (
+      pathname.startsWith("/api/import") &&
+      !pathname.startsWith("/api/import/status")
+    ) {
       if (importLimiter) {
         try {
           const result = await importLimiter.limit(ip);
@@ -548,7 +544,8 @@ export default withAuth(
     if (
       pathname.startsWith("/api/") &&
       !pathname.startsWith("/api/auth") &&
-      !pathname.startsWith("/api/import")
+      (!pathname.startsWith("/api/import") ||
+        pathname.startsWith("/api/import/status"))
     ) {
       if (apiLimiter) {
         try {

@@ -72,7 +72,8 @@ const baseAdapter = PrismaAdapter(prisma);
 type LinkAccountArg = Parameters<
   NonNullable<typeof baseAdapter.linkAccount>
 >[0];
-const adapter: NextAuthOptions["adapter"] = {
+/** Exported for testing — see __tests__/lib/oauth-account-linking.test.ts */
+export const adapter: NextAuthOptions["adapter"] = {
   ...baseAdapter,
   linkAccount: async (account: LinkAccountArg) => {
     const owner = await prisma.user.findUnique({
@@ -83,6 +84,36 @@ const adapter: NextAuthOptions["adapter"] = {
       // Surfaces as /login?error=OAuthAccountNotLinked — same as stock NextAuth.
       throw new Error("OAuthAccountNotLinked");
     }
+
+    // Second half of the guard: auto-linking exists for ONE case — a user
+    // created without any Account row (the iOS app stores them by verified
+    // email) signing in on the web for the first time. Once that user has an
+    // account with this provider, a *different* identity from the same
+    // provider must never attach to it.
+    //
+    // Without this, two distinct Google identities whose verified email
+    // matched collapsed into a single workspace — which is exactly what
+    // happened in production: one user ended up with two google Account rows
+    // carrying different providerAccountIds, so a genuinely new sign-up
+    // silently resumed somebody else's account.
+    const sameProvider = await prisma.account.findFirst({
+      where: { userId: account.userId, provider: account.provider },
+      select: { providerAccountId: true },
+    });
+    if (
+      sameProvider &&
+      sameProvider.providerAccountId !== account.providerAccountId
+    ) {
+      log.warn(
+        "[auth] refused second identity for an already-linked provider",
+        {
+          userId: account.userId,
+          provider: account.provider,
+        },
+      );
+      throw new Error("OAuthAccountNotLinked");
+    }
+
     return baseAdapter.linkAccount!(account);
   },
 } as NextAuthOptions["adapter"];

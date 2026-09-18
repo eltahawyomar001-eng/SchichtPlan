@@ -1085,7 +1085,6 @@ export default function OnboardingPage() {
   const [subGate, setSubGate] = useState<SubGate>("checking");
   const pollCountRef = useRef(0);
   const t = useTranslations("onboardingWizard");
-  const { update } = useSession();
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -1160,32 +1159,15 @@ export default function OnboardingPage() {
             <span className="text-emerald-600 dark:text-emerald-400">fy</span>
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          {subGate === "active" && (
-            <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/onboarding/complete", {
-                    method: "POST",
-                  });
-                  // Refresh the cookie before navigating so the middleware
-                  // onboarding gate sees onboardingCompleted=true (avoids the
-                  // /dashboard → /onboarding redirect loop).
-                  if (res.ok) {
-                    await update();
-                  }
-                } catch {
-                  // best-effort
-                }
-                window.location.href = "/dashboard";
-              }}
-              className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
-            >
-              {t("skipSetup")}
-            </button>
-          )}
-        </div>
+        {/* No "skip setup" escape hatch.
+            It marked onboarding complete and dropped the owner on the
+            dashboard without a location, without employees and without a
+            payment method — the three things the wizard exists to collect.
+            The card gate in the dashboard layout then bounced them straight
+            back here, so the button did not even deliver the escape it
+            promised: it just produced a half-built workspace and a redirect
+            loop. Every step is skippable from inside the wizard instead. */}
+        <ThemeToggle />
       </header>
 
       {subGate !== "active" ? (

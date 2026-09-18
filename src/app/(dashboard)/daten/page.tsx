@@ -50,22 +50,79 @@ export default function DatenSeite() {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
-      if (res.ok) {
-        setImportMsg({
-          type: "success",
-          text: `${data.imported} ${t("recordsImported")}`,
-        });
-        if (fileRef.current) fileRef.current.value = "";
-      } else {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
         setImportMsg({
           type: "error",
           text: data.message || data.error || t("importError"),
         });
+        setImporting(false);
+        return;
       }
+
+      // /api/import answers 202 with a job id and does the inserts after the
+      // response. This page used to read `data.imported`, a field the route
+      // stopped returning when it moved to async jobs — so a perfectly good
+      // import reported "undefined records imported" and a failing one
+      // reported nothing at all. Poll the job like the onboarding wizard does.
+      const { jobId } = data as { jobId?: string };
+      if (!jobId) {
+        setImportMsg({ type: "error", text: t("importError") });
+        setImporting(false);
+        return;
+      }
+
+      let attempts = 0;
+      const MAX_POLL_ATTEMPTS = 150; // 150 × 1s — far past any 500-row import
+      const poll = async (): Promise<void> => {
+        try {
+          const sres = await fetch(
+            `/api/import/status?jobId=${encodeURIComponent(jobId)}`,
+          );
+          const job = await sres.json().catch(() => ({}));
+          if (!sres.ok) {
+            setImportMsg({
+              type: "error",
+              text: job.error || job.message || t("importError"),
+            });
+            setImporting(false);
+            return;
+          }
+          if (++attempts > MAX_POLL_ATTEMPTS) {
+            setImportMsg({ type: "error", text: t("importTimeout") });
+            setImporting(false);
+            return;
+          }
+          if (job.status === "done") {
+            setImportMsg({
+              type: "success",
+              text: t("importResult", {
+                created: job.created ?? 0,
+                skipped: job.skipped ?? 0,
+                duplicates: job.duplicates ?? 0,
+              }),
+            });
+            if (fileRef.current) fileRef.current.value = "";
+            setImporting(false);
+            return;
+          }
+          if (job.status === "error") {
+            setImportMsg({
+              type: "error",
+              text: job.error || t("importError"),
+            });
+            setImporting(false);
+            return;
+          }
+          setTimeout(poll, 1000);
+        } catch {
+          setImportMsg({ type: "error", text: t("networkError") });
+          setImporting(false);
+        }
+      };
+      void poll();
     } catch {
       setImportMsg({ type: "error", text: t("networkError") });
-    } finally {
       setImporting(false);
     }
   }
@@ -131,6 +188,11 @@ export default function DatenSeite() {
             <CardTitle>{t("importTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {importType === "employees" && (
+              <p className="rounded-lg bg-gray-50 dark:bg-zinc-800/50 px-3 py-2 text-xs text-gray-600 dark:text-zinc-400 leading-relaxed">
+                {t("importColumnsHint")}
+              </p>
+            )}
             <div className="flex flex-wrap items-end gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
@@ -153,7 +215,7 @@ export default function DatenSeite() {
                 <input
                   ref={fileRef}
                   type="file"
-                  accept=".csv,.xlsx,.xls"
+                  accept=".csv,.xlsx"
                   className="text-sm"
                 />
               </div>
@@ -169,8 +231,8 @@ export default function DatenSeite() {
               <div
                 className={`rounded-lg p-3 text-sm ${
                   importMsg.type === "success"
-                    ? "bg-green-50 text-green-800 border border-green-200"
-                    : "bg-red-50 text-red-800 border border-red-200"
+                    ? "bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-900/50"
+                    : "bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900/50"
                 }`}
               >
                 {importMsg.text}

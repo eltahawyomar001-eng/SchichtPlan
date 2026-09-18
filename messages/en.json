@@ -396,7 +396,6 @@
     "back": "Back",
     "next": "Next",
     "saving": "Saving...",
-    "skipSetup": "Skip setup",
     "genericError": "Something went wrong. Please try again.",
     "networkError": "Network error. Please check your connection.",
     "footerText": "You can change these settings at any time.",
@@ -1010,7 +1009,8 @@
       "onBreak": "On break",
       "breakDone": "Break done",
       "offline": "Not clocked in"
-    }
+    },
+    "importEmployees": "Import"
   },
   "employeeDetail": {
     "title": "Employee Details",
@@ -3166,7 +3166,10 @@
     "exportError": "Export failed",
     "icalTitle": "iCal Subscription",
     "icalDesc": "Add this URL to your calendar app (Google, Apple, Outlook) to automatically sync shifts.",
-    "copy": "Copy"
+    "copy": "Copy",
+    "importResult": "{created} imported, {skipped} skipped, {duplicates} duplicates.",
+    "importTimeout": "The import is taking unusually long. Please reload the page and check the result.",
+    "importColumnsHint": "Columns: first name, last name, email (required), optional phone, position, hourly rate, weekly hours. Max 500 rows."
   },
   "planLimit": {
     "title": "Plan Limit Reached",

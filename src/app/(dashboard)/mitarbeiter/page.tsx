@@ -31,6 +31,7 @@ import {
   BuildingIcon,
   ClockIcon,
   AlertCircleIcon,
+  UploadCloudIcon,
 } from "@/components/icons";
 
 interface EmployeeSkill {
@@ -505,23 +506,36 @@ export default function MitarbeiterPage() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button
-            size="sm"
-            onClick={openCreateForm}
-            disabled={isAtEmployeeLimit}
-            title={
-              isAtEmployeeLimit
-                ? t("limitReached", {
-                    used: employees.length,
-                    limit: employeeLimit,
-                  })
-                : undefined
-            }
-          >
-            <PlusIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("newEmployee")}</span>
-            <span className="sm:hidden">{tc("new")}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* The CSV/Excel import lives on /daten, which nobody looking to
+                add staff would think to open. Bulk import is the same job as
+                "new employee", so it belongs beside it. */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/daten")}
+            >
+              <UploadCloudIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("importEmployees")}</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={openCreateForm}
+              disabled={isAtEmployeeLimit}
+              title={
+                isAtEmployeeLimit
+                  ? t("limitReached", {
+                      used: employees.length,
+                      limit: employeeLimit,
+                    })
+                  : undefined
+              }
+            >
+              <PlusIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("newEmployee")}</span>
+              <span className="sm:hidden">{tc("new")}</span>
+            </Button>
+          </div>
         }
       />
 

@@ -396,7 +396,6 @@
     "back": "Zurueck",
     "next": "Weiter",
     "saving": "Speichern...",
-    "skipSetup": "Einrichtung ueberspringen",
     "genericError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "networkError": "Netzwerkfehler. Bitte pruefen Sie Ihre Verbindung.",
     "footerText": "Sie koennen diese Einstellungen jederzeit aendern.",
@@ -1010,7 +1009,8 @@
       "onBreak": "In Pause",
       "breakDone": "Pause beendet",
       "offline": "Nicht eingestempelt"
-    }
+    },
+    "importEmployees": "Importieren"
   },
   "employeeDetail": {
     "title": "Mitarbeiter-Details",
@@ -3166,7 +3166,10 @@
     "exportError": "Export fehlgeschlagen",
     "icalTitle": "iCal-Abonnement",
     "icalDesc": "Fügen Sie diese URL in Ihren Kalender (Google, Apple, Outlook) ein, um Schichten automatisch zu synchronisieren.",
-    "copy": "Kopieren"
+    "copy": "Kopieren",
+    "importResult": "{created} importiert, {skipped} übersprungen, {duplicates} Duplikate.",
+    "importTimeout": "Der Import dauert ungewöhnlich lange. Bitte laden Sie die Seite neu und prüfen Sie das Ergebnis.",
+    "importColumnsHint": "Spalten: Vorname, Nachname, E-Mail (erforderlich), optional Telefon, Position, Stundenlohn, Wochenstunden. Max. 500 Zeilen."
   },
   "planLimit": {
     "title": "Plan-Limit erreicht",

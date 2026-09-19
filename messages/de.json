@@ -158,7 +158,8 @@
     "favAdd": "Zu Favoriten hinzufügen",
     "favRemove": "Aus Favoriten entfernen",
     "addonBadge": "Add-on",
-    "favorites": "Favoriten"
+    "favorites": "Favoriten",
+    "photoProof": "Fotonachweise"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -4343,5 +4344,31 @@
         ]
       }
     ]
+  },
+  "proofPhotos": {
+    "title": "Fotonachweise",
+    "description": "Fotos mit servergeprüfter Uhrzeit und Position — für Baustellen, Winterdienst und Sicherheitsdienst.",
+    "filterDate": "Datum",
+    "filterEmployee": "Mitarbeiter",
+    "allEmployees": "Alle Mitarbeiter",
+    "flaggedCount": "{count, plural, =1 {1 Nachweis auffällig} other {# Nachweise auffällig}}",
+    "emptyTitle": "Keine Fotonachweise",
+    "emptyDescription": "Für diesen Tag wurden keine Fotonachweise aufgenommen.",
+    "loadError": "Die Fotonachweise konnten nicht geladen werden.",
+    "detailTitle": "Fotonachweis",
+    "photoAlt": "Fotonachweis",
+    "unknownEmployee": "Unbekannt",
+    "verdictInside": "Am Objekt",
+    "verdictOutside": "Außerhalb",
+    "verdictOutsideDistance": "{distance} m entfernt",
+    "verdictUnavailable": "Ohne Standort",
+    "verdictMocked": "Standort simuliert",
+    "accuracy": "Genauigkeit ±{accuracy} m",
+    "fieldEmployee": "Mitarbeiter",
+    "fieldCapturedAt": "Aufgenommen",
+    "fieldLocation": "Objekt",
+    "fieldNote": "Notiz",
+    "fieldCoordinates": "Koordinaten",
+    "evidenceNote": "Uhrzeit und Entfernung wurden serverseitig bestimmt, nicht vom Gerät gemeldet. Die Aufnahme erfolgte direkt in der App; Bilder aus der Galerie sind nicht zulässig."
   }
 }

@@ -35,6 +35,7 @@ import {
   CreditCardIcon,
   ShieldCheckIcon,
   FileCheckIcon,
+  ImageIcon,
   TicketIcon,
   SearchIcon,
   StarIcon,
@@ -81,6 +82,11 @@ const navGroups: NavGroup[] = [
         key: "serviceProof",
         href: "/leistungsnachweis",
         icon: FileCheckIcon,
+      },
+      {
+        key: "photoProof",
+        href: "/fotonachweise",
+        icon: ImageIcon,
       },
       {
         key: "tickets",

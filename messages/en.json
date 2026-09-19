@@ -158,7 +158,8 @@
     "favAdd": "Add to favorites",
     "favRemove": "Remove from favorites",
     "addonBadge": "Add-on",
-    "favorites": "Favorites"
+    "favorites": "Favorites",
+    "photoProof": "Photo Proof"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -4343,5 +4344,31 @@
         ]
       }
     ]
+  },
+  "proofPhotos": {
+    "title": "Photo proof",
+    "description": "Photos with a server-verified time and position — for construction sites, winter service and security.",
+    "filterDate": "Date",
+    "filterEmployee": "Employee",
+    "allEmployees": "All employees",
+    "flaggedCount": "{count, plural, =1 {1 proof flagged} other {# proofs flagged}}",
+    "emptyTitle": "No photo proof",
+    "emptyDescription": "No photo proof was captured on this day.",
+    "loadError": "The photo proof could not be loaded.",
+    "detailTitle": "Photo proof",
+    "photoAlt": "Photo proof",
+    "unknownEmployee": "Unknown",
+    "verdictInside": "On site",
+    "verdictOutside": "Off site",
+    "verdictOutsideDistance": "{distance} m away",
+    "verdictUnavailable": "No position",
+    "verdictMocked": "Position spoofed",
+    "accuracy": "Accuracy ±{accuracy} m",
+    "fieldEmployee": "Employee",
+    "fieldCapturedAt": "Captured",
+    "fieldLocation": "Site",
+    "fieldNote": "Note",
+    "fieldCoordinates": "Coordinates",
+    "evidenceNote": "The time and distance were determined server side, not reported by the device. The photo was taken in the app; images from the gallery are not accepted."
   }
 }

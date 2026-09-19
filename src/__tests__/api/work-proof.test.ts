@@ -9,6 +9,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
+  mockFindMany,
+  mockRole,
   mockEmployeeFindFirst,
   mockCreate,
   mockLocationFindFirst,
@@ -17,6 +19,8 @@ const {
   mockStat,
   mockDelete,
 } = vi.hoisted(() => ({
+  mockFindMany: vi.fn(),
+  mockRole: { value: "OWNER" as string },
   mockEmployeeFindFirst: vi.fn(),
   mockCreate: vi.fn(),
   mockLocationFindFirst: vi.fn(),
@@ -29,7 +33,7 @@ const {
 vi.mock("@/lib/db", () => ({
   prisma: {
     employee: { findFirst: mockEmployeeFindFirst },
-    workProofPhoto: { create: mockCreate, findMany: vi.fn() },
+    workProofPhoto: { create: mockCreate, findMany: mockFindMany },
     location: { findFirst: mockLocationFindFirst },
     timeEntry: { findFirst: mockTimeEntryFindFirst },
     shift: { findFirst: mockShiftFindFirst },
@@ -51,7 +55,7 @@ vi.mock("@/lib/api-response", async (importOriginal) => {
     ...orig,
     requireAuth: vi.fn(async () => ({
       ok: true,
-      user: { id: "user-1" },
+      user: { id: "user-1", role: mockRole.value },
       workspaceId: "ws-1",
     })),
   };
@@ -188,5 +192,51 @@ describe("POST /api/work-proof", () => {
     mockEmployeeFindFirst.mockResolvedValue(null);
     const res = await handler.POST(post(VALID));
     expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /api/work-proof", () => {
+  let handler: typeof import("@/app/api/work-proof/route");
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockFindMany.mockResolvedValue([]);
+    mockEmployeeFindFirst.mockResolvedValue({ id: "emp-1" });
+    handler = await import("@/app/api/work-proof/route");
+  });
+
+  it("shows a manager the whole workspace", async () => {
+    mockRole.value = "MANAGER";
+    await handler.GET(new Request("http://localhost/api/work-proof"));
+    const where = mockFindMany.mock.calls[0][0].where;
+    expect(where.workspaceId).toBe("ws-1");
+    expect(where.employeeId).toBeUndefined();
+  });
+
+  it("restricts an employee to their own proof", async () => {
+    mockRole.value = "EMPLOYEE";
+    await handler.GET(new Request("http://localhost/api/work-proof"));
+    const where = mockFindMany.mock.calls[0][0].where;
+    // Server-derived, never taken from the query string.
+    expect(where.employeeId).toBe("emp-1");
+  });
+
+  it("returns nothing for an employee with no employee record", async () => {
+    mockRole.value = "EMPLOYEE";
+    mockEmployeeFindFirst.mockResolvedValue(null);
+    const res = await handler.GET(
+      new Request("http://localhost/api/work-proof"),
+    );
+    expect(await res.json()).toEqual({ photos: [] });
+    expect(mockFindMany).not.toHaveBeenCalled();
+  });
+
+  it("ignores an employeeId supplied in the query string", async () => {
+    mockRole.value = "EMPLOYEE";
+    await handler.GET(
+      new Request("http://localhost/api/work-proof?employeeId=emp-999"),
+    );
+    const where = mockFindMany.mock.calls[0][0].where;
+    expect(where.employeeId).toBe("emp-1");
   });
 });

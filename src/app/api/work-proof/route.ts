@@ -5,6 +5,7 @@ import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { evaluateGeofence } from "@/lib/geofence";
+import { isManagement } from "@/lib/authorization";
 import {
   ALLOWED_PHOTO_MIME,
   createPhotoReadUrl,
@@ -176,7 +177,27 @@ export const POST = withRoute("/api/work-proof", "POST", async (req) => {
 export const GET = withRoute("/api/work-proof", "GET", async (req) => {
   const auth = await requireAuth();
   if (!auth.ok) return auth.response;
-  const { workspaceId } = auth;
+  const { user, workspaceId } = auth;
+
+  /**
+   * An employee sees only their own proof, never a colleague's.
+   *
+   * These photos are of workplaces and sometimes of people, and one worker has
+   * no business reviewing where another was standing at 05:20. Managers see the
+   * whole workspace because reviewing the round is the entire point for them.
+   * The filter is applied server-side: a client-supplied employeeId would let
+   * anyone read anyone.
+   */
+  let ownEmployeeId: string | null = null;
+  if (!isManagement(user)) {
+    const me = await prisma.employee.findFirst({
+      where: { workspaceId, userId: user.id },
+      select: { id: true },
+    });
+    // No employee record means nothing of their own exists to show.
+    if (!me) return NextResponse.json({ photos: [] });
+    ownEmployeeId = me.id;
+  }
 
   const { searchParams } = new URL(req.url);
   const shiftId = searchParams.get("shiftId");
@@ -187,6 +208,7 @@ export const GET = withRoute("/api/work-proof", "GET", async (req) => {
     where: {
       workspaceId,
       deletedAt: null,
+      ...(ownEmployeeId ? { employeeId: ownEmployeeId } : {}),
       ...(shiftId ? { shiftId } : {}),
       ...(timeEntryId ? { timeEntryId } : {}),
       ...(date

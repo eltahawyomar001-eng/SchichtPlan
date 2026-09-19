@@ -79,8 +79,8 @@ export const SCOPED_MODELS: ReadonlySet<string> = new Set([
   "BetriebsratMember",
   "Client",
   "ComplianceOverride",
-  "CustomerInvoice",
   "CustomRole",
+  "CustomerInvoice",
   "DATEVToken",
   "DatevOAuthState",
   "Department",
@@ -126,6 +126,7 @@ export const SCOPED_MODELS: ReadonlySet<string> = new Set([
   "VacationBalance",
   "WebhookEndpoint",
   "WebhookFailure",
+  "WorkProofPhoto",
   "WorkspaceCustomer",
   "WorkspaceUsage",
 ]);

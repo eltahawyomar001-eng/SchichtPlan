@@ -238,6 +238,7 @@ model Workspace {
   timesheetImports       TimesheetImport[]
   timesheetImportEntries TimesheetImportEntry[]
   complianceOverrides    ComplianceOverride[]
+  workProofPhotos        WorkProofPhoto[]
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -759,6 +760,7 @@ model Employee {
   bewacherValidatedAt    DateTime?
   /// Date the Zuverlässigkeitsüberprüfung (§34a Abs. 1) was confirmed.
   reliabilityCheckedAt   DateTime?
+  workProofPhotos        WorkProofPhoto[]
 
   @@unique([email, workspaceId])
   @@unique([workspaceId, pinHash])
@@ -816,6 +818,7 @@ model Location {
   serviceVisits        ServiceVisit[]
   employees            Employee[]
   requiredSkills       LocationRequiredSkill[]
+  workProofPhotos      WorkProofPhoto[]
 
   @@index([workspaceId, deletedAt])
 }
@@ -933,6 +936,7 @@ model Shift {
   changeRequests   ShiftChangeRequest[]
   autoFillLogs     AutoFillLog[]
   sosRequests      SosRequest[]
+  workProofPhotos  WorkProofPhoto[]
 
   @@index([workspaceId, date])
   @@index([employeeId, date])
@@ -1058,6 +1062,7 @@ model TimeEntry {
   workspaceId            String
   workspace              Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   auditLog               TimeEntryAudit[]
+  workProofPhotos        WorkProofPhoto[]
   // DB-level guard (not expressible in Prisma schema — see
   // prisma/migrations/20260604_timeentry_one_open_live_clock/migration.sql):
   // a PARTIAL UNIQUE INDEX on (employeeId) WHERE isLiveClock AND clockOutAt IS NULL
@@ -2482,4 +2487,63 @@ model CustomerInvoiceItem {
   invoice        CustomerInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
+}
+
+/// Photographic proof that a job was done, at a place, at a time.
+///
+/// The evidence value comes entirely from the stamps being ours, not the
+/// device's: `capturedAt` is the server clock at the moment the upload is
+/// registered, and `distanceM` / `geofenceStatus` are recomputed server-side
+/// from the raw fix against the object's coordinates — exactly as TimeEntry
+/// does for the punch clock. A client-reported distance, verdict or timestamp
+/// is never stored, because the person being measured must not be able to
+/// influence the measurement.
+///
+/// Built for Winterdienst, Baustellen and Security, where the dispute is
+/// "was this done, and when" and a photo without a trustworthy time and place
+/// settles nothing.
+model WorkProofPhoto {
+  id             String          @id @default(cuid())
+  /// Object key inside the private storage bucket. Deliberately not a public
+  /// URL — the image is served through a short-lived signed URL so a leaked
+  /// link cannot become permanent access to a customer's site photos.
+  storagePath    String          @db.Text
+  fileName       String          @db.VarChar(500)
+  fileType       String          @db.VarChar(150)
+  fileSize       BigInt
+  /// Server clock when the upload was registered. The device clock is not
+  /// evidence: it is trivially changed in Settings.
+  capturedAt     DateTime        @default(now())
+  /// Raw device fix. Kept for audit even when no verdict could be reached.
+  latitude       Float?
+  longitude      Float?
+  accuracyM      Float?
+  /// Server-computed haversine distance to the linked object, in metres.
+  distanceM      Float?
+  geofenceStatus GeofenceStatus?
+  /// OS-reported mock location. Android exposes this; iOS does not, so false
+  /// is not proof of authenticity.
+  locationMocked Boolean         @default(false)
+  /// Optional short caption from the worker ("Streugut ausgebracht").
+  note           String?         @db.VarChar(500)
+
+  timeEntryId String?
+  timeEntry   TimeEntry? @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+  shiftId     String?
+  shift       Shift?     @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  locationId  String?
+  location    Location?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  employeeId  String
+  /// RESTRICT for the same reason as TimeEntry: this is retained evidence.
+  employee    Employee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  workspaceId String
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([workspaceId, capturedAt])
+  @@index([timeEntryId])
+  @@index([shiftId])
+  @@index([employeeId])
 }

@@ -159,6 +159,8 @@ function WelcomeStep({ onNext }: StepProps) {
 
 function LocationStep({ onNext, onBack }: StepProps) {
   const t = useTranslations("onboardingWizard");
+  /** Set once the location exists, so a second Next cannot create another. */
+  const createdIdRef = useRef<string | null>(null);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -170,6 +172,15 @@ function LocationStep({ onNext, onBack }: StepProps) {
       setError(t("locationRequired"));
       return;
     }
+    // Already created on a previous pass through this step — going Back and
+    // forward again, or reloading mid-wizard, must not create a duplicate.
+    // That is how a brand-new workspace ended up refusing its own first
+    // location: the second POST tripped the plan ceiling.
+    if (createdIdRef.current) {
+      onNext();
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -187,6 +198,8 @@ function LocationStep({ onNext, onBack }: StepProps) {
         setLoading(false);
         return;
       }
+      const created = await res.json().catch(() => ({}));
+      createdIdRef.current = created?.id ?? "created";
       onNext();
     } catch {
       setError(t("networkError"));
@@ -280,6 +293,8 @@ function LocationStep({ onNext, onBack }: StepProps) {
 /* ─── Step 3: Add Employee ───────────────────────────────────── */
 
 function EmployeeStep({ onNext, onBack }: StepProps) {
+  /** Set once an employee exists, so a second Next cannot create another. */
+  const createdIdRef = useRef<string | null>(null);
   const t = useTranslations("onboardingWizard");
   const [mode, setMode] = useState<"single" | "bulk">("single");
   const [firstName, setFirstName] = useState("");
@@ -385,19 +400,32 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
       setError(t("nameRequired"));
       return;
     }
+    // Same duplicate guard as the location step.
+    if (createdIdRef.current) {
+      onNext();
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Only what the form actually asked for.
+        //
+        // This used to send hourlyRate: 12.41 and weeklyHours: 40, neither of
+        // which appears anywhere on this step. The wage then fell below the
+        // statutory minimum (MiLoG, currently 13.90 €/h) and the API rejected
+        // every single employee created during onboarding, citing a salary the
+        // user was never shown a field for. Inventing payroll data on someone's
+        // behalf is wrong even when it happens to pass validation: it writes a
+        // wage into the record that nobody agreed to.
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           email: email.trim() || undefined,
           position: position.trim() || undefined,
-          hourlyRate: 12.41,
-          weeklyHours: 40,
         }),
       });
       if (!res.ok) {
@@ -406,6 +434,8 @@ function EmployeeStep({ onNext, onBack }: StepProps) {
         setLoading(false);
         return;
       }
+      const created = await res.json().catch(() => ({}));
+      createdIdRef.current = created?.id ?? "created";
       onNext();
     } catch {
       setError(t("networkError"));

@@ -461,13 +461,12 @@ export async function cancelSubscription(stripeSubscriptionId: string) {
  * (dashboard layout) but defence-in-depth here too.
  */
 export async function canAddEmployee(workspaceId: string): Promise<boolean> {
-  const sub = await getSubscription(workspaceId);
-  if (!sub) return false;
-  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
-    return false;
-
-  const planId = sub.plan.toLowerCase() as PlanId;
-  const plan = PLANS[planId];
+  // getWorkspacePlan, NOT the raw PLANS entry: a free trial widens the limits
+  // via TRIAL_LIMIT_OVERRIDES, and requireEmployeeSlot builds its error message
+  // from the same trial-aware source. Reading raw limits here made the check
+  // and the message disagree — a trial user was stopped at the Basic ceiling
+  // while being told the maximum was the higher trial one.
+  const plan = await getWorkspacePlan(workspaceId);
   if (!plan) return false;
 
   if (plan.limits.maxEmployees === Infinity) return true;
@@ -484,13 +483,10 @@ export async function canAddEmployee(workspaceId: string): Promise<boolean> {
  * Returns false when there is no active subscription.
  */
 export async function canAddLocation(workspaceId: string): Promise<boolean> {
-  const sub = await getSubscription(workspaceId);
-  if (!sub) return false;
-  if (!(ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status))
-    return false;
-
-  const planId = sub.plan.toLowerCase() as PlanId;
-  const plan = PLANS[planId];
+  // Same trial-aware source as requireLocationSlot's message — see
+  // canAddEmployee above for what going out of step here looked like:
+  // "you have reached the maximum of 3 locations" while holding exactly one.
+  const plan = await getWorkspacePlan(workspaceId);
   if (!plan) return false;
 
   if (plan.limits.maxLocations === Infinity) return true;

@@ -190,6 +190,12 @@ export default function EinladungPage() {
     ALREADY_IN_WORKSPACE: t("errorAlreadyInWorkspace"),
     NETWORK_ERROR: t("errorNetwork"),
     ACCEPT_FAILED: t("errorAcceptFailed"),
+    // withRoute maps a Prisma unique-constraint violation to this. It should no
+    // longer be reachable here, but an invitation page is the worst possible
+    // place to find out otherwise — this is the first impression a new
+    // colleague gets of the product.
+    Conflict: t("errorAcceptFailed"),
+    CONFLICT: t("errorAcceptFailed"),
   };
 
   // Loading state
@@ -371,8 +377,11 @@ export default function EinladungPage() {
         {error && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm font-medium text-red-800">
-              {(error ? errorMessages[error] || error : null) ||
-                t("errorGeneric")}
+              {/* Never fall through to the raw value. An unmapped code used
+                  to be printed verbatim, which is how a bare "Conflict" — an
+                  HTTP status, not a sentence — ended up shown to an invited
+                  colleague. */}
+              {(error ? errorMessages[error] : null) || t("errorGeneric")}
             </p>
             {error === "ALREADY_IN_WORKSPACE" && (
               <p className="mt-1 text-xs text-red-600">

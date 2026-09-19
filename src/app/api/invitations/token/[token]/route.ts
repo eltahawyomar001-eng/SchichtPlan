@@ -150,6 +150,30 @@ export const POST = withRoute(
         },
       });
 
+      /**
+       * Release this user's previous employee link before claiming a new one.
+       *
+       * Employee.userId carries a GLOBAL unique index (Employee_userId_key), so
+       * one user account can be linked to exactly one employee row anywhere in
+       * the database — that is how the single-workspace-per-user model is
+       * enforced at the storage layer. Registration creates an employee row for
+       * every owner, so anyone who signed up on their own already holds that
+       * link. Accepting an invitation then tried to take a second one and
+       * tripped P2002, which withRoute renders as a bare "Conflict".
+       *
+       * The row itself is deliberately kept, only unlinked: it carries time
+       * entries subject to ArbZG §16 retention, so deleting it is not an option
+       * and would be wrong anyway. The person has left that workspace; their
+       * historical record has not.
+       */
+      await tx.employee.updateMany({
+        where: {
+          userId: user.id,
+          workspaceId: { not: invitation.workspaceId },
+        },
+        data: { userId: null },
+      });
+
       // Auto-link or create an Employee record
       const existingEmployee = await tx.employee.findFirst({
         where: {

@@ -62,3 +62,9 @@ __pycache__/
 # Apple Sign in with Apple private keys — NEVER commit
 AuthKey_*
 *.p8
+
+# Service account keys / credentials (never commit)
+*-iam.gserviceaccount.com.json
+schichtplan-488118-*.json
+service-account*.json
+*-serviceaccount*.json

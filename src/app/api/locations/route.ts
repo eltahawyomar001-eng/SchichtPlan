@@ -8,6 +8,16 @@ import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { resolveAndPersistLocationGeo } from "@/lib/geocode";
+
+/**
+ * How long creating a location will wait on a geocoder.
+ *
+ * Long enough for an Open-Meteo hit, which is the overwhelming majority, and
+ * short enough that a manager adding an object never sits on a spinner because
+ * a third party is having a bad day.
+ */
+const GEOCODE_BUDGET_MS = 3000;
 
 export const GET = withRoute("/api/locations", "GET", async (req) => {
   const auth = await requireAuth();
@@ -65,6 +75,26 @@ export const POST = withRoute(
       },
     });
 
+    /**
+     * Resolve coordinates now, not eventually.
+     *
+     * A location was only ever geocoded by the manual "Resolve coordinates"
+     * button or as a side effect of the weather widget, so an object created
+     * through onboarding or the locations page had none. Without a reference
+     * point the geofence cannot judge anything: every punch and every proof
+     * photo at that object comes back "cannot be checked", and nothing tells
+     * the manager why. That is a silent failure of the feature, so the common
+     * case has to land before the row is first used.
+     *
+     * Bounded, and never fatal. A geocoding provider is a third party on
+     * someone else's network and must not decide whether a location can be
+     * created — if it is slow or down, the row is created without coordinates
+     * and the nightly sweep picks it up.
+     */
+    const geo = await resolveAndPersistLocationGeo(location.id, {
+      budgetMs: GEOCODE_BUDGET_MS,
+    });
+
     createAuditLog({
       action: "CREATE",
       entityType: "Location",
@@ -81,7 +111,10 @@ export const POST = withRoute(
       address,
     }).catch(() => {});
 
-    return NextResponse.json(location, { status: 201 });
+    return NextResponse.json(
+      geo ? { ...location, latitude: geo.lat, longitude: geo.lon } : location,
+      { status: 201 },
+    );
   },
   { idempotent: true },
 );

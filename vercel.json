@@ -68,6 +68,10 @@
     {
       "path": "/api/cron/purge-deleted",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/geocode-locations",
+      "schedule": "15 3 * * *"
     }
   ]
 }

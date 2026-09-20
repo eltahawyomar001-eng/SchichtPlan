@@ -10,6 +10,10 @@ import { withRoute } from "@/lib/with-route";
 import { updateLocationSchema, validateBody } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { resolveAndPersistLocationGeo } from "@/lib/geocode";
+
+/** Same ceiling as creation: fast enough for the common hit, never a spinner. */
+const GEOCODE_BUDGET_MS = 3000;
 
 export const PATCH = withRoute(
   "/api/locations/[id]",
@@ -34,6 +38,17 @@ export const PATCH = withRoute(
     const body = _json.data;
     const parsed = validateBody(updateLocationSchema, body);
     if (!parsed.success) return parsed.response;
+
+    // Needed to tell an address EDIT from an unrelated field update. Stale
+    // coordinates are worse than none: they point the geofence at the old site
+    // and mark honest work "outside".
+    const before = await prisma.location.findFirst({
+      where: { id, workspaceId },
+      select: { address: true, latitude: true, longitude: true },
+    });
+    if (!before) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const data: Record<string, unknown> = {
       name: parsed.data.name,
@@ -62,6 +77,28 @@ export const PATCH = withRoute(
       where: { id, workspaceId },
       data,
     });
+
+    /**
+     * Re-resolve when the address moved, fill in when it was never resolved.
+     *
+     * Skipped entirely when the client sent explicit coordinates: a manager who
+     * has just dragged the pin or typed a correction outranks any geocoder, and
+     * overwriting that would make the manual control useless. `force` is
+     * correct on an address change for the same reason it is on the "Resolve
+     * coordinates" button — the coordinates on the row describe a place the
+     * object is no longer at.
+     */
+    const addressChanged = (parsed.data.address || null) !== before.address;
+    const manualCoords =
+      parsed.data.latitude !== undefined || parsed.data.longitude !== undefined;
+    const missingCoords = before.latitude == null || before.longitude == null;
+
+    if (!manualCoords && (addressChanged || missingCoords)) {
+      await resolveAndPersistLocationGeo(id, {
+        force: addressChanged,
+        budgetMs: GEOCODE_BUDGET_MS,
+      });
+    }
 
     createAuditLog({
       action: "UPDATE",

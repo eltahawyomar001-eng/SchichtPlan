@@ -67,14 +67,35 @@ export async function geocodeNominatim(
   }
 }
 
-/** Try both providers against the most specific query first. */
+/**
+ * Try both providers against the most specific query first.
+ *
+ * `allowNameFallback` decides whether a location's NAME may be used as a
+ * geocoding query when it has no address, and it defaults to off because doing
+ * so is actively dangerous for a geofence.
+ *
+ * Open-Meteo's endpoint is a place-NAME search, so it answers confidently for
+ * anything that looks like a toponym anywhere on earth. A real object called
+ * "Mutlu" resolved to a town in Turkey. Even a name that is a genuine German
+ * city resolves to the city CENTRE, which against the 50 m default radius is
+ * wrong by kilometres for any actual workplace in that city.
+ *
+ * Both outcomes are worse than having no coordinates at all. With none, a punch
+ * or a proof photo is recorded as "cannot be checked", which is honest. With a
+ * name-derived point, it is recorded as OUTSIDE — evidence, kept for years
+ * under ArbZG §16, that says an employee was not where they said they were. A
+ * geofence reference point has to come from a street address or from a person.
+ */
 export async function geocodeAddress(
   address: string | null,
   name: string,
+  opts: { allowNameFallback?: boolean } = {},
 ): Promise<GeoResult | null> {
-  const queries = [address, name].filter(
+  const candidates = opts.allowNameFallback ? [address, name] : [address];
+  const queries = candidates.filter(
     (q): q is string => !!q && q.trim().length > 0,
   );
+  if (queries.length === 0) return null;
 
   for (const q of queries) {
     const geo = await geocodeOpenMeteo(q);
@@ -98,10 +119,16 @@ export async function geocodeAddress(
  *
  * `force` skips steps 1 and 2 — used by the "Resolve coordinates" button so a
  * manager can re-resolve after fixing a typo in the address.
+ *
+ * `budgetMs` bounds the provider phase. Callers on a user's request path use it
+ * so a slow or unresponsive provider cannot hold up creating a location: the
+ * fast, common case (an Open-Meteo hit) still lands inline, and anything slower
+ * falls through to the nightly sweep. Omitted, the providers run to their own
+ * per-request timeouts, which is what a background job wants.
  */
 export async function resolveAndPersistLocationGeo(
   locationId: string,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; budgetMs?: number } = {},
 ): Promise<GeoResult | null> {
   const loc = await prisma.location.findUnique({
     where: { id: locationId },
@@ -130,7 +157,20 @@ export async function resolveAndPersistLocationGeo(
     }
   }
 
-  const geo = await geocodeAddress(loc.address, loc.name);
+  // Strict on purpose: see geocodeAddress. What this function writes becomes
+  // the geofence's reference point, so it may only ever come from an address.
+  if (!loc.address || !loc.address.trim()) {
+    log.info("geocode: location has no address to resolve", {
+      locationId,
+      name: loc.name,
+    });
+    return null;
+  }
+
+  const work = geocodeAddress(loc.address, loc.name);
+  const geo = opts.budgetMs
+    ? await withBudget(work, opts.budgetMs)
+    : await work;
   if (!geo) {
     log.info("geocode: could not resolve location", {
       locationId,
@@ -163,4 +203,50 @@ async function persist(locationId: string, geo: GeoResult): Promise<void> {
       error: String(err),
     });
   }
+}
+
+/**
+ * Give a lookup a wall-clock ceiling.
+ *
+ * The losing promise is deliberately not cancelled: if it resolves after the
+ * race it still persists the coordinates through geocodeAddress's caller on the
+ * next attempt, and an orphaned fetch against a geocoding API costs nothing. A
+ * rejection is swallowed for the same reason the providers swallow theirs —
+ * failing to geocode is never a reason to fail the operation that asked.
+ */
+async function withBudget<T>(
+  work: Promise<T | null>,
+  ms: number,
+): Promise<T | null> {
+  return Promise.race([
+    work.catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
+/**
+ * Coordinates good enough for a forecast, for a location that has no address.
+ *
+ * The weather widget genuinely can work from a place name: a forecast is a
+ * city-scale quantity, and being a few kilometres off changes nothing a planner
+ * would notice. The geofence cannot, for the reasons in geocodeAddress.
+ *
+ * So this exists to keep the two apart. It never writes to the Location: a
+ * loose, name-derived point must not become the row the geofence later trusts.
+ * That coupling is exactly how a wrong reference point would get in — the
+ * weather widget resolving an object nobody had geocoded, and quietly
+ * persisting a city centre into the field that decides whether an employee gets
+ * accused of being off site.
+ */
+export async function geocodeForWeather(
+  address: string | null,
+  name: string,
+): Promise<GeoResult | null> {
+  const cacheKey = `geo:weather:${address ?? ""}|${name}`;
+  const cached = await cache.get<GeoResult>(cacheKey);
+  if (cached && isValidCoordinate(cached.lat, cached.lon)) return cached;
+
+  const geo = await geocodeAddress(address, name, { allowNameFallback: true });
+  if (geo) await cache.set(cacheKey, geo, GEO_CACHE_TTL);
+  return geo;
 }

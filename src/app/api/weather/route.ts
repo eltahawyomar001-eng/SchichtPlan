@@ -2,7 +2,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth, apiSuccess } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { cache } from "@/lib/cache";
-import { resolveAndPersistLocationGeo } from "@/lib/geocode";
+import { geocodeForWeather, resolveAndPersistLocationGeo } from "@/lib/geocode";
 import { log } from "@/lib/logger";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -150,8 +150,19 @@ export const GET = withRoute("/api/weather", "GET", async () => {
 
   // Phase 1: Geocode all locations IN PARALLEL
   // (Open-Meteo geocoding has no rate limit; per-location cache avoids repeat calls)
+  //
+  // The persisted resolver comes first and only answers for objects with a real
+  // address, because what it returns is also the geofence's reference point. An
+  // object without one falls back to a loose, name-based lookup that is NOT
+  // written to the row: a forecast is a city-scale quantity and tolerates being
+  // a few kilometres off, while a geofence marks an employee as off site for
+  // the same error. A widget must never be the thing that decides that.
   const geoResults = await Promise.all(
-    locations.map((loc) => resolveAndPersistLocationGeo(loc.id)),
+    locations.map(async (loc) => {
+      const strict = await resolveAndPersistLocationGeo(loc.id);
+      if (strict) return strict;
+      return geocodeForWeather(loc.address, loc.name);
+    }),
   );
 
   // Phase 2: Fetch weather for all geocoded locations IN PARALLEL

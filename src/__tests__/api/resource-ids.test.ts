@@ -5,7 +5,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockSession, mockPrisma } = vi.hoisted(() => ({
+const { mockSession, mockPrisma, mockResolveGeo } = vi.hoisted(() => ({
+  mockResolveGeo: vi.fn(),
   mockSession: {
     user: null as ReturnType<
       typeof import("../helpers/factories").buildOwner
@@ -13,7 +14,7 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
   },
   mockPrisma: {
     department: { update: vi.fn(), delete: vi.fn() },
-    location: { updateMany: vi.fn(), deleteMany: vi.fn() },
+    location: { updateMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn() },
     shift: {
       findFirst: vi.fn(),
       updateMany: vi.fn(),
@@ -22,6 +23,11 @@ const { mockSession, mockPrisma } = vi.hoisted(() => ({
     },
     $transaction: vi.fn(),
   },
+}));
+
+// Kept off the network: these tests are about workspace scoping, not geocoding.
+vi.mock("@/lib/geocode", () => ({
+  resolveAndPersistLocationGeo: mockResolveGeo,
 }));
 
 vi.mock("next-auth", () => ({
@@ -255,6 +261,14 @@ describe("PATCH /api/locations/[id]", () => {
   it("updates location scoped by workspaceId", async () => {
     const owner = buildOwner();
     mockSession.user = owner;
+    // PATCH reads the row first so it can tell an address EDIT from any other
+    // update: a changed address means the stored coordinates describe a place
+    // the object is no longer at, and must be re-resolved.
+    mockPrisma.location.findFirst.mockResolvedValue({
+      address: "Alexanderplatz 1, 10178 Berlin",
+      latitude: 52.52,
+      longitude: 13.405,
+    });
     mockPrisma.location.updateMany.mockResolvedValue({ count: 1 });
     const req = new Request("http://localhost/api/locations/l1", {
       method: "PATCH",

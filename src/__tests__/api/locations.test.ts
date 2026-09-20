@@ -15,6 +15,7 @@ const {
   mockLocationCreate,
   mockSubscriptionFindUnique,
   mockUsageFindUnique,
+  mockResolveGeo,
 } = vi.hoisted(() => ({
   mockSession: { user: null as SessionUser | null },
   mockLocationFindMany: vi.fn(),
@@ -22,6 +23,19 @@ const {
   mockLocationCreate: vi.fn(),
   mockSubscriptionFindUnique: vi.fn(),
   mockUsageFindUnique: vi.fn(),
+  mockResolveGeo: vi.fn(),
+}));
+
+/**
+ * Creating a location resolves its coordinates inline.
+ *
+ * Mocked here so the test never touches a geocoding provider, but asserted on:
+ * geocoding used to run only from a manual button, so objects created through
+ * this route had no coordinates, and without a reference point every punch and
+ * every proof photo at them came back unverifiable.
+ */
+vi.mock("@/lib/geocode", () => ({
+  resolveAndPersistLocationGeo: mockResolveGeo,
 }));
 
 vi.mock("next-auth", () => ({
@@ -218,5 +232,57 @@ describe("POST /api/locations", () => {
     const res = await handler.POST(postReq({ name: "Office" }));
     expect(res.status).toBe(201);
     expect(mockLocationCreate).toHaveBeenCalledOnce();
+  });
+
+  it("resolves coordinates for the new location", async () => {
+    mockSession.user = buildAdmin();
+    mockLocationCount.mockResolvedValue(0);
+    mockSubscriptionFindUnique.mockResolvedValue({
+      plan: "PROFESSIONAL",
+      status: "ACTIVE",
+    });
+    mockUsageFindUnique.mockResolvedValue(null);
+    mockLocationCreate.mockResolvedValue({
+      id: "l1",
+      name: "Office",
+      workspaceId: "ws-1",
+    });
+    mockResolveGeo.mockResolvedValue({ lat: 52.52, lon: 13.405 });
+
+    const res = await handler.POST(
+      postReq({ name: "Office", address: "Alexanderplatz 1, 10178 Berlin" }),
+    );
+
+    expect(mockResolveGeo).toHaveBeenCalledWith("l1", {
+      budgetMs: expect.any(Number),
+    });
+    // Returned to the client too, so the form shows the pin without a reload.
+    const body = await res.json();
+    expect(body.latitude).toBe(52.52);
+    expect(body.longitude).toBe(13.405);
+  });
+
+  it("still creates the location when geocoding fails", async () => {
+    // A geocoding provider is a third party on someone else's network. It must
+    // never be able to stop a manager from creating an object.
+    mockSession.user = buildAdmin();
+    mockLocationCount.mockResolvedValue(0);
+    mockSubscriptionFindUnique.mockResolvedValue({
+      plan: "PROFESSIONAL",
+      status: "ACTIVE",
+    });
+    mockUsageFindUnique.mockResolvedValue(null);
+    mockLocationCreate.mockResolvedValue({
+      id: "l1",
+      name: "Office",
+      workspaceId: "ws-1",
+    });
+    mockResolveGeo.mockResolvedValue(null);
+
+    const res = await handler.POST(postReq({ name: "Office" }));
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.id).toBe("l1");
+    expect(body.latitude).toBeUndefined();
   });
 });

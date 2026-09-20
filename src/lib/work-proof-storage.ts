@@ -185,3 +185,33 @@ export async function deletePhotoObject(storagePath: string): Promise<void> {
     /* best effort — a stray object is not worth failing a request over */
   }
 }
+
+/**
+ * Write bytes we already hold straight into the bucket.
+ *
+ * Used by the multipart fallback, where the device could not reach storage
+ * directly and sent the photo through the API instead. Returns the same
+ * workspace-scoped object key the signed-URL path produces, so the record
+ * endpoint cannot tell the two apart — and its tenancy check on the path
+ * prefix keeps working unchanged.
+ */
+export async function uploadPhotoBytes(
+  workspaceId: string,
+  employeeId: string,
+  mimeType: string,
+  bytes: Buffer,
+): Promise<string> {
+  const storage = getStorageClient();
+  await ensureBucket(storage);
+
+  const path = buildPath(workspaceId, employeeId, extensionFor(mimeType));
+  const { error } = await storage
+    .from(WORK_PROOF_BUCKET)
+    .upload(path, bytes, { contentType: mimeType, upsert: true });
+
+  if (error) {
+    log.error("[work-proof] direct upload failed", { message: error.message });
+    throw new Error(`WORK_PROOF_UPLOAD_ERROR: ${error.message}`);
+  }
+  return path;
+}

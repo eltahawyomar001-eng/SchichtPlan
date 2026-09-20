@@ -238,9 +238,17 @@ function VerdictBadge({ photo }: { photo: ProofPhoto }) {
       </Badge>
     );
   }
-  // No usable fix, or no coordinates on the object to compare against. Not a
-  // failure by the worker — say so plainly instead of implying wrongdoing.
-  return <Badge variant="outline">{t("verdictUnavailable")}</Badge>;
+  // Two different gaps used to share one label. A photo carrying a position
+  // that could not be checked means the OBJECT has no coordinates — nothing is
+  // wrong with the proof, the site was never geocoded. A photo with no position
+  // at all is a gap in the capture itself. Reporting both as "no position" hid
+  // an ungeocoded object behind what read like a failure by the worker.
+  const hasFix = photo.latitude != null && photo.longitude != null;
+  return (
+    <Badge variant="outline">
+      {hasFix ? t("verdictNoGeofence") : t("verdictUnavailable")}
+    </Badge>
+  );
 }
 
 /* ─── Card ───────────────────────────────────────────────────── */

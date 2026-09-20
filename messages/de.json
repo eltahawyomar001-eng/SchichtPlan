@@ -4362,6 +4362,7 @@
     "verdictOutside": "Außerhalb",
     "verdictOutsideDistance": "{distance} m entfernt",
     "verdictUnavailable": "Ohne Standort",
+    "verdictNoGeofence": "Objekt ohne Koordinaten",
     "verdictMocked": "Standort simuliert",
     "accuracy": "Genauigkeit ±{accuracy} m",
     "fieldEmployee": "Mitarbeiter",

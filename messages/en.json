@@ -4362,6 +4362,7 @@
     "verdictOutside": "Off site",
     "verdictOutsideDistance": "{distance} m away",
     "verdictUnavailable": "No position",
+    "verdictNoGeofence": "Site not geocoded",
     "verdictMocked": "Position spoofed",
     "accuracy": "Accuracy ±{accuracy} m",
     "fieldEmployee": "Employee",

@@ -4370,6 +4370,7 @@
     "fieldLocation": "Site",
     "fieldNote": "Note",
     "fieldCoordinates": "Coordinates",
+    "fieldAddress": "Address",
     "evidenceNote": "The time and distance were determined server side, not reported by the device. The photo was taken in the app; images from the gallery are not accepted."
   }
 }

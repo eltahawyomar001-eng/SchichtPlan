@@ -4370,6 +4370,7 @@
     "fieldLocation": "Objekt",
     "fieldNote": "Notiz",
     "fieldCoordinates": "Koordinaten",
+    "fieldAddress": "Adresse",
     "evidenceNote": "Uhrzeit und Entfernung wurden serverseitig bestimmt, nicht vom Gerät gemeldet. Die Aufnahme erfolgte direkt in der App; Bilder aus der Galerie sind nicht zulässig."
   }
 }

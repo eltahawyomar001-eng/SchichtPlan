@@ -38,6 +38,7 @@ interface ProofPhoto {
   url: string | null;
   fileName: string;
   capturedAt: string;
+  address: string | null;
   latitude: number | null;
   longitude: number | null;
   accuracyM: number | null;
@@ -363,6 +364,27 @@ function ProofDetail({ photo }: { photo: ProofPhoto }) {
           <Row label={t("fieldLocation")}>{photo.location.name}</Row>
         )}
         {photo.note && <Row label={t("fieldNote")}>{photo.note}</Row>}
+        {/* The address comes first because it is the part a person can read.
+            Coordinates stay directly under it: they are what the geofence was
+            actually computed from, and an address is only ever a rendering of
+            them. Showing the numbers alone is what made a captured position
+            look like a missing one. */}
+        {photo.address && (
+          <Row label={t("fieldAddress")}>
+            {mapsHref ? (
+              <a
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                {photo.address}
+              </a>
+            ) : (
+              photo.address
+            )}
+          </Row>
+        )}
         {mapsHref && (
           <Row label={t("fieldCoordinates")}>
             <a

@@ -2524,6 +2524,14 @@ model WorkProofPhoto {
   /// OS-reported mock location. Android exposes this; iOS does not, so false
   /// is not proof of authenticity.
   locationMocked Boolean         @default(false)
+  /// Postal address the DEVICE resolved from the fix, via the OS geocoder.
+  ///
+  /// Stored because coordinates are not evidence a human can read: a proof
+  /// photo showing "50.85306, 9.73571" told the manager nothing, which is why
+  /// a correctly captured position still looked like a missing one. Advisory
+  /// exactly like the coordinates — every verdict is recomputed from the raw
+  /// numbers, never from this string.
+  address        String?         @db.VarChar(300)
   /// Optional short caption from the worker ("Streugut ausgebracht").
   note           String?         @db.VarChar(500)
 

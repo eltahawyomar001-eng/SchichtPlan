@@ -33,6 +33,15 @@ const createSchema = z.object({
   accuracyM: z.number().nonnegative().max(100_000).optional(),
   /** OS mock-location flag. Android reports it; iOS does not. */
   mocked: z.boolean().optional(),
+  /**
+   * Postal address the device resolved from the fix, via the OS geocoder.
+   *
+   * Advisory, exactly like the coordinates: it is stored so a manager can read
+   * where the photo was taken, and it is never used to reach a verdict. The
+   * geofence is recomputed server-side from latitude/longitude alone, so a
+   * device that lies here changes nothing that matters.
+   */
+  address: z.string().max(300).optional(),
   note: z.string().max(500).optional(),
   timeEntryId: z.string().min(1).optional(),
   shiftId: z.string().min(1).optional(),
@@ -142,6 +151,7 @@ export const POST = withRoute("/api/work-proof", "POST", async (req) => {
       distanceM: decision.distanceM,
       geofenceStatus: decision.status,
       locationMocked: body.mocked ?? false,
+      address: body.address?.trim().slice(0, 300) || null,
       note: body.note?.slice(0, 500) ?? null,
       timeEntryId: body.timeEntryId ?? null,
       shiftId: body.shiftId ?? null,
@@ -233,6 +243,7 @@ export const GET = withRoute("/api/work-proof", "GET", async (req) => {
       distanceM: true,
       geofenceStatus: true,
       locationMocked: true,
+      address: true,
       note: true,
       shiftId: true,
       timeEntryId: true,

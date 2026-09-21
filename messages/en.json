@@ -4349,6 +4349,7 @@
     "title": "Photo proof",
     "description": "Photos with a server-verified time and position — for construction sites, winter service and security.",
     "filterDate": "Date",
+    "filterAllDates": "All dates",
     "filterEmployee": "Employee",
     "allEmployees": "All employees",
     "flaggedCount": "{count, plural, =1 {1 proof flagged} other {# proofs flagged}}",

@@ -72,6 +72,10 @@
     {
       "path": "/api/cron/geocode-locations",
       "schedule": "15 3 * * *"
+    },
+    {
+      "path": "/api/cron/work-proof-retention",
+      "schedule": "45 3 * * *"
     }
   ]
 }

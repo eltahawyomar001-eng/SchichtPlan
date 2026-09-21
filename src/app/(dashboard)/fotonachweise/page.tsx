@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -52,14 +53,20 @@ interface ProofPhoto {
   location: { id: string; name: string } | null;
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default function FotonachweisePage() {
   const t = useTranslations("proofPhotos");
 
-  const [date, setDate] = useState(todayIso);
+  /**
+   * Empty means "everything still retained", not "today".
+   *
+   * This defaulted to today and always sent ?date=, so a photo taken yesterday
+   * vanished from the page overnight with nothing on screen saying it had been
+   * filtered out. It looked exactly like the photos were being deleted daily,
+   * and the rows were there the whole time. Since proofs are kept for
+   * PROOF_RETENTION_DAYS and swept after that, showing everything by default
+   * shows precisely what exists.
+   */
+  const [date, setDate] = useState("");
   const [employeeFilter, setEmployeeFilter] = useState("");
   const [photos, setPhotos] = useState<ProofPhoto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +78,9 @@ export default function FotonachweisePage() {
     setError(null);
     try {
       const res = await fetch(
-        `/api/work-proof?date=${encodeURIComponent(date)}`,
+        date
+          ? `/api/work-proof?date=${encodeURIComponent(date)}`
+          : "/api/work-proof",
       );
       if (!res.ok) {
         setError(t("loadError"));
@@ -120,13 +129,27 @@ export default function FotonachweisePage() {
           <CardContent className="flex flex-wrap items-end gap-3 py-4">
             <div>
               <Label htmlFor="proof-date">{t("filterDate")}</Label>
-              <Input
-                id="proof-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="mt-1"
-              />
+              <div className="mt-1 flex items-center gap-2">
+                <Input
+                  id="proof-date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+                {/* Without a way back to "all", picking a date once would trap
+                    the manager on a single day and recreate the illusion that
+                    older proofs are gone. */}
+                {date && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDate("")}
+                  >
+                    {t("filterAllDates")}
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="min-w-[12rem]">
               <Label htmlFor="proof-employee">{t("filterEmployee")}</Label>

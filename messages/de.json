@@ -4349,6 +4349,7 @@
     "title": "Fotonachweise",
     "description": "Fotos mit servergeprüfter Uhrzeit und Position — für Baustellen, Winterdienst und Sicherheitsdienst.",
     "filterDate": "Datum",
+    "filterAllDates": "Alle Tage",
     "filterEmployee": "Mitarbeiter",
     "allEmployees": "Alle Mitarbeiter",
     "flaggedCount": "{count, plural, =1 {1 Nachweis auffällig} other {# Nachweise auffällig}}",

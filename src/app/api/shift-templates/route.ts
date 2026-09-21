@@ -5,7 +5,11 @@ import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
-import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import {
+  parsePagination,
+  paginatedResponse,
+  MUTABLE_LIST_CACHE_CONTROL,
+} from "@/lib/pagination";
 import { log } from "@/lib/logger";
 import { createShiftTemplateSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
@@ -46,10 +50,7 @@ export const GET = withRoute("/api/shift-templates", "GET", async (req) => {
   ]);
 
   const res = paginatedResponse(templates, total, take, skip);
-  res.headers.set(
-    "Cache-Control",
-    "private, max-age=30, stale-while-revalidate=300",
-  );
+  res.headers.set("Cache-Control", MUTABLE_LIST_CACHE_CONTROL);
   return res;
 });
 

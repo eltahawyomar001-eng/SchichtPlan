@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
-import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import {
+  parsePagination,
+  paginatedResponse,
+  MUTABLE_LIST_CACHE_CONTROL,
+} from "@/lib/pagination";
 import { createDepartmentSchema, validateBody } from "@/lib/validations";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
@@ -31,10 +35,7 @@ export const GET = withRoute("/api/departments", "GET", async (req) => {
   ]);
 
   const res = paginatedResponse(departments, total, take, skip);
-  res.headers.set(
-    "Cache-Control",
-    "private, max-age=30, stale-while-revalidate=300",
-  );
+  res.headers.set("Cache-Control", MUTABLE_LIST_CACHE_CONTROL);
   return res;
 });
 

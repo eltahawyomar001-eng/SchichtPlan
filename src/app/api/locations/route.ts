@@ -3,7 +3,11 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { requireLocationSlot } from "@/lib/subscription";
 import { createLocationSchema, validateBody } from "@/lib/validations";
-import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import {
+  parsePagination,
+  paginatedResponse,
+  MUTABLE_LIST_CACHE_CONTROL,
+} from "@/lib/pagination";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
@@ -37,10 +41,7 @@ export const GET = withRoute("/api/locations", "GET", async (req) => {
   ]);
 
   const res = paginatedResponse(locations, total, take, skip);
-  res.headers.set(
-    "Cache-Control",
-    "private, max-age=30, stale-while-revalidate=300",
-  );
+  res.headers.set("Cache-Control", MUTABLE_LIST_CACHE_CONTROL);
   return res;
 });
 

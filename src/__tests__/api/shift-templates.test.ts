@@ -94,6 +94,7 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 vi.mock("@/lib/pagination", () => ({
+  MUTABLE_LIST_CACHE_CONTROL: "private, no-store",
   parsePagination: vi.fn().mockReturnValue({ take: 50, skip: 0 }),
   paginatedResponse: vi.fn(
     (items: unknown[], total: number, take: number, skip: number) => {

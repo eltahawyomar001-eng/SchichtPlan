@@ -82,3 +82,21 @@ export function paginatedResponse<T>(
     },
   });
 }
+
+/**
+ * Cache policy for a list the signed-in user can change.
+ *
+ * These lists carried `private, max-age=30, stale-while-revalidate=300`, which
+ * made every mutation look broken: after deleting a location the page re-fetched,
+ * the browser answered out of its own cache, and the row the server had already
+ * soft-deleted was still on screen. Reloading did not help either, because
+ * stale-while-revalidate keeps serving the old body for up to five minutes.
+ *
+ * Staleness is exactly what must not happen here. The saving was ~30 seconds of
+ * a small, indexed, per-workspace query; the cost was users concluding that
+ * delete does not work, which is what happened.
+ *
+ * Genuinely static endpoints (holidays, public plans, the API docs) keep their
+ * caching. This is only for things a user edits and expects to see change.
+ */
+export const MUTABLE_LIST_CACHE_CONTROL = "private, no-store";

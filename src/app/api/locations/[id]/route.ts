@@ -159,10 +159,23 @@ export const DELETE = withRoute(
     const forbidden = requirePermission(user, "locations", "delete");
     if (forbidden) return forbidden;
 
-    await prisma.location.updateMany({
+    /**
+     * Report what actually happened.
+     *
+     * updateMany answers with a count and this ignored it, so a delete that
+     * matched nothing -- wrong id, another workspace's object, or a row already
+     * deleted -- still returned "Location deleted" and a 200. The client had no
+     * way to tell a real deletion from a no-op, which is indistinguishable from
+     * the bug users actually hit.
+     */
+    const { count } = await prisma.location.updateMany({
       where: { id, workspaceId, deletedAt: null },
       data: { deletedAt: new Date() },
     });
+
+    if (count === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     createAuditLog({
       action: "DELETE",

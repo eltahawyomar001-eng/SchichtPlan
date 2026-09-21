@@ -471,8 +471,10 @@ export async function canAddEmployee(workspaceId: string): Promise<boolean> {
 
   if (plan.limits.maxEmployees === Infinity) return true;
 
+  // deletedAt as well as isActive: deletion sets both today, and relying on
+  // that coincidence is how the location count above came to be wrong.
   const employeeCount = await prisma.employee.count({
-    where: { workspaceId, isActive: true },
+    where: { workspaceId, isActive: true, deletedAt: null },
   });
 
   return employeeCount < plan.limits.maxEmployees;
@@ -491,8 +493,21 @@ export async function canAddLocation(workspaceId: string): Promise<boolean> {
 
   if (plan.limits.maxLocations === Infinity) return true;
 
+  /**
+   * Deleted objects do not occupy a slot.
+   *
+   * This counted every row ever created, so deleting a location never gave the
+   * slot back: a workspace on Basic that deleted its only object was told it
+   * had "reached the maximum of 1 locations" while holding none, and could
+   * never create another without upgrading. Paying to replace something you
+   * already removed.
+   *
+   * The employee counts elsewhere avoid this only by coincidence -- deletion
+   * happens to set isActive false as well -- so this one is filtered on the
+   * thing that actually marks a row deleted.
+   */
   const locationCount = await prisma.location.count({
-    where: { workspaceId },
+    where: { workspaceId, deletedAt: null },
   });
 
   return locationCount < plan.limits.maxLocations;

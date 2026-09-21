@@ -93,6 +93,26 @@ describe("plan limits during a free trial", () => {
     expect(body.limit).toBe(25);
   });
 
+  it("gives the slot back when a location is deleted", async () => {
+    // The count included every row ever created, so deleting never freed the
+    // slot: a workspace holding NO locations was told it had reached the
+    // maximum and had to upgrade to create its first one. Paying to replace
+    // something it had already removed.
+    mockLocationCount.mockResolvedValue(0);
+    await expect(lib.canAddLocation("ws-1")).resolves.toBe(true);
+
+    const where = mockLocationCount.mock.calls[0][0].where;
+    expect(where).toMatchObject({ workspaceId: "ws-1", deletedAt: null });
+  });
+
+  it("does not count deleted employees against the seat limit", async () => {
+    mockEmployeeCount.mockResolvedValue(0);
+    await expect(lib.canAddEmployee("ws-1")).resolves.toBe(true);
+
+    const where = mockEmployeeCount.mock.calls[0][0].where;
+    expect(where).toMatchObject({ deletedAt: null });
+  });
+
   it("refuses everything without an active subscription", async () => {
     mockSubFindUnique.mockResolvedValue({ ...TRIAL_SUB, status: "CANCELED" });
     mockLocationCount.mockResolvedValue(0);

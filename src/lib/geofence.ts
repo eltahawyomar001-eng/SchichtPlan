@@ -143,12 +143,22 @@ export function evaluateGeofence(
 
   // No usable position, or no coordinates on the object to compare against.
   if (!hasFix || !hasTarget) {
+    /**
+     * Refuse only when the object is one we could actually have checked.
+     *
+     * This used to block on `enforced && !hasFix` alone, so an object with no
+     * coordinates of its own still turned a worker away for having no signal --
+     * punishing them for a gap they cannot see, to enforce a boundary the
+     * server could not have evaluated even with a perfect fix. Unverifiable is
+     * not the same as outside.
+     */
+    const refusable = enforced && hasTarget && !hasFix;
     return {
       status: "UNAVAILABLE",
       distanceM: null,
       radiusM,
-      blocked: enforced && !hasFix,
-      code: enforced && !hasFix ? "GEOFENCE_NO_FIX" : null,
+      blocked: refusable,
+      code: refusable ? "GEOFENCE_NO_FIX" : null,
       message:
         "Kein GPS-Signal verfügbar. Bitte nutzen Sie die QR-Station am Objekt.",
       messageEn:

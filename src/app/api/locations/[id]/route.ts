@@ -68,8 +68,29 @@ export const PATCH = withRoute(
       data.geocodedAt = new Date();
     if (parsed.data.geofenceRadiusMeters !== undefined)
       data.geofenceRadiusMeters = parsed.data.geofenceRadiusMeters;
-    if (parsed.data.geofenceEnforced !== undefined)
+    if (parsed.data.geofenceEnforced !== undefined) {
+      /**
+       * Enforcement needs a reference point, and refusing here is kinder than
+       * the alternative.
+       *
+       * A fence around an object with no coordinates cannot judge anything: it
+       * only ever answers "unverifiable", while quietly changing what happens
+       * to a worker whose phone has no signal. Switching it on therefore costs
+       * something and buys nothing, and the manager who flipped it would have
+       * no way to tell. Say so instead.
+       */
+      const willHaveCoords =
+        (parsed.data.latitude ?? before.latitude) != null &&
+        (parsed.data.longitude ?? before.longitude) != null;
+
+      if (parsed.data.geofenceEnforced && !willHaveCoords) {
+        return NextResponse.json(
+          { error: "GEOFENCE_NEEDS_COORDINATES" },
+          { status: 422 },
+        );
+      }
       data.geofenceEnforced = parsed.data.geofenceEnforced;
+    }
     if (parsed.data.certificationExempt !== undefined)
       data.certificationExempt = parsed.data.certificationExempt;
 

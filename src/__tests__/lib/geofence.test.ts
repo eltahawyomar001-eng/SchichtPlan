@@ -137,6 +137,17 @@ describe("evaluateGeofence", () => {
     expect(r.code).toBe("GEOFENCE_NO_FIX");
   });
 
+  it("does NOT block a missing fix at an object it could not have checked", () => {
+    // Enforcement plus no coordinates on the object used to refuse the punch
+    // anyway, which turns a worker away for a gap they cannot see, to enforce a
+    // boundary the server could not have evaluated even with a perfect fix.
+    // Unverifiable is not the same as outside.
+    const r = evaluateGeofence(target({ latitude: null, longitude: null }), {});
+    expect(r.status).toBe("UNAVAILABLE");
+    expect(r.blocked).toBe(false);
+    expect(r.code).toBeNull();
+  });
+
   it("does NOT block when the object has no coordinates yet", () => {
     // Enforcement cannot be meaningful without a reference point; blocking here
     // would lock out every guard the moment a manager flips the flag.

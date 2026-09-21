@@ -97,12 +97,26 @@ export async function geocodeAddress(
   );
   if (queries.length === 0) return null;
 
+  /**
+   * Nominatim first, Open-Meteo second. The order matters and used to be
+   * backwards.
+   *
+   * Open-Meteo's endpoint is a place-NAME search. Handed a street address it
+   * answers with the nearest town: "Alexanderplatz 1, 10178 Berlin" resolved to
+   * the centre of Berlin, 527 m from the door, and that point was then enforced
+   * as a 50 m fence around a real object with real shifts. Nominatim is an
+   * address geocoder and returns the building.
+   *
+   * Open-Meteo stays as the fallback because it has no rate limit and still
+   * beats nothing when Nominatim is unavailable -- but for a reference point a
+   * worker gets turned away by, being roughly right is not good enough.
+   */
   for (const q of queries) {
-    const geo = await geocodeOpenMeteo(q);
+    const geo = await geocodeNominatim(q);
     if (geo) return geo;
   }
   for (const q of queries) {
-    const geo = await geocodeNominatim(q);
+    const geo = await geocodeOpenMeteo(q);
     if (geo) return geo;
   }
   return null;

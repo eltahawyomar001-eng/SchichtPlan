@@ -44,6 +44,8 @@ interface AbsenceRequest {
   totalDays: number;
   status: string;
   reviewNote: string | null;
+  /** Null on an approved record means it was auto-approved, not reviewed. */
+  reviewedBy: string | null;
   createdAt: string;
   employee: Employee;
 }
@@ -512,7 +514,17 @@ export default function AbwesenheitenPage() {
                                 STATUS_VARIANTS[absence.status] || "outline"
                               }
                             >
-                              {t(STATUS_KEYS[absence.status]) || absence.status}
+                              {/* Approved by a person and approved by a rule
+                                  are different facts. Sick leave auto-approves
+                                  -- correctly, a Krankmeldung is a notification
+                                  rather than a request -- but an identical
+                                  green badge implied a manager had looked at
+                                  it. reviewedBy is null in exactly that case. */}
+                              {absence.status === "GENEHMIGT" &&
+                              !absence.reviewedBy
+                                ? t("autoApproved")
+                                : t(STATUS_KEYS[absence.status]) ||
+                                  absence.status}
                             </Badge>
                           </div>
                           {absence.reviewNote &&

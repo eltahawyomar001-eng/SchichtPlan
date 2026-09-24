@@ -781,7 +781,8 @@
       "ONLY_PENDING_CAN_BE_REVIEWED": "Nur ausstehende Anträge können genehmigt oder abgelehnt werden.",
       "CANNOT_REVIEW_OWN": "Sie können Ihren eigenen Abwesenheitsantrag nicht genehmigen.",
       "NETWORK": "Verbindungsfehler. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
-    }
+    },
+    "autoApproved": "Automatisch genehmigt"
   },
   "availability": {
     "title": "Verfügbarkeiten",

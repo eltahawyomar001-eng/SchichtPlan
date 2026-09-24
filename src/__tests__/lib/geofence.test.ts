@@ -118,23 +118,43 @@ describe("evaluateGeofence", () => {
     expect(r.code).toBe("GEOFENCE_MOCKED_LOCATION");
   });
 
-  it("BLOCKS a fix too coarse to prove presence, even when centred on the object", () => {
+  it("RECORDS a fix too coarse to prove presence, without refusing it", () => {
+    // A position too imprecise to judge is an unknown, not a violation. The
+    // accuracy is kept so a manager can weigh it; it never costs the shift.
     const r = evaluateGeofence(target(), {
       latitude: OBJECT.lat,
       longitude: OBJECT.lon,
       accuracyM: MAX_ACCEPTABLE_ACCURACY_M + 1,
     });
-    expect(r.blocked).toBe(true);
-    expect(r.code).toBe("GEOFENCE_ACCURACY_TOO_LOW");
+    expect(r.blocked).toBe(false);
+    expect(r.code).toBeNull();
+    expect(r.status).toBe("UNAVAILABLE");
     // Distance is still recorded for the audit trail.
     expect(r.distanceM).toBe(0);
   });
 
-  it("BLOCKS when the device supplies no fix at all", () => {
+  it("still REFUSES a position that is genuinely outside", () => {
+    // The line: refuse when we know you are elsewhere, or that the position is
+    // fabricated. Record and flag when we simply cannot tell.
+    const r = evaluateGeofence(target(), {
+      latitude: OBJECT.lat + 0.01,
+      longitude: OBJECT.lon,
+      accuracyM: 5,
+    });
+    expect(r.status).toBe("OUTSIDE");
+    expect(r.blocked).toBe(true);
+    expect(r.code).toBe("GEOFENCE_OUT_OF_RANGE");
+  });
+
+  it("RECORDS but never refuses when the device supplies no fix", () => {
+    // "We do not know where you are" is not "you are somewhere else", and
+    // refusing creates no time record at all -- which is the employer's
+    // obligation under ArbZG §16. The QR station used to be the way out of
+    // this and has been removed, so a refusal here strands someone on site.
     const r = evaluateGeofence(target(), {});
     expect(r.status).toBe("UNAVAILABLE");
-    expect(r.blocked).toBe(true);
-    expect(r.code).toBe("GEOFENCE_NO_FIX");
+    expect(r.blocked).toBe(false);
+    expect(r.code).toBeNull();
   });
 
   it("does NOT block a missing fix at an object it could not have checked", () => {

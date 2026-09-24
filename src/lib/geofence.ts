@@ -152,17 +152,29 @@ export function evaluateGeofence(
      * server could not have evaluated even with a perfect fix. Unverifiable is
      * not the same as outside.
      */
-    const refusable = enforced && hasTarget && !hasFix;
     return {
       status: "UNAVAILABLE",
       distanceM: null,
       radiusM,
-      blocked: refusable,
-      code: refusable ? "GEOFENCE_NO_FIX" : null,
+      /**
+       * Never refuse a punch we simply could not evaluate.
+       *
+       * "We do not know where you are" is not "you are somewhere else", and the
+       * difference matters because refusing creates NO time record at all --
+       * which is the employer's obligation under ArbZG §16, not the worker's
+       * problem. The QR station used to be the way out, and it is gone.
+       *
+       * The evidence is still kept: status UNAVAILABLE, plus whatever position
+       * and accuracy the device managed. A manager can see every punch that
+       * could not be verified and ask about it. Refusing to record one tells
+       * nobody anything and strands someone standing on site.
+       */
+      blocked: false,
+      code: null,
       message:
-        "Kein GPS-Signal verfügbar. Bitte nutzen Sie die QR-Station am Objekt.",
+        "Standort konnte nicht bestimmt werden. Die Stempelung wurde erfasst und zur Prüfung markiert.",
       messageEn:
-        "No GPS signal available. Please use the QR station at the object.",
+        "Location could not be determined. The punch was recorded and flagged for review.",
     };
   }
 
@@ -188,14 +200,17 @@ export function evaluateGeofence(
       status: "UNAVAILABLE",
       distanceM,
       radiusM,
-      blocked: enforced,
-      code: enforced ? "GEOFENCE_ACCURACY_TOO_LOW" : null,
+      // Same reasoning as a missing fix: a position too coarse to judge is an
+      // unknown, not a violation. Recorded with its accuracy so the manager can
+      // weigh it, never used to refuse the shift.
+      blocked: false,
+      code: null,
       message:
         `Die Standortgenauigkeit ist mit ±${Math.round(accuracy)} m zu ungenau ` +
-        `(erforderlich: ±${MAX_ACCEPTABLE_ACCURACY_M} m). Bitte nutzen Sie die QR-Station.`,
+        `(erforderlich: ±${MAX_ACCEPTABLE_ACCURACY_M} m). Die Stempelung wurde erfasst und zur Prüfung markiert.`,
       messageEn:
         `Location accuracy of ±${Math.round(accuracy)} m is too coarse ` +
-        `(required: ±${MAX_ACCEPTABLE_ACCURACY_M} m). Please use the QR station.`,
+        `(required: ±${MAX_ACCEPTABLE_ACCURACY_M} m). The punch was recorded and flagged for review.`,
     };
   }
 

@@ -185,6 +185,27 @@ export const POST = withRoute(
         });
         geoLocation = emp?.location ?? null;
       }
+      if (!geoLocation) {
+        /**
+         * One object in the workspace means there is nothing to be wrong about.
+         *
+         * Without this a small customer's geofence never engages: they add
+         * their single site, geocode it, switch enforcement on, and never
+         * assign anyone to it -- because with one object there is nothing to
+         * choose between. Every punch then recorded no object, so the fence sat
+         * enabled and evaluated nothing, and the proof photos all read "Site
+         * not geocoded" while the site was geocoded perfectly well.
+         *
+         * Stops at exactly one: with two, guessing would put someone at the
+         * wrong site, and a wrong verdict is worse than no verdict.
+         */
+        const only = await prisma.location.findMany({
+          where: { workspaceId, deletedAt: null },
+          select: geoSelect,
+          take: 2,
+        });
+        geoLocation = only.length === 1 ? only[0] : null;
+      }
 
       const geo = evaluateGeofence(geoLocation, {
         latitude,

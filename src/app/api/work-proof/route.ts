@@ -4,6 +4,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
+import { resolveGeofenceTargetId } from "@/lib/geofence-target";
 import { evaluateGeofence } from "@/lib/geofence";
 import { isManagement } from "@/lib/authorization";
 import {
@@ -99,23 +100,21 @@ export const POST = withRoute("/api/work-proof", "POST", async (req) => {
     return NextResponse.json({ error: "UNSUPPORTED_TYPE" }, { status: 415 });
   }
 
-  // Resolve the object to measure against: an explicit location, else the one
-  // on the time entry or shift the proof is attached to.
-  let locationId = body.locationId ?? null;
-  if (!locationId && body.timeEntryId) {
-    const te = await prisma.timeEntry.findFirst({
-      where: { id: body.timeEntryId, workspaceId },
-      select: { locationId: true },
-    });
-    locationId = te?.locationId ?? null;
-  }
-  if (!locationId && body.shiftId) {
-    const sh = await prisma.shift.findFirst({
-      where: { id: body.shiftId, workspaceId },
-      select: { locationId: true },
-    });
-    locationId = sh?.locationId ?? null;
-  }
+  /**
+   * Resolve the object to measure against.
+   *
+   * This used to stop at the shift, while the clock route went on to the
+   * employee's own object -- the same question with two different answers. When
+   * every step came back empty the photo was stored with no object at all, so a
+   * perfectly geocoded and enforced site still produced "Site not geocoded" on
+   * every proof. Shared with the clock route so they cannot drift again.
+   */
+  const locationId = await resolveGeofenceTargetId(workspaceId, {
+    locationId: body.locationId,
+    timeEntryId: body.timeEntryId,
+    shiftId: body.shiftId,
+    employeeId: employee.id,
+  });
 
   const target = locationId
     ? await prisma.location.findFirst({

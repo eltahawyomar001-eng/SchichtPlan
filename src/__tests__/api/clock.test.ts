@@ -94,9 +94,12 @@ vi.mock("@/lib/db", () => {
     },
     // Geofence resolution: no object is bound to these punches, so the gate
     // sees no target and lets them through while still recording evidence.
+    // findMany returns none on purpose -- the single-object fallback only
+    // engages for a workspace that has exactly one, and these do not.
     location: {
       findFirst: vi.fn().mockResolvedValue(null),
       findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     shift: {
       findFirst: vi.fn().mockResolvedValue(null),

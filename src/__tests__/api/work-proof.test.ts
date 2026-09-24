@@ -34,7 +34,12 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     employee: { findFirst: mockEmployeeFindFirst },
     workProofPhoto: { create: mockCreate, findMany: mockFindMany },
-    location: { findFirst: mockLocationFindFirst },
+    // findMany backs the single-object fallback in resolveGeofenceTargetId;
+    // empty here so these tests exercise the explicit paths.
+    location: {
+      findFirst: mockLocationFindFirst,
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     timeEntry: { findFirst: mockTimeEntryFindFirst },
     shift: { findFirst: mockShiftFindFirst },
   },

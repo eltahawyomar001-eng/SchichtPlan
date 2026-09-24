@@ -38,7 +38,10 @@ const AUTOMATION_DEFAULTS: Record<string, boolean> = {
   legalBreakEnforcement: true,
   timeAccountRecalculation: true,
   recurringShifts: true,
-  autoApproveAbsence: true,
+  // OFF by default: a sick note that approves itself the second it is filed
+  // looks like a broken approval flow, and a manager who is not told somebody
+  // is out cannot cover the shift. Opt in per workspace to get it back.
+  autoApproveAbsence: false,
   autoApproveSwap: true,
   overtimeAlerts: true,
   payrollAutoLock: true,
@@ -1024,15 +1027,20 @@ export async function createRecurringShifts(params: {
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * Auto-approve an absence request — ONLY for KRANK (sick leave).
+ * Auto-approve an absence request — ONLY for KRANK (sick leave), and only
+ * where a workspace has explicitly opted in.
  *
- * German industry standard (BUrlG / ArbZG):
- *  - KRANK: Employer must accept sick notes; auto-approve is standard.
- *  - URLAUB: Requires explicit manager approval (team coverage, quotas,
- *    business needs must be evaluated). §7 BUrlG gives the employer the
- *    right to schedule vacations considering operational requirements.
- *  - All other categories (SONDERURLAUB, ELTERNZEIT, UNBEZAHLT,
- *    FORTBILDUNG, SONSTIGES): Require human review.
+ * OFF by default. The legal argument for auto-approving sick leave is sound as
+ * far as it goes -- §5 EFZG obliges an employee to REPORT illness, not to ask
+ * permission, and an employer cannot refuse it -- but "the employer cannot
+ * refuse" is not the same as "no human needs to see this". A manager who is
+ * never asked is also never told, and somebody still has to cover the shift.
+ * Approving it silently within a second of submission also reads, reasonably,
+ * as an approval flow that does not work.
+ *
+ * Everything else requires human review regardless:
+ *  - URLAUB: §7 BUrlG gives the employer the right to weigh operational needs.
+ *  - SONDERURLAUB, ELTERNZEIT, UNBEZAHLT, FORTBILDUNG, SONSTIGES: reviewed.
  *
  * Returns true if auto-approved.
  */

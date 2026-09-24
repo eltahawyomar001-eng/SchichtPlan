@@ -1439,7 +1439,7 @@
       "noCoords": "No coordinates set yet",
       "geocodedAt": "Last resolved on {date}",
       "radius": "Radius (metres)",
-      "radiusHint": "Default 300 m. Narrow it for small objects where precision genuinely matters.",
+      "radiusHint": "Default 600 m. Narrow it for small objects where precision genuinely matters.",
       "enforced": "Enforce geofence",
       "enforcedHint": "On: punches outside the radius are refused. Off: the location is only recorded.",
       "enforcedNoCoordsWarning": "Without coordinates the geofence is not checked, even when enabled.",

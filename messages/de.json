@@ -1439,7 +1439,7 @@
       "noCoords": "Noch keine Koordinaten hinterlegt",
       "geocodedAt": "Zuletzt ermittelt am {date}",
       "radius": "Radius (Meter)",
-      "radiusHint": "Standard 300 m. Für kleine Objekte, bei denen Genauigkeit wirklich zählt, kann ein kleinerer Wert sinnvoll sein.",
+      "radiusHint": "Standard 600 m. Für kleine Objekte, bei denen Genauigkeit wirklich zählt, kann ein kleinerer Wert sinnvoll sein.",
       "enforced": "Geofence erzwingen",
       "enforcedHint": "Aktiv: Einstempeln wird außerhalb des Radius abgelehnt. Inaktiv: Standort wird nur protokolliert.",
       "enforcedNoCoordsWarning": "Ohne Koordinaten wird der Geofence nicht geprüft, auch wenn er aktiviert ist.",

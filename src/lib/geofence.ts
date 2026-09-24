@@ -42,12 +42,18 @@ export const MAX_ACCEPTABLE_ACCURACY_M = 100;
  * rather than catching dishonest ones. Every one of this account's objects had
  * to be widened by hand before enforcement was usable.
  *
- * 300 m is deliberately generous. The audit trail does not weaken with it: the
- * exact coordinates, distance and accuracy are recorded on every punch either
- * way, so a manager can still see someone stood 280 m out. What changes is only
- * whether that refuses them their shift.
+ * 600 m is deliberately very generous -- a circle 1.2 km across. At this size
+ * the fence stops being a precision instrument and becomes a sanity check: it
+ * catches a punch made from another town, not one made from the car park next
+ * door. That is a chosen trade, taken after a 50 m radius refused honest
+ * punches on correctly configured sites.
+ *
+ * The audit trail does not weaken with it. Exact coordinates, distance and
+ * accuracy are recorded on every punch regardless, so a manager can still see
+ * that someone stood 500 m out. What the radius changes is only whether that
+ * costs them their shift.
  */
-export const DEFAULT_GEOFENCE_RADIUS_M = 300;
+export const DEFAULT_GEOFENCE_RADIUS_M = 600;
 
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 

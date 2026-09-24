@@ -791,13 +791,13 @@ model Location {
   /// geocoder (Open-Meteo → Nominatim fallback) or set manually by the planner.
   latitude             Float?
   longitude            Float?
-  /// Check-in radius in metres. 300 m is the product default; narrow it per
+  /// Check-in radius in metres. 600 m is the product default; narrow it per
   /// object where the site is small and precision genuinely matters.
   ///
   /// Was 50 m, which reads precise and is not: consumer GPS is routinely
   /// 10-30 m out, and a yard or depot exceeds a 50 m circle by itself. It
   /// refused honest punches far more often than it caught dishonest ones.
-  geofenceRadiusMeters Int                     @default(300)
+  geofenceRadiusMeters Int                     @default(600)
   /// Per-object opt-in. When false the punch clock records coordinates for the
   /// audit trail but never blocks a check-in.
   geofenceEnforced     Boolean                 @default(false)

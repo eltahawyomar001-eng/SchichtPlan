@@ -32,7 +32,22 @@ const EARTH_RADIUS_M = 6_371_008.8;
 export const MAX_ACCEPTABLE_ACCURACY_M = 100;
 
 /** Fallback radius when a Location has none set. Matches the schema default. */
-export const DEFAULT_GEOFENCE_RADIUS_M = 50;
+/**
+ * Default check-in radius for a new object.
+ *
+ * Was 50 m, which reads precise and is not. Consumer GPS is routinely 10-30 m
+ * out and worse beside a building, a yard or a depot is bigger than a 50 m
+ * circle on its own, and the server already refuses any fix less accurate than
+ * MAX_ACCEPTABLE_ACCURACY_M -- so a tight radius mostly refused honest punches
+ * rather than catching dishonest ones. Every one of this account's objects had
+ * to be widened by hand before enforcement was usable.
+ *
+ * 300 m is deliberately generous. The audit trail does not weaken with it: the
+ * exact coordinates, distance and accuracy are recorded on every punch either
+ * way, so a manager can still see someone stood 280 m out. What changes is only
+ * whether that refuses them their shift.
+ */
+export const DEFAULT_GEOFENCE_RADIUS_M = 300;
 
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 

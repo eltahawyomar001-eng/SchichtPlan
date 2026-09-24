@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_GEOFENCE_RADIUS_M } from "@/lib/geofence";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -68,7 +69,7 @@ export default function StandortePage() {
     address: "",
     latitude: "" as string,
     longitude: "" as string,
-    geofenceRadiusMeters: 50,
+    geofenceRadiusMeters: DEFAULT_GEOFENCE_RADIUS_M,
     geofenceEnforced: false,
     certificationExempt: false,
   });
@@ -145,7 +146,7 @@ export default function StandortePage() {
       address: "",
       latitude: "",
       longitude: "",
-      geofenceRadiusMeters: 50,
+      geofenceRadiusMeters: DEFAULT_GEOFENCE_RADIUS_M,
       geofenceEnforced: false,
       certificationExempt: false,
     });
@@ -246,7 +247,7 @@ export default function StandortePage() {
           address: "",
           latitude: "",
           longitude: "",
-          geofenceRadiusMeters: 50,
+          geofenceRadiusMeters: DEFAULT_GEOFENCE_RADIUS_M,
           geofenceEnforced: false,
           certificationExempt: false,
         });

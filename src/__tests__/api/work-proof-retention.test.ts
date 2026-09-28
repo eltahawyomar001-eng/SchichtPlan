@@ -1,8 +1,8 @@
 /**
  * @vitest-environment node
  *
- * Proof photos are kept for a week, then removed from the database AND from
- * storage.
+ * Proof photos are kept for the retention window, then removed from the
+ * database AND from storage.
  *
  * The ordering is the part worth pinning down. Deleting the row first and then
  * failing to delete the object leaves bytes in the bucket that nothing
@@ -40,6 +40,11 @@ vi.mock("@/lib/logger", () => ({
 }));
 vi.mock("@/lib/sentry", () => ({ captureRouteError: vi.fn() }));
 
+// Read from the route rather than repeated here: the window is a product
+// decision that has already moved once, and a test restating the number would
+// keep passing after the next change.
+import { PROOF_RETENTION_DAYS } from "@/app/api/cron/work-proof-retention/route";
+
 function req(secret = "test-secret"): Request {
   return new Request("http://localhost/api/cron/work-proof-retention", {
     headers: { authorization: `Bearer ${secret}` },
@@ -72,9 +77,11 @@ describe("work-proof retention sweep", () => {
     const cutoff: Date = where.capturedAt.lt;
     const ageDays = (Date.now() - cutoff.getTime()) / 86_400_000;
 
-    // Seven days, give or take the moment the test runs.
-    expect(ageDays).toBeGreaterThan(6.9);
-    expect(ageDays).toBeLessThan(7.1);
+    // Ninety days, give or take the moment the test runs. Asserted against the
+    // exported constant so raising the window cannot silently pass a stale
+    // expectation.
+    expect(ageDays).toBeGreaterThan(PROOF_RETENTION_DAYS - 0.1);
+    expect(ageDays).toBeLessThan(PROOF_RETENTION_DAYS + 0.1);
   });
 
   it("removes the stored image as well as the row", async () => {

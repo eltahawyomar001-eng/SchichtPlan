@@ -19,17 +19,28 @@ import { deletePhotoObject } from "@/lib/work-proof-storage";
  *
  * Why the photos go at all: they show customers' sites, building interiors and
  * sometimes people. Keeping them indefinitely is a liability with no purpose --
- * their job is to let a manager review a round shortly after it happened.
+ * their job is to evidence a round for as long as it might be disputed or
+ * invoiced, not forever.
  */
 
 /**
  * How long a proof photo is kept.
  *
+ * Raised from 7 to 90 days once these stopped being incidental to a clock-in.
+ * A Leistungsnachweis is now the record a Winterdienst round is invoiced
+ * against, and a customer querying a January visit does so in February or
+ * March, not the same week. A window shorter than the dispute it exists to
+ * settle is worth very little.
+ *
+ * Still deliberately finite. The photos show customers' sites, building
+ * interiors and sometimes people, so keeping them indefinitely is a liability
+ * with no purpose once the invoice is settled.
+ *
  * Note this does NOT shorten the working-time record. ArbZG §16 requires the
  * TIME ENTRY to be retained for two years, and that row is untouched: the photo
  * is supplementary evidence attached to it, not the record itself.
  */
-export const PROOF_RETENTION_DAYS = 7;
+export const PROOF_RETENTION_DAYS = 90;
 
 /** One run's ceiling, so a large backlog cannot exhaust the function. */
 const BATCH_SIZE = 500;

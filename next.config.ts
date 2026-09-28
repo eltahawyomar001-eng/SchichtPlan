@@ -26,6 +26,19 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        /**
+         * Apple refuses an association file that is not served as JSON, and the
+         * file deliberately has no extension, so Next would otherwise send it as
+         * octet-stream. Without this, universal links fail silently: the link
+         * just opens Safari and nobody is told why.
+         */
+        source: "/.well-known/apple-app-site-association",
+        headers: [
+          { key: "Content-Type", value: "application/json" },
+          { key: "Cache-Control", value: "public, max-age=3600" },
+        ],
+      },
+      {
         // Allow service worker to control the entire site
         source: "/sw.js",
         headers: [

@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["45W6Z8AGN7.de.shiftfy.app"],
+        "appID": "45W6Z8AGN7.de.shiftfy.app",
+        "components": [
+          {
+            "/": "/einladung/*",
+            "comment": "Team invitation links sent by email open in the app"
+          }
+        ],
+        "paths": ["/einladung/*"]
+      }
+    ]
+  }
+}

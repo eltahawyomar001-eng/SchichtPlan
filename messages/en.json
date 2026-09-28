@@ -4373,6 +4373,14 @@
     "fieldNote": "Note",
     "fieldCoordinates": "Coordinates",
     "fieldAddress": "Address",
-    "evidenceNote": "The time and distance were determined server side, not reported by the device. The photo was taken in the app; images from the gallery are not accepted."
+    "evidenceNote": "The time and distance were determined server side, not reported by the device. The photo was taken in the app; images from the gallery are not accepted.",
+    "pdfExport": "Export PDF",
+    "pdfExporting": "Generating …",
+    "pdfError": "The PDF could not be generated.",
+    "pdfTitle": "Proof of work",
+    "pdfVerdict": "Geofence",
+    "pdfImageUnavailable": "Photo could not be loaded",
+    "pdfPage": "Page",
+    "pdfGenerated": "Generated on"
   }
 }

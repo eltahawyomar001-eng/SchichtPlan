@@ -6,6 +6,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { buildProofFilename, buildProofPdf } from "@/lib/work-proof-pdf";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AdaptiveModal } from "@/components/ui/adaptive-modal";
 import {
+  DownloadIcon,
   ImageIcon,
   MapPinIcon,
   ClockIcon,
@@ -112,6 +114,58 @@ export default function FotonachweisePage() {
     ),
   );
 
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Hand the owner the evidence as one file.
+   *
+   * The dispute this settles ("was the path actually gritted at 04:50") happens
+   * in email and in front of a customer, never inside this dashboard. Signed
+   * read URLs expire within minutes, so a link is useless there and only a
+   * self-contained document is worth anything.
+   */
+  const handleExport = async () => {
+    if (!visible.length || exporting) return;
+    setExporting(true);
+    try {
+      const days = visible.map((p) => p.capturedAt.slice(0, 10)).sort();
+      const employeeName = employeeFilter
+        ? visible.find((p) => p.employee?.id === employeeFilter)
+        : null;
+      const blob = await buildProofPdf(visible, {
+        title: t("pdfTitle"),
+        employee: t("fieldEmployee"),
+        capturedAt: t("fieldCapturedAt"),
+        location: t("fieldLocation"),
+        address: t("fieldAddress"),
+        coordinates: t("fieldCoordinates"),
+        note: t("fieldNote"),
+        verdict: t("pdfVerdict"),
+        imageUnavailable: t("pdfImageUnavailable"),
+        page: t("pdfPage"),
+        generated: t("pdfGenerated"),
+      });
+      const name = buildProofFilename({
+        from: days[0],
+        to: days[days.length - 1],
+        location: visible.find((p) => p.location?.name)?.location?.name ?? null,
+        employee: employeeName?.employee
+          ? `${employeeName.employee.lastName}-${employeeName.employee.firstName}`
+          : null,
+      });
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(href);
+    } catch {
+      setError(t("pdfError"));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const visible = employeeFilter
     ? photos.filter((p) => p.employee?.id === employeeFilter)
     : photos;
@@ -167,6 +221,18 @@ export default function FotonachweisePage() {
                 ))}
               </Select>
             </div>
+
+            {/* Exports exactly what is on screen, so the filters above double as
+                the export selection and there is no second place to choose. */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExport}
+              disabled={!visible.length || exporting}
+            >
+              <DownloadIcon className="mr-2 h-4 w-4" />
+              {exporting ? t("pdfExporting") : t("pdfExport")}
+            </Button>
 
             {flagged > 0 && (
               <div className="ml-auto flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">

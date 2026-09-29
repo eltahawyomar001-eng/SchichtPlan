@@ -11,7 +11,11 @@
  */
 import { describe, it, expect } from "vitest";
 
-import { buildProofFilename, slugForFilename } from "@/lib/work-proof-pdf";
+import {
+  buildProofFilename,
+  singlePhotoFilename,
+  slugForFilename,
+} from "@/lib/work-proof-pdf";
 
 describe("slugForFilename", () => {
   it("transliterates umlauts rather than dropping them", () => {
@@ -79,5 +83,25 @@ describe("buildProofFilename", () => {
         location: null,
       }),
     ).toBe("2026-09-28_Leistungsnachweis_Alle-Objekte.pdf");
+  });
+});
+
+describe("singlePhotoFilename", () => {
+  it("keeps the ISO date lead and adds the capture time", () => {
+    // Same convention as the PDF so a single photo files next to the document
+    // it could have come from, with the time disambiguating rounds on one day.
+    const name = singlePhotoFilename({
+      capturedAt: "2026-09-28T05:12:00",
+      location: { name: "NH Baulogistik" },
+      employee: { firstName: "Omar", lastName: "Rageh" },
+    });
+    expect(name).toBe(
+      "2026-09-28_0512_Leistungsnachweis_NH-Baulogistik_Rageh-Omar.jpg",
+    );
+  });
+
+  it("still names a photo with no object or employee", () => {
+    const name = singlePhotoFilename({ capturedAt: "2026-09-28T05:12:00" });
+    expect(name).toBe("2026-09-28_0512_Leistungsnachweis_Alle-Objekte.jpg");
   });
 });

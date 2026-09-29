@@ -4381,6 +4381,11 @@
     "pdfVerdict": "Geofence",
     "pdfImageUnavailable": "Foto konnte nicht geladen werden",
     "pdfPage": "Seite",
-    "pdfGenerated": "Erstellt am"
+    "pdfGenerated": "Erstellt am",
+    "selectPhoto": "Foto auswählen",
+    "selectAll": "Alle auswählen",
+    "selectNone": "Auswahl aufheben",
+    "pdfExportSelected": "{count} als PDF",
+    "downloadPhoto": "Foto herunterladen"
   }
 }

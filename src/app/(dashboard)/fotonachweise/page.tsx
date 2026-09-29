@@ -6,7 +6,11 @@ import { Topbar } from "@/components/layout/topbar";
 import { PageContent } from "@/components/ui/page-content";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buildProofFilename, buildProofPdf } from "@/lib/work-proof-pdf";
+import {
+  buildProofFilename,
+  buildProofPdf,
+  singlePhotoFilename,
+} from "@/lib/work-proof-pdf";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -74,6 +78,16 @@ export default function FotonachweisePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<ProofPhoto | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -103,6 +117,13 @@ export default function FotonachweisePage() {
     void load();
   }, [load]);
 
+  // Changing a filter clears the selection. Keeping it would let an export
+  // include photos that are no longer on screen, which nobody would notice
+  // until the PDF came out wrong.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [date, employeeFilter]);
+
   const employees = Array.from(
     new Map(
       photos
@@ -114,7 +135,13 @@ export default function FotonachweisePage() {
     ),
   );
 
-  const [exporting, setExporting] = useState(false);
+  const visible = employeeFilter
+    ? photos.filter((p) => p.employee?.id === employeeFilter)
+    : photos;
+
+  const flagged = visible.filter(
+    (p) => p.geofenceStatus === "OUTSIDE" || p.locationMocked,
+  ).length;
 
   /**
    * Hand the owner the evidence as one file.
@@ -128,11 +155,21 @@ export default function FotonachweisePage() {
     if (!visible.length || exporting) return;
     setExporting(true);
     try {
-      const days = visible.map((p) => p.capturedAt.slice(0, 10)).sort();
+      /**
+       * Ticking nothing means "everything on screen".
+       *
+       * Forcing a selection before the common case (export this whole day)
+       * would add a step to the thing people do most, and an export button
+       * that refuses to do anything until you tick boxes reads as broken.
+       */
+      const chosen = selected.size
+        ? visible.filter((p) => selected.has(p.id))
+        : visible;
+      const days = chosen.map((p) => p.capturedAt.slice(0, 10)).sort();
       const employeeName = employeeFilter
-        ? visible.find((p) => p.employee?.id === employeeFilter)
+        ? chosen.find((p) => p.employee?.id === employeeFilter)
         : null;
-      const blob = await buildProofPdf(visible, {
+      const blob = await buildProofPdf(chosen, {
         title: t("pdfTitle"),
         employee: t("fieldEmployee"),
         capturedAt: t("fieldCapturedAt"),
@@ -148,7 +185,7 @@ export default function FotonachweisePage() {
       const name = buildProofFilename({
         from: days[0],
         to: days[days.length - 1],
-        location: visible.find((p) => p.location?.name)?.location?.name ?? null,
+        location: chosen.find((p) => p.location?.name)?.location?.name ?? null,
         employee: employeeName?.employee
           ? `${employeeName.employee.lastName}-${employeeName.employee.firstName}`
           : null,
@@ -165,14 +202,6 @@ export default function FotonachweisePage() {
       setExporting(false);
     }
   };
-
-  const visible = employeeFilter
-    ? photos.filter((p) => p.employee?.id === employeeFilter)
-    : photos;
-
-  const flagged = visible.filter(
-    (p) => p.geofenceStatus === "OUTSIDE" || p.locationMocked,
-  ).length;
 
   return (
     <>
@@ -224,15 +253,40 @@ export default function FotonachweisePage() {
 
             {/* Exports exactly what is on screen, so the filters above double as
                 the export selection and there is no second place to choose. */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleExport}
-              disabled={!visible.length || exporting}
-            >
-              <DownloadIcon className="mr-2 h-4 w-4" />
-              {exporting ? t("pdfExporting") : t("pdfExport")}
-            </Button>
+            <div className="flex items-end gap-2">
+              {/* Only shown once there is something to select, so the common
+                  "export this whole day" path stays a single button. */}
+              {visible.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() =>
+                    setSelected((prev) =>
+                      prev.size === visible.length
+                        ? new Set()
+                        : new Set(visible.map((p) => p.id)),
+                    )
+                  }
+                >
+                  {selected.size === visible.length
+                    ? t("selectNone")
+                    : t("selectAll")}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleExport}
+                disabled={!visible.length || exporting}
+              >
+                <DownloadIcon className="mr-2 h-4 w-4" />
+                {exporting
+                  ? t("pdfExporting")
+                  : selected.size
+                    ? t("pdfExportSelected", { count: selected.size })
+                    : t("pdfExport")}
+              </Button>
+            </div>
 
             {flagged > 0 && (
               <div className="ml-auto flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
@@ -275,6 +329,8 @@ export default function FotonachweisePage() {
                 key={photo.id}
                 photo={photo}
                 onOpen={() => setActive(photo)}
+                selected={selected.has(photo.id)}
+                onToggle={() => toggleSelected(photo.id)}
               />
             ))}
           </div>
@@ -346,9 +402,13 @@ function VerdictBadge({ photo }: { photo: ProofPhoto }) {
 function ProofCard({
   photo,
   onOpen,
+  selected,
+  onToggle,
 }: {
   photo: ProofPhoto;
   onOpen: () => void;
+  selected: boolean;
+  onToggle: () => void;
 }) {
   const t = useTranslations("proofPhotos");
   const time = new Date(photo.capturedAt).toLocaleTimeString("de-DE", {
@@ -357,54 +417,80 @@ function ProofCard({
   });
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+    <div
+      className={`relative overflow-hidden rounded-2xl border bg-white dark:bg-zinc-900 text-left transition-shadow hover:shadow-md ${
+        selected
+          ? "border-emerald-500 ring-2 ring-emerald-500/40"
+          : "border-gray-200 dark:border-zinc-700"
+      }`}
     >
-      <div className="relative aspect-[4/3] bg-gray-100 dark:bg-zinc-800">
-        {photo.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photo.url}
-            alt={photo.note ?? t("photoAlt")}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <ImageIcon className="h-8 w-8 text-gray-300 dark:text-zinc-600" />
-          </div>
-        )}
-        <div className="absolute left-2 top-2">
-          <VerdictBadge photo={photo} />
-        </div>
-      </div>
+      {/* Outside the open button on purpose: nesting an interactive control
+          inside another is invalid and makes the checkbox unreachable by
+          keyboard. */}
+      <label
+        className="absolute left-3 top-3 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-white/90 dark:bg-zinc-900/90 shadow ring-1 ring-black/5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          aria-label={t("selectPhoto")}
+          className="h-4 w-4 accent-emerald-600"
+        />
+      </label>
 
-      <div className="space-y-1.5 p-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-zinc-100">
-          <UserIcon className="h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
-          {photo.employee
-            ? `${photo.employee.firstName} ${photo.employee.lastName}`
-            : t("unknownEmployee")}
+      <button
+        type="button"
+        onClick={onOpen}
+        className="block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+      >
+        <div className="relative aspect-[4/3] bg-gray-100 dark:bg-zinc-800">
+          {photo.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/work-proof/${photo.id}/image`}
+              alt={photo.note ?? t("photoAlt")}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <ImageIcon className="h-8 w-8 text-gray-300 dark:text-zinc-600" />
+            </div>
+          )}
+          {/* Moved to the right: the selection checkbox now occupies the top
+            left, and two overlapping controls in one corner is unusable. */}
+          <div className="absolute right-2 top-2">
+            <VerdictBadge photo={photo} />
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
-          <ClockIcon className="h-3.5 w-3.5" />
-          <span className="tabular-nums">{time}</span>
-          {photo.location && (
-            <>
-              <MapPinIcon className="ml-1 h-3.5 w-3.5" />
-              <span className="truncate">{photo.location.name}</span>
-            </>
+
+        <div className="space-y-1.5 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-zinc-100">
+            <UserIcon className="h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
+            {photo.employee
+              ? `${photo.employee.firstName} ${photo.employee.lastName}`
+              : t("unknownEmployee")}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400">
+            <ClockIcon className="h-3.5 w-3.5" />
+            <span className="tabular-nums">{time}</span>
+            {photo.location && (
+              <>
+                <MapPinIcon className="ml-1 h-3.5 w-3.5" />
+                <span className="truncate">{photo.location.name}</span>
+              </>
+            )}
+          </div>
+          {photo.note && (
+            <p className="line-clamp-2 text-xs text-gray-600 dark:text-zinc-400">
+              {photo.note}
+            </p>
           )}
         </div>
-        {photo.note && (
-          <p className="line-clamp-2 text-xs text-gray-600 dark:text-zinc-400">
-            {photo.note}
-          </p>
-        )}
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }
 
@@ -426,11 +512,23 @@ function ProofDetail({ photo }: { photo: ProofPhoto }) {
       {photo.url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={photo.url}
+          src={`/api/work-proof/${photo.id}/image`}
           alt={photo.note ?? t("photoAlt")}
           className="w-full rounded-xl"
         />
       )}
+
+      {/* Saving one photo on its own. A PDF is the right artefact for filing
+          a round, but when somebody just needs to paste a single picture into
+          an email, wrapping it in a document is in the way. */}
+      <a
+        href={`/api/work-proof/${photo.id}/image`}
+        download={singlePhotoFilename(photo)}
+        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-zinc-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800"
+      >
+        <DownloadIcon className="h-4 w-4" />
+        {t("downloadPhoto")}
+      </a>
 
       <div className="flex flex-wrap items-center gap-2">
         <VerdictBadge photo={photo} />

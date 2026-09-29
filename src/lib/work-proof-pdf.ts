@@ -76,7 +76,14 @@ export function buildProofFilename(opts: {
   return `${parts.join("_")}.pdf`;
 }
 
-/** Signed URL -> data URL, since jsPDF cannot fetch remote images itself. */
+/**
+ * Image bytes -> data URL, since jsPDF cannot fetch remote images itself.
+ *
+ * Reads from our own /api/work-proof/<id>/image rather than the signed storage
+ * URL the list handed over. Those expire after ten minutes, so an export
+ * started later than that produced a document with every photo missing and all
+ * the metadata intact, which is precisely the wrong half to keep.
+ */
 async function toDataUrl(
   url: string,
 ): Promise<{ data: string; w: number; h: number } | null> {
@@ -148,7 +155,7 @@ export async function buildProofPdf(
     doc.setTextColor(0);
 
     let y = 30;
-    const img = p.url ? await toDataUrl(p.url) : null;
+    const img = await toDataUrl(`/api/work-proof/${p.id}/image`);
     if (img && img.w > 0) {
       // Fit inside the text column while preserving the aspect ratio, capped so
       // the metadata below always stays on the same page as its photo.
@@ -207,4 +214,32 @@ export async function buildProofPdf(
   }
 
   return doc.output("blob");
+}
+
+/**
+ * Filename for a single saved photo.
+ *
+ * Same convention as the PDF, down to the leading ISO date, so one photo saved
+ * on its own files next to the document it could have come from rather than
+ * looking like something else entirely.
+ */
+export function singlePhotoFilename(photo: {
+  capturedAt: string;
+  location?: { name: string } | null;
+  employee?: { firstName: string; lastName: string } | null;
+}): string {
+  const d = new Date(photo.capturedAt);
+  const date = d.toISOString().slice(0, 10);
+  const time = `${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
+  const parts = [
+    `${date}_${time}`,
+    "Leistungsnachweis",
+    slugForFilename(photo.location?.name || "Alle-Objekte"),
+  ];
+  if (photo.employee) {
+    parts.push(
+      slugForFilename(`${photo.employee.lastName}-${photo.employee.firstName}`),
+    );
+  }
+  return `${parts.join("_")}.jpg`;
 }

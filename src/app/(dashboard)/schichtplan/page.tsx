@@ -140,6 +140,18 @@ export default function SchichtplanPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"week" | "month" | "day">("week");
   const [holidayConfirmed, setHolidayConfirmed] = useState(false);
+  /**
+   * Set when a manager is about to put THEMSELVES on a shift.
+   *
+   * Assigning your own shift is legitimate -- an owner who also works the floor
+   * does it constantly -- but it is worth one deliberate confirmation, because
+   * it is also the action nobody else reviews. The same reasoning as the
+   * four-eyes rule on absences, stated where the decision is made rather than
+   * after it.
+   */
+  const [pendingSelfAssign, setPendingSelfAssign] = useState(false);
+  const [selfAssignConfirmed, setSelfAssignConfirmed] = useState(false);
+
   const [pendingHolidayName, setPendingHolidayName] = useState<string | null>(
     null,
   );
@@ -325,10 +337,44 @@ export default function SchichtplanPage() {
         templatesRes.ok ? templatesRes.json() : [],
       ]);
 
-      // API returns paginated { data, pagination } — extract the data array
-      setShifts(shiftsJson.data ?? shiftsJson);
-      setEmployees(employeesJson.data ?? employeesJson);
-      setLocations(locationsJson.data ?? locationsJson);
+      /**
+       * These three render as lists, so they must BE lists.
+       *
+       * The responses were unwrapped as `json.data ?? json` with no check on
+       * res.ok, so any error body -- `{ error: "..." }` from a 500, a rate
+       * limit, a transient failure right after a delete -- was stored where the
+       * render expects an array. The very next render then threw on .map and
+       * took the whole planning page down to the error boundary, and "Erneut
+       * versuchen" re-ran the same failing fetch and stored the same object
+       * again. It only recovered once the API did, which is why it came back
+       * much later on its own.
+       *
+       * Note workspace and templates were already checked; these three were
+       * the ones that were not.
+       */
+      const asList = (res: Response, json: unknown): unknown[] | null => {
+        if (!res.ok) return null;
+        const unwrapped =
+          json && typeof json === "object" && "data" in json
+            ? (json as { data: unknown }).data
+            : json;
+        return Array.isArray(unwrapped) ? unwrapped : null;
+      };
+
+      const shiftList = asList(shiftsRes, shiftsJson);
+      const employeeList = asList(employeesRes, employeesJson);
+      const locationList = asList(locationsRes, locationsJson);
+
+      // One bad response must not leave the page half-updated: show the error
+      // and keep the last good data, which is still true and still usable.
+      if (!shiftList || !employeeList || !locationList) {
+        setLoadError(tc("errorLoading"));
+        return;
+      }
+
+      setShifts(shiftList as typeof shifts);
+      setEmployees(employeeList as typeof employees);
+      setLocations(locationList as typeof locations);
       setShiftTemplates(
         Array.isArray(templatesJson)
           ? templatesJson
@@ -440,6 +486,19 @@ export default function SchichtplanPage() {
     if (!timeValidation.valid) return;
     setFormError(null);
 
+    // Assigning yourself: confirm once, on creation only. Editing a shift you
+    // already hold is not the moment to ask.
+    if (
+      !editingShift &&
+      !selfAssignConfirmed &&
+      user?.employeeId &&
+      formData.employeeId === user.employeeId
+    ) {
+      setPendingSelfAssign(true);
+      return;
+    }
+    setPendingSelfAssign(false);
+
     // Holiday guard — only for new single-day shifts
     if (
       !editingShift &&
@@ -506,6 +565,8 @@ export default function SchichtplanPage() {
         setEditingShift(null);
         setFormError(null);
         setHolidayConfirmed(false);
+        setSelfAssignConfirmed(false);
+        setPendingSelfAssign(false);
         setPendingHolidayName(null);
         setComplianceViolations(null);
         setOverrideReason("");
@@ -1490,6 +1551,8 @@ export default function SchichtplanPage() {
           onClose={() => {
             setShowForm(false);
             setHolidayConfirmed(false);
+            setSelfAssignConfirmed(false);
+            setPendingSelfAssign(false);
             setPendingHolidayName(null);
           }}
           title={editingShift ? t("form.editTitle") : t("form.title")}
@@ -1583,6 +1646,8 @@ export default function SchichtplanPage() {
                     value={formData.date}
                     onChange={(e) => {
                       setHolidayConfirmed(false);
+                      setSelfAssignConfirmed(false);
+                      setPendingSelfAssign(false);
                       setPendingHolidayName(null);
                       setFormData((p) => ({
                         ...p,
@@ -1872,6 +1937,31 @@ export default function SchichtplanPage() {
                 </div>
               )}
             </fieldset>
+
+            {/* ── Assigning yourself ── */}
+            {pendingSelfAssign && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 p-3.5 space-y-2">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {t("form.selfAssignWarning")}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelfAssignConfirmed(true);
+                    setPendingSelfAssign(false);
+                    document.getElementById("shift-form")?.dispatchEvent(
+                      new Event("submit", {
+                        bubbles: true,
+                        cancelable: true,
+                      }),
+                    );
+                  }}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  {t("form.selfAssignConfirm")}
+                </button>
+              </div>
+            )}
 
             {/* ── Public holiday warning ── */}
             {pendingHolidayName && (

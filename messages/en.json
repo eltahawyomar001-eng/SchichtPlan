@@ -486,7 +486,9 @@
       "daySu": "Su",
       "templates": "Shift templates",
       "holidayWarning": "This day is a public holiday ({name}). Create shift anyway?",
-      "holidayConfirm": "Yes, create holiday shift"
+      "holidayConfirm": "Yes, create holiday shift",
+      "selfAssignWarning": "You are assigning this shift to yourself. Please confirm.",
+      "selfAssignConfirm": "Assign anyway"
     },
     "viewDay": "Day",
     "viewWeek": "Week",

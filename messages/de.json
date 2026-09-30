@@ -486,7 +486,9 @@
       "daySu": "So",
       "templates": "Schichtvorlagen",
       "holidayWarning": "Dieser Tag ist ein gesetzlicher Feiertag ({name}). Schicht trotzdem erstellen?",
-      "holidayConfirm": "Ja, Feiertag-Schicht erstellen"
+      "holidayConfirm": "Ja, Feiertag-Schicht erstellen",
+      "selfAssignWarning": "Sie weisen sich diese Schicht selbst zu. Bitte bestätigen Sie.",
+      "selfAssignConfirm": "Trotzdem zuweisen"
     },
     "viewDay": "Tag",
     "viewWeek": "Woche",

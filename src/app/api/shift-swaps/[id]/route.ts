@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SwapStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { notify, userIdsForEmployees } from "@/lib/notify";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
   tryAutoApproveSwap,
@@ -322,6 +323,33 @@ export const PATCH = withRoute(
 
     // Re-fetch after GENEHMIGT so the client sees ABGESCHLOSSEN, not the
     // intermediate GENEHMIGT state written before the swap transaction.
+    /**
+     * Tell the people affected how it was decided.
+     *
+     * Both sides of a swap, because an approval changes who is working: the
+     * requester needs to know they are released, and the target needs to know
+     * they are now on. Notifying only the requester is how somebody misses a
+     * shift they never agreed to.
+     */
+    if (validData.status === "GENEHMIGT" || validData.status === "ABGELEHNT") {
+      const approved = validData.status === "GENEHMIGT";
+      const affected = await userIdsForEmployees(
+        [existing.requesterId, existing.targetId ?? ""].filter(Boolean),
+        user.workspaceId!,
+      );
+      await notify({
+        kind: approved ? "swap.approved" : "swap.rejected",
+        userIds: affected,
+        workspaceId: user.workspaceId!,
+        title: approved ? "Schichttausch genehmigt" : "Schichttausch abgelehnt",
+        message: approved
+          ? "Ihr Dienstplan wurde entsprechend angepasst."
+          : "Ihre Schicht bleibt unverändert.",
+        link: "/(app)",
+        collapseId: `swap-${id}`,
+      });
+    }
+
     if (validData.status === "GENEHMIGT" && existing.targetId) {
       const finalSwap = await prisma.shiftSwapRequest.findUnique({
         where: { id },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { notify } from "@/lib/notify";
 import { isEmployee } from "@/lib/authorization";
 import {
   createSystemNotification,
@@ -214,6 +215,43 @@ export const POST = withRoute("/api/shift-swaps", "POST", async (req) => {
     link: "/schichttausch",
     workspaceId,
     recipientType: "managers",
+  });
+
+  /**
+   * Push the request to the managers who have to decide it.
+   *
+   * A swap sits blocking a published rota until somebody acts on it, so this is
+   * one of the events that may arrive outside working hours -- see the urgency
+   * set in lib/notify.
+   */
+  /**
+   * Resolved defensively, inside try/catch rather than with .catch().
+   *
+   * A swap request that was accepted must not come back as an error because
+   * the people to notify could not be looked up -- and a promise .catch() does
+   * not cover it, because the failure can be a synchronous throw before any
+   * promise exists.
+   */
+  let managers: { id: string }[] = [];
+  try {
+    managers = await prisma.user.findMany({
+      where: {
+        workspaceId,
+        role: { in: ["OWNER", "ADMIN", "MANAGER"] },
+      },
+      select: { id: true },
+    });
+  } catch {
+    managers = [];
+  }
+  await notify({
+    kind: "swap.requested",
+    userIds: managers.map((m) => m.id),
+    workspaceId,
+    title: "Schichttausch-Antrag",
+    message: `${requesterName}: ${shiftDate}, ${swap.shift.startTime}–${swap.shift.endTime}`,
+    link: "/(app)/team",
+    collapseId: `swap-${swap.id}`,
   });
 
   return NextResponse.json(swap, { status: 201 });

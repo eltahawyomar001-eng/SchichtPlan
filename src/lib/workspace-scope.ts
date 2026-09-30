@@ -84,6 +84,7 @@ export const SCOPED_MODELS: ReadonlySet<string> = new Set([
   "DATEVToken",
   "DatevOAuthState",
   "Department",
+  "DeviceToken",
   "ESignature",
   "EauRequest",
   "Employee",

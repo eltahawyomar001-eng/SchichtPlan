@@ -242,3 +242,107 @@ export async function pushToTokens(opts: {
 
   return { sent, failed, dead };
 }
+
+/**
+ * A standard user-visible push notification.
+ *
+ * Distinct from the Live Activity path above in every header that matters: a
+ * plain bundle id as the topic (not the .push-type.liveactivity suffix) and
+ * `apns-push-type: alert`. Sending one with the other's headers is rejected
+ * with TopicDisallowed, which reads like a permissions problem rather than the
+ * wrong constant.
+ */
+export async function sendAlertPush(opts: {
+  cfg: ApnsConfig;
+  deviceToken: string;
+  title: string;
+  body: string;
+  /** Deep-link path the app opens on tap, e.g. "/(app)/schicht/abc". */
+  link?: string;
+  /** Unread count to show on the app icon. Omit to leave it unchanged. */
+  badge?: number;
+  /**
+   * Grouping key. iOS collapses notifications sharing one, so a schedule
+   * republished three times reads as one update rather than three alerts.
+   */
+  collapseId?: string;
+  /** Extra values delivered to the app alongside the alert. */
+  data?: Record<string, unknown>;
+}): Promise<ApnsResult> {
+  const { cfg, deviceToken, title, body, link, badge, collapseId, data } = opts;
+  const host = cfg.useSandbox ? APNS_HOST_SANDBOX : APNS_HOST_PROD;
+
+  const payload = {
+    aps: {
+      alert: { title, body },
+      sound: "default",
+      ...(badge != null ? { badge } : {}),
+      // Lets the app update its badge and cache before the user taps.
+      "mutable-content": 1,
+    },
+    ...(link ? { link } : {}),
+    ...(data ?? {}),
+  };
+
+  const raw = Buffer.from(JSON.stringify(payload));
+
+  return new Promise<ApnsResult>((resolve) => {
+    let settled = false;
+    const done = (r: ApnsResult) => {
+      if (settled) return;
+      settled = true;
+      client.close();
+      resolve(r);
+    };
+
+    const client = http2.connect(`https://${host}`);
+    client.on("error", () =>
+      done({ ok: false, status: 0, reason: "connection", gone: false }),
+    );
+
+    const req = client.request({
+      ":method": "POST",
+      ":path": `/3/device/${deviceToken}`,
+      authorization: `bearer ${providerToken(cfg)}`,
+      "apns-push-type": "alert",
+      "apns-topic": cfg.bundleId,
+      // 10 = deliver immediately. A shift change the reader needs now is the
+      // whole reason this exists.
+      "apns-priority": "10",
+      ...(collapseId ? { "apns-collapse-id": collapseId.slice(0, 64) } : {}),
+      "content-type": "application/json",
+      "content-length": raw.length,
+    });
+
+    let status = 0;
+    let bodyText = "";
+
+    req.setTimeout(10_000, () =>
+      done({ ok: false, status: 0, reason: "timeout", gone: false }),
+    );
+    req.on("response", (headers) => {
+      status = Number(headers[":status"] ?? 0);
+    });
+    req.on("data", (chunk) => {
+      bodyText += chunk;
+    });
+    req.on("error", () =>
+      done({ ok: false, status, reason: "stream", gone: false }),
+    );
+    req.on("end", () => {
+      let reason: string | undefined;
+      try {
+        reason = bodyText ? (JSON.parse(bodyText).reason as string) : undefined;
+      } catch {
+        reason = bodyText || undefined;
+      }
+      const gone =
+        status === 410 ||
+        reason === "BadDeviceToken" ||
+        reason === "Unregistered";
+      done({ ok: status >= 200 && status < 300, status, reason, gone });
+    });
+
+    req.end(raw);
+  });
+}

@@ -53,6 +53,7 @@ model User {
   approvalsReviewed        ShiftPlanApproval[]      @relation("ApprovalReviewer")
   timesheetImports         TimesheetImport[]        @relation("TimesheetImporter")
   timesheetImportsReviewed TimesheetImport[]        @relation("TimesheetReviewer")
+  deviceTokens             DeviceToken[]
 }
 
 /// Personal to-do list shown on the dashboard "My Tasks" card.
@@ -240,6 +241,7 @@ model Workspace {
   complianceOverrides    ComplianceOverride[]
   workProofPhotos        WorkProofPhoto[]
   liveActivityTokens     LiveActivityToken[]
+  deviceTokens           DeviceToken[]
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -2596,5 +2598,37 @@ model LiveActivityToken {
   employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
+  @@index([workspaceId])
+}
+
+/// A device registered to receive push notifications.
+///
+/// Separate from LiveActivityToken: that one belongs to a single running Live
+/// Activity and dies with it, while this belongs to the app install and lives
+/// until the user signs out or APNs reports it gone.
+model DeviceToken {
+  id       String @id @default(cuid())
+  /// APNs device token, hex.
+  token    String @unique
+  /// "ios" today; the column exists so Android does not need a migration.
+  platform String @default("ios")
+  /// Preferred language for the notification text, captured at registration.
+  /// The server writes the copy, so it has no other way to know.
+  locale   String @default("de")
+  /// Device clock offset is not reliable; the workspace timezone is used for
+  /// quiet hours instead. Kept for diagnostics.
+  timezone String @default("Europe/Berlin")
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  /// Last successful send, for pruning installs that silently went away.
+  lastUsedAt DateTime?
+
+  @@index([userId])
   @@index([workspaceId])
 }

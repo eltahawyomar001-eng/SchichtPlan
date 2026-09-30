@@ -3,6 +3,7 @@ import { parseJsonBody } from "@/lib/api-response";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { notify, userIdsForEmployees } from "@/lib/notify";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
@@ -261,6 +262,32 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         data.reviewedAt = new Date();
         data.reviewNote = body.reviewNote || null;
       }
+    }
+
+    /**
+     * Tell the employee how their request was decided.
+     *
+     * Not urgent by the quiet-hours rule: a decision on leave booked weeks out
+     * does not need to wake anybody at 23:00, and the in-app record is already
+     * written either way.
+     */
+    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+      const approved = body.status === "GENEHMIGT";
+      const recipients = await userIdsForEmployees(
+        [existing.employeeId],
+        user.workspaceId!,
+      );
+      await notify({
+        kind: approved ? "absence.approved" : "absence.rejected",
+        userIds: recipients,
+        workspaceId: user.workspaceId!,
+        title: approved ? "Antrag genehmigt" : "Antrag abgelehnt",
+        message: approved
+          ? "Ihre Abwesenheit wurde genehmigt."
+          : "Ihre Abwesenheit wurde abgelehnt.",
+        link: "/(app)/abwesenheit",
+        collapseId: `absence-${id}`,
+      });
     }
 
     const updated = await prisma.$transaction(async (tx) => {

@@ -23,6 +23,7 @@ import { captureRouteError } from "@/lib/sentry";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
 import { log } from "@/lib/logger";
+import { notify, userIdsForEmployees } from "@/lib/notify";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { requireSchichtplanungAddon } from "@/lib/schichtplanung-addon";
@@ -480,6 +481,30 @@ export const POST = withRoute(
       }
     } else {
       log.info(`[shifts/POST] Open shift created (no employee assigned)`);
+    }
+
+    /**
+     * Push the assignment to the employee's phone.
+     *
+     * Deliberately outside the email branch above: that notification is
+     * skipped entirely when the employee has no email address, which is common
+     * for shift workers and left exactly those people with no way to learn
+     * about a shift except by opening the app and looking. The push needs only
+     * a device.
+     */
+    if (employeeId) {
+      const recipients = await userIdsForEmployees([employeeId], workspaceId);
+      await notify({
+        kind: "shift.assigned",
+        userIds: recipients,
+        workspaceId,
+        title: "Neue Schicht",
+        message: `${new Date(date).toLocaleDateString("de-DE")}, ${startTime}–${endTime}`,
+        link: `/(app)/schicht/${shift.id}`,
+        // One alert per shift, so a correction moments later replaces it
+        // rather than arriving as a second, contradictory notification.
+        collapseId: `shift-${shift.id}`,
+      });
     }
 
     // ── Automation: Execute custom rules ──

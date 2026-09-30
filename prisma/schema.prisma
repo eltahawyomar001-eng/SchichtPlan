@@ -239,6 +239,7 @@ model Workspace {
   timesheetImportEntries TimesheetImportEntry[]
   complianceOverrides    ComplianceOverride[]
   workProofPhotos        WorkProofPhoto[]
+  liveActivityTokens     LiveActivityToken[]
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -761,6 +762,7 @@ model Employee {
   /// Date the Zuverlässigkeitsüberprüfung (§34a Abs. 1) was confirmed.
   reliabilityCheckedAt   DateTime?
   workProofPhotos        WorkProofPhoto[]
+  liveActivityTokens     LiveActivityToken[]
 
   @@unique([email, workspaceId])
   @@unique([workspaceId, pinHash])
@@ -2558,4 +2560,41 @@ model WorkProofPhoto {
   @@index([timeEntryId])
   @@index([shiftId])
   @@index([employeeId])
+}
+
+/// A device's push token for one running Live Activity.
+///
+/// A Live Activity can normally only be changed by the app that started it,
+/// while that app is running. Without this, ending a break in the web app
+/// leaves the card on the employee's lock screen asserting "on break" until
+/// the phone app is next opened. ActivityKit push is the only way to correct
+/// it from anywhere else.
+///
+/// Rows are short-lived by nature: the token belongs to ONE activity and dies
+/// when that activity ends, so clocking out deletes it, and APNs telling us the
+/// token is gone deletes it too.
+model LiveActivityToken {
+  id          String   @id @default(cuid())
+  workspaceId String
+  employeeId  String
+  /// APNs device token for this activity, hex. Unique so re-registering the
+  /// same activity updates rather than accumulating duplicates.
+  token       String   @unique
+  /// Localized captions and names captured at registration.
+  ///
+  /// The push has to carry the COMPLETE content state -- ActivityKit replaces
+  /// it wholesale, so anything omitted decodes to its default and blanks the
+  /// card. The server does not otherwise know the user's language, so the app
+  /// hands these over when it registers.
+  labels      Json?
+  companyName String?
+  timezone    String   @default("Europe/Berlin")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([workspaceId])
 }

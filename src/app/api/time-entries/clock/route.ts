@@ -13,6 +13,7 @@ import {
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
+import { pushCurrentClockState } from "@/lib/live-activity";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { evaluateGeofence, type GeofenceStatus } from "@/lib/geofence";
@@ -329,6 +330,7 @@ export const POST = withRoute(
         action: "clock-in",
       }).catch((err) => log.error("Custom rule error:", { error: err }));
 
+      await mirrorToLiveActivity(employeeId, workspaceId, tz);
       return NextResponse.json(entry, { status: 201 });
     }
 
@@ -383,6 +385,7 @@ export const POST = withRoute(
           { status: entry.status },
         );
       }
+      await mirrorToLiveActivity(employeeId, workspaceId, tz);
       return NextResponse.json(entry);
     }
 
@@ -428,6 +431,7 @@ export const POST = withRoute(
           { status: entry.status },
         );
       }
+      await mirrorToLiveActivity(employeeId, workspaceId, tz);
       return NextResponse.json(entry);
     }
 
@@ -565,6 +569,12 @@ export const POST = withRoute(
       const cappedByArbzg = !!(
         entry as { remarks?: string | null }
       ).remarks?.includes("ArbZG §3");
+
+      // The clock has stopped, so this ENDS the Live Activity rather than
+      // updating it -- the card must come off the lock screen, not sit there
+      // showing a finished shift.
+      await mirrorToLiveActivity(employeeId, workspaceId, tz);
+
       return NextResponse.json({
         ...entry,
         arbzg: {
@@ -770,6 +780,27 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
  *   3. Check what H:M that guess produces in the target timezone.
  *   4. Correct by the difference (handles DST automatically).
  */
+/**
+ * Mirror the punch onto the employee's iOS Live Activity.
+ *
+ * Awaited rather than fired and forgotten: on serverless the function can be
+ * frozen the moment the response is returned, which would cut the push off
+ * mid-flight. It never throws and never changes the response -- a punch that
+ * succeeded must not read as failed because a lock screen did not update.
+ */
+async function mirrorToLiveActivity(
+  employeeId: string,
+  workspaceId: string,
+  tz: string,
+): Promise<void> {
+  await pushCurrentClockState({
+    employeeId,
+    workspaceId,
+    timezone: tz,
+    toInstant: hhmmToUTC,
+  });
+}
+
 function hhmmToUTC(hhmm: string, referenceDate: Date, tz: string): string {
   const [wantH, wantM] = hhmm.split(":").map(Number);
 

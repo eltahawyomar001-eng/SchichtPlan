@@ -1,7 +1,7 @@
 # Verarbeitungsverzeichnis (Art. 30 DSGVO)
 
 > **Verantwortlicher:** Bashabsheh Vergabepartner, Inhaber Mohammad Bashabsheh  
-> **Anschrift:** c/o VirtualOfficeBerlin, Kolonnenstraße 8, 10827 Berlin  
+> **Anschrift:** Kaiserring 10-16, 68161 Mannheim  
 > **Datenschutz-Ansprechpartner:** Mohammad Bashabsheh — Kontakt@shiftfy.info  
 > **Software:** Shiftfy (SchichtPlan) — SaaS für Schichtplanung, Zeiterfassung und Personalverwaltung  
 > **Stand:** <!-- Datum wird bei Pflege aktualisiert --> Juni 2025

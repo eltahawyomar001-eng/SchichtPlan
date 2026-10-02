@@ -100,7 +100,7 @@ export default function WiderrufPage() {
               <br />
               Mohammad Bashabsheh
               <br />
-              Kolonnenstraße 8, 10827 Berlin, Deutschland
+              Kaiserring 10-16, 68161 Mannheim, Deutschland
               <br />
               E-Mail: Kontakt@shiftfy.info
               <br />
@@ -174,7 +174,7 @@ export default function WiderrufPage() {
                 <br />
                 Bashabsheh Vergabepartner — Mohammad Bashabsheh
                 <br />
-                Kolonnenstraße 8, 10827 Berlin
+                Kaiserring 10-16, 68161 Mannheim
                 <br />
                 E-Mail: Kontakt@shiftfy.info
               </p>

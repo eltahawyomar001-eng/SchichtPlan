@@ -72,7 +72,7 @@ export default function AvvPage() {
               <br />
               Inhaber: Mohammad Bashabsheh
               <br />
-              Kolonnenstraße 8, 10827 Berlin, Deutschland
+              Kaiserring 10-16, 68161 Mannheim, Deutschland
               <br />
               E-Mail: Kontakt@shiftfy.info
             </p>

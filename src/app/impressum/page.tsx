@@ -16,8 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 const OPERATOR = {
   company: "Bashabsheh Vergabepartner",
   owner: "Mohammad Bashabsheh",
-  street: "Kolonnenstraße 8",
-  city: "10827 Berlin",
+  street: "Kaiserring 10-16",
+  city: "68161 Mannheim",
   phone: "+49 176 30365636",
   email: "Kontakt@shiftfy.info",
 };

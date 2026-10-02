@@ -27,6 +27,20 @@ const nextConfig: NextConfig = {
     return [
       {
         /**
+         * The explainer video and its posters never change in place: a new cut
+         * gets a new filename. Immutable caching therefore costs nothing and
+         * saves a repeat visitor the 7 MB download entirely.
+         */
+        source: "/videos/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        /**
          * Apple refuses an association file that is not served as JSON, and the
          * file deliberately has no extension, so Next would otherwise send it as
          * octet-stream. Without this, universal links fail silently: the link

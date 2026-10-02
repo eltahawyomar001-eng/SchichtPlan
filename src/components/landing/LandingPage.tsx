@@ -40,6 +40,11 @@ import {
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CookieSettingsButton } from "@/components/cookie-banner";
+import { track } from "@vercel/analytics";
+import {
+  ExplainerVideo,
+  PLAY_EVENT,
+} from "@/components/landing/ExplainerVideo";
 
 /**
  * Full landing page for Shiftfy — Clockify-inspired redesign.
@@ -73,6 +78,7 @@ export function LandingPage() {
 
       <main id="main-content">
         <HeroSection />
+        <ExplainerVideoSection />
         <FeatureTabsSection />
         <AiScannerSection />
         <SosFeatureSection />
@@ -308,6 +314,29 @@ function HeroSection() {
               >
                 {t("heroCtaSecondary")}
                 <ChevronRightIcon className="w-4 h-4" />
+              </a>
+              {/*
+               * Third entry point, deliberately the quietest of the three so
+               * the trial CTA stays dominant. Scrolls rather than opening a
+               * modal: no focus trap to get wrong, and the URL stays shareable.
+               */}
+              <a
+                href="#erklaervideo"
+                onClick={() => {
+                  track("hero_video_link_click");
+                  // The anchor scrolls; this starts playback once it is there.
+                  window.dispatchEvent(new CustomEvent(PLAY_EVENT));
+                }}
+                className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors flex items-center gap-1.5"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-4 h-4 fill-current"
+                  aria-hidden
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                {t("videoHeroLink")}
               </a>
             </div>
             <p className="mt-3 text-sm text-gray-400 text-center lg:text-left">
@@ -696,6 +725,65 @@ function SocialProofSection() {
 }
 
 /* ─── Interactive Feature Tabs Section (Clockify-style) ─── */
+/**
+ * Explainer video, directly below the hero.
+ *
+ * Placed here because this is where a visitor who is interested but not yet
+ * convinced actually is: past the headline, not yet into the feature list. The
+ * player loads nothing until clicked, so putting it this high costs nothing in
+ * page weight -- see ExplainerVideo.
+ */
+function ExplainerVideoSection() {
+  const t = useTranslations("landing");
+
+  return (
+    <section
+      id="erklaervideo"
+      className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-zinc-950"
+      aria-labelledby="erklaervideo-title"
+    >
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-10">
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300">
+            {t("videoLabel")}
+          </span>
+          <h2
+            id="erklaervideo-title"
+            className="mt-4 text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white"
+          >
+            {t("videoTitle")}
+          </h2>
+          <p className="mt-3 text-lg text-gray-600 dark:text-zinc-400 max-w-2xl mx-auto">
+            {t("videoSubtitle")}
+          </p>
+        </div>
+
+        <ExplainerVideo ctaHref="/register" hasWebm />
+
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            href="/register"
+            onClick={() =>
+              track("video_cta_click", { placement: "below_player" })
+            }
+            className="bg-brand-gradient text-white font-semibold px-8 py-4 rounded-full text-base hover:shadow-xl hover:shadow-emerald-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+          >
+            {t("heroCtaPrimary")}
+            <ArrowRightIcon className="w-5 h-5" />
+          </Link>
+          <a
+            href="#pricing"
+            className="text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1"
+          >
+            {t("heroCtaSecondary")}
+            <ChevronRightIcon className="w-4 h-4" />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FeatureTabsSection() {
   const t = useTranslations("landing");
   const [activeTab, setActiveTab] = useState(0);

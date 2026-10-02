@@ -2388,7 +2388,15 @@
     "nativeAppMockAuthSubtitle": "Your shifts, time tracking and your team — in one place.",
     "nativeAppMockSignIn": "Sign in",
     "nativeAppMockCreate": "Create account",
-    "nativeAppMockOr": "or"
+    "nativeAppMockOr": "or",
+    "videoLabel": "Explained in 90 seconds",
+    "videoTitle": "How Shiftfy works",
+    "videoSubtitle": "Time tracking, emergency cover, DATEV export and legal compliance, in brief.",
+    "videoDuration": "1:26",
+    "videoPlayAria": "Play explainer video, duration 1 minute 26 seconds",
+    "videoHeroLink": "Watch video (1:26)",
+    "videoEndTitle": "Ready to digitise your time tracking?",
+    "videoReplay": "Watch again"
   },
   "calculator": {
     "pageTitle": "Savings Calculator",

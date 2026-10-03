@@ -2491,7 +2491,14 @@ model CustomerInvoice {
   workspaceId       String
   clientId          String?
   quoteId           String?
-  number            String
+  /// Null while the invoice is a draft.
+  ///
+  /// GoBD wants the numbers of ISSUED invoices gapless. Assigning one when the
+  /// draft is created means every discarded draft tears a hole in the sequence
+  /// that cannot afterwards be explained to an auditor, so the number is drawn
+  /// from the counter at issue time instead -- the one moment that is already
+  /// irreversible.
+  number            String?
   status            CustomerInvoiceStatus @default(ENTWURF)
   title             String?
   notes             String?               @db.Text
@@ -2737,6 +2744,10 @@ model InvoiceIssuerProfile {
   /// German Steuernummer. § 14 Abs. 4 UStG accepts either this or the VAT ID,
   /// so at least one must be present before an invoice can be issued.
   taxNumber String?
+  /// BT-30, Handelsregisternummer. BR-CO-26 needs the seller identifiable by
+  /// BT-29, BT-30 or BT-31; a Steuernummer is none of those, so a
+  /// Kleinunternehmer without a VAT ID is rejected without this.
+  legalRegistrationId String?
 
   /// § 19 UStG. When true no VAT is shown and the exemption note is required
   /// on every invoice; the tax category becomes E rather than S.
@@ -2744,6 +2755,11 @@ model InvoiceIssuerProfile {
 
   email String?
   phone String?
+  /// BG-6. BR-DE-2 makes a named contact person mandatory on every German
+  /// e-invoice, which is a national rule on top of EN 16931.
+  contactName  String?
+  contactPhone String?
+  contactEmail String?
 
   /// BT-84/85/86. Needed on the invoice so the customer can actually pay it.
   bankName String?

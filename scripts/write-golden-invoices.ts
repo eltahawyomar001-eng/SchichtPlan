@@ -6,7 +6,10 @@
  */
 import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
-import { GOLDEN_INVOICES } from "../src/lib/e-invoice/fixtures";
+import {
+  ASSEMBLED_INVOICES,
+  GOLDEN_INVOICES,
+} from "../src/lib/e-invoice/fixtures";
 
 const out = process.argv[2];
 if (!out) {
@@ -15,6 +18,14 @@ if (!out) {
 }
 
 mkdirSync(out, { recursive: true });
-for (const [name, make] of Object.entries(GOLDEN_INVOICES)) {
+// Both sets: the writer path and the production mapping path. They can
+// disagree, and only one of them is what customers actually send.
+for (const [name, make] of Object.entries({
+  ...GOLDEN_INVOICES,
+  ...ASSEMBLED_INVOICES,
+})) {
   writeFileSync(join(out, `${name}.xml`), make(), "utf8");
 }
+console.log(
+  `wrote ${Object.keys(GOLDEN_INVOICES).length + Object.keys(ASSEMBLED_INVOICES).length} invoices to ${out}`,
+);

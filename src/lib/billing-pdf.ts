@@ -18,6 +18,14 @@ const LGREY = [243, 244, 246] as const;
 export interface BillingPdfDoc {
   kind: "quote" | "invoice";
   number: string;
+  /**
+   * An invoice that has not been issued yet.
+   *
+   * Marked unmistakably on the page, because a draft PDF that looks like a
+   * finished invoice is the one that gets emailed, paid and booked -- and it
+   * carries no valid number, so it cannot be booked correctly.
+   */
+  draft?: boolean;
   issueDate: Date;
   /** Quotes: validUntil; Invoices: dueDate. */
   secondaryDate: Date | null;
@@ -47,6 +55,7 @@ function deDate(d: Date): string {
 export function generateBillingPdf(doc_: BillingPdfDoc): ArrayBuffer {
   const isInvoice = doc_.kind === "invoice";
   const docLabel = isInvoice ? "RECHNUNG" : "ANGEBOT";
+  const isDraft = doc_.draft === true;
   const doc = new jsPDF() as any;
   const pw = doc.internal.pageSize.getWidth();
   const ml = 15;
@@ -73,12 +82,21 @@ export function generateBillingPdf(doc_: BillingPdfDoc): ArrayBuffer {
 
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...EMERALD);
-  doc.text(docLabel, rx, 18, { align: "right" });
+  // Grey, not the brand colour: the draft should not look like the real thing
+  // at a glance across a desk.
+  doc.setTextColor(...(isDraft ? MED : EMERALD));
+  doc.text(isDraft ? `${docLabel} (ENTWURF)` : docLabel, rx, 18, {
+    align: "right",
+  });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...DARK);
-  doc.text(`Nr. ${doc_.number}`, rx, 25, { align: "right" });
+  doc.text(
+    isDraft ? "Noch keine Rechnungsnummer" : `Nr. ${doc_.number}`,
+    rx,
+    25,
+    { align: "right" },
+  );
   doc.text(`Datum: ${deDate(doc_.issueDate)}`, rx, 30, { align: "right" });
   if (doc_.secondaryDate) {
     doc.text(
@@ -203,6 +221,28 @@ export function generateBillingPdf(doc_: BillingPdfDoc): ArrayBuffer {
       ml,
       ty,
     );
+  }
+
+  // ── Draft watermark ──
+  //
+  // Drawn LAST so it sits over the content on every page: a draft has to be
+  // unusable as an invoice, not merely labelled as one in a corner that a
+  // scanner or an accounts-payable workflow will crop away.
+  if (isDraft) {
+    const pageCount = doc.internal.getNumberOfPages();
+    const ph = doc.internal.pageSize.getHeight();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      doc.setFontSize(60);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...MED);
+      // jsPDF has no alpha on text in every build, so a light grey at an
+      // angle is the portable way to keep it readable underneath.
+      doc.text("ENTWURF", pw / 2, ph / 2, {
+        align: "center",
+        angle: 35,
+      });
+    }
   }
 
   return doc.output("arraybuffer") as ArrayBuffer;

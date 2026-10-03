@@ -38,12 +38,27 @@ export const GET = withRoute(
         where: { id: workspaceId },
         select: { name: true },
       }),
-      prisma.issuerProfile.findFirst({ orderBy: { validFrom: "desc" } }),
+      // InvoiceIssuerProfile, scoped to THIS workspace -- not the global
+      // IssuerProfile, which is Shiftfy's own identity for the invoices
+      // Shiftfy sends to its customers. Reading that one here printed
+      // Shiftfy's name, address and VAT ID as the supplier on invoices our
+      // customers send to THEIR clients: wrong under § 14 Abs. 4, and it
+      // leaked our tax identifiers onto third-party documents.
+      prisma.invoiceIssuerProfile.findUnique({ where: { workspaceId } }),
     ]);
+
+    // A draft has no number yet, by design: GoBD counts the issued invoices,
+    // so a number is drawn only at issue. The PDF of a draft therefore has to
+    // say so rather than invent one -- and must not look like a real invoice,
+    // because a draft that reads like one is exactly what ends up being paid
+    // and booked.
+    const isDraft = !invoice.number;
+    const displayNumber = invoice.number ?? "ENTWURF";
 
     const pdf = generateBillingPdf({
       kind: "invoice",
-      number: invoice.number,
+      number: displayNumber,
+      draft: isDraft,
       issueDate: invoice.issueDate,
       secondaryDate: invoice.dueDate,
       vatRate: invoice.vatRate,
@@ -52,9 +67,20 @@ export const GET = withRoute(
       items: invoice.items,
       totals: computeTotals(invoice.items, invoice.vatRate),
       issuer: {
-        name: issuer?.name ?? workspace?.name ?? "Shiftfy",
-        address: issuer?.address ?? null,
-        vatId: issuer?.vatId ?? null,
+        name: issuer?.legalName ?? workspace?.name ?? "",
+        address: issuer
+          ? [
+              issuer.street,
+              issuer.addressLine2,
+              `${issuer.postalCode} ${issuer.city}`.trim(),
+            ]
+              .filter(Boolean)
+              .join("\n")
+          : null,
+        // Either identifier satisfies § 14 Abs. 4 Nr. 2; show whichever the
+        // customer has, preferring the VAT ID since that is what a business
+        // recipient expects to see.
+        vatId: issuer?.vatId ?? issuer?.taxNumber ?? null,
       },
       recipient: {
         name: invoice.client?.name ?? null,
@@ -68,7 +94,7 @@ export const GET = withRoute(
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="Rechnung_${invoice.number}.pdf"`,
+        "Content-Disposition": `attachment; filename="Rechnung_${displayNumber}.pdf"`,
         "Content-Length": String(pdf.byteLength),
       },
     });

@@ -5,7 +5,7 @@ import { createInvoiceSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
-import { computeTotals, nextInvoiceNumber, addInterval } from "@/lib/billing";
+import { computeTotals, addInterval } from "@/lib/billing";
 
 /**
  * GET /api/invoices — list customer invoices + an outstanding-amount summary.
@@ -97,13 +97,17 @@ export const POST = withRoute("/api/invoices", "POST", async (req) => {
 
   const recurring = body.recurring ?? "KEINE";
   const issueDate = new Date(body.issueDate);
-  const number = await nextInvoiceNumber(workspaceId);
 
   const invoice = await prisma.customerInvoice.create({
     data: {
       workspaceId,
       clientId: body.clientId || null,
-      number,
+      // No number yet. GoBD requires the issued invoices to be gapless, and a
+      // number handed out here would be lost every time a draft is discarded,
+      // leaving a hole nobody can account for later. POST
+      // /api/invoices/[id]/issue draws it at the moment that is already
+      // irreversible.
+      number: null,
       title: body.title || null,
       notes: body.notes || null,
       issueDate,
@@ -132,7 +136,7 @@ export const POST = withRoute("/api/invoices", "POST", async (req) => {
     userId: user.id,
     userEmail: user.email,
     workspaceId,
-    changes: { number, recurring },
+    changes: { recurring },
   });
 
   return NextResponse.json(

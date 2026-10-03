@@ -53,7 +53,11 @@ rm -rf "$OUT"
 mkdir -p "$OUT"
 npx tsx "$ROOT/scripts/write-golden-invoices.ts" "$OUT"
 
-echo "==> Validating"
+# Built from what the writer actually produced, so a new fixture is picked up
+# without this list having to be maintained in two places.
+FILES="$(cd "$OUT" && ls *.xml | sed 's|^|/data/|' | tr '\n' ' ')"
+
+echo "==> Validating: $(cd "$OUT" && ls *.xml | wc -l | tr -d ' ') invoices"
 docker run --rm \
   -v "$KOSIT:/kosit" \
   -v "$OUT:/data" \
@@ -63,7 +67,4 @@ docker run --rm \
     -s /kosit/config/scenarios.xml \
     -r /kosit/config \
     -h -o /data/report \
-    /data/standard.xml \
-    /data/kleinunternehmer.xml \
-    /data/b2g-leitweg.xml \
-    /data/storno.xml
+    $FILES

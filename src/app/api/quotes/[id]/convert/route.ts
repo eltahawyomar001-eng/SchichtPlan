@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/authorization";
 import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { createAuditLog } from "@/lib/audit";
-import { computeTotals, nextInvoiceNumber } from "@/lib/billing";
+import { computeTotals } from "@/lib/billing";
 
 /**
  * POST /api/quotes/[id]/convert
@@ -49,15 +49,16 @@ export const POST = withRoute(
     const issueDate = new Date();
     const dueDate = new Date(issueDate);
     dueDate.setDate(dueDate.getDate() + 14);
-    const number = await nextInvoiceNumber(workspaceId);
-
     const invoice = await prisma.$transaction(async (tx) => {
       const inv = await tx.customerInvoice.create({
         data: {
           workspaceId,
           clientId: quote.clientId,
           quoteId: quote.id,
-          number,
+          // A converted quote is a DRAFT invoice -- the user still reviews it
+          // before it goes out -- so it draws no number here. See
+          // POST /api/invoices/[id]/issue.
+          number: null,
           title: quote.title,
           notes: quote.notes,
           issueDate,
@@ -88,7 +89,7 @@ export const POST = withRoute(
       userId: user.id,
       userEmail: user.email,
       workspaceId,
-      changes: { number, fromQuote: quote.number },
+      changes: { fromQuote: quote.number },
     });
 
     return NextResponse.json(

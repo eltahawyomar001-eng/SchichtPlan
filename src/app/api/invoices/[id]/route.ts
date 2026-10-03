@@ -107,6 +107,23 @@ export const PATCH = withRoute(
     }
 
     // ── Field/item edit path (drafts only) ──
+    //
+    // issuedAt is checked FIRST and separately from the status. Status is a
+    // workflow field that a future feature could legitimately move around;
+    // issuedAt is the record of a legal event and is the thing that must never
+    // be editable behind. GoBD allows no change to an issued invoice at all,
+    // only a Storno or Korrektur that references it.
+    if (existing.issuedAt) {
+      return NextResponse.json(
+        {
+          error: "ISSUED_IMMUTABLE",
+          message:
+            `Die Rechnung ${existing.number ?? ""} wurde bereits gestellt und darf nach GoBD nicht mehr geändert werden. ` +
+            "Erstellen Sie für eine Korrektur eine Storno-Rechnung.".trim(),
+        },
+        { status: 409 },
+      );
+    }
     if (existing.status !== "ENTWURF") {
       return NextResponse.json(
         {
@@ -186,6 +203,22 @@ export const DELETE = withRoute(
     });
     if (!existing)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // An issued invoice cannot be deleted, not even softly. It has a number
+    // from a gapless sequence and the recipient already has it; removing it
+    // from the books is exactly what § 147 AO and the GoBD retention rules
+    // forbid. The lawful way to undo one is a Storno document.
+    if (existing.issuedAt) {
+      return NextResponse.json(
+        {
+          error: "ISSUED_NOT_DELETABLE",
+          message:
+            `Die gestellte Rechnung ${existing.number ?? ""} kann nicht gelöscht werden. ` +
+            "Stornieren Sie sie stattdessen; der Storno bleibt nachvollziehbar.".trim(),
+        },
+        { status: 409 },
+      );
+    }
 
     await prisma.customerInvoice.update({
       where: { id },

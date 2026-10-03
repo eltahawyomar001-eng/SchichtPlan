@@ -214,3 +214,215 @@ export const GOLDEN_INVOICES = {
   "b2g-leitweg": publicSectorInvoice,
   storno: stornoInvoice,
 } as const;
+
+/* ── Invoices assembled the way production assembles them ─────────────── */
+
+/**
+ * The fixtures above exercise the XML writer directly. These go through
+ * assembleCii, which is the path a real invoice actually takes.
+ *
+ * Worth validating separately, because the two can disagree: the writer can be
+ * perfectly correct while the mapping feeds it the wrong field, and the result
+ * is a schema-valid invoice that is simply untrue. A Kleinunternehmer whose
+ * Handelsregister number never reaches BT-30 is the concrete case -- rejected
+ * by the recipient, with nothing wrong in cii.ts.
+ */
+
+import { assembleCii, type ClientInput, type IssuerInput } from "./assemble";
+
+const ASSEMBLED_ISSUER: IssuerInput = {
+  legalName: "Musterreinigung Rhein-Neckar GmbH",
+  tradingName: "Mustergebäudeservice",
+  street: "Industriestraße 14",
+  postalCode: "68161",
+  city: "Mannheim",
+  countryCode: "DE",
+  vatId: "DE123456789",
+  taxNumber: null,
+  legalRegistrationId: "HRB 712345",
+  kleinunternehmer: false,
+  email: "rechnung@musterreinigung.example",
+  phone: "+49 621 1234560",
+  contactName: "Sabine Vogt",
+  contactPhone: null,
+  contactEmail: null,
+  addressLine2: null,
+  bankName: "Beispielbank Mannheim",
+  iban: "DE02120300000000202051",
+  bic: "BYLADEM1001",
+  paymentTermDays: 14,
+};
+
+const ASSEMBLED_CLIENT: ClientInput = {
+  name: "Beispiel Immobilienverwaltung GmbH",
+  street: "Parkallee 88",
+  postalCode: "60322",
+  city: "Frankfurt am Main",
+  countryCode: "DE",
+  vatId: "DE987654321",
+  leitwegId: null,
+  invoiceEmail: "kreditoren@beispiel-immobilien.example",
+  email: null,
+};
+
+/** Mixed rates, through the production mapping. */
+export function assembledStandardInvoice(): string {
+  return buildCii(
+    assembleCii({
+      issuer: ASSEMBLED_ISSUER,
+      client: ASSEMBLED_CLIENT,
+      invoice: {
+        number: "RE-2026-0101",
+        issueDate: new Date(Date.UTC(2026, 9, 3)),
+        dueDate: new Date(Date.UTC(2026, 9, 17)),
+        notes: "Objekt Parkallee 88, Leistungsnachweis liegt bei.",
+        vatRate: 19,
+        periodStart: new Date(Date.UTC(2026, 8, 1)),
+        periodEnd: new Date(Date.UTC(2026, 8, 30)),
+        items: [
+          {
+            description: "Unterhaltsreinigung September 2026",
+            quantity: 162.5,
+            unitPriceCents: 2850,
+            unitCode: "HUR",
+          },
+          {
+            description: "Verbrauchsmaterial",
+            quantity: 12,
+            unitPriceCents: 480,
+            vatRate: 7,
+          },
+        ],
+      },
+      format: "XRECHNUNG",
+    }),
+  );
+}
+
+/** § 19, through the production mapping — the BT-30 case. */
+export function assembledKleinunternehmerInvoice(): string {
+  return buildCii(
+    assembleCii({
+      issuer: {
+        ...ASSEMBLED_ISSUER,
+        legalName: "Hausmeisterservice Mustermann",
+        kleinunternehmer: true,
+        vatId: null,
+        taxNumber: "32/123/45678",
+        legalRegistrationId: "HRB 712345",
+      },
+      client: ASSEMBLED_CLIENT,
+      invoice: {
+        number: "RE-2026-0102",
+        issueDate: new Date(Date.UTC(2026, 9, 3)),
+        dueDate: new Date(Date.UTC(2026, 9, 17)),
+        vatRate: 19,
+        items: [
+          {
+            description: "Hausmeisterleistungen September 2026",
+            quantity: 48,
+            unitPriceCents: 3200,
+            unitCode: "HUR",
+          },
+        ],
+      },
+      format: "XRECHNUNG",
+    }),
+  );
+}
+
+/** § 13b reverse charge, through the production mapping. */
+export function assembledReverseChargeInvoice(): string {
+  return buildCii(
+    assembleCii({
+      issuer: ASSEMBLED_ISSUER,
+      client: ASSEMBLED_CLIENT,
+      invoice: {
+        number: "RE-2026-0103",
+        issueDate: new Date(Date.UTC(2026, 9, 3)),
+        dueDate: new Date(Date.UTC(2026, 9, 17)),
+        reverseCharge: true,
+        vatRate: 19,
+        items: [
+          {
+            description: "Bauleistungen Objekt Parkallee 88",
+            quantity: 1,
+            unitPriceCents: 1250000,
+          },
+        ],
+      },
+      format: "XRECHNUNG",
+    }),
+  );
+}
+
+/** A Storno, through the production mapping. */
+export function assembledStornoInvoice(): string {
+  return buildCii(
+    assembleCii({
+      issuer: ASSEMBLED_ISSUER,
+      client: ASSEMBLED_CLIENT,
+      invoice: {
+        number: "RE-2026-0104",
+        typeCode: "381",
+        issueDate: new Date(Date.UTC(2026, 9, 10)),
+        dueDate: new Date(Date.UTC(2026, 9, 24)),
+        correctsNumber: "RE-2026-0101",
+        correctsDate: new Date(Date.UTC(2026, 9, 3)),
+        vatRate: 19,
+        items: [
+          {
+            description: "Storno Unterhaltsreinigung September 2026",
+            quantity: 162.5,
+            unitPriceCents: 2850,
+            unitCode: "HUR",
+          },
+        ],
+      },
+      format: "XRECHNUNG",
+    }),
+  );
+}
+
+/** Public sector, through the production mapping. */
+export function assembledPublicSectorInvoice(): string {
+  return buildCii(
+    assembleCii({
+      issuer: ASSEMBLED_ISSUER,
+      client: {
+        ...ASSEMBLED_CLIENT,
+        name: "Stadtverwaltung Musterstadt",
+        street: "Rathausplatz 1",
+        postalCode: "76133",
+        city: "Karlsruhe",
+        vatId: null,
+        leitwegId: "991-12345-67",
+        invoiceEmail: "rechnungseingang@musterstadt.example",
+      },
+      invoice: {
+        number: "RE-2026-0105",
+        issueDate: new Date(Date.UTC(2026, 9, 3)),
+        dueDate: new Date(Date.UTC(2026, 9, 17)),
+        vatRate: 19,
+        items: [
+          {
+            description: "Objektbetreuung Rathaus, September 2026",
+            quantity: 210,
+            unitPriceCents: 2990,
+            unitCode: "HUR",
+          },
+        ],
+      },
+      format: "XRECHNUNG",
+    }),
+  );
+}
+
+/** Everything the validator must accept, writer path and mapping path. */
+export const ASSEMBLED_INVOICES = {
+  "assembled-standard": assembledStandardInvoice,
+  "assembled-kleinunternehmer": assembledKleinunternehmerInvoice,
+  "assembled-reverse-charge": assembledReverseChargeInvoice,
+  "assembled-storno": assembledStornoInvoice,
+  "assembled-b2g": assembledPublicSectorInvoice,
+} as const;

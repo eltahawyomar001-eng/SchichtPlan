@@ -76,6 +76,35 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: "INVALID_STATUS" }, { status: 400 });
       }
       const next = parsed.data.status;
+
+      // An invoice cannot be "sent" before it has been issued. Flipping the
+      // status used to be how sending worked, which produced an invoice with
+      // a status but no number, no structured document and no § 14 Abs. 4
+      // check -- the UI no longer offers it, and the API must not either.
+      if (next === "GESENDET" && !existing.issuedAt) {
+        return NextResponse.json(
+          {
+            error: "NOT_ISSUED",
+            message:
+              "Die Rechnung muss zuerst als E-Rechnung ausgestellt werden, bevor sie als gesendet markiert werden kann.",
+          },
+          { status: 409 },
+        );
+      }
+
+      // Cancelling is a document, not a status. Writing STORNIERT directly
+      // would mark the invoice cancelled with no credit note behind it, which
+      // leaves the books showing a reversal that does not exist.
+      if (next === "STORNIERT") {
+        return NextResponse.json(
+          {
+            error: "USE_STORNO_ENDPOINT",
+            message:
+              "Eine gestellte Rechnung wird über eine Storno-Rechnung storniert, nicht durch eine Statusänderung.",
+          },
+          { status: 409 },
+        );
+      }
       const updated = await prisma.customerInvoice.update({
         where: { id },
         data: {
@@ -85,9 +114,9 @@ export const PATCH = withRoute(
               ? (existing.sentAt ?? new Date())
               : existing.sentAt,
           paidAt: next === "BEZAHLT" ? new Date() : existing.paidAt,
-          // Stop recurrence if the template is cancelled.
-          recurringActive:
-            next === "STORNIERT" ? false : existing.recurringActive,
+          // Recurrence is stopped by the storno endpoint, which is now the
+          // only route to STORNIERT -- so there is nothing to decide here.
+          recurringActive: existing.recurringActive,
         },
         include: { items: { orderBy: { position: "asc" } } },
       });

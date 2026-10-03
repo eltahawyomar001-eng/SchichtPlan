@@ -19,6 +19,9 @@ import {
   FileExportIcon,
   CheckCircleIcon,
   DownloadIcon,
+  FileCheckIcon,
+  CircleXIcon,
+  AlertTriangleIcon,
 } from "@/components/icons";
 
 type DocKind = "invoice" | "quote";
@@ -49,8 +52,10 @@ interface Quote {
 }
 interface Invoice {
   id: string;
-  number: string;
+  /** Null until the invoice is issued: the number is drawn at that moment. */
+  number: string | null;
   status: string;
+  issuedAt: string | null;
   title: string | null;
   issueDate: string;
   dueDate: string;
@@ -114,6 +119,18 @@ export default function RechnungenPage() {
     kind: DocKind;
     id: string;
   } | null>(null);
+  /** What preflight is still blocking, shown after a refused issue. */
+  const [blocked, setBlocked] = useState<
+    | {
+        code: string;
+        message: string;
+        basis?: string;
+      }[]
+    | null
+  >(null);
+  const [issuing, setIssuing] = useState<string | null>(null);
+  const [stornoFor, setStornoFor] = useState<Invoice | null>(null);
+  const [stornoReason, setStornoReason] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -154,6 +171,55 @@ export default function RechnungenPage() {
     } else toast.error(tc("errorOccurred"));
   }
 
+  /**
+   * Issue a draft as an e-invoice.
+   *
+   * Replaces the old "send", which merely flipped the status to GESENDET --
+   * producing an invoice with a number but no structured document, and
+   * bypassing every § 14 Abs. 4 check. 422 means the tenant's master data is
+   * incomplete; the list is the useful part of that answer, so it goes in a
+   * dialog rather than a toast that disappears.
+   */
+  async function issueInvoice(id: string) {
+    setIssuing(id);
+    try {
+      const res = await fetch(`/api/invoices/${id}/issue`, { method: "POST" });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(t("issued", { number: d.number }));
+        load();
+        return;
+      }
+      if (res.status === 422 && Array.isArray(d.issues)) {
+        setBlocked(d.issues);
+        return;
+      }
+      toast.error(d.message ?? t("issueFailed"));
+    } finally {
+      setIssuing(null);
+    }
+  }
+
+  async function doStorno() {
+    if (!stornoFor) return;
+    const res = await fetch(`/api/invoices/${stornoFor.id}/storno`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        stornoReason.trim() ? { reason: stornoReason.trim() } : {},
+      ),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      toast.success(t("stornoCreated", { number: d.number ?? "" }));
+      load();
+    } else {
+      toast.error(d.message ?? t("stornoFailed"));
+    }
+    setStornoFor(null);
+    setStornoReason("");
+  }
+
   async function sendQuote(id: string) {
     const res = await fetch(`/api/quotes/${id}/send`, { method: "POST" });
     if (res.ok) {
@@ -185,7 +251,10 @@ export default function RechnungenPage() {
     if (res.ok) {
       toast.success(tc("deleted"));
       load();
-    } else toast.error(tc("errorOccurred"));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.message ?? tc("errorOccurred"));
+    }
     setConfirmDel(null);
   }
 
@@ -274,6 +343,9 @@ export default function RechnungenPage() {
                   rows={invoices}
                   t={t}
                   onStatus={setInvoiceStatus}
+                  onIssue={issueInvoice}
+                  onStorno={setStornoFor}
+                  issuing={issuing}
                   onDelete={(id) => setConfirmDel({ kind: "invoice", id })}
                 />
               ) : (
@@ -312,6 +384,81 @@ export default function RechnungenPage() {
         message={t("confirmDeleteDesc")}
         variant="danger"
       />
+
+      {/* Why an invoice could not be issued.
+          A dialog rather than a toast: the list is the answer, it is several
+          lines long, and it names fields the user has to go and fill in. */}
+      <Modal
+        open={!!blocked}
+        onClose={() => setBlocked(null)}
+        size="md"
+        title={t("issueBlockedTitle")}
+        description={t("issueBlockedHint")}
+      >
+        <ul className="space-y-2.5">
+          {(blocked ?? []).map((i) => (
+            <li key={i.code} className="flex items-start gap-2.5 text-sm">
+              <AlertTriangleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+              <span className="text-gray-700 dark:text-zinc-300">
+                {i.message}
+                {i.basis && (
+                  <span className="ml-1 text-gray-400 dark:text-zinc-500">
+                    ({i.basis})
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setBlocked(null)}>
+            {tc("close")}
+          </Button>
+          {/* Most of these live in one form, so link straight to it rather
+              than leaving the user to find it. */}
+          <Button
+            onClick={() => {
+              setBlocked(null);
+              window.location.href = "/einstellungen/rechnungsstellung";
+            }}
+          >
+            {t("issueBlockedSettings")}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Storno. Explains WHY a cancellation creates a second document,
+          because otherwise it looks like the app refusing to delete. */}
+      <Modal
+        open={!!stornoFor}
+        onClose={() => {
+          setStornoFor(null);
+          setStornoReason("");
+        }}
+        size="md"
+        title={t("stornoConfirmTitle")}
+        description={t("stornoConfirmDesc")}
+      >
+        <Label className="mb-1.5 block">{t("stornoReason")}</Label>
+        <Input
+          value={stornoReason}
+          onChange={(e) => setStornoReason(e.target.value)}
+        />
+        <ModalFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setStornoFor(null);
+              setStornoReason("");
+            }}
+          >
+            {tc("cancel")}
+          </Button>
+          <Button variant="destructive" onClick={doStorno}>
+            {t("storno")}
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }
@@ -322,11 +469,17 @@ function InvoiceTable({
   rows,
   t,
   onStatus,
+  onIssue,
+  onStorno,
+  issuing,
   onDelete,
 }: {
   rows: Invoice[];
   t: (k: string) => string;
   onStatus: (id: string, s: string) => void;
+  onIssue: (id: string) => void;
+  onStorno: (inv: Invoice) => void;
+  issuing: string | null;
   onDelete: (id: string) => void;
 }) {
   if (rows.length === 0)
@@ -352,7 +505,14 @@ function InvoiceTable({
           {rows.map((inv) => (
             <tr key={inv.id}>
               <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-zinc-100">
-                {inv.number}
+                {inv.number ?? (
+                  // A draft genuinely has no number yet, and showing a
+                  // placeholder that looks like one is how a draft ends up
+                  // being quoted to a customer.
+                  <span className="text-gray-400 dark:text-zinc-500 italic">
+                    {t("draftNoNumber")}
+                  </span>
+                )}
                 {inv.recurring !== "KEINE" && (
                   <span className="ml-1.5 text-[10px] text-emerald-600">↻</span>
                 )}
@@ -383,13 +543,27 @@ function InvoiceTable({
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                   </Button>
-                  {inv.status === "ENTWURF" && (
+                  {/* The archived XML, available only once there is one. */}
+                  {inv.issuedAt && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title={t("downloadXml")}
+                      onClick={() =>
+                        window.open(`/api/invoices/${inv.id}/xml`, "_blank")
+                      }
+                    >
+                      <FileCheckIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {!inv.issuedAt && inv.status === "ENTWURF" && (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onStatus(inv.id, "GESENDET")}
+                      disabled={issuing === inv.id}
+                      onClick={() => onIssue(inv.id)}
                     >
-                      {t("send")}
+                      {issuing === inv.id ? t("issuing") : t("issue")}
                     </Button>
                   )}
                   {(inv.status === "GESENDET" ||
@@ -403,13 +577,28 @@ function InvoiceTable({
                       {t("markPaid")}
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDelete(inv.id)}
-                  >
-                    <TrashIcon className="h-3.5 w-3.5 text-red-500" />
-                  </Button>
+                  {/* Issued invoices are cancelled, never deleted: GoBD and
+                      § 147 AO forbid removing one from the books. */}
+                  {inv.issuedAt ? (
+                    inv.status !== "STORNIERT" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title={t("storno")}
+                        onClick={() => onStorno(inv)}
+                      >
+                        <CircleXIcon className="h-3.5 w-3.5 text-red-500" />
+                      </Button>
+                    )
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onDelete(inv.id)}
+                    >
+                      <TrashIcon className="h-3.5 w-3.5 text-red-500" />
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>

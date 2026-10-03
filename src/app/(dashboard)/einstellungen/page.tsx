@@ -32,6 +32,7 @@ import {
   DownloadIcon,
   TrashIcon,
   TicketIcon,
+  FileCheckIcon,
 } from "@/components/icons";
 import type { SessionUser } from "@/lib/types";
 import Link from "next/link";
@@ -723,6 +724,31 @@ export default function EinstellungenPage() {
                   </p>
                   <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
                     {t("automationsDesc")}
+                  </p>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {/* Invoice issuer / E-Rechnung Card — admin only.
+            Separate from the billing card: that one is about the subscription
+            WE bill, this is the customer's own identity as an invoice issuer
+            to their clients. */}
+        {["OWNER", "ADMIN"].includes(rawRole) && (
+          <Link href="/einstellungen/rechnungsstellung" className="block group">
+            <Card className="transition-colors group-hover:border-emerald-200 dark:group-hover:border-emerald-800 group-hover:bg-emerald-50/30 dark:group-hover:bg-emerald-950/20">
+              <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/40 transition-colors">
+                  <FileCheckIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-semibold text-gray-900 dark:text-zinc-100">
+                    {t("invoiceIssuer")}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
+                    {t("invoiceIssuerDesc")}
                   </p>
                 </div>
                 <ChevronRightIcon className="h-5 w-5 text-gray-400 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />

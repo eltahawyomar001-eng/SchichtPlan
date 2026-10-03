@@ -2,65 +2,68 @@
 #
 # Validate the golden e-invoices against the official KoSIT validator.
 #
-# This is the only thing that actually proves an invoice will be accepted. The
-# vitest suite checks structure and arithmetic, which catches the mistakes that
-# would waste a run here, but it cannot tell you whether KoSIT's current
-# XRechnung rules accept the document -- only KoSIT can.
+# This is the only thing that proves an invoice will be accepted. The vitest
+# suite checks structure and arithmetic, which catches the mistakes that would
+# waste a run here, but it cannot tell you whether KoSIT's current XRechnung
+# rules accept the document.
 #
-# The validator is Java, so it runs in a container rather than being added to
-# the toolchain. Pinned by digest-able tag on purpose: the rules change, and an
-# invoice that passed last quarter can legitimately fail today. Treat a bump as
-# a deliberate change, and re-run the suite when you make one.
+# There is no official KoSIT container image, so this downloads the released
+# JAR and the XRechnung configuration and runs them in a stock JRE image. Both
+# are pinned: the rules change, and an invoice that passed last quarter can
+# legitimately fail today. Treat a version bump as a deliberate change and
+# re-run the suite when you make one.
 #
-#   ./scripts/validate-einvoices.sh
+#   npm run einvoice:validate
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/.e-invoice-out"
-IMAGE="${KOSIT_IMAGE:-ghcr.io/itplr-kosit/validator:1.5.0}"
+KOSIT="$ROOT/.kosit"
+
+VALIDATOR_VERSION="1.6.3"
+# Configuration release tag and the file inside it.
+CONFIG_TAG="v2026-08-31"
+CONFIG_FILE="xrechnung-3.0.2-validator-configuration-2026-08-31.zip"
 
 if ! command -v docker >/dev/null 2>&1; then
-  echo "docker is required: the KoSIT validator is a Java tool and is not" >&2
-  echo "installed into this project's toolchain." >&2
+  export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin"
+fi
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker is required: the KoSIT validator is a Java tool and is" >&2
+  echo "deliberately not added to this project's toolchain." >&2
   exit 1
+fi
+
+mkdir -p "$KOSIT"
+if [ ! -f "$KOSIT/validator.jar" ]; then
+  echo "==> Fetching KoSIT validator $VALIDATOR_VERSION"
+  curl -sSL -o "$KOSIT/validator.jar" \
+    "https://github.com/itplr-kosit/validator/releases/download/v$VALIDATOR_VERSION/validator-$VALIDATOR_VERSION-standalone.jar"
+fi
+if [ ! -d "$KOSIT/config" ]; then
+  echo "==> Fetching XRechnung configuration $CONFIG_TAG"
+  curl -sSL -o "$KOSIT/config.zip" \
+    "https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/$CONFIG_TAG/$CONFIG_FILE"
+  unzip -qo "$KOSIT/config.zip" -d "$KOSIT/config"
 fi
 
 echo "==> Writing the golden invoices"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 npx tsx "$ROOT/scripts/write-golden-invoices.ts" "$OUT"
-ls -1 "$OUT"/*.xml | while read -r f; do echo "    $(basename "$f")"; done
 
-echo
-echo "==> Validating with $IMAGE"
-# --repository points the validator at its own rule configuration; the image
-# ships the current XRechnung scenarios.
+echo "==> Validating"
 docker run --rm \
+  -v "$KOSIT:/kosit" \
   -v "$OUT:/data" \
-  "$IMAGE" \
-  -r /scenarios \
-  -s /scenarios/scenarios.xml \
-  -h \
-  --output-directory /data/report \
-  /data/*.xml || true
-
-echo
-echo "==> Results"
-failed=0
-for report in "$OUT"/report/*.html "$OUT"/report/*.xml; do
-  [ -e "$report" ] || continue
-  name="$(basename "$report")"
-  if grep -qiE "<accepted>false|rejected" "$report" 2>/dev/null; then
-    echo "    REJECTED  $name"
-    failed=1
-  fi
-done
-
-if [ "$failed" -ne 0 ]; then
-  echo
-  echo "At least one invoice was rejected. The reports are in $OUT/report." >&2
-  exit 1
-fi
-
-echo "    all invoices accepted"
+  -w /kosit \
+  eclipse-temurin:21-jre \
+  java -jar validator.jar \
+    -s /kosit/config/scenarios.xml \
+    -r /kosit/config \
+    -h -o /data/report \
+    /data/standard.xml \
+    /data/kleinunternehmer.xml \
+    /data/b2g-leitweg.xml \
+    /data/storno.xml

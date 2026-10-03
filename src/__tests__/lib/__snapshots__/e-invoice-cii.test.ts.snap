@@ -8,8 +8,15 @@ exports[`b2g-leitweg invoice > matches the committed shape for b2g-leitweg 1`] =
   xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
   xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100">
   <rsm:ExchangedDocumentContext>
+    <!--
+      BT-23. PEPPOL-EN16931-R001 requires it, and it must precede the guideline
+      parameter: CII is an XSD sequence, so order is part of validity.
+    -->
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
     <ram:GuidelineSpecifiedDocumentContextParameter>
-      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0</ram:ID>
+      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</ram:ID>
     </ram:GuidelineSpecifiedDocumentContextParameter>
   </rsm:ExchangedDocumentContext>
   <rsm:ExchangedDocument>
@@ -50,6 +57,11 @@ exports[`b2g-leitweg invoice > matches the committed shape for b2g-leitweg 1`] =
       <ram:BuyerReference>991-12345-67</ram:BuyerReference>
       <ram:SellerTradeParty>
         <ram:Name>Musterreinigung Rhein-Neckar GmbH</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Sabine Vogt</ram:PersonName>
+          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>+49 621 1234560</ram:CompleteNumber></ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication><ram:URIID>buchhaltung@musterreinigung.example</ram:URIID></ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>68161</ram:PostcodeCode>
           <ram:LineOne>Industriestraße 14</ram:LineOne>
@@ -67,6 +79,7 @@ exports[`b2g-leitweg invoice > matches the committed shape for b2g-leitweg 1`] =
           <ram:CityName>Karlsruhe</ram:CityName>
           <ram:CountryID>DE</ram:CountryID>
         </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication><ram:URIID schemeID="EM">rechnungseingang@musterstadt.example</ram:URIID></ram:URIUniversalCommunication>
         
       </ram:BuyerTradeParty>
     </ram:ApplicableHeaderTradeAgreement>
@@ -123,8 +136,15 @@ exports[`kleinunternehmer invoice > matches the committed shape for kleinunterne
   xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
   xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100">
   <rsm:ExchangedDocumentContext>
+    <!--
+      BT-23. PEPPOL-EN16931-R001 requires it, and it must precede the guideline
+      parameter: CII is an XSD sequence, so order is part of validity.
+    -->
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
     <ram:GuidelineSpecifiedDocumentContextParameter>
-      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0</ram:ID>
+      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</ram:ID>
     </ram:GuidelineSpecifiedDocumentContextParameter>
   </rsm:ExchangedDocumentContext>
   <rsm:ExchangedDocument>
@@ -162,14 +182,22 @@ exports[`kleinunternehmer invoice > matches the committed shape for kleinunterne
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
     <ram:ApplicableHeaderTradeAgreement>
+      <ram:BuyerReference>Bestellung 2026-09</ram:BuyerReference>
       <ram:SellerTradeParty>
         <ram:Name>Hausmeisterservice Mustermann</ram:Name>
+        <ram:SpecifiedLegalOrganization><ram:ID>HRB 712345</ram:ID></ram:SpecifiedLegalOrganization>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Jörg Mustermann</ram:PersonName>
+          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>+49 6221 998877</ram:CompleteNumber></ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication><ram:URIID>rechnung@hausmeister-mustermann.example</ram:URIID></ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>69115</ram:PostcodeCode>
           <ram:LineOne>Lindenweg 3</ram:LineOne>
           <ram:CityName>Heidelberg</ram:CityName>
           <ram:CountryID>DE</ram:CountryID>
         </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication><ram:URIID schemeID="EM">rechnung@hausmeister-mustermann.example</ram:URIID></ram:URIUniversalCommunication>
         <ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">32/123/45678</ram:ID></ram:SpecifiedTaxRegistration>
       </ram:SellerTradeParty>
       <ram:BuyerTradeParty>
@@ -180,6 +208,7 @@ exports[`kleinunternehmer invoice > matches the committed shape for kleinunterne
           <ram:CityName>Frankfurt am Main</ram:CityName>
           <ram:CountryID>DE</ram:CountryID>
         </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication><ram:URIID schemeID="EM">kreditoren@beispiel-immobilien.example</ram:URIID></ram:URIUniversalCommunication>
         <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">DE987654321</ram:ID></ram:SpecifiedTaxRegistration>
       </ram:BuyerTradeParty>
     </ram:ApplicableHeaderTradeAgreement>
@@ -237,8 +266,15 @@ exports[`standard invoice > matches the committed shape for standard 1`] = `
   xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
   xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100">
   <rsm:ExchangedDocumentContext>
+    <!--
+      BT-23. PEPPOL-EN16931-R001 requires it, and it must precede the guideline
+      parameter: CII is an XSD sequence, so order is part of validity.
+    -->
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
     <ram:GuidelineSpecifiedDocumentContextParameter>
-      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0</ram:ID>
+      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</ram:ID>
     </ram:GuidelineSpecifiedDocumentContextParameter>
   </rsm:ExchangedDocumentContext>
   <rsm:ExchangedDocument>
@@ -328,8 +364,14 @@ exports[`standard invoice > matches the committed shape for standard 1`] = `
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
     <ram:ApplicableHeaderTradeAgreement>
+      <ram:BuyerReference>Bestellung 2026-09</ram:BuyerReference>
       <ram:SellerTradeParty>
         <ram:Name>Musterreinigung Rhein-Neckar GmbH</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Sabine Vogt</ram:PersonName>
+          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>+49 621 1234560</ram:CompleteNumber></ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication><ram:URIID>buchhaltung@musterreinigung.example</ram:URIID></ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>68161</ram:PostcodeCode>
           <ram:LineOne>Industriestraße 14</ram:LineOne>
@@ -347,6 +389,7 @@ exports[`standard invoice > matches the committed shape for standard 1`] = `
           <ram:CityName>Frankfurt am Main</ram:CityName>
           <ram:CountryID>DE</ram:CountryID>
         </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication><ram:URIID schemeID="EM">kreditoren@beispiel-immobilien.example</ram:URIID></ram:URIUniversalCommunication>
         <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">DE987654321</ram:ID></ram:SpecifiedTaxRegistration>
       </ram:BuyerTradeParty>
     </ram:ApplicableHeaderTradeAgreement>
@@ -410,8 +453,15 @@ exports[`storno invoice > matches the committed shape for storno 1`] = `
   xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
   xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100">
   <rsm:ExchangedDocumentContext>
+    <!--
+      BT-23. PEPPOL-EN16931-R001 requires it, and it must precede the guideline
+      parameter: CII is an XSD sequence, so order is part of validity.
+    -->
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
     <ram:GuidelineSpecifiedDocumentContextParameter>
-      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0</ram:ID>
+      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</ram:ID>
     </ram:GuidelineSpecifiedDocumentContextParameter>
   </rsm:ExchangedDocumentContext>
   <rsm:ExchangedDocument>
@@ -432,7 +482,7 @@ exports[`storno invoice > matches the committed shape for storno 1`] = `
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>-28.50</ram:ChargeAmount>
+          <ram:ChargeAmount>28.50</ram:ChargeAmount>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
@@ -445,13 +495,19 @@ exports[`storno invoice > matches the committed shape for storno 1`] = `
           <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
         </ram:ApplicableTradeTax>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>-4631.25</ram:LineTotalAmount>
+          <ram:LineTotalAmount>4631.25</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
     <ram:ApplicableHeaderTradeAgreement>
+      <ram:BuyerReference>Bestellung 2026-09</ram:BuyerReference>
       <ram:SellerTradeParty>
         <ram:Name>Musterreinigung Rhein-Neckar GmbH</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Sabine Vogt</ram:PersonName>
+          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>+49 621 1234560</ram:CompleteNumber></ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication><ram:URIID>buchhaltung@musterreinigung.example</ram:URIID></ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>68161</ram:PostcodeCode>
           <ram:LineOne>Industriestraße 14</ram:LineOne>
@@ -469,6 +525,7 @@ exports[`storno invoice > matches the committed shape for storno 1`] = `
           <ram:CityName>Frankfurt am Main</ram:CityName>
           <ram:CountryID>DE</ram:CountryID>
         </ram:PostalTradeAddress>
+        <ram:URIUniversalCommunication><ram:URIID schemeID="EM">kreditoren@beispiel-immobilien.example</ram:URIID></ram:URIUniversalCommunication>
         <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">DE987654321</ram:ID></ram:SpecifiedTaxRegistration>
       </ram:BuyerTradeParty>
     </ram:ApplicableHeaderTradeAgreement>
@@ -490,9 +547,9 @@ exports[`storno invoice > matches the committed shape for storno 1`] = `
           <ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>BYLADEM1001</ram:BICID></ram:PayeeSpecifiedCreditorFinancialInstitution>
         </ram:SpecifiedTradeSettlementPaymentMeans>
         <ram:ApplicableTradeTax>
-          <ram:CalculatedAmount>-879.94</ram:CalculatedAmount>
+          <ram:CalculatedAmount>879.94</ram:CalculatedAmount>
           <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:BasisAmount>-4631.25</ram:BasisAmount>
+          <ram:BasisAmount>4631.25</ram:BasisAmount>
           <ram:CategoryCode>S</ram:CategoryCode>
           <ram:RateApplicablePercent>19.00</ram:RateApplicablePercent>
         </ram:ApplicableTradeTax>
@@ -504,17 +561,17 @@ exports[`storno invoice > matches the committed shape for storno 1`] = `
           <ram:Description>Zahlbar innerhalb von 14 Tagen ohne Abzug.</ram:Description>
           <ram:DueDateDateTime><udt:DateTimeString format="102">20261017</udt:DateTimeString></ram:DueDateDateTime>
         </ram:SpecifiedTradePaymentTerms>
+      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        <ram:LineTotalAmount>4631.25</ram:LineTotalAmount>
+        <ram:TaxBasisTotalAmount>4631.25</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">879.94</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>5511.19</ram:GrandTotalAmount>
+        <ram:DuePayableAmount>5511.19</ram:DuePayableAmount>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
         <ram:InvoiceReferencedDocument>
           <ram:IssuerAssignedID>RE-2026-0001</ram:IssuerAssignedID>
           <ram:FormattedIssueDateTime><qdt:DateTimeString format="102">20261003</qdt:DateTimeString></ram:FormattedIssueDateTime>
         </ram:InvoiceReferencedDocument>
-      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-        <ram:LineTotalAmount>-4631.25</ram:LineTotalAmount>
-        <ram:TaxBasisTotalAmount>-4631.25</ram:TaxBasisTotalAmount>
-        <ram:TaxTotalAmount currencyID="EUR">-879.94</ram:TaxTotalAmount>
-        <ram:GrandTotalAmount>-5511.19</ram:GrandTotalAmount>
-        <ram:DuePayableAmount>-5511.19</ram:DuePayableAmount>
-      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>
 </rsm:CrossIndustryInvoice>

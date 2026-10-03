@@ -28,9 +28,18 @@ import { lineNetCents } from "./totals";
  * a bump as a deliberate change rather than a dependency update.
  */
 export const PROFILE = {
-  /** XRechnung 3.0 (CII). The German public-sector standard. */
+  /**
+   * XRechnung 3.0 (CII). The German public-sector standard.
+   *
+   * The namespace is `xeinkauf.de:kosit`, NOT the older
+   * `xoev-de:kosit:standard` that most tutorials still show. KoSIT moved it,
+   * and the validator matches a document to a ruleset by this string alone:
+   * get it wrong and every invoice is rejected with "no scenario matched",
+   * which says nothing about the actual content. Taken from scenarios.xml in
+   * the configuration the validator runs, which is the only authority on it.
+   */
   XRECHNUNG:
-    "urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0",
+    "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
   /** ZUGFeRD 2.x profile EN 16931 (COMFORT). */
   ZUGFERD_EN16931: "urn:cen.eu:en16931:2017",
 } as const;
@@ -49,7 +58,31 @@ export interface Party {
   vatId?: string | null;
   /** German Steuernummer, used when there is no VAT ID. */
   taxNumber?: string | null;
+  /**
+   * BT-34/BT-49, the electronic address.
+   *
+   * Mandatory for BOTH parties under PEPPOL-EN16931-R020 and R010; an invoice
+   * without one is rejected even though nothing about it is otherwise wrong.
+   */
   email?: string | null;
+  /**
+   * BG-6, the seller's contact person. BR-DE-2 makes this mandatory in
+   * Germany, which is a national rule on top of EN 16931 and therefore absent
+   * from most international examples.
+   */
+  contact?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+  /**
+   * BT-30, legal registration identifier (Handelsregister).
+   *
+   * BR-CO-26 needs the seller identifiable by BT-29, BT-30 or BT-31. A German
+   * Steuernummer alone does NOT satisfy it, so a Kleinunternehmer with no VAT
+   * ID must supply this.
+   */
+  legalRegistrationId?: string | null;
 }
 
 export interface CiiInvoice {
@@ -134,8 +167,29 @@ function partyXml(tag: string, p: Party): string {
       : "",
   ].join("");
 
+  const contact = p.contact
+    ? `\n        <ram:DefinedTradeContact>${
+        p.contact.name
+          ? `\n          <ram:PersonName>${esc(p.contact.name)}</ram:PersonName>`
+          : ""
+      }${
+        p.contact.phone
+          ? `\n          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>${esc(p.contact.phone)}</ram:CompleteNumber></ram:TelephoneUniversalCommunication>`
+          : ""
+      }${
+        p.contact.email
+          ? `\n          <ram:EmailURIUniversalCommunication><ram:URIID>${esc(p.contact.email)}</ram:URIID></ram:EmailURIUniversalCommunication>`
+          : ""
+      }
+        </ram:DefinedTradeContact>`
+    : "";
+
+  const legalOrg = p.legalRegistrationId
+    ? `\n        <ram:SpecifiedLegalOrganization><ram:ID>${esc(p.legalRegistrationId)}</ram:ID></ram:SpecifiedLegalOrganization>`
+    : "";
+
   return `<${tag}>
-        <ram:Name>${esc(p.name)}</ram:Name>
+        <ram:Name>${esc(p.name)}</ram:Name>${legalOrg}${contact}
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>${esc(p.postalCode)}</ram:PostcodeCode>
           <ram:LineOne>${esc(p.street)}</ram:LineOne>${
@@ -264,6 +318,13 @@ export function buildCii(inv: CiiInvoice): string {
   xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
   xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100">
   <rsm:ExchangedDocumentContext>
+    <!--
+      BT-23. PEPPOL-EN16931-R001 requires it, and it must precede the guideline
+      parameter: CII is an XSD sequence, so order is part of validity.
+    -->
+    <ram:BusinessProcessSpecifiedDocumentContextParameter>
+      <ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID>
+    </ram:BusinessProcessSpecifiedDocumentContextParameter>
     <ram:GuidelineSpecifiedDocumentContextParameter>
       <ram:ID>${esc(inv.profile)}</ram:ID>
     </ram:GuidelineSpecifiedDocumentContextParameter>
@@ -298,14 +359,14 @@ ${inv.lines.map(lineXml).join("\n")}
     </ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
       <ram:InvoiceCurrencyCode>${esc(inv.currency)}</ram:InvoiceCurrencyCode>${payment}
-${t.breakdown.map((r) => taxXml(r, r.category)).join("\n")}${period}${terms}${preceding}
+${t.breakdown.map((r) => taxXml(r, r.category)).join("\n")}${period}${terms}
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
         <ram:LineTotalAmount>${amt(t.lineTotalCents)}</ram:LineTotalAmount>
         <ram:TaxBasisTotalAmount>${amt(t.taxBasisCents)}</ram:TaxBasisTotalAmount>
         <ram:TaxTotalAmount currencyID="${esc(inv.currency)}">${amt(t.taxTotalCents)}</ram:TaxTotalAmount>
         <ram:GrandTotalAmount>${amt(t.grandTotalCents)}</ram:GrandTotalAmount>
         <ram:DuePayableAmount>${amt(t.payableCents)}</ram:DuePayableAmount>
-      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>${preceding}
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>
 </rsm:CrossIndustryInvoice>

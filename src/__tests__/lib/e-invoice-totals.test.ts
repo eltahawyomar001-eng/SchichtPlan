@@ -224,9 +224,12 @@ describe("edge cases", () => {
     });
   });
 
-  it("handles a credit note with negative amounts", () => {
-    // A Storno is the same arithmetic with the sign flipped; it must not be
-    // clamped to zero anywhere.
+  it("does not clamp negative amounts", () => {
+    // Not how a Storno is emitted -- BR-27 rejects a negative item net price,
+    // so a credit note carries POSITIVE amounts and says what it is via its
+    // document type code (381). This covers negative lines wherever they do
+    // occur legitimately, such as a discount line, and pins down that nothing
+    // silently clamps them to zero.
     const t = computeEInvoiceTotals([line({ unitPriceCents: -10000 })]);
     expect(t.taxBasisCents).toBe(-10000);
     expect(t.taxTotalCents).toBe(-1900);

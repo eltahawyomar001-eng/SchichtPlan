@@ -68,3 +68,7 @@ AuthKey_*
 schichtplan-488118-*.json
 service-account*.json
 *-serviceaccount*.json
+
+# E-Rechnung validator artefacts (downloaded on demand)
+.kosit/
+.e-invoice-out/

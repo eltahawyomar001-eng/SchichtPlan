@@ -174,7 +174,9 @@ describe("B2G and corrections", () => {
     const doc = parse(GOLDEN_INVOICES.storno());
     expect(text(doc, "TypeCode")).toBe("381");
     expect(text(doc, "InvoiceReferencedDocument")).toContain("RE-2026-0001");
-    expect(headerTotal(doc, "GrandTotalAmount")).toBeLessThan(0);
+    // POSITIVE: BR-27 forbids a negative item net price. A credit note is
+    // signalled by BT-3 = 381, not by negating the amounts.
+    expect(headerTotal(doc, "GrandTotalAmount")).toBeGreaterThan(0);
   });
 });
 

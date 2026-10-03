@@ -26,6 +26,12 @@ const SELLER: Party = {
   countryCode: "DE",
   vatId: "DE123456789",
   email: "rechnung@musterreinigung.example",
+  // BR-DE-2: a German invoice must name a contact person.
+  contact: {
+    name: "Sabine Vogt",
+    phone: "+49 621 1234560",
+    email: "buchhaltung@musterreinigung.example",
+  },
 };
 
 const SELLER_KLEIN: Party = {
@@ -35,8 +41,17 @@ const SELLER_KLEIN: Party = {
   city: "Heidelberg",
   countryCode: "DE",
   // No VAT ID: a Kleinunternehmer typically has only a Steuernummer, and the
-  // invoice must still satisfy § 14 Abs. 4 with that alone.
+  // invoice must still satisfy § 14 Abs. 4 with that alone. BR-CO-26 is a
+  // separate requirement -- a Steuernummer does not identify the seller for
+  // its purposes -- so the legal registration carries that instead.
   taxNumber: "32/123/45678",
+  legalRegistrationId: "HRB 712345",
+  email: "rechnung@hausmeister-mustermann.example",
+  contact: {
+    name: "Jörg Mustermann",
+    phone: "+49 6221 998877",
+    email: "rechnung@hausmeister-mustermann.example",
+  },
 };
 
 const BUYER: Party = {
@@ -46,6 +61,8 @@ const BUYER: Party = {
   city: "Frankfurt am Main",
   countryCode: "DE",
   vatId: "DE987654321",
+  // BT-49: mandatory for the buyer too (PEPPOL-EN16931-R010).
+  email: "kreditoren@beispiel-immobilien.example",
 };
 
 const BUYER_PUBLIC: Party = {
@@ -54,6 +71,7 @@ const BUYER_PUBLIC: Party = {
   postalCode: "76133",
   city: "Karlsruhe",
   countryCode: "DE",
+  email: "rechnungseingang@musterstadt.example",
 };
 
 const PAYMENT = {
@@ -80,6 +98,9 @@ function build(
     buyer: BUYER,
     periodStart: new Date(Date.UTC(2026, 8, 1)),
     periodEnd: new Date(Date.UTC(2026, 8, 30)),
+    // BR-DE-15 makes BT-10 mandatory for every XRechnung, not just for public
+    // sector recipients -- where it additionally carries the Leitweg-ID.
+    buyerReference: "Bestellung 2026-09",
     payment: PAYMENT,
     lines,
     totals,
@@ -158,13 +179,21 @@ export function publicSectorInvoice(): string {
   });
 }
 
-/** Storno: a credit note that must name the invoice it reverses. */
+/**
+ * Storno: a credit note that must name the invoice it reverses.
+ *
+ * Amounts are POSITIVE. The reversal is expressed by the document type code
+ * (BT-3 = 381), not by negating the figures: BR-27 forbids a negative item net
+ * price outright, so a "negative invoice" is rejected even though the
+ * arithmetic is self-consistent. The reader of a credit note understands the
+ * direction from the document type, and the accounting system does the same.
+ */
 export function stornoInvoice(): string {
   const lines: InvoiceLine[] = [
     {
       description: "Storno zu Rechnung RE-2026-0001",
       quantity: 162.5,
-      unitPriceCents: -2850,
+      unitPriceCents: 2850,
       vatRate: 19,
       category: "S",
       unitCode: "HUR",

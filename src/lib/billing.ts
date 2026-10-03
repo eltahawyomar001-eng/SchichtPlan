@@ -53,12 +53,47 @@ export async function nextQuoteNumber(workspaceId: string): Promise<string> {
   return `ANG-${year}-${String(count + 1).padStart(4, "0")}`;
 }
 
-export async function nextInvoiceNumber(workspaceId: string): Promise<string> {
+/**
+ * The next invoice number for a workspace. Gapless, sequential, per tenant.
+ *
+ * This used to be `count(*) + 1` over the existing invoices, which is wrong in
+ * two ways that both matter legally:
+ *
+ *  - It is not concurrency-safe. Two requests arriving together both read the
+ *    same count and both return N+1; the unique index on (workspaceId, number)
+ *    then turns one of them into a 500 instead of an invoice.
+ *  - It is not gapless. The count reflects how many invoices EXIST, not how
+ *    many have been ISSUED, so removing one makes the next invoice reuse a
+ *    number that has already been sent to a customer. GoBD requires the
+ *    sequence to be unbroken and never reused.
+ *
+ * A counter row is the fix: the increment is atomic, so the database decides
+ * the order, and the number is derived from "how many have ever been handed
+ * out" rather than from what currently exists.
+ *
+ * Pass `tx` when allocating inside a transaction, so the number and the
+ * invoice that carries it commit or roll back together.
+ */
+export async function nextInvoiceNumber(
+  workspaceId: string,
+  tx: Pick<typeof prisma, "invoiceSequence"> = prisma,
+): Promise<string> {
   const year = new Date().getFullYear();
-  const count = await prisma.customerInvoice.count({
-    where: { workspaceId, number: { startsWith: `RE-${year}-` } },
+
+  // Atomic: `increment` is applied by the database, so concurrent callers are
+  // serialised on the row and each receives a distinct value.
+  const seq = await tx.invoiceSequence.upsert({
+    // CUSTOMER_INVOICE, never the default: the other series belongs to the
+    // invoices Shiftfy issues to this workspace and must not be advanced here.
+    where: {
+      workspaceId_kind: { workspaceId, kind: "CUSTOMER_INVOICE" },
+    },
+    update: { lastNumber: { increment: 1 } },
+    create: { workspaceId, kind: "CUSTOMER_INVOICE", lastNumber: 1 },
+    select: { lastNumber: true },
   });
-  return `RE-${year}-${String(count + 1).padStart(4, "0")}`;
+
+  return `RE-${year}-${String(seq.lastNumber).padStart(4, "0")}`;
 }
 
 /** A URL-safe opaque token for the public quote-acceptance page. */

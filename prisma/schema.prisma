@@ -225,7 +225,7 @@ model Workspace {
   quotes                 Quote[]
   customerInvoices       CustomerInvoice[]
   feedback               Feedback[]
-  invoiceSequence        InvoiceSequence?
+  invoiceSequences       InvoiceSequence[]
   stationSessions        StationSession[]
   customRoles            CustomRole[]
   userTasks              UserTask[]
@@ -2108,11 +2108,28 @@ model TicketAttachment {
 /// GoBD § 147 — per-workspace monotonic invoice counter.
 /// One row per workspace; incremented atomically inside a transaction so
 /// numbers are continuous and gap-free even under concurrent webhook delivery.
+/// A gapless counter for ONE document series in ONE workspace.
+///
+/// Keyed by (workspaceId, kind) because a workspace runs two unrelated series
+/// that must never share a counter: SHIFTFY_BILLING numbers the invoices
+/// Shiftfy issues to the workspace, and CUSTOMER_INVOICE numbers the invoices
+/// the workspace issues to ITS clients. Sharing one row put gaps in both,
+/// which is precisely what GoBD forbids.
 model InvoiceSequence {
-  workspaceId String    @id
-  lastNumber  Int       @default(0)
-  updatedAt   DateTime  @updatedAt
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  kind        InvoiceSequenceKind @default(SHIFTFY_BILLING)
+  lastNumber  Int                 @default(0)
+  updatedAt   DateTime            @updatedAt
+  workspace   Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, kind])
+}
+
+enum InvoiceSequenceKind {
+  /// Invoices Shiftfy issues to the workspace (Stripe billing).
+  SHIFTFY_BILLING
+  /// Invoices the workspace issues to its own clients.
+  CUSTOMER_INVOICE
 }
 
 /// Tracks active station tablet sessions so managers can revoke access

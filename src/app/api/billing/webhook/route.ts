@@ -705,9 +705,20 @@ export const POST = withRoute("/api/billing/webhook", "POST", async (req) => {
 
               await prisma.$transaction(async (tx) => {
                 const updated = await tx.invoiceSequence.upsert({
-                  where: { workspaceId: sub.workspaceId },
+                  // Explicit: this is Shiftfy's own billing series, not the
+                  // workspace's series to its clients.
+                  where: {
+                    workspaceId_kind: {
+                      workspaceId: sub.workspaceId,
+                      kind: "SHIFTFY_BILLING",
+                    },
+                  },
                   update: { lastNumber: { increment: 1 } },
-                  create: { workspaceId: sub.workspaceId, lastNumber: 1 },
+                  create: {
+                    workspaceId: sub.workspaceId,
+                    kind: "SHIFTFY_BILLING",
+                    lastNumber: 1,
+                  },
                   select: { lastNumber: true },
                 });
                 const shiftfyInvoiceNumber = `${year}-${String(updated.lastNumber).padStart(6, "0")}`;

@@ -277,19 +277,17 @@ describe("format selection", () => {
     expect(result.format).toBe("XRECHNUNG");
   });
 
-  it("refuses ZUGFeRD rather than emitting bare XML under its name", async () => {
-    // The PDF/A-3 container is not built. A file claiming ZUGFeRD without
-    // the embedded-file structure is rejected by the recipient, so refusing
-    // is the honest outcome -- and it must happen BEFORE a number is drawn.
+  it("issues ZUGFeRD, archiving the same CII as XRechnung", async () => {
+    // Both formats archive the SAME XML -- that is the document § 147 AO
+    // requires us to keep. The difference is only the container the recipient
+    // gets, and the PDF is built at download time so there is one archived
+    // document per invoice rather than two that could drift apart.
     const f = fakeTx({ issuer: { defaultFormat: "ZUGFERD" } });
     const result = await issue(f);
-    expect(result).toEqual({
-      ok: false,
-      code: "FORMAT_UNAVAILABLE",
-      format: "ZUGFERD",
-    });
-    expect(f.upsert).not.toHaveBeenCalled();
-    expect(f.update).not.toHaveBeenCalled();
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
+    expect(result.format).toBe("ZUGFERD");
+    expect(result.xml).toContain("<rsm:CrossIndustryInvoice");
+    expect(f.update.mock.calls[0][0].data.einvoiceFormat).toBe("ZUGFERD");
   });
 });
 

@@ -41,8 +41,7 @@ export type IssueResult =
     }
   | { ok: false; code: "ALREADY_ISSUED"; number: string | null }
   | { ok: false; code: "NOT_FOUND" }
-  | { ok: false; code: "PREFLIGHT_FAILED"; issues: PreflightIssue[] }
-  | { ok: false; code: "FORMAT_UNAVAILABLE"; format: IssueFormat };
+  | { ok: false; code: "PREFLIGHT_FAILED"; issues: PreflightIssue[] };
 
 /** SHA-256 of the XML as issued, so an audit can prove the archive is intact. */
 export function xmlChecksum(xml: string): string {
@@ -132,15 +131,11 @@ export async function issueInvoiceInTx(
     (invoice.client.preferredFormat as IssueFormat | null) ??
     (issuer.defaultFormat as IssueFormat);
 
-  // Checked BEFORE a number is drawn: a format we cannot produce must not
-  // cost one. ZUGFeRD needs a genuine PDF/A-3 container -- embedded file with
-  // AFRelationship, an output intent, ZUGFeRD XMP metadata -- which the PDF
-  // library here cannot write. A file claiming ZUGFeRD conformance without
-  // that structure is rejected by the recipient, so emitting the bare XML
-  // under a ZUGFeRD label would be worse than refusing outright.
-  if (format === "ZUGFERD") {
-    return { ok: false, code: "FORMAT_UNAVAILABLE", format };
-  }
+  // Both formats archive the SAME CII XML -- that is the document, and it is
+  // what § 147 AO requires us to keep. The difference is only the container
+  // the recipient receives: XRechnung is the XML itself, ZUGFeRD wraps it in
+  // a PDF. Building the PDF at download time rather than storing it keeps one
+  // archived document per invoice instead of two that could disagree.
 
   const number =
     invoice.number ??

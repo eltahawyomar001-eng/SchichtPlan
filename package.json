@@ -43,7 +43,8 @@
     "prepare": "husky",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "einvoice:validate": "bash scripts/validate-einvoices.sh"
+    "einvoice:validate": "bash scripts/validate-einvoices.sh",
+    "zugferd:validate": "bash scripts/validate-zugferd.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -79,6 +80,7 @@
     "next-intl": "^4.8.2",
     "openai": "^6.42.0",
     "otpauth": "^9.5.0",
+    "pdf-lib": "^1.17.1",
     "pg": "^8.18.0",
     "prisma": "^7.4.0",
     "qrcode": "^1.5.4",

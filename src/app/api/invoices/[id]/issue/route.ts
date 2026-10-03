@@ -71,19 +71,6 @@ export const POST = withRoute(
           { status: 409 },
         );
       }
-      if (result.code === "FORMAT_UNAVAILABLE") {
-        return NextResponse.json(
-          {
-            error: "FORMAT_UNAVAILABLE",
-            message:
-              "ZUGFeRD (PDF mit eingebetteter XML) steht noch nicht zur Verfügung. " +
-              "Bitte stellen Sie die Rechnung als XRechnung aus; sie ist rechtlich " +
-              "gleichwertig und wird von allen Behörden akzeptiert.",
-            format: result.format,
-          },
-          { status: 409 },
-        );
-      }
       // 422, not 400: the request is well-formed, the data behind it is not
       // yet complete enough to produce a lawful invoice.
       return NextResponse.json(

@@ -72,3 +72,6 @@ service-account*.json
 # E-Rechnung validator artefacts (downloaded on demand)
 .kosit/
 .e-invoice-out/
+
+# ZUGFeRD validation output
+.zugferd-out/

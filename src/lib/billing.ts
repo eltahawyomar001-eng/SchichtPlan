@@ -77,6 +77,12 @@ export async function nextQuoteNumber(workspaceId: string): Promise<string> {
 export async function nextInvoiceNumber(
   workspaceId: string,
   tx: Pick<typeof prisma, "invoiceSequence"> = prisma,
+  /**
+   * From the issuer profile. Only decides how the number is SPELLED -- the
+   * counter below is what guarantees it is gapless, so changing the prefix
+   * does not reset or branch the sequence.
+   */
+  prefix = "RE",
 ): Promise<string> {
   const year = new Date().getFullYear();
 
@@ -93,7 +99,7 @@ export async function nextInvoiceNumber(
     select: { lastNumber: true },
   });
 
-  return `RE-${year}-${String(seq.lastNumber).padStart(4, "0")}`;
+  return `${prefix}-${year}-${String(seq.lastNumber).padStart(4, "0")}`;
 }
 
 /** A URL-safe opaque token for the public quote-acceptance page. */

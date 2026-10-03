@@ -2772,7 +2772,13 @@ model InvoiceIssuerProfile {
   /// Default payment terms in days (BT-9 is derived from this).
   paymentTermDays Int            @default(14)
   /// What "issue" produces unless the recipient asks for something else.
-  defaultFormat   EInvoiceFormat @default(ZUGFERD)
+  ///
+  /// XRECHNUNG by default. It is a complete, legally valid e-invoice in its
+  /// own right -- and the only one a public body must accept -- whereas
+  /// ZUGFeRD additionally requires a PDF/A-3 container that is not built yet.
+  /// Defaulting to ZUGFeRD would stamp invoices with a format we do not
+  /// actually produce.
+  defaultFormat   EInvoiceFormat @default(XRECHNUNG)
 
   logoUrl String?
 
@@ -2785,5 +2791,11 @@ enum EInvoiceFormat {
   /// CII syntax, the German public-sector standard. Mandatory for B2G.
   XRECHNUNG
   /// PDF/A-3 with embedded CII XML, profile EN 16931 (COMFORT).
+  ///
+  /// Not produced yet: the container needs a genuine PDF/A-3 (embedded file
+  /// with AFRelationship, output intent, ZUGFeRD XMP metadata), which jsPDF
+  /// cannot write. A file that claims ZUGFeRD conformance without it is
+  /// rejected by the recipient, so requesting this returns an explicit error
+  /// rather than bare XML under a ZUGFeRD label.
   ZUGFERD
 }

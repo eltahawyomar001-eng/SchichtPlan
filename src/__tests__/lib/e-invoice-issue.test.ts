@@ -39,7 +39,8 @@ const ISSUER = {
   iban: "DE02120300000000202051",
   bic: "BYLADEM1001",
   paymentTermDays: 14,
-  defaultFormat: "ZUGFERD" as const,
+  // Widened so a test can set the other value.
+  defaultFormat: "XRECHNUNG" as "XRECHNUNG" | "ZUGFERD",
 };
 
 // Widened deliberately: each of these is a field a test needs to blank out or
@@ -149,7 +150,7 @@ describe("the happy path", () => {
     const result = await issue(f);
 
     expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
     expect(result.number).toBe("RE-2026-0007");
     expect(result.xml).toContain("<rsm:CrossIndustryInvoice");
     expect(result.xml).toContain("RE-2026-0007");
@@ -166,7 +167,7 @@ describe("the happy path", () => {
     expect(data.issuedAt).toEqual(new Date("2026-10-03T09:00:00Z"));
     expect(data.einvoiceXml).toContain("CrossIndustryInvoice");
     expect(data.einvoiceSha256).toHaveLength(64);
-    expect(data.einvoiceFormat).toBe("ZUGFERD");
+    expect(data.einvoiceFormat).toBe("XRECHNUNG");
   });
 
   it("stores a checksum of exactly what it archived", async () => {
@@ -174,7 +175,7 @@ describe("the happy path", () => {
     // issued, so the two must not be computed from different strings.
     const f = fakeTx();
     const result = await issue(f);
-    if (!result.ok) return;
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
     expect(result.sha256).toBe(xmlChecksum(result.xml));
     expect(f.update.mock.calls[0][0].data.einvoiceSha256).toBe(result.sha256);
   });
@@ -248,29 +249,47 @@ describe("format selection", () => {
   it("uses the issuer default", async () => {
     const f = fakeTx();
     const result = await issue(f);
-    if (!result.ok) return;
-    expect(result.format).toBe("ZUGFERD");
-  });
-
-  it("lets the recipient's preference win over our default", async () => {
-    // A public body that only accepts XRechnung will bounce a ZUGFeRD PDF
-    // regardless of what we would rather send.
-    const f = fakeTx({ client: { preferredFormat: "XRECHNUNG" } });
-    const result = await issue(f);
-    if (!result.ok) return;
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
     expect(result.format).toBe("XRECHNUNG");
     expect(result.xml).toContain("xrechnung_3.0");
   });
 
+  it("lets the recipient's preference win over our default", async () => {
+    // A recipient that insists on one syntax will bounce the other, no matter
+    // what our default says.
+    const f = fakeTx({
+      issuer: { defaultFormat: "ZUGFERD" },
+      client: { preferredFormat: "XRECHNUNG" },
+    });
+    const result = await issue(f);
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
+    expect(result.format).toBe("XRECHNUNG");
+  });
+
   it("lets an explicit request win over both", async () => {
-    const f = fakeTx({ client: { preferredFormat: "XRECHNUNG" } });
+    const f = fakeTx({ issuer: { defaultFormat: "ZUGFERD" } });
     const result = await issueInvoiceInTx(f.tx, {
       invoiceId: "inv_1",
       workspaceId: "ws_1",
+      format: "XRECHNUNG",
+    });
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
+    expect(result.format).toBe("XRECHNUNG");
+  });
+
+  it("refuses ZUGFeRD rather than emitting bare XML under its name", async () => {
+    // The PDF/A-3 container is not built. A file claiming ZUGFeRD without
+    // the embedded-file structure is rejected by the recipient, so refusing
+    // is the honest outcome -- and it must happen BEFORE a number is drawn.
+    const f = fakeTx({ issuer: { defaultFormat: "ZUGFERD" } });
+    const result = await issue(f);
+    expect(result).toEqual({
+      ok: false,
+      code: "FORMAT_UNAVAILABLE",
       format: "ZUGFERD",
     });
-    if (!result.ok) return;
-    expect(result.format).toBe("ZUGFERD");
+    expect(f.upsert).not.toHaveBeenCalled();
+    expect(f.update).not.toHaveBeenCalled();
   });
 });
 
@@ -314,7 +333,7 @@ describe("legacy drafts", () => {
     // customer saw and the document we archived have different numbers.
     const f = fakeTx({ invoice: { number: "RE-2026-0099" } });
     const result = await issue(f);
-    if (!result.ok) return;
+    if (!result.ok) throw new Error(`expected success, got ${result.code}`);
     expect(result.number).toBe("RE-2026-0099");
     expect(f.upsert).not.toHaveBeenCalled();
   });

@@ -41,7 +41,8 @@ export type IssueResult =
     }
   | { ok: false; code: "ALREADY_ISSUED"; number: string | null }
   | { ok: false; code: "NOT_FOUND" }
-  | { ok: false; code: "PREFLIGHT_FAILED"; issues: PreflightIssue[] };
+  | { ok: false; code: "PREFLIGHT_FAILED"; issues: PreflightIssue[] }
+  | { ok: false; code: "FORMAT_UNAVAILABLE"; format: IssueFormat };
 
 /** SHA-256 of the XML as issued, so an audit can prove the archive is intact. */
 export function xmlChecksum(xml: string): string {
@@ -131,8 +132,19 @@ export async function issueInvoiceInTx(
     (invoice.client.preferredFormat as IssueFormat | null) ??
     (issuer.defaultFormat as IssueFormat);
 
+  // Checked BEFORE a number is drawn: a format we cannot produce must not
+  // cost one. ZUGFeRD needs a genuine PDF/A-3 container -- embedded file with
+  // AFRelationship, an output intent, ZUGFeRD XMP metadata -- which the PDF
+  // library here cannot write. A file claiming ZUGFeRD conformance without
+  // that structure is rejected by the recipient, so emitting the bare XML
+  // under a ZUGFeRD label would be worse than refusing outright.
+  if (format === "ZUGFERD") {
+    return { ok: false, code: "FORMAT_UNAVAILABLE", format };
+  }
+
   const number =
-    invoice.number ?? (await nextInvoiceNumber(opts.workspaceId, tx));
+    invoice.number ??
+    (await nextInvoiceNumber(opts.workspaceId, tx, issuer.numberPrefix));
 
   const xml = buildCii(
     assembleCii({

@@ -109,3 +109,30 @@ describe("nextInvoiceNumber", () => {
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 });
+
+describe("the prefix", () => {
+  it("spells the number with the issuer's prefix", async () => {
+    // Only the spelling. The counter is what makes the sequence gapless, so a
+    // customer who changes "RE" to "AR" must not reset or branch it.
+    mockUpsert.mockResolvedValue({ lastNumber: 5 });
+    expect(await nextInvoiceNumber("ws1", undefined, "AR")).toBe(
+      `AR-${new Date().getFullYear()}-0005`,
+    );
+  });
+
+  it("defaults to RE when no prefix is configured", async () => {
+    mockUpsert.mockResolvedValue({ lastNumber: 5 });
+    expect(await nextInvoiceNumber("ws1")).toBe(
+      `RE-${new Date().getFullYear()}-0005`,
+    );
+  });
+
+  it("does not advance the counter differently for a different prefix", async () => {
+    // The prefix is cosmetic; the sequence is the evidence.
+    mockUpsert.mockResolvedValue({ lastNumber: 9 });
+    await nextInvoiceNumber("ws1", undefined, "AR");
+    expect(mockUpsert.mock.calls[0][0].update).toEqual({
+      lastNumber: { increment: 1 },
+    });
+  });
+});

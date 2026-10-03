@@ -42,7 +42,8 @@
     "postinstall": "prisma generate",
     "prepare": "husky",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "einvoice:validate": "bash scripts/validate-einvoices.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

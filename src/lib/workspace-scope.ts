@@ -93,6 +93,7 @@ export const SCOPED_MODELS: ReadonlySet<string> = new Set([
   "ICalToken",
   "Invitation",
   "Invoice",
+  "InvoiceIssuerProfile",
   "InvoiceSequence",
   "LiveActivityToken",
   "Location",

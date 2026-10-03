@@ -242,6 +242,7 @@ model Workspace {
   workProofPhotos        WorkProofPhoto[]
   liveActivityTokens     LiveActivityToken[]
   deviceTokens           DeviceToken[]
+  invoiceIssuerProfile   InvoiceIssuerProfile?
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -1375,6 +1376,24 @@ model Client {
   email            String?
   phone            String?
   address          String?           @db.Text
+  // ── E-Rechnung (EN 16931) ──
+  /// Structured address. `address` above stays as the human-written version
+  /// shown in the UI; these are what the XML carries, because EN 16931 wants
+  /// the parts separately and free text cannot be parsed back into them
+  /// reliably enough for a document that gets rejected automatically.
+  street           String?
+  postalCode       String?
+  city             String?
+  countryCode      String            @default("DE")
+  /// BT-48. Required when the recipient deducts input tax.
+  vatId            String?
+  /// Routing identifier for public-sector recipients (BT-10). Its presence is
+  /// what makes an invoice B2G, where XRechnung is mandatory.
+  leitwegId        String?
+  /// Where e-invoices go, which is often not the general contact address.
+  invoiceEmail     String?
+  /// Overrides the issuer default when this recipient insists on one syntax.
+  preferredFormat  EInvoiceFormat?
   notes            String?           @db.Text
   isActive         Boolean           @default(true)
   createdAt        DateTime          @default(now())
@@ -2488,6 +2507,26 @@ model CustomerInvoice {
   recurringActive   Boolean               @default(false)
   /// For generated children: points back to the recurring template invoice.
   recurringParentId String?
+  // ── E-Rechnung / GoBD ──
+  /// Set once, when the invoice is issued. Its presence means the document is
+  /// read-only: GoBD allows no change to an issued invoice, only a Storno or
+  /// Korrektur that references it. Enforced in the API, not just by convention.
+  issuedAt          DateTime?
+  /// The structured XML exactly as issued. Stored rather than regenerated,
+  /// because regeneration would reflect today's code and today's master data,
+  /// and the archived document must be the one that was actually sent.
+  einvoiceXml       String?               @db.Text
+  einvoiceFormat    EInvoiceFormat?
+  /// SHA-256 of `einvoiceXml`, taken at issue time. Lets an audit show the
+  /// archived copy is byte-identical to what left the building.
+  einvoiceSha256    String?
+  /// For a Storno or Korrektur: the invoice being corrected (BT-25).
+  correctsInvoiceId String?
+  corrects          CustomerInvoice?      @relation("InvoiceCorrection", fields: [correctsInvoiceId], references: [id], onDelete: Restrict)
+  correctedBy       CustomerInvoice[]     @relation("InvoiceCorrection")
+  /// § 13b UStG. Shifts the tax liability to the recipient; no VAT is shown
+  /// and the note is mandatory.
+  reverseCharge     Boolean               @default(false)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   deletedAt         DateTime?
@@ -2509,6 +2548,15 @@ model CustomerInvoiceItem {
   quantity       Float           @default(1)
   unitPriceCents Int             @default(0)
   position       Int             @default(0)
+  /// Per LINE, not per invoice. EN 16931 requires the tax breakdown grouped by
+  /// rate (BG-23), so a single rate on the invoice cannot express a document
+  /// mixing 19 % services with 7 % items -- which is ordinary in cleaning and
+  /// catering. Nullable so existing rows keep falling back to the invoice rate
+  /// until they are migrated.
+  vatRate        Float?
+  /// BT-130. "HUR" for hours, "DAY", "C62" for pieces. Hours matter here
+  /// because invoices are built from time entries.
+  unitCode       String          @default("C62")
   invoice        CustomerInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
@@ -2648,4 +2696,78 @@ model DeviceToken {
 
   @@index([userId])
   @@index([workspaceId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// E-RECHNUNG (EN 16931 / XRechnung / ZUGFeRD)
+// ═══════════════════════════════════════════════════════════════
+
+/// The workspace AS AN INVOICE ISSUER to its own clients.
+///
+/// Distinct from the global IssuerProfile, which is Shiftfy billing the
+/// workspace, and from WorkspaceCustomer, which is the workspace as Shiftfy's
+/// customer. This is the third relationship: a cleaning company invoicing the
+/// property manager it works for. It is their name, their tax number and their
+/// bank details that belong on that document, and none of them exist anywhere
+/// else in the schema.
+///
+/// Addresses are structured rather than one free-text block because EN 16931
+/// requires the parts separately (BT-35 street, BT-37 city, BT-38 postcode,
+/// BT-40 country). Parsing them back out of free text is not safe enough for a
+/// document that is rejected automatically when a field is wrong.
+model InvoiceIssuerProfile {
+  id          String @id @default(cuid())
+  workspaceId String @unique
+
+  /// Legal name exactly as registered (BT-27). Not a trading name.
+  legalName   String
+  /// BT-28, only when the trading name differs from the legal one.
+  tradingName String?
+
+  street       String
+  /// BT-163. Rare in DE but part of the standard.
+  addressLine2 String?
+  postalCode   String
+  city         String
+  /// ISO 3166-1 alpha-2 (BT-40).
+  countryCode  String  @default("DE")
+
+  /// BT-31. Required for reverse charge and intra-EU supply.
+  vatId     String?
+  /// German Steuernummer. § 14 Abs. 4 UStG accepts either this or the VAT ID,
+  /// so at least one must be present before an invoice can be issued.
+  taxNumber String?
+
+  /// § 19 UStG. When true no VAT is shown and the exemption note is required
+  /// on every invoice; the tax category becomes E rather than S.
+  kleinunternehmer Boolean @default(false)
+
+  email String?
+  phone String?
+
+  /// BT-84/85/86. Needed on the invoice so the customer can actually pay it.
+  bankName String?
+  iban     String?
+  bic      String?
+
+  /// Invoice-number prefix, e.g. "RE" or "2027". The sequence supplies the
+  /// counter; this only decides how it is spelled.
+  numberPrefix    String         @default("RE")
+  /// Default payment terms in days (BT-9 is derived from this).
+  paymentTermDays Int            @default(14)
+  /// What "issue" produces unless the recipient asks for something else.
+  defaultFormat   EInvoiceFormat @default(ZUGFERD)
+
+  logoUrl String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+enum EInvoiceFormat {
+  /// CII syntax, the German public-sector standard. Mandatory for B2G.
+  XRECHNUNG
+  /// PDF/A-3 with embedded CII XML, profile EN 16931 (COMFORT).
+  ZUGFERD
 }

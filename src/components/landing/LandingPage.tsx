@@ -4,38 +4,40 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
-  ShiftfyMark,
-  CalendarIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  ZapIcon,
-  ShieldCheckIcon,
+  AlertCircleIcon,
+  ArchiveIcon,
   ArrowRightIcon,
-  ChevronRightIcon,
-  MenuIcon,
-  XIcon,
-  DownloadIcon,
-  SwapIcon,
-  TemplateIcon,
   AwardIcon,
   BarChartIcon,
-  SettingsIcon,
-  CalendarUsersIcon,
-  FlagIcon,
-  BuildingIcon,
   BriefcaseIcon,
-  PalmtreeIcon,
-  SmartphoneIcon,
-  TabletIcon,
-  MonitorIcon,
-  HeadsetIcon,
-  StarIcon,
-  QuoteIcon,
-  AlertCircleIcon,
-  ScaleIcon,
-  FileCheckIcon,
-  SparklesIcon,
+  BuildingIcon,
+  CalendarIcon,
+  CalendarUsersIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  DownloadIcon,
   EyeIcon,
+  FileCheckIcon,
+  FlagIcon,
+  HashIcon,
+  HeadsetIcon,
+  MenuIcon,
+  MonitorIcon,
+  PalmtreeIcon,
+  QuoteIcon,
+  ScaleIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  ShiftfyMark,
+  SmartphoneIcon,
+  SparklesIcon,
+  StarIcon,
+  SwapIcon,
+  TabletIcon,
+  TemplateIcon,
+  XIcon,
+  ZapIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -83,6 +85,7 @@ export function LandingPage() {
         <AiScannerSection />
         <SosFeatureSection />
         <ComplianceFeatureSection />
+        <EInvoiceSection />
         <BenefitsSection />
         <AppShowcaseSection />
         <NativeAppSection />
@@ -1635,6 +1638,125 @@ function BenefitsSection() {
   );
 }
 
+/**
+ * E-Rechnung.
+ *
+ * The claims here are deliberately narrow. "100 % rechtssicher" and savings
+ * figures are the two things this section must not say: the first is not
+ * something software can promise -- whether a given invoice is accepted also
+ * depends on the master data the customer enters -- and the second would need
+ * a source we do not have. What it can say is exactly what the product does,
+ * which is specific enough to be more convincing than a guarantee.
+ */
+function EInvoiceSection() {
+  const t = useTranslations("landing");
+
+  const cards = [
+    {
+      icon: ShieldCheckIcon,
+      title: t("eInvoiceCard1Title"),
+      desc: t("eInvoiceCard1Body"),
+    },
+    {
+      icon: ClockIcon,
+      title: t("eInvoiceCard2Title"),
+      desc: t("eInvoiceCard2Body"),
+    },
+    {
+      icon: HashIcon,
+      title: t("eInvoiceCard3Title"),
+      desc: t("eInvoiceCard3Body"),
+    },
+    {
+      icon: ArchiveIcon,
+      title: t("eInvoiceCard4Title"),
+      desc: t("eInvoiceCard4Body"),
+    },
+    {
+      icon: ScaleIcon,
+      title: t("eInvoiceCard5Title"),
+      desc: t("eInvoiceCard5Body"),
+    },
+    {
+      icon: BuildingIcon,
+      title: t("eInvoiceCard6Title"),
+      desc: t("eInvoiceCard6Body"),
+    },
+  ];
+
+  return (
+    <section
+      id="e-rechnung"
+      aria-labelledby="e-rechnung-title"
+      className="py-16 sm:py-24 bg-white dark:bg-zinc-950"
+    >
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+          <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+            {t("eInvoiceEyebrow")}
+          </span>
+          <h2
+            id="e-rechnung-title"
+            className="mt-4 text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-zinc-100"
+          >
+            {t("eInvoiceTitle")}
+          </h2>
+          <p className="mt-4 text-gray-500 dark:text-zinc-400 leading-relaxed">
+            {t("eInvoiceSubtitle")}
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {cards.map((c) => (
+            <div
+              key={c.title}
+              className="rounded-3xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-[0px_4px_24px_0px_rgba(37,99,235,0.06)] hover:shadow-[0px_8px_32px_0px_rgba(37,99,235,0.12)] transition-all duration-300"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center mb-3">
+                <c.icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className="font-bold text-gray-900 dark:text-zinc-100">
+                {c.title}
+              </h3>
+              <p className="mt-1.5 text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
+                {c.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* The proof, with its limits stated. A qualified claim that survives
+            scrutiny is worth more here than an unqualified one that does not. */}
+        <div className="mt-8 rounded-3xl border border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50 to-emerald-100/40 dark:from-emerald-950/40 dark:to-emerald-900/20 p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-600 flex items-center justify-center">
+              <FileCheckIcon className="w-5 h-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-gray-900 dark:text-zinc-100">
+                {t("eInvoiceProofTitle")}
+              </h3>
+              <p className="mt-1.5 text-sm text-gray-600 dark:text-zinc-300 leading-relaxed">
+                {t("eInvoiceProofBody")}
+              </p>
+              <p className="mt-2 text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
+                {t("eInvoiceProofNote")}
+              </p>
+              <Link
+                href="/registrieren"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+              >
+                {t("eInvoiceCta")}
+                <ArrowRightIcon className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FAQSection() {
   const t = useTranslations("landing");
 
@@ -1645,6 +1767,9 @@ function FAQSection() {
     { q: t("faq4Q"), a: t("faq4A") },
     { q: t("faq5Q"), a: t("faq5A") },
     { q: t("faqDatevConnect"), a: t("faqDatevConnectAnswer") },
+    { q: t("faqEInvoiceQ"), a: t("faqEInvoiceA") },
+    { q: t("faqEInvoiceDeadlineQ"), a: t("faqEInvoiceDeadlineA") },
+    { q: t("faqEInvoiceStornoQ"), a: t("faqEInvoiceStornoA") },
   ];
 
   return (

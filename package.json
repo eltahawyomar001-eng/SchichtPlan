@@ -69,6 +69,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
+    "fast-xml-parser": "^5.11.2",
     "framer-motion": "^12.35.0",
     "ical-generator": "^10.0.0",
     "jspdf": "^4.2.0",

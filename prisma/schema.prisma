@@ -243,6 +243,7 @@ model Workspace {
   liveActivityTokens     LiveActivityToken[]
   deviceTokens           DeviceToken[]
   invoiceIssuerProfile   InvoiceIssuerProfile?
+  incomingInvoices IncomingInvoice[]
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -1068,6 +1069,16 @@ model TimeEntry {
   shiftId                String?
   projectId              String?
   project                Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  /// The invoice line that billed this entry, if any.
+  ///
+  /// This is what stops the same hours being billed twice. A date range cannot
+  /// do it: ranges overlap, and the second invoice is noticed by the
+  /// customer's client rather than by us. SetNull on purpose -- discarding a
+  /// draft invoice releases its hours back into the billable pool, which is
+  /// exactly what should happen, while an issued invoice cannot be deleted at
+  /// all so its hours stay claimed.
+  invoicedItemId         String?
+  invoicedItem           CustomerInvoiceItem? @relation(fields: [invoicedItemId], references: [id], onDelete: SetNull)
   workspaceId            String
   workspace              Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   auditLog               TimeEntryAudit[]
@@ -1083,6 +1094,7 @@ model TimeEntry {
   @@index([workspaceId, employeeId])
   @@index([status])
   @@index([projectId])
+  @@index([invoicedItemId])
 }
 
 model TimeEntryAudit {
@@ -2565,6 +2577,9 @@ model CustomerInvoiceItem {
   /// because invoices are built from time entries.
   unitCode       String          @default("C62")
   invoice        CustomerInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  /// The time entries this line bills. Lets the invoice show its evidence and
+  /// keeps those hours out of the next invoice.
+  timeEntries    TimeEntry[]
 
   @@index([invoiceId])
 }
@@ -2798,4 +2813,75 @@ enum EInvoiceFormat {
   /// rejected by the recipient, so requesting this returns an explicit error
   /// rather than bare XML under a ZUGFeRD label.
   ZUGFERD
+}
+
+/// An e-invoice a supplier sent US.
+///
+/// Receiving has been mandatory for every German business since 1 January
+/// 2025, which is earlier than the obligation to send. The original bytes are
+/// kept verbatim and never regenerated: § 147 AO requires the document to be
+/// retained in the form it was received, and the parsed fields below are a
+/// convenience for the UI, not the record.
+model IncomingInvoice {
+  id          String   @id @default(cuid())
+  workspaceId String
+
+  /// Exactly as received. The retained document.
+  xml         String   @db.Text
+  /// SHA-256 of `xml`, to show the archive is unaltered.
+  sha256      String
+  /// Original file name, which is often the only clue to its provenance.
+  fileName    String?
+  syntax      EInvoiceSyntax
+  /// BT-24, the ruleset the SENDER claims. Recorded, not trusted.
+  profile     String?
+
+  // ── Parsed for display and search. Not the record; the XML is. ──
+  number            String?
+  typeCode          String?
+  issueDate         DateTime? @db.Date
+  dueDate           DateTime? @db.Date
+  currency          String?
+  sellerName        String?
+  sellerVatId       String?
+  buyerName         String?
+  netCents          Int?
+  taxCents          Int?
+  grossCents        Int?
+  precedingNumber   String?
+
+  status      IncomingInvoiceStatus @default(NEU)
+  /// Free-text note from whoever reviewed it.
+  notes       String?  @db.Text
+  /// Who imported it, for the audit trail.
+  importedBy  String?
+  reviewedAt  DateTime?
+  paidAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  /// The same document must not be imported twice. A supplier resending the
+  /// same invoice, or a forwarded mail processed twice, would otherwise be
+  /// booked and paid twice.
+  @@unique([workspaceId, sha256])
+  @@index([workspaceId, status])
+  @@index([workspaceId, issueDate])
+}
+
+enum EInvoiceSyntax {
+  /// UN/CEFACT Cross Industry Invoice. What ZUGFeRD and our own output use.
+  CII
+  /// OASIS UBL. The other syntax XRechnung permits, and roughly half of what
+  /// arrives in practice.
+  UBL
+}
+
+enum IncomingInvoiceStatus {
+  NEU
+  GEPRUEFT
+  BEZAHLT
+  ABGELEHNT
 }

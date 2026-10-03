@@ -39,11 +39,30 @@ export interface EmailParams {
   message: string;
   link?: string | null;
   locale?: string;
+  /**
+   * Files to attach.
+   *
+   * NOT persisted to the EmailJob retry queue -- see sendEmail. An attachment
+   * is usually the entire point of the message (an invoice email without the
+   * invoice is worse than no email), and the queue has nowhere to put the
+   * bytes, so a message with attachments either goes out or reports failure
+   * to its caller.
+   */
+  attachments?: { filename: string; content: Buffer | string }[];
 }
 
 /** Attempt a single delivery via Resend. Returns null on success, error string on failure. */
 async function attemptSend(params: EmailParams): Promise<string | null> {
-  const { to, type, category, title, message, link, locale = "de" } = params;
+  const {
+    to,
+    type,
+    category,
+    title,
+    message,
+    link,
+    locale = "de",
+    attachments,
+  } = params;
   const client = getResend();
   if (!client) return "RESEND_API_KEY not configured";
 
@@ -57,6 +76,14 @@ async function attemptSend(params: EmailParams): Promise<string | null> {
       html,
       text,
       tags: [{ name: "category", value: category }],
+      ...(attachments?.length
+        ? {
+            attachments: attachments.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+            })),
+          }
+        : {}),
     });
     if (result.error) {
       return `Resend error: ${result.error.message || JSON.stringify(result.error)}`;
@@ -96,6 +123,19 @@ export async function sendEmail(
     if (attempt < MAX_IN_PROCESS) {
       await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt - 1)));
     }
+  }
+
+  // A message with attachments is not queued.
+  //
+  // EmailJob stores only the text fields, so a retry would deliver the same
+  // message WITHOUT its attachment -- an invoice email with no invoice, which
+  // the recipient would reasonably treat as the invoice having been sent. The
+  // caller is told it failed and can try again with the file still to hand.
+  if (params.attachments?.length) {
+    log.error(
+      `[notifications/email] All ${MAX_IN_PROCESS} attempts failed to=${to} — NOT queued (has attachments)`,
+    );
+    return { success: false, error: lastError ?? "Unknown error" };
   }
 
   // All in-process attempts failed — persist to DB queue for cron retry

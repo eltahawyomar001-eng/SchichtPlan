@@ -16,26 +16,49 @@ from email.message import EmailMessage
 
 SMTP_HOST, SMTP_PORT = "smtp.strato.de", 465
 IMAP_HOST, IMAP_PORT = "imap.strato.de", 993
-FROM_NAME = "Omar Rageh - Shiftfy"
+# The owner of the business, not whoever is operating the tool. A commercial
+# email in Germany has to identify the sender (§ 5 TMG), and naming anyone
+# else misstates who the recipient is dealing with.
+FROM_NAME = "Mohammad Bashabsheh - Shiftfy"
+SIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "shiftfy-signature.html")
 
 USER = os.environ["SHIFTFY_SMTP_USER"]
 PASS = os.environ["SHIFTFY_SMTP_PASS"]
 
+# Plain-text fallback. Carries the same mandatory details as the HTML part:
+# a recipient whose client strips HTML must still get the Impressum
+# information, so this is not a shortened version of the signature.
 SIG_TEXT = """Mit freundlichen Gruessen
 
-Omar Rageh
-Shiftfy
-kontakt@shiftfy.info
-https://www.shiftfy.de"""
+Mohammad Bashabsheh
+Inhaber - Bashabsheh Vergabepartner
+Shiftfy | Schichtplanung & Zeiterfassung
 
-SIG_HTML = """<table style="border-collapse:collapse;width:420px;max-width:100%;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;color:#333333" role="presentation" border="0" cellspacing="0" cellpadding="0"><tbody>
-<tr><td style="padding:0 0 14px 0">Mit freundlichen Gr&uuml;&szlig;en</td></tr>
-<tr><td style="padding:0 0 4px 0;font-size:15px;font-weight:bold;color:#059669">Shiftfy</td></tr>
-<tr><td style="padding:0 0 10px 0;font-size:14px;font-weight:bold;color:#333333">Omar Rageh</td></tr>
-<tr><td style="padding:0 0 14px 0;font-size:13px;line-height:1.5">
-<a style="color:#059669;text-decoration:none" href="mailto:kontakt@shiftfy.info">kontakt@shiftfy.info</a><br>
-<a style="color:#059669;text-decoration:none" href="https://www.shiftfy.de">www.shiftfy.de</a></td></tr>
-</tbody></table>"""
+E  Kontakt@shiftfy.info
+T  +49 176 30365636
+W  https://www.shiftfy.de
+A  Kolonnenstrasse 8, 10827 Berlin, Deutschland
+
+Bashabsheh Vergabepartner - Inhaber: Mohammad Bashabsheh
+Kleinunternehmer gem. Paragraf 19 UStG (keine Umsatzsteuer ausgewiesen)
+Impressum: https://www.shiftfy.de/impressum
+Datenschutz: https://www.shiftfy.de/datenschutz
+
+Diese E-Mail kann vertrauliche Informationen enthalten. Sollten Sie nicht der
+richtige Adressat sein, informieren Sie bitte den Absender und loeschen Sie
+diese E-Mail."""
+
+
+def signature_html():
+    """The signature, read from file rather than inlined.
+
+    It is a block of hand-tuned table markup that renders across mail clients;
+    retyping it into a Python string is how it drifts from the one the
+    business actually uses.
+    """
+    with open(SIG_PATH, encoding="utf-8") as f:
+        return f.read()
 
 
 def build(to, subject, body, in_reply_to=None):
@@ -56,7 +79,8 @@ def build(to, subject, body, in_reply_to=None):
         for p in re.split(r"\n\s*\n", body) if p.strip()
     )
     m.add_alternative(
-        "<html><body style=\"margin:0;padding:0\">%s%s</body></html>" % (paras, SIG_HTML),
+        "<html><body style=\"margin:0;padding:0\">%s%s</body></html>"
+        % (paras, signature_html()),
         subtype="html",
     )
     return m

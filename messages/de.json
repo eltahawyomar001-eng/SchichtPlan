@@ -159,7 +159,8 @@
     "favRemove": "Aus Favoriten entfernen",
     "addonBadge": "Add-on",
     "favorites": "Favoriten",
-    "photoProof": "Fotonachweise"
+    "photoProof": "Fotonachweise",
+    "eInvoiceInbox": "E-Rechnungs-Eingang"
   },
   "dashboard": {
     "title": "Dashboard",

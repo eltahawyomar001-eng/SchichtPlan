@@ -183,6 +183,16 @@ const navGroups: NavGroup[] = [
         icon: CreditCardIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
+      {
+        // Invoices we RECEIVE, as opposed to the ones we send. Separate entry
+        // rather than a tab on /rechnungen because the two are different jobs:
+        // one is billing a customer, the other is approving a supplier's
+        // invoice for payment, and they are rarely done by the same person.
+        key: "eInvoiceInbox",
+        href: "/e-rechnung-eingang",
+        icon: FileCheckIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
     ],
   },
   {

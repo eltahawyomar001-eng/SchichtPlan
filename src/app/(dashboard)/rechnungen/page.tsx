@@ -22,6 +22,8 @@ import {
   FileCheckIcon,
   CircleXIcon,
   AlertTriangleIcon,
+  ClockIcon,
+  SendIcon,
 } from "@/components/icons";
 
 type DocKind = "invoice" | "quote";
@@ -131,6 +133,9 @@ export default function RechnungenPage() {
   const [issuing, setIssuing] = useState<string | null>(null);
   const [stornoFor, setStornoFor] = useState<Invoice | null>(null);
   const [stornoReason, setStornoReason] = useState("");
+  const [hoursOpen, setHoursOpen] = useState(false);
+  const [datevOpen, setDatevOpen] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -200,6 +205,30 @@ export default function RechnungenPage() {
     }
   }
 
+  /**
+   * Email the invoice to the client.
+   *
+   * Only offered on issued invoices: a draft has no number and no structured
+   * document, so what would arrive is not an invoice.
+   */
+  async function sendInvoice(inv: Invoice) {
+    setSending(inv.id);
+    try {
+      const res = await fetch(`/api/invoices/${inv.id}/send`, {
+        method: "POST",
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(t("sentTo", { to: d.to }));
+        load();
+      } else {
+        toast.error(d.message ?? t("sendFailed"));
+      }
+    } finally {
+      setSending(null);
+    }
+  }
+
   async function doStorno() {
     if (!stornoFor) return;
     const res = await fetch(`/api/invoices/${stornoFor.id}/storno`, {
@@ -264,12 +293,30 @@ export default function RechnungenPage() {
         title={t("title")}
         description={t("description")}
         actions={
-          <Button size="sm" onClick={() => setFormOpen(true)}>
-            <PlusIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {tab === "invoice" ? t("newInvoice") : t("newQuote")}
-            </span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDatevOpen(true)}
+            >
+              <FileExportIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("datevExport")}</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setHoursOpen(true)}
+            >
+              <ClockIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("fromHours")}</span>
+            </Button>
+            <Button size="sm" onClick={() => setFormOpen(true)}>
+              <PlusIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {tab === "invoice" ? t("newInvoice") : t("newQuote")}
+              </span>
+            </Button>
+          </div>
         }
       />
 
@@ -345,7 +392,9 @@ export default function RechnungenPage() {
                   onStatus={setInvoiceStatus}
                   onIssue={issueInvoice}
                   onStorno={setStornoFor}
+                  onSend={sendInvoice}
                   issuing={issuing}
+                  sending={sending}
                   onDelete={(id) => setConfirmDel({ kind: "invoice", id })}
                 />
               ) : (
@@ -427,6 +476,20 @@ export default function RechnungenPage() {
         </ModalFooter>
       </Modal>
 
+      {hoursOpen && (
+        <FromHoursModal
+          clients={clients}
+          onClose={() => setHoursOpen(false)}
+          onCreated={() => {
+            setHoursOpen(false);
+            setTab("invoice");
+            load();
+          }}
+        />
+      )}
+
+      {datevOpen && <DatevModal onClose={() => setDatevOpen(false)} />}
+
       {/* Storno. Explains WHY a cancellation creates a second document,
           because otherwise it looks like the app refusing to delete. */}
       <Modal
@@ -471,7 +534,9 @@ function InvoiceTable({
   onStatus,
   onIssue,
   onStorno,
+  onSend,
   issuing,
+  sending,
   onDelete,
 }: {
   rows: Invoice[];
@@ -479,7 +544,9 @@ function InvoiceTable({
   onStatus: (id: string, s: string) => void;
   onIssue: (id: string) => void;
   onStorno: (inv: Invoice) => void;
+  onSend: (inv: Invoice) => void;
   issuing: string | null;
+  sending: string | null;
   onDelete: (id: string) => void;
 }) {
   if (rows.length === 0)
@@ -543,18 +610,43 @@ function InvoiceTable({
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                   </Button>
-                  {/* The archived XML, available only once there is one. */}
+                  {/* The archived XML and the hybrid PDF, both only once
+                      there is an issued document behind them. */}
                   {inv.issuedAt && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      title={t("downloadXml")}
-                      onClick={() =>
-                        window.open(`/api/invoices/${inv.id}/xml`, "_blank")
-                      }
-                    >
-                      <FileCheckIcon className="h-3.5 w-3.5" />
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title={t("downloadXml")}
+                        onClick={() =>
+                          window.open(`/api/invoices/${inv.id}/xml`, "_blank")
+                        }
+                      >
+                        <FileCheckIcon className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title={t("downloadZugferd")}
+                        onClick={() =>
+                          window.open(
+                            `/api/invoices/${inv.id}/zugferd`,
+                            "_blank",
+                          )
+                        }
+                      >
+                        <DownloadIcon className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={sending === inv.id}
+                        onClick={() => onSend(inv)}
+                      >
+                        <SendIcon className="h-3.5 w-3.5" />
+                        {sending === inv.id ? t("sending") : t("sendInvoice")}
+                      </Button>
+                    </>
                   )}
                   {!inv.issuedAt && inv.status === "ENTWURF" && (
                     <Button
@@ -962,6 +1054,320 @@ function DocumentFormModal({
         </Button>
         <Button onClick={save} disabled={saving}>
           {saving ? tc("saving") : tc("save")}
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
+}
+
+/* ───────────────────── Rechnung aus Stunden ───────────────────── */
+
+interface HoursLine {
+  projectId: string;
+  description: string;
+  quantity: number;
+  unitPriceCents: number;
+  netMinutes: number;
+}
+interface SkippedEntry {
+  entryId: string;
+  date: string;
+  netMinutes: number;
+  reason: string;
+  projectName?: string;
+}
+
+/** First and last day of the previous whole month, as yyyy-mm-dd. */
+function lastMonthRange(): { from: string; to: string } {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const last = new Date(now.getFullYear(), now.getMonth(), 0);
+  const iso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { from: iso(first), to: iso(last) };
+}
+
+/**
+ * Build an invoice from recorded time.
+ *
+ * Previews before it creates anything, because the interesting part is not
+ * the total but WHAT WAS LEFT OUT: hours still awaiting confirmation, or a
+ * project with no rate, are exactly the things that otherwise go unbilled
+ * without anyone noticing.
+ */
+function FromHoursModal({
+  clients,
+  onClose,
+  onCreated,
+}: {
+  clients: ClientOption[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const t = useTranslations("invoicing");
+  const tc = useTranslations("common");
+  const defaults = lastMonthRange();
+
+  const [clientId, setClientId] = useState(clients[0]?.id ?? "");
+  const [from, setFrom] = useState(defaults.from);
+  const [to, setTo] = useState(defaults.to);
+  const [lines, setLines] = useState<HoursLine[]>([]);
+  const [skipped, setSkipped] = useState<SkippedEntry[]>([]);
+  const [netCents, setNetCents] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const preview = useCallback(async () => {
+    if (!clientId) return;
+    setLoading(true);
+    try {
+      const qs = new URLSearchParams({ clientId, from, to });
+      const res = await fetch(`/api/invoices/aus-stunden?${qs}`);
+      if (res.ok) {
+        const d = await res.json();
+        setLines(d.lines ?? []);
+        setSkipped(d.skipped ?? []);
+        setNetCents(d.netCents ?? 0);
+      }
+      setLoaded(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [clientId, from, to]);
+
+  useEffect(() => {
+    void preview();
+  }, [preview]);
+
+  async function create() {
+    setCreating(true);
+    try {
+      const res = await fetch("/api/invoices/aus-stunden", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, from, to }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(tc("saved"));
+        onCreated();
+      } else {
+        toast.error(d.message ?? tc("errorOccurred"));
+      }
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  // Grouped by reason: "12 entries not yet confirmed" is actionable in a way
+  // that twelve separate rows naming each date is not.
+  const skipGroups = skipped.reduce<Record<string, number>>((acc, s) => {
+    acc[s.reason] = (acc[s.reason] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="lg"
+      title={t("fromHoursTitle")}
+      description={t("fromHoursDesc")}
+    >
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <Label className="mb-1.5 block">{t("fromHoursClient")}</Label>
+          <Select
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+          >
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label className="mb-1.5 block">{t("fromHoursFrom")}</Label>
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5 block">{t("fromHoursTo")}</Label>
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-semibold text-gray-900 dark:text-zinc-100">
+          {t("fromHoursPreview")}
+        </p>
+        {loading ? (
+          <p className="py-6 text-center text-sm text-gray-400">
+            {tc("loading")}
+          </p>
+        ) : lines.length === 0 ? (
+          <p className="py-6 text-center text-sm text-gray-400">
+            {loaded ? t("fromHoursNothing") : ""}
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-zinc-800">
+            <table className="w-full text-sm">
+              <tbody className="divide-y dark:divide-zinc-800">
+                {lines.map((l) => (
+                  <tr key={l.projectId}>
+                    <td className="px-3 py-2 text-gray-700 dark:text-zinc-300">
+                      {l.description}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right text-gray-500 dark:text-zinc-400">
+                      {l.quantity.toLocaleString("de-DE")} h
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                      {euro(Math.round(l.quantity * l.unitPriceCents))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {lines.length > 0 && (
+          <p className="mt-2 text-right text-sm font-semibold text-gray-900 dark:text-zinc-100">
+            {t("fromHoursNet")}: {euro(netCents)}
+          </p>
+        )}
+
+        {/* What was NOT billed. The useful half of the preview. */}
+        {skipped.length > 0 && (
+          <div className="mt-3 rounded-xl bg-amber-50 p-3 dark:bg-amber-950/20">
+            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+              {t("fromHoursSkipped", { count: skipped.length })}
+            </p>
+            <ul className="mt-1.5 space-y-0.5">
+              {Object.entries(skipGroups).map(([reason, count]) => (
+                <li
+                  key={reason}
+                  className="text-xs text-amber-700 dark:text-amber-400"
+                >
+                  {count} × {t(`skip${reason}`)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <ModalFooter>
+        <Button variant="outline" onClick={onClose}>
+          {tc("cancel")}
+        </Button>
+        <Button onClick={create} disabled={creating || lines.length === 0}>
+          {t("fromHoursCreate")}
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
+}
+
+/* ───────────────────── DATEV-Export ───────────────────── */
+
+/**
+ * Export the issued invoices for the tax adviser.
+ *
+ * The two numbers come from the adviser, not from us, and the export is
+ * useless without them -- so they are asked for rather than guessed.
+ */
+function DatevModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("invoicing");
+  const defaults = lastMonthRange();
+
+  const [from, setFrom] = useState(defaults.from);
+  const [to, setTo] = useState(defaults.to);
+  const [consultant, setConsultant] = useState("");
+  const [client, setClient] = useState("");
+
+  const qs = (format?: string) =>
+    new URLSearchParams({
+      from,
+      to,
+      consultantNumber: consultant,
+      clientNumber: client,
+      ...(format ? { format } : {}),
+    }).toString();
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="md"
+      title={t("datevTitle")}
+      description={t("datevDesc")}
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <Label className="mb-1.5 block">{t("fromHoursFrom")}</Label>
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5 block">{t("fromHoursTo")}</Label>
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5 block">{t("datevConsultant")}</Label>
+          <Input
+            value={consultant}
+            onChange={(e) => setConsultant(e.target.value)}
+            inputMode="numeric"
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5 block">{t("datevClient")}</Label>
+          <Input
+            value={client}
+            onChange={(e) => setClient(e.target.value)}
+            inputMode="numeric"
+          />
+        </div>
+      </div>
+      <p className="mt-3 text-xs text-gray-500 dark:text-zinc-400">
+        {t("datevHint")}
+      </p>
+      <ModalFooter>
+        {/* The plain CSV needs no adviser numbers, so it stays available
+            while the DATEV file is still missing them. */}
+        <Button
+          variant="outline"
+          onClick={() =>
+            window.open(`/api/invoices/export/datev?${qs("csv")}`, "_blank")
+          }
+        >
+          {t("csvDownload")}
+        </Button>
+        <Button
+          disabled={!consultant.trim() || !client.trim()}
+          onClick={() =>
+            window.open(`/api/invoices/export/datev?${qs()}`, "_blank")
+          }
+        >
+          {t("datevDownload")}
         </Button>
       </ModalFooter>
     </Modal>

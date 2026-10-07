@@ -49,6 +49,16 @@ export interface EmailParams {
    * to its caller.
    */
   attachments?: { filename: string; content: Buffer | string }[];
+  /**
+   * Whether a final failure should be queued for the retry cron.
+   *
+   * Defaults to true. The RETRY CRON must pass false: it calls this function
+   * to retry a job that is already in the queue, and persisting on failure
+   * there creates a SECOND row for the same message. Every cron pass then
+   * multiplies the backlog instead of draining it -- one undeliverable email
+   * became eleven thousand rows that way, all to a single recipient.
+   */
+  persistOnFailure?: boolean;
 }
 
 /** Attempt a single delivery via Resend. Returns null on success, error string on failure. */
@@ -123,6 +133,14 @@ export async function sendEmail(
     if (attempt < MAX_IN_PROCESS) {
       await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt - 1)));
     }
+  }
+
+  // Called from the retry cron, which already owns a row for this message.
+  if (params.persistOnFailure === false) {
+    log.error(
+      `[notifications/email] All ${MAX_IN_PROCESS} attempts failed to=${to} — caller owns the queue row`,
+    );
+    return { success: false, error: lastError ?? "Unknown error" };
   }
 
   // A message with attachments is not queued.

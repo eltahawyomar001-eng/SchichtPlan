@@ -48,6 +48,10 @@ export const GET = withRoute("/api/cron/retry-emails", "GET", async (req) => {
         message: job.message,
         link: job.link,
         locale: job.locale,
+        // This job already HAS a queue row -- the one being retried. Without
+        // this, a failed retry persists a second row for the same message and
+        // the queue grows on every pass instead of draining.
+        persistOnFailure: false,
       });
 
       const nextAttempts = job.attempts + 1;

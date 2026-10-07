@@ -75,3 +75,6 @@ service-account*.json
 
 # ZUGFeRD validation output
 .zugferd-out/
+
+# Pre-deletion data backups. Contain password hashes; never commit.
+.backups/

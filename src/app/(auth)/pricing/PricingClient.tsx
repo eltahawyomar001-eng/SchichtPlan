@@ -16,6 +16,28 @@ import {
   DatabaseIcon,
 } from "@/components/icons";
 
+/** One comparison cell: included, add-on, or not available. */
+function CompareCell({
+  state,
+  addonLabel,
+}: {
+  state: boolean | "addon";
+  addonLabel: string;
+}) {
+  if (state === "addon") {
+    return (
+      <span className="inline-block rounded-full bg-amber-100 dark:bg-amber-950/40 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+        {addonLabel}
+      </span>
+    );
+  }
+  return state ? (
+    <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+  ) : (
+    <span className="text-gray-300 dark:text-gray-600">—</span>
+  );
+}
+
 export default function PricingClient() {
   const t = useTranslations("pricing");
   const tc = useTranslations("common");
@@ -108,15 +130,43 @@ export default function PricingClient() {
     { q: t("pricingFaq6Q"), a: t("pricingFaq6A") },
   ];
 
+  /**
+   * Three states, not two.
+   *
+   * "addon" is the one that was missing: Schichtplanung is a paid module on
+   * Basic and Professional, and showing it as a plain tick told customers it
+   * was included in the price. That is what prompted the question this table
+   * now answers.
+   */
+  type CellState = boolean | "addon";
   const compareRows: {
     feature: string;
-    basic: boolean;
-    pro: boolean;
-    enterprise: boolean;
+    basic: CellState;
+    pro: CellState;
+    enterprise: CellState;
   }[] = [
     { feature: t("compareFeature1"), basic: true, pro: true, enterprise: true },
     { feature: t("compareFeature2"), basic: true, pro: true, enterprise: true },
-    { feature: t("compareFeature3"), basic: true, pro: true, enterprise: true },
+    {
+      feature: t("compareFeature3"),
+      basic: "addon",
+      pro: "addon",
+      enterprise: true,
+    },
+    // Not previously listed anywhere in pricing, despite being marketed on the
+    // landing page. It travels with the Schichtplanung module.
+    {
+      feature: t("compareFeatureSos"),
+      basic: "addon",
+      pro: "addon",
+      enterprise: true,
+    },
+    {
+      feature: t("compareFeaturePush"),
+      basic: true,
+      pro: true,
+      enterprise: true,
+    },
     { feature: t("compareFeature4"), basic: true, pro: true, enterprise: true },
     { feature: t("compareFeature5"), basic: true, pro: true, enterprise: true },
     {
@@ -376,6 +426,84 @@ export default function PricingClient() {
           </p>
         </div>
 
+        {/* ─── Add-on modules ───
+            Shown with their real prices and placed BEFORE the comparison
+            table, because "is this included?" is the question customers were
+            actually asking and the table only makes sense once it is
+            answered. */}
+        <section className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 pb-12">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              {t("addonsTitle")}
+            </h2>
+            <p className="mt-3 text-gray-500 dark:text-gray-400">
+              {t("addonsSubtitle")}
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="rounded-3xl border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-gray-900 p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                    {t("addonShiftName")}
+                  </h3>
+                  <p className="mt-0.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    {t("addonShiftPrice")}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                  {t("addonBadge")}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                {t("addonShiftDesc")}
+              </p>
+              <ul className="mt-4 space-y-2">
+                {[
+                  t("addonShiftBullet1"),
+                  t("addonShiftBullet2"),
+                  t("addonShiftBullet3"),
+                ].map((b) => (
+                  <li
+                    key={b}
+                    className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300"
+                  >
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                {t("addonShiftIncluded")}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                    {t("addonTicketName")}
+                  </h3>
+                  <p className="mt-0.5 text-gray-700 dark:text-gray-200 font-semibold">
+                    {t("addonTicketPrice")}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                  {t("addonBadge")}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                {t("addonTicketDesc")}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-5 text-center text-xs text-gray-500 dark:text-gray-400">
+            {t("addonNote")}
+          </p>
+        </section>
+
         {/* ─── Plan Comparison Table ─── */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 pb-16 sm:pb-20">
           <div className="text-center mb-8">
@@ -413,37 +541,22 @@ export default function PricingClient() {
                       {row.feature}
                     </td>
                     <td className="py-3 px-4 text-center text-base">
-                      {row.basic ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="text-gray-300 dark:text-gray-600">
-                          —
-                        </span>
-                      )}
+                      <CompareCell
+                        state={row.basic}
+                        addonLabel={t("addonBadge")}
+                      />
                     </td>
                     <td className="py-3 px-4 text-center text-base">
-                      {row.pro ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="text-gray-300 dark:text-gray-600">
-                          —
-                        </span>
-                      )}
+                      <CompareCell
+                        state={row.pro}
+                        addonLabel={t("addonBadge")}
+                      />
                     </td>
                     <td className="py-3 px-4 text-center text-base">
-                      {row.enterprise ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="text-gray-300 dark:text-gray-600">
-                          —
-                        </span>
-                      )}
+                      <CompareCell
+                        state={row.enterprise}
+                        addonLabel={t("addonBadge")}
+                      />
                     </td>
                   </tr>
                 ))}

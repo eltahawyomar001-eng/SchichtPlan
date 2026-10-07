@@ -72,10 +72,20 @@ export async function hasSchichtplanungAddon(
     select: { status: true, plan: true, schichtplanungAddonActive: true },
   });
 
+  // TRIALING counts as having the module.
+  //
+  // The trial exists so a prospect can evaluate the product, and
+  // TRIAL_LIMIT_OVERRIDES already unlocks every other paid feature for exactly
+  // that reason. It cannot reach this gate, though, because the add-on is not
+  // a plan limit -- so a trial user saw no Schichtplanung and no
+  // Notfall-Besetzung at all. That is the single module most of them signed up
+  // to look at, and the first one they concluded we did not have.
   const result =
     !!sub &&
     (ACTIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(sub.status) &&
-    (sub.plan === "ENTERPRISE" || sub.schichtplanungAddonActive);
+    (sub.plan === "ENTERPRISE" ||
+      sub.status === "TRIALING" ||
+      sub.schichtplanungAddonActive);
 
   await cache.set(cacheKey, result, ADDON_CACHE_TTL);
   return result;

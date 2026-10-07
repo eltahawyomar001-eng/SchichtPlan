@@ -294,8 +294,8 @@ export default function SchichtplanungPage() {
                 <strong>Für wen eignet sich Shiftfy?</strong> Für alle
                 Unternehmen mit Schichtarbeit: Gastronomie, Sicherheitsdienste,
                 Einzelhandel, Produktion, Pflege, Gebäudereinigung und weitere
-                Dienstleistungsbranchen. Jedes Konto startet mit einer 7-tägigen
-                Testphase, danach ab 2,99 €/Nutzer/Monat.
+                Dienstleistungsbranchen. Jedes Konto startet mit einer
+                14-tägigen Testphase, danach ab 2,99 €/Nutzer/Monat.
               </p>
             </div>
           </div>

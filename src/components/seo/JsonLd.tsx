@@ -74,7 +74,10 @@ export function CombinedJsonLd() {
             priceCurrency: "EUR",
             name: "Basic",
             description:
-              "Ab 2,99 €/Nutzer/Monat — bis zu 15 Mitarbeiter, 1 Standort, Schichtplanung inklusive",
+              // Schichtplanung is a 1,50 €/Nutzer/Monat add-on, so naming it
+              // as included here put a false claim into the structured data
+              // search engines read.
+              "Ab 2,99 €/Nutzer/Monat — bis zu 15 Mitarbeiter, 1 Standort, Zeiterfassung inklusive. Schichtplanung als Zusatzmodul.",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
               price: "2.99",
@@ -144,7 +147,7 @@ export function CombinedJsonLd() {
             name: "Was kostet Shiftfy?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Shiftfy berechnet nur pro Nutzer — ohne Grundgebühr. Basic kostet 2,99 €/Nutzer/Monat, Professional 4,99 € und Enterprise 7,99 €. Bei jährlicher Zahlung sparst du bis zu 20 %. Jedes neue Konto startet mit einer 7-tägigen Testphase, danach läuft der gewählte Plan.",
+              text: "Shiftfy berechnet nur pro Nutzer — ohne Grundgebühr. Basic kostet 2,99 €/Nutzer/Monat, Professional 4,99 € und Enterprise 7,99 €. Bei jährlicher Zahlung sparst du bis zu 20 %. Jedes neue Konto startet mit einer 14-tägigen Testphase, danach läuft der gewählte Plan.",
             },
           },
           {
@@ -176,7 +179,7 @@ export function CombinedJsonLd() {
             name: "Kann ich Shiftfy testen?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Ja, jedes neue Konto erhält eine 7-tägige Testphase mit vollem Funktionsumfang. Nach Ablauf wird der gewählte Plan automatisch abgerechnet — jederzeit kündbar.",
+              text: "Ja, jedes neue Konto erhält eine 14-tägige Testphase mit vollem Funktionsumfang. Nach Ablauf wird der gewählte Plan automatisch abgerechnet — jederzeit kündbar.",
             },
           },
           {

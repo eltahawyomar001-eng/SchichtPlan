@@ -591,10 +591,10 @@ function InvoiceTable({
               <td className="px-4 py-2.5 text-gray-600 dark:text-zinc-300">
                 {inv.client?.name ?? "—"}
               </td>
-              <td className="px-4 py-2.5 text-gray-600 dark:text-zinc-300">
+              <td className="whitespace-nowrap px-4 py-2.5 text-gray-600 dark:text-zinc-300">
                 {new Date(inv.dueDate).toLocaleDateString("de-DE")}
               </td>
-              <td className="px-4 py-2.5 text-right font-medium">
+              <td className="whitespace-nowrap px-4 py-2.5 text-right font-medium">
                 {euro(inv.totals.grossCents)}
               </td>
               <td className="px-4 py-2.5">
@@ -747,7 +747,7 @@ function QuoteTable({
               <td className="px-4 py-2.5 text-gray-600 dark:text-zinc-300">
                 {q.client?.name ?? "—"}
               </td>
-              <td className="px-4 py-2.5 text-right font-medium">
+              <td className="whitespace-nowrap px-4 py-2.5 text-right font-medium">
                 {euro(q.totals.grossCents)}
               </td>
               <td className="px-4 py-2.5">

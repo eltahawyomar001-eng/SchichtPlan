@@ -30,7 +30,10 @@ export function LanguageSwitcher() {
     <div
       role="group"
       aria-label="Language"
-      className={`inline-flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-zinc-700 dark:bg-zinc-800/60 ${
+      // shrink-0 and whitespace-nowrap: the switcher shares the top bar with
+      // page actions, and a page with several buttons squeezed it until DE and
+      // EN stacked vertically on top of each other.
+      className={`inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-zinc-700 dark:bg-zinc-800/60 ${
         isPending ? "pointer-events-none opacity-50" : ""
       }`}
     >

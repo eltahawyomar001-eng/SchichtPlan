@@ -588,7 +588,7 @@ function InvoiceTable({
                   <span className="ml-1.5 text-[10px] text-emerald-600">↻</span>
                 )}
               </td>
-              <td className="px-4 py-2.5 text-gray-600 dark:text-zinc-300">
+              <td className="min-w-[180px] break-words px-4 py-2.5 text-gray-600 dark:text-zinc-300 [word-break:normal] [overflow-wrap:break-word]">
                 {inv.client?.name ?? "—"}
               </td>
               <td className="whitespace-nowrap px-4 py-2.5 text-gray-600 dark:text-zinc-300">

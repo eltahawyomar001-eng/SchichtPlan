@@ -560,10 +560,14 @@ function InvoiceTable({
       <table className="w-full text-sm">
         <thead className="border-b text-left text-gray-500 dark:text-zinc-400">
           <tr>
-            <th className="px-4 py-2.5 font-medium">{t("number")}</th>
+            <th className="whitespace-nowrap px-4 py-2.5 font-medium">
+              {t("number")}
+            </th>
             <th className="px-4 py-2.5 font-medium">{t("client")}</th>
             <th className="px-4 py-2.5 font-medium">{t("dueDate")}</th>
-            <th className="px-4 py-2.5 font-medium text-right">{t("gross")}</th>
+            <th className="whitespace-nowrap px-4 py-2.5 font-medium text-right">
+              {t("gross")}
+            </th>
             <th className="px-4 py-2.5 font-medium">{t("status")}</th>
             <th className="px-4 py-2.5" />
           </tr>
@@ -571,7 +575,7 @@ function InvoiceTable({
         <tbody className="divide-y dark:divide-zinc-800">
           {rows.map((inv) => (
             <tr key={inv.id}>
-              <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-zinc-100">
+              <td className="whitespace-nowrap px-4 py-2.5 font-medium text-gray-900 dark:text-zinc-100">
                 {inv.number ?? (
                   // A draft genuinely has no number yet, and showing a
                   // placeholder that looks like one is how a draft ends up
@@ -639,12 +643,12 @@ function InvoiceTable({
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
+                        title={t("sendInvoice")}
                         disabled={sending === inv.id}
                         onClick={() => onSend(inv)}
                       >
                         <SendIcon className="h-3.5 w-3.5" />
-                        {sending === inv.id ? t("sending") : t("sendInvoice")}
                       </Button>
                     </>
                   )}
@@ -662,11 +666,11 @@ function InvoiceTable({
                     inv.status === "UEBERFAELLIG") && (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
+                      title={t("markPaid")}
                       onClick={() => onStatus(inv.id, "BEZAHLT")}
                     >
                       <CheckCircleIcon className="h-3.5 w-3.5" />
-                      {t("markPaid")}
                     </Button>
                   )}
                   {/* Issued invoices are cancelled, never deleted: GoBD and
@@ -723,9 +727,13 @@ function QuoteTable({
       <table className="w-full text-sm">
         <thead className="border-b text-left text-gray-500 dark:text-zinc-400">
           <tr>
-            <th className="px-4 py-2.5 font-medium">{t("number")}</th>
+            <th className="whitespace-nowrap px-4 py-2.5 font-medium">
+              {t("number")}
+            </th>
             <th className="px-4 py-2.5 font-medium">{t("client")}</th>
-            <th className="px-4 py-2.5 font-medium text-right">{t("gross")}</th>
+            <th className="whitespace-nowrap px-4 py-2.5 font-medium text-right">
+              {t("gross")}
+            </th>
             <th className="px-4 py-2.5 font-medium">{t("status")}</th>
             <th className="px-4 py-2.5" />
           </tr>

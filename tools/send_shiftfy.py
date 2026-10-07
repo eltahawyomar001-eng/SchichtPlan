@@ -38,7 +38,7 @@ Shiftfy | Schichtplanung & Zeiterfassung
 E  Kontakt@shiftfy.info
 T  +49 176 30365636
 W  https://www.shiftfy.de
-A  Kolonnenstrasse 8, 10827 Berlin, Deutschland
+A  Kaiserring 10-16, 68161 Mannheim, Deutschland
 
 Bashabsheh Vergabepartner - Inhaber: Mohammad Bashabsheh
 Kleinunternehmer gem. Paragraf 19 UStG (keine Umsatzsteuer ausgewiesen)

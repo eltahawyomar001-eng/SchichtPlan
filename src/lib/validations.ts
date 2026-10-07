@@ -457,8 +457,27 @@ export const createClientSchema = z.object({
   name: requiredString.max(300, "Maximal 300 Zeichen"),
   email: optionalEmail.nullable(),
   phone: optionalString.pipe(z.string().max(50).optional()).nullable(),
+  /** Human-written address block, kept for display. */
   address: optionalString.pipe(z.string().max(500).optional()).nullable(),
   notes: optionalString.pipe(z.string().max(2000).optional()).nullable(),
+
+  // ── E-Rechnung (EN 16931) ──
+  //
+  // These were on the model but absent from this schema, so every one of them
+  // was silently stripped on the way in. An e-invoice cannot be issued without
+  // a structured address (BG-8), which meant no invoice could be issued at all
+  // for any client created through the API.
+  street: optionalString.pipe(z.string().max(200).optional()).nullable(),
+  postalCode: optionalString.pipe(z.string().max(20).optional()).nullable(),
+  city: optionalString.pipe(z.string().max(100).optional()).nullable(),
+  countryCode: z.string().trim().length(2).toUpperCase().optional(),
+  /** BT-48. Needed by the recipient to deduct input tax. */
+  vatId: optionalString.pipe(z.string().max(30).optional()).nullable(),
+  /** BT-10. Its presence is what makes an invoice B2G. */
+  leitwegId: optionalString.pipe(z.string().max(50).optional()).nullable(),
+  /** Accounts payable is usually not the general contact address. */
+  invoiceEmail: optionalEmail.nullable(),
+  preferredFormat: z.enum(["XRECHNUNG", "ZUGFERD"]).nullable().optional(),
 });
 
 export const updateClientSchema = createClientSchema.partial().extend({

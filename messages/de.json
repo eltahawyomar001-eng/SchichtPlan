@@ -3093,7 +3093,18 @@
     "noResults": "Keine Kunden gefunden.",
     "deleteTitle": "Kunden löschen?",
     "deleteMessage": "Soll dieser Kunde wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.",
-    "nameRequired": "Name ist erforderlich."
+    "nameRequired": "Name ist erforderlich.",
+    "einvoiceSection": "Angaben für E-Rechnungen",
+    "einvoiceHint": "Für eine E-Rechnung muss die Anschrift in getrennten Feldern vorliegen. Ein Adressblock als Freitext genügt nicht.",
+    "streetLabel": "Straße und Hausnummer",
+    "postalCodeLabel": "PLZ",
+    "cityLabel": "Ort",
+    "vatIdLabel": "USt-IdNr. des Kunden",
+    "vatIdHint": "Nötig, damit der Kunde die Vorsteuer abziehen kann, und zwingend bei § 13b.",
+    "leitwegIdLabel": "Leitweg-ID",
+    "leitwegIdHint": "Nur bei öffentlichen Auftraggebern. Dort ist die XRechnung Pflicht.",
+    "invoiceEmailLabel": "E-Mail für Rechnungen",
+    "invoiceEmailHint": "Falls abweichend von der allgemeinen Adresse."
   },
   "monthClose": {
     "title": "Monatsabschluss",

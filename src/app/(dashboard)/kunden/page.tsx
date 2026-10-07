@@ -35,6 +35,12 @@ interface Client {
   address: string | null;
   notes: string | null;
   isActive: boolean;
+  street?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  vatId?: string | null;
+  leitwegId?: string | null;
+  invoiceEmail?: string | null;
   projects?: ProjectRef[];
 }
 
@@ -44,6 +50,15 @@ const INITIAL_FORM = {
   phone: "",
   address: "",
   notes: "",
+  // E-Rechnung. The address has to exist in separate fields (BG-8): the free
+  // text block above cannot be parsed back into them reliably enough for a
+  // document that gets rejected automatically.
+  street: "",
+  postalCode: "",
+  city: "",
+  vatId: "",
+  leitwegId: "",
+  invoiceEmail: "",
 };
 
 // ─── Component ──────────────────────────────────────────────────
@@ -107,6 +122,12 @@ export default function KundenSeite() {
       email: client.email || "",
       phone: client.phone || "",
       address: client.address || "",
+      street: client.street || "",
+      postalCode: client.postalCode || "",
+      city: client.city || "",
+      vatId: client.vatId || "",
+      leitwegId: client.leitwegId || "",
+      invoiceEmail: client.invoiceEmail || "",
       notes: client.notes || "",
     });
     setFormError(null);
@@ -148,6 +169,12 @@ export default function KundenSeite() {
           phone: formData.phone.trim() || null,
           address: formData.address.trim() || null,
           notes: formData.notes.trim() || null,
+          street: formData.street.trim() || null,
+          postalCode: formData.postalCode.trim() || null,
+          city: formData.city.trim() || null,
+          vatId: formData.vatId.trim() || null,
+          leitwegId: formData.leitwegId.trim() || null,
+          invoiceEmail: formData.invoiceEmail.trim() || null,
         }),
       });
       if (res.ok) {
@@ -321,6 +348,107 @@ export default function KundenSeite() {
                       onChange={(e) => handleField("address", e.target.value)}
                       placeholder="Musterstraße 1, 10115 Berlin"
                     />
+                  </div>
+
+                  {/* E-Rechnung.
+                      Kept as its own section: these fields are not general
+                      contact data, they are what decides whether an invoice to
+                      this client can be issued at all. */}
+                  <div className="pt-3 border-t border-gray-100 dark:border-zinc-800">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                      {t("einvoiceSection")}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-zinc-400">
+                      {t("einvoiceHint")}
+                    </p>
+
+                    <div className="mt-3 space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="clientStreet">{t("streetLabel")}</Label>
+                        <Input
+                          id="clientStreet"
+                          value={formData.street}
+                          onChange={(e) =>
+                            handleField("street", e.target.value)
+                          }
+                          placeholder="Parkallee 88"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="clientZip">
+                            {t("postalCodeLabel")}
+                          </Label>
+                          <Input
+                            id="clientZip"
+                            value={formData.postalCode}
+                            onChange={(e) =>
+                              handleField("postalCode", e.target.value)
+                            }
+                            placeholder="60322"
+                          />
+                        </div>
+                        <div className="space-y-1.5 sm:col-span-2">
+                          <Label htmlFor="clientCity">{t("cityLabel")}</Label>
+                          <Input
+                            id="clientCity"
+                            value={formData.city}
+                            onChange={(e) =>
+                              handleField("city", e.target.value)
+                            }
+                            placeholder="Frankfurt am Main"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="clientVatId">{t("vatIdLabel")}</Label>
+                        <Input
+                          id="clientVatId"
+                          value={formData.vatId}
+                          onChange={(e) => handleField("vatId", e.target.value)}
+                          placeholder="DE123456789"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-zinc-400">
+                          {t("vatIdHint")}
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="clientInvoiceEmail">
+                          {t("invoiceEmailLabel")}
+                        </Label>
+                        <Input
+                          id="clientInvoiceEmail"
+                          type="email"
+                          value={formData.invoiceEmail}
+                          onChange={(e) =>
+                            handleField("invoiceEmail", e.target.value)
+                          }
+                        />
+                        <p className="text-xs text-gray-500 dark:text-zinc-400">
+                          {t("invoiceEmailHint")}
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="clientLeitwegId">
+                          {t("leitwegIdLabel")}
+                        </Label>
+                        <Input
+                          id="clientLeitwegId"
+                          value={formData.leitwegId}
+                          onChange={(e) =>
+                            handleField("leitwegId", e.target.value)
+                          }
+                          placeholder="991-12345-67"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-zinc-400">
+                          {t("leitwegIdHint")}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Notizen */}

@@ -55,7 +55,21 @@ export const POST = withRoute(
     const parsed = validateBody(createClientSchema, _json.data);
     if (!parsed.success) return parsed.response;
 
-    const { name, email, phone, address, notes } = parsed.data;
+    const {
+      name,
+      email,
+      phone,
+      address,
+      notes,
+      street,
+      postalCode,
+      city,
+      countryCode,
+      vatId,
+      leitwegId,
+      invoiceEmail,
+      preferredFormat,
+    } = parsed.data;
 
     const client = await prisma.client.create({
       data: {
@@ -64,6 +78,17 @@ export const POST = withRoute(
         phone: phone || null,
         address: address || null,
         notes: notes || null,
+        // E-Rechnung fields. Previously absent here, so they were accepted by
+        // the caller and then silently dropped -- leaving every client without
+        // the structured address BG-8 requires, and every invoice unissuable.
+        street: street || null,
+        postalCode: postalCode || null,
+        city: city || null,
+        countryCode: countryCode || "DE",
+        vatId: vatId || null,
+        leitwegId: leitwegId || null,
+        invoiceEmail: invoiceEmail || null,
+        preferredFormat: preferredFormat || null,
         workspaceId: user.workspaceId,
       },
     });

@@ -3093,7 +3093,18 @@
     "noResults": "No clients found.",
     "deleteTitle": "Delete Client?",
     "deleteMessage": "Are you sure you want to delete this client? This action cannot be undone.",
-    "nameRequired": "Name is required."
+    "nameRequired": "Name is required.",
+    "einvoiceSection": "Details for e-invoices",
+    "einvoiceHint": "An e-invoice needs the address in separate fields. A free-text address block is not enough.",
+    "streetLabel": "Street and number",
+    "postalCodeLabel": "Postcode",
+    "cityLabel": "City",
+    "vatIdLabel": "Client's VAT ID",
+    "vatIdHint": "Needed for the client to reclaim input tax, and mandatory for reverse charge.",
+    "leitwegIdLabel": "Leitweg-ID",
+    "leitwegIdHint": "Public-sector clients only. XRechnung is mandatory there.",
+    "invoiceEmailLabel": "Email for invoices",
+    "invoiceEmailHint": "If different from the general address."
   },
   "monthClose": {
     "title": "Month Close",

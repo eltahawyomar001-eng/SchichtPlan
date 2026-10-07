@@ -80,6 +80,30 @@ export const PATCH = withRoute(
         notes: body.notes !== undefined ? body.notes || null : existing.notes,
         isActive:
           body.isActive !== undefined ? body.isActive : existing.isActive,
+        // E-Rechnung fields, same omission as on create: accepted by the
+        // caller and then dropped, so a client could never be given the
+        // structured address an e-invoice requires.
+        street:
+          body.street !== undefined ? body.street || null : existing.street,
+        postalCode:
+          body.postalCode !== undefined
+            ? body.postalCode || null
+            : existing.postalCode,
+        city: body.city !== undefined ? body.city || null : existing.city,
+        countryCode: body.countryCode ?? existing.countryCode,
+        vatId: body.vatId !== undefined ? body.vatId || null : existing.vatId,
+        leitwegId:
+          body.leitwegId !== undefined
+            ? body.leitwegId || null
+            : existing.leitwegId,
+        invoiceEmail:
+          body.invoiceEmail !== undefined
+            ? body.invoiceEmail || null
+            : existing.invoiceEmail,
+        preferredFormat:
+          body.preferredFormat !== undefined
+            ? body.preferredFormat || null
+            : existing.preferredFormat,
       },
     });
 

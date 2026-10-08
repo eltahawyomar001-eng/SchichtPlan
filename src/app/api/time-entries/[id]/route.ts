@@ -12,7 +12,9 @@ import {
 } from "@/lib/time-utils";
 import { updateTimeEntrySchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
+import { log } from "@/lib/logger";
 import { createAuditLog } from "@/lib/audit";
+import { assessEntry, type EntryAssessment } from "@/lib/time-entry-assessment";
 import { dispatchWebhook } from "@/lib/webhooks";
 
 // ─── GET  /api/time-entries/:id ─────────────────────────────────
@@ -284,6 +286,56 @@ export const PATCH = withRoute(
       return result;
     });
 
+    /**
+     * Re-assess the corrected day.
+     *
+     * Working time already recomputes above. The deviations have to follow it,
+     * or a manager fixes a missing break and the entry keeps showing the
+     * breach they just resolved -- or worse, a correction introduces one and
+     * nothing says so.
+     *
+     * Nothing is stored. The verdict is derived from the times and the roster,
+     * both of which can still change, and a stored verdict would quietly go
+     * stale the next time either did.
+     */
+    let assessment: EntryAssessment | null = null;
+    try {
+      const shift = await prisma.shift.findFirst({
+        where: {
+          employeeId: updated.employeeId,
+          workspaceId: workspaceId ?? undefined,
+          date: updated.date,
+          deletedAt: null,
+        },
+        orderBy: { startTime: "asc" },
+        select: { startTime: true },
+      });
+      const breaks = await prisma.timeEntryBreak.findMany({
+        where: { timeEntryId: id },
+        select: {
+          startOffsetMinutes: true,
+          endOffsetMinutes: true,
+          confirmed: true,
+        },
+      });
+      assessment = assessEntry(
+        {
+          startTime: updated.startTime,
+          endTime: updated.endTime,
+          breakStart: updated.breakStart,
+          breakEnd: updated.breakEnd,
+          breakMinutes: updated.breakMinutes,
+          breaks,
+          latenessReason: updated.latenessReason,
+        },
+        shift?.startTime,
+      );
+    } catch (err) {
+      // A failed re-assessment must not undo a correction that is already
+      // committed; the client simply refetches.
+      log.error("Re-assessment after correction failed", { error: err });
+    }
+
     createAuditLog({
       action: "UPDATE",
       entityType: "TimeEntry",
@@ -299,7 +351,9 @@ export const PATCH = withRoute(
       ...changedFields,
     }).catch(() => {});
 
-    return NextResponse.json(updated);
+    // The freshly derived verdict rides along, so the caller shows the state
+    // the correction produced rather than the one it replaced.
+    return NextResponse.json({ ...updated, assessment });
   },
 );
 

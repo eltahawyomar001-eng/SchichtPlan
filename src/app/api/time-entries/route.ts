@@ -18,6 +18,7 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, serverError, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
+import { assessEntry } from "@/lib/time-entry-assessment";
 import {
   createTimeEntrySchema,
   validateBody,
@@ -69,6 +70,13 @@ export const GET = withRoute("/api/time-entries", "GET", async (req) => {
           employee: true,
           location: true,
           auditLog: { orderBy: { performedAt: "desc" }, take: 5 },
+          breaks: {
+            select: {
+              startOffsetMinutes: true,
+              endOffsetMinutes: true,
+              confirmed: true,
+            },
+          },
         },
         orderBy: [{ date: "desc" }, { startTime: "desc" }],
         take,
@@ -78,7 +86,57 @@ export const GET = withRoute("/api/time-entries", "GET", async (req) => {
     ]),
   );
 
-  return paginatedResponse(entries, total, take, skip);
+  /**
+   * Attach the derived verdict to every row.
+   *
+   * Lateness and §4 breaches are not stored, because both depend on the roster
+   * and the recorded times, either of which can still change. Deriving them on
+   * read is what keeps a corrected entry from carrying a breach it no longer
+   * has.
+   *
+   * The rosters are fetched in ONE query for the whole page rather than per
+   * row: a month of entries for a team would otherwise be hundreds of
+   * round-trips, which is how a list view quietly becomes unusable.
+   */
+  // Prisma hands back a Date, but this is a list endpoint: a shape it did not
+  // expect must not take the whole page down, so the day is derived defensively.
+  const dayOf = (d: Date | string) =>
+    (d instanceof Date ? d.toISOString() : String(d)).slice(0, 10);
+  const shiftKeys = entries.map((e) => `${e.employeeId}|${dayOf(e.date)}`);
+  const plannedStarts = new Map<string, string>();
+  if (entries.length > 0) {
+    const shifts = await prisma.shift.findMany({
+      where: {
+        workspaceId,
+        employeeId: { in: [...new Set(entries.map((e) => e.employeeId))] },
+        date: { in: [...new Set(entries.map((e) => e.date))] },
+        deletedAt: null,
+      },
+      orderBy: { startTime: "asc" },
+      select: { employeeId: true, date: true, startTime: true },
+    });
+    for (const sh of shifts ?? []) {
+      if (!sh.employeeId) continue;
+      const key = `${sh.employeeId}|${dayOf(sh.date)}`;
+      // First wins: the earliest shift of the day is the one a clock-in is
+      // measured against.
+      if (!plannedStarts.has(key)) plannedStarts.set(key, sh.startTime);
+    }
+  }
+
+  const withAssessment = entries.map((e, i) => ({
+    ...e,
+    plannedStart: plannedStarts.get(shiftKeys[i]) ?? null,
+    // A row without times cannot be assessed. The columns are non-null in the
+    // schema, so this should not happen -- but one malformed row must not cost
+    // the caller the whole page, and a null assessment simply renders nothing.
+    assessment:
+      e.startTime && e.endTime
+        ? assessEntry(e, plannedStarts.get(shiftKeys[i]))
+        : null,
+  }));
+
+  return paginatedResponse(withAssessment, total, take, skip);
 });
 
 // ─── POST  /api/time-entries ────────────────────────────────────

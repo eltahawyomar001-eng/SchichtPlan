@@ -46,6 +46,9 @@ vi.mock("@/lib/db", () => ({
       update: mockUpdate,
     },
     auditLog: { create: mockAuditCreate },
+    // The post-correction re-assessment reads the roster and any break rows.
+    shift: { findFirst: vi.fn().mockResolvedValue(null) },
+    timeEntryBreak: { findMany: vi.fn().mockResolvedValue([]) },
     $transaction: vi.fn((fn: (tx: unknown) => Promise<unknown>) =>
       fn({
         timeEntry: { update: mockUpdate },

@@ -36,6 +36,11 @@ import {
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { de, enUS } from "date-fns/locale";
 import type { SessionUser } from "@/lib/types";
+import {
+  DeviationBadges,
+  LatenessHint,
+} from "@/components/zeiterfassung/deviation-badges";
+import type { EntryAssessment } from "@/lib/time-entry-assessment";
 
 // ─── Constants ──────────────────────────────────────────────────
 
@@ -90,6 +95,10 @@ interface TimeEntry {
   employee: Employee;
   location: Location | null;
   auditLog: AuditEntry[];
+  /** Rostered start for this day, so planned and actual sit side by side. */
+  plannedStart?: string | null;
+  /** Derived on read: lateness and §4 breaks. Never stored. */
+  assessment?: EntryAssessment | null;
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -140,6 +149,8 @@ export default function ZeiterfassungPage() {
     employeeId: "",
     locationId: "",
     remarks: "",
+    /** Required by the API whenever a correction moves a recorded time. */
+    changeReason: "",
   });
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -211,6 +222,7 @@ export default function ZeiterfassungPage() {
       employeeId: "",
       locationId: "",
       remarks: "",
+      changeReason: "",
     });
     setFormErrors([]);
     setEditingId(null);
@@ -227,6 +239,7 @@ export default function ZeiterfassungPage() {
       breakMinutes: entry.breakMinutes,
       employeeId: entry.employee.id,
       locationId: entry.location?.id ?? "",
+      changeReason: "",
       remarks: entry.remarks ?? "",
     });
     setEditingId(entry.id);
@@ -252,6 +265,11 @@ export default function ZeiterfassungPage() {
           breakMinutes: Number(formData.breakMinutes),
           breakStart: formData.breakStart || null,
           breakEnd: formData.breakEnd || null,
+          // Omitted when blank rather than sent as "". The field is optional
+          // but has a minimum length, so an empty string would be rejected on
+          // an edit that touches no recorded time -- a remark, say -- and the
+          // user would be asked to justify a change they did not make.
+          changeReason: formData.changeReason.trim() || undefined,
         }),
       });
 
@@ -846,6 +864,30 @@ export default function ZeiterfassungPage() {
                 placeholder={t("form.remarksPlaceholder")}
               />
             </div>
+
+            {/* Only when correcting an existing entry. A new record is not a
+                change to anything, so there is nothing to justify -- and
+                asking anyway is how "Korrektur" ends up in every box. */}
+            {editingId && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-zinc-300">
+                  Änderungsgrund <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  rows={2}
+                  value={formData.changeReason}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, changeReason: e.target.value }))
+                  }
+                  placeholder="z. B. Stempeluhr defekt, Zeiten laut Objektleiter"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+                  Wird mit dem ursprünglichen und dem korrigierten Wert
+                  revisionssicher gespeichert.
+                </p>
+              </div>
+            )}
           </form>
         </AdaptiveModal>
 
@@ -883,6 +925,13 @@ export default function ZeiterfassungPage() {
                   <p className="font-medium">
                     {selectedEntry.startTime} – {selectedEntry.endTime}
                   </p>
+                  {/* Planned beside actual, never instead of it: the stamped
+                      time is the evidence and keeps its own line. */}
+                  {selectedEntry.plannedStart && (
+                    <p className="text-xs text-gray-500 dark:text-zinc-400">
+                      Geplanter Beginn: {selectedEntry.plannedStart}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <span className="text-gray-500">{t("detail.net")}</span>
@@ -909,6 +958,39 @@ export default function ZeiterfassungPage() {
                     </Badge>
                   </p>
                 </div>
+                {/* Everything a manager has to act on, together and in full
+                    sentences. The badges in the list say THAT something is
+                    wrong; this is where it says what and by how much. */}
+                {selectedEntry.assessment && (
+                  <div className="col-span-2 space-y-2 rounded-lg bg-gray-50 p-3 dark:bg-zinc-800/50">
+                    <LatenessHint assessment={selectedEntry.assessment} />
+                    <DeviationBadges assessment={selectedEntry.assessment} />
+                    {selectedEntry.assessment.breaks.deviations.map((d) => (
+                      <p
+                        key={d.code}
+                        className="text-sm text-gray-700 dark:text-zinc-300"
+                      >
+                        {d.message}
+                      </p>
+                    ))}
+                    <p className="text-xs text-gray-500 dark:text-zinc-400">
+                      Erfasste Pause:{" "}
+                      {selectedEntry.assessment.breaks.recordedBreakMinutes}{" "}
+                      Min.
+                      {" · "}
+                      Gesetzlich erforderlich:{" "}
+                      {
+                        selectedEntry.assessment.breaks.requiredBreakMinutes
+                      }{" "}
+                      Min.
+                      {" · "}
+                      Arbeitszeit ohne Pausen:{" "}
+                      {formatMinutesToHHmm(
+                        selectedEntry.assessment.breaks.workedMinutes,
+                      )}
+                    </p>
+                  </div>
+                )}
                 {selectedEntry.remarks && (
                   <div className="col-span-2">
                     <span className="text-gray-500">{t("detail.remarks")}</span>
@@ -1129,6 +1211,7 @@ export default function ZeiterfassungPage() {
                             {formatMinutesToHHmm(entry.netMinutes)}
                           </span>
                         </div>
+                        <DeviationBadges assessment={entry.assessment} />
                         {entry.location && (
                           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500">
                             <MapPinIcon className="h-3 w-3 shrink-0" />
@@ -1213,7 +1296,18 @@ export default function ZeiterfassungPage() {
                               </div>
                             </td>
                             <td className="px-4 py-3 text-gray-600 dark:text-zinc-300">
-                              {entry.startTime} – {entry.endTime}
+                              <div>
+                                {entry.startTime} – {entry.endTime}
+                              </div>
+                              {entry.plannedStart && (
+                                <div className="text-xs text-gray-400 dark:text-zinc-500">
+                                  geplant ab {entry.plannedStart}
+                                </div>
+                              )}
+                              <DeviationBadges
+                                assessment={entry.assessment}
+                                className="mt-1"
+                              />
                             </td>
                             <td className="px-4 py-3 text-gray-600 dark:text-zinc-300">
                               {formatMinutesToHHmm(entry.breakMinutes)}

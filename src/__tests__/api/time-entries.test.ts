@@ -14,6 +14,7 @@ const {
   mockTimeEntryCount,
   mockTimeEntryCreate,
   mockEmployeeFindFirst,
+  mockShiftFindMany,
   mockTransaction,
 } = vi.hoisted(() => {
   const mockTimeEntryCreate = vi.fn();
@@ -27,6 +28,7 @@ const {
     mockTimeEntryCount: vi.fn(),
     mockTimeEntryCreate,
     mockEmployeeFindFirst: vi.fn(),
+    mockShiftFindMany: vi.fn(),
     mockTransaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) =>
       fn(mockTx),
     ),
@@ -55,6 +57,9 @@ vi.mock("@/lib/db", () => {
     employee: {
       findFirst: mockEmployeeFindFirst,
     },
+    // The per-row assessment resolves each planned start from the roster, in
+    // one query for the whole page rather than one per row.
+    shift: { findMany: mockShiftFindMany },
     auditLog: { create: vi.fn().mockResolvedValue({ id: "a1" }) },
     $transaction: mockTransaction,
   };
@@ -154,6 +159,7 @@ describe("GET /api/time-entries", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockShiftFindMany.mockResolvedValue([]);
     handler = await import("@/app/api/time-entries/route");
   });
 

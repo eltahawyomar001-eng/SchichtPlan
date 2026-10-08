@@ -1058,6 +1058,19 @@ model TimeEntry {
   /// mandatory justification. Both set together with geofenceStatus=OVERRIDDEN.
   geofenceOverrideBy     String?
   geofenceOverrideReason String?
+  // ── Unplanned attendance (abweichend vom Schichtplan) ──
+  //
+  // Whether an entry DEVIATES from the roster is derived, not stored: it
+  // follows from the shift plan, which can still change after the fact, and a
+  // stored verdict would quietly go stale. What is stored is the DECISION a
+  // manager took about it, which is a fact about a person and a moment and
+  // must survive any later edit to the plan.
+  unplannedDecision      UnplannedDecision @default(OFFEN)
+  /// Why it was approved or rejected. Required for a decision to be recorded:
+  /// an approval nobody can account for later is worth little in a dispute.
+  unplannedReason        String?           @db.Text
+  unplannedDecidedBy     String?
+  unplannedDecidedAt     DateTime?
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
   deletedAt              DateTime?
@@ -1095,6 +1108,7 @@ model TimeEntry {
   @@index([status])
   @@index([projectId])
   @@index([invoicedItemId])
+  @@index([workspaceId, unplannedDecision])
 }
 
 model TimeEntryAudit {
@@ -2883,5 +2897,13 @@ enum IncomingInvoiceStatus {
   NEU
   GEPRUEFT
   BEZAHLT
+  ABGELEHNT
+}
+
+/// A manager's verdict on an attendance that deviated from the roster.
+enum UnplannedDecision {
+  /// Not yet decided. The default, and what the admin view lists.
+  OFFEN
+  GENEHMIGT
   ABGELEHNT
 }

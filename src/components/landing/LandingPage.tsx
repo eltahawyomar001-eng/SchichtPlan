@@ -22,6 +22,7 @@ import {
   FlagIcon,
   HashIcon,
   HeadsetIcon,
+  MapPinIcon,
   MenuIcon,
   MonitorIcon,
   PalmtreeIcon,
@@ -36,6 +37,7 @@ import {
   SwapIcon,
   TabletIcon,
   TemplateIcon,
+  TicketIcon,
   XIcon,
   ZapIcon,
 } from "@/components/icons";
@@ -838,6 +840,30 @@ function FeatureTabsSection() {
         t("featureTab4Bullet2"),
         t("featureTab4Bullet3"),
         t("featureTab4Bullet4"),
+      ],
+    },
+    {
+      label: t("featureTab5"),
+      icon: MapPinIcon,
+      title: t("featureTab5Title"),
+      desc: t("featureTab5Desc"),
+      bullets: [
+        t("featureTab5Bullet1"),
+        t("featureTab5Bullet2"),
+        t("featureTab5Bullet3"),
+        t("featureTab5Bullet4"),
+      ],
+    },
+    {
+      label: t("featureTab6"),
+      icon: TicketIcon,
+      title: t("featureTab6Title"),
+      desc: t("featureTab6Desc"),
+      bullets: [
+        t("featureTab6Bullet1"),
+        t("featureTab6Bullet2"),
+        t("featureTab6Bullet3"),
+        t("featureTab6Bullet4"),
       ],
     },
   ];

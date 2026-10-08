@@ -74,6 +74,14 @@ const navGroups: NavGroup[] = [
         icon: AlertCircleIcon,
         roles: ["OWNER", "ADMIN", "MANAGER"],
       },
+      // Right now, against the roster. Distinct from Zeiterfassung, which is
+      // the historical record; this is the view a manager leaves open.
+      {
+        key: "attendance",
+        href: "/anwesenheit",
+        icon: UsersIcon,
+        roles: ["OWNER", "ADMIN", "MANAGER"],
+      },
       { key: "timeTracking", href: "/zeiterfassung", icon: ClockIcon },
       { key: "absences", href: "/abwesenheiten", icon: CalendarOffIcon },
       { key: "shiftSwap", href: "/schichttausch", icon: SwapIcon },

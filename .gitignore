@@ -78,3 +78,8 @@ service-account*.json
 
 # Pre-deletion data backups. Contain password hashes; never commit.
 .backups/
+
+# Google OAuth credential downloads. These carry the web client secret.
+client_secret_*.json
+client_*.googleusercontent.com.json
+client_*.googleusercontent.com.plist

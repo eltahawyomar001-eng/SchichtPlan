@@ -188,6 +188,7 @@ model Workspace {
   shifts                 Shift[]
   locations              Location[]
   departments            Department[]
+  timeEntryBreaks        TimeEntryBreak[]
   timeEntries            TimeEntry[]
   absenceRequests        AbsenceRequest[]
   availabilities         Availability[]
@@ -243,7 +244,7 @@ model Workspace {
   liveActivityTokens     LiveActivityToken[]
   deviceTokens           DeviceToken[]
   invoiceIssuerProfile   InvoiceIssuerProfile?
-  incomingInvoices IncomingInvoice[]
+  incomingInvoices       IncomingInvoice[]
 }
 
 /// DATEV OAuth2 token store — one per workspace, refreshed automatically.
@@ -1018,23 +1019,23 @@ enum TimeEntryStatus {
 }
 
 model TimeEntry {
-  id                     String           @id @default(cuid())
-  date                   DateTime         @db.Date
+  id                     String               @id @default(cuid())
+  date                   DateTime             @db.Date
   startTime              String
   endTime                String
   breakStart             String?
   breakEnd               String?
-  breakMinutes           Int              @default(0)
-  grossMinutes           Int              @default(0)
-  netMinutes             Int              @default(0)
+  breakMinutes           Int                  @default(0)
+  grossMinutes           Int                  @default(0)
+  netMinutes             Int                  @default(0)
   remarks                String?
-  status                 TimeEntryStatus  @default(ENTWURF)
+  status                 TimeEntryStatus      @default(ENTWURF)
   submittedAt            DateTime?
   confirmedAt            DateTime?
   confirmedBy            String?
   clockInAt              DateTime?
   clockOutAt             DateTime?
-  isLiveClock            Boolean          @default(false)
+  isLiveClock            Boolean              @default(false)
   // ── Geofence evidence (Zoll-Shield) ──
   // Coordinates are supplied by the device but the DISTANCE is always computed
   // server-side from Location.latitude/longitude — a client-reported distance
@@ -1053,7 +1054,7 @@ model TimeEntry {
   geofenceStatus         GeofenceStatus?
   /// True when the OS flagged the fix as mock/simulated (Android exposes this;
   /// iOS does not, so absence of the flag is not proof of authenticity).
-  locationMocked         Boolean          @default(false)
+  locationMocked         Boolean              @default(false)
   /// User id of the manager who released a blocked check-in, plus their
   /// mandatory justification. Both set together with geofenceStatus=OVERRIDDEN.
   geofenceOverrideBy     String?
@@ -1065,23 +1066,36 @@ model TimeEntry {
   // stored verdict would quietly go stale. What is stored is the DECISION a
   // manager took about it, which is a fact about a person and a moment and
   // must survive any later edit to the plan.
-  unplannedDecision      UnplannedDecision @default(OFFEN)
+  unplannedDecision      UnplannedDecision    @default(OFFEN)
   /// Why it was approved or rejected. Required for a decision to be recorded:
   /// an approval nobody can account for later is worth little in a dispute.
-  unplannedReason        String?           @db.Text
+  unplannedReason        String?              @db.Text
   unplannedDecidedBy     String?
   unplannedDecidedAt     DateTime?
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
+  // ── Verspätung ──
+  //
+  // Whether an entry IS late is derived from the shift plan and the stamped
+  // clock-in, never stored: the plan can still change, and a stored verdict
+  // would go stale. What is stored is the employee's explanation, which is a
+  // statement a person made and must survive any later edit to the roster.
+  //
+  // The clock-out must never wait for this. A missing justification leaves the
+  // entry flagged; it does not hold up the stamped end of the shift, because
+  // the time somebody stopped working is a fact and the reason is paperwork.
+  latenessReason         String?              @db.Text
+  latenessReasonAt       DateTime?
+  latenessReasonBy       String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
   deletedAt              DateTime?
   employeeId             String
   // RESTRICT: cannot delete employee with time records (ArbZG §16: 2yr working-time retention)
-  employee               Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  employee               Employee             @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   locationId             String?
-  location               Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  location               Location?            @relation(fields: [locationId], references: [id], onDelete: SetNull)
   shiftId                String?
   projectId              String?
-  project                Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project                Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
   /// The invoice line that billed this entry, if any.
   ///
   /// This is what stops the same hours being billed twice. A date range cannot
@@ -1093,8 +1107,9 @@ model TimeEntry {
   invoicedItemId         String?
   invoicedItem           CustomerInvoiceItem? @relation(fields: [invoicedItemId], references: [id], onDelete: SetNull)
   workspaceId            String
-  workspace              Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace              Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   auditLog               TimeEntryAudit[]
+  breaks                 TimeEntryBreak[]
   workProofPhotos        WorkProofPhoto[]
   // DB-level guard (not expressible in Prisma schema — see
   // prisma/migrations/20260604_timeentry_one_open_live_clock/migration.sql):
@@ -2769,10 +2784,10 @@ model InvoiceIssuerProfile {
   countryCode  String  @default("DE")
 
   /// BT-31. Required for reverse charge and intra-EU supply.
-  vatId     String?
+  vatId               String?
   /// German Steuernummer. § 14 Abs. 4 UStG accepts either this or the VAT ID,
   /// so at least one must be present before an invoice can be issued.
-  taxNumber String?
+  taxNumber           String?
   /// BT-30, Handelsregisternummer. BR-CO-26 needs the seller identifiable by
   /// BT-29, BT-30 or BT-31; a Steuernummer is none of those, so a
   /// Kleinunternehmer without a VAT ID is rejected without this.
@@ -2782,8 +2797,8 @@ model InvoiceIssuerProfile {
   /// on every invoice; the tax category becomes E rather than S.
   kleinunternehmer Boolean @default(false)
 
-  email String?
-  phone String?
+  email        String?
+  phone        String?
   /// BG-6. BR-DE-2 makes a named contact person mandatory on every German
   /// e-invoice, which is a national rule on top of EN 16931.
   contactName  String?
@@ -2837,45 +2852,45 @@ enum EInvoiceFormat {
 /// retained in the form it was received, and the parsed fields below are a
 /// convenience for the UI, not the record.
 model IncomingInvoice {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   workspaceId String
 
   /// Exactly as received. The retained document.
-  xml         String   @db.Text
+  xml      String         @db.Text
   /// SHA-256 of `xml`, to show the archive is unaltered.
-  sha256      String
+  sha256   String
   /// Original file name, which is often the only clue to its provenance.
-  fileName    String?
-  syntax      EInvoiceSyntax
+  fileName String?
+  syntax   EInvoiceSyntax
   /// BT-24, the ruleset the SENDER claims. Recorded, not trusted.
-  profile     String?
+  profile  String?
 
   // ── Parsed for display and search. Not the record; the XML is. ──
-  number            String?
-  typeCode          String?
-  issueDate         DateTime? @db.Date
-  dueDate           DateTime? @db.Date
-  currency          String?
-  sellerName        String?
-  sellerVatId       String?
-  buyerName         String?
-  netCents          Int?
-  taxCents          Int?
-  grossCents        Int?
-  precedingNumber   String?
+  number          String?
+  typeCode        String?
+  issueDate       DateTime? @db.Date
+  dueDate         DateTime? @db.Date
+  currency        String?
+  sellerName      String?
+  sellerVatId     String?
+  buyerName       String?
+  netCents        Int?
+  taxCents        Int?
+  grossCents      Int?
+  precedingNumber String?
 
-  status      IncomingInvoiceStatus @default(NEU)
+  status     IncomingInvoiceStatus @default(NEU)
   /// Free-text note from whoever reviewed it.
-  notes       String?  @db.Text
+  notes      String?               @db.Text
   /// Who imported it, for the audit trail.
-  importedBy  String?
-  reviewedAt  DateTime?
-  paidAt      DateTime?
+  importedBy String?
+  reviewedAt DateTime?
+  paidAt     DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   /// The same document must not be imported twice. A supplier resending the
   /// same invoice, or a forwarded mail processed twice, would otherwise be
@@ -2901,9 +2916,52 @@ enum IncomingInvoiceStatus {
 }
 
 /// A manager's verdict on an attendance that deviated from the roster.
+/// One break that was actually taken.
+///
+/// TimeEntry carries a single breakStart/breakEnd pair, which cannot express a
+/// day with two breaks and cannot say WHEN the rest fell. ArbZG §4 needs both:
+/// a day can reach 45 minutes of break and still breach the law by taking all
+/// of it at the end, after more than six hours at a stretch.
+///
+/// Additive on purpose. The legacy pair stays authoritative for entries that
+/// have no rows here, so nothing already recorded changes meaning.
+model TimeEntryBreak {
+  id                 String      @id @default(cuid())
+  /// Minutes after clock-in. Offsets rather than wall-clock times, so an
+  /// overnight shift needs no date arithmetic to place a break correctly.
+  startOffsetMinutes Int
+  endOffsetMinutes   Int
+  /// Only a confirmed break counts toward the statutory minimum. An
+  /// unconfirmed row is a claim; treating a claim as rest would let a missing
+  /// break be papered over by entering one after the fact.
+  confirmed          Boolean     @default(false)
+  confirmedBy        String?
+  confirmedAt        DateTime?
+  /// Who recorded it: the employee's own device, or a manager correcting the
+  /// day afterwards.
+  source             BreakSource @default(MITARBEITER)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  timeEntryId        String
+  timeEntry          TimeEntry   @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+  workspaceId        String
+  workspace          Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([timeEntryId])
+  @@index([workspaceId])
+}
+
 enum UnplannedDecision {
   /// Not yet decided. The default, and what the admin view lists.
   OFFEN
   GENEHMIGT
   ABGELEHNT
+}
+
+enum BreakSource {
+  /// Recorded by the employee, typically via the live clock.
+  MITARBEITER
+  /// Entered by a manager correcting the day. Needs confirming that the break
+  /// was genuinely taken before it counts.
+  KORREKTUR
 }

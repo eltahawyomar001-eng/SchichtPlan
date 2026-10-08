@@ -99,6 +99,13 @@ interface TimeEntry {
   plannedStart?: string | null;
   /** Derived on read: lateness and §4 breaks. Never stored. */
   assessment?: EntryAssessment | null;
+  /** Recorded breaks. Unconfirmed rows count for nothing until confirmed. */
+  breaks?: {
+    id: string;
+    startOffsetMinutes: number;
+    endOffsetMinutes: number;
+    confirmed: boolean;
+  }[];
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -161,6 +168,33 @@ export default function ZeiterfassungPage() {
   // Action states
   const [actionComment, setActionComment] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [breakBusy, setBreakBusy] = useState<string | null>(null);
+
+  /**
+   * Confirm or withdraw a recorded break.
+   *
+   * Until a break is confirmed it counts for nothing, so this is the act that
+   * actually changes the §4 verdict -- which is why the list is refetched
+   * afterwards rather than patched locally.
+   */
+  const setBreakConfirmed = async (
+    entryId: string,
+    breakId: string,
+    confirmed: boolean,
+  ) => {
+    setBreakBusy(breakId);
+    try {
+      await fetch(`/api/time-entries/${entryId}/breaks/${breakId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed }),
+      });
+      await fetchEntries();
+      setSelectedEntry(null);
+    } finally {
+      setBreakBusy(null);
+    }
+  };
   const [bulkApproving, setBulkApproving] = useState(false);
 
   // ─── Data Fetching ──────────────────────────────────────────
@@ -989,6 +1023,54 @@ export default function ZeiterfassungPage() {
                         selectedEntry.assessment.breaks.workedMinutes,
                       )}
                     </p>
+                    {/*
+                      Recorded breaks, with the confirmation that decides
+                      whether each one counts. An unconfirmed row is listed
+                      plainly as not counting, because hiding it would leave a
+                      manager wondering why a break they can see has not
+                      cleared the shortfall.
+                    */}
+                    {selectedEntry.breaks &&
+                      selectedEntry.breaks.length > 0 && (
+                        <div className="mt-2 space-y-1 border-t border-gray-200 pt-2 dark:border-zinc-700">
+                          {selectedEntry.breaks.map((b) => (
+                            <div
+                              key={b.id}
+                              className="flex items-center justify-between gap-2 text-xs"
+                            >
+                              <span className="text-gray-700 dark:text-zinc-300">
+                                {b.endOffsetMinutes - b.startOffsetMinutes} Min.
+                                Pause
+                                {b.confirmed ? (
+                                  <span className="ml-2 text-emerald-600 dark:text-emerald-400">
+                                    bestätigt – wird angerechnet
+                                  </span>
+                                ) : (
+                                  <span className="ml-2 text-amber-600 dark:text-amber-400">
+                                    nicht bestätigt – wird nicht angerechnet
+                                  </span>
+                                )}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={breakBusy === b.id}
+                                onClick={() =>
+                                  setBreakConfirmed(
+                                    selectedEntry.id,
+                                    b.id,
+                                    !b.confirmed,
+                                  )
+                                }
+                                className="shrink-0 rounded-md border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-zinc-600 dark:hover:bg-zinc-700"
+                              >
+                                {b.confirmed
+                                  ? "Bestätigung zurücknehmen"
+                                  : "Als genommen bestätigen"}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </div>
                 )}
                 {selectedEntry.remarks && (

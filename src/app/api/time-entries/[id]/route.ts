@@ -131,6 +131,41 @@ export const PATCH = withRoute(
       }
     }
 
+    /**
+     * A change to recorded times needs a stated reason.
+     *
+     * The audit row already captures the old and new values, who made the
+     * change and when. Without the why it still cannot answer the question an
+     * auditor or a disputing employee actually asks, and the moment to capture
+     * it is now -- reconstructing it months later is guesswork.
+     *
+     * Only time fields are gated. Attaching a location or a remark is not a
+     * correction to the record of hours worked, and demanding a justification
+     * for it would train people to type "Korrektur" into every box, including
+     * the ones that matter.
+     */
+    const TIME_FIELDS = [
+      "startTime",
+      "endTime",
+      "breakStart",
+      "breakEnd",
+      "breakMinutes",
+      "date",
+    ] as const;
+    const changedTimeFields = TIME_FIELDS.filter((f) => f in changedFields);
+    if (changedTimeFields.length > 0 && !body.changeReason) {
+      return NextResponse.json(
+        {
+          error: "CHANGE_REASON_REQUIRED",
+          message:
+            "Für die Korrektur der erfassten Zeiten ist ein Änderungsgrund erforderlich.",
+          messageEn: "A reason is required when correcting recorded times.",
+          fields: changedTimeFields,
+        },
+        { status: 400 },
+      );
+    }
+
     // Guard: prevent arbitrary backdating (payroll fraud risk).
     // Employees may correct up to 7 days back; managers/admins up to 30 days.
     if (body.date) {
@@ -226,6 +261,8 @@ export const PATCH = withRoute(
           data: {
             action: "EDITED",
             changes: JSON.stringify(changedFields),
+            // The why, alongside the what, the who and the when.
+            comment: body.changeReason ?? null,
             performedBy: user.id,
             timeEntryId: id,
           },

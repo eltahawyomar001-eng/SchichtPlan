@@ -11,14 +11,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SessionUser } from "@/lib/types";
 
-const { mockSession, mockFindFirst, mockUpdate, mockAuditCreate } = vi.hoisted(
-  () => ({
-    mockSession: { user: null as SessionUser | null },
-    mockFindFirst: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockAuditCreate: vi.fn().mockResolvedValue({ id: "a1" }),
-  }),
-);
+const {
+  mockSession,
+  mockFindFirst,
+  mockUpdate,
+  mockAuditCreate,
+  mockEntryAuditCreate,
+} = vi.hoisted(() => ({
+  mockSession: { user: null as SessionUser | null },
+  mockFindFirst: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockAuditCreate: vi.fn().mockResolvedValue({ id: "a1" }),
+  // The TimeEntryAudit row written inside the transaction. Hoisted so the
+  // recorded change reason can be asserted, not just its absence.
+  mockEntryAuditCreate: vi.fn().mockResolvedValue({ id: "tea1" }),
+}));
 
 vi.mock("next-auth", () => ({
   default: vi.fn(),
@@ -42,7 +49,7 @@ vi.mock("@/lib/db", () => ({
     $transaction: vi.fn((fn: (tx: unknown) => Promise<unknown>) =>
       fn({
         timeEntry: { update: mockUpdate },
-        timeEntryAudit: { create: vi.fn() },
+        timeEntryAudit: { create: mockEntryAuditCreate },
       }),
     ),
   },
@@ -239,10 +246,85 @@ describe("PATCH /api/time-entries/[id]", () => {
         startTime: "09:00",
         endTime: "17:00",
         date: recentDateISO(1),
+        changeReason: "Stempeluhr defekt, Zeiten laut Objektleiter",
       }),
     });
     const res = await PATCH(req, makeCtx());
     expect(res.status).toBe(200);
+  });
+
+  describe("Änderungsgrund (change reason)", () => {
+    it("refuses to move a recorded time without a reason", async () => {
+      // The audit row would otherwise record what changed, by whom and when,
+      // but not why -- which is the question an auditor actually asks.
+      mockSession.user = managerUser;
+      mockFindFirst.mockResolvedValue(draftEntry);
+      const { PATCH } = await import("@/app/api/time-entries/[id]/route");
+      const req = new Request("http://localhost/api/time-entries/te1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startTime: "09:00" }),
+      });
+      const res = await PATCH(req, makeCtx());
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBe("CHANGE_REASON_REQUIRED");
+      expect(json.fields).toContain("startTime");
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it("rejects a reason too short to mean anything", async () => {
+      // "ok" as a justification is the same as none.
+      mockSession.user = managerUser;
+      mockFindFirst.mockResolvedValue(draftEntry);
+      const { PATCH } = await import("@/app/api/time-entries/[id]/route");
+      const req = new Request("http://localhost/api/time-entries/te1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startTime: "09:00", changeReason: "ok" }),
+      });
+      expect((await PATCH(req, makeCtx())).status).toBe(400);
+    });
+
+    it("does not demand one for a remark, which is not a time correction", async () => {
+      // Gating every field would train people to type "Korrektur" everywhere,
+      // including the boxes that matter.
+      mockSession.user = managerUser;
+      mockFindFirst.mockResolvedValue(draftEntry);
+      mockUpdate.mockResolvedValue({
+        ...draftEntry,
+        remarks: "Objekt gewechselt",
+      });
+      const { PATCH } = await import("@/app/api/time-entries/[id]/route");
+      const req = new Request("http://localhost/api/time-entries/te1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remarks: "Objekt gewechselt" }),
+      });
+      expect((await PATCH(req, makeCtx())).status).toBe(200);
+    });
+
+    it("stores the reason on the audit row", async () => {
+      mockSession.user = managerUser;
+      mockFindFirst.mockResolvedValue(draftEntry);
+      mockUpdate.mockResolvedValue({ ...draftEntry, startTime: "09:00" });
+      const { PATCH } = await import("@/app/api/time-entries/[id]/route");
+      const req = new Request("http://localhost/api/time-entries/te1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startTime: "09:00",
+          changeReason: "Vergessen auszustempeln, Ende laut Wachbuch",
+        }),
+      });
+      expect((await PATCH(req, makeCtx())).status).toBe(200);
+      const auditCall = mockEntryAuditCreate.mock.calls.find(
+        (c) => c[0]?.data?.action === "EDITED",
+      );
+      expect(auditCall?.[0].data.comment).toBe(
+        "Vergessen auszustempeln, Ende laut Wachbuch",
+      );
+    });
   });
 
   it("allows editing KORREKTUR entries", async () => {
@@ -261,6 +343,7 @@ describe("PATCH /api/time-entries/[id]", () => {
         startTime: "09:00",
         endTime: "17:00",
         date: recentDateISO(1),
+        changeReason: "Stempeluhr defekt, Zeiten laut Objektleiter",
       }),
     });
     const res = await PATCH(req, makeCtx());

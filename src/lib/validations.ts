@@ -305,6 +305,17 @@ export const updateTimeEntrySchema = z.object({
   remarks: optionalString.pipe(z.string().max(2000).optional()),
   locationId: optionalString.nullable(),
   date: dateString.optional(),
+  /**
+   * Why the recorded times were changed.
+   *
+   * Required whenever a time field actually moves -- enforced in the route,
+   * which is the only place that knows whether anything changed. An audit row
+   * that records what a time was before and after, by whom and when, but not
+   * WHY, cannot answer the one question a Zoll auditor or a disputing employee
+   * actually asks. The minimum length is there because "Korrektur" as a reason
+   * is the same as no reason.
+   */
+  changeReason: z.string().trim().min(5).max(500).optional(),
 });
 
 // ── Absence (POST) ─────────────────────────────────────────────

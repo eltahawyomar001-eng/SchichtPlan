@@ -11,6 +11,7 @@ import {
   ARBZG_MAX_DAILY_MINUTES,
 } from "@/lib/automations";
 import { log } from "@/lib/logger";
+import { assessLateness } from "@/lib/lateness";
 import { captureRouteError } from "@/lib/sentry";
 import { clockActionSchema, validateBody } from "@/lib/validations";
 import { pushCurrentClockState } from "@/lib/live-activity";
@@ -575,8 +576,57 @@ export const POST = withRoute(
       // showing a finished shift.
       await mirrorToLiveActivity(employeeId, workspaceId, tz);
 
+      /**
+       * Lateness, computed only AFTER the clock-out is persisted.
+       *
+       * The stamped end of a shift is a fact about when somebody stopped
+       * working. It must never wait on a roster lookup, a justification, or
+       * anything else that can fail or be slow -- so this runs here, on an
+       * entry that is already saved, and a failure degrades to no prompt
+       * rather than to a lost clock-out.
+       *
+       * The entry carries no shiftId, so the roster is matched on employee and
+       * date. The earliest shift of the day is the one a clock-in is measured
+       * against; a later shift cannot be the one somebody was late for.
+       */
+      let lateness: ReturnType<typeof assessLateness> | null = null;
+      try {
+        const shift = await prisma.shift.findFirst({
+          where: {
+            employeeId,
+            workspaceId,
+            date: new Date(localDateStr),
+            deletedAt: null,
+          },
+          orderBy: { startTime: "asc" },
+          select: { startTime: true },
+        });
+        if (shift) lateness = assessLateness(shift.startTime, entry.startTime);
+      } catch (err) {
+        log.error("Lateness assessment failed", { error: err });
+      }
+
       return NextResponse.json({
         ...entry,
+        /**
+         * What the app needs to decide whether to ask for a justification.
+         *
+         * `reasonMissing` is what drives the prompt and the
+         * "Begründung der Verspätung fehlt" status; the clock-out has already
+         * been written either way.
+         */
+        lateness: lateness
+          ? {
+              minutes: lateness.minutes,
+              severity: lateness.severity,
+              message: lateness.message,
+              messageEn: lateness.messageEn,
+              reasonRequired: lateness.requiresReason,
+              reasonMissing:
+                lateness.requiresReason &&
+                !(entry as { latenessReason?: string | null }).latenessReason,
+            }
+          : null,
         arbzg: {
           wasCapped: cappedByArbzg,
           cappedToHours: 10,

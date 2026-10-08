@@ -2502,7 +2502,8 @@
     "featureTab6Bullet1": "Tickets from the app or a public link",
     "featureTab6Bullet2": "Categories, ownership and deadlines",
     "featureTab6Bullet3": "Photos and file attachments on the ticket",
-    "featureTab6Bullet4": "Full history per case"
+    "featureTab6Bullet4": "Full history per case",
+    "featureTabAddon": "Add-on"
   },
   "calculator": {
     "pageTitle": "Savings Calculator",

@@ -268,14 +268,36 @@ export async function sendAlertPush(opts: {
   collapseId?: string;
   /** Extra values delivered to the app alongside the alert. */
   data?: Record<string, unknown>;
+  /**
+   * Deliver without sound or waking the screen.
+   *
+   * iOS "passive" places the alert in Notification Center for the user to find
+   * when they next look, which is what a non-urgent notification arriving at
+   * 23:00 should do. The alternative the code used before was to send nothing
+   * at all, so anybody who did not open the app simply never learned.
+   */
+  quiet?: boolean;
 }): Promise<ApnsResult> {
-  const { cfg, deviceToken, title, body, link, badge, collapseId, data } = opts;
+  const {
+    cfg,
+    deviceToken,
+    title,
+    body,
+    link,
+    badge,
+    collapseId,
+    data,
+    quiet,
+  } = opts;
   const host = cfg.useSandbox ? APNS_HOST_SANDBOX : APNS_HOST_PROD;
 
   const payload = {
     aps: {
       alert: { title, body },
-      sound: "default",
+      // No sound at all when quiet: a sound key set to "" still plays the
+      // default on some iOS versions, so the key has to be absent.
+      ...(quiet ? {} : { sound: "default" }),
+      ...(quiet ? { "interruption-level": "passive" } : {}),
       ...(badge != null ? { badge } : {}),
       // Lets the app update its badge and cache before the user taps.
       "mutable-content": 1,

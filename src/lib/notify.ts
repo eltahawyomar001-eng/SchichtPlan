@@ -142,12 +142,14 @@ export async function notify(input: NotifyInput): Promise<void> {
     const cfg = apnsConfigFromEnv();
     if (!cfg) return;
 
-    if (inQuietHours(kind, new Date(), timeZone)) {
-      // Held back on purpose, not dropped: the in-app record above is already
-      // written and will be seen when the app is next opened.
-      log.info("[notify] held for quiet hours", { kind });
-      return;
-    }
+    // Quiet hours change HOW the push is delivered, not whether it is.
+    //
+    // Returning here meant anyone who did not open the app simply never
+    // learned -- an approval decided at 22:00 reached nobody. Delivering with
+    // iOS "passive" puts it in Notification Center without a sound or waking
+    // the screen, so it is waiting in the morning instead of lost.
+    const quiet = inQuietHours(kind, new Date(), timeZone);
+    if (quiet) log.info("[notify] delivering quietly", { kind });
 
     const devices = await prisma.deviceToken.findMany({
       where: { userId: { in: recipients }, workspaceId },
@@ -164,6 +166,7 @@ export async function notify(input: NotifyInput): Promise<void> {
           body: message,
           link,
           collapseId: collapseId ?? kind,
+          quiet,
         });
         if (res.gone) dead.push(d.token);
         else if (!res.ok)

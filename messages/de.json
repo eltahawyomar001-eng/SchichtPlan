@@ -2502,7 +2502,8 @@
     "featureTab6Bullet1": "Tickets per App oder öffentlichem Link",
     "featureTab6Bullet2": "Kategorien, Zuständigkeit und Fristen",
     "featureTab6Bullet3": "Fotos und Dateianhänge am Ticket",
-    "featureTab6Bullet4": "Vollständiger Verlauf je Vorgang"
+    "featureTab6Bullet4": "Vollständiger Verlauf je Vorgang",
+    "featureTabAddon": "Zusatzmodul"
   },
   "calculator": {
     "pageTitle": "Ersparnisrechner",

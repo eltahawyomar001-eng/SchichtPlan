@@ -856,6 +856,10 @@ function FeatureTabsSection() {
     },
     {
       label: t("featureTab6"),
+      // Ticketing is billed on top of the plan. Saying so on the tab is the
+      // honest place for it: a prospect reading the feature list should not
+      // have to reach the pricing page to find out.
+      addon: true,
       icon: TicketIcon,
       title: t("featureTab6Title"),
       desc: t("featureTab6Desc"),
@@ -898,6 +902,14 @@ function FeatureTabsSection() {
                 >
                   <Icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
+                  {/* Billed on top of the plan. Shown on the tab itself so a
+                      prospect does not have to reach the pricing page to
+                      find out. */}
+                  {tab.addon && (
+                    <span className="rounded-full bg-amber-100 dark:bg-amber-950/40 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                      {t("featureTabAddon")}
+                    </span>
+                  )}
                 </button>
               );
             })}

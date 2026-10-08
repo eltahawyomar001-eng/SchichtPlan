@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { notify, userIdsForEmployees } from "@/lib/notify";
+import { absenceDecisionMessage } from "@/lib/absence-notification";
 import type { SessionUser } from "@/lib/types";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
@@ -264,32 +265,6 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       }
     }
 
-    /**
-     * Tell the employee how their request was decided.
-     *
-     * Not urgent by the quiet-hours rule: a decision on leave booked weeks out
-     * does not need to wake anybody at 23:00, and the in-app record is already
-     * written either way.
-     */
-    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
-      const approved = body.status === "GENEHMIGT";
-      const recipients = await userIdsForEmployees(
-        [existing.employeeId],
-        user.workspaceId!,
-      );
-      await notify({
-        kind: approved ? "absence.approved" : "absence.rejected",
-        userIds: recipients,
-        workspaceId: user.workspaceId!,
-        title: approved ? "Antrag genehmigt" : "Antrag abgelehnt",
-        message: approved
-          ? "Ihre Abwesenheit wurde genehmigt."
-          : "Ihre Abwesenheit wurde abgelehnt.",
-        link: "/(app)/abwesenheit",
-        collapseId: `absence-${id}`,
-      });
-    }
-
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.absenceRequest.update({
         where: { id, workspaceId: user.workspaceId! },
@@ -299,6 +274,54 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
       return result;
     });
+
+    /**
+     * Tell the employee how their request was decided.
+     *
+     * AFTER the write, deliberately. This used to run before it, so a
+     * transaction that then failed left the employee holding a push saying
+     * their leave was approved when nothing had been recorded.
+     *
+     * The message names the period and the kind of request, because the push
+     * has to be actionable without opening the app: somebody with two requests
+     * in flight cannot do anything with "Ihre Abwesenheit wurde genehmigt".
+     */
+    if (body.status === "GENEHMIGT" || body.status === "ABGELEHNT") {
+      const approved = body.status === "GENEHMIGT";
+      // Guarded, because the decision is already written by this point.
+      // Letting a notification problem reject the response would tell the
+      // manager their approval failed when it did not, and invite them to do
+      // it again.
+      try {
+        const recipients = await userIdsForEmployees(
+          [existing.employeeId],
+          user.workspaceId!,
+        );
+        const { title, body: message } = absenceDecisionMessage({
+          category: existing.category,
+          // From `existing`, which was loaded in full. The dates are not
+          // editable on a decision, so the two agree, and `updated` comes
+          // back shaped by whatever the caller selected.
+          startDate: existing.startDate,
+          endDate: existing.endDate,
+          approved,
+        });
+        await notify({
+          kind: approved ? "absence.approved" : "absence.rejected",
+          userIds: recipients,
+          workspaceId: user.workspaceId!,
+          title,
+          message,
+          link: "/(app)/abwesenheit",
+          collapseId: `absence-${id}`,
+        });
+      } catch (err) {
+        log.error("[absences] decision notification failed", {
+          absenceId: id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
 
     // ── Sync VacationBalance for URLAUB absences on any status change ──
     if (existing.category === "URLAUB" && body.status) {

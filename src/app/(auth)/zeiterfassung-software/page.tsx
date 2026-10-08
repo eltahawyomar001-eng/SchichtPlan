@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title:
     "Zeiterfassung Software – Digitale Arbeitszeiterfassung für Teams | Shiftfy",
   description:
-    "Prüfungssichere Zeiterfassung für Unternehmen: Stempeluhr-App, GPS-Verifizierung, automatische Pausenberechnung nach ArbZG — und auf Knopfdruck ein Zoll/FKS-Prüfungsdossier. DSGVO-konform, 14 Tage testen. Ideal für Sicherheitsdienste, Gastronomie & Dienstleister.",
+    "Prüfungssichere Zeiterfassung für Unternehmen: Stempeluhr-App, GPS-Verifizierung, automatische Pausenprüfung nach ArbZG — und auf Knopfdruck ein Zoll/FKS-Prüfungsdossier. DSGVO-konform, 14 Tage testen. Ideal für Sicherheitsdienste, Gastronomie & Dienstleister.",
   keywords: [
     "Zeiterfassung",
     "Zeiterfassung Software",
@@ -61,9 +61,9 @@ const features = [
     icon: SmartphoneIcon,
   },
   {
-    title: "Automatische Pausenberechnung",
+    title: "Pausenprüfung nach ArbZG",
     description:
-      "Pausen werden automatisch nach dem Arbeitszeitgesetz (ArbZG) berechnet: 30 Min. ab 6 h, 45 Min. ab 9 h Arbeitszeit.",
+      "Shiftfy prüft die erfasste Arbeitszeit gegen § 4 ArbZG: mehr als 6 bis 9 Stunden mindestens 30 Minuten, mehr als 9 Stunden mindestens 45 Minuten. Fehlt eine Pause oder ist sie zu kurz, wird das als Abweichung gekennzeichnet — eine nicht genommene Pause wird nicht automatisch abgezogen.",
     icon: CheckCircleIcon,
   },
   {
@@ -294,8 +294,12 @@ export default function ZeiterfassungPage() {
                 <strong>Maximale Arbeitszeit:</strong> 8 Stunden pro Werktag,
                 erweiterbar auf 10 Stunden bei Ausgleich innerhalb von 6
                 Monaten. <strong>Ruhezeit:</strong> Mindestens 11 Stunden
-                zwischen zwei Arbeitstagen. <strong>Pausen:</strong> 30 Minuten
-                ab 6 Stunden, 45 Minuten ab 9 Stunden Arbeitszeit.
+                zwischen zwei Arbeitstagen. <strong>Ruhepausen:</strong> Bei
+                mehr als 6 bis zu 9 Stunden Arbeitszeit mindestens 30 Minuten,
+                bei mehr als 9 Stunden mindestens 45 Minuten. Maßgeblich ist die
+                Arbeitszeit ohne Ruhepausen, nicht die gesamte Anwesenheit.
+                Spätestens nach 6 Stunden ist die Arbeit zu unterbrechen.
+                Tarifliche oder betriebliche Regelungen können abweichen.
               </p>
               <p className="text-gray-600 leading-relaxed mt-4">
                 Shiftfy prüft all diese Vorschriften automatisch bei jeder

@@ -34,7 +34,20 @@ export interface BillingPdfDoc {
   notes: string | null;
   items: { description: string; quantity: number; unitPriceCents: number }[];
   totals: { netCents: number; vatCents: number; grossCents: number };
-  issuer: { name: string; address: string | null; vatId: string | null };
+  issuer: {
+    name: string;
+    address: string | null;
+    vatId: string | null;
+    /**
+     * The company logo, already fetched and base64-encoded.
+     *
+     * Optional by design: the PDF must render identically minus the image when
+     * no logo is stored or it could not be loaded. An invoice is a legal record
+     * a customer is waiting for, and a decorative image is not worth failing it
+     * over.
+     */
+    logo?: { data: string; format: "PNG" | "JPEG" } | null;
+  };
   recipient: { name: string | null; address: string | null };
 }
 
@@ -63,15 +76,49 @@ export function generateBillingPdf(doc_: BillingPdfDoc): ArrayBuffer {
   const rx = pw - mr;
 
   // ── Header: issuer (left) + document title (right) ──
+  //
+  // The logo sits above the issuer name and pushes the block down, rather than
+  // being placed beside it: a wide wordmark and a square icon need very
+  // different widths, and anything measured from the right would collide with
+  // the document title on one of them.
+  let headerTop = 18;
+  if (doc_.issuer.logo) {
+    try {
+      const boxH = 14;
+      const boxW = 45;
+      const props = doc.getImageProperties(
+        `data:image/${doc_.issuer.logo.format.toLowerCase()};base64,${doc_.issuer.logo.data}`,
+      );
+      // Fit inside the box without distorting it. A stretched logo looks worse
+      // than no logo, and this is the one element a customer recognises.
+      const scale = Math.min(boxW / props.width, boxH / props.height);
+      const w = props.width * scale;
+      const h = props.height * scale;
+      doc.addImage(
+        doc_.issuer.logo.data,
+        doc_.issuer.logo.format,
+        ml,
+        12,
+        w,
+        h,
+      );
+      headerTop = 12 + h + 6;
+    } catch {
+      // A corrupt image must not take the invoice with it; the header simply
+      // renders without it.
+      headerTop = 18;
+    }
+  }
+
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...DARK);
-  doc.text(doc_.issuer.name, ml, 18);
+  doc.text(doc_.issuer.name, ml, headerTop);
 
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...MED);
-  let iy = 23;
+  let iy = headerTop + 5;
   for (const line of (doc_.issuer.address ?? "").split("\n").filter(Boolean)) {
     doc.text(line, ml, iy);
     iy += 4;

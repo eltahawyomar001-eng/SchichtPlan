@@ -11,6 +11,10 @@ import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
+import {
+  EMPLOYEE_DIRECTORY_SELECT,
+  EMPLOYEE_MANAGEMENT_SELECT,
+} from "@/lib/employee-projection";
 import { sendEmail } from "@/lib/notifications/email";
 import { invitationEmail } from "@/lib/notifications/email-i18n";
 import { getLocaleFromCookie } from "@/i18n/locale";
@@ -39,11 +43,19 @@ export const GET = withRoute("/api/employees", "GET", async (req) => {
     ];
   }
 
-  // DSGVO Art. 5(1)(c) data minimisation: wage and contract fields must not
-  // be fetched from the DB at all for EMPLOYEE-role requests, not just stripped
-  // in JS after the query. pinHash is never returned to any client.
-  // withWorkspaceContext: switches to shiftfy_app role (NOBYPASSRLS) so RLS
-  // policies enforce workspace isolation as a second layer after app-level auth.
+  /**
+   * DSGVO Art. 5(1)(c), enforced in the QUERY rather than after it.
+   *
+   * This used to omit two fields and return the rest, which meant every column
+   * added to Employee since -- Sozialversicherungsnummer, date and place of
+   * birth, nationality, DATEV personnel number, Bewacher-ID -- was being
+   * served to any authenticated colleague. It is an allowlist now: forgetting
+   * a field makes it missing, not public.
+   *
+   * withWorkspaceContext: switches to shiftfy_app role (NOBYPASSRLS) so RLS
+   * policies enforce workspace isolation as a second layer after app-level auth.
+   */
+  const isColleagueView = isEmployee(user);
   const [employees, total] = await withWorkspaceContext(
     workspaceId,
     async (tx) =>
@@ -51,22 +63,31 @@ export const GET = withRoute("/api/employees", "GET", async (req) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (tx.employee.findMany as any)({
           where,
-          // pinHash is fetched so we can derive a `hasPin` boolean below, then
-          // stripped before the response — the hash itself never reaches a client.
-          omit: isEmployee(user)
-            ? { hourlyRate: true, contractType: true }
-            : undefined,
-          include: {
+          select: {
+            ...(isColleagueView
+              ? EMPLOYEE_DIRECTORY_SELECT
+              : EMPLOYEE_MANAGEMENT_SELECT),
+            // Fetched only to derive `hasPin`; stripped before the response and
+            // never sent to any client, colleague or manager.
+            ...(isColleagueView ? {} : { pinHash: true }),
             employeeSkills: {
-              include: { skill: { select: { id: true, name: true } } },
+              select: {
+                id: true,
+                skill: { select: { id: true, name: true } },
+              },
               orderBy: { createdAt: "asc" },
             },
             location: { select: { id: true, name: true } },
             departments: {
-              include: { department: { select: { id: true, name: true } } },
+              select: {
+                department: { select: { id: true, name: true } },
+              },
               orderBy: { assignedAt: "asc" },
             },
-            user: { select: { id: true, role: true } },
+            // A colleague sees who someone is, not which login is behind them.
+            ...(isColleagueView
+              ? {}
+              : { user: { select: { id: true, role: true } } }),
           },
           orderBy: { lastName: "asc" },
           take,

@@ -34,7 +34,7 @@ export const PATCH = withRoute(
 
     const { id } = params;
     const changeRequest = await prisma.shiftChangeRequest.findFirst({
-      where: { id, workspaceId: workspaceId ?? undefined },
+      where: { id, workspaceId },
       include: {
         shift: { include: { employee: true } },
         requester: true,
@@ -68,7 +68,7 @@ export const PATCH = withRoute(
       if (isEmployee(user)) {
         const linkedEmployee = await prisma.employee.findFirst({
           where: {
-            workspaceId: workspaceId ?? undefined,
+            workspaceId,
             email: user.email ?? undefined,
           },
         });
@@ -85,7 +85,7 @@ export const PATCH = withRoute(
           where: {
             id,
             status: "AUSSTEHEND",
-            workspaceId: workspaceId ?? undefined,
+            workspaceId,
           },
           data: { status: "STORNIERT" },
         },
@@ -116,7 +116,7 @@ export const PATCH = withRoute(
           where: {
             id,
             status: "AUSSTEHEND",
-            workspaceId: workspaceId ?? undefined,
+            workspaceId,
           },
           data: {
             status: "ABGELEHNT",
@@ -234,7 +234,7 @@ export const PATCH = withRoute(
           where: {
             id,
             status: "AUSSTEHEND",
-            workspaceId: workspaceId ?? undefined,
+            workspaceId,
           },
           data: {
             status: "GENEHMIGT",

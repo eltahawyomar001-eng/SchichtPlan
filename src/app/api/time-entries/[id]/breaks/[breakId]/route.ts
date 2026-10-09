@@ -20,6 +20,7 @@ import { isEmployee } from "@/lib/authorization";
 import { parseJsonBody } from "@/lib/api-response";
 import { validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
+import { requireSessionWorkspace } from "@/lib/require-workspace";
 
 const patchSchema = z.object({
   confirmed: z.boolean(),
@@ -34,6 +35,11 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
     const params = (await context!.params) as {
       id: string;
       breakId: string;
@@ -55,7 +61,7 @@ export const PATCH = withRoute(
       where: {
         id: params.breakId,
         timeEntryId: params.id,
-        workspaceId: user.workspaceId ?? undefined,
+        workspaceId,
       },
     });
     if (!existing) {
@@ -107,6 +113,11 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
     const params = (await context!.params) as { id: string; breakId: string };
 
     if (isEmployee(user)) {
@@ -117,7 +128,7 @@ export const DELETE = withRoute(
       where: {
         id: params.breakId,
         timeEntryId: params.id,
-        workspaceId: user.workspaceId ?? undefined,
+        workspaceId,
       },
     });
     if (!existing) {

@@ -39,7 +39,7 @@ export const POST = withRoute(
 
     // workspaceId enforced at DB level — prevents claiming cross-tenant shifts
     const shift = await prisma.shift.findFirst({
-      where: { id, workspaceId: workspaceId ?? undefined },
+      where: { id, workspaceId },
     });
 
     if (!shift) {

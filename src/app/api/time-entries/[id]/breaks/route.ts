@@ -20,6 +20,7 @@ import { isEmployee } from "@/lib/authorization";
 import { parseJsonBody } from "@/lib/api-response";
 import { validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
+import { requireSessionWorkspace } from "@/lib/require-workspace";
 
 const createSchema = z.object({
   /** Minutes after clock-in. */
@@ -51,10 +52,15 @@ export const GET = withRoute(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
     const { id } = await context!.params;
 
     const entry = await prisma.timeEntry.findFirst({
-      where: { id, workspaceId: user.workspaceId ?? undefined },
+      where: { id, workspaceId },
       select: { id: true, employeeId: true },
     });
     if (!entry) {
@@ -81,6 +87,11 @@ export const POST = withRoute(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
     const { id } = await context!.params;
 
     // Only a manager books a break onto somebody's day. An employee adding
@@ -106,7 +117,7 @@ export const POST = withRoute(
     }
 
     const entry = await prisma.timeEntry.findFirst({
-      where: { id, workspaceId: user.workspaceId ?? undefined },
+      where: { id, workspaceId },
       select: { id: true, workspaceId: true },
     });
     if (!entry) {

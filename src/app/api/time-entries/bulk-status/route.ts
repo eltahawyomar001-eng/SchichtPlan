@@ -8,6 +8,7 @@ import { isMonthLocked } from "@/lib/automations";
 import { log } from "@/lib/logger";
 import { createAuditLog } from "@/lib/audit";
 import { withRoute } from "@/lib/with-route";
+import { requireSessionWorkspace } from "@/lib/require-workspace";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -54,7 +55,11 @@ export const POST = withRoute(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
 
     if (!["OWNER", "ADMIN", "MANAGER"].includes(user.role ?? "")) {
       return NextResponse.json(
@@ -91,7 +96,7 @@ export const POST = withRoute(
     const entries = await prisma.timeEntry.findMany({
       where: {
         id: { in: ids },
-        workspaceId: workspaceId ?? undefined,
+        workspaceId,
         status: { in: transition.from },
       },
     });

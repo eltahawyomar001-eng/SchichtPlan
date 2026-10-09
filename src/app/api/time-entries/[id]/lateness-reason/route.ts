@@ -24,6 +24,7 @@ import { isEmployee } from "@/lib/authorization";
 import { parseJsonBody } from "@/lib/api-response";
 import { validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
+import { requireSessionWorkspace } from "@/lib/require-workspace";
 
 const schema = z.object({
   /**
@@ -43,6 +44,11 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
     const { id } = await context!.params;
 
     const body = await parseJsonBody(req);
@@ -53,7 +59,7 @@ export const PATCH = withRoute(
     const entry = await prisma.timeEntry.findFirst({
       where: {
         id,
-        workspaceId: user.workspaceId ?? undefined,
+        workspaceId,
         deletedAt: null,
       },
       select: { id: true, employeeId: true, latenessReason: true },

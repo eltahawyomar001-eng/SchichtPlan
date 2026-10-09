@@ -17,6 +17,7 @@ import { captureRouteError } from "@/lib/sentry";
 import { timeEntryStatusSchema, validateBody } from "@/lib/validations";
 import { withRoute } from "@/lib/with-route";
 import { createAuditLog } from "@/lib/audit";
+import { requireSessionWorkspace } from "@/lib/require-workspace";
 
 type TimeEntryStatusValue =
   | "ENTWURF"
@@ -53,10 +54,14 @@ export const POST = withRoute(
 
     const { id } = params;
     const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
 
     const entry = await prisma.timeEntry.findFirst({
-      where: { id, workspaceId: workspaceId ?? undefined },
+      where: { id, workspaceId },
       include: { employee: true },
     });
 

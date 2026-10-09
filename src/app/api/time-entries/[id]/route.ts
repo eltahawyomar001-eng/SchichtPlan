@@ -16,6 +16,7 @@ import { log } from "@/lib/logger";
 import { createAuditLog } from "@/lib/audit";
 import { assessEntry, type EntryAssessment } from "@/lib/time-entry-assessment";
 import { dispatchWebhook } from "@/lib/webhooks";
+import { requireSessionWorkspace } from "@/lib/require-workspace";
 
 // ─── GET  /api/time-entries/:id ─────────────────────────────────
 export const GET = withRoute(
@@ -29,10 +30,15 @@ export const GET = withRoute(
     }
 
     const { id } = params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
+    const user = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
 
     const entry = await prisma.timeEntry.findFirst({
-      where: { id, workspaceId: workspaceId ?? undefined },
+      where: { id, workspaceId },
       include: {
         employee: true,
         location: true,
@@ -45,7 +51,6 @@ export const GET = withRoute(
     }
 
     // EMPLOYEE can only view their own time entries
-    const user = session.user as SessionUser;
     if (
       isEmployee(user) &&
       user.employeeId &&
@@ -71,10 +76,14 @@ export const PATCH = withRoute(
 
     const { id } = params;
     const user = session.user as SessionUser;
-    const workspaceId = user.workspaceId;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(user);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
 
     const existing = await prisma.timeEntry.findFirst({
-      where: { id, workspaceId: workspaceId ?? undefined },
+      where: { id, workspaceId },
     });
 
     if (!existing) {
@@ -303,7 +312,7 @@ export const PATCH = withRoute(
       const shift = await prisma.shift.findFirst({
         where: {
           employeeId: updated.employeeId,
-          workspaceId: workspaceId ?? undefined,
+          workspaceId,
           date: updated.date,
           deletedAt: null,
         },
@@ -369,11 +378,15 @@ export const DELETE = withRoute(
     }
 
     const { id } = params;
-    const workspaceId = (session.user as SessionUser).workspaceId;
     const currentUser = session.user as SessionUser;
+    // A session without a workspace must be refused, never queried across
+    // every tenant. See require-workspace.ts.
+    const ws = requireSessionWorkspace(currentUser);
+    if (!ws.ok) return ws.response;
+    const workspaceId = ws.workspaceId;
 
     const existing = await prisma.timeEntry.findFirst({
-      where: { id, workspaceId: workspaceId ?? undefined },
+      where: { id, workspaceId },
     });
 
     if (!existing) {

@@ -4231,7 +4231,7 @@
           },
           {
             "type": "p",
-            "text": "Sitz: San Francisco, USA. Server-Standort: EU (Frankfurt am Main, AWS eu-central-1). Alle Datenbankdaten werden ausschließlich in der EU verarbeitet und gespeichert. Administrativer Zugriff aus den USA möglich. Transfergarantie: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln (SCCs).",
+            "text": "Sitz: San Francisco, USA. Server-Standort: EU (Irland, AWS eu-west-1). Alle Datenbankdaten werden ausschließlich in der EU verarbeitet und gespeichert. Administrativer Zugriff aus den USA möglich. Transfergarantie: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln (SCCs).",
             "link": {
               "label": "Datenschutzerklärung von Supabase",
               "href": "https://supabase.com/privacy"

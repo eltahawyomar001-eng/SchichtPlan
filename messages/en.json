@@ -4231,7 +4231,7 @@
           },
           {
             "type": "p",
-            "text": "Registered office: San Francisco, USA. Server location: EU (Frankfurt am Main, AWS eu-central-1). All database data is processed and stored exclusively in the EU. Administrative access from the USA is possible. Transfer safeguard: EU-US Data Privacy Framework and EU standard contractual clauses (SCCs).",
+            "text": "Registered office: San Francisco, USA. Server location: EU (Ireland, AWS eu-west-1). All database data is processed and stored exclusively in the EU. Administrative access from the USA is possible. Transfer safeguard: EU-US Data Privacy Framework and EU standard contractual clauses (SCCs).",
             "link": {
               "label": "Supabase privacy policy",
               "href": "https://supabase.com/privacy"

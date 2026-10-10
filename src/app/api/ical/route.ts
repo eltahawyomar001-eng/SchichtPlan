@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { EMPLOYEE_NESTED_SELECT } from "@/lib/employee-projection";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -161,7 +162,12 @@ export async function GET(req: Request) {
 
     const shifts = await prisma.shift.findMany({
       where,
-      include: { employee: true, location: true },
+      include: {
+        // A calendar feed reachable with a long-lived token. It renders names, so
+        // that is all it may read.
+        employee: { select: EMPLOYEE_NESTED_SELECT },
+        location: true,
+      },
       orderBy: { date: "asc" },
       take: 2000, // hard cap — prevents unbounded reads on old accounts
     });

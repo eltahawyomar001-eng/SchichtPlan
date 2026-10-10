@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { EMPLOYEE_NESTED_SELECT } from "@/lib/employee-projection";
 import { prisma } from "@/lib/db";
 import { checkShiftConflicts } from "@/lib/automations";
 import { log } from "@/lib/logger";
@@ -89,7 +90,9 @@ export const POST = withRoute(
         status: "SCHEDULED",
       },
       include: {
-        employee: true,
+        // The claimer's own record, but the response still carried every personnel
+        // column. A claim needs a name, not a Sozialversicherungsnummer.
+        employee: { select: EMPLOYEE_NESTED_SELECT },
         location: true,
       },
     });

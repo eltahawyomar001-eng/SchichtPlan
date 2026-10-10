@@ -72,3 +72,63 @@ describe("clockToMinutes", () => {
     expect(clockToMinutes("23:59")).toBe(1439);
   });
 });
+
+/**
+ * Preferring the stored instant.
+ *
+ * Clock strings cannot survive a DST transition: the wall clock jumps an hour
+ * and minute arithmetic silently gains or loses it. An instant is unambiguous.
+ */
+describe("breakDurationMinutes", () => {
+  it("uses the instant when one was stored", async () => {
+    const { breakDurationMinutes } = await import("@/lib/clock-duration");
+    const r = breakDurationMinutes({
+      breakStartAt: new Date("2026-10-09T12:00:00Z"),
+      breakStart: "14:00",
+      endAt: new Date("2026-10-09T12:30:00Z"),
+      endClock: "14:30",
+    });
+    expect(r).toEqual({ minutes: 30, exact: true });
+  });
+
+  it("is correct across a DST transition, where clock strings are not", async () => {
+    const { breakDurationMinutes, minutesBetweenClockTimes } =
+      await import("@/lib/clock-duration");
+    // Europe/Berlin, 2027-03-28: 02:00 local jumps to 03:00. A break from
+    // 01:45 to 03:15 local is 45 real minutes, but the clock strings say 90.
+    const r = breakDurationMinutes({
+      breakStartAt: new Date("2027-03-28T00:45:00Z"),
+      breakStart: "01:45",
+      endAt: new Date("2027-03-28T01:30:00Z"),
+      endClock: "03:15",
+    });
+    expect(r.minutes).toBe(45);
+    expect(r.exact).toBe(true);
+    // What the string path would have claimed, for contrast.
+    expect(minutesBetweenClockTimes("01:45", "03:15")).toBe(90);
+  });
+
+  it("falls back to clock strings for entries predating the column", async () => {
+    const { breakDurationMinutes } = await import("@/lib/clock-duration");
+    const r = breakDurationMinutes({
+      breakStartAt: null,
+      breakStart: "23:50",
+      endAt: new Date("2026-10-10T00:20:00Z"),
+      endClock: "00:20",
+    });
+    // Still wraps correctly; simply not certified exact.
+    expect(r).toEqual({ minutes: 30, exact: false });
+  });
+
+  it("ignores an instant that would yield a negative span", async () => {
+    // Clock skew or a bad write must not record a negative break.
+    const { breakDurationMinutes } = await import("@/lib/clock-duration");
+    const r = breakDurationMinutes({
+      breakStartAt: new Date("2026-10-09T13:00:00Z"),
+      breakStart: "12:00",
+      endAt: new Date("2026-10-09T12:30:00Z"),
+      endClock: "12:30",
+    });
+    expect(r).toEqual({ minutes: 30, exact: false });
+  });
+});

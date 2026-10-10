@@ -55,14 +55,14 @@ async function getRedis() {
 /* ── In-memory LRU fallback when Redis is unavailable ──────── */
 
 interface MemoryEntry {
-  data: CachedResponse;
+  data: StoredEntry;
   expiresAt: number;
 }
 
 const LRU_MAX_SIZE = 500;
 const memoryCache = new Map<string, MemoryEntry>();
 
-function memoryGet(key: string): CachedResponse | null {
+function memoryGet(key: string): StoredEntry | null {
   const entry = memoryCache.get(key);
   if (!entry) return null;
   if (Date.now() > entry.expiresAt) {
@@ -75,7 +75,18 @@ function memoryGet(key: string): CachedResponse | null {
   return entry.data;
 }
 
-function memorySet(key: string, data: CachedResponse, ttlMs: number): void {
+/** Reserve atomically. Node is single-threaded here, so get-then-set is safe. */
+function memoryReserve(key: string, ttlMs: number): boolean {
+  if (memoryGet(key)) return false;
+  memorySet(key, { inProgress: true, startedAt: Date.now() }, ttlMs);
+  return true;
+}
+
+function memoryDelete(key: string): void {
+  memoryCache.delete(key);
+}
+
+function memorySet(key: string, data: StoredEntry, ttlMs: number): void {
   // Evict oldest entries if at capacity
   if (memoryCache.size >= LRU_MAX_SIZE) {
     const oldest = memoryCache.keys().next().value;
@@ -97,6 +108,38 @@ interface CachedResponse {
   body: string;
   contentType: string;
 }
+
+/**
+ * What sits under a key while the first request is still running.
+ *
+ * Without this, two identical requests arriving together both found an empty
+ * cache, both executed, and both created a record -- which is precisely what
+ * an Idempotency-Key is supposed to prevent. Caching the response afterwards
+ * is too late; the duplicate has already happened.
+ *
+ * The reservation is written atomically with SET NX, so exactly one caller
+ * wins it. The loser is told to retry rather than being given a half-finished
+ * answer.
+ */
+interface InProgressMarker {
+  inProgress: true;
+  startedAt: number;
+}
+
+type StoredEntry = CachedResponse | InProgressMarker;
+
+function isInProgress(e: StoredEntry): e is InProgressMarker {
+  return (e as InProgressMarker).inProgress === true;
+}
+
+/**
+ * How long a reservation may be held.
+ *
+ * Long enough for a slow handler, short enough that a process dying mid-request
+ * does not lock the key for a day. On expiry the next retry simply wins a new
+ * reservation.
+ */
+const IN_PROGRESS_TTL_SECONDS = 60;
 
 /* ── Helpers ────────────────────────────────────────────────── */
 
@@ -220,45 +263,85 @@ export async function checkIdempotency(
     const client = await getRedis();
     const cacheKey = buildRedisKey(key, scope);
 
-    if (!client) {
-      // Redis unavailable — use in-memory LRU fallback
-      const memoryCached = memoryGet(cacheKey);
-      if (!memoryCached) return null;
-
-      log.info("Idempotent request — returning cached response (memory)", {
-        idempotencyKey: key,
-        status: memoryCached.status,
-      });
-
-      return new NextResponse(memoryCached.body, {
-        status: memoryCached.status,
+    /** A finished response replays; an unfinished one must not. */
+    const replay = (entry: CachedResponse) =>
+      new NextResponse(entry.body, {
+        status: entry.status,
         headers: {
-          "Content-Type": memoryCached.contentType,
+          "Content-Type": entry.contentType,
           "Idempotency-Replayed": "true",
         },
       });
+
+    /**
+     * Somebody else is already running this exact request.
+     *
+     * 409 rather than a wait or a guess: the first attempt may still succeed,
+     * and returning an invented success would be worse than asking the client
+     * to retry. Retry-After tells it when the reservation lapses.
+     */
+    const duplicateInFlight = () =>
+      NextResponse.json(
+        {
+          error: "IDEMPOTENT_REQUEST_IN_PROGRESS",
+          message:
+            "Eine identische Anfrage wird bereits verarbeitet. Bitte in Kürze erneut versuchen.",
+          messageEn:
+            "An identical request is already being processed. Please retry shortly.",
+        },
+        {
+          status: 409,
+          headers: { "Retry-After": String(IN_PROGRESS_TTL_SECONDS) },
+        },
+      );
+
+    if (!client) {
+      // Redis unavailable — in-memory LRU, same reserve-then-complete rules.
+      const existing = memoryGet(cacheKey);
+      if (existing) {
+        return isInProgress(existing) ? duplicateInFlight() : replay(existing);
+      }
+      // Claim the slot so a concurrent duplicate cannot also proceed.
+      memoryReserve(cacheKey, IN_PROGRESS_TTL_SECONDS * 1000);
+      return null;
     }
 
     const raw = await client.get(cacheKey);
 
-    if (!raw) return null; // First time seeing this key
+    if (raw) {
+      const entry: StoredEntry =
+        typeof raw === "string" ? JSON.parse(raw) : (raw as StoredEntry);
+      if (isInProgress(entry)) {
+        log.info("Idempotent request already in progress", {
+          idempotencyKey: key,
+        });
+        return duplicateInFlight();
+      }
+      log.info("Idempotent request — returning cached response", {
+        idempotencyKey: key,
+        status: entry.status,
+      });
+      return replay(entry);
+    }
 
-    // Parse cached response
-    const cached: CachedResponse =
-      typeof raw === "string" ? JSON.parse(raw) : (raw as CachedResponse);
+    /**
+     * Reserve the key before running the handler.
+     *
+     * SET NX is the whole point: two identical requests arriving together both
+     * saw an empty cache and both executed, each creating a record. Exactly one
+     * caller can win this write; the other is told to retry.
+     *
+     * A lost race is not an error -- it means a duplicate reached us in the
+     * same instant, which is what the key exists to stop.
+     */
+    const reserved = await client.set(
+      cacheKey,
+      JSON.stringify({ inProgress: true, startedAt: Date.now() }),
+      { nx: true, ex: IN_PROGRESS_TTL_SECONDS },
+    );
+    if (!reserved) return duplicateInFlight();
 
-    log.info("Idempotent request — returning cached response", {
-      idempotencyKey: key,
-      status: cached.status,
-    });
-
-    return new NextResponse(cached.body, {
-      status: cached.status,
-      headers: {
-        "Content-Type": cached.contentType,
-        "Idempotency-Replayed": "true",
-      },
-    });
+    return null;
   } catch (error) {
     // Redis error — degrade gracefully, process the request normally
     log.warn("Idempotency check failed — processing request normally", {
@@ -272,6 +355,43 @@ export async function checkIdempotency(
  * Cache the response for this Idempotency-Key in Redis.
  * Call this after successfully processing a POST request.
  */
+/**
+ * Drop the in-progress marker so a retry can proceed immediately.
+ *
+ * Without this a failed attempt would hold its reservation for the full
+ * sixty seconds and every retry in that window would be answered with 409 --
+ * turning one transient error into a minute of refusals.
+ */
+export async function releaseIdempotencyReservation(
+  req: Request,
+  route: string,
+  method: string,
+): Promise<void> {
+  const key = getIdempotencyKey(req);
+  if (key) await releaseReservation(req, route, method, key);
+}
+
+async function releaseReservation(
+  req: Request,
+  route: string,
+  method: string,
+  key: string,
+): Promise<void> {
+  try {
+    const scope = await resolveScope(req, route, method);
+    if (!scope) return;
+    const cacheKey = buildRedisKey(key, scope);
+    const client = await getRedis();
+    if (!client) {
+      memoryDelete(cacheKey);
+      return;
+    }
+    await client.del(cacheKey);
+  } catch {
+    // The marker expires on its own; a failed release is not worth surfacing.
+  }
+}
+
 export async function cacheIdempotentResponse(
   req: Request,
   response: NextResponse,
@@ -289,7 +409,10 @@ export async function cacheIdempotentResponse(
    * for that key, and a retry could never succeed. A failure should be retried,
    * not remembered.
    */
-  if (response.status < 200 || response.status >= 300) return;
+  if (response.status < 200 || response.status >= 300) {
+    await releaseReservation(req, route, method, key);
+    return;
+  }
 
   try {
     const scope = await resolveScope(req, route, method);
@@ -309,7 +432,7 @@ export async function cacheIdempotentResponse(
     };
 
     if (!client) {
-      // Redis unavailable — cache in memory only
+      // Replaces this key's in-progress marker with the finished response.
       memorySet(cacheKey, cached, IDEMPOTENCY_TTL_SECONDS * 1000);
       return;
     }

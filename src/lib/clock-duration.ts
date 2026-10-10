@@ -44,3 +44,33 @@ export function minutesBetweenClockTimes(start: string, end: string): number {
   // crossed midnight.
   return diff < 0 ? diff + 24 * 60 : diff;
 }
+
+/**
+ * Break duration, preferring the stored instant over the clock string.
+ *
+ * `breakStartAt` is an absolute moment, so `end - start` on it is correct
+ * across midnight AND across a DST transition. The clock-string path remains
+ * for entries recorded before that column existed: those cannot be made
+ * DST-exact after the fact, because the information needed to do so was never
+ * stored, and inventing it would fabricate evidence.
+ *
+ * Which path was used is returned, so a caller can tell an exact figure from
+ * a reconstructed one rather than presenting both as equally certain.
+ */
+export function breakDurationMinutes(input: {
+  breakStartAt?: Date | null;
+  breakStart: string;
+  endAt: Date;
+  endClock: string;
+}): { minutes: number; exact: boolean } {
+  if (input.breakStartAt) {
+    const ms = input.endAt.getTime() - input.breakStartAt.getTime();
+    // A negative span means clock skew or a bad write; fall through rather
+    // than record a negative break.
+    if (ms >= 0) return { minutes: Math.round(ms / 60000), exact: true };
+  }
+  return {
+    minutes: minutesBetweenClockTimes(input.breakStart, input.endClock),
+    exact: false,
+  };
+}

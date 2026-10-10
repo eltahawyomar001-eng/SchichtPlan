@@ -1024,6 +1024,13 @@ model TimeEntry {
   startTime              String
   endTime                String
   breakStart             String?
+  /// The exact instant the running break began.
+  ///
+  /// breakStart is "HH:MM" with no date, so a duration derived from it is
+  /// wrong across a DST transition -- the wall clock jumps an hour and the
+  /// arithmetic silently gains or loses it. An instant removes the ambiguity.
+  /// Nullable: entries recorded before this existed fall back to the string.
+  breakStartAt           DateTime?
   breakEnd               String?
   breakMinutes           Int                  @default(0)
   grossMinutes           Int                  @default(0)

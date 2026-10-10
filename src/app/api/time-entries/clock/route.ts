@@ -18,7 +18,10 @@ import { pushCurrentClockState } from "@/lib/live-activity";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { evaluateGeofence, type GeofenceStatus } from "@/lib/geofence";
-import { minutesBetweenClockTimes } from "@/lib/clock-duration";
+import {
+  minutesBetweenClockTimes,
+  breakDurationMinutes,
+} from "@/lib/clock-duration";
 
 /**
  * POST /api/time-entries/clock
@@ -366,6 +369,9 @@ export const POST = withRoute(
             where: { id: open.id },
             data: {
               breakStart: timeStr,
+              // The exact moment, so the duration survives a DST transition
+              // that the "HH:MM" string cannot express.
+              breakStartAt: now,
               breakEnd: null,
             },
           });
@@ -421,7 +427,14 @@ export const POST = withRoute(
 
           return tx.timeEntry.update({
             where: { id: open.id },
-            data: { breakEnd: timeStr, breakMinutes: totalBreakMinutes },
+            data: {
+              breakEnd: timeStr,
+              breakMinutes: totalBreakMinutes,
+              // Cleared with the break it belonged to. A stale instant would
+              // be picked up by the NEXT break and measure from the wrong
+              // moment -- and the next break has not started yet.
+              breakStartAt: null,
+            },
           });
         })
         .catch((err) => {
@@ -465,7 +478,13 @@ export const POST = withRoute(
           let breakEnd = open.breakEnd;
           if (open.breakStart && !open.breakEnd) {
             breakMinutes =
-              breakMinutes + minutesBetweenClockTimes(open.breakStart, timeStr);
+              breakMinutes +
+              breakDurationMinutes({
+                breakStartAt: open.breakStartAt,
+                breakStart: open.breakStart,
+                endAt: now,
+                endClock: timeStr,
+              }).minutes;
             breakEnd = timeStr;
           }
 
@@ -501,6 +520,8 @@ export const POST = withRoute(
               endTime: timeStr,
               clockOutAt: now,
               breakEnd,
+              // The entry is closed; no break is running to measure from.
+              breakStartAt: null,
               breakMinutes: capped.breakMinutes,
               grossMinutes: capped.cappedGross,
               netMinutes: capped.cappedNet,
@@ -724,6 +745,7 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
           endTime: endTimeStr,
           clockOutAt: cappedClockOut,
           breakEnd,
+          breakStartAt: null,
           breakMinutes: capped.breakMinutes,
           grossMinutes: capped.cappedGross,
           netMinutes: capped.cappedNet,

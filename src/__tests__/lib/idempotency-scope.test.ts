@@ -223,3 +223,86 @@ describe("only successes are replayable", () => {
     expect(replay!.status).toBe(status);
   });
 });
+
+/**
+ * Concurrency.
+ *
+ * Caching the response afterwards does nothing for two requests that arrive
+ * together: both found an empty cache, both ran, and both created a record --
+ * exactly what an Idempotency-Key exists to prevent. The first caller now
+ * reserves the key before the handler runs.
+ */
+describe("a duplicate arriving mid-flight", () => {
+  beforeEach(() => mockRequireAuth.mockResolvedValue(asUser("user-a")));
+
+  it("is refused while the first is still running", async () => {
+    const { checkIdempotency } = await lib();
+    // First caller wins the reservation and proceeds.
+    expect(
+      await checkIdempotency(post({ x: 1 }), "/api/absences", "POST"),
+    ).toBeNull();
+
+    // Second caller, before the first has finished.
+    const second = await checkIdempotency(
+      post({ x: 1 }),
+      "/api/absences",
+      "POST",
+    );
+    expect(second).not.toBeNull();
+    expect(second!.status).toBe(409);
+    expect((await second!.json()).error).toBe("IDEMPOTENT_REQUEST_IN_PROGRESS");
+  });
+
+  it("tells the caller when to retry", async () => {
+    const { checkIdempotency } = await lib();
+    await checkIdempotency(post({ x: 1 }), "/api/absences", "POST");
+    const second = await checkIdempotency(
+      post({ x: 1 }),
+      "/api/absences",
+      "POST",
+    );
+    expect(second!.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  it("does not block a different key", async () => {
+    const { checkIdempotency } = await lib();
+    await checkIdempotency(post({ x: 1 }, "key-A"), "/api/absences", "POST");
+    expect(
+      await checkIdempotency(post({ x: 1 }, "key-B"), "/api/absences", "POST"),
+    ).toBeNull();
+  });
+
+  it("replays the real response once the first completes", async () => {
+    const { checkIdempotency, cacheIdempotentResponse } = await lib();
+    await checkIdempotency(post({ x: 1 }), "/api/absences", "POST");
+    await cacheIdempotentResponse(
+      post({ x: 1 }),
+      NextResponse.json({ id: "abs-1" }, { status: 201 }),
+      "/api/absences",
+      "POST",
+    );
+    const replay = await checkIdempotency(
+      post({ x: 1 }),
+      "/api/absences",
+      "POST",
+    );
+    expect(replay!.status).toBe(201);
+    expect(await replay!.json()).toEqual({ id: "abs-1" });
+  });
+
+  it("frees the key when the first attempt fails", async () => {
+    // Otherwise one transient error would refuse every retry for a full minute.
+    const { checkIdempotency, cacheIdempotentResponse } = await lib();
+    await checkIdempotency(post({ x: 1 }), "/api/absences", "POST");
+    await cacheIdempotentResponse(
+      post({ x: 1 }),
+      NextResponse.json({ error: "boom" }, { status: 500 }),
+      "/api/absences",
+      "POST",
+    );
+    // The retry must be allowed to run, not answered with 409 or a cached 500.
+    expect(
+      await checkIdempotency(post({ x: 1 }), "/api/absences", "POST"),
+    ).toBeNull();
+  });
+});

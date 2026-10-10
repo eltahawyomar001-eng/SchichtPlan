@@ -28,7 +28,11 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { log } from "@/lib/logger";
 import { captureRouteError } from "@/lib/sentry";
-import { checkIdempotency, cacheIdempotentResponse } from "@/lib/idempotency";
+import {
+  checkIdempotency,
+  cacheIdempotentResponse,
+  releaseIdempotencyReservation,
+} from "@/lib/idempotency";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -81,8 +85,17 @@ export function withRoute(
       const response = await handler(req, context);
 
       // ── Cache response for idempotent routes ──
-      if (options?.idempotent && response instanceof NextResponse) {
-        await cacheIdempotentResponse(req, response, route, method);
+      if (options?.idempotent) {
+        if (response instanceof NextResponse) {
+          await cacheIdempotentResponse(req, response, route, method);
+        } else {
+          // A plain Response -- a file download, a stream -- is not replayable,
+          // but the reservation taken before the handler ran must still be
+          // released, or every retry is refused until it expires.
+          await releaseIdempotencyReservation(req, route, method).catch(
+            () => {},
+          );
+        }
       }
 
       // Echo request ID back so callers can correlate logs
@@ -92,6 +105,13 @@ export function withRoute(
 
       return response;
     } catch (error) {
+      // A thrown handler leaves its idempotency reservation standing, so every
+      // retry would be refused with 409 until the marker expired. Release it
+      // here so the next attempt can actually run.
+      if (options?.idempotent) {
+        await releaseIdempotencyReservation(req, route, method).catch(() => {});
+      }
+
       // Map Prisma unique-constraint and relation violations to 409 instead of 500
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === "P2002") {

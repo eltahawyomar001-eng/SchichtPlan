@@ -70,6 +70,25 @@ export const POST = withRoute(
       );
     }
 
+    /**
+     * A revoked refresh token must not mint a fresh access token.
+     *
+     * Without this the revocation is cosmetic: the access token dies, the
+     * client refreshes, and a brand-new valid one comes back. Logout and
+     * password reset would have changed nothing for anyone holding the refresh
+     * token.
+     *
+     * A token with no `tv` claim counts as version 0, so credentials issued
+     * before the column existed keep refreshing until something revokes them.
+     */
+    const refreshVersion = typeof payload.tv === "number" ? payload.tv : 0;
+    if ((user.tokenVersion ?? 0) !== refreshVersion) {
+      return NextResponse.json(
+        { error: "Sitzung wurde beendet. Bitte erneut anmelden." },
+        { status: 401 },
+      );
+    }
+
     // ── Lockout-Prüfung: gesperrte Nutzer dürfen keinen neuen Token erhalten ──
     if (user.email) {
       const lockedSeconds = await isLockedOut(user.email);

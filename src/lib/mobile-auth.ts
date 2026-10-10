@@ -27,6 +27,8 @@ export interface MobileUserRecord {
   email: string;
   name: string | null;
   role: string;
+  /** See User.tokenVersion: stamped into tokens so they can be revoked. */
+  tokenVersion?: number;
   workspaceId: string | null;
   workspace?: { name: string | null; onboardingCompleted?: boolean } | null;
   employee?: { id: string } | null;
@@ -63,6 +65,9 @@ export async function mintMobileTokens(user: MobileUserRecord) {
     workspaceName: user.workspace?.name ?? null,
     employeeId: user.employee?.id ?? null,
     type: "access" as const,
+    // Lets logout and password reset invalidate this token; see
+    // User.tokenVersion.
+    tv: user.tokenVersion ?? 0,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -72,6 +77,7 @@ export async function mintMobileTokens(user: MobileUserRecord) {
   const refreshToken = await new jose.SignJWT({
     sub: user.id,
     type: "refresh" as const,
+    tv: user.tokenVersion ?? 0,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

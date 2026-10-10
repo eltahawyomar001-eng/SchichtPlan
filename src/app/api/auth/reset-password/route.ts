@@ -60,9 +60,15 @@ export const POST = withRoute(
     // Update password and delete token in transaction
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await prisma.$transaction(async (tx: any) => {
+      // Resetting a password must end every existing session.
+      //
+      // Mobile tokens are stateless JWTs: without this bump the old refresh
+      // token stayed valid for up to thirty days, so somebody who reset their
+      // password because an account was compromised would have changed
+      // nothing for the person holding that token.
       await tx.user.update({
         where: { id: user.id },
-        data: { hashedPassword },
+        data: { hashedPassword, tokenVersion: { increment: 1 } },
       });
 
       await tx.passwordResetToken.delete({

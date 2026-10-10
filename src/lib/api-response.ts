@@ -160,10 +160,29 @@ export async function requireAuth(
         algorithms: ["HS256"],
       });
 
-      // Reject tokens older than 1 hour
-      if (payload.iat && Date.now() / 1000 - payload.iat > 3600) {
-        return { ok: false, response: unauthorized() };
+      /**
+       * A refresh token must never authenticate an API call.
+       *
+       * Without this check any validly signed token passed -- including the
+       * thirty-day refresh token, whose whole purpose is to be stored and sent
+       * only to the refresh endpoint. Purpose is part of what a signature
+       * attests to; verifying the signature without reading the claim throws
+       * that away.
+       */
+      if (payload.type !== "access") {
+        return { ok: false, response: unauthorized("Invalid token type") };
       }
+
+      /**
+       * The token's own expiry governs, which jwtVerify has already enforced.
+       *
+       * There used to be an extra rule rejecting anything issued more than an
+       * hour ago, while tokens were minted with a 24-hour lifetime. The two
+       * disagreed, and the shorter one quietly won: a Live Activity or widget
+       * clock-out part-way through an eight-hour shift failed with no
+       * explanation the user could act on. Revocation below is what makes the
+       * full lifetime safe to honour -- an hour of guesswork never was.
+       */
 
       const userId = payload.sub as string;
       if (!userId) {
@@ -181,8 +200,26 @@ export async function requireAuth(
         },
       });
 
+      /**
+       * Revocation. A token minted before the user's version was bumped is
+       * dead, which is how logout and password reset take effect on a
+       * stateless JWT.
+       *
+       * A token with no `tv` claim counts as version 0, so credentials issued
+       * before this existed keep working until something actually revokes
+       * them. Without that, shipping this would have signed out every mobile
+       * user and every native clock extension at once.
+       */
+      const tokenVersion = typeof payload.tv === "number" ? payload.tv : 0;
+
       if (!dbUser) {
         return { ok: false, response: unauthorized() };
+      }
+
+      // Revoked: this token predates a logout, a password reset, or a
+      // deliberate sign-out-everywhere.
+      if ((dbUser.tokenVersion ?? 0) !== tokenVersion) {
+        return { ok: false, response: unauthorized("Session revoked") };
       }
 
       const user: SessionUser = {

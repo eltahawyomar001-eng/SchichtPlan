@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/with-route";
 import { requireAuth } from "@/lib/api-response";
 import { computeTotals } from "@/lib/billing";
 import { generateBillingPdf } from "@/lib/billing-pdf";
+import { loadInvoiceLogo } from "@/lib/invoice-logo";
 import { buildZugferdPdf } from "@/lib/e-invoice/zugferd";
 
 /**
@@ -51,10 +52,20 @@ export const GET = withRoute(
     const [workspace, issuer] = await Promise.all([
       prisma.workspace.findUnique({
         where: { id: workspaceId },
-        select: { name: true },
+        select: { name: true, logo: true },
       }),
       prisma.invoiceIssuerProfile.findUnique({ where: { workspaceId } }),
     ]);
+
+    /**
+     * The same logo the plain PDF prints.
+     *
+     * Every route that renders a billing document has to load this, or the
+     * logo appears on whichever one the uploader happened to test and is
+     * missing from the rest. Resolves to null on any problem, so a logo can
+     * never cost somebody their document.
+     */
+    const logo = await loadInvoiceLogo(issuer?.logoUrl ?? workspace?.logo);
 
     const pdf = generateBillingPdf({
       kind: "invoice",
@@ -78,6 +89,7 @@ export const GET = withRoute(
               .join("\n")
           : null,
         vatId: issuer?.vatId ?? issuer?.taxNumber ?? null,
+        logo,
       },
       recipient: {
         name: invoice.client?.name ?? null,

@@ -74,7 +74,7 @@ export function withRoute(
     try {
       // ── Idempotency check (opt-in) ──
       if (options?.idempotent) {
-        const cached = await checkIdempotency(req);
+        const cached = await checkIdempotency(req, route, method);
         if (cached) return cached;
       }
 
@@ -82,7 +82,7 @@ export function withRoute(
 
       // ── Cache response for idempotent routes ──
       if (options?.idempotent && response instanceof NextResponse) {
-        await cacheIdempotentResponse(req, response);
+        await cacheIdempotentResponse(req, response, route, method);
       }
 
       // Echo request ID back so callers can correlate logs

@@ -30,7 +30,9 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { log } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-response";
 
 /* ── Redis client (reuse from middleware or init lazily) ───── */
 
@@ -102,16 +104,84 @@ function getIdempotencyKey(req: Request): string | null {
   return req.headers.get(IDEMPOTENCY_HEADER);
 }
 
-function getRequestIp(req: Request): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown"
-  );
+/**
+ * The scope a cached response belongs to.
+ *
+ * Keying on IP was the defect. Two people behind one NAT -- which is every
+ * guard at a shared site, every office, every depot -- sharing an
+ * Idempotency-Key value would read each other's responses. The key also
+ * ignored the route, the method and the body, so one key could replay an
+ * unrelated operation's result.
+ *
+ * Identity here is VERIFIED, not claimed: the caller is authenticated before
+ * the cache is consulted at all, so an invalid token can never retrieve a
+ * cached success.
+ */
+interface IdempotencyScope {
+  userId: string;
+  workspaceId: string;
+  method: string;
+  route: string;
+  /** Hash of the request body, so the same key cannot replay a different one. */
+  bodyHash: string;
 }
 
-function buildRedisKey(idempotencyKey: string, ip: string): string {
-  return `${IDEMPOTENCY_PREFIX}${ip}:${idempotencyKey}`;
+/**
+ * Versioned prefix.
+ *
+ * v2 deliberately orphans every v1 entry rather than migrating it. Those were
+ * keyed by IP and cannot be attributed to a user, so re-using them would mean
+ * trusting exactly the data this change exists to distrust. They expire on
+ * their own 24-hour TTL.
+ */
+function buildRedisKey(
+  idempotencyKey: string,
+  scope: IdempotencyScope,
+): string {
+  return [
+    `${IDEMPOTENCY_PREFIX}v2`,
+    scope.userId,
+    scope.workspaceId,
+    scope.method,
+    scope.route,
+    scope.bodyHash,
+    idempotencyKey,
+  ].join(":");
+}
+
+/** Stable fingerprint of the body; empty bodies hash consistently. */
+async function hashBody(req: Request): Promise<string> {
+  try {
+    // Clone: the handler still needs to read the body itself.
+    const text = await req.clone().text();
+    return createHash("sha256").update(text).digest("hex").slice(0, 32);
+  } catch {
+    return "unreadable";
+  }
+}
+
+/**
+ * Resolve the scope, or null when the caller is not authenticated.
+ *
+ * Null means "do not touch the cache" -- neither read nor write. The handler
+ * then runs and rejects the request itself, which is the correct outcome: an
+ * unauthenticated caller must never be able to retrieve somebody's cached
+ * success, and nothing it produces is worth replaying.
+ */
+async function resolveScope(
+  req: Request,
+  route: string,
+  method: string,
+): Promise<IdempotencyScope | null> {
+  const auth = await requireAuth();
+  if (!auth.ok) return null;
+  return {
+    userId: auth.user.id,
+    workspaceId: auth.workspaceId,
+    method,
+    route,
+    bodyHash: await hashBody(req),
+  };
 }
 
 /* ── Public API ─────────────────────────────────────────────── */
@@ -123,6 +193,8 @@ function buildRedisKey(idempotencyKey: string, ip: string): string {
  */
 export async function checkIdempotency(
   req: Request,
+  route: string,
+  method: string,
 ): Promise<NextResponse | null> {
   const key = getIdempotencyKey(req);
   if (!key) return null; // No idempotency header — process normally
@@ -139,9 +211,14 @@ export async function checkIdempotency(
   }
 
   try {
+    // Authenticate BEFORE consulting the cache. Reading first was the defect:
+    // a request that had not proved who it was could be handed somebody else's
+    // stored response.
+    const scope = await resolveScope(req, route, method);
+    if (!scope) return null;
+
     const client = await getRedis();
-    const ip = getRequestIp(req);
-    const cacheKey = buildRedisKey(key, ip);
+    const cacheKey = buildRedisKey(key, scope);
 
     if (!client) {
       // Redis unavailable — use in-memory LRU fallback
@@ -198,15 +275,28 @@ export async function checkIdempotency(
 export async function cacheIdempotentResponse(
   req: Request,
   response: NextResponse,
+  route: string,
+  method: string,
 ): Promise<void> {
   const key = getIdempotencyKey(req);
   if (!key) return; // No idempotency header — nothing to cache
 
-  try {
-    const client = await getRedis();
+  /**
+   * Only successful outcomes are replayable.
+   *
+   * Errors used to be cached too, so one 500 or one 403 was served back for
+   * twenty-four hours -- a transient database blip became a day-long outage
+   * for that key, and a retry could never succeed. A failure should be retried,
+   * not remembered.
+   */
+  if (response.status < 200 || response.status >= 300) return;
 
-    const ip = getRequestIp(req);
-    const cacheKey = buildRedisKey(key, ip);
+  try {
+    const scope = await resolveScope(req, route, method);
+    if (!scope) return;
+
+    const client = await getRedis();
+    const cacheKey = buildRedisKey(key, scope);
 
     // Clone the response to read the body without consuming it
     const cloned = response.clone();

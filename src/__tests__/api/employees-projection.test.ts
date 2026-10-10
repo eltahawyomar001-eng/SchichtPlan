@@ -232,3 +232,32 @@ describe("an unauthenticated caller", () => {
     expect((await get()).status).toBe(401);
   });
 });
+
+/**
+ * The same leak, nested inside other records.
+ *
+ * Narrowing the employees list is not enough while a shift, report or absence
+ * row carries the whole employee. The schedule is the most-loaded screen in
+ * the product, so `include: { employee: true }` there put every colleague's
+ * regulated data in front of every employee who opened it.
+ */
+describe("the nested projection", () => {
+  it("carries only display fields", async () => {
+    const { EMPLOYEE_NESTED_SELECT } =
+      await import("@/lib/employee-projection");
+    expect(Object.keys(EMPLOYEE_NESTED_SELECT).sort()).toEqual(
+      ["color", "firstName", "id", "lastName", "position"].sort(),
+    );
+  });
+
+  it("excludes every regulated field", async () => {
+    const { EMPLOYEE_NESTED_SELECT, EMPLOYEE_SENSITIVE_FIELDS } =
+      await import("@/lib/employee-projection");
+    for (const field of EMPLOYEE_SENSITIVE_FIELDS) {
+      expect(
+        (EMPLOYEE_NESTED_SELECT as Record<string, unknown>)[field],
+        `nested projection must not select ${field}`,
+      ).toBeUndefined();
+    }
+  });
+});

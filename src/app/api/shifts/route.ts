@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { EMPLOYEE_NESTED_SELECT } from "@/lib/employee-projection";
 import { prisma } from "@/lib/db";
 import { requirePermission, isEmployee } from "@/lib/authorization";
 import {
@@ -76,7 +77,9 @@ export const GET = withRoute("/api/shifts", "GET", async (req) => {
     prisma.shift.findMany({
       where,
       include: {
-        employee: true,
+        // Display fields only. `employee: true` returned the whole row,
+        // including socialSecurityNumber, to anyone who opened the schedule.
+        employee: { select: EMPLOYEE_NESTED_SELECT },
         location: true,
       },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],

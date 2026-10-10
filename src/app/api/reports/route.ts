@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { EMPLOYEE_NESTED_SELECT } from "@/lib/employee-projection";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/authorization";
 import { requirePlanFeature } from "@/lib/subscription";
@@ -72,7 +73,9 @@ export const GET = withRoute("/api/reports", "GET", async (req) => {
       workspaceId,
       date: { gte: start, lte: end },
     },
-    include: { employee: true },
+    // Display fields only: a report groups by person, it does not need their
+    // regulated personnel data, and this route has no role gate.
+    include: { employee: { select: EMPLOYEE_NESTED_SELECT } },
   });
 
   // Fetch employees
@@ -161,7 +164,9 @@ export const GET = withRoute("/api/reports", "GET", async (req) => {
       workspaceId,
       date: { gte: start, lte: end },
     },
-    include: { employee: true },
+    // Display fields only: a report groups by person, it does not need their
+    // regulated personnel data, and this route has no role gate.
+    include: { employee: { select: EMPLOYEE_NESTED_SELECT } },
   });
 
   let totalTrackedMinutes = 0;

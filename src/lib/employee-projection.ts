@@ -85,3 +85,24 @@ export const EMPLOYEE_SENSITIVE_FIELDS = [
   "email",
   "phone",
 ] as const;
+
+/**
+ * Employee fields safe to nest inside another record's response.
+ *
+ * A shift, absence or report row needs to say WHO, not everything about them.
+ * `include: { employee: true }` returns the whole row -- Sozialversicherungs-
+ * nummer included -- and the schedule is the most-loaded screen in the
+ * product, so that single include put every colleague's regulated data in
+ * front of every employee who opened it.
+ *
+ * Only for responses that reach a client. Server-side work that genuinely
+ * needs email or contract terms -- notifications, payroll -- should select
+ * those explicitly in its own query rather than widening this.
+ */
+export const EMPLOYEE_NESTED_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  position: true,
+  color: true,
+} as const;

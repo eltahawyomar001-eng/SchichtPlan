@@ -8,6 +8,7 @@ import {
 import { log } from "@/lib/logger";
 import { captureRouteError, cronMonitor } from "@/lib/sentry";
 import { cache } from "@/lib/cache";
+import { minutesBetweenClockTimes } from "@/lib/clock-duration";
 
 /**
  * GET /api/automations/auto-clockout
@@ -88,9 +89,12 @@ export async function GET(req: Request) {
         let breakEnd = entry.breakEnd;
         if (entry.breakStart && !entry.breakEnd) {
           // Auto-end break at the capped time
-          const bsMin = toMinutes(entry.breakStart);
-          const beMin = toMinutes(endTimeStr);
-          breakMinutes = breakMinutes + Math.max(0, beMin - bsMin);
+          // Wraps past midnight; the old subtraction clamped a cross-midnight
+          // break to zero. Auto-clockout runs at night, so this path saw it
+          // most often.
+          breakMinutes =
+            breakMinutes +
+            minutesBetweenClockTimes(entry.breakStart, endTimeStr);
           breakEnd = endTimeStr;
         }
 
@@ -168,9 +172,4 @@ export async function GET(req: Request) {
       { status: 500 },
     );
   }
-}
-
-function toMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
 }

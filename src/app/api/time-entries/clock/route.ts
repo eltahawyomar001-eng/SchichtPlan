@@ -18,6 +18,7 @@ import { pushCurrentClockState } from "@/lib/live-activity";
 import { requireAuth, parseJsonBody } from "@/lib/api-response";
 import { withRoute } from "@/lib/with-route";
 import { evaluateGeofence, type GeofenceStatus } from "@/lib/geofence";
+import { minutesBetweenClockTimes } from "@/lib/clock-duration";
 
 /**
  * POST /api/time-entries/clock
@@ -409,9 +410,13 @@ export const POST = withRoute(
 
           // Calculate this break's duration and ADD to the running total
           // (supports multiple breaks per shift).
-          const bsMin = toMinutes(open.breakStart);
-          const beMin = toMinutes(timeStr);
-          const thisBreakMin = Math.max(0, beMin - bsMin);
+          // Wraps past midnight. Subtracting minutes-of-day made a 23:50 to
+          // 00:20 break compute as -1410, which the old clamp turned into 0 --
+          // a real half-hour of rest recorded as none.
+          const thisBreakMin = minutesBetweenClockTimes(
+            open.breakStart,
+            timeStr,
+          );
           const totalBreakMinutes = (open.breakMinutes ?? 0) + thisBreakMin;
 
           return tx.timeEntry.update({
@@ -459,9 +464,8 @@ export const POST = withRoute(
           let breakMinutes = open.breakMinutes || 0;
           let breakEnd = open.breakEnd;
           if (open.breakStart && !open.breakEnd) {
-            const bsMin = toMinutes(open.breakStart);
-            const beMin = toMinutes(timeStr);
-            breakMinutes = breakMinutes + Math.max(0, beMin - bsMin);
+            breakMinutes =
+              breakMinutes + minutesBetweenClockTimes(open.breakStart, timeStr);
             breakEnd = timeStr;
           }
 
@@ -641,11 +645,6 @@ export const POST = withRoute(
   },
 );
 
-function toMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-}
-
 /**
  * GET /api/time-entries/clock
  * Returns current clock-in status + today's completed entries for the employee.
@@ -696,9 +695,8 @@ export const GET = withRoute("/api/time-entries/clock", "GET", async (req) => {
       let breakMinutes = open.breakMinutes || 0;
       let breakEnd = open.breakEnd;
       if (open.breakStart && !open.breakEnd) {
-        const bsMin = toMinutes(open.breakStart);
-        const beMin = toMinutes(endTimeStr);
-        breakMinutes = breakMinutes + Math.max(0, beMin - bsMin);
+        breakMinutes =
+          breakMinutes + minutesBetweenClockTimes(open.breakStart, endTimeStr);
         breakEnd = endTimeStr;
       }
 

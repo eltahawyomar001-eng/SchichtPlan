@@ -106,3 +106,37 @@ describe("everything that can go wrong yields null, never a throw", () => {
     expect(await loadInvoiceLogo("https://example.test/l")).toBeNull();
   });
 });
+
+/**
+ * How hard the logo may be cached depends on whether its URL names its bytes.
+ *
+ * This is the layer that actually produced the bug report: the invoice PDF is
+ * rendered on the server, and the fetch of the logo was cached for an hour
+ * against a URL that stayed the same when the logo changed. The app showed the
+ * new logo while invoices went out with the old one.
+ */
+describe("cache policy", () => {
+  const fetchOptions = async (url: string) => {
+    const spy = mockFetch(png, "image/png");
+    vi.stubGlobal("fetch", spy);
+    await loadInvoiceLogo(url);
+    return spy.mock.calls[0][1] as RequestInit;
+  };
+
+  it("caches a content-addressed logo permanently", async () => {
+    const url =
+      "https://p.supabase.co/storage/v1/object/public/b/workspace-logos/ws1/" +
+      "0123456789abcdef0123456789abcdef.png";
+    expect((await fetchOptions(url)).cache).toBe("force-cache");
+  });
+
+  it("refuses to cache a legacy fixed-path logo at all", async () => {
+    // `.../logo.png` keeps its name when the image behind it is replaced, so
+    // any caching here is a wrong logo on somebody's invoice. One extra
+    // request is the cheaper mistake.
+    const opts = await fetchOptions(
+      "https://p.supabase.co/storage/v1/object/public/b/workspace-logos/ws1/logo.png",
+    );
+    expect(opts.cache).toBe("no-store");
+  });
+});

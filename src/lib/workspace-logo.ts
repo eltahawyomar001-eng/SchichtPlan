@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { StorageClient } from "@supabase/storage-js";
 import { log } from "@/lib/logger";
 
@@ -37,38 +38,73 @@ function publicUrl(path: string): string {
 
 export { MAX_LOGO_BYTES, ALLOWED_LOGO_TYPES };
 
+function extensionFor(contentType: string): string {
+  return contentType === "image/svg+xml"
+    ? "svg"
+    : contentType === "image/png"
+      ? "png"
+      : contentType === "image/webp"
+        ? "webp"
+        : "jpg";
+}
+
+/**
+ * A logo filename is the hash of its own bytes.
+ *
+ * The old scheme wrote every upload to one fixed key per workspace
+ * (`workspace-logos/<id>/logo.png`), so changing the logo left the URL
+ * identical. Nothing downstream could tell that the bytes behind it had
+ * changed, and three separate caches went on serving the old image: the
+ * Next.js data cache that holds the base64 for the PDF, the Supabase/Cloudflare
+ * CDN, and the browser. A company changed its logo, saw the new one in the app,
+ * and kept sending invoices with the old one.
+ *
+ * Content addressing removes the problem rather than racing it. Different
+ * bytes produce a different URL, so no cache can hold a stale answer for a URL
+ * that did not exist before; identical bytes produce the same URL, so
+ * re-uploading the same file is free. This is the same trick every asset
+ * pipeline uses for fingerprinted bundles, and it is what lets the file be
+ * cached hard instead of re-fetched on every invoice.
+ */
+const LOGO_HASH_LENGTH = 32;
+
+/** 1 year. Safe only because the URL names the exact bytes it returns. */
+const IMMUTABLE_CACHE_SECONDS = "31536000";
+
+/** Does this URL name its own content, or is it a legacy fixed path? */
+export function isContentAddressedLogo(url: string): boolean {
+  const file = url.split("?")[0].split("/").pop() ?? "";
+  return new RegExp(
+    `^[0-9a-f]{${LOGO_HASH_LENGTH}}\\.(png|jpg|webp|svg)$`,
+  ).test(file);
+}
+
 export async function uploadWorkspaceLogo(
   workspaceId: string,
   contentType: string,
   body: Buffer,
 ): Promise<string> {
-  const ext =
-    contentType === "image/svg+xml"
-      ? "svg"
-      : contentType === "image/png"
-        ? "png"
-        : contentType === "image/webp"
-          ? "webp"
-          : "jpg";
-  const path = `workspace-logos/${workspaceId}/logo.${ext}`;
+  const ext = extensionFor(contentType);
+  const hash = createHash("sha256")
+    .update(body)
+    .digest("hex")
+    .slice(0, LOGO_HASH_LENGTH);
+  const path = `workspace-logos/${workspaceId}/${hash}.${ext}`;
   const storage = getStorageClient();
 
-  // Delete any existing logo first (upsert doesn't work well across extensions)
-  await deleteWorkspaceLogo(`${path.replace(`.${ext}`, ".png")}`).catch(
-    () => {},
-  );
-  await deleteWorkspaceLogo(`${path.replace(`.${ext}`, ".jpg")}`).catch(
-    () => {},
-  );
-  await deleteWorkspaceLogo(`${path.replace(`.${ext}`, ".webp")}`).catch(
-    () => {},
-  );
-  await deleteWorkspaceLogo(`${path.replace(`.${ext}`, ".svg")}`).catch(
-    () => {},
-  );
-
+  /**
+   * Upload before anything is removed, and never remove here.
+   *
+   * The previous version deleted all four possible extensions up front, so an
+   * upload that then failed left the workspace with no logo at all -- it had
+   * destroyed the only copy before writing the replacement. The old file is
+   * now cleaned up by the caller, after the database points at the new one.
+   */
   const { error } = await storage.from(BUCKET).upload(path, body, {
     contentType,
+    cacheControl: IMMUTABLE_CACHE_SECONDS,
+    // The same bytes land on the same path, so a re-upload is a no-op write
+    // rather than a conflict.
     upsert: true,
   });
 

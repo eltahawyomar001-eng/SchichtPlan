@@ -11,6 +11,7 @@
  * is waiting for; a decorative image is not worth failing it over.
  */
 import { log } from "@/lib/logger";
+import { isContentAddressedLogo } from "@/lib/workspace-logo";
 
 /** What jsPDF can actually place. SVG is not among them. */
 const RENDERABLE = new Set(["image/png", "image/jpeg"]);
@@ -39,11 +40,22 @@ export async function loadInvoiceLogo(
   if (!url) return null;
 
   try {
+    /**
+     * Cache hard, but only when the URL names the bytes it returns.
+     *
+     * A content-addressed logo URL can be cached forever: different bytes get a
+     * different URL, so the cache is never asked a question whose answer has
+     * changed. A legacy fixed-path URL (`.../logo.png`) is the opposite -- it
+     * keeps its name when the image behind it is replaced -- and caching that
+     * for an hour is exactly how a company ended up emailing invoices with its
+     * previous logo while the app showed the new one. Those are re-fetched
+     * every time: one request is worth less than a wrong logo on an invoice,
+     * and they stop existing as soon as the logo is next changed.
+     */
+    const immutable = isContentAddressedLogo(url);
     const res = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      // The logo changes about once in a company's lifetime; revalidating it
-      // on every invoice would be a round-trip for nothing.
-      next: { revalidate: 3600 },
+      cache: immutable ? "force-cache" : "no-store",
     });
     if (!res.ok) {
       log.warn("[invoice-logo] fetch failed", { status: res.status });

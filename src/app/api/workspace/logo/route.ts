@@ -45,12 +45,31 @@ export const POST = withRoute("/api/workspace/logo", "POST", async (req) => {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  const previous = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { logo: true },
+  });
+
   const url = await uploadWorkspaceLogo(workspaceId, file.type, buffer);
 
   await prisma.workspace.update({
     where: { id: workspaceId },
     data: { logo: url },
   });
+
+  /**
+   * Remove the old file only now, and only if it is genuinely a different one.
+   *
+   * Order matters: the new logo is stored and the workspace points at it
+   * before anything is deleted, so a failure anywhere leaves a working logo
+   * rather than a blank one. The equality check covers re-uploading the same
+   * image -- content addressing makes that resolve to the same URL, and
+   * deleting it would erase the logo that was just saved.
+   */
+  if (previous?.logo && previous.logo !== url) {
+    await deleteWorkspaceLogo(previous.logo);
+  }
 
   return NextResponse.json({ logo: url });
 });

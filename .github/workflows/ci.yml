@@ -75,8 +75,28 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Materialize schema (ephemeral CI DB)
-        run: npx prisma db push --accept-data-loss
+      # `db push` materialises schema.prisma directly and never reads
+      # prisma/migrations, so a broken or missing migration could not fail CI.
+      # That is how an empty migration file -- dotenv output where the DDL
+      # should have been -- stayed green for weeks while `migrate deploy`
+      # against a fresh database was broken.
+      - name: Apply migrations (the path a real deploy takes)
+        run: npx prisma migrate deploy
+
+      # Proves the migrations and schema.prisma agree. A non-empty diff means
+      # somebody changed the schema without a matching migration.
+      - name: Fail on schema drift
+        run: |
+          DRIFT=$(npx prisma migrate diff \
+            --from-schema prisma/schema.prisma \
+            --to-url "$DATABASE_URL" --script 2>/dev/null \
+            | grep -v '^\[dotenv@' | grep -v '^[[:space:]]*$' || true)
+          if [ -n "$DRIFT" ]; then
+            echo "Schema drift between prisma/migrations and schema.prisma:"
+            echo "$DRIFT"
+            exit 1
+          fi
+          echo "No drift."
 
       - name: Run Tests
         run: npx vitest run --reporter=verbose --coverage
@@ -146,8 +166,28 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Materialize schema (ephemeral CI DB)
-        run: npx prisma db push --accept-data-loss
+      # `db push` materialises schema.prisma directly and never reads
+      # prisma/migrations, so a broken or missing migration could not fail CI.
+      # That is how an empty migration file -- dotenv output where the DDL
+      # should have been -- stayed green for weeks while `migrate deploy`
+      # against a fresh database was broken.
+      - name: Apply migrations (the path a real deploy takes)
+        run: npx prisma migrate deploy
+
+      # Proves the migrations and schema.prisma agree. A non-empty diff means
+      # somebody changed the schema without a matching migration.
+      - name: Fail on schema drift
+        run: |
+          DRIFT=$(npx prisma migrate diff \
+            --from-schema prisma/schema.prisma \
+            --to-url "$DATABASE_URL" --script 2>/dev/null \
+            | grep -v '^\[dotenv@' | grep -v '^[[:space:]]*$' || true)
+          if [ -n "$DRIFT" ]; then
+            echo "Schema drift between prisma/migrations and schema.prisma:"
+            echo "$DRIFT"
+            exit 1
+          fi
+          echo "No drift."
 
       - name: Build Next.js
         run: npx next build --turbopack
@@ -196,8 +236,28 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Materialize schema (ephemeral CI DB)
-        run: npx prisma db push --accept-data-loss
+      # `db push` materialises schema.prisma directly and never reads
+      # prisma/migrations, so a broken or missing migration could not fail CI.
+      # That is how an empty migration file -- dotenv output where the DDL
+      # should have been -- stayed green for weeks while `migrate deploy`
+      # against a fresh database was broken.
+      - name: Apply migrations (the path a real deploy takes)
+        run: npx prisma migrate deploy
+
+      # Proves the migrations and schema.prisma agree. A non-empty diff means
+      # somebody changed the schema without a matching migration.
+      - name: Fail on schema drift
+        run: |
+          DRIFT=$(npx prisma migrate diff \
+            --from-schema prisma/schema.prisma \
+            --to-url "$DATABASE_URL" --script 2>/dev/null \
+            | grep -v '^\[dotenv@' | grep -v '^[[:space:]]*$' || true)
+          if [ -n "$DRIFT" ]; then
+            echo "Schema drift between prisma/migrations and schema.prisma:"
+            echo "$DRIFT"
+            exit 1
+          fi
+          echo "No drift."
 
       # Build in-job rather than relying on the cross-job artifact, which was
       # fragile ("Artifact not found"). The `needs: [build]` gate still ensures
